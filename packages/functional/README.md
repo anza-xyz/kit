@@ -17,7 +17,9 @@ This package contains generalized functional helpers and functional helpers spec
 
 ### `pipe()`
 
-Until the [pipe operator](https://github.com/tc39/proposal-pipeline-operator) becomes part of JavaScript you can use this utility to create pipelines.
+A pipeline is a solution that allows you to perform successive transforms of a value using functions. This is useful when building up a transaction message.
+
+Until the [pipeline operator](https://github.com/tc39/proposal-pipeline-operator) becomes part of JavaScript you can use this utility to create pipelines.
 
 ```ts
 const add = (a, b) => a + b;
@@ -26,8 +28,6 @@ const add100 = x => add(x, 100);
 const sum = pipe(1, add10, add100);
 sum === 111; // true
 ```
-
-A pipeline is one solution to performing consecutive operations on a value using functions, such as you would when building a transaction.
 
 ```ts
 const transferTransactionMessage = pipe(
