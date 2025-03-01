@@ -34,7 +34,7 @@ mkdir -p $LOCK_DIR
     fi
   ) 200>$EXCLUSIVE_LOCK_FILE
   validator_pid=$(pidof $TEST_VALIDATOR)
-  if (exit $?) && ! lsof -p ^$BASHPID -p ^$validator_pid $SHARED_LOCK_FILE >/dev/null; then
+  if (exit $?) && ! lsof -p "$BASHPID" -p "$validator_pid" "$SHARED_LOCK_FILE" >/dev/null; then
     # We are the last caller with a lock. Kill the validator now.
     echo "Terminating test validator (PID $validator_pid)"
     kill -n 15 $validator_pid
