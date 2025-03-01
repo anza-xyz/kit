@@ -9,6 +9,14 @@ import {
 
 import { IAccountLookupMeta, IAccountMeta } from './accounts';
 
+/**
+ * An instruction destined for a given program.
+ *
+ * @example
+ * ```ts
+ * type StakeProgramInstruction = IInstruction<'StakeConfig11111111111111111111111111111111'>;
+ * ```
+ */
 export interface IInstruction<
     TProgramAddress extends string = string,
     TAccounts extends readonly (IAccountLookupMeta | IAccountMeta)[] = readonly (IAccountLookupMeta | IAccountMeta)[],
@@ -18,6 +26,19 @@ export interface IInstruction<
     readonly programAddress: Address<TProgramAddress>;
 }
 
+/**
+ * An instruction that loads certain accounts.
+ *
+ * @example
+ * ```ts
+ * type InstructionWithTwoAccounts = IInstructionWithAccounts<
+ *     [
+ *         WritableAccount, // First account
+ *         RentSysvar, // Second account
+ *     ]
+ * >;
+ * ```
+ */
 export interface IInstructionWithAccounts<TAccounts extends readonly (IAccountLookupMeta | IAccountMeta)[]>
     extends IInstruction {
     readonly accounts: TAccounts;
@@ -61,6 +82,28 @@ export function assertIsInstructionWithAccounts<
     }
 }
 
+/**
+ * An instruction whose data conforms to a certain type.
+ *
+ * This is most useful when you have a branded `Uint8Array` that represents a particular
+ * instruction's data.
+ *
+ * @example A type for the \`AdvanceNonce\` instruction of the System program
+ * ```ts
+ * type AdvanceNonceAccountInstruction<
+ *     TNonceAccountAddress extends string = string,
+ *     TNonceAuthorityAddress extends string = string,
+ * > = IInstruction<'11111111111111111111111111111111'> &
+ *     IInstructionWithAccounts<
+ *         [
+ *             WritableAccount<TNonceAccountAddress>,
+ *             ReadonlyAccount<'SysvarRecentB1ockHashes11111111111111111111'>,
+ *             ReadonlySignerAccount<TNonceAuthorityAddress>,
+ *         ]
+ *     > &
+ *     IInstructionWithData<AdvanceNonceAccountInstructionData>;
+ * ```
+ */
 export interface IInstructionWithData<TData extends ReadonlyUint8Array> extends IInstruction {
     readonly data: TData;
 }

@@ -75,7 +75,7 @@ type StakeProgramInstruction = IInstruction<'StakeConfig111111111111111111111111
 
 ### `IInstructionWithAccounts<TAccounts>`
 
-Use this type to specify an instruction that contains certain accounts.
+Use this type to specify an instruction that loads certain accounts.
 
 ```ts
 type InstructionWithTwoAccounts = IInstructionWithAccounts<
@@ -88,7 +88,7 @@ type InstructionWithTwoAccounts = IInstructionWithAccounts<
 
 ### `IInstructionWithData<TData>`
 
-Use this type to specify an instruction whose data conforms to a certain type. This is most useful when you have a branded `Uint8Array` that represents a particular instruction.
+Use this type to specify an instruction whose data conforms to a certain type. This is most useful when you have a branded `Uint8Array` that represents a particular instruction's data.
 
 For example, here is how the `AdvanceNonce` instruction is typed.
 
@@ -134,7 +134,7 @@ Returns an `AccountRole` representing the non-signer variant of the supplied rol
 
 ### `downgradeRoleToReadonly(role: AccountRole)`
 
-Returns an `AccountRole` representing the non-writable variant of the supplied role.
+Returns an `AccountRole` representing the read-only variant of the supplied role.
 
 ### `upgradeRoleToSigner(role: AccountRole)`
 
