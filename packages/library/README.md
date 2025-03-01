@@ -123,7 +123,7 @@ try {
 }
 ```
 
-### `sendAndConfirmTransactionFactory({rpc, rpcSubscriptions})`
+### `sendAndConfirmTransactionFactory({rpc, rpcSubscriptions?})`
 
 Returns a function that you can call to send a blockhash-based transaction to the network and to wait until it has been confirmed.
 
@@ -143,7 +143,39 @@ try {
 }
 ```
 
-### `sendTransactionWithoutConfirmingFactory({rpc, rpcSubscriptions})`
+### `sendAndPollToConfirmTransactionFactory({rpc, pollingInterval?})`
+
+Returns a function that sends a transaction—with a blockhash lifetime—to the network and polls for confirmation until the transaction is confirmed or its blockhash lifetime expires. Internally, it monitors both block height exceedance and recent signature confirmation.
+
+The returned function accepts a fully signed transaction (with blockhash lifetime) and a configuration object (e.g. commitment level).
+
+Example usage with error handling:
+
+```ts
+import {
+    isSolanaError,
+    sendAndPollToConfirmTransactionFactory,
+    SOLANA_ERROR__BLOCK_HEIGHT_EXCEEDED,
+} from '@solana/web3.js';
+
+const pollingInterval = 1000; // Polling interval in milliseconds. Default is 1,000.
+
+const sendAndPollToConfirmTransaction = sendAndPollToConfirmTransactionFactory({ rpc, pollingInterval });
+
+try {
+    await sendAndPollToConfirmTransaction(transaction, {
+        commitment: 'confirmed',
+    });
+} catch (e) {
+    if (isSolanaError(e, SOLANA_ERROR__BLOCK_HEIGHT_EXCEEDED)) {
+        console.error('This transaction depends on a blockhash that has expired');
+    } else {
+        throw e;
+    }
+}
+```
+
+### `sendTransactionWithoutConfirmingFactory({rpc})`
 
 Returns a function that you can call to send a transaction with any kind of lifetime to the network without waiting for it to be confirmed.
 
