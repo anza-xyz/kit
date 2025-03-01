@@ -35,3 +35,7 @@ jobs:
 
       - name: BundleMon
         uses: lironer/bundlemon-action@v1
+        env:
+          # Always compare to the main branch; prevents stacked PRs from being
+          # compared to the wrong mergebase (ie. the PR beneath the current one)
+          CI_TARGET_BRANCH: main
