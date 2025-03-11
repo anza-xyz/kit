@@ -4,6 +4,10 @@ import type { Base64EncodedWireTransaction } from '@solana/transactions';
 
 type SendTransactionConfig = Readonly<{
     maxRetries?: bigint;
+    /**
+     * Prevents accessing stale data by enforcing that the RPC node has processed transactions up to
+     * this slot
+     */
     minContextSlot?: Slot;
     /**
      * Simulate the transaction as of the highest slot that has reached this level of commitment.

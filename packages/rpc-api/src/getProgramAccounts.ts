@@ -28,7 +28,10 @@ type GetProgramAccountsApiCommonConfig = Readonly<{
     commitment?: Commitment;
     /** filter results (up to 4 filters allowed) @see https://docs.solana.com/api/http#filter-criteria */
     filters?: (GetProgramAccountsDatasizeFilter | GetProgramAccountsMemcmpFilter)[];
-    /** The minimum slot that the request can be evaluated at */
+    /**
+     * Prevents accessing stale data by enforcing that the RPC node has processed transactions up to
+     * this slot
+     */
     minContextSlot?: Slot;
 }>;
 

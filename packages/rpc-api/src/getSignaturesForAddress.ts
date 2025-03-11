@@ -35,7 +35,10 @@ type GetSignaturesForAddressConfig = Readonly<{
     commitment?: AllowedCommitmentForGetSignaturesForAddress;
     /** maximum transaction signatures to return (between 1 and 1,000). Default: 1000 */
     limit?: number;
-    /** The minimum slot that the request can be evaluated at */
+    /**
+     * Prevents accessing stale data by enforcing that the RPC node has processed transactions up to
+     * this slot
+     */
     minContextSlot?: Slot;
     /** search until this transaction signature, if found before limit reached */
     until?: Signature;

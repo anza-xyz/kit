@@ -15,7 +15,10 @@ type GetInflationRewardApiConfig = Readonly<{
     // An epoch for which the reward occurs.
     // If omitted, the previous epoch will be used
     epoch?: bigint;
-    // The minimum slot that the request can be evaluated at
+    /**
+     * Prevents accessing stale data by enforcing that the RPC node has processed transactions up to
+     * this slot
+     */
     minContextSlot?: Slot;
 }>;
 

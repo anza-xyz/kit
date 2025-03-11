@@ -27,6 +27,10 @@ export type AccountLoaderArgsBase = {
     commitment?: Commitment;
     dataSlice?: { length: number; offset: number };
     encoding?: 'base58' | 'base64' | 'base64+zstd' | 'jsonParsed';
+    /**
+     * Prevents accessing stale data by enforcing that the RPC node has processed transactions up to
+     * this slot
+     */
     minContextSlot?: Slot;
 };
 export type AccountLoaderArgs = AccountLoaderArgsBase & { address: Address };
@@ -73,6 +77,10 @@ export type ProgramAccountsLoaderArgsBase = {
               };
           }
     )[];
+    /**
+     * Prevents accessing stale data by enforcing that the RPC node has processed transactions up to
+     * this slot
+     */
     minContextSlot?: Slot;
 };
 export type ProgramAccountsLoaderArgs = ProgramAccountsLoaderArgsBase & { programAddress: Address };

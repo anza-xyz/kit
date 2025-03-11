@@ -23,6 +23,10 @@ export type GetLatestBlockhashApi = {
              * on the client, the default commitment applied by the server is `"finalized"`.
              */
             commitment?: Commitment;
+            /**
+             * Prevents accessing stale data by enforcing that the RPC node has processed transactions up to
+             * this slot
+             */
             minContextSlot?: Slot;
         }>,
     ): SolanaRpcResponse<GetLatestBlockhashApiResponse>;

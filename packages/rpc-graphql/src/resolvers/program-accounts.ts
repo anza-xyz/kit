@@ -23,6 +23,10 @@ export function resolveProgramAccounts(fieldName?: string) {
             commitment?: Commitment;
             dataSizeFilters?: { dataSize: bigint }[];
             memcmpFilters?: { bytes: string; encoding: 'base58' | 'base64'; offset: bigint }[];
+            /**
+             * Prevents accessing stale data by enforcing that the RPC node has processed
+             * transactions up to this slot
+             */
             minContextSlot?: Slot;
             programAddress: Address;
         },

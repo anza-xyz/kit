@@ -23,6 +23,10 @@ export type FetchAccountConfig = {
      * default commitment applied by the server is `"finalized"`.
      */
     commitment?: Commitment;
+    /**
+     * Prevents accessing stale data by enforcing that the RPC node has processed transactions up to
+     * this slot
+     */
     minContextSlot?: Slot;
 };
 
@@ -113,6 +117,10 @@ export type FetchAccountsConfig = {
      * default commitment applied by the server is `"finalized"`.
      */
     commitment?: Commitment;
+    /**
+     * Prevents accessing stale data by enforcing that the RPC node has processed transactions up to
+     * this slot
+     */
     minContextSlot?: Slot;
 };
 

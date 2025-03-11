@@ -18,7 +18,10 @@ export type GetTransactionCountApi = {
              * on the client, the default commitment applied by the server is `"finalized"`.
              */
             commitment?: Commitment;
-            // The minimum slot that the request can be evaluated at
+            /**
+             * Prevents accessing stale data by enforcing that the RPC node has processed
+             * transactions up to this slot
+             */
             minContextSlot?: Slot;
         }>,
     ): GetTransactionCountApiResponse;
