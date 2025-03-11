@@ -31,6 +31,15 @@ type GetVoteAccountsApiResponse<TVotePubkey extends Address> = Readonly<{
 }>;
 
 type GetVoteAccountsConfig<TVotePubkey extends Address> = Readonly<{
+    /**
+     * Fetch the details of the vote accounts as of the highest slot that has reached this level of
+     * commitment.
+     *
+     * @defaultValue Whichever default is applied by the underlying {@link RpcApi} in use. For
+     * example, when using an API created by a `createSolanaRpc*()` helper, the default commitment
+     * is `"confirmed"` unless configured otherwise. Unmitigated by an API layer on the client, the
+     * default commitment applied by the server is `"finalized"`.
+     */
     commitment?: Commitment;
     /** Specify the number of slots behind the tip that a validator must fall to be considered delinquent. **NOTE:** For the sake of consistency between ecosystem products, _it is **not** recommended that this argument be specified._ */
     delinquentSlotDistance?: bigint;

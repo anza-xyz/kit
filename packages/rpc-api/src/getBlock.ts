@@ -45,7 +45,14 @@ type GetBlockApiResponseWithTransactions<TTransaction> = Readonly<{
 // API parameter types
 
 type GetBlockCommonConfig = Readonly<{
-    /** @defaultValue finalized */
+    /**
+     * Fetch blocks from slots that have reached at least this level of commitment.
+     *
+     * @defaultValue Whichever default is applied by the underlying {@link RpcApi} in use. For
+     * example, when using an API created by a `createSolanaRpc*()` helper, the default commitment
+     * is `"confirmed"` unless configured otherwise. Unmitigated by an API layer on the client, the
+     * default commitment applied by the server is `"finalized"`.
+     */
     commitment?: Omit<Commitment, 'processed'>;
     encoding?: GetBlockEncoding;
     maxSupportedTransactionVersion?: GetBlockMaxSupportedTransactionVersion;

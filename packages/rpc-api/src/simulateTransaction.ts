@@ -17,9 +17,13 @@ import type { Base64EncodedWireTransaction, TransactionBlockhashLifetime } from 
 
 type SimulateTransactionConfigBase = Readonly<{
     /**
-     * Commitment level to simulate the transaction at
-     * @defaultValue finalized
-     * */
+     * Simulate the transaction as of the highest slot that has reached this level of commitment.
+     *
+     * @defaultValue Whichever default is applied by the underlying {@link RpcApi} in use. For
+     * example, when using an API created by a `createSolanaRpc*()` helper, the default commitment
+     * is `"confirmed"` unless configured otherwise. Unmitigated by an API layer on the client, the
+     * default commitment applied by the server is `"finalized"`.
+     */
     commitment?: Commitment;
     /**
      * If `true` the response will include inner instructions. These inner instructions will be

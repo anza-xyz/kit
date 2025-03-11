@@ -5,6 +5,16 @@ import type { Base64EncodedWireTransaction } from '@solana/transactions';
 type SendTransactionConfig = Readonly<{
     maxRetries?: bigint;
     minContextSlot?: Slot;
+    /**
+     * Simulate the transaction as of the highest slot that has reached this level of commitment.
+     *
+     * Has no effect when `skipPreflight` is set to `true`.
+     *
+     * @defaultValue Whichever default is applied by the underlying {@link RpcApi} in use. For
+     * example, when using an API created by a `createSolanaRpc*()` helper, the default commitment
+     * is `"confirmed"` unless configured otherwise. Unmitigated by an API layer on the client, the
+     * default commitment applied by the server is `"finalized"`.
+     */
     preflightCommitment?: Commitment;
     skipPreflight?: boolean;
 }>;

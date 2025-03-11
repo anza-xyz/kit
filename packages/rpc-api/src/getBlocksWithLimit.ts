@@ -13,7 +13,14 @@ export type GetBlocksWithLimitApi = {
         // Note: 0 will return an empty array
         limit: number,
         config?: Readonly<{
-            // Defaults to `finalized`
+            /**
+             * Include only blocks at slots that have reached at least this level of commitment.
+             *
+             * @defaultValue Whichever default is applied by the underlying {@link RpcApi} in use.
+             * For example, when using an API created by a `createSolanaRpc*()` helper, the default
+             * commitment is `"confirmed"` unless configured otherwise. Unmitigated by an API layer
+             * on the client, the default commitment applied by the server is `"finalized"`.
+             */
             commitment?: Exclude<Commitment, 'processed'>;
         }>,
     ): GetBlocksWithLimitApiResponse;

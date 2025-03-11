@@ -24,6 +24,14 @@ type AllowedCommitmentForGetSignaturesForAddress = Exclude<Commitment, 'processe
 type GetSignaturesForAddressConfig = Readonly<{
     /** start searching backwards from this transaction signature. If not provided the search starts from the top of the highest max confirmed block. */
     before?: Signature;
+    /**
+     * Fetch the signatures as of the highest slot that has reached this level of commitment.
+     *
+     * @defaultValue Whichever default is applied by the underlying {@link RpcApi} in use. For
+     * example, when using an API created by a `createSolanaRpc*()` helper, the default commitment
+     * is `"confirmed"` unless configured otherwise. Unmitigated by an API layer on the client, the
+     * default commitment applied by the server is `"finalized"`.
+     */
     commitment?: AllowedCommitmentForGetSignaturesForAddress;
     /** maximum transaction signatures to return (between 1 and 1,000). Default: 1000 */
     limit?: number;
