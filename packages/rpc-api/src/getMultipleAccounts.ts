@@ -32,7 +32,11 @@ type GetMultipleAccountsApiCommonConfig = Readonly<{
 }>;
 
 type GetMultipleAccountsApiSliceableCommonConfig = Readonly<{
-    /** Limit the returned account data */
+    /**
+     * Define which slice of the accounts' data you want the RPC to return.
+     *
+     * Use this to save network bandwidth and encoding time when you do not need the entire buffer.
+     */
     dataSlice?: DataSlice;
 }>;
 
