@@ -5,7 +5,8 @@ type GetBalanceApiResponse = SolanaRpcResponse<Lamports>;
 
 export type GetBalanceApi = {
     /**
-     * Returns the balance of the account of provided Pubkey
+     * Fetches the Lamport balance of the account at the given address.
+     * @see https://solana.com/docs/rpc/http/getbalance
      */
     getBalance(
         address: Address,
