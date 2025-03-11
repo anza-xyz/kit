@@ -54,67 +54,131 @@ type GetBlockCommonConfig = Readonly<{
      * default commitment applied by the server is `"finalized"`.
      */
     commitment?: Omit<Commitment, 'processed'>;
+    /**
+     * Determines how the transaction property should be encoded in the response.
+     *
+     * - `'base58'` produces a tuple whose first element is the wire transaction as a base58-encoded
+     *   string.
+     * - `'base64'` produces a tuple whose first element is the wire transaction as a base64-encoded
+     *   string.
+     * - `'json'` produces an object with `message` and `signatures` properties. The `instructions`
+     *   property of the message is an array of instructions, each an object containing the indices
+     *   of the instruction's accounts, the instruction data, the index of the program address, and
+     * - `'jsonParsed'` produces an object with `message` and `signatures` properties. This property
+     *   will cause the server to attempt to process each instruction using a parser specific to its
+     *   program. If successful, the parsed instruction will be returned in the response as JSON.
+     *   Otherwise, each instruction will be returned according to the rules of `'json'` encoding.
+     *
+     * @defaultValue "json"
+     */
     encoding?: GetBlockEncoding;
+    /**
+     * The newest transaction version that the caller wants to receive in the response. This
+     * argument has no effect unless the {@link GetBlockCommonConfig.transactionDetails | transactionDetails}
+     * argument is set to `'accounts'` or `'full'`.
+     *
+     * When not supplied, only legacy (unversioned) transactions will be returned, and no `version`
+     * property will be returned in the response.
+     *
+     * If a block contains any transaction at a version higher than this, the server will throw
+     * {@link SolanaErrorCode.SOLANA_ERROR__JSON_RPC__SERVER_ERROR_UNSUPPORTED_TRANSACTION_VERSION | SOLANA_ERROR__JSON_RPC__SERVER_ERROR_UNSUPPORTED_TRANSACTION_VERSION}.
+     */
     maxSupportedTransactionVersion?: GetBlockMaxSupportedTransactionVersion;
+    /**
+     * Set this to `false` to omit block rewards from the response. These typically only
+     * materialize on the first block of an epoch.
+     * @defaultValue true
+     */
     rewards?: boolean;
+    /**
+     * The level of transaction detail to include in the response.
+     *
+     * - `'accounts'` includes signatures, an annotated list of accounts, and some transaction
+     *   metadata.
+     * - `'full'` includes the entire transaction message and its signatures.
+     * - `'none'` excludes transaction details completely.
+     * - `'signatures'` includes transaction signatures only.
+     *
+     * @defaultValue "full"
+     */
     transactionDetails?: GetBlockTransactionDetailsMode;
 }>;
 
 type GetBlockEncoding = 'base58' | 'base64' | 'json' | 'jsonParsed';
 type GetBlockTransactionDetailsMode = 'accounts' | 'full' | 'none' | 'signatures';
 
-// Max supported transaction version parameter:
-// - `maxSupportedTransactionVersion` can only be provided with a number value. "legacy" is not a valid argument.
-// This will throw a parse error (code -32602).
-// - If `maxSupportedTransactionVersion` is not provided, the default value is "legacy".
-// This will error if the block contains any transactions with a version greater than "legacy" (code -32015).
-// - Also, If `maxSupportedTransactionVersion` is not provided, the `version` field of each transaction is omitted.
-// - These rules apply to both "accounts" and "full" transaction details.
 type GetBlockMaxSupportedTransactionVersion = Exclude<TransactionVersion, 'legacy'>;
 
 export type GetBlockApi = {
     /**
      * Returns identity and transaction information about a confirmed block in the ledger
+     *
+     * {@label transactions-none--rewards-none}
+     * @see https://solana.com/docs/rpc/http/getblock
      */
-    // transactionDetails=none, rewards=false, encoding + maxSupportedTransactionVersion irrelevant
     getBlock(
         slot: Slot,
+        // transactionDetails=none, rewards=false, encoding + maxSupportedTransactionVersion irrelevant
         config: GetBlockCommonConfig &
             Readonly<{
                 rewards: false;
                 transactionDetails: 'none';
             }>,
     ): GetBlockApiResponseBase | null;
-    // transactionDetails=none, rewards=missing/true, encoding + maxSupportedTransactionVersion irrelevant
+    /**
+     * Returns identity and transaction information about a confirmed block in the ledger
+     *
+     * {@label transactions-none--rewards-included}
+     * @see https://solana.com/docs/rpc/http/getblock
+     */
     getBlock(
         slot: Slot,
+        // transactionDetails=none, rewards=missing/true, encoding + maxSupportedTransactionVersion irrelevant
         config: GetBlockCommonConfig &
             Readonly<{
                 rewards?: true;
                 transactionDetails: 'none';
             }>,
     ): (GetBlockApiResponseBase & GetBlockApiResponseWithRewards) | null;
-    // transactionDetails=signatures, rewards=false, encoding + maxSupportedTransactionVersion irrelevant
+    /**
+     * Returns identity and transaction information about a confirmed block in the ledger
+     *
+     * {@label transactions-signatures--rewards-none}
+     * @see https://solana.com/docs/rpc/http/getblock
+     */
     getBlock(
         slot: Slot,
+        // transactionDetails=signatures, rewards=false, encoding + maxSupportedTransactionVersion irrelevant
         config: GetBlockCommonConfig &
             Readonly<{
                 rewards: false;
                 transactionDetails: 'signatures';
             }>,
     ): (GetBlockApiResponseBase & GetBlockApiResponseWithSignatures) | null;
-    // transactionDetails=signatures, rewards=missing/true, encoding + maxSupportedTransactionVersion irrelevant
+    /**
+     * Returns identity and transaction information about a confirmed block in the ledger
+     *
+     * {@label transactions-signatures--rewards-included}
+     * @see https://solana.com/docs/rpc/http/getblock
+     */
     getBlock(
         slot: Slot,
+        // transactionDetails=signatures, rewards=missing/true, encoding + maxSupportedTransactionVersion irrelevant
         config: GetBlockCommonConfig &
             Readonly<{
                 rewards?: true;
                 transactionDetails: 'signatures';
             }>,
     ): (GetBlockApiResponseBase & GetBlockApiResponseWithRewards & GetBlockApiResponseWithSignatures) | null;
-    // transactionDetails=accounts, rewards=false, maxSupportedTransactionVersion=0, encoding irrelevant
+    /**
+     * Returns identity and transaction information about a confirmed block in the ledger
+     *
+     * {@label transactions-accounts--rewards-none--version-specified}
+     * @see https://solana.com/docs/rpc/http/getblock
+     */
     getBlock(
         slot: Slot,
+        // transactionDetails=accounts, rewards=false, maxSupportedTransactionVersion=0, encoding irrelevant
         config: GetBlockCommonConfig &
             Readonly<{
                 maxSupportedTransactionVersion: GetBlockMaxSupportedTransactionVersion;
@@ -125,18 +189,30 @@ export type GetBlockApi = {
         | (GetBlockApiResponseBase &
               GetBlockApiResponseWithTransactions<TransactionForAccounts<GetBlockMaxSupportedTransactionVersion>>)
         | null;
-    // // transactionDetails=accounts, rewards=false, maxSupportedTransactionVersion=missing, encoding irrelevant
+    /**
+     * Returns identity and transaction information about a confirmed block in the ledger
+     *
+     * {@label transactions-accounts--rewards-none--version-legacy}
+     * @see https://solana.com/docs/rpc/http/getblock
+     */
     getBlock(
         slot: Slot,
+        // transactionDetails=accounts, rewards=false, maxSupportedTransactionVersion=missing, encoding irrelevant
         config: Omit<GetBlockCommonConfig, 'maxSupportedTransactionVersion'> &
             Readonly<{
                 rewards: false;
                 transactionDetails: 'accounts';
             }>,
     ): (GetBlockApiResponseBase & GetBlockApiResponseWithTransactions<TransactionForAccounts<void>>) | null;
-    // transactionDetails=accounts, rewards=missing/true, maxSupportedTransactionVersion=0, encoding irrelevant
+    /**
+     * Returns identity and transaction information about a confirmed block in the ledger
+     *
+     * {@label transactions-accounts--rewards-included--version-specified}
+     * @see https://solana.com/docs/rpc/http/getblock
+     */
     getBlock(
         slot: Slot,
+        // transactionDetails=accounts, rewards=missing/true, maxSupportedTransactionVersion=0, encoding irrelevant
         config: GetBlockCommonConfig &
             Readonly<{
                 maxSupportedTransactionVersion: GetBlockMaxSupportedTransactionVersion;
@@ -148,9 +224,15 @@ export type GetBlockApi = {
               GetBlockApiResponseWithRewards &
               GetBlockApiResponseWithTransactions<TransactionForAccounts<GetBlockMaxSupportedTransactionVersion>>)
         | null;
-    // transactionDetails=accounts, rewards=missing/true, maxSupportedTransactionVersion=missing, encoding irrelevant
+    /**
+     * Returns identity and transaction information about a confirmed block in the ledger
+     *
+     * {@label transactions-accounts--rewards-included--version-legacy}
+     * @see https://solana.com/docs/rpc/http/getblock
+     */
     getBlock(
         slot: Slot,
+        // transactionDetails=accounts, rewards=missing/true, maxSupportedTransactionVersion=missing, encoding irrelevant
         config: Omit<GetBlockCommonConfig, 'maxSupportedTransactionVersion'> &
             Readonly<{
                 rewards?: true;
@@ -161,9 +243,15 @@ export type GetBlockApi = {
               GetBlockApiResponseWithRewards &
               GetBlockApiResponseWithTransactions<TransactionForAccounts<void>>)
         | null;
-    // transactionDetails=full (default), encoding=base58, rewards=false, maxSupportedTransactionVersion=0
+    /**
+     * Returns identity and transaction information about a confirmed block in the ledger
+     *
+     * {@label transactions-base58--rewards-none--version-specified}
+     * @see https://solana.com/docs/rpc/http/getblock
+     */
     getBlock(
         slot: Slot,
+        // transactionDetails=full (default), encoding=base58, rewards=false, maxSupportedTransactionVersion=0
         config: GetBlockCommonConfig &
             Readonly<{
                 encoding: 'base58';
@@ -175,9 +263,15 @@ export type GetBlockApi = {
         | (GetBlockApiResponseBase &
               GetBlockApiResponseWithTransactions<TransactionForFullBase58<GetBlockMaxSupportedTransactionVersion>>)
         | null;
-    // transactionDetails=full (default), encoding=base58, rewards=false, maxSupportedTransactionVersion=missing
+    /**
+     * Returns identity and transaction information about a confirmed block in the ledger
+     *
+     * {@label transactions-base58--rewards-none--version-legacy}
+     * @see https://solana.com/docs/rpc/http/getblock
+     */
     getBlock(
         slot: Slot,
+        // transactionDetails=full (default), encoding=base58, rewards=false, maxSupportedTransactionVersion=missing
         config: Omit<GetBlockCommonConfig, 'maxSupportedTransactionVersion'> &
             Readonly<{
                 encoding: 'base58';
@@ -185,9 +279,15 @@ export type GetBlockApi = {
                 transactionDetails?: 'full';
             }>,
     ): (GetBlockApiResponseBase & GetBlockApiResponseWithTransactions<TransactionForFullBase58<void>>) | null;
-    // transactionDetails=full (default), encoding=base58, rewards=missing/true, maxSupportedTransactionVersion=0
+    /**
+     * Returns identity and transaction information about a confirmed block in the ledger
+     *
+     * {@label transactions-base58--rewards-included--version-specified}
+     * @see https://solana.com/docs/rpc/http/getblock
+     */
     getBlock(
         slot: Slot,
+        // transactionDetails=full (default), encoding=base58, rewards=missing/true, maxSupportedTransactionVersion=0
         config: GetBlockCommonConfig &
             Readonly<{
                 encoding: 'base58';
@@ -200,9 +300,15 @@ export type GetBlockApi = {
               GetBlockApiResponseWithRewards &
               GetBlockApiResponseWithTransactions<TransactionForFullBase58<GetBlockMaxSupportedTransactionVersion>>)
         | null;
-    // transactionDetails=full (default), encoding=base58, rewards=missing/true, maxSupportedTransactionVersion=missing
+    /**
+     * Returns identity and transaction information about a confirmed block in the ledger
+     *
+     * {@label transactions-base58--rewards-included--version-legacy}
+     * @see https://solana.com/docs/rpc/http/getblock
+     */
     getBlock(
         slot: Slot,
+        // transactionDetails=full (default), encoding=base58, rewards=missing/true, maxSupportedTransactionVersion=missing
         config: Omit<GetBlockCommonConfig, 'maxSupportedTransactionVersion'> &
             Readonly<{
                 encoding: 'base58';
@@ -214,9 +320,15 @@ export type GetBlockApi = {
               GetBlockApiResponseWithRewards &
               GetBlockApiResponseWithTransactions<TransactionForFullBase58<void>>)
         | null;
-    // transactionDetails=full (default), encoding=base64, rewards=false, maxSupportedTransactionVersion=0
+    /**
+     * Returns identity and transaction information about a confirmed block in the ledger
+     *
+     * {@label transactions-base64--rewards-none--version-specified}
+     * @see https://solana.com/docs/rpc/http/getblock
+     */
     getBlock(
         slot: Slot,
+        // transactionDetails=full (default), encoding=base64, rewards=false, maxSupportedTransactionVersion=0
         config: GetBlockCommonConfig &
             Readonly<{
                 encoding: 'base64';
@@ -228,9 +340,15 @@ export type GetBlockApi = {
         | (GetBlockApiResponseBase &
               GetBlockApiResponseWithTransactions<TransactionForFullBase64<GetBlockMaxSupportedTransactionVersion>>)
         | null;
-    // transactionDetails=full (default), encoding=base64, rewards=false, maxSupportedTransactionVersion=missing
+    /**
+     * Returns identity and transaction information about a confirmed block in the ledger
+     *
+     * {@label transactions-base64--rewards-none--version-legacy}
+     * @see https://solana.com/docs/rpc/http/getblock
+     */
     getBlock(
         slot: Slot,
+        // transactionDetails=full (default), encoding=base64, rewards=false, maxSupportedTransactionVersion=missing
         config: Omit<GetBlockCommonConfig, 'maxSupportedTransactionVersion'> &
             Readonly<{
                 encoding: 'base64';
@@ -238,9 +356,15 @@ export type GetBlockApi = {
                 transactionDetails?: 'full';
             }>,
     ): (GetBlockApiResponseBase & GetBlockApiResponseWithTransactions<TransactionForFullBase64<void>>) | null;
-    // transactionDetails=full (default), encoding=base64, rewards=missing/true, maxSupportedTransactionVersion=0
+    /**
+     * Returns identity and transaction information about a confirmed block in the ledger
+     *
+     * {@label transactions-base64--rewards-included--version-specified}
+     * @see https://solana.com/docs/rpc/http/getblock
+     */
     getBlock(
         slot: Slot,
+        // transactionDetails=full (default), encoding=base64, rewards=missing/true, maxSupportedTransactionVersion=0
         config: GetBlockCommonConfig &
             Readonly<{
                 encoding: 'base64';
@@ -253,9 +377,15 @@ export type GetBlockApi = {
               GetBlockApiResponseWithRewards &
               GetBlockApiResponseWithTransactions<TransactionForFullBase64<GetBlockMaxSupportedTransactionVersion>>)
         | null;
-    // transactionDetails=full (default), encoding=base64, rewards=missing/true, maxSupportedTransactionVersion=missing
+    /**
+     * Returns identity and transaction information about a confirmed block in the ledger
+     *
+     * {@label transactions-base64--rewards-included--version-legacy}
+     * @see https://solana.com/docs/rpc/http/getblock
+     */
     getBlock(
         slot: Slot,
+        // transactionDetails=full (default), encoding=base64, rewards=missing/true, maxSupportedTransactionVersion=missing
         config: Omit<GetBlockCommonConfig, 'maxSupportedTransactionVersion'> &
             Readonly<{
                 encoding: 'base64';
@@ -267,9 +397,15 @@ export type GetBlockApi = {
               GetBlockApiResponseWithRewards &
               GetBlockApiResponseWithTransactions<TransactionForFullBase64<void>>)
         | null;
-    // transactionDetails=full (default), encoding=jsonParsed, rewards=false, maxSupportedTransactionVersion=0
+    /**
+     * Returns identity and transaction information about a confirmed block in the ledger
+     *
+     * {@label transactions-parsed--rewards-none--version-specified}
+     * @see https://solana.com/docs/rpc/http/getblock
+     */
     getBlock(
         slot: Slot,
+        // transactionDetails=full (default), encoding=jsonParsed, rewards=false, maxSupportedTransactionVersion=0
         config: GetBlockCommonConfig &
             Readonly<{
                 encoding: 'jsonParsed';
@@ -281,9 +417,15 @@ export type GetBlockApi = {
         | (GetBlockApiResponseBase &
               GetBlockApiResponseWithTransactions<TransactionForFullJsonParsed<GetBlockMaxSupportedTransactionVersion>>)
         | null;
-    // transactionDetails=full (default), encoding=jsonParsed, rewards=false, maxSupportedTransactionVersion=missing
+    /**
+     * Returns identity and transaction information about a confirmed block in the ledger
+     *
+     * {@label transactions-parsed--rewards-none--version-legacy}
+     * @see https://solana.com/docs/rpc/http/getblock
+     */
     getBlock(
         slot: Slot,
+        // transactionDetails=full (default), encoding=jsonParsed, rewards=false, maxSupportedTransactionVersion=missing
         config: Omit<GetBlockCommonConfig, 'maxSupportedTransactionVersion'> &
             Readonly<{
                 encoding: 'jsonParsed';
@@ -291,9 +433,15 @@ export type GetBlockApi = {
                 transactionDetails?: 'full';
             }>,
     ): (GetBlockApiResponseBase & GetBlockApiResponseWithTransactions<TransactionForFullJsonParsed<void>>) | null;
-    // transactionDetails=full (default), encoding=jsonParsed, rewards=missing/true, maxSupportedTransactionVersion=0
+    /**
+     * Returns identity and transaction information about a confirmed block in the ledger
+     *
+     * {@label transactions-parsed--rewards-included--version-specified}
+     * @see https://solana.com/docs/rpc/http/getblock
+     */
     getBlock(
         slot: Slot,
+        // transactionDetails=full (default), encoding=jsonParsed, rewards=missing/true, maxSupportedTransactionVersion=0
         config: GetBlockCommonConfig &
             Readonly<{
                 encoding: 'jsonParsed';
@@ -305,9 +453,15 @@ export type GetBlockApi = {
               GetBlockApiResponseWithRewards &
               GetBlockApiResponseWithTransactions<TransactionForFullJsonParsed<GetBlockMaxSupportedTransactionVersion>>)
         | null;
-    // transactionDetails=full (default), encoding=jsonParsed, rewards=missing/true, maxSupportedTransactionVersion=missing
+    /**
+     * Returns identity and transaction information about a confirmed block in the ledger
+     *
+     * {@label transactions-parsed--rewards-included--version-legacy}
+     * @see https://solana.com/docs/rpc/http/getblock
+     */
     getBlock(
         slot: Slot,
+        // transactionDetails=full (default), encoding=jsonParsed, rewards=missing/true, maxSupportedTransactionVersion=missing
         config: Omit<GetBlockCommonConfig, 'maxSupportedTransactionVersion'> &
             Readonly<{
                 encoding: 'jsonParsed';
@@ -319,9 +473,15 @@ export type GetBlockApi = {
               GetBlockApiResponseWithRewards &
               GetBlockApiResponseWithTransactions<TransactionForFullJsonParsed<void>>)
         | null;
-    // transactionDetails=full (default), encoding=json (default), rewards=false, maxSupportedTransactionVersion=0
+    /**
+     * Returns identity and transaction information about a confirmed block in the ledger
+     *
+     * {@label transactions-json--rewards-none--version-specified}
+     * @see https://solana.com/docs/rpc/http/getblock
+     */
     getBlock(
         slot: Slot,
+        // transactionDetails=full (default), encoding=json (default), rewards=false, maxSupportedTransactionVersion=0
         config: GetBlockCommonConfig &
             Readonly<{
                 encoding?: 'json';
@@ -333,9 +493,15 @@ export type GetBlockApi = {
         | (GetBlockApiResponseBase &
               GetBlockApiResponseWithTransactions<TransactionForFullJson<GetBlockMaxSupportedTransactionVersion>>)
         | null;
-    // transactionDetails=full (default), encoding=json (default), rewards=false, maxSupportedTransactionVersion=missing
+    /**
+     * Returns identity and transaction information about a confirmed block in the ledger
+     *
+     * {@label transactions-json--rewards-none--version-legacy}
+     * @see https://solana.com/docs/rpc/http/getblock
+     */
     getBlock(
         slot: Slot,
+        // transactionDetails=full (default), encoding=json (default), rewards=false, maxSupportedTransactionVersion=missing
         config: Omit<GetBlockCommonConfig, 'maxSupportedTransactionVersion'> &
             Readonly<{
                 encoding?: 'json';
@@ -343,9 +509,15 @@ export type GetBlockApi = {
                 transactionDetails?: 'full';
             }>,
     ): (GetBlockApiResponseBase & GetBlockApiResponseWithTransactions<TransactionForFullJson<void>>) | null;
-    // transactionDetails=full (default), encoding=json (default), rewards=missing/true, maxSupportedTransactionVersion=0
+    /**
+     * Returns identity and transaction information about a confirmed block in the ledger
+     *
+     * {@label transactions-json--rewards-included--version-specified}
+     * @see https://solana.com/docs/rpc/http/getblock
+     */
     getBlock(
         slot: Slot,
+        // transactionDetails=full (default), encoding=json (default), rewards=missing/true, maxSupportedTransactionVersion=0
         config: GetBlockCommonConfig &
             Readonly<{
                 encoding?: 'json';
@@ -357,9 +529,15 @@ export type GetBlockApi = {
               GetBlockApiResponseWithRewards &
               GetBlockApiResponseWithTransactions<TransactionForFullJson<GetBlockMaxSupportedTransactionVersion>>)
         | null;
-    // transactionDetails=full (default), encoding=json (default), rewards=missing/true, maxSupportedTransactionVersion=missing
+    /**
+     * Returns identity and transaction information about a confirmed block in the ledger
+     *
+     * {@label transactions-json--rewards-included--version-legacy}
+     * @see https://solana.com/docs/rpc/http/getblock
+     */
     getBlock(
         slot: Slot,
+        // transactionDetails=full (default), encoding=json (default), rewards=missing/true, maxSupportedTransactionVersion=missing
         config?: Omit<GetBlockCommonConfig, 'maxSupportedTransactionVersion'> &
             Readonly<{
                 encoding?: 'json';
