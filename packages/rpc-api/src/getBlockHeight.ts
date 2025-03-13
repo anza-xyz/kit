@@ -5,6 +5,7 @@ type GetBlockHeightApiResponse = bigint;
 export type GetBlockHeightApi = {
     /**
      * Returns the current block height of the node
+     * @see https://solana.com/docs/rpc/http/getblockheight
      */
     getBlockHeight(
         config?: Readonly<{
