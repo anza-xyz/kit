@@ -1,14 +1,18 @@
 import type { Commitment, Lamports, Slot, SolanaRpcResponse } from '@solana/rpc-types';
 import type { TransactionMessageBytesBase64 } from '@solana/transactions';
 
-/** Fee corresponding to the message at the specified blockhash */
 type GetFeeForMessageApiResponse = Lamports | null;
 
 export type GetFeeForMessageApi = {
     /**
-     * Returns the fee the network will charge for a particular Message
+     * Returns the fee the network will charge for a particular message
+     *
+     * @returns The fee that the network will charge to process the message, in {@link Lamports}, as
+     * computed at the specified blockhash.
+     * @see https://solana.com/docs/rpc/http/getfeeformessage
      */
     getFeeForMessage(
+        /** A transaction message encoded as a base64 string */
         message: TransactionMessageBytesBase64,
         config?: Readonly<{
             /**
