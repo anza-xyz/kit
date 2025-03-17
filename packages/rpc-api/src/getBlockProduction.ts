@@ -24,16 +24,10 @@ type GetBlockProductionApiConfigBase = Readonly<{
 }>;
 
 type BlockProductionWithSingleIdentity<TIdentity extends string> = Readonly<{
-    value: Readonly<{
-        byIdentity: Readonly<{ [TAddress in TIdentity]?: [NumberOfLeaderSlots, NumberOfBlocksProduced] }>;
-    }>;
+    [TAddress in TIdentity]?: [NumberOfLeaderSlots, NumberOfBlocksProduced];
 }>;
 
-type BlockProductionWithAllIdentities = Readonly<{
-    value: Readonly<{
-        byIdentity: Record<Address, [NumberOfLeaderSlots, NumberOfBlocksProduced]>;
-    }>;
-}>;
+type BlockProductionWithAllIdentities = Record<Address, [NumberOfLeaderSlots, NumberOfBlocksProduced]>;
 
 type GetBlockProductionApiResponse<T> = Readonly<{
     byIdentity: T;
