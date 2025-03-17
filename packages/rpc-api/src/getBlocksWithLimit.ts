@@ -4,13 +4,19 @@ type GetBlocksWithLimitApiResponse = Slot[];
 
 export type GetBlocksWithLimitApi = {
     /**
-     * Returns a list of confirmed blocks starting at the given slot
-     * for up to `limit` blocks
+     * Returns a list of confirmed blocks starting at the given slot (inclusive). Returns up to the
+     * number of blocks specified by the limit.
+     *
+     * @see https://solana.com/docs/rpc/http/getblockswithlimit
      */
     getBlocksWithLimit(
+        /** The first slot for which to return a confirmed block */
         startSlot: Slot,
-        // The maximum number of blocks to return (between 0 and 500,000)
-        // Note: 0 will return an empty array
+        /**
+         * The maximum number of blocks to return (between 0 and 500,000).
+         *
+         * Specifying 0 will result in an empty array being returned.
+         */
         limit: number,
         config?: Readonly<{
             /**
