@@ -315,8 +315,8 @@ importers:
         specifier: workspace:*
         version: link:../rpc-types
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
 
   packages/addresses:
     dependencies:
@@ -333,8 +333,8 @@ importers:
         specifier: workspace:*
         version: link:../errors
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
 
   packages/assertions:
     dependencies:
@@ -342,8 +342,8 @@ importers:
         specifier: workspace:*
         version: link:../errors
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
 
   packages/build-scripts:
     devDependencies:
@@ -375,8 +375,8 @@ importers:
         specifier: workspace:*
         version: link:../options
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
 
   packages/codecs-core:
     dependencies:
@@ -384,8 +384,8 @@ importers:
         specifier: workspace:*
         version: link:../errors
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
     devDependencies:
       tinybench:
         specifier: ^4.0.1
@@ -403,8 +403,8 @@ importers:
         specifier: workspace:*
         version: link:../errors
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
     devDependencies:
       '@solana/codecs-strings':
         specifier: workspace:*
@@ -419,8 +419,8 @@ importers:
         specifier: workspace:*
         version: link:../errors
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
 
   packages/codecs-strings:
     dependencies:
@@ -437,8 +437,8 @@ importers:
         specifier: ^1.0.22
         version: 1.0.22
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
     devDependencies:
       '@solana/text-encoding-impl':
         specifier: workspace:*
@@ -468,8 +468,8 @@ importers:
         specifier: workspace:*
         version: link:../transactions
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
     devDependencies:
       '@solana/web3.js':
         specifier: ^1
@@ -486,16 +486,16 @@ importers:
         specifier: ^13.1.0
         version: 13.1.0
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
 
   packages/event-target-impl: {}
 
   packages/fast-stable-stringify:
     dependencies:
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
     devDependencies:
       '@types/json-stable-stringify':
         specifier: ^1.2.0
@@ -516,8 +516,8 @@ importers:
   packages/functional:
     dependencies:
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
 
   packages/instructions:
     dependencies:
@@ -528,8 +528,8 @@ importers:
         specifier: workspace:*
         version: link:../errors
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
     devDependencies:
       '@solana/addresses':
         specifier: workspace:*
@@ -550,8 +550,8 @@ importers:
         specifier: workspace:*
         version: link:../errors
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
     devDependencies:
       tinybench:
         specifier: ^4.0.1
@@ -614,7 +614,7 @@ importers:
         specifier: workspace:*
         version: link:../transactions
       typescript:
-        specifier: '>=5'
+        specifier: '>=5.3.3'
         version: 5.7.3
 
   packages/options:
@@ -635,8 +635,8 @@ importers:
         specifier: workspace:*
         version: link:../errors
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
 
   packages/programs:
     dependencies:
@@ -647,8 +647,8 @@ importers:
         specifier: workspace:*
         version: link:../errors
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
     devDependencies:
       '@solana/functional':
         specifier: workspace:*
@@ -660,8 +660,8 @@ importers:
   packages/promises:
     dependencies:
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
 
   packages/react:
     dependencies:
@@ -748,8 +748,8 @@ importers:
         specifier: workspace:*
         version: link:../rpc-types
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
     devDependencies:
       '@solana/event-target-impl':
         specifier: workspace:*
@@ -791,8 +791,8 @@ importers:
         specifier: workspace:*
         version: link:../transactions
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
     devDependencies:
       '@solana/rpc-spec-types':
         specifier: workspace:*
@@ -819,8 +819,8 @@ importers:
         specifier: ^16.10.0
         version: 16.10.0
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
     devDependencies:
       '@solana/addresses':
         specifier: workspace:*
@@ -841,8 +841,8 @@ importers:
   packages/rpc-parsed-types:
     dependencies:
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
     devDependencies:
       '@solana/addresses':
         specifier: workspace:*
@@ -860,14 +860,14 @@ importers:
         specifier: workspace:*
         version: link:../rpc-spec-types
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
 
   packages/rpc-spec-types:
     dependencies:
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
 
   packages/rpc-subscriptions:
     dependencies:
@@ -905,8 +905,8 @@ importers:
         specifier: workspace:*
         version: link:../subscribable
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
     devDependencies:
       '@solana/addresses':
         specifier: workspace:*
@@ -939,8 +939,8 @@ importers:
         specifier: workspace:*
         version: link:../transactions
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
     devDependencies:
       '@solana/rpc-subscriptions-channel-websocket':
         specifier: workspace:*
@@ -961,8 +961,8 @@ importers:
         specifier: workspace:*
         version: link:../subscribable
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
       ws:
         specifier: ^8.18.0
         version: 8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
@@ -992,8 +992,8 @@ importers:
         specifier: workspace:*
         version: link:../subscribable
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
     devDependencies:
       '@solana/event-target-impl':
         specifier: workspace:*
@@ -1014,8 +1014,8 @@ importers:
         specifier: workspace:*
         version: link:../rpc-types
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
 
   packages/rpc-transport-http:
     dependencies:
@@ -1029,8 +1029,8 @@ importers:
         specifier: workspace:*
         version: link:../rpc-spec-types
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
       undici-types:
         specifier: ^7.5.0
         version: 7.5.0
@@ -1063,8 +1063,8 @@ importers:
         specifier: workspace:*
         version: link:../errors
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
 
   packages/signers:
     dependencies:
@@ -1090,8 +1090,8 @@ importers:
         specifier: workspace:*
         version: link:../transactions
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
     devDependencies:
       '@solana/rpc-types':
         specifier: workspace:*
@@ -1106,8 +1106,8 @@ importers:
         specifier: workspace:*
         version: link:../errors
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
     devDependencies:
       '@solana/event-target-impl':
         specifier: workspace:*
@@ -1128,8 +1128,8 @@ importers:
         specifier: workspace:*
         version: link:../rpc-types
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
     devDependencies:
       '@solana/addresses':
         specifier: workspace:*
@@ -1208,8 +1208,8 @@ importers:
         specifier: workspace:*
         version: link:../transactions
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
     devDependencies:
       '@solana/codecs-core':
         specifier: workspace:*
@@ -1248,8 +1248,8 @@ importers:
         specifier: workspace:*
         version: link:../rpc-types
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
     devDependencies:
       '@solana/codecs-strings':
         specifier: workspace:*
@@ -1291,8 +1291,8 @@ importers:
         specifier: workspace:*
         version: link:../transaction-messages
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
 
   packages/tsconfig: {}
 
@@ -1302,8 +1302,8 @@ importers:
         specifier: ^2.2.3
         version: 2.2.3
       typescript:
-        specifier: '>=5'
-        version: 5.7.2
+        specifier: '>=5.3.3'
+        version: 5.7.3
     devDependencies:
       '@solana/crypto-impl':
         specifier: workspace:*
@@ -6940,11 +6940,6 @@ packages:
     peerDependenciesMeta:
       typescript:
         optional: true
-
-  typescript@5.7.2:
-    resolution: {integrity: sha512-i5t66RHxDvVN40HfDd1PsEThGNnlMCMT3jMUuoh9/0TaqWevNontacunWyN02LA9/fIbEWlcHZcgTKb9QoaLfg==}
-    engines: {node: '>=14.17'}
-    hasBin: true
 
   typescript@5.7.3:
     resolution: {integrity: sha512-84MVSjMEHP+FQRPy3pX9sTVV/INIex71s9TL2Gm5FG/WG1SqXeKyZ0k7/blY/4FdOzI12CBy1vGc4og/eus0fw==}
@@ -13796,8 +13791,6 @@ snapshots:
       typescript: 5.7.3
     transitivePeerDependencies:
       - supports-color
-
-  typescript@5.7.2: {}
 
   typescript@5.7.3: {}
 

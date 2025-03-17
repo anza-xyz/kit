@@ -77,7 +77,7 @@
         "@solana/errors": "workspace:*"
     },
     "peerDependencies": {
-        "typescript": ">=5"
+        "typescript": ">=5.3.3"
     },
     "engines": {
         "node": ">=20.18.0"

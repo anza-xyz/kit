@@ -14,10 +14,6 @@ type GetEpochScheduleApiResponse = Readonly<{
 export type GetEpochScheduleApi = {
     /**
      * Returns the epoch schedule information from this cluster's genesis config
-     * Note that the optional NO_CONFIG object is ignored. See https://github.com/solana-labs/solana-web3.js/issues/1389
      */
-    getEpochSchedule(
-        // FIXME: https://github.com/solana-labs/solana-web3.js/issues/1389
-        NO_CONFIG?: Record<string, never>,
-    ): GetEpochScheduleApiResponse;
+    getEpochSchedule(): GetEpochScheduleApiResponse;
 };

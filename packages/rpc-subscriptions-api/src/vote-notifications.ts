@@ -14,8 +14,5 @@ export type VoteNotificationsApi = {
     /**
      * Subscribe to receive a notification from the validator on a variety of updates on every slot
      */
-    voteNotifications(
-        // FIXME: https://github.com/solana-labs/solana-web3.js/issues/1389
-        NO_CONFIG?: Record<string, never>,
-    ): VoteNotificationsApiNotification;
+    voteNotifications(): VoteNotificationsApiNotification;
 };
