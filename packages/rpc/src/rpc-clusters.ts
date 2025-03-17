@@ -72,13 +72,13 @@ export type RpcTransportFromClusterUrl<TClusterUrl extends ClusterUrl> = TCluste
  * ```ts
  * async function getSpecialAccountInfo(
  *     address: Address<'ReAL1111111111111111111111111111'>,
- *     rpc: RpcMainnet,
+ *     rpc: RpcMainnet<unknown>,
  * ): Promise<SpecialAccountInfo>;
  * async function getSpecialAccountInfo(
  *     address: Address<'TeST1111111111111111111111111111'>,
- *     rpc: RpcDevnet | RpcTestnet,
+ *     rpc: RpcDevnet<unknown> | RpcTestnet<unknown>,
  * ): Promise<SpecialAccountInfo>;
- * async function getSpecialAccountInfo(address: Address, rpc: Rpc): Promise<SpecialAccountInfo> {
+ * async function getSpecialAccountInfo(address: Address, rpc: Rpc<unknown>): Promise<SpecialAccountInfo> {
  *     /* ... *\/
  * }
  * const rpc = createSolanaRpc(devnet('https://api.devnet.solana.com'));
@@ -97,13 +97,13 @@ export type RpcDevnet<TRpcMethods> = Rpc<TRpcMethods> & { '~cluster': 'devnet' }
  * ```ts
  * async function getSpecialAccountInfo(
  *     address: Address<'ReAL1111111111111111111111111111'>,
- *     rpc: RpcMainnet,
+ *     rpc: RpcMainnet<unknown>,
  * ): Promise<SpecialAccountInfo>;
  * async function getSpecialAccountInfo(
  *     address: Address<'TeST1111111111111111111111111111'>,
- *     rpc: RpcDevnet | RpcTestnet,
+ *     rpc: RpcDevnet<unknown> | RpcTestnet<unknown>,
  * ): Promise<SpecialAccountInfo>;
- * async function getSpecialAccountInfo(address: Address, rpc: Rpc): Promise<SpecialAccountInfo> {
+ * async function getSpecialAccountInfo(address: Address, rpc: Rpc<unknown>): Promise<SpecialAccountInfo> {
  *     /* ... *\/
  * }
  * const rpc = createSolanaRpc(devnet('https://api.devnet.solana.com'));
@@ -122,13 +122,13 @@ export type RpcTestnet<TRpcMethods> = Rpc<TRpcMethods> & { '~cluster': 'testnet'
  * ```ts
  * async function getSpecialAccountInfo(
  *     address: Address<'ReAL1111111111111111111111111111'>,
- *     rpc: RpcMainnet,
+ *     rpc: RpcMainnet<unknown>,
  * ): Promise<SpecialAccountInfo>;
  * async function getSpecialAccountInfo(
  *     address: Address<'TeST1111111111111111111111111111'>,
- *     rpc: RpcDevnet | RpcTestnet,
+ *     rpc: RpcDevnet<unknown> | RpcTestnet<unknown>,
  * ): Promise<SpecialAccountInfo>;
- * async function getSpecialAccountInfo(address: Address, rpc: Rpc): Promise<SpecialAccountInfo> {
+ * async function getSpecialAccountInfo(address: Address, rpc: Rpc<unknown>): Promise<SpecialAccountInfo> {
  *     /* ... *\/
  * }
  * const rpc = createSolanaRpc(devnet('https://api.devnet.solana.com'));
