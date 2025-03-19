@@ -13,7 +13,9 @@ type GetInflationRateApiResponse = Readonly<{
 
 export type GetInflationRateApi = {
     /**
-     * Returns the specific inflation values for the current epoch
+     * Returns the specific inflation values for the current epoch.
+     *
+     * @see https://solana.com/docs/rpc/http/getinflationrate
      */
     getInflationRate(): GetInflationRateApiResponse;
 };
