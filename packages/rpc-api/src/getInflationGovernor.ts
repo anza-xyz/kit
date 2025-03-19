@@ -8,9 +8,8 @@ type GetInflationGovernorApiResponse = Readonly<{
     /** The initial inflation percentage from time 0 */
     initial: F64UnsafeSeeDocumentation;
     /**
-     * Rate per year at which inflation is lowered.
-     * (Rate reduction is derived using the target
-     * slot time in genesis config)
+     * Rate per year at which inflation is lowered. (Rate reduction is derived using the target slot
+     * time in genesis config)
      */
     taper: F64UnsafeSeeDocumentation;
     /** Terminal inflation percentage */
@@ -19,7 +18,9 @@ type GetInflationGovernorApiResponse = Readonly<{
 
 export type GetInflationGovernorApi = {
     /**
-     * Returns the current inflation governor
+     * Returns the current inflation governor.
+     *
+     * @see https://solana.com/docs/rpc/http/getinflationgovernor
      */
     getInflationGovernor(
         config?: Readonly<{
