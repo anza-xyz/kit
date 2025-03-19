@@ -1,15 +1,22 @@
 import type { Blockhash, Commitment, Slot, SolanaRpcResponse } from '@solana/rpc-types';
 
 type GetLatestBlockhashApiResponse = Readonly<{
-    /** a Hash as base-58 encoded string */
+    /** A SHA-256 hash as base-58 encoded string */
     blockhash: Blockhash;
-    /** last block height at which the blockhash will be valid */
+    /**
+     * Last block height at which the blockhash will be considered a valid lifetime specifier with
+     * which to land a transaction.
+     *
+     * @see {@link setTransactionMessageLifetimeUsingBlockhash}
+     */
     lastValidBlockHeight: bigint;
 }>;
 
 export type GetLatestBlockhashApi = {
     /**
-     * Returns the latest blockhash
+     * Returns the blockhash of the latest block.
+     *
+     * @see https://solana.com/docs/rpc/http/getlatestblockhash
      */
     getLatestBlockhash(
         config?: Readonly<{
@@ -24,8 +31,8 @@ export type GetLatestBlockhashApi = {
              */
             commitment?: Commitment;
             /**
-             * Prevents accessing stale data by enforcing that the RPC node has processed transactions up to
-             * this slot
+             * Prevents accessing stale data by enforcing that the RPC node has processed
+             * transactions up to this slot
              */
             minContextSlot?: Slot;
         }>,
