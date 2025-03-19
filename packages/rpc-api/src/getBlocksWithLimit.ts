@@ -11,7 +11,7 @@ export type GetBlocksWithLimitApi = {
      */
     getBlocksWithLimit(
         /** The first slot for which to return a confirmed block */
-        startSlot: Slot,
+        startSlotInclusive: Slot,
         /**
          * The maximum number of blocks to return (between 0 and 500,000).
          *

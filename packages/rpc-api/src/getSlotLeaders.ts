@@ -10,7 +10,7 @@ export type GetSlotLeadersApi = {
      */
     getSlotLeaders(
         /** Start slot, as u64 integer */
-        startSlot: Slot,
+        startSlotInclusive: Slot,
         /** Limit (between 1 and 5000) */
         limit: number,
     ): GetSlotLeadersApiResponse;

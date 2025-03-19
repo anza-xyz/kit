@@ -10,7 +10,7 @@ export type GetBlocksApi = {
      */
     getBlocks(
         /** The first slot for which to return a confirmed block */
-        startSlot: Slot,
+        startSlotInclusive: Slot,
         /**
          * The last slot for which to return a confirmed block.
          *
