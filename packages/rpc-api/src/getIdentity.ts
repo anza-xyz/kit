@@ -6,7 +6,9 @@ type GetIdentityApiResponse = Readonly<{
 
 export type GetIdentityApi = {
     /**
-     * Returns the identity pubkey for the current node
+     * Returns the identity pubkey for the current node.
+     *
+     * @see https://solana.com/docs/rpc/http/getidentity
      */
     getIdentity(): GetIdentityApiResponse;
 };
