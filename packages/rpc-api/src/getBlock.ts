@@ -64,6 +64,7 @@ type GetBlockCommonConfig = Readonly<{
      * - `'json'` produces an object with `message` and `signatures` properties. The `instructions`
      *   property of the message is an array of instructions, each an object containing the indices
      *   of the instruction's accounts, the instruction data, the index of the program address, and
+     *   optionally the stack height if it is an inner instruction.
      * - `'jsonParsed'` produces an object with `message` and `signatures` properties. This property
      *   will cause the server to attempt to process each instruction using a parser specific to its
      *   program. If successful, the parsed instruction will be returned in the response as JSON.
