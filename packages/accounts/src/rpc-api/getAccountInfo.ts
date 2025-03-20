@@ -55,6 +55,8 @@ type GetAccountInfoApiSliceableCommonConfig = Readonly<{
      * Define which slice of the account's data you want the RPC to return.
      *
      * Use this to save network bandwidth and encoding time when you do not need the entire buffer.
+     *
+     * Data slicing is only available for `"base58"`, `"base64"`, and `"base64+zstd"` encodings.
      */
     dataSlice?: DataSlice;
 }>;

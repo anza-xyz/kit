@@ -1,5 +1,7 @@
 export type DataSlice = Readonly<{
+    /** The number of bytes to return */
     length: number;
+    /** The byte offset from which to start reading */
     offset: number;
 }>;
 
