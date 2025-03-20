@@ -22,7 +22,11 @@ type GetSignaturesForAddressApiResponse = readonly GetSignaturesForAddressTransa
 type AllowedCommitmentForGetSignaturesForAddress = Exclude<Commitment, 'processed'>;
 
 type GetSignaturesForAddressConfig = Readonly<{
-    /** start searching backwards from this transaction signature. If not provided the search starts from the top of the highest max confirmed block. */
+    /**
+     * Start the search from before, but excluding, this signature.
+     *
+     * @defaultValue When omitted, the search starts from the top of the latest confirmed block.
+     */
     before?: Signature;
     /**
      * Fetch the signatures as of the highest slot that has reached this level of commitment.
@@ -33,21 +37,49 @@ type GetSignaturesForAddressConfig = Readonly<{
      * default commitment applied by the server is `"finalized"`.
      */
     commitment?: AllowedCommitmentForGetSignaturesForAddress;
-    /** maximum transaction signatures to return (between 1 and 1,000). Default: 1000 */
+    /**
+     * Maximum transaction signatures to return (between 1 and 1,000).
+     *
+     * @defaultValue 1000
+     */
     limit?: number;
     /**
      * Prevents accessing stale data by enforcing that the RPC node has processed transactions up to
      * this slot
      */
     minContextSlot?: Slot;
-    /** search until this transaction signature, if found before limit reached */
+    /**
+     * Search, back in time, until this transaction signature.
+     *
+     * @defaultValue When omitted, search will proceed until the limit (if supplied) or until 1,000
+     * signatures have been found.
+     */
     until?: Signature;
 }>;
 
 export type GetSignaturesForAddressApi = {
     /**
-     * Returns signatures for confirmed transactions that include the given address in their accountKeys list.
-     * Returns signatures backwards in time from the provided signature or most recent confirmed block
+     * Returns signatures for confirmed transactions that load the given address.
+     *
+     * {@label before-signature}
+     * @returns Signatures in reverse chronological order starting from before, but excluding, the
+     * signature supplied.
+     * @see https://solana.com/docs/rpc/http/getsignaturesforaddress
+     */
+    getSignaturesForAddress(
+        address: Address,
+        config?: GetSignaturesForAddressConfig &
+            Readonly<{
+                before: Signature;
+            }>,
+    ): GetSignaturesForAddressApiResponse;
+    /**
+     * Returns signatures for confirmed transactions that load the given address.
+     *
+     * {@label all}
+     * @returns Signatures in reverse chronological order starting from the most recent confirmed
+     * block.
+     * @see https://solana.com/docs/rpc/http/getsignaturesforaddress
      */
     getSignaturesForAddress(
         address: Address,
