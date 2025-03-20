@@ -3,9 +3,8 @@ import type { MicroLamports, Slot } from '@solana/rpc-types';
 
 type RecentPrioritizationFee = Readonly<{
     /**
-     * The per-compute-unit fee paid by at least one successfully
-     * landed transaction, specified in increments of
-     * micro-lamports (0.000001 lamports).
+     * The smallest per-compute-unit fee paid by at least one successfully landed transaction,
+     * specified in increments of {@link MicroLamports} (0.000001 {@link Lamports}).
      */
     prioritizationFee: MicroLamports;
     /** Slot in which the fee was observed */
@@ -16,17 +15,14 @@ type GetRecentPrioritizationFeesApiResponse = readonly RecentPrioritizationFee[]
 
 export type GetRecentPrioritizationFeesApi = {
     /**
-     * Returns the balance of the account of provided Pubkey
+     * Returns a list of the smallest prioritization fees paid in recent blocks.
+     *
+     * Currently, a node's prioritization-fee cache stores data from up to 150 blocks.
+     *
+     * @param addresses A maximum of 128 addresses. When supplied, the response will reflect the
+     * prioritization fee paid for transactions which take a write-lock on all of them.
+     *
+     * @see https://solana.com/docs/rpc/http/getrecentprioritizationfees
      */
-    getRecentPrioritizationFees(
-        /**
-         * An array of Account addresses (up to a maximum of 128 addresses),
-         * as base-58 encoded strings.
-         *
-         * Note: If this parameter is provided, the response will reflect
-         * a fee to land a transaction locking all of the provided accounts
-         * as writable.
-         */
-        addresses?: Address[],
-    ): GetRecentPrioritizationFeesApiResponse;
+    getRecentPrioritizationFees(addresses?: Address[]): GetRecentPrioritizationFeesApiResponse;
 };
