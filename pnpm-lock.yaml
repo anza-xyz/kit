@@ -1971,14 +1971,6 @@ packages:
     resolution: {integrity: sha512-2WJMeRQPHKSPemqk/awGrAiuFfzBmOIPXKizAsVhWH9YJqLZ0H+HS4c8loHGgW6utJ3E/ejXQUsiGaQy2NZ9Fw==}
     engines: {node: '>=6.9.0'}
 
-  '@babel/runtime@7.26.7':
-    resolution: {integrity: sha512-AOPI3D+a8dXnja+iwsUqGRjr1BbZIe771sXdapOtYI531gSqpi92vXivKcq2asu/DFpdl1ceFAKZyRzK2PCVcQ==}
-    engines: {node: '>=6.9.0'}
-
-  '@babel/runtime@7.26.9':
-    resolution: {integrity: sha512-aA63XwOkcl4xxQa3HjPMqOP6LiK0ZDv3mUPYEFXkpHbaFjtGggE1A61FjFzJnB+p7/oy2gA8E+rcBNl/zC1tMg==}
-    engines: {node: '>=6.9.0'}
-
   '@babel/template@7.25.9':
     resolution: {integrity: sha512-9DGttpmPvIxBb/2uwpVo3dqJ+O6RooAFOS+lB+xDqoE2PVCE8nfoHMdZLpfCQRLwvohzXISPZcgxt80xLfsuwg==}
     engines: {node: '>=6.9.0'}
@@ -8166,14 +8158,6 @@ snapshots:
     dependencies:
       regenerator-runtime: 0.14.1
 
-  '@babel/runtime@7.26.7':
-    dependencies:
-      regenerator-runtime: 0.14.1
-
-  '@babel/runtime@7.26.9':
-    dependencies:
-      regenerator-runtime: 0.14.1
-
   '@babel/template@7.25.9':
     dependencies:
       '@babel/code-frame': 7.26.2
@@ -10023,7 +10007,7 @@ snapshots:
 
   '@solana/web3.js@1.98.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
     dependencies:
-      '@babel/runtime': 7.26.9
+      '@babel/runtime': 7.26.10
       '@noble/curves': 1.8.1
       '@noble/hashes': 1.7.1
       '@solana/buffer-layout': 4.0.1
@@ -13197,7 +13181,7 @@ snapshots:
 
   react-error-boundary@5.0.0(react@19.0.0):
     dependencies:
-      '@babel/runtime': 7.26.7
+      '@babel/runtime': 7.26.10
       react: 19.0.0
 
   react-is@17.0.2: {}
@@ -14077,7 +14061,7 @@ snapshots:
 
   yup@0.32.11:
     dependencies:
-      '@babel/runtime': 7.26.7
+      '@babel/runtime': 7.26.10
       '@types/lodash': 4.17.13
       lodash: 4.17.21
       lodash-es: 4.17.21
