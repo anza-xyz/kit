@@ -1,5 +1,17 @@
 # @solana/react
 
+## 2.1.1
+
+### Patch Changes
+
+- Updated dependencies [[`ca1d4ec`](https://github.com/anza-xyz/kit/commit/ca1d4ec7ddd641ca813f79f8ca06d225f29419e2)]:
+    - @solana/transactions@2.1.1
+    - @solana/addresses@2.1.1
+    - @solana/promises@2.1.1
+    - @solana/signers@2.1.1
+    - @solana/errors@2.1.1
+    - @solana/keys@2.1.1
+
 ## 2.1.0
 
 ### Patch Changes
