@@ -29,7 +29,7 @@ export async function generateKeyPair(): Promise<CryptoKeyPair> {
         /* extractable */ false, // Prevents the bytes of the private key from being visible to JS.
         /* allowed uses */ ['sign', 'verify'],
     );
-    return keyPair as CryptoKeyPair; // FIXME: See https://github.com/microsoft/TypeScript-DOM-lib-generator/pull/1878
+    return keyPair;
 }
 
 /**
