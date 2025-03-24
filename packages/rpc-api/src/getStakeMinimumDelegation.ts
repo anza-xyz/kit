@@ -4,12 +4,15 @@ type GetStakeMinimumDelegationApiResponse = Lamports;
 
 export type GetStakeMinimumDelegationApi = {
     /**
-     * Returns the stake minimum delegation, in lamports.
+     * Returns the minimum amount of stake that can be delegated to a validator, in
+     * {@link Lamports}.
+     *
+     * @see https://solana.com/docs/rpc/http/getstakeminimumdelegation
      */
     getStakeMinimumDelegation(
         config?: Readonly<{
             /**
-             * Fetch the minimum delegation as of  highest slot that has reached this level of
+             * Fetch the minimum delegation as of the highest slot that has reached this level of
              * commitment.
              *
              * @defaultValue Whichever default is applied by the underlying {@link RpcApi} in use.
