@@ -13,22 +13,20 @@ type TransactionStatusErr = Readonly<{
 
 type SignatureStatusResult = Readonly<{
     /**
-     * The transaction's cluster confirmation status; either `processed`,
-     * `confirmed`, or `finalized`.
+     * The transaction's cluster confirmation status; either `processed`, `confirmed`, or
+     * `finalized`.
      */
     confirmationStatus: Commitment | null;
     /**
-     * Number of blocks since signature confirmation, null if rooted,
-     * as well as finalized by a supermajority of the cluster
+     * Number of blocks since signature confirmation or `null` if rooted as well as finalized by a
+     * supermajority of the cluster.
      */
     confirmations: bigint | null;
-    /** Error if transaction failed, null if transaction succeeded */
+    /** If the transaction failed, this property will contain the error */
     err: TransactionError | null;
     /** The slot the transaction was processed */
     slot: Slot;
-    /**
-     * @deprecated Transaction status
-     */
+    /** @deprecated */
     status: TransactionStatusErr | TransactionStatusOk;
 }>;
 
@@ -37,23 +35,26 @@ type GetSignatureStatusesApiResponse = readonly (SignatureStatusResult | null)[]
 export type GetSignatureStatusesApi = {
     /**
      * Returns the statuses of a list of signatures.
-     * Each signature must be a txid, the first signature of a transaction.
      *
-     * Note: Unless the `searchTransactionHistory` configuration parameter is
-     * included, this method only searches the recent status cache of
-     * signatures, which retains statuses for all active slots plus
-     * `MAX_RECENT_BLOCKHASHES` rooted slots.
+     * Each signature uniquely identifies a transaction by virtue of being the first or only
+     * signature in its list of signatures.
+     *
+     * @see https://solana.com/docs/rpc/http/getsignaturestatuses
      */
     getSignatureStatuses(
         /**
-         * An array of transaction signatures to confirm,
-         * as base-58 encoded strings (up to a maximum of 256)
+         * An array of transaction signatures to confirm, as base-58 encoded strings (up to a
+         * maximum of 256)
          */
         signatures: Signature[],
         config?: Readonly<{
             /**
-             * if `true` - a Solana node will search its ledger cache for any
-             * signatures not found in the recent status cache
+             * Determines whether the search for a transaction with a given signature will consider
+             * any more than what is available in the recent status cache that retains statuses for
+             * the active slots plus `MAX_RECENT_BLOCKHASHES` rooted slots. When `true` the search
+             * will proceed into local block storage then, if available, archival storage.
+             *
+             * @defaultValue `false`
              */
             searchTransactionHistory?: boolean;
         }>,
