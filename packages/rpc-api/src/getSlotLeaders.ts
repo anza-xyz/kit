@@ -6,7 +6,11 @@ type GetSlotLeadersApiResponse = Address[];
 
 export type GetSlotLeadersApi = {
     /**
-     * Returns the slot leaders for a given slot range
+     * Returns the slot leaders for a given slot range.
+     *
+     * @returns The addresses of the validators that have been granted the opportunity to create the
+     * blocks for each slot in the range provided
+     * @see https://solana.com/docs/rpc/http/getslotleaders
      */
     getSlotLeaders(
         /** Start slot, as u64 integer */

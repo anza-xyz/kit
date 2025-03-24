@@ -5,7 +5,11 @@ type GetSlotLeaderApiResponse = Address;
 
 export type GetSlotLeaderApi = {
     /**
-     * Returns the current slot leader
+     * Returns the current slot leader.
+     *
+     * @returns The address of the validator that has been granted the opportunity to create the
+     * block for the current slot.
+     * @see https://solana.com/docs/rpc/http/getslotleader
      */
     getSlotLeader(
         config?: Readonly<{

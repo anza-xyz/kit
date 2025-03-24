@@ -4,7 +4,9 @@ type GetSlotApiResponse = Slot;
 
 export type GetSlotApi = {
     /**
-     * Returns the slot that has reached the given or default commitment level
+     * Returns the slot that has reached the given or default commitment level.
+     *
+     * @see https://solana.com/docs/rpc/http/getslot
      */
     getSlot(
         config?: Readonly<{
