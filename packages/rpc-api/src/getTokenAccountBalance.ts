@@ -5,10 +5,11 @@ type GetTokenAccountBalanceApiResponse = TokenAmount;
 
 export type GetTokenAccountBalanceApi = {
     /**
-     * Returns the token balance of an SPL Token account
+     * Returns the balance of an SPL Token account.
+     *
+     * @see https://solana.com/docs/rpc/http/gettokenaccountbalance
      */
     getTokenAccountBalance(
-        /** Pubkey of Token account to query, as base-58 encoded string */
         address: Address,
         config?: Readonly<{
             /**
