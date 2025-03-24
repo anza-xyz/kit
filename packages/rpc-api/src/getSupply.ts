@@ -11,35 +11,39 @@ type GetSupplyConfig = Readonly<{
      * default commitment applied by the server is `"finalized"`.
      */
     commitment?: Commitment;
+    excludeNonCirculatingAccountsList?: boolean;
 }>;
 
 type GetSupplyApiResponseBase = Readonly<{
-    /** Circulating supply in lamports */
+    /** Circulating supply in {@link Lamports} */
     circulating: Lamports;
-    /** Non-circulating supply in lamports */
+    /** Non-circulating supply in {@link Lamports} */
     nonCirculating: Lamports;
-    /** Total supply in lamports */
+    /** Total supply in {@link Lamports} */
     total: Lamports;
 }>;
 
 type GetSupplyApiResponseWithNonCirculatingAccounts = GetSupplyApiResponseBase &
     Readonly<{
-        /** an array of account addresses of non-circulating accounts */
+        /** Addresses of non-circulating accounts */
         nonCirculatingAccounts: Address[];
     }>;
 
 type GetSupplyApiResponseWithoutNonCirculatingAccounts = GetSupplyApiResponseBase &
     Readonly<{
-        /** As per the docs:
-         * "If `excludeNonCirculatingAccountsList` is enabled, the returned array will be empty."
-         * See: https://solana.com/docs/rpc/http/getsupply
+        /**
+         * An empty array, since the `excludeNonCirculatingAccountsList` argument was not set to
+         * `true`.
          */
         nonCirculatingAccounts: never[];
     }>;
 
 export type GetSupplyApi = {
     /**
-     * Returns information about the current supply.
+     * Returns information about the current supply, excluding the list of non-circulating accounts.
+     *
+     * {@label exclude-non-circulating-accounts}
+     * @see https://solana.com/docs/rpc/http/getsupply
      */
     getSupply(
         config: GetSupplyConfig &
@@ -47,6 +51,12 @@ export type GetSupplyApi = {
                 excludeNonCirculatingAccountsList: true;
             }>,
     ): SolanaRpcResponse<GetSupplyApiResponseWithoutNonCirculatingAccounts>;
+    /**
+     * Returns information about the current supply.
+     *
+     * {@label default}
+     * @see https://solana.com/docs/rpc/http/getsupply
+     */
     getSupply(
         config?: GetSupplyConfig &
             Readonly<{
