@@ -4,10 +4,15 @@ type IsBlockhashValidApiResponse = boolean;
 
 export type IsBlockhashValidApi = {
     /**
-     * Returns whether a blockhash is still valid or not
+     * Returns whether a blockhash is still valid or not.
+     *
+     * The last 300 blockhashes produced are considered valid. This equates to an age of ~2 minutes.
+     *
+     * @param blockhash A SHA-256 hash as base-58 encoded string
+     *
+     * @see https://solana.com/docs/rpc/http/isblockhashvalid
      */
     isBlockhashValid(
-        /** query blockhash, as a base-58 encoded string */
         blockhash: Blockhash,
         config?: Readonly<{
             /**
