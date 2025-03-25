@@ -18,7 +18,13 @@ type RequestAirdropResponse = Signature;
 
 export type RequestAirdropApi = {
     /**
-     * Requests an airdrop of lamports to a Pubkey
+     * Requests an airdrop of {@link Lamports} to the specified address.
+     *
+     * This method is offered by test clusters as a way to obtain SOL tokens to pay transaction
+     * fees.
+     *
+     * @returns The signature of the airdrop transaction, as a base-58 encoded string.
+     * @see https://solana.com/docs/rpc/http/requestairdrop
      */
     requestAirdrop(
         recipientAccount: Address,
