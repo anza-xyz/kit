@@ -7,7 +7,9 @@ type GetTokenLargestAccountsApiResponse = readonly TokenLargestAccount[];
 
 export type GetTokenLargestAccountsApi = {
     /**
-     * Returns the 20 largest accounts of a particular SPL Token type.
+     * Returns the 20 largest token accounts whose mint is equal to the address supplied.
+     *
+     * @see https://solana.com/docs/rpc/http/gettokenlargestaccounts
      */
     getTokenLargestAccounts(
         tokenMint: Address,
