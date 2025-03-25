@@ -28,12 +28,15 @@ type TokenAccountInfoWithJsonData = Readonly<{
 type GetTokenAccountsByDelegateResponse<T> = readonly AccountInfoWithPubkey<AccountInfoBase & T>[];
 
 type MintFilter = Readonly<{
-    /** Pubkey of the specific token Mint to limit accounts to */
+    /** This filter matches when the token account's mint is equal to the address supplied. */
     mint: Address;
 }>;
 
 type ProgramIdFilter = Readonly<{
-    /** Pubkey of the Token program that owns the accounts */
+    /**
+     * This filter matches when the token account's token program address is equal to the address
+     * supplied.
+     */
     programId: Address;
 }>;
 
@@ -50,6 +53,20 @@ type GetTokenAccountsByDelegateApiCommonConfig = Readonly<{
      * default commitment applied by the server is `"finalized"`.
      */
     commitment?: Commitment;
+    /**
+     * Determines how the accounts' data should be encoded in the response.
+     *
+     * - `'base58'` returns a tuple whose first element is the data as a base58-encoded string. If
+     *   the account contains more than 129 bytes of data, an error will be raised.
+     * - `'base64'` returns a tuple whose first element is the data as a base64-encoded string.
+     * - `'base64+zstd'` returns a tuple whose first element is the
+     *   [ZStandard](https://facebook.github.io/zstd/)-compressed data as a base64-encoded string.
+     * - `'jsonParsed'` will cause the server to attempt to process the data using a parser specific
+     *   to each account's owning program. If successful, the parsed data will be returned in the
+     *   response as JSON. Otherwise, the raw account data will be returned in the response as a
+     *   tuple whose first element is a base64-encoded string.
+     */
+    encoding?: 'base58' | 'base64' | 'base64+zstd' | 'jsonParsed';
     /**
      * Prevents accessing stale data by enforcing that the RPC node has processed transactions up to
      * this slot
@@ -70,10 +87,20 @@ type GetTokenAccountsByDelegateApiSliceableCommonConfig = Readonly<{
 
 export type GetTokenAccountsByDelegateApi = {
     /**
-     * Returns all SPL Token accounts by approved Delegate.
+     * Returns all SPL Token accounts for which transfer authority over some quantity of tokens has
+     * been delegated to the supplied address.
+     *
+     * The accounts' data will be returned in the response as a tuple whose first element is a
+     * base64-encoded string.
+     *
+     * @param filter Limits the results to either token accounts associated with a particular mint,
+     * or token accounts owned by a certain token program.
+     *
+     * {@label base64}
+     * @see https://solana.com/docs/rpc/http/gettokenaccountsbydelegate
      */
     getTokenAccountsByDelegate(
-        program: Address,
+        delegate: Address,
         filter: AccountsFilter,
         config: GetTokenAccountsByDelegateApiCommonConfig &
             GetTokenAccountsByDelegateApiSliceableCommonConfig &
@@ -81,9 +108,22 @@ export type GetTokenAccountsByDelegateApi = {
                 encoding: 'base64';
             }>,
     ): SolanaRpcResponse<GetTokenAccountsByDelegateResponse<AccountInfoWithBase64EncodedData>>;
-
+    /**
+     * Returns all SPL Token accounts for which transfer authority over some quantity of tokens has
+     * been delegated to the supplied address.
+     *
+     * The accounts' data will first be compressed using
+     * [ZStandard](https://facebook.github.io/zstd/) and the result will be returned in the response
+     * as a tuple whose first element is a base64-encoded string.
+     *
+     * @param filter Limits the results to either token accounts associated with a particular mint,
+     * or token accounts owned by a certain token program.
+     *
+     * {@label base64-zstd-compressed}
+     * @see https://solana.com/docs/rpc/http/gettokenaccountsbydelegate
+     */
     getTokenAccountsByDelegate(
-        program: Address,
+        delegate: Address,
         filter: AccountsFilter,
         config: GetTokenAccountsByDelegateApiCommonConfig &
             GetTokenAccountsByDelegateApiSliceableCommonConfig &
@@ -91,18 +131,43 @@ export type GetTokenAccountsByDelegateApi = {
                 encoding: 'base64+zstd';
             }>,
     ): SolanaRpcResponse<GetTokenAccountsByDelegateResponse<AccountInfoWithBase64EncodedZStdCompressedData>>;
-
+    /**
+     * Returns all SPL Token accounts for which transfer authority over some quantity of tokens has
+     * been delegated to the supplied address.
+     *
+     * The server will attempt to process the accounts' data using a parser specific to each
+     * account's owning token program.
+     *
+     * @param filter Limits the results to either token accounts associated with a particular mint,
+     * or token accounts owned by a certain token program.
+     *
+     * {@label parsed}
+     * @see https://solana.com/docs/rpc/http/gettokenaccountsbydelegate
+     */
     getTokenAccountsByDelegate(
-        program: Address,
+        delegate: Address,
         filter: AccountsFilter,
         config: GetTokenAccountsByDelegateApiCommonConfig &
             Readonly<{
                 encoding: 'jsonParsed';
             }>,
     ): SolanaRpcResponse<GetTokenAccountsByDelegateResponse<TokenAccountInfoWithJsonData>>;
-
+    /**
+     * Returns all SPL Token accounts for which transfer authority over some quantity of tokens has
+     * been delegated to the supplied address.
+     *
+     * The accounts' data will be returned in the response as a tuple whose first element is a
+     * base58-encoded string. If any account contains more than 129 bytes of data, this method will
+     * raise an error.
+     *
+     * @param filter Limits the results to either token accounts associated with a particular mint,
+     * or token accounts owned by a certain token program.
+     *
+     * {@label base58}
+     * @see https://solana.com/docs/rpc/http/gettokenaccountsbydelegate
+     */
     getTokenAccountsByDelegate(
-        program: Address,
+        delegate: Address,
         filter: AccountsFilter,
         config: GetTokenAccountsByDelegateApiCommonConfig &
             GetTokenAccountsByDelegateApiSliceableCommonConfig &
@@ -110,9 +175,21 @@ export type GetTokenAccountsByDelegateApi = {
                 encoding: 'base58';
             }>,
     ): SolanaRpcResponse<GetTokenAccountsByDelegateResponse<AccountInfoWithBase58EncodedData>>;
-
+    /**
+     * Returns all SPL Token accounts for which transfer authority over some quantity of tokens has
+     * been delegated to the supplied address.
+     *
+     * The accounts' data will be returned in the response as a base58-encoded string. If any
+     * account contains more than 129 bytes of data, this method will raise an error.
+     *
+     * @param filter Limits the results to either token accounts associated with a particular mint,
+     * or token accounts owned by a certain token program.
+     *
+     * {@label base58-legacy}
+     * @see https://solana.com/docs/rpc/http/gettokenaccountsbydelegate
+     */
     getTokenAccountsByDelegate(
-        program: Address,
+        delegate: Address,
         filter: AccountsFilter,
         config?: GetTokenAccountsByDelegateApiCommonConfig & GetTokenAccountsByDelegateApiSliceableCommonConfig,
     ): SolanaRpcResponse<GetTokenAccountsByDelegateResponse<AccountInfoWithBase58Bytes>>;
