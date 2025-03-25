@@ -297,25 +297,25 @@ export type TransactionForFullJson<TMaxSupportedTransactionVersion extends Trans
           }>;
 
 type RewardBase = Readonly<{
-    /** number of reward lamports credited or debited by the account */
+    /** The number of reward {@link Lamports} credited or debited to the account */
     lamports: SignedLamports;
-    /** account balance in lamports after the reward was applied */
+    /** The account balance in {@link Lamports} after the reward was applied */
     postBalance: Lamports;
-    /** The public key of the account that received the reward */
+    /** The address of the account that received the reward */
     pubkey: Address;
 }>;
 
 export type Reward =
     | (Readonly<{
-          /** type of reward */
+          /** The type of reward */
           rewardType: 'Fee' | 'Rent';
       }> &
           RewardBase)
-    /** Commission is present only for voting and staking rewards */
+    // Commission is present only for voting and staking rewards
     | (Readonly<{
-          /** vote account commission when the reward was credited */
+          /** The vote account commission when the reward was credited */
           commission: number;
-          /** type of reward */
+          /** The type of reward */
           rewardType: 'Staking' | 'Voting';
       }> &
           RewardBase);
