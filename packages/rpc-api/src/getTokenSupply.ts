@@ -5,11 +5,12 @@ type GetTokenSupplyApiResponse = TokenAmount;
 
 export type GetTokenSupplyApi = {
     /**
-     * Returns the total supply of an SPL Token mint
+     * Returns the total supply of the token mint supplied.
+     *
+     * @see https://solana.com/docs/rpc/http/gettokensupply
      */
     getTokenSupply(
-        /** Pubkey of the token Mint to query, as base-58 encoded string */
-        address: Address,
+        tokenMint: Address,
         config?: Readonly<{
             /**
              * Fetch the supply as of the highest slot that has reached this level of commitment.
