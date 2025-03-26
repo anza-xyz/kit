@@ -17,7 +17,7 @@ This API is designed to be used as follows:
 
 ```ts
 const rpc =
-    // Step 1 - Create an `Rpc` instance. This may be stateful.
+    // Step 1 - Create a `Rpc` instance. This may be stateful.
     createSolanaRpc(mainnet('https://api.mainnet-beta.solana.com'));
 const response = await rpc
     // Step 2 - Call supported methods on it to produce `PendingRpcRequest` objects.
@@ -30,23 +30,23 @@ const response = await rpc
 
 ### `PendingRpcRequest<TResponse>`
 
-Pending requests are the result of calling a supported method on an `Rpc` object. They encapsulate all of the information necessary to make the request without actually making it.
+Pending requests are the result of calling a supported method on a `Rpc` object. They encapsulate all of the information necessary to make the request without actually making it.
 
-Calling the `send(options)` method on a `PendingRpcRequest` will trigger the request and return a promise for `TResponse`.
+Calling the `send(options)` method on a `PendingRpcRequest<TResponse>` will trigger the request and return a promise for `TResponse`.
 
 ### `Rpc<TRpcMethods, TRpcTransport>`
 
-An object that exposes all of the functions described by `TRpcMethods`, and fulfils them using `TRpcTransport`. Calling each method returns a `PendingRpcRequest<TResponse>` where `TResponse` is that method's response type.
+An object that exposes all of the functions described by `TRpcMethods`. Calling each method returns a `PendingRpcRequest<TResponse>` where `TResponse` is that method's response type.
 
 ### `RpcApi<TRpcMethods>`
 
-For each of `TRpcMethods` this object exposes a method with the same name that maps between its input arguments and a `RpcPlan<TResponse>` that describes how to prepare a JSON RPC request to fetch `TResponse`.
+For each of `TRpcMethods`, this object exposes a method with the same name that maps between its input arguments and a `RpcPlan<TResponse>` that implements the execution of a JSON RPC request to fetch `TResponse`.
 
 ### `RpcPlan`
 
-This type allows an `RpcApi` to describe how a particular request should be issued to the JSON RPC server. Given a function that was called on a `Rpc`, this object returns an `execute` function that dictates which request will be sent, how the underlying transport will be used and how the responses will be transformed.
+This type allows an `RpcApi` to describe how a particular request should be issued to the JSON RPC server. Given a function that was called on a `Rpc`, this object exposes an `execute` function that dictates which request will be sent, how the underlying transport will be used, and how the responses will be transformed.
 
-This function accepts an `RpcTransport` and an `AbortSignal` and asynchronously returns an `RpcResponse`. This gives us the opportunity to:
+This function accepts a `RpcTransport` and an `AbortSignal` and asynchronously returns a `RpcResponse`. This gives us the opportunity to:
 
 - define the `payload` from the requested method name and parameters before passing it to the transport.
 - call the underlying transport zero, one or multiple times depending on the use-case (e.g. caching or aggregating multiple responses).
@@ -60,7 +60,7 @@ A configuration object consisting of the following properties:
 
 ### `RpcTransport`
 
-Any function that implements this interface can act as a transport for an `Rpc`. It need only return a promise for a response given the following config:
+Any function that implements this interface can act as a transport for a `Rpc`. It need only return a promise for a response given the following config:
 
 - `payload`: A value of arbitrary type to be sent.
 - `signal`: An optional `AbortSignal` on which the `'abort'` event will be fired if the request should be cancelled.
@@ -69,7 +69,7 @@ Any function that implements this interface can act as a transport for an `Rpc`.
 
 ### `createRpc(config)`
 
-Creates an RPC instance given an `RpcApi<TRpcMethods>` and a `RpcTransport` capable of fulfilling them.
+Creates a `Rpc` instance given an `RpcApi<TRpcMethods>` and a `RpcTransport` capable of fulfilling them.
 
 #### Arguments
 
@@ -96,8 +96,8 @@ const rpcApi = createJsonRpcApi({
 rpcApi.foo('bar', { baz: 'bat' });
 
 // ...will produce an `RpcPlan` that:
-// -   Uses the following payload: { id: 1, jsonrpc: '2.0', method: 'foo', params: ['bar', { baz: 'bat' }] }.
-// -   Returns the "result" attribute of the RPC response.
+// -   Uses the following payload: { id: 1, jsonrpc: '2.0', method: 'foo', params: [{ baz: 'bat' }, 'bar'] }.
+// -   Returns the "result" property of the RPC response.
 ```
 
 #### Arguments
