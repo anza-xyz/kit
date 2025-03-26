@@ -10,4 +10,4 @@
 
 # @solana/rpc-parsed-types
 
-This package defines types for Parsed objects used in the [Solana JSON-RPC](https://docs.solana.com/api/http). It can be used standalone, but it is also exported as part of Kit [`@solana/kit`](https://github.com/anza-xyz/kit/tree/main/packages/kit).
+This package defines types for parsed objects returned by methods of the [Solana JSON-RPC](https://docs.solana.com/api/http). It can be used standalone, but it is also exported as part of Kit [`@solana/kit`](https://github.com/anza-xyz/kit/tree/main/packages/kit).
