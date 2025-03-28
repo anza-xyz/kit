@@ -27,6 +27,11 @@ function createSolanaRpcSubscriptionsImpl<TClusterUrl extends ClusterUrl, TApi e
     return createSolanaRpcSubscriptionsFromTransport<typeof transport, TApi>(transport);
 }
 
+/**
+ * Creates a {@link RpcSubscriptions} instance that exposes the Solana JSON RPC WebSocket API given
+ * a cluster URL and some optional channel config. See
+ * {@link createDefaultRpcSubscriptionsChannelCreator} for the shape of the channel config.
+ */
 export function createSolanaRpcSubscriptions<TClusterUrl extends ClusterUrl>(
     clusterUrl: TClusterUrl,
     config?: Omit<Config<TClusterUrl>, 'url'>,
@@ -34,6 +39,11 @@ export function createSolanaRpcSubscriptions<TClusterUrl extends ClusterUrl>(
     return createSolanaRpcSubscriptionsImpl<TClusterUrl, SolanaRpcSubscriptionsApi>(clusterUrl, config);
 }
 
+/**
+ * Creates a {@link RpcSubscriptions} instance that exposes the Solana JSON RPC WebSocket API,
+ * including its unstable methods, given a cluster URL and some optional channel config. See
+ * {@link createDefaultRpcSubscriptionsChannelCreator} for the shape of the channel config.
+ */
 export function createSolanaRpcSubscriptions_UNSTABLE<TClusterUrl extends ClusterUrl>(
     clusterUrl: TClusterUrl,
     config?: Omit<Config<TClusterUrl>, 'url'>,
@@ -44,6 +54,10 @@ export function createSolanaRpcSubscriptions_UNSTABLE<TClusterUrl extends Cluste
     );
 }
 
+/**
+ * Creates a {@link RpcSubscriptions} instance that exposes the Solana JSON RPC WebSocket API given
+ * the supplied {@link RpcSubscriptionsTransport}.
+ */
 export function createSolanaRpcSubscriptionsFromTransport<
     TTransport extends RpcSubscriptionsTransport,
     TApi extends RpcSubscriptionsApiMethods = SolanaRpcSubscriptionsApi,
