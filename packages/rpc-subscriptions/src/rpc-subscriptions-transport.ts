@@ -18,6 +18,15 @@ export type DefaultRpcSubscriptionsTransportConfig<TClusterUrl extends ClusterUr
     createChannel: RpcSubscriptionsChannelCreatorFromClusterUrl<TClusterUrl, unknown, unknown>;
 }>;
 
+/**
+ * Creates a {@link RpcSubscriptionsTransport} with some default behaviours.
+ *
+ * The default behaviours include:
+ * - Logic that coalesces multiple subscriptions for the same notifications with the same arguments
+ *   into a single subscription.
+ *
+ * @param config
+ */
 export function createDefaultRpcSubscriptionsTransport<TClusterUrl extends ClusterUrl>({
     createChannel,
 }: DefaultRpcSubscriptionsTransportConfig<TClusterUrl>) {

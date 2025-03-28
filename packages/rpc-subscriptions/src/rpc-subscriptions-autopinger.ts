@@ -13,6 +13,12 @@ const PING_PAYLOAD = {
     method: 'ping',
 } as const;
 
+/**
+ * Given a {@link RpcSubscriptionsChannel}, will return a new channel that sends a ping message to
+ * the inner channel if a message has not been sent or received in the last `intervalMs`. In web
+ * browsers, this implementation sends no ping when the network is down, and sends a ping
+ * immediately upon the network coming back up.
+ */
 export function getRpcSubscriptionsChannelWithAutoping<TChannel extends RpcSubscriptionsChannel<object, unknown>>({
     abortSignal: callerAbortSignal,
     channel,
