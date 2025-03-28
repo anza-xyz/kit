@@ -1,0 +1,41 @@
+{
+    "name": "@solana/kit-docs",
+    "version": "0.0.0",
+    "private": true,
+    "scripts": {
+        "build": "next build",
+        "dev": "next dev",
+        "start": "next start",
+        "postinstall": "fumadocs-mdx"
+    },
+    "dependencies": {
+        "@solana-program/compute-budget": "^0.7.0",
+        "@solana-program/system": "^0.7.0",
+        "@solana-program/token": "^0.5.1",
+        "@solana/compat": "^2.1.0",
+        "@solana/kit": "^2.1.0",
+        "@solana/react": "^2.1.0",
+        "@solana/web3.js": "^1.98.0",
+        "fumadocs-core": "15.0.15",
+        "fumadocs-docgen": "^2.0.0",
+        "fumadocs-mdx": "11.5.6",
+        "fumadocs-twoslash": "^3.1.0",
+        "fumadocs-ui": "15.0.15",
+        "lucide-react": "^0.484.0",
+        "next": "15.2.0",
+        "react": "^19.0.0",
+        "react-dom": "^19.0.0"
+    },
+    "devDependencies": {
+        "@tailwindcss/postcss": "^4.0.9",
+        "@types/mdx": "^2.0.13",
+        "@types/node": "22.13.8",
+        "@types/react": "^19.0.10",
+        "@types/react-dom": "^19.0.4",
+        "eslint": "^8",
+        "eslint-config-next": "15.2.0",
+        "postcss": "^8.5.3",
+        "tailwindcss": "^4.0.9",
+        "typescript": "^5.8.2"
+    }
+}

@@ -8,6 +8,7 @@ declarations/
 dist/
 doc/
 lib/
+!docs/src/lib
 
 pnpm-lock.yaml
 pnpm-workspace.yaml

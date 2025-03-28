@@ -1,0 +1,6 @@
+{
+  "title": "Documentation",
+  "defaultOpen": true,
+  "root": true,
+  "pages": ["...", "compatible-clients", "getting-started", "concepts"]
+}

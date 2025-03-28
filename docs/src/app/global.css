@@ -1,0 +1,12 @@
+@import 'tailwindcss';
+
+/* Fumadocs imports. */
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+@import 'fumadocs-twoslash/twoslash.css';
+@source '../../node_modules/fumadocs-ui/dist/**/*.js';
+
+/* App imports. */
+@import '../../src/app/styles/brand.css';
+@import '../../src/app/styles/typography.css';
+@import '../../src/app/styles/fumadocs-overrides.css';

@@ -1,0 +1,7 @@
+.prose :where(h2):not(:where([class~='not-prose'], [class~='not-prose'] *, :first-child)) {
+    margin-top: 4em;
+}
+
+.prose :where(h3):not(:where([class~='not-prose'], [class~='not-prose'] *)) {
+    margin-top: 3em;
+}

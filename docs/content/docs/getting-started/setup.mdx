@@ -1,0 +1,117 @@
+---
+title: Set up your project
+description: Set up the environment and prepare a personalised client object
+---
+
+## Install dependencies
+
+First things first, set up a new TypeScript project with a `src/index.ts` file and install the `@solana/kit` library. Additionally, to keep this tutorial focused on the Solana Kit library, we'll use `tsx` to compile and run our TypeScript code.
+
+```package-install
+@solana/kit tsx
+```
+
+## Add some scripts
+
+Let's also create a `start` script that runs `tsx src/index.ts` and a `validator` script to start a local Solana validator. Your `package.json` should look something like this:
+
+```json
+{
+  "name": "kit-tutorial",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "validator": "solana-test-validator"
+  },
+  "dependencies": {
+    "@solana/kit": "^2.1.0",
+    "tsx": "^4.19.3"
+  }
+}
+```
+
+From now on, we just need to make sure a Solana validator is running using the `validator` script before we can run our `start` script.
+
+## Create a client object
+
+To simplify our development, we'll create a small `Client` type specific to our application. Meaning it will include all the necessary objects and functions we need to interact with Solana.
+
+The first two things we need are the RPC and RPC Subscriptions objects which allow us to send requests to the network and listen for network events respectively. We'll need both of them to fetch accounts and send transactions.
+
+Let's create a new `src/client.ts` file and add the following `Client` type:
+
+```ts twoslash
+import { Rpc, RpcSubscriptions, SolanaRpcApi, SolanaRpcSubscriptionsApi } from "@solana/kit";
+
+export type Client = {
+  rpc: Rpc<SolanaRpcApi>;
+  rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+};
+```
+
+Then, let's create a helper function to create a new cached `Client` object that we can use throughout our application:
+
+```ts twoslash
+import { Rpc, RpcSubscriptions, SolanaRpcApi, SolanaRpcSubscriptionsApi } from "@solana/kit";
+
+export type Client = {
+  rpc: Rpc<SolanaRpcApi>;
+  rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+};
+// ---cut-before---
+import { createSolanaRpc, createSolanaRpcSubscriptions } from "@solana/kit";
+
+let client: Client | undefined;
+export function createClient(): Client {
+  if (!client) {
+    client = {
+      rpc: createSolanaRpc("http://127.0.0.1:8899"),
+      rpcSubscriptions: createSolanaRpcSubscriptions("ws://127.0.0.1:8900"),
+    };
+  }
+  return client;
+}
+```
+
+We'll add more to this `Client` type as we progress through the tutorial but for now, this is all we need to get started.
+
+## Run the tutorial
+
+Finally, let's go back to our `src/index.ts` file and add an asynchronous `tutorial` function that we will run immediately to start our tutorial.
+For now, let's just use our `Client` object to fetch the balance of a specific account.
+
+We can do this by creating an `Address` type via the `address` helper and fetching the balance via the `getBalance` method of the `rpc` object.
+
+```ts twoslash
+// @filename: client.ts
+import { Rpc, RpcSubscriptions, SolanaRpcApi, SolanaRpcSubscriptionsApi } from "@solana/kit";
+export type Client = {
+  rpc: Rpc<SolanaRpcApi>;
+  rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+};
+export function createClient(): Client {
+  return {} as Client;
+}
+// @filename: index.ts
+// ---cut-before---
+import { address } from "@solana/kit";
+import { createClient } from "./client";
+
+// Run the tutorial.
+tutorial();
+
+async function tutorial() {
+  const client = createClient();
+  const account = address("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
+  const { value: balance } = await client.rpc.getBalance(account).send();
+  console.log(`Balance: ${balance} lamports.`);
+}
+```
+
+You should now see something like this when you run the `start` script:
+
+```
+Balance: 1141440 lamports.
+```
+
+In the next article, we'll learn how to generate a wallet that can spend lamports and sign transactions.

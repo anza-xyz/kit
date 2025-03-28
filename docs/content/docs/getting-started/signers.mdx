@@ -1,0 +1,156 @@
+---
+title: Generate a signer
+description: Create a new keypair signer and airdrop lamports to it
+---
+
+Before we can start crafting transactions, we're going to need a wallet that can sign transactions and pay for fees. In this article, we'll explore how to generate new keypairs and how to airdrop some lamports to them in test environments.
+
+## Generate a new `CryptoKeypair`
+
+The Solana Kit library uses the [native Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Crypto) for cryptographic tasks like generating key pairs and signing or verifying messages. This improves security by leveraging the browser's built-in functions instead of third-party libraries.
+
+To create a new keypair, you can use the `generateKeyPair` helper function. This will return an instance of the native `CryptoKeyPair` type.
+
+```ts twoslash
+import { generateKeyPair } from "@solana/kit";
+
+const wallet: CryptoKeyPair = await generateKeyPair();
+```
+
+And just like that, we have a wallet that can be used to sign transactions. However, Solana Kit provides a useful abstraction on top of anything that can sign messages and/or transactions called `Signers`.
+
+## Generate a new `KeyPairSigner`
+
+Using `CryptoKeyPairs` is one way to sign and verify transactions but it isn't the only way. What if I want my transactions to be signed by an in-browser wallet? What if I want to sign them using a hardware wallet instead? What about a multisig wallet? Or what if I want some custom logic that detects the best way to sign a transaction based on the current environment?
+
+The `Signer` API allows us to decouple the signing logic from the rest of our code by providing signer interfaces that can be leveraged throughout the library. A `Signer` is an object that holds an `Address` and implements its own signing logic for messages and transactions.
+
+Different types of signers are available for various use cases, but in this tutorial, we'll focus on the `KeyPairSigner` which signs transactions and messages using a `CryptoKeyPair`. It implements the `TransactionSigner` and `MessageSigner` interfaces so any function that requires a transaction or message signer will be able to use it.
+
+We can use the `generateKeyPairSigner` function to create a new `KeyPairSigner` instance like so.
+
+```ts twoslash
+import { generateKeyPairSigner } from "@solana/kit";
+
+const wallet = await generateKeyPairSigner();
+```
+
+As you can see, this is very similar to generating a `CryptoKeyPair`, but now we have an abstracted `Signer` object that can be replaced with any other type of signer in the future without affecting the rest of our code.
+
+For instance, here's how we could replace our `KeyPairSigner` with a signer that uses an in-browser wallet instead.
+
+```ts twoslash
+import { generateKeyPairSigner, KeyPairSigner, TransactionSigner } from "@solana/kit";
+import { useWalletAccountTransactionSendingSigner } from "@solana/react";
+// ---cut-start---
+const account = null as unknown as Parameters<typeof useWalletAccountTransactionSendingSigner>[0];
+const currentChain = null as unknown as Parameters<typeof useWalletAccountTransactionSendingSigner>[1];
+// ---cut-end---
+
+let wallet: TransactionSigner;
+wallet = await generateKeyPairSigner(); // [!code --]
+wallet = useWalletAccountTransactionSendingSigner(account, currentChain); // [!code ++]
+```
+
+For a deeper dive into the Signer API, check out [this in-depth article about signers](/docs/concepts/signers).
+
+## Airdrop lamports
+
+Now that we know how to generate a new signer, let's make sure we give it some lamports so it can pay for transaction fees and account storage. For that we can use the `airdropFactory` function. Given an RPC and RPC subscriptions object, it will return a function that can be used to airdrop lamports to any address — provided we are in a test environment such as localnet.
+
+```ts twoslash
+import {
+  airdropFactory,
+  createSolanaRpc,
+  createSolanaRpcSubscriptions,
+  generateKeyPairSigner,
+  lamports,
+} from "@solana/kit";
+
+// Create the RPC, RPC Subscriptions and airdrop function.
+const rpc = createSolanaRpc("http://127.0.0.1:8899");
+const rpcSubscriptions = createSolanaRpcSubscriptions("ws://127.0.0.1:8900");
+const airdrop = airdropFactory({ rpc, rpcSubscriptions });
+
+// Generate a new wallet with 1 SOL.
+const wallet = await generateKeyPairSigner();
+await airdrop({
+  recipientAddress: wallet.address,
+  lamports: lamports(1_000_000_000n),
+  commitment: "confirmed",
+});
+```
+
+## Adjust our `Client` object
+
+Since we're going to rely on this signer for the rest of the tutorial, let's adjust our `Client` object to include it.
+
+```ts twoslash title="src/client.ts"
+import {
+  createSolanaRpc,
+  createSolanaRpcSubscriptions,
+  Rpc,
+  RpcSubscriptions,
+  SolanaRpcApi,
+  SolanaRpcSubscriptionsApi,
+} from "@solana/kit";
+// ---cut-before---
+import { airdropFactory, generateKeyPairSigner, lamports, MessageSigner, TransactionSigner } from "@solana/kit";
+
+export type Client = {
+  rpc: Rpc<SolanaRpcApi>;
+  rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+  wallet: TransactionSigner & MessageSigner;
+};
+
+let client: Client | undefined;
+export async function createClient(): Promise<Client> {
+  if (!client) {
+    // Create RPC objects and airdrop function.
+    const rpc = createSolanaRpc("http://127.0.0.1:8899");
+    const rpcSubscriptions = createSolanaRpcSubscriptions("ws://127.0.0.1:8900");
+    const airdrop = airdropFactory({ rpc, rpcSubscriptions });
+
+    // Create a wallet with lamports.
+    const wallet = await generateKeyPairSigner();
+    await airdrop({
+      recipientAddress: wallet.address,
+      lamports: lamports(1_000_000_000n),
+      commitment: "confirmed",
+    });
+
+    // Store the client.
+    client = { rpc, rpcSubscriptions, wallet };
+  }
+  return client;
+}
+```
+
+Notice how we had to make the `createClient` function asynchronous since it now contains asynchronous code to generate the `KeyPairSigner` and airdrop lamports to it. That means, we also need to adjust our main `tutorial` function accordingly. And whilst we're at it, let's display the balance of our newly created wallet.
+
+```ts twoslash title="src/index.ts"
+import {
+  Rpc,
+  RpcSubscriptions,
+  SolanaRpcApi,
+  SolanaRpcSubscriptionsApi,
+  TransactionSigner,
+  MessageSigner,
+} from "@solana/kit";
+export type Client = {
+  rpc: Rpc<SolanaRpcApi>;
+  rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+  wallet: TransactionSigner & MessageSigner;
+};
+export async function createClient() {
+  return {} as Client;
+}
+// ---cut-before---
+async function tutorial() {
+  const client = await createClient();
+  const { value: balance } = await client.rpc.getBalance(client.wallet.address).send();
+  console.log(`Balance: ${balance} lamports.`);
+}
+```
+
+We've now got everything we need to start crafting transactions! In the next article, we'll build instructions that create a new token on Solana.
