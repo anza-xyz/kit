@@ -3,4 +3,416 @@ title: Codecs
 description: Encode and decode anything
 ---
 
+## Introduction
+
+Solana Kit includes a powerful serialisation system called Codecs. Whether you're working with account data, instruction arguments, or custom binary layouts, Codecs give you the tools to transform structured data into bytes — and back again.
+
+Codecs are composable, type-safe, and environment-agnostic. They are designed to provide a flexible and consistent foundation for handling binary data across the Solana stack.
+
+## Installation
+
+Codecs are **included within the `@solana/kit` library** but you may also install them using their standalone package.
+
+```package-install
+@solana/codecs
+```
+
+Note that the `@solana/codecs` package itself is composed of several smaller packages, each providing a different set of codec helpers. Here's the list of all packages containing codecs, should you need to install them individually:
+
+| Package                          | Description                                                                        |
+| -------------------------------- | ---------------------------------------------------------------------------------- |
+| `@solana/kit`                    | Includes `@solana/codecs`.                                                         |
+| `@solana/codecs`                 | Includes all codecs packages below.                                                |
+| `@solana/codecs-core`            | Core types and utilities for building codecs.                                      |
+| `@solana/codecs-numbers`         | Codecs for numbers of various sizes and characteristics.                           |
+| `@solana/codecs-strings`         | Codecs for strings of various encodings and size strategies.                       |
+| `@solana/codecs-data-structures` | Codecs for a variety of data structures such as objects, enums, arrays, maps, etc. |
+| `@solana/options`                | Codecs for Rust-list `Options` in JavaScript.                                      |
+
+## What is a Codec?
+
+A Codec is an object that knows how to encode a any type into a `Uint8Array` and how to decode a `Uint8Array` back into that value.
+
+No matter which serialization strategy we use, Codecs abstract away its implementation and offer a simple encode and decode interface. They are also highly composable, allowing us to build complex data structures from simple building blocks.
+
+Here's a quick example that encodes and decodes a simple `Person` type.
+
+```ts twoslash
+import { Codec, addCodecSizePrefix, getUtf8Codec, getU32Codec, getStructCodec, ReadonlyUint8Array } from "@solana/kit";
+// ---cut-before---
+// Use composable codecs to build complex data structures.
+type Person = { name: string; age: number };
+const getPersonCodec = (): Codec<Person> =>
+  getStructCodec([
+    ["name", addCodecSizePrefix(getUtf8Codec(), getU32Codec())],
+    ["age", getU32Codec()],
+  ]);
+
+// Use your own codecs to encode and decode data.
+const personCodec = getPersonCodec();
+const encodedPerson = personCodec.encode({ name: "John", age: 42 });
+const decodedPerson = personCodec.decode(encodedPerson);
+```
+
+## Composing codecs
+
+The easiest way to create your own codecs is to compose the [various codecs](#available-codecs) at your disposal.
+
+For instance, consider the following codecs available:
+
+- `getStructCodec`: Creates a codec for objects with named fields.
+- `getU32Codec`: Creates a codec for unsigned 32-bit integers.
+- `getUtf8Codec`: Creates a codec for UTF-8 strings.
+- `addCodecSizePrefix`: Creates a codec that prefixes the encoded data with its length.
+- `getBooleanCodec`: Creates a codec for booleans using a single byte.
+
+By combining them together we can create a custom codec for the following `Person` type.
+
+```ts twoslash
+import { Codec, addCodecSizePrefix, getUtf8Codec, getU32Codec, getStructCodec, getBooleanCodec } from "@solana/kit";
+
+type Person = {
+  name: string;
+  age: number;
+  verified: boolean;
+};
+
+const getPersonCodec = (): Codec<Person> =>
+  getStructCodec([
+    ["name", addCodecSizePrefix(getUtf8Codec(), getU32Codec())],
+    ["age", getU32Codec()],
+    ["verified", getBooleanCodec()],
+  ]);
+```
+
+This function returns a `Codec` object which contains both an `encode` and `decode` function that can be used to convert a `Person` type to and from a `Uint8Array`.
+
+```ts twoslash
+import { Codec, addCodecSizePrefix, getUtf8Codec, getU32Codec, getStructCodec, getBooleanCodec } from "@solana/kit";
+type Person = { name: string; age: number; verified: boolean };
+const getPersonCodec = (): Codec<Person> =>
+  getStructCodec([
+    ["name", addCodecSizePrefix(getUtf8Codec(), getU32Codec())],
+    ["age", getU32Codec()],
+    ["verified", getBooleanCodec()],
+  ]);
+// ---cut-before---
+const personCodec = getPersonCodec();
+const bytes = personCodec.encode({ name: "John", age: 42, verified: true });
+const person = personCodec.decode(bytes);
+```
+
+There is a significant library of composable codecs at your disposal, enabling you to compose complex types. Check out the [available codecs](#available-codecs) section for more information. If you need a custom codec that cannot be composed from existing ones, you can always create your own as we will see in the ["Creating custom codecs"](#creating-custom-codecs) section below.
+
+## Separate encoders and decoders
+
+TODO
+
+## Combining encoders and decoders
+
+TODO
+
+## Different `From` and `To` types
+
+TODO
+
+## Fixed-size and variable-size codecs
+
+TODO
+
+## Creating custom codecs
+
+TODO
+
+## Available codecs
+
+### Core utilities
+
+<div className="*:columns-5xs *:gap-8">
+
+[addCodecSentinel](#add-codec-sentinel) \
+[addCodecSizePrefix](#add-codec-size-prefix) \
+[containsBytes](#contains-bytes) \
+[fixBytes](#fix-bytes) \
+[fixCodecSize](#fix-codec-size) \
+[mergeBytes](#merge-bytes) \
+[offsetCodec](#offset-codec) \
+[padBytes](#pad-bytes) \
+[padLeftCodec](#pad-left-codec) \
+[padRightCodec](#pad-right-codec) \
+[resizeCodec](#resize-codec) \
+[reverseCodec](#reverse-codec) \
+[transformCodec](#transform-codec)
+
+</div>
+
+### Numbers
+
+<div className="*:columns-5xs *:gap-8">
+
+[getI8Codec](#get-i8-codec) \
+[getI16Codec](#get-i16-codec) \
+[getI32Codec](#get-i32-codec) \
+[getI64Codec](#get-i64-codec) \
+[getI128Codec](#get-i128-codec) \
+[getF32Codec](#get-f32-codec) \
+[getF64Codec](#get-f64-codec) \
+[getShortU16Codec](#get-short-u16-codec) \
+[getU8Codec](#get-u8-codec) \
+[getU16Codec](#get-u16-codec) \
+[getU32Codec](#get-u32-codec) \
+[getU64Codec](#get-u64-codec) \
+[getU128Codec](#get-u128-codec)
+
+</div>
+
+### Strings
+
+<div className="*:columns-5xs *:gap-8">
+
+[getBase10Codec](#get-base10-codec) \
+[getBase16Codec](#get-base16-codec) \
+[getBase58Codec](#get-base58-codec) \
+[getBase64Codec](#get-base64-codec) \
+[getBaseXCodec](#get-baseX-codec) \
+[getBaseXResliceCodec](#get-baseX-reslice-codec) \
+[getUtf8Codec](#get-utf8-codec)
+
+</div>
+
+### Data structures
+
+<div className="*:columns-5xs *:gap-8">
+
+[getArrayCodec](#get-array-codec) \
+[getBitArrayCodec](#get-bit-array-codec) \
+[getBooleanCodec](#get-boolean-codec) \
+[getBytesCodec](#get-bytes-codec) \
+[getConstantCodec](#get-constant-codec) \
+[getDiscriminatedUnionCodec](#get-discriminated-union-codec) \
+[getEnumCodec](#get-enum-codec) \
+[getHiddenPrefixCodec](#get-hidden-prefix-codec) \
+[getHiddenSuffixCodec](#get-hidden-suffix-codec) \
+[getLiteralUnionCodec](#get-literal-union-codec) \
+[getMapCodec](#get-map-codec) \
+[getNullableCodec](#get-nullable-codec) \
+[getOptionCodec](#get-option-codec) \
+[getSetCodec](#get-set-codec) \
+[getStructCodec](#get-struct-codec) \
+[getTupleCodec](#get-tuple-codec) \
+[getUnionCodec](#get-union-codec) \
+[getUnitCodec](#get-unit-codec)
+
+</div>
+
+## Core utilities listing [!toc]
+
+### addCodecSentinel [!toc] [#add-codec-sentinel]
+
+TODO
+
+### addCodecSizePrefix [!toc] [#add-codec-size-prefix]
+
+TODO
+
+### containsBytes [!toc] [#contains-bytes]
+
+TODO
+
+### fixBytes [!toc] [#fix-bytes]
+
+TODO
+
+### fixCodecSize [!toc] [#fix-codec-size]
+
+TODO
+
+### mergeBytes [!toc] [#merge-bytes]
+
+TODO
+
+### offsetCodec [!toc] [#offset-codec]
+
+TODO
+
+### padBytes [!toc] [#pad-bytes]
+
+TODO
+
+### padLeftCodec [!toc] [#pad-left-codec]
+
+TODO
+
+### padRightCodec [!toc] [#pad-right-codec]
+
+TODO
+
+### resizeCodec [!toc] [#resize-codec]
+
+TODO
+
+### reverseCodec [!toc] [#reverse-codec]
+
+TODO
+
+### transformCodec [!toc] [#transform-codec]
+
+TODO
+
+## Numbers listing [!toc]
+
+### getI8Codec [!toc] [#get-i8-codec]
+
+TODO
+
+### getI16Codec [!toc] [#get-i16-codec]
+
+TODO
+
+### getI32Codec [!toc] [#get-i32-codec]
+
+TODO
+
+### getI64Codec [!toc] [#get-i64-codec]
+
+TODO
+
+### getI128Codec [!toc] [#get-i128-codec]
+
+TODO
+
+### getF32Codec [!toc] [#get-f32-codec]
+
+TODO
+
+### getF64Codec [!toc] [#get-f64-codec]
+
+TODO
+
+### getShortU16Codec [!toc] [#get-short-u16-codec]
+
+TODO
+
+### getU8Codec [!toc] [#get-u8-codec]
+
+TODO
+
+### getU16Codec [!toc] [#get-u16-codec]
+
+TODO
+
+### getU32Codec [!toc] [#get-u32-codec]
+
+TODO
+
+### getU64Codec [!toc] [#get-u64-codec]
+
+TODO
+
+### getU128Codec [!toc] [#get-u128-codec]
+
+TODO
+
+## Strings listing [!toc]
+
+### getBase10Codec [!toc] [#get-base10-codec]
+
+TODO
+
+### getBase16Codec [!toc] [#get-base16-codec]
+
+TODO
+
+### getBase58Codec [!toc] [#get-base58-codec]
+
+TODO
+
+### getBase64Codec [!toc] [#get-base64-codec]
+
+TODO
+
+### getBaseXCodec [!toc] [#get-baseX-codec]
+
+TODO
+
+### getBaseXResliceCodec [!toc] [#get-baseX-reslice-codec]
+
+TODO
+
+### getUtf8Codec [!toc] [#get-utf8-codec]
+
+TODO
+
+## Data structures listing [!toc]
+
+### getArrayCodec [!toc] [#get-array-codec]
+
+TODO
+
+### getBitArrayCodec [!toc] [#get-bit-array-codec]
+
+TODO
+
+### getBooleanCodec [!toc] [#get-boolean-codec]
+
+TODO
+
+### getBytesCodec [!toc] [#get-bytes-codec]
+
+TODO
+
+### getConstantCodec [!toc] [#get-constant-codec]
+
+TODO
+
+### getDiscriminatedUnionCodec [!toc] [#get-discriminated-union-codec]
+
+TODO
+
+### getEnumCodec [!toc] [#get-enum-codec]
+
+TODO
+
+### getHiddenPrefixCodec [!toc] [#get-hidden-prefix-codec]
+
+TODO
+
+### getHiddenSuffixCodec [!toc] [#get-hidden-suffix-codec]
+
+TODO
+
+### getLiteralUnionCodec [!toc] [#get-literal-union-codec]
+
+TODO
+
+### getMapCodec [!toc] [#get-map-codec]
+
+TODO
+
+### getNullableCodec [!toc] [#get-nullable-codec]
+
+TODO
+
+### getOptionCodec [!toc] [#get-option-codec]
+
+TODO
+
+### getSetCodec [!toc] [#get-set-codec]
+
+TODO
+
+### getStructCodec [!toc] [#get-struct-codec]
+
+TODO
+
+### getTupleCodec [!toc] [#get-tuple-codec]
+
+TODO
+
+### getUnionCodec [!toc] [#get-union-codec]
+
+TODO
+
+### getUnitCodec [!toc] [#get-unit-codec]
+
 TODO
