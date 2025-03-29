@@ -1,0 +1,285 @@
+---
+title: Create instructions
+description: Build instructions that create a new Solana token
+---
+
+## A new token
+
+Now that our `Client` helper is ready, let's use it to build a new transaction. In this tutorial, we'll build a simple transaction that creates a new Solana token using the [Token program](https://github.com/solana-program/token).
+
+More precisely, we will create a `Mint` account which is the main account that represents a Solana token. We will need at least two instructions to create a new `Mint` account:
+
+- The `CreateAccount` instruction of the [System program](https://github.com/solana-program/system). This will allocate a new account on the Solana blockchain and assign it to the Token program.
+- The `InitializeMint` instruction of the [Token program](https://github.com/solana-program/token). This will initialize the previously allocated account as a new `Mint` account.
+
+## The `createMint` helper
+
+Before we start constructing these instructions, let's create a new `create-mint.ts` file under our `src` directory. We'll export a `createMint` function that will be responsible for building and sending the transaction that creates a new `Mint` account.
+
+We'll accept our `Client` object as the first argument and some options as the second argument. To keep things simple, we'll only support customizing the number of decimals for the new `Mint` account.
+
+```ts twoslash title="src/create-mint.ts"
+// @filename: client.ts
+import {
+  Rpc,
+  RpcSubscriptions,
+  SolanaRpcApi,
+  SolanaRpcSubscriptionsApi,
+  TransactionSigner,
+  MessageSigner,
+} from "@solana/kit";
+export type Client = {
+  rpc: Rpc<SolanaRpcApi>;
+  rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+  wallet: TransactionSigner & MessageSigner;
+};
+// @filename: create-mint.ts
+// ---cut-before---
+import type { Client } from "./client";
+
+export async function createMint(client: Client, options: { decimals?: number } = {}) {
+  // ...
+}
+```
+
+Next, let's start building our instructions inside that `createMint` helper.
+
+## The `CreateAccount` instruction
+
+To allocate a new account on the Solana blockchain, we need to use the `CreateAccount` instruction of the System program. We can build this instruction using the `getCreateAccountInstruction` helper from the `@solana-program/system` library.
+
+```ts twoslash title="src/create-mint.ts"
+// @filename: client.ts
+import {
+  Rpc,
+  RpcSubscriptions,
+  SolanaRpcApi,
+  SolanaRpcSubscriptionsApi,
+  TransactionSigner,
+  MessageSigner,
+} from "@solana/kit";
+export type Client = {
+  rpc: Rpc<SolanaRpcApi>;
+  rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+  wallet: TransactionSigner & MessageSigner;
+};
+// @filename: create-mint.ts
+const payer = null as any;
+const newAccount = null as any;
+const lamports = null as any;
+const space = null as any;
+const programAddress = null as any;
+// ---cut-before---
+import { getCreateAccountInstruction } from "@solana-program/system";
+
+import type { Client } from "./client";
+
+export async function createMint(client: Client, options: { decimals?: number } = {}) {
+  // Build instructions.
+  const createAccountIx = getCreateAccountInstruction({
+    payer,
+    newAccount,
+    space,
+    lamports,
+    programAddress,
+  });
+}
+```
+
+As you can see, the `getCreateAccountInstruction` helper requires a handful of inputs that we need to provide:
+
+- The `payer` signer that will pay for the storage fees of the newly allocated account. In our case, we'll use the `wallet` signer of our `Client` object.
+  ```ts twoslash
+  import {
+    Rpc,
+    RpcSubscriptions,
+    SolanaRpcApi,
+    SolanaRpcSubscriptionsApi,
+    TransactionSigner,
+    MessageSigner,
+  } from "@solana/kit";
+  type Client = {
+    rpc: Rpc<SolanaRpcApi>;
+    rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+    wallet: TransactionSigner & MessageSigner;
+  };
+  const client = {} as Client;
+  // ---cut-before---
+  const payer = client.wallet;
+  ```
+- The `newAccount` itself as a signer. Since this can be any address, we'll generate a new one and save it as a `mint` variable.
+  ```ts twoslash
+  import { generateKeyPairSigner } from "@solana/kit";
+  const mint = await generateKeyPairSigner();
+  ```
+- The `space` we want to allocated for the new account. For this, we can use the `getMintSize` helper from the `@solana-program/token` library.
+  ```ts twoslash
+  import { getMintSize } from "@solana-program/token";
+  const mintSize = getMintSize();
+  ```
+- The number of `lamports` to transfer to the new account in order to pay for the storage fees. This can be deduced from the size we want to allocate for the account by using `getMinimumBalanceForRentExemption` RPC method. This method returns the minimum lamports required for an account of the given size.
+  ```ts twoslash
+  import {
+    Rpc,
+    RpcSubscriptions,
+    SolanaRpcApi,
+    SolanaRpcSubscriptionsApi,
+    TransactionSigner,
+    MessageSigner,
+  } from "@solana/kit";
+  import { getMintSize } from "@solana-program/token";
+  type Client = {
+    rpc: Rpc<SolanaRpcApi>;
+    rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+    wallet: TransactionSigner & MessageSigner;
+  };
+  const client = {} as Client;
+  const mintSize = getMintSize();
+  // ---cut-before---
+  const mintRent = await client.rpc.getMinimumBalanceForRentExemption(BigInt(mintSize)).send();
+  ```
+- The `programAddress` of the program that will own the new account. In our case, that's the Token program whose address is accessible via the `TOKEN_PROGRAM_ADDRESS` constant of the `@solana-program/token` library.
+  ```ts twoslash
+  import { TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
+  const programAddress = TOKEN_PROGRAM_ADDRESS;
+  ```
+
+We end up with the following code. Notice how we wrapped a few promises that could be executed in parallel in a `Promise.all` to make the code more efficient.
+
+```ts twoslash title="src/create-mint.ts"
+// @filename: client.ts
+import {
+  Rpc,
+  RpcSubscriptions,
+  SolanaRpcApi,
+  SolanaRpcSubscriptionsApi,
+  TransactionSigner,
+  MessageSigner,
+} from "@solana/kit";
+export type Client = {
+  rpc: Rpc<SolanaRpcApi>;
+  rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+  wallet: TransactionSigner & MessageSigner;
+};
+// @filename: create-mint.ts
+// ---cut-before---
+import { generateKeyPairSigner } from "@solana/kit";
+import { getCreateAccountInstruction } from "@solana-program/system";
+import { getMintSize, TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
+
+import type { Client } from "./client";
+
+export async function createMint(client: Client, options: { decimals?: number } = {}) {
+  // Prepare inputs.
+  const mintSize = getMintSize();
+  const [mint, mintRent] = await Promise.all([
+    generateKeyPairSigner(),
+    client.rpc.getMinimumBalanceForRentExemption(BigInt(mintSize)).send(),
+  ]);
+
+  // Build instructions.
+  const createAccountIx = getCreateAccountInstruction({
+    payer: client.wallet,
+    newAccount: mint,
+    space: mintSize,
+    lamports: mintRent,
+    programAddress: TOKEN_PROGRAM_ADDRESS,
+  });
+}
+```
+
+## The `InitializeMint` instruction
+
+Now that we have an empty account allocated on chain, let's initialize it as a `Mint` account. For that, we can use the `getInitializeMintInstruction` helper from the `@solana-program/token` library.
+
+```ts twoslash
+const mint = null as any;
+const decimals = null as any;
+const mintAuthority = null as any;
+const freezeAuthority = null as any;
+// ---cut-before---
+import { getInitializeMintInstruction } from "@solana-program/token";
+
+const initializeMintIx = getInitializeMintInstruction({
+  mint,
+  decimals,
+  mintAuthority,
+  freezeAuthority,
+});
+```
+
+This time, the instruction requires we provide the following inputs:
+
+- The address of the `mint` account we just allocated. Since we already generated a new `mint` signer, we just need to provide `mint.address`.
+- The number of `decimals` for the new `Mint` account. We'll use the `options.decimals` argument or default to `0`.
+- The authority that can mint new tokens. Here, we'll use the `wallet` signer of our `Client` object.
+- The optional authority that can freeze tokens. Let's also use the `wallet` signer for this.
+
+We end up with the following code:
+
+```ts twoslash title="src/create-mint.ts"
+// @filename: client.ts
+import {
+  Rpc,
+  RpcSubscriptions,
+  SolanaRpcApi,
+  SolanaRpcSubscriptionsApi,
+  TransactionSigner,
+  MessageSigner,
+} from "@solana/kit";
+export type Client = {
+  rpc: Rpc<SolanaRpcApi>;
+  rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+  wallet: TransactionSigner & MessageSigner;
+};
+// @filename: create-mint.ts
+// ---cut-before---
+import { generateKeyPairSigner } from "@solana/kit";
+import { getCreateAccountInstruction } from "@solana-program/system";
+import { getInitializeMintInstruction, getMintSize, TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
+
+import type { Client } from "./client";
+
+export async function createMint(client: Client, options: { decimals?: number } = {}) {
+  // Prepare inputs.
+  const mintSize = getMintSize();
+  const [mint, mintRent] = await Promise.all([
+    generateKeyPairSigner(),
+    client.rpc.getMinimumBalanceForRentExemption(BigInt(mintSize)).send(),
+  ]);
+
+  // Build instructions.
+  const createAccountIx = getCreateAccountInstruction({
+    payer: client.wallet,
+    newAccount: mint,
+    space: mintSize,
+    lamports: mintRent,
+    programAddress: TOKEN_PROGRAM_ADDRESS,
+  });
+  const initializeMintIx = getInitializeMintInstruction({
+    mint: mint.address,
+    decimals: options.decimals ?? 0,
+    mintAuthority: client.wallet.address,
+    freezeAuthority: client.wallet.address,
+  });
+}
+```
+
+## Compute budget instructions
+
+On top of any instructions we might need in our transactions, we may also use instructions from the Compute Budget program to configure our transaction's compute allocation. For instance, we may use the `SetComputeUnitLimit` instruction to set the maximum number of compute units (CUs) that our transaction can consume. The lower that number is, the higher the chances that our transaction will be included in the next block. Additionally, the `SetComputeUnitPrice` instruction can be used to provide additional priority fees for our transactions in the form of micro-lamports per CU.
+
+If we wanted to include these instructions explicitly in our transaction, we could use the `getSetComputeUnitLimitInstruction` and `getSetComputeUnitPriceInstruction` helpers from the `@solana-program/compute-budget` library.
+
+```ts twoslash
+import { getSetComputeUnitLimitInstruction, getSetComputeUnitPriceInstruction } from "@solana-program/compute-budget";
+
+const setComputeLimitIx = getSetComputeUnitLimitInstruction({
+  units: 50_000, // 50k CUs per transaction.
+});
+const setComputePriceIx = getSetComputeUnitPriceInstruction({
+  microLamports: 10_000, // 10k micro-lamports per CU, as priority fees.
+});
+```
+
+However, for this tutorial, we won't set up priority fees and we will use another helper to estimate the compute unit our transaction will consume by simulating it. We will tackle this — as well as the transaction message construction — in the next article.

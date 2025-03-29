@@ -1,0 +1,472 @@
+---
+title: Build a transaction
+description: Construct a new transaction message and sign it
+---
+
+## An immutable affair
+
+Before we start building our transaction, let's take a moment to discuss immutability in TypeScript. This is relevant for understanding how we can build transaction messages in a functional way.
+
+Consider the following mutable variable:
+
+```ts twoslash
+let person = { name: "Alice" };
+```
+
+As you can see by hovering on top of the `person` variable, TypeScript assigns the type `{ name: string }` to it. Now imagine we wanted to gradually grow this type by adding more properties to it. Say we wanted to add an `age` and a `wallet` property to it by using the following functions:
+
+```ts twoslash
+import { Address } from "@solana/kit";
+
+const setAge = <T extends object>(age: number, p: T) => ({ ...p, age });
+const setWallet = <T extends object>(wallet: Address, p: T) => ({ ...p, wallet });
+```
+
+One way to tackle this is to mutate the variable at each step like so.
+
+```ts twoslash
+// @errors: 1360
+import { address, Address } from "@solana/kit";
+// ---cut-start---
+const setAge = <T extends object>(age: number, p: T) => ({ ...p, age });
+const setWallet = <T extends object>(wallet: Address, p: T) => ({
+  ...p,
+  wallet,
+});
+// ---cut-end---
+
+let person = { name: "Alice" };
+person = setAge(30, person);
+person = setWallet(address("1234..5678"), person);
+
+person satisfies { name: string; age: number; wallet: Address };
+```
+
+But as you can see, even after updating our variable, TypeScript still believes the `person` variable is of type `{ name: string }`. This is because TypeScript doesn't re-assign types to variables when they are mutated.
+
+Fortunately, the Solana Kit library offers a functional API which means its types are designed to be immutable. So, instead of trying to grow the `person` variable by mutating it, it creates new variables with new types at each step.
+
+```ts twoslash
+import { address, Address } from "@solana/kit";
+// ---cut-start---
+const setAge = <T extends object>(age: number, p: T) => ({ ...p, age });
+const setWallet = <T extends object>(wallet: Address, p: T) => ({
+  ...p,
+  wallet,
+});
+// ---cut-end---
+
+const person = { name: "Alice" };
+const personWithAge = setAge(30, person);
+const personWithAgeAndWallet = setWallet(address("1234..5678"), personWithAge);
+
+personWithAgeAndWallet satisfies { name: string; age: number; wallet: Address };
+```
+
+The downside is we now need to create a new variable at each step. This is where the `pipe` function comes in. It takes a starting value and runs it through a series of functions, one after the other, returning the final result. This lets us build up the value and its type without needing extra variables.
+
+```ts twoslash
+import { pipe, address, Address } from "@solana/kit";
+// ---cut-start---
+const setAge = <T extends object>(age: number, p: T) => ({ ...p, age });
+const setWallet = <T extends object>(wallet: Address, p: T) => ({
+  ...p,
+  wallet,
+});
+// ---cut-end---
+
+const person = pipe(
+  { name: "Alice" },
+  (p) => setAge(30, p),
+  (p) => setWallet(address("1234..5678"), p),
+);
+
+person satisfies { name: string; age: number; wallet: Address };
+```
+
+This is exactly how we'll build our transaction in the following sections. Similarly to this person example, transaction messages can grow in a variety of ways and the ability to use composable functions to gradually construct them is a powerful tool.
+
+With that in mind, let's start building our transaction message, starting with the initial value of our `pipe`.
+
+## Create the base transaction message
+
+The first step in building a transaction is to create a new empty transaction message. This message will eventually contain all the necessary information to send a transaction to the Solana network before being compiled and signed.
+
+To create one, we can use the `createTransactionMessage` function. This function requires a `version` parameter which is used to determine the format of the transaction. At the time of writing, `0` is the latest version available so we'll use that.
+
+```ts twoslash
+import { createTransactionMessage, pipe } from "@solana/kit";
+
+const transactionMessage = pipe(
+  createTransactionMessage({ version: 0 }),
+  // Customize the transaction message using helper functions here...
+);
+```
+
+## Set the fee payer
+
+Next, we need to set a fee payer for our transaction. This is the wallet that will pay for the transaction to be sent to the network. For this, we can use the `setTransactionMessageFeePayerSigner` function which requires a `TransactionSigner` object. Since we already have a signer in our `Client` object, let's use it.
+
+```ts twoslash
+import {
+  Rpc,
+  RpcSubscriptions,
+  SolanaRpcApi,
+  SolanaRpcSubscriptionsApi,
+  TransactionSigner,
+  MessageSigner,
+} from "@solana/kit";
+type Client = {
+  rpc: Rpc<SolanaRpcApi>;
+  rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+  wallet: TransactionSigner & MessageSigner;
+};
+const client = {} as Client;
+// ---cut-before---
+import { createTransactionMessage, pipe, setTransactionMessageFeePayerSigner } from "@solana/kit";
+
+const transactionMessage = pipe(
+  createTransactionMessage({ version: 0 }),
+  (tx) => setTransactionMessageFeePayerSigner(client.wallet, tx), // [!code ++]
+);
+```
+
+## Set the transaction lifetime
+
+We also need to specify a lifetime for our transaction. This lifetime defines a period of time during which the transaction is valid.
+
+There are currently two lifetime strategies available:
+
+- **The blockhash strategy**: Given a block height — i.e. number of blocks since the genesis block — the transaction will be valid until the next block at the given height is produced. This is the most common strategy.
+- **The durable nonce strategy**: This strategy requires setting up a durable nonce account and advancing its value in the first instruction of the transaction. This is useful for transactions that need to be valid for long periods of time.
+
+For this tutorial, we'll use the blockhash strategy. To do this, we can use the `setTransactionMessageLifetimeUsingBlockhash` function which requires an object with a recent blockhash and a block height. Fortunately, this is exactly what the `getLatestBlockhash` RPC method provides.
+
+```ts twoslash
+import {
+  Rpc,
+  RpcSubscriptions,
+  SolanaRpcApi,
+  SolanaRpcSubscriptionsApi,
+  TransactionSigner,
+  MessageSigner,
+} from "@solana/kit";
+type Client = {
+  rpc: Rpc<SolanaRpcApi>;
+  rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+  wallet: TransactionSigner & MessageSigner;
+};
+const client = {} as Client;
+// ---cut-before---
+import {
+  createTransactionMessage,
+  pipe,
+  setTransactionMessageFeePayerSigner,
+  setTransactionMessageLifetimeUsingBlockhash,
+} from "@solana/kit";
+
+const { value: latestBlockhash } = await client.rpc.getLatestBlockhash().send(); // [!code ++]
+
+const transactionMessage = pipe(
+  createTransactionMessage({ version: 0 }),
+  (tx) => setTransactionMessageFeePayerSigner(client.wallet, tx),
+  (tx) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx), // [!code ++]
+);
+```
+
+## Add instructions
+
+Last but not least, we need to add our instructions to the transaction message. Since we've already built our instructions in the previous article, we can add them to our transaction message using the `appendTransactionMessageInstructions` function like so.
+
+```ts twoslash
+import {
+  Rpc,
+  RpcSubscriptions,
+  SolanaRpcApi,
+  SolanaRpcSubscriptionsApi,
+  TransactionSigner,
+  MessageSigner,
+} from "@solana/kit";
+import { getCreateAccountInstruction } from "@solana-program/system";
+import { getInitializeMintInstruction } from "@solana-program/token";
+type Client = {
+  rpc: Rpc<SolanaRpcApi>;
+  rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+  wallet: TransactionSigner & MessageSigner;
+};
+const client = {} as Client;
+const createAccountIx = null as unknown as ReturnType<typeof getCreateAccountInstruction>;
+const initializeMintIx = null as unknown as ReturnType<typeof getInitializeMintInstruction>;
+// ---cut-before---
+import {
+  appendTransactionMessageInstructions,
+  createTransactionMessage,
+  pipe,
+  setTransactionMessageFeePayerSigner,
+  setTransactionMessageLifetimeUsingBlockhash,
+} from "@solana/kit";
+
+const { value: latestBlockhash } = await client.rpc.getLatestBlockhash().send();
+
+const transactionMessage = pipe(
+  createTransactionMessage({ version: 0 }),
+  (tx) => setTransactionMessageFeePayerSigner(client.wallet, tx),
+  (tx) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx),
+  (tx) => appendTransactionMessageInstructions([createAccountIx, initializeMintIx], tx), // [!code ++]
+);
+```
+
+## Set the compute limit dynamically
+
+As mentioned in the previous article, setting a compute limit on a transaction as close as possible to the actual cost of running it will have many benefits, such as: increasing the likelihood of the transaction being scheduled, increasing the number of transactions that can be produced in a block and reducing the price of your priority fees, if any.
+
+A good way to estimate how much compute unit a transaction will need is to simulate it and measure its cost. This can be done using the `getComputeUnitEstimateForTransactionMessageFactory` function from `@solana/kit` to get the estimated compute limit before setting it on the transaction message using the `getSetComputeUnitLimitInstruction` function from `@solana-program/compute-budget`. Note that this must be done _after_ the transaction message is fully configured to ensure the estimate is as accurate as possible.
+
+```ts twoslash
+import {
+  Rpc,
+  RpcSubscriptions,
+  SolanaRpcApi,
+  SolanaRpcSubscriptionsApi,
+  TransactionSigner,
+  MessageSigner,
+  CompilableTransactionMessage,
+} from "@solana/kit";
+import { getCreateAccountInstruction } from "@solana-program/system";
+import { getInitializeMintInstruction } from "@solana-program/token";
+type Client = {
+  rpc: Rpc<SolanaRpcApi>;
+  rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+  wallet: TransactionSigner & MessageSigner;
+};
+const client = {} as Client;
+const transactionMessage = null as unknown as CompilableTransactionMessage;
+// ---cut-before---
+import { getComputeUnitEstimateForTransactionMessageFactory, prependTransactionMessageInstruction } from "@solana/kit";
+import { getSetComputeUnitLimitInstruction } from "@solana-program/compute-budget";
+
+// Build the function to estimate compute units.
+const estimateComputeUnitLimit = getComputeUnitEstimateForTransactionMessageFactory({ rpc: client.rpc });
+
+// Estimate compute units.
+const computeUnitsEstimate = await estimateComputeUnitLimit(transactionMessage);
+
+// Prepend the compute unit limit instruction to the transaction message.
+const transactionMessageWithComputeUnitLimit = prependTransactionMessageInstruction(
+  getSetComputeUnitLimitInstruction({ units: computeUnitsEstimate }),
+  transactionMessage,
+);
+```
+
+Since this is a common operation, let's add a helper function to our `Client` type so we can reuse it any time we need to set a compute unit limit. First, let's update the `Client` type so it offers an `estimateAndSetComputeUnitLimit` function like so.
+
+```ts twoslash title="src/client.ts"
+import {
+  Rpc,
+  RpcSubscriptions,
+  SolanaRpcApi,
+  SolanaRpcSubscriptionsApi,
+  TransactionSigner,
+  MessageSigner,
+} from "@solana/kit";
+// ---cut-before---
+import {
+  CompilableTransactionMessage, // [!code ++]
+  // ...
+} from "@solana/kit";
+
+export type Client = {
+  estimateAndSetComputeUnitLimit: <T extends CompilableTransactionMessage>(transactionMessage: T) => Promise<T>; // [!code ++]
+  rpc: Rpc<SolanaRpcApi>;
+  rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+  wallet: TransactionSigner & MessageSigner;
+};
+```
+
+Next, we'll implement this function in the `createClient` method by adding the following code:
+
+```ts twoslash title="src/client.ts"
+import {
+  Rpc,
+  RpcSubscriptions,
+  SolanaRpcApi,
+  SolanaRpcSubscriptionsApi,
+  TransactionSigner,
+  MessageSigner,
+  CompilableTransactionMessage,
+} from "@solana/kit";
+export type Client = {
+  estimateAndSetComputeUnitLimit: <T extends CompilableTransactionMessage>(transactionMessage: T) => Promise<T>; // [!code ++]
+  rpc: Rpc<SolanaRpcApi>;
+  rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+  wallet: TransactionSigner & MessageSigner;
+};
+const rpc = {} as Rpc<SolanaRpcApi>;
+const rpcSubscriptions = {} as RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+const wallet = {} as TransactionSigner & MessageSigner;
+// ---cut-before---
+import {
+  getComputeUnitEstimateForTransactionMessageFactory, // [!code ++]
+  prependTransactionMessageInstruction, // [!code ++]
+  // ...
+} from "@solana/kit";
+import { getSetComputeUnitLimitInstruction } from "@solana-program/compute-budget"; // [!code ++]
+
+let client: Client | undefined;
+export async function createClient(): Promise<Client> {
+  if (!client) {
+    // ...
+
+    // Create a function to estimate and set the compute unit limit. // [!code ++]
+    const estimateComputeUnitLimit = getComputeUnitEstimateForTransactionMessageFactory({ rpc }); // [!code ++]
+    const estimateAndSetComputeUnitLimit = async <T extends CompilableTransactionMessage>(transactionMessage: T) => {
+      // [!code ++]
+      const computeUnitsEstimate = await estimateComputeUnitLimit(transactionMessage); // [!code ++]
+      return prependTransactionMessageInstruction(
+        // [!code ++]
+        getSetComputeUnitLimitInstruction({ units: computeUnitsEstimate }), // [!code ++]
+        transactionMessage, // [!code ++]
+      ); // [!code ++]
+    }; // [!code ++]
+
+    // Store the client.
+    client = { estimateAndSetComputeUnitLimit, rpc, rpcSubscriptions, wallet };
+  }
+  return client;
+}
+```
+
+Finally, we can now use this new `estimateAndSetComputeUnitLimit` helper at the end of our `pipe` call to set the compute unit limit on our transaction message. Note that, since `estimateAndSetComputeUnitLimit` is asynchronous, we now need to await on the return value of our `pipe`.
+
+```ts twoslash
+import {
+  Rpc,
+  RpcSubscriptions,
+  SolanaRpcApi,
+  SolanaRpcSubscriptionsApi,
+  TransactionSigner,
+  MessageSigner,
+  CompilableTransactionMessage,
+} from "@solana/kit";
+import { getCreateAccountInstruction } from "@solana-program/system";
+import { getInitializeMintInstruction } from "@solana-program/token";
+type Client = {
+  estimateAndSetComputeUnitLimit: <T extends CompilableTransactionMessage>(transactionMessage: T) => Promise<T>;
+  rpc: Rpc<SolanaRpcApi>;
+  rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+  wallet: TransactionSigner & MessageSigner;
+};
+const client = {} as Client;
+const createAccountIx = null as unknown as ReturnType<typeof getCreateAccountInstruction>;
+const initializeMintIx = null as unknown as ReturnType<typeof getInitializeMintInstruction>;
+// ---cut-before---
+import {
+  appendTransactionMessageInstructions,
+  createTransactionMessage,
+  pipe,
+  setTransactionMessageFeePayerSigner,
+  setTransactionMessageLifetimeUsingBlockhash,
+} from "@solana/kit";
+
+const { value: latestBlockhash } = await client.rpc.getLatestBlockhash().send();
+
+// [!code word:await]
+const transactionMessage = await pipe(
+  createTransactionMessage({ version: 0 }),
+  (tx) => setTransactionMessageFeePayerSigner(client.wallet, tx),
+  (tx) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx),
+  (tx) => appendTransactionMessageInstructions([createAccountIx, initializeMintIx], tx),
+  (tx) => client.estimateAndSetComputeUnitLimit(tx), // [!code ++]
+);
+```
+
+## Sign the transaction message
+
+Our transaction message is now fully configured and ready to be signed. Since we have been providing signer objects every step of the way, our transaction message already knows how to sign itself. All that is left to do is call `signTransactionMessageWithSigners`. This helper function will extract and deduplicate all the signers from the transaction message and use them to sign the message. As the message is signed, it is compiled into a new `Transaction` type that contains the compiled message and all of its signatures.
+
+```ts twoslash
+import { CompilableTransactionMessage } from "@solana/kit";
+const transactionMessage = null as unknown as CompilableTransactionMessage;
+// ---cut-before---
+import { signTransactionMessageWithSigners } from "@solana/kit";
+
+const signedTransaction = await signTransactionMessageWithSigners(transactionMessage);
+```
+
+## The `createMint` helper
+
+And we finally have our fully signed transaction! In the next article, we'll learn how to send it and wait for its confirmation but before we do, here's our updated `createMint` function including everything we've learned so far.
+
+```ts twoslash title="src/create-mint.ts"
+// @filename: client.ts
+import {
+  Rpc,
+  RpcSubscriptions,
+  SolanaRpcApi,
+  SolanaRpcSubscriptionsApi,
+  TransactionSigner,
+  MessageSigner,
+  CompilableTransactionMessage,
+} from "@solana/kit";
+export type Client = {
+  estimateAndSetComputeUnitLimit: <T extends CompilableTransactionMessage>(transactionMessage: T) => Promise<T>;
+  rpc: Rpc<SolanaRpcApi>;
+  rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+  wallet: TransactionSigner & MessageSigner;
+};
+// @filename: create-mint.ts
+// ---cut-before---
+import {
+  appendTransactionMessageInstructions,
+  createTransactionMessage,
+  generateKeyPairSigner,
+  pipe,
+  setTransactionMessageFeePayerSigner,
+  setTransactionMessageLifetimeUsingBlockhash,
+  signTransactionMessageWithSigners,
+} from "@solana/kit";
+import { getCreateAccountInstruction } from "@solana-program/system";
+import { getInitializeMintInstruction, getMintSize, TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
+
+import type { Client } from "./client";
+
+export async function createMint(client: Client, options: { decimals?: number } = {}) {
+  // Prepare inputs.
+  const mintSize = getMintSize();
+  const [mint, mintRent, { value: latestBlockhash }] = await Promise.all([
+    generateKeyPairSigner(),
+    client.rpc.getMinimumBalanceForRentExemption(BigInt(mintSize)).send(),
+    client.rpc.getLatestBlockhash().send(),
+  ]);
+
+  // Build instructions.
+  const createAccountIx = getCreateAccountInstruction({
+    payer: client.wallet,
+    newAccount: mint,
+    space: mintSize,
+    lamports: mintRent,
+    programAddress: TOKEN_PROGRAM_ADDRESS,
+  });
+  const initializeMintIx = getInitializeMintInstruction({
+    mint: mint.address,
+    decimals: options.decimals ?? 0,
+    mintAuthority: client.wallet.address,
+    freezeAuthority: client.wallet.address,
+  });
+
+  // Build the transaction message.
+  const transactionMessage = await pipe(
+    createTransactionMessage({ version: 0 }),
+    (tx) => setTransactionMessageFeePayerSigner(client.wallet, tx),
+    (tx) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx),
+    (tx) => appendTransactionMessageInstructions([createAccountIx, initializeMintIx], tx),
+    (tx) => client.estimateAndSetComputeUnitLimit(tx),
+  );
+
+  // Compile the transaction message and sign it.
+  const signedTransaction = await signTransactionMessageWithSigners(transactionMessage);
+
+  // Send the transaction and wait for confirmation.
+  // TODO: Next article!
+}
+```

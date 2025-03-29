@@ -1,0 +1,259 @@
+---
+title: Fetch an account
+description: Fetch and decode on-chain accounts
+---
+
+In the previous article of this series, we've learned how to send a transaction that creates a new Solana token — also known as a `Mint` account. In this last article, we'll learn how to retrieve the account we created and access its decoded data.
+
+## Fetch using RPC methods
+
+RPC methods such as `getAccountInfo` or `getMultipleAccounts` can be used to fetch on-chain accounts from their addresses. These take a variety of options and return different outputs based on these options. For instance, the `encoding` option will determine which string format to use when returning the account's encoded data.
+
+```ts twoslash
+import { Rpc, SolanaRpcApi } from "@solana/kit";
+const rpc = null as unknown as Rpc<SolanaRpcApi>;
+// ---cut-before---
+import { address } from "@solana/kit";
+
+const { value: account } = await rpc.getAccountInfo(address("1234..5678")).send();
+const { value: accounts } = await rpc.getMultipleAccounts([address("1234..5678")]).send();
+```
+
+## Fetch using helpers
+
+Having so many possible return values makes it harder to work with the retrieved information. For instance, the `getAccountInfo` RPC method will default to a Base58 encoding whereas the `getMultipleAccounts` method will default to Base64.
+
+Additionally, when trying to fetch an account that does not exist on-chain, the `null` value is returned which is particularly inconvenient when dealing with multiple accounts as it requires zipping the address array with the account array to determine which ones are missing.
+
+Therefore, Solana Kit offers a set of types and helpers that aim to unify these APIs and make them easier to work with. For instance, the `fetchEncodedAccount` and `fetchEncodedAccounts` helpers can be used to fetch one or multiple accounts and return them in a unified format.
+
+```ts twoslash
+import { Rpc, SolanaRpcApi } from "@solana/kit";
+const rpc = null as unknown as Rpc<SolanaRpcApi>;
+// ---cut-before---
+import { address, fetchEncodedAccount, fetchEncodedAccounts, MaybeEncodedAccount } from "@solana/kit";
+
+const account = await fetchEncodedAccount(rpc, address("1234..5678"));
+const accounts = await fetchEncodedAccounts(rpc, [address("1234..5678")]);
+
+account satisfies MaybeEncodedAccount;
+accounts satisfies MaybeEncodedAccount[];
+```
+
+As you can see, the return types are all `MaybeAccounts`. This means the account may or may not exist on-chain. It contains an `exists` field indicating whether the account exists. If it does, we have access to all its fields. Otherwise, we just know its address — since it was provided as an input.
+
+```ts twoslash
+import { Rpc, SolanaRpcApi } from "@solana/kit";
+const rpc = null as unknown as Rpc<SolanaRpcApi>;
+// ---cut-before---
+import { EncodedAccount, address, Address, fetchEncodedAccount, fetchEncodedAccounts } from "@solana/kit";
+
+const account = await fetchEncodedAccount(rpc, address("1234..5678"));
+
+if (account.exists) {
+  // If it exists, we have access to all its fields.
+  account satisfies EncodedAccount<"1234..5678">;
+} else {
+  // Otherwise, we just know its address.
+  account satisfies { address: Address<"1234..5678">; exists: false };
+}
+```
+
+We can also assert the existence of an account using the `assertAccountExists` helper. This will throw an error if the account does not exist and tell TypeScript that our `MaybeAccount` is actually an `Account` moving forward.
+
+```ts twoslash
+import { Rpc, SolanaRpcApi } from "@solana/kit";
+const rpc = null as unknown as Rpc<SolanaRpcApi>;
+// ---cut-before---
+import { assertAccountExists, EncodedAccount, address, fetchEncodedAccount, fetchEncodedAccounts } from "@solana/kit";
+
+const account = await fetchEncodedAccount(rpc, address("1234..5678"));
+assertAccountExists(account);
+
+account satisfies EncodedAccount;
+```
+
+## Decode the data manually
+
+So far, we have been dealing with encoded accounts, meaning the `data` field of the fetched account is a byte array — i.e. a `Uint8Array`. But we are realistically going to need to decode that data into a more usable format.
+
+Solana Kit ships with a set of serialization libraries called Codecs. These libraries offer types and functions to create Codec objects that can be composed together to create more complex serialization and deserialization logic.
+
+You can [read more about Codecs here](/docs/concepts/codecs), but let's quickly see how we can create a Codec object to decode our `Mint` account.
+
+Mint accounts are composed of the following data:
+
+- A `mintAuthority` which is an optional address. When set, this address can mint new tokens.
+- A `supply` integer using a `u64`. This keeps track of the total supply of tokens.
+- A `decimals` integer using a `u8`. This keeps track of the number of decimal places for the token.
+- An `isInitialized` boolean using a single byte. This tells us whether the mint account has been initialized.
+- A `freezeAuthority` which is an optional address. When set, this address can freeze token accounts.
+
+By composing various Codec functions — such as `getStructCodec` to create objects or `getOptionCodec` to create optional data — we can design a Codec object that describes the byte layout of the `Mint` account. Here's an example illustrating that. Note that the layout of the `Mint` account was slightly simplified for this example.
+
+```ts twoslash
+import { Rpc, SolanaRpcApi } from "@solana/kit";
+const rpc = null as unknown as Rpc<SolanaRpcApi>;
+// ---cut-before---
+import {
+  address,
+  Address,
+  assertAccountExists,
+  fetchEncodedAccount,
+  getAddressCodec,
+  getBooleanCodec,
+  getOptionCodec,
+  getStructCodec,
+  getU64Codec,
+  getU8Codec,
+  Option,
+} from "@solana/kit";
+
+const account = await fetchEncodedAccount(rpc, address("1234..5678"));
+assertAccountExists(account);
+
+const mintCodec = getStructCodec([
+  ["mintAuthority", getOptionCodec(getAddressCodec())], // [simplified]
+  ["supply", getU64Codec()],
+  ["decimals", getU8Codec()],
+  ["isInitialized", getBooleanCodec()],
+  ["freezeAuthority", getOptionCodec(getAddressCodec())], // [simplified]
+]);
+
+const decodedData = mintCodec.decode(account.data);
+decodedData satisfies {
+  mintAuthority: Option<Address>;
+  supply: bigint;
+  decimals: number;
+  isInitialized: boolean;
+  freezeAuthority: Option<Address>;
+};
+```
+
+## Decode using program clients
+
+Fortunately for us, we often don't need to manually create these Codec objects as program clients will provide them for us. These helpers are typically [generated via Codama IDLs](https://github.com/codama-idl/codama) and follow the `getXCodec` naming convention where `X` is the name of the account.
+
+For instance, here's how we can access the `Mint` codec from the `@solana-program/token` library.
+
+```ts twoslash
+import { Rpc, SolanaRpcApi } from "@solana/kit";
+const rpc = null as unknown as Rpc<SolanaRpcApi>;
+// ---cut-before---
+import { address, assertAccountExists, fetchEncodedAccount } from "@solana/kit";
+import { getMintCodec, Mint } from "@solana-program/token";
+
+const account = await fetchEncodedAccount(rpc, address("1234..5678"));
+assertAccountExists(account);
+
+const mintCodec = getMintCodec();
+const decodedData = mintCodec.decode(account.data);
+decodedData satisfies Mint;
+```
+
+This can be simplified even further by using the `decodeX` helpers from program clients. These helpers accept an `EncodedAccount` or a `MaybeEncodedAccount` and return an `Account<T>` or a `MaybeAccount<T>` respectively, where `T` is the type of the account data.
+
+```ts twoslash
+import { Rpc, SolanaRpcApi } from "@solana/kit";
+const rpc = null as unknown as Rpc<SolanaRpcApi>;
+// ---cut-before---
+import { Account, address, assertAccountExists, fetchEncodedAccount } from "@solana/kit";
+import { decodeMint, Mint } from "@solana-program/token";
+
+const account = decodeMint(await fetchEncodedAccount(rpc, address("1234..5678")));
+assertAccountExists(account);
+account satisfies Account<Mint>;
+```
+
+## Fetch and decode using program clients
+
+Last but not least, it is possible to fetch and decode an account in a single step using the `fetchX` helpers from program clients. These helpers accept an `Rpc` object and an `Address` and return an `Account<T>` where `T` is the type of the account data. These helpers will also assert the existence of the account and throw an error if it does not exist.
+
+This means, everything we've been doing so far can be simplified into a single line of code.
+
+```ts twoslash
+import { Rpc, SolanaRpcApi } from "@solana/kit";
+const rpc = null as unknown as Rpc<SolanaRpcApi>;
+// ---cut-before---
+import { Account, address } from "@solana/kit";
+import { fetchMint, Mint } from "@solana-program/token";
+
+const account = await fetchMint(rpc, address("1234..5678"));
+account satisfies Account<Mint>;
+```
+
+## Update `index.ts`
+
+Now that we know how to fetch and decode on-chain accounts, let's update our main `tutorial` function to fetch the `Mint` account we created in the previous article and display its decoded data.
+
+Since some of its data is optional, we'll use the `unwrapOption` helper to convert `Option<T>` types into `T | null` before displaying them.
+
+```ts twoslash title="src/index.ts"
+// @filename: client.ts
+import {
+  CompilableTransactionMessage,
+  MessageSigner,
+  Rpc,
+  RpcSubscriptions,
+  SolanaRpcApi,
+  SolanaRpcSubscriptionsApi,
+  TransactionSigner,
+  sendAndConfirmTransactionFactory,
+} from "@solana/kit";
+export type Client = {
+  estimateAndSetComputeUnitLimit: <T extends CompilableTransactionMessage>(transactionMessage: T) => Promise<T>;
+  rpc: Rpc<SolanaRpcApi>;
+  rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+  sendAndConfirmTransaction: ReturnType<typeof sendAndConfirmTransactionFactory>;
+  wallet: TransactionSigner & MessageSigner;
+};
+export async function createClient() {
+  return {} as Client;
+}
+// @filename: create-mint.ts
+import { Address } from "@solana/kit";
+import { Client } from "./client";
+export async function createMint(client: Client, options: { decimals?: number } = {}) {
+  return "" as Address;
+}
+// @filename: index.ts
+// ---cut-before---
+import { unwrapOption } from "@solana/kit"; // [!code ++]
+import { fetchMint } from "@solana-program/token"; // [!code ++]
+
+import { createClient } from "./client";
+import { createMint } from "./create-mint";
+
+async function tutorial() {
+  const client = await createClient();
+  const mintAddress = await createMint(client, { decimals: 2 });
+  const mintAccount = await fetchMint(client.rpc, mintAddress); // [!code ++]
+  console.log(`Mint created: ${mintAddress}.`);
+  console.log(`Mint lamports: ${mintAccount.lamports}.`); // [!code ++]
+  console.log(`Mint authority: ${unwrapOption(mintAccount.data.mintAuthority)}.`); // [!code ++]
+  console.log(`Mint decimals: ${mintAccount.data.decimals}.`); // [!code ++]
+  console.log(`Mint supply: ${mintAccount.data.supply}.`); // [!code ++]
+}
+```
+
+You should now see the following output when you run the `start` script:
+
+```
+Mint created: 4txHAwAuUDJAdzuNnfaL88kj4hF7wa3U3kak91r4keju.
+Mint lamports: 1461600.
+Mint authority: 9QR4w82jYj2eSVdzLprHZwrgEReFCGQNRPrBN2v8BCBG.
+Mint decimals: 2.
+Mint supply: 0.
+```
+
+## Next steps
+
+Congrats on completing this tutorial! You've learned how to get started with the Solana Kit library by:
+
+- Creating a `Client` object containing all the bits from Solana Kit that matter for your application — ensuring the rest can be tree-shaken away.
+- Building instructions and transaction messages.
+- Generating signer objects and using them to sign transactions.
+- Sending transactions and waiting for them to be confirmed.
+- Fetching and decoding on-chain accounts that were created by your transactions.
+
+If you'd like to dig deeper into the Solana Kit library, you may be interested in the [Core concepts](/docs/concepts) section of the documentation. There, you'll find in-depth articles about specific parts of the library such as [Codecs](/docs/concepts/codecs), [Signers](/docs/concepts/signers), and [RPCs](/docs/concepts/rpc).

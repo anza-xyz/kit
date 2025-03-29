@@ -1,0 +1,8 @@
+@theme {
+    /* Colors */
+    --color-primary-50: #fff7f1;
+
+    /* Containers */
+    --container-5xs: 12rem;
+    --container-4xs: 14rem;
+}

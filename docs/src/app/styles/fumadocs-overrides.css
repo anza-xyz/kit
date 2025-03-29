@@ -1,0 +1,53 @@
+/* Colours. */
+
+/* @theme {
+  --color-fd-background: #fff7f1;
+  --color-fd-border: #6d5d6e;
+
+  --color-fd-background: hsl(0, 0%, 96%);
+  --color-fd-foreground: hsl(0, 0%, 3.9%);
+  --color-fd-muted: hsl(0, 0%, 96.1%);
+  --color-fd-muted-foreground: hsl(0, 0%, 45.1%);
+  --color-fd-popover: hsl(0, 0%, 98%);
+  --color-fd-popover-foreground: hsl(0, 0%, 15.1%);
+  --color-fd-card: hsl(0, 0%, 94.7%);
+  --color-fd-card-foreground: hsl(0, 0%, 3.9%);
+  --color-fd-border: hsl(0, 0%, 89.8%);
+  --color-fd-primary: hsl(0, 0%, 9%);
+  --color-fd-primary-foreground: hsl(0, 0%, 98%);
+  --color-fd-secondary: hsl(0, 0%, 93.1%);
+  --color-fd-secondary-foreground: hsl(0, 0%, 9%);
+  --color-fd-accent: hsl(0, 0%, 90.1%);
+  --color-fd-accent-foreground: hsl(0, 0%, 9%);
+  --color-fd-ring: hsl(0, 0%, 63.9%);
+  --spacing-fd-container: 1400px;
+  --fd-sidebar-width: 0px;
+  --fd-toc-width: 0px;
+  --fd-layout-width: 100vw;
+  --fd-banner-height: 0px;
+  --fd-nav-height: 0px;
+  --fd-tocnav-height: 0px;
+  --fd-diff-remove-color: rgba(200, 10, 100, 0.12);
+  --fd-diff-remove-symbol-color: rgb(230, 10, 100);
+  --fd-diff-add-color: rgba(14, 180, 100, 0.12);
+  --fd-diff-add-symbol-color: rgb(10, 200, 100);
+} */
+
+/* @variant dark {
+  --color-fd-background: #2a2834;
+  --color-fd-border: #a190a2;
+} */
+
+/* Sidebar. */
+
+/* #nd-sidebar {
+  background-color: #fff7f1;
+
+  @variant dark {
+    background-color: #2a2834;
+  }
+}
+
+#nd-sidebar > div {
+  border-color: transparent;
+} */
