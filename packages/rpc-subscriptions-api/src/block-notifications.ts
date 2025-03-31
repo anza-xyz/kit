@@ -1,3 +1,4 @@
+import { Address } from '@solana/addresses';
 import type {
     Base58EncodedBytes,
     Blockhash,
@@ -56,38 +57,99 @@ type BlockNotificationsNotificationBlockWithTransactions<TTransaction> = Readonl
 
 // Subscription parameter types
 
-// Filter criteria for the logs to receive results by account type
-// `mentionsAccountsOrProgram` object will return only transactions that mention
-// the provided public key (as base-58 encoded string). If no mentions in a
-// given block, then no notification will be sent.
-type BlockNotificationsFilter = 'all' | { mentionsAccountOrProgram: string };
+type BlockNotificationsFilter =
+    | 'all'
+    | {
+          /**
+           * This filter matches when a transaction mentions the provided address. If no transaction
+           * mentions this address in a given block, then no notification will be sent for that
+           * block.
+           */
+          mentionsAccountOrProgram: Address;
+      };
 
 type BlockNotificationsCommonConfig = Readonly<{
-    /** @defaultValue finalized */
+    /**
+     * Get notified when a new block has reached this level of commitment.
+     *
+     * @defaultValue Whichever default is applied by the underlying {@link RpcSubscriptionsApi} in
+     * use. For example, when using an API created by a `createSolanaRpcSubscriptions*()` helper,
+     * the default commitment is `"confirmed"` unless configured otherwise. Unmitigated by an API
+     * layer on the client, the default commitment applied by the server is `"finalized"`.
+     */
     commitment?: Omit<Commitment, 'processed'>;
+    /**
+     * Determines how the transaction property should be encoded in the response.
+     *
+     * - `'base58'` produces a tuple whose first element is the wire transaction as a base58-encoded
+     *   string.
+     * - `'base64'` produces a tuple whose first element is the wire transaction as a base64-encoded
+     *   string.
+     * - `'json'` produces an object with `message` and `signatures` properties. The `instructions`
+     *   property of the message is an array of instructions, each an object containing the indices
+     *   of the instruction's accounts, the instruction data, the index of the program address, and
+     *   optionally the stack height if it is an inner instruction.
+     * - `'jsonParsed'` produces an object with `message` and `signatures` properties. This property
+     *   will cause the server to attempt to process each instruction using a parser specific to its
+     *   program. If successful, the parsed instruction will be returned in the response as JSON.
+     *   Otherwise, each instruction will be returned according to the rules of `'json'` encoding.
+     *
+     * @defaultValue "json"
+     */
+    encoding?: BlockNotificationsEncoding;
+    /**
+     * The newest transaction version that the caller wants to receive in the response. This
+     * argument has no effect unless the {@link GetBlockCommonConfig.transactionDetails | transactionDetails}
+     * argument is set to `'accounts'` or `'full'`.
+     *
+     * When not supplied, only legacy (unversioned) transactions will be returned, and no `version`
+     * property will be returned in the response.
+     *
+     * If a block contains any transaction at a version higher than this, the server will throw
+     * {@link SolanaErrorCode.SOLANA_ERROR__JSON_RPC__SERVER_ERROR_UNSUPPORTED_TRANSACTION_VERSION | SOLANA_ERROR__JSON_RPC__SERVER_ERROR_UNSUPPORTED_TRANSACTION_VERSION}.
+     */
+    maxSupportedTransactionVersion?: BlockNotificationsMaxSupportedTransactionVersion;
+    /**
+     * Set this to `false` to omit block rewards from the response. These typically only
+     * materialize on the first block of an epoch.
+     * @defaultValue true
+     */
+    rewards?: boolean;
+    /**
+     * The level of transaction detail to include in the response.
+     *
+     * - `'accounts'` includes signatures, an annotated list of accounts, and some transaction
+     *   metadata.
+     * - `'full'` includes the entire transaction message and its signatures.
+     * - `'none'` excludes transaction details completely.
+     * - `'signatures'` includes transaction signatures only.
+     *
+     * @defaultValue "full"
+     */
+    transactionDetails?: BlockNotificationTransactionDetailsMode;
 }>;
 
 type BlockNotificationsEncoding = 'base58' | 'base64' | 'json' | 'jsonParsed';
+type BlockNotificationTransactionDetailsMode = 'accounts' | 'full' | 'none' | 'signatures';
 
-// Max supported transaction version parameter:
-// - `maxSupportedTransactionVersion` can only be provided with a number value. "legacy" is not a valid argument.
-// This will throw a parse error (code -32602).
-// - If `maxSupportedTransactionVersion` is not provided, the default value is "legacy".
-// This will error if the block contains any transactions with a version greater than "legacy" (code -32015).
-// - Also, If `maxSupportedTransactionVersion` is not provided, the `version` field of each transaction is omitted.
-// - These rules apply to both "accounts" and "full" transaction details.
 type BlockNotificationsMaxSupportedTransactionVersion = Exclude<TransactionVersion, 'legacy'>;
 
 export type BlockNotificationsApi = {
     /**
-     * Subscribe to receive notification anytime a new block is Confirmed or Finalized.
+     * Subscribe to receive notifications anytime a new block reaches the specified level of
+     * commitment.
      *
-     * Note: The `block` field is a block object as seen in the `getBlock` RPC HTTP method.
-     * @see https://docs.solana.com/api/http#getblock
+     * The notification format is the same as seen in the {@link GetBlockApi.getBlock} RPC HTTP
+     * method.
+     *
+     * @param filter Notifications will only be produced for blocks that match this filter.
+     *
+     * {@label transactions-none--rewards-none}
+     * @see https://solana.com/docs/rpc/websocket/blocksubscribe
      */
-    // transactionDetails=none, rewards=false, encoding + maxSupportedTransactionVersion irrelevant
     blockNotifications(
         filter: BlockNotificationsFilter,
+        // transactionDetails=none, rewards=false, encoding + maxSupportedTransactionVersion irrelevant
         config: BlockNotificationsCommonConfig &
             Readonly<{
                 encoding?: BlockNotificationsEncoding;
@@ -101,9 +163,21 @@ export type BlockNotificationsApi = {
                 block: BlockNotificationsNotificationBlock | null;
             }>
     >;
-    // transactionDetails=none, rewards=missing/true, encoding + maxSupportedTransactionVersion irrelevant
+    /**
+     * Subscribe to receive notifications anytime a new block reaches the specified level of
+     * commitment.
+     *
+     * The notification format is the same as seen in the {@link GetBlockApi.getBlock} RPC HTTP
+     * method.
+     *
+     * @param filter Notifications will only be produced for blocks that match this filter.
+     *
+     * {@label transactions-none--rewards-included}
+     * @see https://solana.com/docs/rpc/websocket/blocksubscribe
+     */
     blockNotifications(
         filter: BlockNotificationsFilter,
+        // transactionDetails=none, rewards=missing/true, encoding + maxSupportedTransactionVersion irrelevant
         config: BlockNotificationsCommonConfig &
             Readonly<{
                 encoding?: BlockNotificationsEncoding;
@@ -117,9 +191,22 @@ export type BlockNotificationsApi = {
                 block: (BlockNotificationsNotificationBlock & BlockNotificationsNotificationBlockWithRewards) | null;
             }>
     >;
-    // transactionDetails=signatures, rewards=false, encoding + maxSupportedTransactionVersion irrelevant
+    /**
+     * Subscribe to receive notifications anytime a new block reaches the specified level of
+     * commitment.
+     *
+     * The notification format is the same as seen in the {@link GetBlockApi.getBlock} RPC HTTP
+     * method.
+     *
+     * @param filter Notifications will only be produced for blocks that match this filter. Only
+     * signatures of transactions that match this filter will be included in the block.
+     *
+     * {@label transactions-signatures--rewards-none}
+     * @see https://solana.com/docs/rpc/websocket/blocksubscribe
+     */
     blockNotifications(
         filter: BlockNotificationsFilter,
+        // transactionDetails=signatures, rewards=false, encoding + maxSupportedTransactionVersion irrelevant
         config: BlockNotificationsCommonConfig &
             Readonly<{
                 encoding?: BlockNotificationsEncoding;
@@ -133,9 +220,22 @@ export type BlockNotificationsApi = {
                 block: (BlockNotificationsNotificationBlock & BlockNotificationsNotificationBlockWithSignatures) | null;
             }>
     >;
-    // transactionDetails=signatures, rewards=missing/true, encoding + maxSupportedTransactionVersion irrelevant
+    /**
+     * Subscribe to receive notifications anytime a new block reaches the specified level of
+     * commitment.
+     *
+     * The notification format is the same as seen in the {@link GetBlockApi.getBlock} RPC HTTP
+     * method.
+     *
+     * @param filter Notifications will only be produced for blocks that match this filter. Only
+     * signatures of transactions that match this filter will be included in the block.
+     *
+     * {@label transactions-signatures--rewards-included}
+     * @see https://solana.com/docs/rpc/websocket/blocksubscribe
+     */
     blockNotifications(
         filter: BlockNotificationsFilter,
+        // transactionDetails=signatures, rewards=missing/true, encoding + maxSupportedTransactionVersion irrelevant
         config: BlockNotificationsCommonConfig &
             Readonly<{
                 encoding?: BlockNotificationsEncoding;
@@ -153,9 +253,22 @@ export type BlockNotificationsApi = {
                     | null;
             }>
     >;
-    // transactionDetails=accounts, rewards=false, maxSupportedTransactionVersion=0, encoding irrelevant
+    /**
+     * Subscribe to receive notifications anytime a new block reaches the specified level of
+     * commitment.
+     *
+     * The notification format is the same as seen in the {@link GetBlockApi.getBlock} RPC HTTP
+     * method.
+     *
+     * @param filter Notifications will only be produced for blocks that match this filter. Only
+     * transactions that match this filter will be included in the block.
+     *
+     * {@label transactions-accounts--rewards-none--version-specified}
+     * @see https://solana.com/docs/rpc/websocket/blocksubscribe
+     */
     blockNotifications(
         filter: BlockNotificationsFilter,
+        // transactionDetails=accounts, rewards=false, maxSupportedTransactionVersion=0, encoding irrelevant
         config: BlockNotificationsCommonConfig &
             Readonly<{
                 encoding?: BlockNotificationsEncoding;
@@ -174,9 +287,22 @@ export type BlockNotificationsApi = {
                     | null;
             }>
     >;
-    // transactionDetails=accounts, rewards=false, maxSupportedTransactionVersion=missing, encoding irrelevant
+    /**
+     * Subscribe to receive notifications anytime a new block reaches the specified level of
+     * commitment.
+     *
+     * The notification format is the same as seen in the {@link GetBlockApi.getBlock} RPC HTTP
+     * method.
+     *
+     * @param filter Notifications will only be produced for blocks that match this filter. Only
+     * transactions that match this filter will be included in the block.
+     *
+     * {@label transactions-accounts--rewards-none--version-legacy}
+     * @see https://solana.com/docs/rpc/websocket/blocksubscribe
+     */
     blockNotifications(
         filter: BlockNotificationsFilter,
+        // transactionDetails=accounts, rewards=false, maxSupportedTransactionVersion=missing, encoding irrelevant
         config: BlockNotificationsCommonConfig &
             Readonly<{
                 encoding?: BlockNotificationsEncoding;
@@ -192,9 +318,22 @@ export type BlockNotificationsApi = {
                     | null;
             }>
     >;
-    // transactionDetails=accounts, rewards=missing/true, maxSupportedTransactionVersion=0, encoding irrelevant
+    /**
+     * Subscribe to receive notifications anytime a new block reaches the specified level of
+     * commitment.
+     *
+     * The notification format is the same as seen in the {@link GetBlockApi.getBlock} RPC HTTP
+     * method.
+     *
+     * @param filter Notifications will only be produced for blocks that match this filter. Only
+     * transactions that match this filter will be included in the block.
+     *
+     * {@label transactions-accounts--rewards-included--version-specified}
+     * @see https://solana.com/docs/rpc/websocket/blocksubscribe
+     */
     blockNotifications(
         filter: BlockNotificationsFilter,
+        // transactionDetails=accounts, rewards=missing/true, maxSupportedTransactionVersion=0, encoding irrelevant
         config: BlockNotificationsCommonConfig &
             Readonly<{
                 encoding?: BlockNotificationsEncoding;
@@ -214,9 +353,22 @@ export type BlockNotificationsApi = {
                     | null;
             }>
     >;
-    // transactionDetails=accounts, rewards=missing/true, maxSupportedTransactionVersion=missing, encoding irrelevant
+    /**
+     * Subscribe to receive notifications anytime a new block reaches the specified level of
+     * commitment.
+     *
+     * The notification format is the same as seen in the {@link GetBlockApi.getBlock} RPC HTTP
+     * method.
+     *
+     * @param filter Notifications will only be produced for blocks that match this filter. Only
+     * transactions that match this filter will be included in the block.
+     *
+     * {@label transactions-accounts--rewards-included--version-legacy}
+     * @see https://solana.com/docs/rpc/websocket/blocksubscribe
+     */
     blockNotifications(
         filter: BlockNotificationsFilter,
+        // transactionDetails=accounts, rewards=missing/true, maxSupportedTransactionVersion=missing, encoding irrelevant
         config: BlockNotificationsCommonConfig &
             Readonly<{
                 encoding?: BlockNotificationsEncoding;
@@ -233,9 +385,22 @@ export type BlockNotificationsApi = {
                     | null;
             }>
     >;
-    // transactionDetails=full (default), encoding=base58, rewards=false, maxSupportedTransactionVersion=0
+    /**
+     * Subscribe to receive notifications anytime a new block reaches the specified level of
+     * commitment.
+     *
+     * The notification format is the same as seen in the {@link GetBlockApi.getBlock} RPC HTTP
+     * method.
+     *
+     * @param filter Notifications will only be produced for blocks that match this filter. Only
+     * transactions that match this filter will be included in the block.
+     *
+     * {@label transactions-base58--rewards-none--version-specified}
+     * @see https://solana.com/docs/rpc/websocket/blocksubscribe
+     */
     blockNotifications(
         filter: BlockNotificationsFilter,
+        // transactionDetails=full (default), encoding=base58, rewards=false, maxSupportedTransactionVersion=0
         config: BlockNotificationsCommonConfig &
             Readonly<{
                 encoding: 'base58';
@@ -254,9 +419,22 @@ export type BlockNotificationsApi = {
                     | null;
             }>
     >;
-    // transactionDetails=full (default), encoding=base58, rewards=false, maxSupportedTransactionVersion=missing
+    /**
+     * Subscribe to receive notifications anytime a new block reaches the specified level of
+     * commitment.
+     *
+     * The notification format is the same as seen in the {@link GetBlockApi.getBlock} RPC HTTP
+     * method.
+     *
+     * @param filter Notifications will only be produced for blocks that match this filter. Only
+     * transactions that match this filter will be included in the block.
+     *
+     * {@label transactions-base58--rewards-none--version-legacy}
+     * @see https://solana.com/docs/rpc/websocket/blocksubscribe
+     */
     blockNotifications(
         filter: BlockNotificationsFilter,
+        // transactionDetails=full (default), encoding=base58, rewards=false, maxSupportedTransactionVersion=missing
         config: BlockNotificationsCommonConfig &
             Readonly<{
                 encoding: 'base58';
@@ -272,9 +450,22 @@ export type BlockNotificationsApi = {
                     | null;
             }>
     >;
-    // transactionDetails=full (default), encoding=base58, rewards=missing/true, maxSupportedTransactionVersion=0
+    /**
+     * Subscribe to receive notifications anytime a new block reaches the specified level of
+     * commitment.
+     *
+     * The notification format is the same as seen in the {@link GetBlockApi.getBlock} RPC HTTP
+     * method.
+     *
+     * @param filter Notifications will only be produced for blocks that match this filter. Only
+     * transactions that match this filter will be included in the block.
+     *
+     * {@label transactions-base58--rewards-included--version-specified}
+     * @see https://solana.com/docs/rpc/websocket/blocksubscribe
+     */
     blockNotifications(
         filter: BlockNotificationsFilter,
+        // transactionDetails=full (default), encoding=base58, rewards=missing/true, maxSupportedTransactionVersion=0
         config: BlockNotificationsCommonConfig &
             Readonly<{
                 encoding: 'base58';
@@ -294,9 +485,22 @@ export type BlockNotificationsApi = {
                     | null;
             }>
     >;
-    // transactionDetails=full (default), encoding=base58, rewards=missing/true, maxSupportedTransactionVersion=missing
+    /**
+     * Subscribe to receive notifications anytime a new block reaches the specified level of
+     * commitment.
+     *
+     * The notification format is the same as seen in the {@link GetBlockApi.getBlock} RPC HTTP
+     * method.
+     *
+     * @param filter Notifications will only be produced for blocks that match this filter. Only
+     * transactions that match this filter will be included in the block.
+     *
+     * {@label transactions-base58--rewards-included--version-legacy}
+     * @see https://solana.com/docs/rpc/websocket/blocksubscribe
+     */
     blockNotifications(
         filter: BlockNotificationsFilter,
+        // transactionDetails=full (default), encoding=base58, rewards=missing/true, maxSupportedTransactionVersion=missing
         config: BlockNotificationsCommonConfig &
             Readonly<{
                 encoding: 'base58';
@@ -313,9 +517,22 @@ export type BlockNotificationsApi = {
                     | null;
             }>
     >;
-    // transactionDetails=full (default), encoding=base64, rewards=false, maxSupportedTransactionVersion=0
+    /**
+     * Subscribe to receive notifications anytime a new block reaches the specified level of
+     * commitment.
+     *
+     * The notification format is the same as seen in the {@link GetBlockApi.getBlock} RPC HTTP
+     * method.
+     *
+     * @param filter Notifications will only be produced for blocks that match this filter. Only
+     * transactions that match this filter will be included in the block.
+     *
+     * {@label transactions-base64--rewards-none--version-specified}
+     * @see https://solana.com/docs/rpc/websocket/blocksubscribe
+     */
     blockNotifications(
         filter: BlockNotificationsFilter,
+        // transactionDetails=full (default), encoding=base64, rewards=false, maxSupportedTransactionVersion=0
         config: BlockNotificationsCommonConfig &
             Readonly<{
                 encoding: 'base64';
@@ -334,9 +551,22 @@ export type BlockNotificationsApi = {
                     | null;
             }>
     >;
-    // transactionDetails=full (default), encoding=base64, rewards=false, maxSupportedTransactionVersion=missing
+    /**
+     * Subscribe to receive notifications anytime a new block reaches the specified level of
+     * commitment.
+     *
+     * The notification format is the same as seen in the {@link GetBlockApi.getBlock} RPC HTTP
+     * method.
+     *
+     * @param filter Notifications will only be produced for blocks that match this filter. Only
+     * transactions that match this filter will be included in the block.
+     *
+     * {@label transactions-base64--rewards-none--version-legacy}
+     * @see https://solana.com/docs/rpc/websocket/blocksubscribe
+     */
     blockNotifications(
         filter: BlockNotificationsFilter,
+        // transactionDetails=full (default), encoding=base64, rewards=false, maxSupportedTransactionVersion=missing
         config: BlockNotificationsCommonConfig &
             Readonly<{
                 encoding: 'base64';
@@ -352,9 +582,22 @@ export type BlockNotificationsApi = {
                     | null;
             }>
     >;
-    // transactionDetails=full (default), encoding=base64, rewards=missing/true, maxSupportedTransactionVersion=0
+    /**
+     * Subscribe to receive notifications anytime a new block reaches the specified level of
+     * commitment.
+     *
+     * The notification format is the same as seen in the {@link GetBlockApi.getBlock} RPC HTTP
+     * method.
+     *
+     * @param filter Notifications will only be produced for blocks that match this filter. Only
+     * transactions that match this filter will be included in the block.
+     *
+     * {@label transactions-base64--rewards-included--version-specified}
+     * @see https://solana.com/docs/rpc/websocket/blocksubscribe
+     */
     blockNotifications(
         filter: BlockNotificationsFilter,
+        // transactionDetails=full (default), encoding=base64, rewards=missing/true, maxSupportedTransactionVersion=0
         config: BlockNotificationsCommonConfig &
             Readonly<{
                 encoding: 'base64';
@@ -374,9 +617,22 @@ export type BlockNotificationsApi = {
                     | null;
             }>
     >;
-    // transactionDetails=full (default), encoding=base64, rewards=missing/true, maxSupportedTransactionVersion=missing
+    /**
+     * Subscribe to receive notifications anytime a new block reaches the specified level of
+     * commitment.
+     *
+     * The notification format is the same as seen in the {@link GetBlockApi.getBlock} RPC HTTP
+     * method.
+     *
+     * @param filter Notifications will only be produced for blocks that match this filter. Only
+     * transactions that match this filter will be included in the block.
+     *
+     * {@label transactions-base64--rewards-included--version-legacy}
+     * @see https://solana.com/docs/rpc/websocket/blocksubscribe
+     */
     blockNotifications(
         filter: BlockNotificationsFilter,
+        // transactionDetails=full (default), encoding=base64, rewards=missing/true, maxSupportedTransactionVersion=missing
         config: BlockNotificationsCommonConfig &
             Readonly<{
                 encoding: 'base64';
@@ -393,9 +649,22 @@ export type BlockNotificationsApi = {
                     | null;
             }>
     >;
-    // transactionDetails=full (default), encoding=jsonParsed, rewards=false, maxSupportedTransactionVersion=0
+    /**
+     * Subscribe to receive notifications anytime a new block reaches the specified level of
+     * commitment.
+     *
+     * The notification format is the same as seen in the {@link GetBlockApi.getBlock} RPC HTTP
+     * method.
+     *
+     * @param filter Notifications will only be produced for blocks that match this filter. Only
+     * transactions that match this filter will be included in the block.
+     *
+     * {@label transactions-parsed--rewards-none--version-specified}
+     * @see https://solana.com/docs/rpc/websocket/blocksubscribe
+     */
     blockNotifications(
         filter: BlockNotificationsFilter,
+        // transactionDetails=full (default), encoding=jsonParsed, rewards=false, maxSupportedTransactionVersion=0
         config: BlockNotificationsCommonConfig &
             Readonly<{
                 encoding: 'jsonParsed';
@@ -414,9 +683,22 @@ export type BlockNotificationsApi = {
                     | null;
             }>
     >;
-    // transactionDetails=full (default), encoding=jsonParsed, rewards=false, maxSupportedTransactionVersion=missing
+    /**
+     * Subscribe to receive notifications anytime a new block reaches the specified level of
+     * commitment.
+     *
+     * The notification format is the same as seen in the {@link GetBlockApi.getBlock} RPC HTTP
+     * method.
+     *
+     * @param filter Notifications will only be produced for blocks that match this filter. Only
+     * transactions that match this filter will be included in the block.
+     *
+     * {@label transactions-parsed--rewards-none--version-legacy}
+     * @see https://solana.com/docs/rpc/websocket/blocksubscribe
+     */
     blockNotifications(
         filter: BlockNotificationsFilter,
+        // transactionDetails=full (default), encoding=jsonParsed, rewards=false, maxSupportedTransactionVersion=missing
         config: BlockNotificationsCommonConfig &
             Readonly<{
                 encoding: 'jsonParsed';
@@ -432,9 +714,22 @@ export type BlockNotificationsApi = {
                     | null;
             }>
     >;
-    // transactionDetails=full (default), encoding=jsonParsed, rewards=missing/true, maxSupportedTransactionVersion=0
+    /**
+     * Subscribe to receive notifications anytime a new block reaches the specified level of
+     * commitment.
+     *
+     * The notification format is the same as seen in the {@link GetBlockApi.getBlock} RPC HTTP
+     * method.
+     *
+     * @param filter Notifications will only be produced for blocks that match this filter. Only
+     * transactions that match this filter will be included in the block.
+     *
+     * {@label transactions-parsed--rewards-included--version-specified}
+     * @see https://solana.com/docs/rpc/websocket/blocksubscribe
+     */
     blockNotifications(
         filter: BlockNotificationsFilter,
+        // transactionDetails=full (default), encoding=jsonParsed, rewards=missing/true, maxSupportedTransactionVersion=0
         config: BlockNotificationsCommonConfig &
             Readonly<{
                 encoding: 'jsonParsed';
@@ -454,9 +749,22 @@ export type BlockNotificationsApi = {
                     | null;
             }>
     >;
-    // transactionDetails=full (default), encoding=jsonParsed, rewards=missing/true, maxSupportedTransactionVersion=missing
+    /**
+     * Subscribe to receive notifications anytime a new block reaches the specified level of
+     * commitment.
+     *
+     * The notification format is the same as seen in the {@link GetBlockApi.getBlock} RPC HTTP
+     * method.
+     *
+     * @param filter Notifications will only be produced for blocks that match this filter. Only
+     * transactions that match this filter will be included in the block.
+     *
+     * {@label transactions-parsed--rewards-included--version-legacy}
+     * @see https://solana.com/docs/rpc/websocket/blocksubscribe
+     */
     blockNotifications(
         filter: BlockNotificationsFilter,
+        // transactionDetails=full (default), encoding=jsonParsed, rewards=missing/true, maxSupportedTransactionVersion=missing
         config: BlockNotificationsCommonConfig &
             Readonly<{
                 encoding: 'jsonParsed';
@@ -473,9 +781,22 @@ export type BlockNotificationsApi = {
                     | null;
             }>
     >;
-    // transactionDetails=full (default), encoding=json (default), rewards=false, maxSupportedTransactionVersion=0
+    /**
+     * Subscribe to receive notifications anytime a new block reaches the specified level of
+     * commitment.
+     *
+     * The notification format is the same as seen in the {@link GetBlockApi.getBlock} RPC HTTP
+     * method.
+     *
+     * @param filter Notifications will only be produced for blocks that match this filter. Only
+     * transactions that match this filter will be included in the block.
+     *
+     * {@label transactions-json--rewards-none--version-specified}
+     * @see https://solana.com/docs/rpc/websocket/blocksubscribe
+     */
     blockNotifications(
         filter: BlockNotificationsFilter,
+        // transactionDetails=full (default), encoding=json (default), rewards=false, maxSupportedTransactionVersion=0
         config: BlockNotificationsCommonConfig &
             Readonly<{
                 encoding?: 'json';
@@ -494,9 +815,22 @@ export type BlockNotificationsApi = {
                     | null;
             }>
     >;
-    // transactionDetails=full (default), encoding=json (default), rewards=false, maxSupportedTransactionVersion=missing
+    /**
+     * Subscribe to receive notifications anytime a new block reaches the specified level of
+     * commitment.
+     *
+     * The notification format is the same as seen in the {@link GetBlockApi.getBlock} RPC HTTP
+     * method.
+     *
+     * @param filter Notifications will only be produced for blocks that match this filter. Only
+     * transactions that match this filter will be included in the block.
+     *
+     * {@label transactions-json--rewards-none--version-legacy}
+     * @see https://solana.com/docs/rpc/websocket/blocksubscribe
+     */
     blockNotifications(
         filter: BlockNotificationsFilter,
+        // transactionDetails=full (default), encoding=json (default), rewards=false, maxSupportedTransactionVersion=missing
         config: BlockNotificationsCommonConfig &
             Readonly<{
                 encoding?: 'json';
@@ -512,9 +846,22 @@ export type BlockNotificationsApi = {
                     | null;
             }>
     >;
-    // transactionDetails=full (default), encoding=json (default), rewards=missing/true, maxSupportedTransactionVersion=0
+    /**
+     * Subscribe to receive notifications anytime a new block reaches the specified level of
+     * commitment.
+     *
+     * The notification format is the same as seen in the {@link GetBlockApi.getBlock} RPC HTTP
+     * method.
+     *
+     * @param filter Notifications will only be produced for blocks that match this filter. Only
+     * transactions that match this filter will be included in the block.
+     *
+     * {@label transactions-json--rewards-included--version-specified}
+     * @see https://solana.com/docs/rpc/websocket/blocksubscribe
+     */
     blockNotifications(
         filter: BlockNotificationsFilter,
+        // transactionDetails=full (default), encoding=json (default), rewards=missing/true, maxSupportedTransactionVersion=0
         config: BlockNotificationsCommonConfig &
             Readonly<{
                 encoding?: 'json';
@@ -534,9 +881,22 @@ export type BlockNotificationsApi = {
                     | null;
             }>
     >;
-    // transactionDetails=full (default), encoding=json (default), rewards=missing/true, maxSupportedTransactionVersion=missing
+    /**
+     * Subscribe to receive notifications anytime a new block reaches the specified level of
+     * commitment.
+     *
+     * The notification format is the same as seen in the {@link GetBlockApi.getBlock} RPC HTTP
+     * method.
+     *
+     * @param filter Notifications will only be produced for blocks that match this filter. Only
+     * transactions that match this filter will be included in the block.
+     *
+     * {@label transactions-json--rewards-included--version-legacy}
+     * @see https://solana.com/docs/rpc/websocket/blocksubscribe
+     */
     blockNotifications(
         filter: BlockNotificationsFilter,
+        // transactionDetails=full (default), encoding=json (default), rewards=missing/true, maxSupportedTransactionVersion=missing
         config?: BlockNotificationsCommonConfig &
             Readonly<{
                 encoding?: 'json';
