@@ -6,25 +6,11 @@ import type {
     AccountInfoWithBase64EncodedData,
     AccountInfoWithBase64EncodedZStdCompressedData,
     AccountInfoWithJsonData,
-    Base58EncodedBytes,
-    Base64EncodedBytes,
     Commitment,
+    GetProgramAccountsDatasizeFilter,
+    GetProgramAccountsMemcmpFilter,
     SolanaRpcResponse,
 } from '@solana/rpc-types';
-
-type ProgramNotificationsMemcmpFilterBase58 = Readonly<{
-    bytes: Base58EncodedBytes;
-    encoding: 'base58';
-    offset: bigint;
-}>;
-
-type ProgramNotificationsMemcmpFilterBase64 = Readonly<{
-    bytes: Base64EncodedBytes;
-    encoding: 'base64';
-    offset: bigint;
-}>;
-
-type ProgramNotificationsDatasizeFilter = bigint;
 
 type ProgramNotificationsApiNotificationBase<TData> = SolanaRpcResponse<
     Readonly<{
@@ -36,10 +22,7 @@ type ProgramNotificationsApiNotificationBase<TData> = SolanaRpcResponse<
 type ProgramNotificationsApiCommonConfig = Readonly<{
     commitment?: Commitment;
     // The resultant account must meet ALL filter criteria to be included in the returned results
-    filters?: readonly Readonly<
-        | { dataSize: ProgramNotificationsDatasizeFilter }
-        | { memcmp: ProgramNotificationsMemcmpFilterBase58 | ProgramNotificationsMemcmpFilterBase64 }
-    >[];
+    filters?: readonly Readonly<GetProgramAccountsDatasizeFilter | GetProgramAccountsMemcmpFilter>[];
 }>;
 
 export type ProgramNotificationsApi = {

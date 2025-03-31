@@ -2,7 +2,12 @@ import type { Address } from '@solana/addresses';
 import stringify from '@solana/fast-stable-stringify';
 import type { Signature } from '@solana/keys';
 import type { GetAccountInfoApi, GetBlockApi, GetProgramAccountsApi, GetTransactionApi } from '@solana/rpc';
-import type { Commitment, Slot } from '@solana/rpc-types';
+import type {
+    Commitment,
+    GetProgramAccountsDatasizeFilter,
+    GetProgramAccountsMemcmpFilter,
+    Slot,
+} from '@solana/rpc-types';
 
 export type BatchLoadPromiseCallback<T> = Readonly<{
     reject: (reason?: unknown) => void;
@@ -65,18 +70,7 @@ export type ProgramAccountsLoaderArgsBase = {
     commitment?: Commitment;
     dataSlice?: { length: number; offset: number };
     encoding?: 'base58' | 'base64' | 'base64+zstd' | 'jsonParsed';
-    filters?: (
-        | {
-              dataSize: bigint;
-          }
-        | {
-              memcmp: {
-                  bytes: string;
-                  encoding: 'base58' | 'base64';
-                  offset: bigint;
-              };
-          }
-    )[];
+    filters?: (GetProgramAccountsDatasizeFilter | GetProgramAccountsMemcmpFilter)[];
     /**
      * Prevents accessing stale data by enforcing that the RPC node has processed transactions up to
      * this slot

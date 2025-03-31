@@ -4,7 +4,7 @@ import type { Address } from '@solana/addresses';
 import { getBase58Decoder } from '@solana/codecs-strings';
 import { SOLANA_ERROR__JSON_RPC__SERVER_ERROR_MIN_CONTEXT_SLOT_NOT_REACHED, SolanaError } from '@solana/errors';
 import type { Rpc } from '@solana/rpc-spec';
-import type { Commitment } from '@solana/rpc-types';
+import type { Base58EncodedBytes, Commitment } from '@solana/rpc-types';
 import path from 'path';
 
 import { GetProgramAccountsApi } from '../index';
@@ -2339,7 +2339,7 @@ describe('getProgramAccounts', () => {
                     filters: [
                         {
                             memcmp: {
-                                bytes: mint,
+                                bytes: mint as unknown as Base58EncodedBytes,
                                 encoding: 'base58',
                                 offset: 0n,
                             },
@@ -2400,7 +2400,7 @@ describe('getProgramAccounts', () => {
                         },
                         {
                             memcmp: {
-                                bytes: mint,
+                                bytes: mint as unknown as Base58EncodedBytes,
                                 encoding: 'base58',
                                 offset: 0n,
                             },

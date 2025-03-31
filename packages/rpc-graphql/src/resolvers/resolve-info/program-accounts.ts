@@ -1,5 +1,5 @@
 import { Address } from '@solana/addresses';
-import { Commitment, Slot } from '@solana/rpc-types';
+import { Commitment, GetProgramAccountsDatasizeFilter, GetProgramAccountsMemcmpFilter, Slot } from '@solana/rpc-types';
 import { GraphQLResolveInfo } from 'graphql';
 
 import { ProgramAccountsLoaderArgs } from '../../loaders';
@@ -21,18 +21,7 @@ export function buildProgramAccountsLoaderArgSetFromResolveInfo(
          * the client, the default commitment applied by the server is `"finalized"`.
          */
         commitment?: Commitment;
-        filters?: (
-            | {
-                  dataSize: bigint;
-              }
-            | {
-                  memcmp: {
-                      bytes: string;
-                      encoding: 'base58' | 'base64';
-                      offset: bigint;
-                  };
-              }
-        )[];
+        filters?: (GetProgramAccountsDatasizeFilter | GetProgramAccountsMemcmpFilter)[];
         /**
          * Prevents accessing stale data by enforcing that the RPC node has processed transactions
          * up to this slot
