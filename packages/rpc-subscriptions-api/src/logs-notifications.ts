@@ -4,33 +4,59 @@ import type { Commitment, SolanaRpcResponse, TransactionError } from '@solana/rp
 
 type LogsNotificationsApiNotification = SolanaRpcResponse<
     Readonly<{
-        // Error if transaction failed, null if transaction succeeded
+        /** Error if transaction failed, null if transaction succeeded. */
         err: TransactionError | null;
-        // Array of log messages the transaction instructions output during execution,
-        // null if simulation failed before the transaction was able to execute
-        // (for example due to an invalid blockhash or signature verification failure)
-        logs: readonly string[] | null;
-        // The transaction signature base58 encoded
+        /** Array of log messages the transaction instructions output during execution. */
+        logs: readonly string[];
+        /** Transaction signature as base-58 encoded string */
         signature: Signature;
     }>
 >;
 
-// Currently, the mentions field only supports one Pubkey string per method call.
-// Listing additional addresses will result in an error.
-type LogsNotificationsApiFilter = 'all' | 'allWithVotes' | { mentions: [Address] };
-
 type LogsNotificationsApiConfig = Readonly<{
+    /**
+     * Get notified on logs from new transactions that have reached this level of commitment.
+     *
+     * @defaultValue Whichever default is applied by the underlying {@link RpcSubscriptionsApi} in
+     * use. For example, when using an API created by a `createSolanaRpcSubscriptions*()` helper,
+     * the default commitment is `"confirmed"` unless configured otherwise. Unmitigated by an API
+     * layer on the client, the default commitment applied by the server is `"finalized"`.
+     */
     commitment?: Commitment;
 }>;
 
 export type LogsNotificationsApi = {
     /**
-     * Subscribe to a transaction logs to receive notification when a given transaction is committed.
-     * On `logsNotification` - the subscription is automatically cancelled.
-     * The logs must be a txid, the first logs of a transaction.
+     * Subscribe to receive notifications containing the logs of all non-vote transactions.
+     *
+     * {@label non-vote}
+     * @see https://solana.com/docs/rpc/websocket/logssubscribe
+     */
+    logsNotifications(filter: 'all', config?: LogsNotificationsApiConfig): LogsNotificationsApiNotification;
+    /**
+     * Subscribe to receive notifications containing the logs of all transactions.
+     *
+     * {@label all}
+     * @see https://solana.com/docs/rpc/websocket/logssubscribe
+     */
+    logsNotifications(filter: 'allWithVotes', config?: LogsNotificationsApiConfig): LogsNotificationsApiNotification;
+    /**
+     * Subscribe to receive notifications containing the logs of transactions that mention the
+     * supplied program or account.
+
+    * {@label all-that-mention}
+     * @see https://solana.com/docs/rpc/websocket/logssubscribe
      */
     logsNotifications(
-        filter: LogsNotificationsApiFilter,
+        filter: {
+            /**
+             * This filter matches when a transaction mentions the single address provided.
+             *
+             * This filter currently only supports one address per method call. Listing additional
+             * addresses will result in an error.
+             */
+            mentions: [Address];
+        },
         config?: LogsNotificationsApiConfig,
     ): LogsNotificationsApiNotification;
 };
