@@ -41,9 +41,9 @@ try {
 
 ## Types
 
-### `SolanaRpcSubscriptionsApi{Devnet|Testnet|Mainnet}`
+### `SolanaRpcSubscriptionsApi`
 
-These types represent the RPC subscription methods available on a specific Solana cluster.
+These types represent the RPC subscription methods available on all clusters.
 
 ## Functions
 
@@ -61,5 +61,5 @@ The default behaviours include:
 
 A config object with the following properties:
 
-- `defaultCommitment`: An optional default `Commitment` value. Given an RPC method that takes `commitment` as a parameter, this value will be used when the caller does not supply one.
+- `defaultCommitment`: An optional `Commitment` value to use as the default when none is supplied by the caller.
 - `onIntegerOverflow(request, keyPath, value): void`: An optional function that will be called whenever a `bigint` input exceeds that which can be expressed using JavaScript numbers. This is used in the default `SolanaRpcSubscriptionsApi` to throw an exception rather than to allow truncated values to propagate through a program.

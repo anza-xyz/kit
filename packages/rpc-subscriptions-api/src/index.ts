@@ -1,3 +1,40 @@
+/**
+ * This package contains types that describe the [methods](https://solana.com/docs/rpc/websocket) of
+ * the Solana JSON RPC Subscriptions API, and utilities for creating a
+ * {@link RpcSubscriptionsApi} implementation with sensible defaults. It can be used standalone, but
+ * it is also exported as part of Kit
+ * [`@solana/kit`](https://github.com/anza-xyz/kit/tree/main/packages/kit).
+ *
+ * Each RPC subscriptions method is described in terms of a TypeScript type of the following form:
+ *
+ * ```ts
+ * type ExampleApi = {
+ *     thingNotifications(address: Address): Thing;
+ * };
+ * ```
+ *
+ * A {@link RpcSubscriptionsApi} that implements `ExampleApi` will ultimately expose its defined
+ * methods on any {@link RpcSubscriptions} that uses it.
+ *
+ * ```ts
+ * const rpcSubscriptions: RpcSubscriptions<ExampleApi> = createExampleRpcSubscriptions(/* ... *\/);
+ * const thingNotifications = await rpc
+ *     .thingNotifications(address('95DpK3y3GF7U8s1k4EvZ7xqyeCkhsHeZaE97iZpHUGMN'))
+ *     .subscribe({ abortSignal: AbortSignal.timeout(5_000) });
+ * try {
+ *     for await (const thing of thingNotifications) {
+ *         console.log('Got a thing', thing);
+ *     }
+ * } catch (e) {
+ *     console.error('Our subscription to `Thing` notifications has failed', e);
+ * } finally {
+ *     console.log('We are done listening for `Thing` notifications');
+ * }
+ * ```
+ *
+ * @pacakageDocumentation
+ */
+
 import {
     createRpcSubscriptionsApi,
     executeRpcPubSubSubscriptionPlan,
@@ -23,12 +60,14 @@ import { SlotNotificationsApi } from './slot-notifications';
 import { SlotsUpdatesNotificationsApi } from './slots-updates-notifications';
 import { VoteNotificationsApi } from './vote-notifications';
 
+/** Represents the RPC Subscriptions methods available on all clusters. */
 export type SolanaRpcSubscriptionsApi = AccountNotificationsApi &
     LogsNotificationsApi &
     ProgramNotificationsApi &
     RootNotificationsApi &
     SignatureNotificationsApi &
     SlotNotificationsApi;
+/** Represents unstable RPC Subscriptions methods available on node that have enabled them. */
 export type SolanaRpcSubscriptionsApiUnstable = BlockNotificationsApi &
     SlotsUpdatesNotificationsApi &
     VoteNotificationsApi;
@@ -67,6 +106,19 @@ function createSolanaRpcSubscriptionsApi_INTERNAL<TApi extends RpcSubscriptionsA
     });
 }
 
+/**
+ * Creates a {@link RpcSubscriptionsApi} implementation of the Solana JSON RPC API with some default
+ * behaviours.
+ *
+ * The default behaviours include:
+ * - A transform that converts `bigint` inputs to `number` for compatibility with version 1.0 of the
+ *   Solana JSON RPC.
+ * - A transform that calls the config's {@link Config.onIntegerOverflow | onIntegerOverflow}
+ *   handler whenever a `bigint` input would overflow a JavaScript IEEE 754 number. See
+ *   [this](https://github.com/solana-labs/solana-web3.js/issues/1116) GitHub issue for more
+ *   information.
+ * - A transform that applies a default commitment wherever not specified
+ */
 export function createSolanaRpcSubscriptionsApi<TApi extends RpcSubscriptionsApiMethods = SolanaRpcSubscriptionsApi>(
     config?: Config,
 ): RpcSubscriptionsApi<TApi> {
