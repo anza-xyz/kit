@@ -32,7 +32,7 @@
  * }
  * ```
  *
- * @pacakageDocumentation
+ * @packageDocumentation
  */
 
 import {
