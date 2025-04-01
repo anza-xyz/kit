@@ -4,7 +4,10 @@ type RootNotificationsApiNotification = Slot;
 
 export type RootNotificationsApi = {
     /**
-     * Subscribe to receive notification anytime a new root is set by the validator
+     * Subscribe to receive notifications anytime a new root is set by the validator.
+     *
+     * @returns The number of the rooted slot
+     * @see https://solana.com/docs/rpc/websocket/rootsubscribe
      */
     rootNotifications(): RootNotificationsApiNotification;
 };
