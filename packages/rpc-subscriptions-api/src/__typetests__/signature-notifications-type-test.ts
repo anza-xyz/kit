@@ -63,3 +63,29 @@ rpcSubscriptions
     })
     // @ts-expect-error Should have both notification types
     .subscribe({ abortSignal: new AbortController().signal }) satisfies Promise<AsyncIterable<TNotificationProcessed>>;
+
+void (async () => {
+    // [DESCRIBE] When `enableReceivedNotification` is true
+    {
+        // It is the literal string `'receivedSignature'` when the value is a string.
+        const notifications = await rpcSubscriptions
+            .signatureNotifications('xxxxx' as Signature, { enableReceivedNotification: true })
+            .subscribe({ abortSignal: AbortSignal.any([]) });
+        for await (const notif of notifications) {
+            if (typeof notif.value === 'string') {
+                notif.value satisfies 'receivedSignature';
+            }
+        }
+    }
+    {
+        // It is an object with a nullable error property when the value is not a string.
+        const notifications = await rpcSubscriptions
+            .signatureNotifications('xxxxx' as Signature, { enableReceivedNotification: true })
+            .subscribe({ abortSignal: AbortSignal.any([]) });
+        for await (const notif of notifications) {
+            if (typeof notif.value !== 'string') {
+                notif.value.err satisfies TransactionError | null;
+            }
+        }
+    }
+});
