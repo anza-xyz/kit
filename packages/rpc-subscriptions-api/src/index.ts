@@ -67,7 +67,7 @@ export type SolanaRpcSubscriptionsApi = AccountNotificationsApi &
     RootNotificationsApi &
     SignatureNotificationsApi &
     SlotNotificationsApi;
-/** Represents unstable RPC Subscriptions methods available on node that have enabled them. */
+/** Represents unstable RPC Subscriptions methods available on nodes that have enabled them. */
 export type SolanaRpcSubscriptionsApiUnstable = BlockNotificationsApi &
     SlotsUpdatesNotificationsApi &
     VoteNotificationsApi;
