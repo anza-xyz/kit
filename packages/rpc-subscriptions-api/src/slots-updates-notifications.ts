@@ -1,12 +1,15 @@
 import type { Slot } from '@solana/rpc-types';
 
 type SlotsUpdatesNotificationsApiNotificationBase = Readonly<{
+    /** The newly updated slot */
     slot: Slot;
+    /** The Unix timestamp of the update in milliseconds */
     timestamp: bigint;
     type: 'completed' | 'firstShredReceived' | 'optimisticConfirmation' | 'root';
 }>;
 
 type SlotsUpdatesNotificationsApiNotificationCreatedBank = Readonly<{
+    /** The parent slot */
     parent: Slot;
     type: 'createdBank';
 }> &
@@ -37,7 +40,12 @@ type SlotsUpdatesNotificationsApiNotification =
 
 export type SlotsUpdatesNotificationsApi = {
     /**
-     * Subscribe to receive a notification from the validator on a variety of updates on every slot
+     * Subscribe to receive a notification from the validator on a variety of updates on every slot.
+     *
+     * This subscription is unstable. The format of this subscription may change in the future, and
+     * may not be supported by every node.
+     *
+     * @see https://solana.com/docs/rpc/websocket/slotsupdatessubscribe
      */
     slotsUpdatesNotifications(): SlotsUpdatesNotificationsApiNotification;
 };
