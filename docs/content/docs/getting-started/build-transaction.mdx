@@ -44,7 +44,7 @@ person satisfies { name: string; age: number; wallet: Address };
 
 But as you can see, even after updating our variable, TypeScript still believes the `person` variable is of type `{ name: string }`. This is because TypeScript doesn't re-assign types to variables when they are mutated.
 
-Fortunately, the Solana Kit library offers a functional API which means its types are designed to be immutable. So, instead of trying to grow the `person` variable by mutating it, it creates new variables with new types at each step.
+Fortunately, the Kit library offers a functional API which means its types are designed to be immutable. So, instead of trying to grow the `person` variable by mutating it, it creates new variables with new types at each step.
 
 ```ts twoslash
 import { address, Address } from "@solana/kit";

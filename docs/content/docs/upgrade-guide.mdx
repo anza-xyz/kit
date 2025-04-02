@@ -5,21 +5,21 @@ description: Upgrade your Web3.js project to Kit
 
 ## Why upgrade?
 
-Solana Kit (formerly Web3.js v2) is a complete rewrite of [the Web3.js library](https://github.com/solana-labs/solana-web3.js/). It is designed to be more composable, customizable, and efficient than its predecessor. Its functional design enables the entire library to be tree-shaken, drastically reducing your bundle size. It also takes advantage of modern JavaScript features — such as native Ed25519 key support and `bigint` for large values — resulting in an even smaller bundle, better performance and most importantly, a reduced attack surface for your application.
+Kit (formerly Web3.js v2) is a complete rewrite of [the Web3.js library](https://github.com/solana-labs/solana-web3.js/). It is designed to be more composable, customizable, and efficient than its predecessor. Its functional design enables the entire library to be tree-shaken, drastically reducing your bundle size. It also takes advantage of modern JavaScript features — such as native Ed25519 key support and `bigint` for large values — resulting in an even smaller bundle, better performance and most importantly, a reduced attack surface for your application.
 
 <Spread>
   ![Tree-shaking illustration. The left side shows a bunch of imports from Web3.js all being bundled despite only a
-  couple being used. The right side shows an equivalent set of imports for Solana Kit but only the used functions are
+  couple being used. The right side shows an equivalent set of imports for Kit but only the used functions are
   bundled.](./tree-shaking.svg)
 </Spread>
 
-Unlike Web3.js, Solana Kit doesn't rely on JavaScript classes or other non-tree-shakeable features. This brings us to our first key difference.
+Unlike Web3.js, Kit doesn't rely on JavaScript classes or other non-tree-shakeable features. This brings us to our first key difference.
 
 ## Where's my `Connection` class?
 
 In Web3.js, the `Connection` class serves as a central entry point, making the library's API easier to discover via a single object. However, this comes at a cost: using the `Connection` class forces you to bundle every method it provides, even if you only use a few. As a result, your users must download the entire library, even when most of it goes unused.
 
-To avoid this, **Solana Kit does not include a single entry-point class like `Connection`**. Instead, it offers a set of functions that you can import and use as needed. Two key functions replace most of the `Connection` class's functionality: `createSolanaRpc` and `createSolanaRpcSubscriptions`.
+To avoid this, **Kit does not include a single entry-point class like `Connection`**. Instead, it offers a set of functions that you can import and use as needed. Two key functions replace most of the `Connection` class's functionality: `createSolanaRpc` and `createSolanaRpcSubscriptions`.
 
 The former, `createSolanaRpc`, returns an `Rpc` object for making RPC requests to a specified endpoint. [Read more about RPCs here](/docs/concepts/rpc).
 
@@ -39,7 +39,7 @@ const wallet = new PublicKey("1234..5678");
 const balance = await connection.getBalance(wallet);
 ```
 
-```ts twoslash title="Solana Kit"
+```ts twoslash title="Kit"
 import { address, createSolanaRpc } from "@solana/kit";
 
 // Create an RPC proxy object.
@@ -74,7 +74,7 @@ connection.onAccountChange(wallet, (accountInfo) => {
 });
 ```
 
-```ts twoslash title="Solana Kit"
+```ts twoslash title="Kit"
 import { address, createSolanaRpcSubscriptions } from "@solana/kit";
 
 // Create an RPC subscriptions proxy object.
@@ -118,7 +118,7 @@ const wallet = new PublicKey("1234..5678");
 const account = await connection.getAccountInfo(wallet);
 ```
 
-```ts twoslash title="Solana Kit"
+```ts twoslash title="Kit"
 import { address } from "@solana/kit";
 // ---cut-start---
 import { createSolanaRpc } from "@solana/kit";
@@ -132,9 +132,9 @@ const { value: account } = await rpc.getAccountInfo(wallet).send();
 </div>
 </Spread>
 
-Solana Kit also provides helper functions like `fetchEncodedAccount` and `fetchEncodedAccounts`, which return `MaybeAccount` objects. These objects store the account's address and include an `exists` boolean to indicate whether the account is present on-chain. If `exists` is `true`, the object also contains the expected account info. These helpers also unify the return type of accounts, ensuring consistency regardless of the encoding used to fetch them.
+Kit also provides helper functions like `fetchEncodedAccount` and `fetchEncodedAccounts`, which return `MaybeAccount` objects. These objects store the account's address and include an `exists` boolean to indicate whether the account is present on-chain. If `exists` is `true`, the object also contains the expected account info. These helpers also unify the return type of accounts, ensuring consistency regardless of the encoding used to fetch them.
 
-```ts twoslash title="Solana Kit"
+```ts twoslash title="Kit"
 import { address, assertAccountExists, fetchEncodedAccount } from "@solana/kit";
 // ---cut-start---
 import { createSolanaRpc } from "@solana/kit";
@@ -147,9 +147,9 @@ assertAccountExists(account);
 account.data satisfies Uint8Array;
 ```
 
-In addition, Solana Kit introduces a new serialization library called `codecs`. Codecs are composable objects for encoding and decoding any type to and from a `Uint8Array`. For example, here's how you can define a codec for a `Person` account by combining multiple codec primitives:
+In addition, Kit introduces a new serialization library called `codecs`. Codecs are composable objects for encoding and decoding any type to and from a `Uint8Array`. For example, here's how you can define a codec for a `Person` account by combining multiple codec primitives:
 
-```ts twoslash title="Solana Kit"
+```ts twoslash title="Kit"
 import {
   address,
   Address,
@@ -188,7 +188,7 @@ const bytes = personCodec.encode({
 
 Once you have a codec for an account's data, you can use the `decodeAccount` function to transform an encoded account into a decoded account.
 
-```ts twoslash title="Solana Kit"
+```ts twoslash title="Kit"
 import { address, Codec, decodeAccount, fetchEncodedAccount } from "@solana/kit";
 // ---cut-start---
 import {
@@ -227,11 +227,11 @@ if (decodedAccount.exists) {
 
 ## Using program libraries
 
-Fortunately, you don't need to create a custom codec every time you decode an account. Solana Kit provides client libraries for many popular Solana programs that can help with that. For example, System program helpers are available in the `@solana-program/system` library.
+Fortunately, you don't need to create a custom codec every time you decode an account. Kit provides client libraries for many popular Solana programs that can help with that. For example, System program helpers are available in the `@solana-program/system` library.
 
 These libraries are [generated via Codama](https://github.com/codama-idl/codama), ensuring consistent structure across them. For instance, the `fetchNonce` function from `@solana-program/system` can be used to fetch and decode a `Nonce` account from its address.
 
-```ts twoslash title="Solana Kit"
+```ts twoslash title="Kit"
 import { Account, address } from "@solana/kit";
 import { fetchNonce, Nonce } from "@solana-program/system";
 // ---cut-start---
@@ -242,13 +242,13 @@ const rpc = createSolanaRpc("https://api.devnet.solana.com");
 const account: Account<Nonce> = await fetchNonce(rpc, address("1234..5678"));
 ```
 
-[Check out the "Compatible clients" page](/docs/compatible-clients) for a list of available program libraries compatible with Solana Kit.
+[Check out the "Compatible clients" page](/docs/compatible-clients) for a list of available program libraries compatible with Kit.
 
 ## Creating instructions
 
 In addition to fetching and decoding accounts, generated program clients also provide functions for creating instructions. These functions follow the `getXInstruction` naming convention, where `X` is the name of the instruction.
 
-For example, here's how to create a `CreateAccount` instruction using the `SystemProgram` class in Web3.js, followed by the Solana Kit equivalent using the `@solana-program/system` library.
+For example, here's how to create a `CreateAccount` instruction using the `SystemProgram` class in Web3.js, followed by the Kit equivalent using the `@solana-program/system` library.
 
 <Spread>
 <div className="2xl:flex 2xl:*:flex-1 2xl:items-start 2xl:gap-4">
@@ -263,7 +263,7 @@ const transferSol = SystemProgram.transfer({
 });
 ```
 
-```ts twoslash title="Solana Kit"
+```ts twoslash title="Kit"
 import { address, createNoopSigner } from "@solana/kit";
 import { getTransferSolInstruction } from "@solana-program/system";
 
@@ -278,10 +278,10 @@ const transferSol = getTransferSolInstruction({
 </Spread>
 
 <Callout title="Transaction signers">
-  Notice the `createNoopSigner` function in the Solana Kit example. Unlike Web3.js, Solana Kit uses `TransactionSigner`
-  objects when an account needs to act as a signer for an instruction. This allows signers to be extracted from built
-  transactions, enabling automatic transaction signing without manually scanning instructions to find required signers.
-  We'll explore this further in the ["Signing transactions" section below](#signing-transactions).
+  Notice the `createNoopSigner` function in the Kit example. Unlike Web3.js, Kit uses `TransactionSigner` objects when
+  an account needs to act as a signer for an instruction. This allows signers to be extracted from built transactions,
+  enabling automatic transaction signing without manually scanning instructions to find required signers. We'll explore
+  this further in the ["Signing transactions" section below](#signing-transactions).
 </Callout>
 
 Now that we know how to create instructions, let's see how to use them to build transactions.
@@ -290,9 +290,9 @@ Now that we know how to create instructions, let's see how to use them to build 
 
 Web3.js makes a number of assumptions when creating transactions. For example, it defaults to the latest transaction version and uses a recent blockhash for the transaction lifetime. While this improves the developer experience by providing sensible defaults, it comes at the cost of tree-shakeability. If an application only relies on durable nonce lifetimes, it will still be forced to bundle logic related to blockhash lifetimes, even if it's never used.
 
-Solana Kit, on the other hand, makes no assumptions about transactions. Instead, it requires developers to explicitly provide all necessary information using a series of helper functions. These functions progressively transform an empty transaction message into a fully compiled and signed transaction, ready to be sent to the network. This approach ensures strong type safety, allowing helper functions to enforce valid transaction states at compile time.
+Kit, on the other hand, makes no assumptions about transactions. Instead, it requires developers to explicitly provide all necessary information using a series of helper functions. These functions progressively transform an empty transaction message into a fully compiled and signed transaction, ready to be sent to the network. This approach ensures strong type safety, allowing helper functions to enforce valid transaction states at compile time.
 
-Since TypeScript cannot re-declare the type of an existing variable, each transaction helper returns a new immutable transaction object with an updated type. To streamline this, Solana Kit provides a `pipe` function, allowing developers to chain transaction helpers together efficiently.
+Since TypeScript cannot re-declare the type of an existing variable, each transaction helper returns a new immutable transaction object with an updated type. To streamline this, Kit provides a `pipe` function, allowing developers to chain transaction helpers together efficiently.
 
 <Spread>
 <div className="2xl:flex 2xl:*:flex-1 2xl:items-start 2xl:gap-4">
@@ -308,7 +308,7 @@ const initializeMint = createInitializeMintInstruction(initializeMintInput);
 const transaction = new Transaction({ feePayer, ...latestBlockhash }).add(createAccount).add(initializeMint);
 ```
 
-```ts twoslash title="Solana Kit"
+```ts twoslash title="Kit"
 import {
   appendTransactionMessageInstructions,
   createTransactionMessage,
@@ -343,7 +343,7 @@ const transactionMessage = pipe(
 
 ## Signing transactions
 
-Both Web3.js and Solana Kit allow keypairs to sign or partially sign transactions. However, Solana Kit leverages the native [`CryptoKeyPair`](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKeyPair) API to generate and export keypairs securely, without exposing private keys to the environment.
+Both Web3.js and Kit allow keypairs to sign or partially sign transactions. However, Kit leverages the native [`CryptoKeyPair`](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKeyPair) API to generate and export keypairs securely, without exposing private keys to the environment.
 
 <Spread>
 <div className="2xl:flex 2xl:*:flex-1 2xl:items-start 2xl:gap-4">
@@ -357,7 +357,7 @@ const authority = Keypair.generate();
 transaction.sign([payer, authority]);
 ```
 
-```ts twoslash title="Solana Kit"
+```ts twoslash title="Kit"
 import { compileTransaction, generateKeyPair, signTransaction } from "@solana/kit";
 // ---cut-start---
 import { CompilableTransactionMessage, TransactionMessageWithBlockhashLifetime } from "@solana/kit";
@@ -373,9 +373,9 @@ const signedTransaction = await signTransaction([payer, authority], transaction)
 </div>
 </Spread>
 
-Additionally, as mentioned in the ["Creating instructions"](#creating-instructions) section, Solana Kit introduces **signer objects**. These objects handle transaction and message signing while abstracting away the underlying signing mechanism. This could be using a Crypto KeyPair, a wallet adapter in the browser, a Noop signer, or anything we want. Here are some examples of how signers can be created:
+Additionally, as mentioned in the ["Creating instructions"](#creating-instructions) section, Kit introduces **signer objects**. These objects handle transaction and message signing while abstracting away the underlying signing mechanism. This could be using a Crypto KeyPair, a wallet adapter in the browser, a Noop signer, or anything we want. Here are some examples of how signers can be created:
 
-```ts twoslash title="Solana Kit"
+```ts twoslash title="Kit"
 import { address, createNoopSigner, generateKeyPairSigner } from "@solana/kit";
 import { useWalletAccountTransactionSendingSigner } from "@solana/react";
 // ---cut-start---
@@ -397,7 +397,7 @@ One key advantage of using signers is that they can be passed directly when crea
 
 Here's an example of passing signers to both instructions and the transaction fee payer. Notice that `signTransactionMessageWithSigners` doesn't require additional signers to be passed in — it already knows which ones are needed.
 
-```ts twoslash title="Solana Kit"
+```ts twoslash title="Kit"
 import { signTransactionMessageWithSigners } from "@solana/kit";
 import { getCreateAccountInstruction } from "@solana-program/system";
 import { getInitializeMintInstruction, TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
@@ -449,7 +449,7 @@ const signedTransaction = await signTransactionMessageWithSigners(transactionMes
 
 ## Sending and confirming transactions
 
-Finally, we can send our signed transaction to the network and wait for confirmation. While there are multiple ways to confirm transactions (e.g., polling, listening for events, etc.), both Web3.js and Solana Kit provide a default strategy that works for most use cases.
+Finally, we can send our signed transaction to the network and wait for confirmation. While there are multiple ways to confirm transactions (e.g., polling, listening for events, etc.), both Web3.js and Kit provide a default strategy that works for most use cases.
 
 <Spread>
 <div className="2xl:flex 2xl:*:flex-1 2xl:items-start 2xl:gap-4">
@@ -465,7 +465,7 @@ const mint = Keypair.generate();
 const transactionSignature = await sendAndConfirmTransaction(connection, transaction, [feePayer, mint]);
 ```
 
-```ts twoslash title="Solana Kit"
+```ts twoslash title="Kit"
 import { sendAndConfirmTransactionFactory, getSignatureFromTransaction } from "@solana/kit";
 // ---cut-start---
 import {
@@ -490,7 +490,7 @@ await sendAndConfirm(signedTransaction, { commitment: "confirmed" });
 </div>
 </Spread>
 
-Notice that the `sendAndConfirm` function does not return the transaction signature. This is because a transaction signature is deterministically known before it is sent. To access it, Solana Kit provides a separate `getSignatureFromTransaction` helper as illustrated in the code snippet above.
+Notice that the `sendAndConfirm` function does not return the transaction signature. This is because a transaction signature is deterministically known before it is sent. To access it, Kit provides a separate `getSignatureFromTransaction` helper as illustrated in the code snippet above.
 
 Additionally, the `sendAndConfirmTransactionFactory` function requires both an RPC and an RPC Subscriptions object. However, this does not mean that the full RPC and RPC Subscriptions implementations are needed. Only the following API methods must be implemented:
 
@@ -499,11 +499,11 @@ Additionally, the `sendAndConfirmTransactionFactory` function requires both an R
 
 ## Closing words
 
-We've now explored the key differences between Web3.js and Solana Kit, giving you a solid foundation for upgrading your project. Since Solana Kit is a complete rewrite, there's no simple step-by-step migration guide, and the process may take some time.
+We've now explored the key differences between Web3.js and Kit, giving you a solid foundation for upgrading your project. Since Kit is a complete rewrite, there's no simple step-by-step migration guide, and the process may take some time.
 
-To ease the transition, Solana Kit provides a `@solana/compat` package, which allows for incremental migration. This package includes functions that convert core types — such as public keys and transactions — between Web3.js and Solana Kit. This means you can start integrating Solana Kit without having to refactor your entire project at once.
+To ease the transition, Kit provides a `@solana/compat` package, which allows for incremental migration. This package includes functions that convert core types — such as public keys and transactions — between Web3.js and Kit. This means you can start integrating Kit without having to refactor your entire project at once.
 
-```ts twoslash title="Solana Kit"
+```ts twoslash title="Kit"
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { createSignerFromKeyPair } from "@solana/kit";
 import {
@@ -531,4 +531,4 @@ const instruction = fromLegacyTransactionInstruction(transactionInstruction);
 const transaction = fromVersionedTransaction(versionedTransaction);
 ```
 
-For more details on how Solana Kit differs from Web3.js and its design principles, check out the [Solana Kit README](https://github.com/anza-xyz/kit/blob/main/README.md).
+For more details on how Kit differs from Web3.js and its design principles, check out the [Kit README](https://github.com/anza-xyz/kit/blob/main/README.md).

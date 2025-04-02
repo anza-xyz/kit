@@ -18,7 +18,7 @@ Follow these simple steps to install and get started with Kit:
  
 ### Install Kit
 
-Install Solana Kit using the main `@solana/kit` library. It includes many smaller packages — such as `@solana/rpc` or `@solana/transactions` — that can also be used individually for more granular imports.
+Install Kit using the main `@solana/kit` library. It includes many smaller packages — such as `@solana/rpc` or `@solana/transactions` — that can also be used individually for more granular imports.
 
 ```package-install
 @solana/kit
@@ -30,7 +30,7 @@ Install Solana Kit using the main `@solana/kit` library. It includes many smalle
 
 ### Install program clients
 
-Install Solana Kit compatible clients for any program you want to interact with. For example, to interact with the System program, install the `@solana-program/system` package. You can find a [list of available program clients here](/docs/compatible-clients).
+Install Kit compatible clients for any program you want to interact with. For example, to interact with the System program, install the `@solana-program/system` package. You can find a [list of available program clients here](/docs/compatible-clients).
 
 ```package-install
 npm install @solana-program/system \
@@ -45,7 +45,7 @@ npm install @solana-program/system \
 
 ### Set up your project
 
-Use primitives provided by Solana Kit to set up your project and start interacting with Solana!
+Use primitives provided by Kit to set up your project and start interacting with Solana!
 
 For example, if you are planning on sending transactions, you will likely need an RPC API, an RPC Subscriptions API and a "send and confirm" strategy.
 
@@ -57,7 +57,7 @@ const rpcSubscriptions = createSolanaRpcSubscriptions("wss://api.devnet.solana.c
 const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
 ```
 
-Check out our [Getting started](/docs/getting-started) tutorial and our [Core concepts](/docs/concepts) guides to learn more about how to use Solana Kit.
+Check out our [Getting started](/docs/getting-started) tutorial and our [Core concepts](/docs/concepts) guides to learn more about how to use Kit.
 
 </Step>
 </Steps>

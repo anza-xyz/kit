@@ -25,7 +25,7 @@ Having so many possible return values makes it harder to work with the retrieved
 
 Additionally, when trying to fetch an account that does not exist on-chain, the `null` value is returned which is particularly inconvenient when dealing with multiple accounts as it requires zipping the address array with the account array to determine which ones are missing.
 
-Therefore, Solana Kit offers a set of types and helpers that aim to unify these APIs and make them easier to work with. For instance, the `fetchEncodedAccount` and `fetchEncodedAccounts` helpers can be used to fetch one or multiple accounts and return them in a unified format.
+Therefore, Kit offers a set of types and helpers that aim to unify these APIs and make them easier to work with. For instance, the `fetchEncodedAccount` and `fetchEncodedAccounts` helpers can be used to fetch one or multiple accounts and return them in a unified format.
 
 ```ts twoslash
 import { Rpc, SolanaRpcApi } from "@solana/kit";
@@ -77,7 +77,7 @@ account satisfies EncodedAccount;
 
 So far, we have been dealing with encoded accounts, meaning the `data` field of the fetched account is a byte array — i.e. a `Uint8Array`. But we are realistically going to need to decode that data into a more usable format.
 
-Solana Kit ships with a set of serialization libraries called Codecs. These libraries offer types and functions to create Codec objects that can be composed together to create more complex serialization and deserialization logic.
+Kit ships with a set of serialization libraries called Codecs. These libraries offer types and functions to create Codec objects that can be composed together to create more complex serialization and deserialization logic.
 
 You can [read more about Codecs here](/docs/concepts/codecs), but let's quickly see how we can create a Codec object to decode our `Mint` account.
 
@@ -248,12 +248,12 @@ Mint supply: 0.
 
 ## Next steps
 
-Congrats on completing this tutorial! You've learned how to get started with the Solana Kit library by:
+Congrats on completing this tutorial! You've learned how to get started with the Kit library by:
 
-- Creating a `Client` object containing all the bits from Solana Kit that matter for your application — ensuring the rest can be tree-shaken away.
+- Creating a `Client` object containing all the bits from Kit that matter for your application — ensuring the rest can be tree-shaken away.
 - Building instructions and transaction messages.
 - Generating signer objects and using them to sign transactions.
 - Sending transactions and waiting for them to be confirmed.
 - Fetching and decoding on-chain accounts that were created by your transactions.
 
-If you'd like to dig deeper into the Solana Kit library, you may be interested in the [Core concepts](/docs/concepts) section of the documentation. There, you'll find in-depth articles about specific parts of the library such as [Codecs](/docs/concepts/codecs), [Signers](/docs/concepts/signers), and [RPCs](/docs/concepts/rpc).
+If you'd like to dig deeper into the Kit library, you may be interested in the [Core concepts](/docs/concepts) section of the documentation. There, you'll find in-depth articles about specific parts of the library such as [Codecs](/docs/concepts/codecs), [Signers](/docs/concepts/signers), and [RPCs](/docs/concepts/rpc).

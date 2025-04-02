@@ -22,7 +22,7 @@ const encodedTransaction = getBase64EncodedWireTransaction(signedTransaction);
 await rpc.sendTransaction(encodedTransaction, { preflightCommitment: "confirmed", encoding: "base64" }).send();
 ```
 
-However, Solana Kit offers a helper function that does that for us whilst providing some sensible default values. This function is called `sendTransactionWithoutConfirmingFactory` and, given an RPC object, it returns a function that sends transactions without waiting for confirmation.
+However, Kit offers a helper function that does that for us whilst providing some sensible default values. This function is called `sendTransactionWithoutConfirmingFactory` and, given an RPC object, it returns a function that sends transactions without waiting for confirmation.
 
 ```ts twoslash
 import { FullySignedTransaction, TransactionWithBlockhashLifetime, Rpc, SolanaRpcApi } from "@solana/kit";
@@ -41,7 +41,7 @@ Sending transactions is one thing but, more often than not, we'll want to make s
 
 There are several ways to ensure a transaction was confirmed by the network. For instance, we could poll the network at regular intervals to check the status of the transaction until it has the required commitment level. Another way would be to listen for network events and use them to determine the status of the sent transaction.
 
-Sometimes it may be useful to dig deeper into confirmation strategies and create custom ones that make the most sense for our applications. But for all other cases, Solana Kit provides helpers that abstract this complexity away from us. Namely, it provides two helper functions that both send and confirm transactions. Which function to use depends on the lifetime set on the transaction.
+Sometimes it may be useful to dig deeper into confirmation strategies and create custom ones that make the most sense for our applications. But for all other cases, Kit provides helpers that abstract this complexity away from us. Namely, it provides two helper functions that both send and confirm transactions. Which function to use depends on the lifetime set on the transaction.
 
 - `sendAndConfirmTransactionFactory` is used for transactions using a blockhash strategy for its lifetime.
 - `sendAndConfirmDurableNonceTransactionFactory` is used for transactions using a durable nonce strategy for its lifetime.
@@ -73,7 +73,7 @@ If you hover on top of the `sendTransaction` or `sendAndConfirmTransaction` func
 
 This is because there is a common misconception that one must wait for the transaction to be sent to the network before obtaining its signature. However, that's not the case. The transaction signature is accessible as soon as the transaction is signed by its fee payer. This is because the signature that uniquely identifies a transaction is none other than the fee payer's signature for that transaction.
 
-As such, Solana Kit decouples these two distinct concepts by offering a `getSignatureFromTransaction` function that returns the signature of a transaction that can be used even before it is sent to the network.
+As such, Kit decouples these two distinct concepts by offering a `getSignatureFromTransaction` function that returns the signature of a transaction that can be used even before it is sent to the network.
 
 ```ts twoslash
 import {

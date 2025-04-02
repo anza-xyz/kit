@@ -33,7 +33,7 @@ export const baseOptions: BaseLayoutProps = {
                         fill="currentColor"
                     />
                 </svg>
-                Solana Kit
+                Kit
             </>
         ),
     },

@@ -7,7 +7,7 @@ Before we can start crafting transactions, we're going to need a wallet that can
 
 ## Generate a new `CryptoKeypair`
 
-The Solana Kit library uses the [native Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Crypto) for cryptographic tasks like generating key pairs and signing or verifying messages. This improves security by leveraging the browser's built-in functions instead of third-party libraries.
+The Kit library uses the [native Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Crypto) for cryptographic tasks like generating key pairs and signing or verifying messages. This improves security by leveraging the browser's built-in functions instead of third-party libraries.
 
 To create a new keypair, you can use the `generateKeyPair` helper function. This will return an instance of the native `CryptoKeyPair` type.
 
@@ -17,7 +17,7 @@ import { generateKeyPair } from "@solana/kit";
 const wallet: CryptoKeyPair = await generateKeyPair();
 ```
 
-And just like that, we have a wallet that can be used to sign transactions. However, Solana Kit provides a useful abstraction on top of anything that can sign messages and/or transactions called `Signers`.
+And just like that, we have a wallet that can be used to sign transactions. However, Kit provides a useful abstraction on top of anything that can sign messages and/or transactions called `Signers`.
 
 ## Generate a new `KeyPairSigner`
 
