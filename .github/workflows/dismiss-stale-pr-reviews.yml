@@ -19,6 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Dismiss Stale PR Reviews
+        if: ${{ !contains('OWNER,MEMBER,COLLABORATOR', github.event.pull_request.author_association) }}
         uses: withgraphite/dismiss-stale-approvals@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
