@@ -707,7 +707,7 @@ importers:
         version: 19.0.12
       '@types/react-test-renderer':
         specifier: ^19
-        version: 19.0.0
+        version: 19.1.0
       react:
         specifier: ^19
         version: 19.1.0
@@ -3781,8 +3781,8 @@ packages:
     peerDependencies:
       '@types/react': ^19.0.0
 
-  '@types/react-test-renderer@19.0.0':
-    resolution: {integrity: sha512-qDVnNybqFm2eZKJ4jD34EvRd6VHD67KjgnWaEMM0Id9L22EpWe3nOSVKHWL1XWRCxUWe3lhXwlEeCKD1BlJCQA==}
+  '@types/react-test-renderer@19.1.0':
+    resolution: {integrity: sha512-XD0WZrHqjNrxA/MaR9O22w/RNidWR9YZmBdRGI7wcnWGrv/3dA8wKCJ8m63Sn+tLJhcjmuhOi629N66W6kgWzQ==}
 
   '@types/react@19.0.12':
     resolution: {integrity: sha512-V6Ar115dBDrjbtXSrS+/Oruobc+qVbbUxDFC1RSbRqLt5SYvxxyIDrSC85RWml54g+jfNeEMZhEj7wW07ONQhA==}
@@ -9815,7 +9815,7 @@ snapshots:
     dependencies:
       '@types/react': 19.0.12
 
-  '@types/react-test-renderer@19.0.0':
+  '@types/react-test-renderer@19.1.0':
     dependencies:
       '@types/react': 19.0.12
 
