@@ -95,6 +95,18 @@ function getMemoizedDemultiplexedNotificationPublisherFromChannelAndResponseTran
     return publisher;
 }
 
+/**
+ * Given a channel, this function executes the particular subscription plan required by the Solana
+ * JSON RPC Subscriptions API.
+ *
+ * @param config
+ *
+ * 1. Calls the `subscribeRequest` on the remote RPC
+ * 2. Waits for a response containing the subscription id
+ * 3. Returns a {@link DataPublisher} that publishes notifications related to that subscriptions id,
+ *    filtering out all others
+ * 4. Calls the `unsubscribeMethodName` on the remote RPC when the abort signal is fired.
+ */
 export async function executeRpcPubSubSubscriptionPlan<TNotification>({
     channel,
     responseTransformer,

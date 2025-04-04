@@ -17,7 +17,7 @@ This API is designed to be used as follows:
 
 ```ts
 const rpcSubscriptions =
-    // Step 1 - Create an `RpcSubscriptions` instance. This may be stateful.
+    // Step 1 - Create a `RpcSubscriptions` instance. This may be stateful.
     createSolanaRpcSubscriptions(mainnet('wss://api.mainnet-beta.solana.com'));
 const response = await rpcSubscriptions
     // Step 2 - Call supported methods on it to produce `PendingRpcSubscriptionsRequest` objects.
@@ -40,7 +40,7 @@ try {
 
 ### `RpcSubscriptionsChannel<TOutboundMessage, TInboundMessage>`
 
-A channel is a `DataPublisher` that you can subscribe to events of type `RpcSubscriptionChannelEvents<TInboundMessage>`. Additionally, you can use it to send messages of type `TOutboundMessage` back to the remote end by calling the `send(message)` method.
+A channel is a `DataPublisher` on which you can subscribe to events of type `RpcSubscriptionChannelEvents<TInboundMessage>`. Additionally, you can use this object to send messages of type `TOutboundMessage` back to the remote end by calling its `send(message)` method.
 
 ### `RpcSubscriptionsChannelCreator<TOutboundMessage, TInboundMessage>`
 
