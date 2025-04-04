@@ -52,7 +52,7 @@ type PendingRpcRequestReturnTypeMapper<TMethodImplementation> =
         : never;
 
 /**
- * Creates a {@link Rpc} instance given an {@link RpcApi | RpcApi<TRpcMethods>} and a
+ * Creates a {@link Rpc} instance given a {@link RpcApi | RpcApi<TRpcMethods>} and a
  * {@link RpcTransport} capable of fulfilling them.
  */
 export function createRpc<TRpcMethods, TRpcTransport extends RpcTransport>(
