@@ -2,7 +2,6 @@ export * from './request-transformer';
 export * from './request-transformer-bigint-downcast';
 export * from './request-transformer-default-commitment';
 export * from './request-transformer-integer-overflow';
-export * from './request-transformer-options-object-position-config';
 export * from './response-transformer';
 export * from './response-transformer-allowed-numeric-values';
 export * from './response-transformer-bigint-upcast';
