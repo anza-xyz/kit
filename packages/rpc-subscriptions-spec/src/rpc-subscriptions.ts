@@ -11,6 +11,13 @@ export type RpcSubscriptionsConfig<TRpcMethods> = Readonly<{
     transport: RpcSubscriptionsTransport;
 }>;
 
+/**
+ * An object that exposes all of the functions described by `TRpcSubscriptionsMethods`.
+ *
+ * Calling each method returns a
+ * {@link PendingRpcSubscriptionsRequest | PendingRpcSubscriptionsRequest<TNotification>} where
+ * `TNotification` is that method's notification type.
+ */
 export type RpcSubscriptions<TRpcSubscriptionsMethods> = {
     [TMethodName in keyof TRpcSubscriptionsMethods]: PendingRpcSubscriptionsRequestBuilder<
         OverloadImplementations<TRpcSubscriptionsMethods, TMethodName>
@@ -33,6 +40,11 @@ type PendingRpcSubscriptionsRequestReturnTypeMapper<TSubscriptionMethodImplement
           ) => PendingRpcSubscriptionsRequest<ReturnType<TSubscriptionMethodImplementation>>
         : never;
 
+/**
+ * Creates a {@link RpcSubscriptions} instance given a
+ * {@link RpcSubscriptionsApi | RpcSubscriptionsApi<TRpcSubscriptionsApiMethods>} and a
+ * {@link RpcSubscriptionsTransport} capable of fulfilling them.
+ */
 export function createSubscriptionRpc<TRpcSubscriptionsApiMethods>(
     rpcConfig: RpcSubscriptionsConfig<TRpcSubscriptionsApiMethods>,
 ): RpcSubscriptions<TRpcSubscriptionsApiMethods> {
