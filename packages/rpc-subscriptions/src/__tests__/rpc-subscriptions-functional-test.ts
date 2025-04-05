@@ -25,15 +25,19 @@ describe('accountNotifications', () => {
 
     it('can subscribe to account notifications', async () => {
         expect.hasAssertions();
-        const abortSignal = new AbortController().signal;
-        const subscriptionPromise = rpcSubscriptions
-            .accountNotifications('4nTLDQiSTRHbngKZWPMfYnZdWTbKiNeuuPcX7yFUpSAc' as Address)
-            .subscribe({ abortSignal });
+        const abortController = new AbortController();
+        try {
+            const subscriptionPromise = rpcSubscriptions
+                .accountNotifications('4nTLDQiSTRHbngKZWPMfYnZdWTbKiNeuuPcX7yFUpSAc' as Address)
+                .subscribe({ abortSignal: abortController.signal });
 
-        await expect(subscriptionPromise).resolves.toEqual(
-            expect.objectContaining({
-                [Symbol.asyncIterator]: expect.any(Function),
-            }),
-        );
+            await expect(subscriptionPromise).resolves.toEqual(
+                expect.objectContaining({
+                    [Symbol.asyncIterator]: expect.any(Function),
+                }),
+            );
+        } finally {
+            abortController.abort();
+        }
     });
 });
