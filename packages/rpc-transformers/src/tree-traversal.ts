@@ -10,7 +10,7 @@ export type TraversalState = Readonly<{
     keyPath: KeyPath;
 }>;
 
-export function getTreeWalker(visitors: NodeVisitor[]) {
+function getTreeWalker(visitors: NodeVisitor[]) {
     return function traverse<TState extends TraversalState>(node: unknown, state: TState): unknown {
         if (Array.isArray(node)) {
             return node.map((element, ii) => {

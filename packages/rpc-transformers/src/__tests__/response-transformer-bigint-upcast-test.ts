@@ -1,4 +1,4 @@
-import { getBigIntUpcastVisitor } from '../response-transformer-bigint-upcast';
+import { getBigIntUpcastVisitor } from '../response-transformer-bigint-upcast-internal';
 import { TraversalState } from '../tree-traversal';
 
 const MOCK_TRAVERSAL_STATE = {
