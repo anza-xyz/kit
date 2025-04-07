@@ -45,7 +45,7 @@
         "ts-node": "^10.9.2",
         "tsup": "^8.4.0",
         "turbo": "^2.4.4",
-        "typescript": "^5.8.2"
+        "typescript": "^5.8.3"
     },
     "engines": {
         "node": ">=20.18.0",
