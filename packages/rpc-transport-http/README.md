@@ -11,7 +11,7 @@
 
 # @solana/rpc-transport-http
 
-This package allows developers to create custom RPC transports. With this library, one can implement highly specialized functionality for leveraging multiple transports, attempting/handling retries, and more.
+This package allows developers to create custom RPC transports. Using these primitives, developers can create custom transports that perform transforms on messages sent and received, attempt retries, and implement routing strategies between multiple transports.
 
 ## Functions
 
@@ -109,7 +109,7 @@ A string representing the target endpoint. In Node, it must be an absolute URL u
 
 ### `createHttpTransportForSolanaRpc()`
 
-Creates an `RpcTransport` that uses JSON HTTP requests — much like the `createHttpTransport` function — except that it also uses custom `toJson` and `fromJson` functions in order to allow `bigint` values to be serialized and deserialized correctly over the wire.
+Creates a `RpcTransport` that uses JSON HTTP requests — much like the `createHttpTransport` function — except that it also uses custom `toJson` and `fromJson` functions in order to allow `bigint` values to be serialized and deserialized correctly over the wire.
 
 Since this is something specific to the Solana RPC API, these custom JSON functions are only triggered when the request is recognized as a Solana RPC request. Normal RPC APIs should aim to wrap their `bigint` values — e.g. `u64` or `i64` — in special value objects that represent the number as a string to avoid numerical values going above `Number.MAX_SAFE_INTEGER`.
 

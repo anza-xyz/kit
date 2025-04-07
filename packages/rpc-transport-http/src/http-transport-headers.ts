@@ -18,12 +18,10 @@ export type AllowedHttpRequestHeaders = Readonly<
 type DisallowedHeaders = 'Accept' | 'Content-Length' | 'Content-Type' | 'Solana-Client';
 type ForbiddenHeaders =
     | 'Accept-Charset'
-    /**
-     * Though technically forbidden in non-Node environments, we don't have a way to target
-     * TypeScript types depending on which platform you are authoring for. `Accept-Encoding` is
-     * therefore omitted from the forbidden headers type, but is still a runtime error in dev mode
-     * when supplied in a non-Node context.
-     */
+    // Though technically forbidden in non-Node environments, we don't have a way to target
+    // TypeScript types depending on which platform you are authoring for. `Accept-Encoding` is
+    // therefore omitted from the forbidden headers type, but is still a runtime error in dev mode
+    // when supplied in a non-Node context.
     // | 'Accept-Encoding'
     | 'Access-Control-Request-Headers'
     | 'Access-Control-Request-Method'
@@ -100,10 +98,8 @@ export function assertIsAllowedHttpRequestHeaders(
     }
 }
 
-/**
- * Lowercasing header names makes it easier to override user-supplied headers, such as those defined
- * in the `DisallowedHeaders` type.
- */
+// Lowercasing header names makes it easier to override user-supplied headers, such as those defined
+// in the `DisallowedHeaders` type.
 export function normalizeHeaders<T extends Record<string, string>>(
     headers: T,
 ): { [K in string & keyof T as Lowercase<K>]: T[K] } {

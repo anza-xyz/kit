@@ -3,19 +3,8 @@ import type { RpcTransport } from '@solana/rpc-spec';
 import type { RpcResponse } from '@solana/rpc-spec-types';
 import type Dispatcher from 'undici-types/dispatcher';
 
-import {
-    AllowedHttpRequestHeaders,
-    assertIsAllowedHttpRequestHeaders,
-    normalizeHeaders,
-} from './http-transport-headers';
-
-type Config = Readonly<{
-    dispatcher_NODE_ONLY?: Dispatcher;
-    fromJson?: (rawResponse: string, payload: unknown) => RpcResponse;
-    headers?: AllowedHttpRequestHeaders;
-    toJson?: (payload: unknown) => string;
-    url: string;
-}>;
+import { HttpTransportConfig as Config } from './http-transport-config';
+import { assertIsAllowedHttpRequestHeaders, normalizeHeaders } from './http-transport-headers';
 
 let didWarnDispatcherWasSuppliedInNonNodeEnvironment = false;
 function warnDispatcherWasSuppliedInNonNodeEnvironment() {
@@ -31,6 +20,21 @@ function warnDispatcherWasSuppliedInNonNodeEnvironment() {
     );
 }
 
+/**
+ * Creates a function you can use to make `POST` requests with headers suitable for sending JSON
+ * data to a server.
+ *
+ * @example
+ * ```ts
+ * import { createHttpTransport } from '@solana/rpc-transport-http';
+ *
+ * const transport = createHttpTransport({ url: 'https://api.mainnet-beta.solana.com' });
+ * const response = await transport({
+ *     payload: { id: 1, jsonrpc: '2.0', method: 'getSlot' },
+ * });
+ * const data = await response.json();
+ * ```
+ */
 export function createHttpTransport(config: Config): RpcTransport {
     if (__DEV__ && !__NODEJS__ && 'dispatcher_NODE_ONLY' in config) {
         warnDispatcherWasSuppliedInNonNodeEnvironment();
