@@ -24,3 +24,6 @@ yarn-error.log*
 # `solana-test-validator`
 .agave/
 test-ledger/
+
+# ignore JetBrains IDE
+.idea
