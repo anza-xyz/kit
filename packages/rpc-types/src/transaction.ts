@@ -10,79 +10,176 @@ import type { SignedLamports } from './typed-numbers';
 type TransactionVersion = 'legacy' | 0;
 
 type AddressTableLookup = Readonly<{
-    /** public key for an address lookup table account. */
+    /** Address of the address lookup table account. */
     accountKey: Address;
-    /** List of indices used to load addresses of readonly accounts from a lookup table. */
+    /** Indices of accounts in a lookup table to load as read-only. */
     readableIndexes: readonly number[];
-    /** List of indices used to load addresses of writable accounts from a lookup table. */
+    /** Indices of accounts in a lookup table to load as writable. */
     writableIndexes: readonly number[];
 }>;
 
-type ParsedTransactionInstruction = Readonly<{
-    parsed: {
-        info?: object;
-        type: string;
-    };
-    program: string;
-    programId: Address;
-    stackHeight?: number;
+type InstructionWithStackHeight = Readonly<{
+    /**
+     * A number indicating the height at which this instruction was called with respect to the
+     * bottom of the call stack denoted by `1` or `null`.
+     *
+     * For instance, an instruction explicitly declared in the transaction message will have a `1`
+     * or `null` height, the first instruction that it calls using a cross-program invocation (CPI)
+     * will have a height of 2, an instruction called by that instruction using a CPI will have a
+     * depth of 3, and so on.
+     */
+    stackHeight: number; // FIXME(https://github.com/anza-xyz/agave/issues/5732) Should be `1` instead of `null` at base of stack
 }>;
 
-type PartiallyDecodedTransactionInstruction = Readonly<{
-    accounts: readonly Address[];
+type InstructionWithData = Readonly<{
+    /** The input to the invoked program */
     data: Base58EncodedBytes;
-    programId: Address;
-    stackHeight?: number;
 }>;
+
+type ParsedTransactionInstruction = Partial<InstructionWithStackHeight> &
+    Readonly<{
+        /** The output of the program's instruction parser */
+        parsed: {
+            /** The instruction, as interpreted the program's instruction parser. */
+            info?: object;
+            /**
+             * A label that indicates the type of the instruction, as determined by the program's
+             * instruction parser.
+             */
+            type: string;
+        };
+        /** The name of the program. */
+        program: string;
+        /** The address of the program */
+        programId: Address;
+    }>;
+
+type PartiallyDecodedTransactionInstruction = InstructionWithData &
+    Partial<InstructionWithStackHeight> &
+    Readonly<{
+        /** An ordered list of addresses belonging to the accounts loaded by this instruction */
+        accounts: readonly Address[];
+        /** The address of the program to invoke */
+        programId: Address;
+    }>;
 
 type ReturnData = {
-    /** the return data itself */
+    /** A tuple whose first element is the bytes of the return data as a base64-encoded string. */
     data: Base64EncodedDataResponse;
-    /** the program that generated the return data */
+    /** The address of the program that generated the return data */
     programId: Address;
 };
 
-type TransactionInstruction = Readonly<{
-    accounts: readonly number[];
-    data: Base58EncodedBytes;
-    programIdIndex: number;
-    stackHeight?: number;
+type TransactionInstruction = InstructionWithData &
+    Partial<InstructionWithStackHeight> &
+    Readonly<{
+        /**
+         * An ordered list of indices that indicate which accounts in the transaction message's
+         * accounts list are loaded by this instruction.
+         */
+        accounts: readonly number[];
+        /**
+         * The index of the address in the transaction message's accounts list associated with the
+         * program to invoke.
+         */
+        programIdIndex: number;
+    }>;
+
+type TransactionMessageBase = Readonly<{
+    header: {
+        /**
+         * The number of read-only accounts in the static accounts list that must sign this
+         * transaction.
+         *
+         * Subtracting this number from `numRequiredSignatures` yields the index of the first
+         * read-only signer account in the static accounts list.
+         */
+        numReadonlySignedAccounts: number;
+        /**
+         * The number of accounts in the static accounts list that are neither writable nor signers.
+         *
+         * Adding this number to `numRequiredSignatures` yields the index of the first read-only
+         * non-signer account in the static accounts list.
+         */
+        numReadonlyUnsignedAccounts: number;
+        /**
+         * The number of accounts in the static accounts list that must sign this transaction.
+         *
+         * Subtracting `numReadonlySignedAccounts` from this number yields the number of writable
+         * signer accounts in the static accounts list. Writable signer accounts always begin at
+         * index zero in the static accounts list.
+         *
+         * This number itself is the index of the first non-signer account in the static accounts
+         * list.
+         */
+        numRequiredSignatures: number;
+    };
+    /**
+     * For transactions whose lifetime is specified by a recent blockhash, this is that blockhash,
+     * and for transactions whose lifetime is specified by a durable nonce, this is the nonce value.
+     */
+    recentBlockhash: Blockhash;
+}>;
+
+type TransactionParsedAccountBase = Readonly<{
+    /** The address of the account */
+    pubkey: Address;
+    /** Whether this account is required to sign the transaction that it's a part of */
+    signer: boolean;
+    /** Whether this account must be loaded with a write-lock */
+    writable: boolean;
 }>;
 
 type TransactionParsedAccountLegacy = Readonly<{
-    pubkey: Address;
-    signer: boolean;
+    /** Indicates that the account was statically declared in the transaction message */
     source: 'transaction';
-    writable: boolean;
-}>;
+}> &
+    TransactionParsedAccountBase;
+
 type TransactionParsedAccountVersioned = Readonly<{
-    pubkey: Address;
-    signer: boolean;
+    /**
+     * Indicates whether the account was statically declared in the transaction message or loaded
+     * from an address lookup table.
+     */
     source: 'lookupTable' | 'transaction';
-    writable: boolean;
-}>;
+}> &
+    TransactionParsedAccountBase;
 
 // Types for `accounts` transactionDetails
 
-// Only a partial version of the `TransactionMetaBase` type for when `transactionDetails: accounts` is provided.
+// Only a partial version of the `TransactionMetaBase` type for when
+// `transactionDetails: 'accounts'` is provided.
 type TransactionForAccountsMetaBase = Readonly<{
-    /** Error if transaction failed, null if transaction succeeded. */
+    /** Error if transaction failed, `null` if transaction succeeded. */
     err: TransactionError | null;
-    /** fee this transaction was charged */
+    /** The fee this transaction was charged, in {@link Lamports} */
     fee: Lamports;
-    /** array of account balances after the transaction was processed */
+    /** Account balances after the transaction was processed */
     postBalances: readonly Lamports[];
-    /** List of token balances from after the transaction was processed or omitted if token balance recording was not yet enabled during this transaction */
-    postTokenBalances?: readonly TokenBalance[];
-    /** array of account balances from before the transaction was processed */
-    preBalances: readonly Lamports[];
-    /** List of token balances from before the transaction was processed or omitted if token balance recording was not yet enabled during this transaction */
-    preTokenBalances?: readonly TokenBalance[];
     /**
-     * Transaction status
-     * @deprecated
+     * List of token balances from after the transaction was processed or omitted if token balance
+     * recording was not yet enabled during this transaction
      */
+    postTokenBalances?: readonly TokenBalance[];
+    /** Account balances from before the transaction was processed */
+    preBalances: readonly Lamports[];
+    /**
+     * List of token balances from before the transaction was processed or omitted if token balance
+     * recording was not yet enabled during this transaction
+     */
+    preTokenBalances?: readonly TokenBalance[];
+    /** @deprecated */
     status: TransactionStatus;
+}>;
+
+type TransactionWithSignatures = Readonly<{
+    /**
+     * An ordered list of signatures belonging to the accounts required to sign this transaction.
+     *
+     * Each signature is an Ed25519 signature of the transaction message using the private key
+     * associated with the account required to sign the transaction.
+     */
+    signatures: readonly Base58EncodedBytes[];
 }>;
 
 // Accounts
@@ -96,9 +193,8 @@ export type TransactionForAccounts<TMaxSupportedTransactionVersion extends Trans
               transaction: Readonly<{
                   /** Parsed accounts */
                   accountKeys: readonly TransactionParsedAccountLegacy[];
-                  /** Account signatures */
-                  signatures: readonly Base58EncodedBytes[];
-              }>;
+              }> &
+                  TransactionWithSignatures;
           }>
         : Readonly<{
               /** Transaction partial meta */
@@ -107,9 +203,8 @@ export type TransactionForAccounts<TMaxSupportedTransactionVersion extends Trans
               transaction: Readonly<{
                   /** Parsed accounts */
                   accountKeys: readonly TransactionParsedAccountVersioned[];
-                  /** Account signatures */
-                  signatures: readonly Base58EncodedBytes[];
-              }>;
+              }> &
+                  TransactionWithSignatures;
               /** The transaction version */
               version: TransactionVersion;
           }>;
@@ -117,47 +212,33 @@ export type TransactionForAccounts<TMaxSupportedTransactionVersion extends Trans
 // Types for `full` transactionDetails
 
 type TransactionForFullMetaBase = Readonly<{
-    /** number of compute units consumed by the transaction */
+    /** Number of compute units consumed by the transaction */
     computeUnitsConsumed?: bigint;
-    /** Error if transaction failed, null if transaction succeeded. */
-    err: TransactionError | null;
-    /** fee this transaction was charged */
-    fee: Lamports;
-    /** array of string log messages or null if log message recording was not enabled during this transaction */
+    /** String log messages or `null` if log message recording was not enabled during this transaction */
     logMessages: readonly string[] | null;
-    /** array of account balances after the transaction was processed */
-    postBalances: readonly Lamports[];
-    /** List of token balances from after the transaction was processed or omitted if token balance recording was not yet enabled during this transaction */
-    postTokenBalances?: readonly TokenBalance[];
-    /** array of account balances from before the transaction was processed */
-    preBalances: readonly Lamports[];
-    /** List of token balances from before the transaction was processed or omitted if token balance recording was not yet enabled during this transaction */
-    preTokenBalances?: readonly TokenBalance[];
-    /** the most-recent return data generated by an instruction in the transaction */
+    /** The most-recent return data generated by an instruction in the transaction */
     returnData?: ReturnData;
-    /** transaction-level rewards */
+    /** Transaction-level rewards */
     rewards: readonly Reward[] | null;
-    /**
-     * Transaction status
-     * @deprecated
-     */
-    status: TransactionStatus;
-}>;
+}> &
+    TransactionForAccountsMetaBase;
 
 export type TransactionForFullMetaInnerInstructionsUnparsed = Readonly<{
+    /** A list of instructions called by programs via cross-program invocation (CPI) */
     innerInstructions: readonly Readonly<{
         /** The index of the instruction in the transaction */
         index: number;
-        /** The instruction */
+        /** The instructions */
         instructions: readonly TransactionInstruction[];
     }>[];
 }>;
 
 export type TransactionForFullMetaInnerInstructionsParsed = Readonly<{
+    /** A list of instructions called by programs via cross-program invocation (CPI) */
     innerInstructions: readonly Readonly<{
         /** The index of the instruction in the transaction */
         index: number;
-        /** The instruction */
+        /** The instructions */
         instructions: readonly (ParsedTransactionInstruction | PartiallyDecodedTransactionInstruction)[];
     }>[];
 }>;
@@ -168,13 +249,16 @@ export type TransactionForFullMetaInnerInstructionsParsed = Readonly<{
 type TransactionForFullMetaLoadedAddresses = Readonly<{
     /** Addresses loaded from lookup tables */
     loadedAddresses: {
+        /** Ordered list of base-58 encoded addresses for read-only accounts */
         readonly: readonly Address[];
+        /** Ordered list of base-58 encoded addresses for writable accounts */
         writable: readonly Address[];
     };
 }>;
 
 type TransactionForFullTransactionAddressTableLookups = Readonly<{
     message: {
+        /** A list of address tables and the accounts that this transaction loads from them */
         addressTableLookups?: readonly AddressTableLookup[] | null;
     };
 }>;
@@ -228,17 +312,12 @@ export type TransactionForFullBase64<TMaxSupportedTransactionVersion extends Tra
 // JsonParsed
 
 type TransactionForFullTransactionJsonParsedBase = Readonly<{
-    message: {
-        header: {
-            numReadonlySignedAccounts: number;
-            numReadonlyUnsignedAccounts: number;
-            numRequiredSignatures: number;
-        };
+    message: Readonly<{
         instructions: readonly (ParsedTransactionInstruction | PartiallyDecodedTransactionInstruction)[];
-        recentBlockhash: Blockhash;
-    };
-    signatures: readonly Base58EncodedBytes[];
-}>;
+    }> &
+        TransactionMessageBase;
+}> &
+    TransactionWithSignatures;
 
 export type TransactionForFullJsonParsed<TMaxSupportedTransactionVersion extends TransactionVersion | void> =
     TMaxSupportedTransactionVersion extends void
@@ -246,6 +325,7 @@ export type TransactionForFullJsonParsed<TMaxSupportedTransactionVersion extends
               meta: (TransactionForFullMetaBase & TransactionForFullMetaInnerInstructionsParsed) | null;
               transaction: TransactionForFullTransactionJsonParsedBase & {
                   message: Readonly<{
+                      /** Parsed accounts */
                       accountKeys: readonly TransactionParsedAccountLegacy[];
                   }>;
               };
@@ -258,6 +338,7 @@ export type TransactionForFullJsonParsed<TMaxSupportedTransactionVersion extends
                   | null;
               transaction: TransactionForFullTransactionJsonParsedBase & {
                   message: Readonly<{
+                      /** Parsed accounts */
                       accountKeys: readonly TransactionParsedAccountLegacy[];
                   }>;
               };
@@ -267,18 +348,14 @@ export type TransactionForFullJsonParsed<TMaxSupportedTransactionVersion extends
 // Json
 
 type TransactionForFullTransactionJsonBase = Readonly<{
-    message: {
+    message: Readonly<{
+        /** An ordered list of addresses belonging to the accounts loaded by this transaction */
         accountKeys: readonly Address[];
-        header: {
-            numReadonlySignedAccounts: number;
-            numReadonlyUnsignedAccounts: number;
-            numRequiredSignatures: number;
-        };
         instructions: readonly TransactionInstruction[];
-        recentBlockhash: Blockhash;
-    };
-    signatures: readonly Base58EncodedBytes[];
-}>;
+    }> &
+        TransactionMessageBase;
+}> &
+    TransactionWithSignatures;
 
 export type TransactionForFullJson<TMaxSupportedTransactionVersion extends TransactionVersion | void> =
     TMaxSupportedTransactionVersion extends void

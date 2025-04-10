@@ -1,3 +1,11 @@
+/**
+ * This package defines types for values used in the
+ * [Solana JSON-RPC](https://docs.solana.com/api/http) and a series of helpers for working with
+ * them. It can be used standalone, but it is also exported as part of Kit
+ * [`@solana/kit`](https://github.com/anza-xyz/kit/tree/main/packages/kit).
+ *
+ * @packageDocumentation
+ */
 export * from './account-filters';
 export * from './account-info';
 export * from './blockhash';
