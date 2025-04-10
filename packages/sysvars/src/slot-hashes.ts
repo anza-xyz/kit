@@ -22,13 +22,13 @@ type Entry = Readonly<{
     slot: Slot;
 }>;
 
-/**
- * The `SlotHashes` sysvar.
- *
- * The most recent hashes of a slot's parent banks.
- */
+/** The most recent hashes of a slot's parent banks. */
 export type SysvarSlotHashes = Entry[];
 
+/**
+ * Returns an encoder that you can use to encode a {@link SysvarSlotHashes} to a byte array
+ * representing the `SlotHashes` sysvar's account data.
+ */
 export function getSysvarSlotHashesEncoder(): VariableSizeEncoder<SysvarSlotHashes> {
     return getArrayEncoder(
         getStructEncoder([
@@ -38,6 +38,10 @@ export function getSysvarSlotHashesEncoder(): VariableSizeEncoder<SysvarSlotHash
     );
 }
 
+/**
+ * Returns a decoder that you can use to decode a byte array representing the `SlotHashes` sysvar's
+ * account data to a {@link SysvarSlotHashes}.
+ */
 export function getSysvarSlotHashesDecoder(): VariableSizeDecoder<SysvarSlotHashes> {
     return getArrayDecoder(
         getStructDecoder([
@@ -47,14 +51,18 @@ export function getSysvarSlotHashesDecoder(): VariableSizeDecoder<SysvarSlotHash
     );
 }
 
+/**
+ * Returns a codec that you can use to encode from or decode to {@link SysvarSlotHashes}
+ *
+ * @see {@link getSysvarSlotHashesDecoder}
+ * @see {@link getSysvarSlotHashesEncoder}
+ */
 export function getSysvarSlotHashesCodec(): VariableSizeCodec<SysvarSlotHashes> {
     return combineCodec(getSysvarSlotHashesEncoder(), getSysvarSlotHashesDecoder());
 }
 
 /**
- * Fetch the `SlotHashes` sysvar.
- *
- * The most recent hashes of a slot's parent banks.
+ * Fetches the `SlotHashes` sysvar account using any RPC that supports the {@link GetAccountInfoApi}.
  */
 export async function fetchSysvarSlotHashes(
     rpc: Rpc<GetAccountInfoApi>,
