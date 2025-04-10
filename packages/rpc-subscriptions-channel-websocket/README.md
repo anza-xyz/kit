@@ -75,7 +75,7 @@ await channel.send({ id: 1, jsonrpc: '2.0', method: 'getSlot' });
 
 The number of bytes to admit into the WebSocket's send buffer before queueing messages on the client.
 
-When you call `send()` on a `WebSocket` the runtime might add the message to a buffer rather than to send it right away. In the event that `socket.bufferedAmount` exceeds the value configured here, messages will be added to a queue in your application code instead of being sent to the WebSocket, until such time as the `bufferedAmount` falls back below the high watermark.
+When you call `send()` on a `WebSocket` the runtime might add the message to a buffer rather than send it right away. In the event that `socket.bufferedAmount` exceeds the value configured here, messages will be added to a queue in your application code instead of being sent to the WebSocket, until such time as the `bufferedAmount` falls back below the high watermark.
 
 ##### `signal`
 
