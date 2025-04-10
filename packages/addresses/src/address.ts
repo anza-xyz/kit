@@ -192,7 +192,7 @@ export function getAddressEncoder(): FixedSizeEncoder<Address, 32> {
  *     248, 179, 178, 232, 220,  89, 53, 127
  * ]);
  * const addressDecoder = getAddressDecoder();
- * const address = addressDecoder.decode(address); // B9Lf9z5BfNPT4d5KMeaBFx8x1G4CULZYR1jA2kmxRDka
+ * const address = addressDecoder.decode(addressBytes); // B9Lf9z5BfNPT4d5KMeaBFx8x1G4CULZYR1jA2kmxRDka
  * ```
  */
 export function getAddressDecoder(): FixedSizeDecoder<Address, 32> {
