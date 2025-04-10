@@ -29,28 +29,43 @@ import { fetchEncodedSysvarAccount, SYSVAR_EPOCH_REWARDS_ADDRESS } from './sysva
 type SysvarEpochRewardsSize = 81;
 
 /**
- * The `EpochRewards` sysvar.
+ * Tracks whether the rewards period (including calculation and distribution) is in progress, as
+ * well as the details needed to resume distribution when starting from a snapshot during the
+ * rewards period.
  *
- * Tracks the progress of epoch rewards distribution. It includes:
- * - Total rewards for the current epoch, in lamports.
- * - Rewards for the current epoch distributed so far, in lamports.
- * - Distribution completed block height, i.e. distribution of all staking rewards for the current
- *   epoch will be completed at this block height.
- *
- * Note that `EpochRewards` only lasts for a handful of blocks at the start of
- * an epoch. When all rewards have been distributed, the sysvar is deleted.
- * See https://github.com/anza-xyz/agave/blob/e0203f22dc83cb792fa97f91dbe6e924cbd08af1/docs/src/runtime/sysvars.md?plain=1#L155-L168
+ * The sysvar is repopulated at the start of the first block of each epoch. Therefore, the sysvar
+ * contains data about the current epoch until a new epoch begins.
  */
 export type SysvarEpochRewards = Readonly<{
+    /** Whether the rewards period (including calculation and distribution) is active */
     active: boolean;
+    /** The rewards currently distributed for the current epoch, in {@link Lamports} */
     distributedRewards: Lamports;
+    /** The starting block height of the rewards distribution in the current epoch */
     distributionStartingBlockHeight: bigint;
+    /**
+     * Number of partitions in the rewards distribution in the current epoch, used to generate an
+     * `EpochRewardsHasher`
+     */
     numPartitions: bigint;
+    /**
+     * The {@link Blockhash} of the parent block of the first block in the epoch, used to seed an
+     * `EpochRewardsHasher`
+     */
     parentBlockhash: Blockhash;
+    /**
+     * The total rewards points calculated for the current epoch, where points equals the sum of
+     * (delegated stake * credits observed) for all  delegations
+     */
     totalPoints: bigint;
+    /** The total rewards for the current epoch, in {@link Lamports} */
     totalRewards: Lamports;
 }>;
 
+/**
+ * Returns an encoder that you can use to encode a {@link SysvarEpochRewards} to a byte array
+ * representing the `EpochRewards` sysvar's account data.
+ */
 export function getSysvarEpochRewardsEncoder(): FixedSizeEncoder<SysvarEpochRewards, SysvarEpochRewardsSize> {
     return getStructEncoder([
         ['distributionStartingBlockHeight', getU64Encoder()],
@@ -63,6 +78,10 @@ export function getSysvarEpochRewardsEncoder(): FixedSizeEncoder<SysvarEpochRewa
     ]) as FixedSizeEncoder<SysvarEpochRewards, SysvarEpochRewardsSize>;
 }
 
+/**
+ * Returns a decoder that you can use to decode a byte array representing the `EpochRewards`
+ * sysvar's account data to a {@link SysvarEpochRewards}.
+ */
 export function getSysvarEpochRewardsDecoder(): FixedSizeDecoder<SysvarEpochRewards, SysvarEpochRewardsSize> {
     return getStructDecoder([
         ['distributionStartingBlockHeight', getU64Decoder()],
@@ -75,6 +94,12 @@ export function getSysvarEpochRewardsDecoder(): FixedSizeDecoder<SysvarEpochRewa
     ]) as FixedSizeDecoder<SysvarEpochRewards, SysvarEpochRewardsSize>;
 }
 
+/**
+ * Returns a codec that you can use to encode from or decode to {@link SysvarEpochRewards}
+ *
+ * @see {@link getSysvarEpochRewardsDecoder}
+ * @see {@link getSysvarEpochRewardsEncoder}
+ */
 export function getSysvarEpochRewardsCodec(): FixedSizeCodec<
     SysvarEpochRewards,
     SysvarEpochRewards,
@@ -84,17 +109,8 @@ export function getSysvarEpochRewardsCodec(): FixedSizeCodec<
 }
 
 /**
- * Fetch the `EpochRewards` sysvar.
- *
- * Tracks the progress of epoch rewards distribution. It includes:
- * - Total rewards for the current epoch, in lamports.
- * - Rewards for the current epoch distributed so far, in lamports.
- * - Distribution completed block height, i.e. distribution of all staking rewards for the current
- *   epoch will be completed at this block height.
- *
- * Note that `EpochRewards` only lasts for a handful of blocks at the start of
- * an epoch. When all rewards have been distributed, the sysvar is deleted.
- * See https://github.com/anza-xyz/agave/blob/e0203f22dc83cb792fa97f91dbe6e924cbd08af1/docs/src/runtime/sysvars.md?plain=1#L155-L168
+ * Fetch the `EpochRewards` sysvar account using any RPC that supports the
+ * {@link GetAccountInfoApi}.
  */
 export async function fetchSysvarEpochRewards(
     rpc: Rpc<GetAccountInfoApi>,

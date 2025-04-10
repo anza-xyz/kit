@@ -1,7 +1,12 @@
 type GetEpochScheduleApiResponse = Readonly<{
-    /** First normal-length epoch, log2(slotsPerEpoch) - log2(MINIMUM_SLOTS_PER_EPOCH) */
+    /**
+     * First normal-length epoch after the warmup period,
+     * log2(slotsPerEpoch) - log2(MINIMUM_SLOTS_PER_EPOCH)
+     */
     firstNormalEpoch: bigint;
-    /** MINIMUM_SLOTS_PER_EPOCH * (2^(firstNormalEpoch) - 1) */
+    /**
+     * The first slot after the warmup period, MINIMUM_SLOTS_PER_EPOCH * (2^(firstNormalEpoch) - 1)
+     */
     firstNormalSlot: bigint;
     /**
      * The number of slots before beginning of an epoch to calculate a leader schedule for that
