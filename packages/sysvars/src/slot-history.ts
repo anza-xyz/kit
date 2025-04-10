@@ -66,16 +66,25 @@ function getMemoizedU64ArrayDecoder(): FixedSizeDecoder<bigint[], typeof BITVEC_
 
 type SysvarSlotHistorySize = typeof SLOT_HISTORY_ACCOUNT_DATA_STATIC_SIZE;
 
-/**
- * The `SlotHistory` sysvar.
- *
- * A bitvector of slots present over the last epoch.
- */
+/** A bitvector of slots present over the last epoch. */
 export type SysvarSlotHistory = {
+    /**
+     * A vector of 64-bit numbers which, when their bits are strung together, represent a record of
+     * non-skipped slots.
+     *
+     * The bit in position (slot % MAX_ENTRIES) is 0 if the slot was skipped and 1 otherwise, valid
+     * only when the candidate slot is less than `nextSlot` and greater than or equal to
+     * `MAX_ENTRIES - nextSlot`.
+     */
     bits: bigint[];
+    /** The number of the slot one newer than tracked by the bitvector */
     nextSlot: Slot;
 };
 
+/**
+ * Returns an encoder that you can use to encode a {@link SysvarSlotHistory} to a byte array
+ * representing the `SlotHistory` sysvar's account data.
+ */
 export function getSysvarSlotHistoryEncoder(): FixedSizeEncoder<SysvarSlotHistory, SysvarSlotHistorySize> {
     return createEncoder({
         fixedSize: SLOT_HISTORY_ACCOUNT_DATA_STATIC_SIZE,
@@ -101,6 +110,10 @@ export function getSysvarSlotHistoryEncoder(): FixedSizeEncoder<SysvarSlotHistor
     });
 }
 
+/**
+ * Returns a decoder that you can use to decode a byte array representing the `SlotHistory` sysvar's
+ * account data to a {@link SysvarSlotHistory}.
+ */
 export function getSysvarSlotHistoryDecoder(): FixedSizeDecoder<SysvarSlotHistory, SysvarSlotHistorySize> {
     return createDecoder({
         fixedSize: SLOT_HISTORY_ACCOUNT_DATA_STATIC_SIZE,
@@ -158,6 +171,12 @@ export function getSysvarSlotHistoryDecoder(): FixedSizeDecoder<SysvarSlotHistor
     });
 }
 
+/**
+ * Returns a codec that you can use to encode from or decode to {@link SysvarSlotHistory}
+ *
+ * @see {@link getSysvarSlotHistoryDecoder}
+ * @see {@link getSysvarSlotHistoryEncoder}
+ */
 export function getSysvarSlotHistoryCodec(): FixedSizeCodec<
     SysvarSlotHistory,
     SysvarSlotHistory,
@@ -167,9 +186,8 @@ export function getSysvarSlotHistoryCodec(): FixedSizeCodec<
 }
 
 /**
- * Fetch the `SlotHistory` sysvar.
- *
- * A bitvector of slots present over the last epoch.
+ * Fetches the `SlotHistory` sysvar account using any RPC that supports the
+ * {@link GetAccountInfoApi}.
  */
 export async function fetchSysvarSlotHistory(
     rpc: Rpc<GetAccountInfoApi>,
