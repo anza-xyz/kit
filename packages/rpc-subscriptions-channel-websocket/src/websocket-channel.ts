@@ -43,7 +43,7 @@ type WebSocketMessage = ArrayBufferLike | ArrayBufferView | Blob | string;
 const NORMAL_CLOSURE_CODE = 1000; // https://www.rfc-editor.org/rfc/rfc6455.html#section-7.4.1
 
 /**
- * Creates an object that represents an open a channel to a `WebSocket` server.
+ * Creates an object that represents an open channel to a `WebSocket` server.
  *
  * You can use it to send messages by calling its
  * {@link RpcSubscriptionsChannel.send | `send()`} function and you can receive them by subscribing
