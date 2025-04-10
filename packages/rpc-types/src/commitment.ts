@@ -1,5 +1,11 @@
 import { SOLANA_ERROR__INVARIANT_VIOLATION__SWITCH_MUST_BE_EXHAUSTIVE, SolanaError } from '@solana/errors';
 
+/**
+ * A union of all possible commitment statuses -- each a measure of the network confirmation and
+ * stake levels on a particular block.
+ *
+ * Read more about the statuses themselves, [here](https://docs.solana.com/cluster/commitments).
+ */
 export type Commitment = 'confirmed' | 'finalized' | 'processed';
 
 function getCommitmentScore(commitment: Commitment): number {
