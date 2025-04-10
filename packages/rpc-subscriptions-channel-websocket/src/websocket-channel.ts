@@ -15,7 +15,7 @@ export type Config = Readonly<{
      * client.
      *
      * When you call {@link RpcSubscriptionsChannel.send | `send()`} on a `WebSocket` the runtime
-     * might add the message to a buffer rather than to send it right away. In the event that
+     * might add the message to a buffer rather than send it right away. In the event that
      * `socket.bufferedAmount` exceeds the value configured here, messages will be added to a queue
      * in your application code instead of being sent to the WebSocket, until such time as the
      * `bufferedAmount` falls back below the high watermark.
