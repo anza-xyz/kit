@@ -17,7 +17,7 @@ This package allows developers to create custom RPC Subscriptions channels. Usin
 
 ### `createWebSocketChannel()`
 
-Creates an object that represents an open a channel to a `WebSocket` server.
+Creates an object that represents an open channel to a `WebSocket` server.
 
 You can use it to send messages by calling its `send()` function and you can receive them by subscribing to the `RpcSubscriptionChannelEvents` it emits.
 
