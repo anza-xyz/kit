@@ -9,15 +9,15 @@ import type {
 import type { Lamports } from './lamports';
 
 export type AccountInfoBase = Readonly<{
-    /** indicates if the account contains a program (and is strictly read-only) */
+    /** Indicates if the account contains a program (and is strictly read-only) */
     executable: boolean;
-    /** number of lamports assigned to this account */
+    /** Number of {@link Lamports} assigned to this account */
     lamports: Lamports;
-    /** pubkey of the program this account has been assigned to */
+    /** Address of the program this account has been assigned to */
     owner: Address;
-    /** the epoch at which this account will next owe rent */
+    /** The epoch at which this account will next owe rent */
     rentEpoch: bigint;
-    /** the size of the account data in bytes (excluding the 128 bytes of header) */
+    /** The size of the account data in bytes (excluding the 128 bytes of header) */
     space: bigint;
 }>;
 
