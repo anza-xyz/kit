@@ -12,10 +12,12 @@ describe('stake history', () => {
     it('decode', () => {
         // prettier-ignore
         const stakeHistoryState = new Uint8Array([
-            2, 0, 0, 0,                     // array length 
+            2, 0, 0, 0, 0, 0, 0, 0,         // array length 
+            1, 0, 0, 0, 0, 0, 0, 0,         // epoch
             0, 208, 237, 144, 46, 0, 0, 0,  // effective
             0, 160, 219, 33, 93, 0, 0, 0,   // activating
             0, 112, 201, 178, 139, 0, 0, 0, // deactivating
+            2, 0, 0, 0, 0, 0, 0, 0,         // epoch
             0, 160, 219, 33, 93, 0, 0, 0,   // effective
             0, 112, 201, 178, 139, 0, 0, 0, // activating
             0, 64, 183, 67, 186, 0, 0, 0,   // deactivating
@@ -23,14 +25,20 @@ describe('stake history', () => {
         expect(getSysvarStakeHistoryCodec().decode(stakeHistoryState)).toMatchObject(
             expect.arrayContaining([
                 {
-                    activating: 400_000_000_000n,
-                    deactivating: 600_000_000_000n,
-                    effective: 200_000_000_000n,
+                    epoch: 1n,
+                    stakeHistory: {
+                        activating: 400_000_000_000n,
+                        deactivating: 600_000_000_000n,
+                        effective: 200_000_000_000n,
+                    },
                 },
                 {
-                    activating: 600_000_000_000n,
-                    deactivating: 800_000_000_000n,
-                    effective: 400_000_000_000n,
+                    epoch: 2n,
+                    stakeHistory: {
+                        activating: 600_000_000_000n,
+                        deactivating: 800_000_000_000n,
+                        effective: 400_000_000_000n,
+                    },
                 },
             ]),
         );
