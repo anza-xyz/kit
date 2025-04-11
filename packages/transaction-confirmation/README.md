@@ -135,7 +135,7 @@ try {
 
 ### `waitForRecentTransactionConfirmation()`
 
-Supply your own confirmation implementations to this function to create a custom nonce transaction confirmation strategy.
+Supply your own confirmation implementations to this function to create a custom confirmation strategy for recently-landed transactions.
 
 ```ts
 import { waitForRecentTransactionConfirmation } from '@solana/transaction-confirmation';
