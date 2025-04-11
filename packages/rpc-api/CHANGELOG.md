@@ -1,5 +1,26 @@
 # @solana/rpc-api
 
+## 2.1.1
+
+### Patch Changes
+
+- [#236](https://github.com/anza-xyz/kit/pull/236) [`ca1d4ec`](https://github.com/anza-xyz/kit/commit/ca1d4ec7ddd641ca813f79f8ca06d225f29419e2) Thanks [@steveluscher](https://github.com/steveluscher)! - RPC methods that take no parameters no longer rely on having a placeholder `NO_CONFIG` argument. Removing it will save you from wondering why it exists.
+
+- [#236](https://github.com/anza-xyz/kit/pull/236) [`ca1d4ec`](https://github.com/anza-xyz/kit/commit/ca1d4ec7ddd641ca813f79f8ca06d225f29419e2) Thanks [@steveluscher](https://github.com/steveluscher)! - The minimum TypeScript version is now 5.3.3
+
+- Updated dependencies [[`776e18d`](https://github.com/anza-xyz/kit/commit/776e18d75c759a839608069c61da3f70b775540b), [`ca1d4ec`](https://github.com/anza-xyz/kit/commit/ca1d4ec7ddd641ca813f79f8ca06d225f29419e2)]:
+    - @solana/transaction-messages@2.1.1
+    - @solana/rpc-parsed-types@2.1.1
+    - @solana/rpc-transformers@2.1.1
+    - @solana/codecs-strings@2.1.1
+    - @solana/transactions@2.1.1
+    - @solana/codecs-core@2.1.1
+    - @solana/addresses@2.1.1
+    - @solana/rpc-types@2.1.1
+    - @solana/rpc-spec@2.1.1
+    - @solana/errors@2.1.1
+    - @solana/keys@2.1.1
+
 ## 2.1.0
 
 ### Patch Changes
