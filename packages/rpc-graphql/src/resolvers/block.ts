@@ -83,10 +83,15 @@ export const resolveBlock = (fieldName?: string) => {
                                     })
                                 ] = data[0];
                             } else if (typeof data === 'object') {
-                                const jsonParsedData = data;
-                                jsonParsedData.message.instructions = mapJsonParsedInstructions(
-                                    jsonParsedData.message.instructions,
-                                ) as unknown as (typeof jsonParsedData)['message']['instructions'];
+                                const jsonParsedData: typeof data = {
+                                    ...data,
+                                    message: {
+                                        ...data.message,
+                                        instructions: mapJsonParsedInstructions(
+                                            data.message.instructions,
+                                        ) as unknown as (typeof jsonParsedData)['message']['instructions'],
+                                    },
+                                };
 
                                 const loadedInnerInstructions = loadedTransaction.meta?.innerInstructions;
                                 if (loadedInnerInstructions) {
