@@ -1,4 +1,4 @@
-import { downcastNodeToNumberIfBigint } from '../request-transformer-bigint-downcast';
+import { downcastNodeToNumberIfBigint } from '../request-transformer-bigint-downcast-internal';
 
 describe('bigint downcast visitor', () => {
     it.each([10, '10', null, undefined, Symbol()])('returns the value `%p` as-is', value => {
