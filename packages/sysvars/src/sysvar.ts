@@ -46,8 +46,8 @@ type SysvarAddress =
 /**
  * Fetch an encoded sysvar account.
  *
- * Sysvars are special accounts that contain dynamically-updated data about the
- * network cluster, the blockchain history, and the executing transaction.
+ * Sysvars are special accounts that contain dynamically-updated data about the network cluster, the
+ * blockchain history, and the executing transaction.
  */
 export async function fetchEncodedSysvarAccount<TAddress extends SysvarAddress>(
     rpc: Rpc<GetAccountInfoApi>,
@@ -60,8 +60,8 @@ export async function fetchEncodedSysvarAccount<TAddress extends SysvarAddress>(
 /**
  * Fetch a JSON-parsed sysvar account.
  *
- * Sysvars are special accounts that contain dynamically-updated data about the
- * network cluster, the blockchain history, and the executing transaction.
+ * Sysvars are special accounts that contain dynamically-updated data about the network cluster, the
+ * blockchain history, and the executing transaction.
  */
 export async function fetchJsonParsedSysvarAccount<TAddress extends SysvarAddress>(
     rpc: Rpc<GetAccountInfoApi>,
