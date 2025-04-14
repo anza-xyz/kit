@@ -65,29 +65,29 @@ setTransactionMessageLifetimeUsingBlockhash(
 
 {
     // assertIsTransactionMessageWithBlockhashLifetime
-    const transaction = null as unknown as BaseTransactionMessage;
+    const transactionMessage = null as unknown as BaseTransactionMessage;
     // @ts-expect-error Should not be blockhash lifetime
-    transaction satisfies TransactionMessageWithBlockhashLifetime;
+    transactionMessage satisfies TransactionMessageWithBlockhashLifetime;
     // @ts-expect-error Should not satisfy has blockhash
-    transaction satisfies {
+    transactionMessage satisfies {
         lifetimeConstraint: {
             blockhash: Blockhash;
         };
     };
     // @ts-expect-error Should not satisfy has lastValidBlockHeight
-    transaction satisfies {
+    transactionMessage satisfies {
         lifetimeConstraint: {
             lastValidBlockHeight: bigint;
         };
     };
-    assertIsTransactionMessageWithBlockhashLifetime(transaction);
-    transaction satisfies TransactionMessageWithBlockhashLifetime;
-    transaction satisfies {
+    assertIsTransactionMessageWithBlockhashLifetime(transactionMessage);
+    transactionMessage satisfies TransactionMessageWithBlockhashLifetime;
+    transactionMessage satisfies {
         lifetimeConstraint: {
             blockhash: Blockhash;
         };
     };
-    transaction satisfies {
+    transactionMessage satisfies {
         lifetimeConstraint: {
             lastValidBlockHeight: bigint;
         };
@@ -233,9 +233,9 @@ null as unknown as BaseTransactionMessage &
     // @ts-expect-error missing fee payer
     TransactionMessageWithBlockhashLifetime satisfies CompilableTransactionMessage;
 {
-    const transaction = null as unknown as BaseTransactionMessage & TransactionMessageWithDurableNonceLifetime;
+    const transactionMessage = null as unknown as BaseTransactionMessage & TransactionMessageWithDurableNonceLifetime;
     // @ts-expect-error missing fee payer
-    transaction satisfies CompilableTransactionMessage;
+    transactionMessage satisfies CompilableTransactionMessage;
 }
 null as unknown as BaseTransactionMessage &
     ITransactionMessageWithFeePayer &

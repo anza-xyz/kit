@@ -219,14 +219,14 @@ export function decompileTransactionMessage(
 
     return pipe(
         createTransactionMessage({ version: compiledTransactionMessage.version as TransactionVersion }),
-        tx => setTransactionMessageFeePayer(feePayer, tx),
-        tx =>
+        m => setTransactionMessageFeePayer(feePayer, m),
+        m =>
             instructions.reduce((acc, instruction) => {
                 return appendTransactionMessageInstruction(instruction, acc);
-            }, tx),
-        tx =>
+            }, m),
+        m =>
             'blockhash' in lifetimeConstraint
-                ? setTransactionMessageLifetimeUsingBlockhash(lifetimeConstraint, tx)
-                : setTransactionMessageLifetimeUsingDurableNonce(lifetimeConstraint, tx),
+                ? setTransactionMessageLifetimeUsingBlockhash(lifetimeConstraint, m)
+                : setTransactionMessageLifetimeUsingDurableNonce(lifetimeConstraint, m),
     );
 }

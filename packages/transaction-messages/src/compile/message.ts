@@ -27,22 +27,27 @@ type VersionedCompiledTransactionMessage = BaseCompiledTransactionMessage &
     }>;
 
 export function compileTransactionMessage(
-    transaction: CompilableTransactionMessage & Readonly<{ version: 'legacy' }>,
+    transactionMessage: CompilableTransactionMessage & Readonly<{ version: 'legacy' }>,
 ): LegacyCompiledTransactionMessage;
 export function compileTransactionMessage(
-    transaction: CompilableTransactionMessage,
+    transactionMessage: CompilableTransactionMessage,
 ): VersionedCompiledTransactionMessage;
-export function compileTransactionMessage(transaction: CompilableTransactionMessage): CompiledTransactionMessage {
-    const addressMap = getAddressMapFromInstructions(transaction.feePayer.address, transaction.instructions);
+export function compileTransactionMessage(
+    transactionMessage: CompilableTransactionMessage,
+): CompiledTransactionMessage {
+    const addressMap = getAddressMapFromInstructions(
+        transactionMessage.feePayer.address,
+        transactionMessage.instructions,
+    );
     const orderedAccounts = getOrderedAccountsFromAddressMap(addressMap);
     return {
-        ...(transaction.version !== 'legacy'
+        ...(transactionMessage.version !== 'legacy'
             ? { addressTableLookups: getCompiledAddressTableLookups(orderedAccounts) }
             : null),
         header: getCompiledMessageHeader(orderedAccounts),
-        instructions: getCompiledInstructions(transaction.instructions, orderedAccounts),
-        lifetimeToken: getCompiledLifetimeToken(transaction.lifetimeConstraint),
+        instructions: getCompiledInstructions(transactionMessage.instructions, orderedAccounts),
+        lifetimeToken: getCompiledLifetimeToken(transactionMessage.lifetimeConstraint),
         staticAccounts: getCompiledStaticAccounts(orderedAccounts),
-        version: transaction.version,
+        version: transactionMessage.version,
     };
 }
