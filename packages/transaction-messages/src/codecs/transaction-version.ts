@@ -12,6 +12,12 @@ import { TransactionVersion } from '../transaction-message';
 
 const VERSION_FLAG_MASK = 0x80;
 
+/**
+ * Returns an encoder that you can use to encode a {@link TransactionVersion} to a byte array.
+ *
+ * Legacy messages will produce an empty array and will not advance the offset. Versioned messages
+ * will produce an array with a single byte.
+ */
 export function getTransactionVersionEncoder(): VariableSizeEncoder<TransactionVersion> {
     return createEncoder({
         getSizeFromValue: value => (value === 'legacy' ? 0 : 1),
@@ -31,6 +37,13 @@ export function getTransactionVersionEncoder(): VariableSizeEncoder<TransactionV
     });
 }
 
+/**
+ * Returns a decoder that you can use to decode a byte array representing a
+ * {@link TransactionVersion}.
+ *
+ * When the byte at the current offset is determined to represent a legacy transaction, this decoder
+ * will return `'legacy'` and will not advance the offset.
+ */
 export function getTransactionVersionDecoder(): VariableSizeDecoder<TransactionVersion> {
     return createDecoder({
         maxSize: 1,
@@ -47,6 +60,12 @@ export function getTransactionVersionDecoder(): VariableSizeDecoder<TransactionV
     });
 }
 
+/**
+ * Returns a codec that you can use to encode from or decode to {@link TransactionVersion}
+ *
+ * @see {@link getTransactionVersionDecoder}
+ * @see {@link getTransactionVersionEncoder}
+ */
 export function getTransactionVersionCodec(): VariableSizeCodec<TransactionVersion> {
     return combineCodec(getTransactionVersionEncoder(), getTransactionVersionDecoder());
 }
