@@ -10,8 +10,17 @@ import { Nonce } from '@solana/transaction-messages';
 
 type GetNonceInvalidationPromiseFn = (config: {
     abortSignal: AbortSignal;
+    /**
+     * Fetch the nonce account details as of the highest slot that has reached this level of
+     * commitment.
+     */
     commitment: Commitment;
+    /**
+     * The value of the nonce that we would expect to see in the nonce account in order for any
+     * transaction with that nonce-based lifetime to be considered valid.
+     */
     currentNonceValue: Nonce;
+    /** The address of the account in which the currently-valid nonce value is stored */
     nonceAccountAddress: Address;
 }) => Promise<void>;
 
@@ -26,6 +35,40 @@ const NONCE_VALUE_OFFSET =
     32; // nonce authority(pubkey)
 // Then comes the nonce value.
 
+/**
+ * Creates a promise that throws when the value stored in a nonce account is not the expected one.
+ *
+ * When a transaction's lifetime is tied to the value stored in a nonce account, that transaction
+ * can be landed on the network until the nonce is advanced to a new value.
+ *
+ * @param config
+ *
+ * @example
+ * ```ts
+ * import { isSolanaError, SolanaError } from '@solana/errors';
+ * import { createNonceInvalidationPromiseFactory } from '@solana/transaction-confirmation';
+ *
+ * const getNonceInvalidationPromise = createNonceInvalidationPromiseFactory({
+ *     rpc,
+ *     rpcSubscriptions,
+ * });
+ * try {
+ *     await getNonceInvalidationPromise({
+ *         currentNonceValue,
+ *         nonceAccountAddress,
+ *     });
+ * } catch (e) {
+ *     if (isSolanaError(e, SOLANA_ERROR__NONCE_INVALID)) {
+ *         console.error(`The nonce has advanced to ${e.context.actualNonceValue}`);
+ *         // Re-sign and retry the transaction.
+ *         return;
+ *     } else if (isSolanaError(e, SOLANA_ERROR__NONCE_ACCOUNT_NOT_FOUND)) {
+ *         console.error(`No nonce account was found at ${nonceAccountAddress}`);
+ *     }
+ *     throw e;
+ * }
+ * ```
+ */
 export function createNonceInvalidationPromiseFactory({
     rpc,
     rpcSubscriptions,
