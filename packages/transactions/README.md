@@ -54,7 +54,7 @@ console.debug(`Inspect this transaction at https://explorer.solana.com/tx/${sign
 
 ### `signTransaction()`
 
-Given an array of `CryptoKey` objects which are private keys pertaining to addresses that are required to sign a transaction, this method will return a new signed transaction of type `FullySignedTransaction`. The transaction must have a signature for all required signers after being signed by the input `CryptoKey` objects.
+Given an array of `CryptoKey` objects which are private keys pertaining to addresses that are required to sign a transaction, this method will return a new signed transaction of type `FullySignedTransaction`. This function will throw unless the resulting transaction is fully signed.
 
 ```ts
 import { generateKeyPair } from '@solana/keys';
