@@ -73,6 +73,13 @@ function getAddressTableLookupArrayDecoder() {
     return getArrayDecoder(getAddressTableLookupDecoder(), { size: getShortU16Decoder() });
 }
 
+/**
+ * Returns an encoder that you can use to encode a {@link CompiledTransactionMessage} to a byte
+ * array.
+ *
+ * The wire format of a Solana transaction consists of signatures followed by a compiled transaction
+ * message. The byte array produced by this encoder is the message part.
+ */
 export function getCompiledTransactionMessageEncoder(): VariableSizeEncoder<CompiledTransactionMessage> {
     return createEncoder({
         getSizeFromValue: (compiledMessage: CompiledTransactionMessage) => {
@@ -92,6 +99,13 @@ export function getCompiledTransactionMessageEncoder(): VariableSizeEncoder<Comp
     });
 }
 
+/**
+ * Returns a decoder that you can use to decode a byte array representing a
+ * {@link CompiledTransactionMessage}.
+ *
+ * The wire format of a Solana transaction consists of signatures followed by a compiled transaction
+ * message. You can use this decoder to decode the message part.
+ */
 export function getCompiledTransactionMessageDecoder(): VariableSizeDecoder<CompiledTransactionMessage> {
     return transformDecoder(
         getStructDecoder(getPreludeStructDecoderTuple()) as VariableSizeDecoder<
@@ -109,6 +123,12 @@ export function getCompiledTransactionMessageDecoder(): VariableSizeDecoder<Comp
     );
 }
 
+/**
+ * Returns a codec that you can use to encode from or decode to {@link CompiledTransactionMessage}
+ *
+ * @see {@link getCompiledTransactionMessageDecoder}
+ * @see {@link getCompiledTransactionMessageEncoder}
+ */
 export function getCompiledTransactionMessageCodec(): VariableSizeCodec<CompiledTransactionMessage> {
     return combineCodec(getCompiledTransactionMessageEncoder(), getCompiledTransactionMessageDecoder());
 }

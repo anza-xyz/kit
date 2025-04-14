@@ -4,8 +4,11 @@ import { AccountRole } from '@solana/instructions';
 import { OrderedAccounts } from '../compile/accounts';
 
 type AddressTableLookup = Readonly<{
+    /** The address of the address lookup table account. */
     lookupTableAddress: Address;
+    /** Indices of accounts in a lookup table to load as read-only. */
     readableIndices: readonly number[];
+    /** Indices of accounts in a lookup table to load as writable. */
     writableIndices: readonly number[];
 }>;
 
