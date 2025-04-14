@@ -1,20 +1,20 @@
 import { TransactionMessageWithDurableNonceLifetime } from './durable-nonce';
 import { BaseTransactionMessage } from './transaction-message';
 
-export function appendTransactionMessageInstruction<TTransaction extends BaseTransactionMessage>(
-    instruction: TTransaction['instructions'][number],
-    transaction: TTransaction,
-): TTransaction {
-    return appendTransactionMessageInstructions([instruction], transaction);
+export function appendTransactionMessageInstruction<TTransactionMessage extends BaseTransactionMessage>(
+    instruction: TTransactionMessage['instructions'][number],
+    transactionMessage: TTransactionMessage,
+): TTransactionMessage {
+    return appendTransactionMessageInstructions([instruction], transactionMessage);
 }
 
-export function appendTransactionMessageInstructions<TTransaction extends BaseTransactionMessage>(
-    instructions: ReadonlyArray<TTransaction['instructions'][number]>,
-    transaction: TTransaction,
-): TTransaction {
+export function appendTransactionMessageInstructions<TTransactionMessage extends BaseTransactionMessage>(
+    instructions: ReadonlyArray<TTransactionMessage['instructions'][number]>,
+    transactionMessage: TTransactionMessage,
+): TTransactionMessage {
     return Object.freeze({
-        ...transaction,
-        instructions: Object.freeze([...transaction.instructions, ...instructions]),
+        ...transactionMessage,
+        instructions: Object.freeze([...transactionMessage.instructions, ...instructions]),
     });
 }
 
@@ -24,19 +24,19 @@ type ExcludeDurableNonce<T> = T extends TransactionMessageWithDurableNonceLifeti
     ? BaseTransactionMessage & Omit<T, keyof TransactionMessageWithDurableNonceLifetime>
     : T;
 
-export function prependTransactionMessageInstruction<TTransaction extends BaseTransactionMessage>(
-    instruction: TTransaction['instructions'][number],
-    transaction: TTransaction,
-): ExcludeDurableNonce<TTransaction> {
-    return prependTransactionMessageInstructions([instruction], transaction);
+export function prependTransactionMessageInstruction<TTransactionMessage extends BaseTransactionMessage>(
+    instruction: TTransactionMessage['instructions'][number],
+    transactionMessage: TTransactionMessage,
+): ExcludeDurableNonce<TTransactionMessage> {
+    return prependTransactionMessageInstructions([instruction], transactionMessage);
 }
 
-export function prependTransactionMessageInstructions<TTransaction extends BaseTransactionMessage>(
-    instructions: ReadonlyArray<TTransaction['instructions'][number]>,
-    transaction: TTransaction,
-): ExcludeDurableNonce<TTransaction> {
+export function prependTransactionMessageInstructions<TTransactionMessage extends BaseTransactionMessage>(
+    instructions: ReadonlyArray<TTransactionMessage['instructions'][number]>,
+    transactionMessage: TTransactionMessage,
+): ExcludeDurableNonce<TTransactionMessage> {
     return Object.freeze({
-        ...transaction,
-        instructions: Object.freeze([...instructions, ...transaction.instructions]),
-    }) as ExcludeDurableNonce<TTransaction>;
+        ...transactionMessage,
+        instructions: Object.freeze([...instructions, ...transactionMessage.instructions]),
+    }) as ExcludeDurableNonce<TTransactionMessage>;
 }

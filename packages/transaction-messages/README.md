@@ -24,11 +24,11 @@ import {
     setTransactionMessageLifetimeUsingBlockhash,
 } from '@solana/transaction-messages';
 
-const transferTransaction = pipe(
+const transferTransactionMessage = pipe(
     createTransactionMessage({ version: 0 }),
-    tx => setTransactionMessageFeePayer(myAddress, tx),
-    tx => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx),
-    tx => appendTransactionMessageInstruction(getTransferSolInstruction({ source, destination, amount }), tx),
+    m => setTransactionMessageFeePayer(myAddress, m),
+    m => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, m),
+    m => appendTransactionMessageInstruction(getTransferSolInstruction({ source, destination, amount }), m),
 );
 ```
 
@@ -49,7 +49,7 @@ Given a `TransactionVersion` this method will return an empty transaction having
 ```ts
 import { createTransactionMessage } from '@solana/transaction-messages';
 
-const tx = createTransactionMessage({ version: 0 });
+const message = createTransactionMessage({ version: 0 });
 ```
 
 ## Setting the fee payer
@@ -111,7 +111,7 @@ Given a blockhash and the last block height at which that blockhash is considere
 import { setTransactionMessageLifetimeUsingBlockhash } from '@solana/transaction-messages';
 
 const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
-const txWithBlockhashLifetime = setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx);
+const txMessageWithBlockhashLifetime = setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, txMessage);
 ```
 
 #### `setTransactionMessageLifetimeUsingDurableNonce()`
@@ -164,7 +164,7 @@ function handleSubmit() {
         // Typescript will upcast `blockhash` to `Blockhash`.
         assertIsBlockhash(blockhash);
         // At this point, `blockhash` is a `Blockhash` that can be used with the RPC.
-        const blockhashIsValid = await rpc.isBlockhashValid(blockhash).send();
+        const { value: blockhashIsValid } = await rpc.isBlockhashValid(blockhash).send();
     } catch (e) {
         // `blockhash` turned out not to be a base58-encoded blockhash
     }
