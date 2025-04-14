@@ -14,15 +14,15 @@ export interface TransactionMessageWithBlockhashLifetime {
 }
 
 export function isTransactionMessageWithBlockhashLifetime(
-    transaction: BaseTransactionMessage | (BaseTransactionMessage & TransactionMessageWithBlockhashLifetime),
-): transaction is BaseTransactionMessage & TransactionMessageWithBlockhashLifetime {
+    transactionMessage: BaseTransactionMessage | (BaseTransactionMessage & TransactionMessageWithBlockhashLifetime),
+): transactionMessage is BaseTransactionMessage & TransactionMessageWithBlockhashLifetime {
     const lifetimeConstraintShapeMatches =
-        'lifetimeConstraint' in transaction &&
-        typeof transaction.lifetimeConstraint.blockhash === 'string' &&
-        typeof transaction.lifetimeConstraint.lastValidBlockHeight === 'bigint';
+        'lifetimeConstraint' in transactionMessage &&
+        typeof transactionMessage.lifetimeConstraint.blockhash === 'string' &&
+        typeof transactionMessage.lifetimeConstraint.lastValidBlockHeight === 'bigint';
     if (!lifetimeConstraintShapeMatches) return false;
     try {
-        assertIsBlockhash(transaction.lifetimeConstraint.blockhash);
+        assertIsBlockhash(transactionMessage.lifetimeConstraint.blockhash);
         return true;
     } catch {
         return false;
@@ -30,40 +30,42 @@ export function isTransactionMessageWithBlockhashLifetime(
 }
 
 export function assertIsTransactionMessageWithBlockhashLifetime(
-    transaction: BaseTransactionMessage | (BaseTransactionMessage & TransactionMessageWithBlockhashLifetime),
-): asserts transaction is BaseTransactionMessage & TransactionMessageWithBlockhashLifetime {
-    if (!isTransactionMessageWithBlockhashLifetime(transaction)) {
+    transactionMessage: BaseTransactionMessage | (BaseTransactionMessage & TransactionMessageWithBlockhashLifetime),
+): asserts transactionMessage is BaseTransactionMessage & TransactionMessageWithBlockhashLifetime {
+    if (!isTransactionMessageWithBlockhashLifetime(transactionMessage)) {
         throw new SolanaError(SOLANA_ERROR__TRANSACTION__EXPECTED_BLOCKHASH_LIFETIME);
     }
 }
 
 export function setTransactionMessageLifetimeUsingBlockhash<
-    TTransaction extends BaseTransactionMessage & TransactionMessageWithDurableNonceLifetime,
+    TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithDurableNonceLifetime,
 >(
     blockhashLifetimeConstraint: BlockhashLifetimeConstraint,
-    transaction: TTransaction,
-): Omit<TTransaction, 'lifetimeConstraint'> & TransactionMessageWithBlockhashLifetime;
+    transactionMessage: TTransactionMessage,
+): Omit<TTransactionMessage, 'lifetimeConstraint'> & TransactionMessageWithBlockhashLifetime;
 
 export function setTransactionMessageLifetimeUsingBlockhash<
-    TTransaction extends BaseTransactionMessage | (BaseTransactionMessage & TransactionMessageWithBlockhashLifetime),
+    TTransactionMessage extends
+        | BaseTransactionMessage
+        | (BaseTransactionMessage & TransactionMessageWithBlockhashLifetime),
 >(
     blockhashLifetimeConstraint: BlockhashLifetimeConstraint,
-    transaction: TTransaction,
-): TransactionMessageWithBlockhashLifetime & TTransaction;
+    transactionMessage: TTransactionMessage,
+): TransactionMessageWithBlockhashLifetime & TTransactionMessage;
 
 export function setTransactionMessageLifetimeUsingBlockhash(
     blockhashLifetimeConstraint: BlockhashLifetimeConstraint,
-    transaction: BaseTransactionMessage | (BaseTransactionMessage & TransactionMessageWithBlockhashLifetime),
+    transactionMessage: BaseTransactionMessage | (BaseTransactionMessage & TransactionMessageWithBlockhashLifetime),
 ) {
     if (
-        'lifetimeConstraint' in transaction &&
-        transaction.lifetimeConstraint.blockhash === blockhashLifetimeConstraint.blockhash &&
-        transaction.lifetimeConstraint.lastValidBlockHeight === blockhashLifetimeConstraint.lastValidBlockHeight
+        'lifetimeConstraint' in transactionMessage &&
+        transactionMessage.lifetimeConstraint.blockhash === blockhashLifetimeConstraint.blockhash &&
+        transactionMessage.lifetimeConstraint.lastValidBlockHeight === blockhashLifetimeConstraint.lastValidBlockHeight
     ) {
-        return transaction;
+        return transactionMessage;
     }
     const out = {
-        ...transaction,
+        ...transactionMessage,
         lifetimeConstraint: Object.freeze(blockhashLifetimeConstraint),
     };
     Object.freeze(out);
