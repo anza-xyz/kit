@@ -54,6 +54,34 @@ type WidenTransactionMessageInstructions<TTransactionMessage extends Transaction
               >
         : TTransactionMessage;
 
+/**
+ * Given a transaction message and a mapping of lookup tables to the addresses stored in them, this
+ * function will return a new transaction message with the same instructions but with all non-signer
+ * accounts that are found in the given lookup tables represented by an {@link IAccountLookupMeta}
+ * instead of an {@link IAccountMeta}.
+ *
+ * This means that these accounts will take up less space in the compiled transaction message. This
+ * size reduction is most significant when the transaction includes many accounts from the same
+ * lookup table.
+ *
+ * @example
+ * ```ts
+ * import { address } from '@solana/addresses';
+ * import { compressTransactionMessageUsingAddressLookupTables } from '@solana/transaction-messages';
+ *
+ * const lookupTableAddress = address('4QwSwNriKPrz8DLW4ju5uxC2TN5cksJx6tPUPj7DGLAW');
+ * const accountAddress = address('5n2ADjHPsqB4EVUNEX48xRqtnmuLu5XSHDwkJRR98qpM');
+ * const lookupTableAddresses: AddressesByLookupTableAddress = {
+ *     [lookupTableAddress]: [accountAddress],
+ * };
+ *
+ * const compressedTransactionMessage = compressTransactionMessageUsingAddressLookupTables(
+ *     transactionMessage,
+ *     lookupTableAddresses,
+ * );
+ * ```
+ *
+ */
 export function compressTransactionMessageUsingAddressLookupTables<
     TTransactionMessage extends TransactionMessageNotLegacy = TransactionMessageNotLegacy,
 >(
