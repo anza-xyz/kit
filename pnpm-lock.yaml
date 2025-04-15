@@ -690,8 +690,8 @@ importers:
         specifier: ^1.1.0
         version: 1.1.0
       '@wallet-standard/errors':
-        specifier: ^0.1.0
-        version: 0.1.0
+        specifier: ^0.1.1
+        version: 0.1.1
       '@wallet-standard/ui':
         specifier: ^1.0.0
         version: 1.0.0
@@ -4020,6 +4020,11 @@ packages:
 
   '@wallet-standard/errors@0.1.0':
     resolution: {integrity: sha512-ag0eq5ixy7rz8M5YUWGi/EoIJ69KJ+KILFNunoufgmXVkiISC7+NIZXJYTJrapni4f9twE1hfT+8+IV2CYCvmg==}
+    engines: {node: '>=16'}
+    hasBin: true
+
+  '@wallet-standard/errors@0.1.1':
+    resolution: {integrity: sha512-V8Ju1Wvol8i/VDyQOHhjhxmMVwmKiwyxUZBnHhtiPZJTWY0U/Shb2iEWyGngYEbAkp2sGTmEeNX1tVyGR7PqNw==}
     engines: {node: '>=16'}
     hasBin: true
 
@@ -10157,6 +10162,11 @@ snapshots:
       chalk: 5.4.1
       commander: 12.1.0
 
+  '@wallet-standard/errors@0.1.1':
+    dependencies:
+      chalk: 5.4.1
+      commander: 13.1.0
+
   '@wallet-standard/experimental-features@0.2.0':
     dependencies:
       '@wallet-standard/base': 1.1.0
@@ -10169,7 +10179,7 @@ snapshots:
     dependencies:
       '@wallet-standard/app': 1.1.0
       '@wallet-standard/base': 1.1.0
-      '@wallet-standard/errors': 0.1.0
+      '@wallet-standard/errors': 0.1.1
       '@wallet-standard/experimental-features': 0.2.0
       '@wallet-standard/features': 1.1.0
       '@wallet-standard/ui': 1.0.0
