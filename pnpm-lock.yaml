@@ -171,8 +171,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/react
       '@wallet-standard/core':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.1.1
+        version: 1.1.1
       '@wallet-standard/react':
         specifier: ^1.0.0
         version: 1.0.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -4014,12 +4014,17 @@ packages:
     resolution: {integrity: sha512-DJDQhjKmSNVLKWItoKThJS+CsJQjR9AOBOirBVT1F9YpRyC9oYHE+ZnSf8y8bxUphtKqdQMPVQ2mHohYdRvDVQ==}
     engines: {node: '>=16'}
 
-  '@wallet-standard/core@1.1.0':
-    resolution: {integrity: sha512-v2W5q/NlX1qkn2q/JOXQT//pOAdrhz7+nOcO2uiH9+a0uvreL+sdWWqkhFmMcX+HEBjaibdOQMUoIfDhOGX4XA==}
+  '@wallet-standard/core@1.1.1':
+    resolution: {integrity: sha512-5Xmjc6+Oe0hcPfVc5n8F77NVLwx1JVAoCVgQpLyv/43/bhtIif+Gx3WUrDlaSDoM8i2kA2xd6YoFbHCxs+e0zA==}
     engines: {node: '>=16'}
 
   '@wallet-standard/errors@0.1.0':
     resolution: {integrity: sha512-ag0eq5ixy7rz8M5YUWGi/EoIJ69KJ+KILFNunoufgmXVkiISC7+NIZXJYTJrapni4f9twE1hfT+8+IV2CYCvmg==}
+    engines: {node: '>=16'}
+    hasBin: true
+
+  '@wallet-standard/errors@0.1.1':
+    resolution: {integrity: sha512-V8Ju1Wvol8i/VDyQOHhjhxmMVwmKiwyxUZBnHhtiPZJTWY0U/Shb2iEWyGngYEbAkp2sGTmEeNX1tVyGR7PqNw==}
     engines: {node: '>=16'}
     hasBin: true
 
@@ -10144,11 +10149,11 @@ snapshots:
 
   '@wallet-standard/base@1.1.0': {}
 
-  '@wallet-standard/core@1.1.0':
+  '@wallet-standard/core@1.1.1':
     dependencies:
       '@wallet-standard/app': 1.1.0
       '@wallet-standard/base': 1.1.0
-      '@wallet-standard/errors': 0.1.0
+      '@wallet-standard/errors': 0.1.1
       '@wallet-standard/features': 1.1.0
       '@wallet-standard/wallet': 1.1.0
 
@@ -10156,6 +10161,11 @@ snapshots:
     dependencies:
       chalk: 5.4.1
       commander: 12.1.0
+
+  '@wallet-standard/errors@0.1.1':
+    dependencies:
+      chalk: 5.4.1
+      commander: 13.1.0
 
   '@wallet-standard/experimental-features@0.2.0':
     dependencies:
@@ -10169,7 +10179,7 @@ snapshots:
     dependencies:
       '@wallet-standard/app': 1.1.0
       '@wallet-standard/base': 1.1.0
-      '@wallet-standard/errors': 0.1.0
+      '@wallet-standard/errors': 0.1.1
       '@wallet-standard/experimental-features': 0.2.0
       '@wallet-standard/features': 1.1.0
       '@wallet-standard/ui': 1.0.0
