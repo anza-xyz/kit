@@ -20,7 +20,7 @@
         "@solana/kit": "workspace:*",
         "@solana/react": "workspace:*",
         "@wallet-standard/core": "^1.1.0",
-        "@wallet-standard/react": "^1.0.0",
+        "@wallet-standard/react": "^1.0.1",
         "react": "^19",
         "react-dom": "^19",
         "react-error-boundary": "^5.0.0",
