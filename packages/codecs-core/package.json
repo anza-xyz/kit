@@ -1,6 +1,6 @@
 {
     "name": "@solana/codecs-core",
-    "version": "2.1.0",
+    "version": "2.1.1",
     "description": "Core types and helpers for encoding and decoding byte arrays on Solana",
     "exports": {
         "edge-light": {
@@ -43,7 +43,6 @@
     "scripts": {
         "compile:docs": "typedoc",
         "benchmark": "./src/__benchmarks__/run.ts",
-        "compile:docs": "typedoc",
         "compile:js": "tsup --config build-scripts/tsup.config.package.ts",
         "compile:typedefs": "tsc -p ./tsconfig.declarations.json",
         "dev": "jest -c ../../node_modules/@solana/test-config/jest-dev.config.ts --rootDir . --watch",

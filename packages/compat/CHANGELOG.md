@@ -1,5 +1,19 @@
 # @solana/compat
 
+## 2.1.1
+
+### Patch Changes
+
+- [#236](https://github.com/anza-xyz/kit/pull/236) [`ca1d4ec`](https://github.com/anza-xyz/kit/commit/ca1d4ec7ddd641ca813f79f8ca06d225f29419e2) Thanks [@steveluscher](https://github.com/steveluscher)! - The minimum TypeScript version is now 5.3.3
+
+- Updated dependencies [[`ca1d4ec`](https://github.com/anza-xyz/kit/commit/ca1d4ec7ddd641ca813f79f8ca06d225f29419e2)]:
+    - @solana/instructions@2.1.1
+    - @solana/transactions@2.1.1
+    - @solana/codecs-core@2.1.1
+    - @solana/addresses@2.1.1
+    - @solana/errors@2.1.1
+    - @solana/keys@2.1.1
+
 ## 2.1.0
 
 ### Patch Changes

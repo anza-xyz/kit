@@ -1,5 +1,19 @@
 # @solana/rpc-transformers
 
+## 2.1.1
+
+### Patch Changes
+
+- [#353](https://github.com/anza-xyz/kit/pull/353) [`7e7b2ef`](https://github.com/anza-xyz/kit/commit/7e7b2efebfd8de431e4381cc3d3fa117d3228030) Thanks [@steveluscher](https://github.com/steveluscher)! - Removed `OPTIONS_OBJECT_POSITION_BY_METHOD`, `downcastNodeToNumberIfBigint()`, `applyDefaultCommitment()`, `getIntegerOverflowNodeVisitor()`, `getBigIntUpcastVisitor()`, and `getTreeWalker()` from the exports of `@solana/rpc-transformer`
+
+- [#236](https://github.com/anza-xyz/kit/pull/236) [`ca1d4ec`](https://github.com/anza-xyz/kit/commit/ca1d4ec7ddd641ca813f79f8ca06d225f29419e2) Thanks [@steveluscher](https://github.com/steveluscher)! - The minimum TypeScript version is now 5.3.3
+
+- Updated dependencies [[`ca1d4ec`](https://github.com/anza-xyz/kit/commit/ca1d4ec7ddd641ca813f79f8ca06d225f29419e2)]:
+    - @solana/rpc-spec-types@2.1.1
+    - @solana/functional@2.1.1
+    - @solana/rpc-types@2.1.1
+    - @solana/errors@2.1.1
+
 ## 2.1.0
 
 ### Patch Changes
