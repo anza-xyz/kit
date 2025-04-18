@@ -3,6 +3,10 @@ import { remarkInstall } from 'fumadocs-docgen';
 import { defineConfig, defineDocs } from 'fumadocs-mdx/config';
 import { transformerTwoslash } from 'fumadocs-twoslash';
 
+export const api = defineDocs({
+    dir: 'content/api',
+});
+
 export const docs = defineDocs({
     dir: 'content/docs',
 });

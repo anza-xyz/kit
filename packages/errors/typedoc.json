@@ -1,6 +1,8 @@
 {
     "$schema": "https://typedoc.org/schema.json",
-    "extends": ["../typedoc.base.json"],
+    "extends": ["../../typedoc.json"],
     "entryPoints": ["src/index.ts"],
+    "readme": "none",
+    "out": "./.docs",
     "readme": "none"
 }

@@ -19,6 +19,17 @@
             ],
             "outputs": ["dist/**"]
         },
+        "compile:docs": {
+            "dependsOn": ["^compile:typedefs"],
+            "inputs": [
+                "$TURBO_DEFAULT$",
+                "tsconfig.*",
+                "$TURBO_ROOT$/typedoc.json",
+                "$TURBO_ROOT$/typedoc.plugin.mjs",
+                "src/**"
+            ],
+            "outputs": [".docs/**"]
+        },
         "compile:js": {
             "dependsOn": ["^compile:js"],
             "inputs": ["$TURBO_DEFAULT$", "tsconfig.*", "src/**", "../build-scripts/*.ts"],

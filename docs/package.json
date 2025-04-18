@@ -6,7 +6,9 @@
         "build": "next build",
         "dev": "next dev",
         "start": "next start",
-        "postinstall": "fumadocs-mdx"
+        "postinstall": "fumadocs-mdx",
+        "prebuild": "./build-api-docs.sh",
+        "predev": "./build-api-docs.sh"
     },
     "dependencies": {
         "@solana-program/compute-budget": "^0.7.0",

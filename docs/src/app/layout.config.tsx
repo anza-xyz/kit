@@ -45,8 +45,9 @@ export const baseOptions: BaseLayoutProps = {
             icon: <BookTextIcon />,
         },
         {
-            text: 'References',
-            url: 'https://tsdocs.dev/docs/@solana/kit',
+            text: 'API Reference',
+            url: '/api',
+            active: 'nested-url',
             icon: <LibraryBigIcon />,
         },
     ],
