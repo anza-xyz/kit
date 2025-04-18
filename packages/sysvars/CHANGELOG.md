@@ -1,5 +1,21 @@
 # @solana/sysvars
 
+## 2.1.1
+
+### Patch Changes
+
+- [#374](https://github.com/anza-xyz/kit/pull/374) [`2fb1fbc`](https://github.com/anza-xyz/kit/commit/2fb1fbcf06b12f3f892776e89d2ee32797d032a3) Thanks [@steveluscher](https://github.com/steveluscher)! - The `SysvarEpochRewards` encoder/decoder no longer produces malformed data
+
+- [#379](https://github.com/anza-xyz/kit/pull/379) [`e143797`](https://github.com/anza-xyz/kit/commit/e1437975c60b9fe1beaabb45d513a840000b25a3) Thanks [@steveluscher](https://github.com/steveluscher)! - The `SysvarStakeHistory` encoder/decoder no longer produces malformed data
+
+- [#236](https://github.com/anza-xyz/kit/pull/236) [`ca1d4ec`](https://github.com/anza-xyz/kit/commit/ca1d4ec7ddd641ca813f79f8ca06d225f29419e2) Thanks [@steveluscher](https://github.com/steveluscher)! - The minimum TypeScript version is now 5.3.3
+
+- Updated dependencies [[`ca1d4ec`](https://github.com/anza-xyz/kit/commit/ca1d4ec7ddd641ca813f79f8ca06d225f29419e2)]:
+    - @solana/rpc-types@2.1.1
+    - @solana/accounts@2.1.1
+    - @solana/codecs@2.1.1
+    - @solana/errors@2.1.1
+
 ## 2.1.0
 
 ### Minor Changes
