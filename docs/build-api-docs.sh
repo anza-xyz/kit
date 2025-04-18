@@ -9,5 +9,8 @@ find $API_DIR -mindepth 1 -maxdepth 1 -type d -exec rm -rf {} +
 mkdir -p "$API_DIR"
 
 for DOC_PATH in packages/*/.docs; do
-    (cd $DOC_PATH && rsync -a . $API_DIR/ --exclude "index.mdx")
+    (cd "$DOC_PATH" && find . -type f ! -name "index.mdx" | while read -r file; do
+        mkdir -p "$API_DIR/$(dirname "$file")"
+        cp "$file" "$API_DIR/$file"
+    done)
 done
