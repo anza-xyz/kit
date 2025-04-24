@@ -3,21 +3,22 @@ import type { RpcSubscriptions, SignatureNotificationsApi, SlotNotificationsApi 
 import {
     createBlockHeightExceedencePromiseFactory,
     createRecentSignatureConfirmationPromiseFactory,
+    TransactionWithLastValidBlockHeight,
     waitForRecentTransactionConfirmation,
 } from '@solana/transaction-confirmation';
-import { FullySignedTransaction, TransactionWithBlockhashLifetime } from '@solana/transactions';
+import { FullySignedTransaction } from '@solana/transactions';
 
-import { sendAndConfirmTransactionWithBlockhashLifetime_INTERNAL_ONLY_DO_NOT_EXPORT } from './send-transaction-internal';
+import { sendAndConfirmTransactionWithLastValidBlockHeight_INTERNAL_ONLY_DO_NOT_EXPORT } from './send-transaction-internal';
 
-type SendAndConfirmTransactionWithBlockhashLifetimeFunction = (
-    transaction: FullySignedTransaction & TransactionWithBlockhashLifetime,
+type SendAndConfirmTransactionWithLastValidBlockHeightFunction = (
+    transaction: FullySignedTransaction & TransactionWithLastValidBlockHeight,
     config: Omit<
-        Parameters<typeof sendAndConfirmTransactionWithBlockhashLifetime_INTERNAL_ONLY_DO_NOT_EXPORT>[0],
+        Parameters<typeof sendAndConfirmTransactionWithLastValidBlockHeight_INTERNAL_ONLY_DO_NOT_EXPORT>[0],
         'confirmRecentTransaction' | 'rpc' | 'transaction'
     >,
 ) => Promise<void>;
 
-type SendAndConfirmTransactionWithBlockhashLifetimeFactoryConfig<TCluster> = {
+type SendAndConfirmTransactionWithLastValidBlockHeightFactoryConfig<TCluster> = {
     /** An object that supports the {@link GetSignatureStatusesApi} and the {@link SendTransactionApi} of the Solana RPC API */
     rpc: Rpc<GetEpochInfoApi & GetSignatureStatusesApi & SendTransactionApi> & { '~cluster'?: TCluster };
     /** An object that supports the {@link SignatureNotificationsApi} and the {@link SlotNotificationsApi} of the Solana RPC Subscriptions API */
@@ -50,19 +51,19 @@ type SendAndConfirmTransactionWithBlockhashLifetimeFactoryConfig<TCluster> = {
 export function sendAndConfirmTransactionFactory({
     rpc,
     rpcSubscriptions,
-}: SendAndConfirmTransactionWithBlockhashLifetimeFactoryConfig<'devnet'>): SendAndConfirmTransactionWithBlockhashLifetimeFunction;
+}: SendAndConfirmTransactionWithLastValidBlockHeightFactoryConfig<'devnet'>): SendAndConfirmTransactionWithLastValidBlockHeightFunction;
 export function sendAndConfirmTransactionFactory({
     rpc,
     rpcSubscriptions,
-}: SendAndConfirmTransactionWithBlockhashLifetimeFactoryConfig<'testnet'>): SendAndConfirmTransactionWithBlockhashLifetimeFunction;
+}: SendAndConfirmTransactionWithLastValidBlockHeightFactoryConfig<'testnet'>): SendAndConfirmTransactionWithLastValidBlockHeightFunction;
 export function sendAndConfirmTransactionFactory({
     rpc,
     rpcSubscriptions,
-}: SendAndConfirmTransactionWithBlockhashLifetimeFactoryConfig<'mainnet'>): SendAndConfirmTransactionWithBlockhashLifetimeFunction;
+}: SendAndConfirmTransactionWithLastValidBlockHeightFactoryConfig<'mainnet'>): SendAndConfirmTransactionWithLastValidBlockHeightFunction;
 export function sendAndConfirmTransactionFactory<TCluster extends 'devnet' | 'mainnet' | 'testnet' | void = void>({
     rpc,
     rpcSubscriptions,
-}: SendAndConfirmTransactionWithBlockhashLifetimeFactoryConfig<TCluster>): SendAndConfirmTransactionWithBlockhashLifetimeFunction {
+}: SendAndConfirmTransactionWithLastValidBlockHeightFactoryConfig<TCluster>): SendAndConfirmTransactionWithLastValidBlockHeightFunction {
     const getBlockHeightExceedencePromise = createBlockHeightExceedencePromiseFactory({
         rpc,
         rpcSubscriptions,
@@ -84,7 +85,7 @@ export function sendAndConfirmTransactionFactory<TCluster extends 'devnet' | 'ma
         });
     }
     return async function sendAndConfirmTransaction(transaction, config) {
-        await sendAndConfirmTransactionWithBlockhashLifetime_INTERNAL_ONLY_DO_NOT_EXPORT({
+        await sendAndConfirmTransactionWithLastValidBlockHeight_INTERNAL_ONLY_DO_NOT_EXPORT({
             ...config,
             confirmRecentTransaction,
             rpc,

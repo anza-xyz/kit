@@ -10,7 +10,7 @@ type GetBlockHeightExceedencePromiseFn = (config: {
     lastValidBlockHeight: bigint;
 }) => Promise<void>;
 
-type CreateBlockHeightExceedencePromiseFactoryyConfig<TCluster> = {
+type CreateBlockHeightExceedencePromiseFactoryConfig<TCluster> = {
     rpc: Rpc<GetEpochInfoApi> & { '~cluster'?: TCluster };
     rpcSubscriptions: RpcSubscriptions<SlotNotificationsApi> & { '~cluster'?: TCluster };
 };
@@ -18,21 +18,21 @@ type CreateBlockHeightExceedencePromiseFactoryyConfig<TCluster> = {
 export function createBlockHeightExceedencePromiseFactory({
     rpc,
     rpcSubscriptions,
-}: CreateBlockHeightExceedencePromiseFactoryyConfig<'devnet'>): GetBlockHeightExceedencePromiseFn;
+}: CreateBlockHeightExceedencePromiseFactoryConfig<'devnet'>): GetBlockHeightExceedencePromiseFn;
 export function createBlockHeightExceedencePromiseFactory({
     rpc,
     rpcSubscriptions,
-}: CreateBlockHeightExceedencePromiseFactoryyConfig<'testnet'>): GetBlockHeightExceedencePromiseFn;
+}: CreateBlockHeightExceedencePromiseFactoryConfig<'testnet'>): GetBlockHeightExceedencePromiseFn;
 export function createBlockHeightExceedencePromiseFactory({
     rpc,
     rpcSubscriptions,
-}: CreateBlockHeightExceedencePromiseFactoryyConfig<'mainnet'>): GetBlockHeightExceedencePromiseFn;
+}: CreateBlockHeightExceedencePromiseFactoryConfig<'mainnet'>): GetBlockHeightExceedencePromiseFn;
 export function createBlockHeightExceedencePromiseFactory<
     TCluster extends 'devnet' | 'mainnet' | 'testnet' | void = void,
 >({
     rpc,
     rpcSubscriptions,
-}: CreateBlockHeightExceedencePromiseFactoryyConfig<TCluster>): GetBlockHeightExceedencePromiseFn {
+}: CreateBlockHeightExceedencePromiseFactoryConfig<TCluster>): GetBlockHeightExceedencePromiseFn {
     return async function getBlockHeightExceedencePromise({
         abortSignal: callerAbortSignal,
         commitment,

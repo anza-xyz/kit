@@ -2,7 +2,7 @@ import { Signature } from '@solana/keys';
 import {
     getSignatureFromTransaction,
     Transaction,
-    TransactionWithBlockhashLifetime,
+    TransactionBlockhashLifetime,
     TransactionWithDurableNonceLifetime,
 } from '@solana/transactions';
 
@@ -10,6 +10,10 @@ import { createBlockHeightExceedencePromiseFactory } from './confirmation-strate
 import { createNonceInvalidationPromiseFactory } from './confirmation-strategy-nonce';
 import { BaseTransactionConfirmationStrategyConfig, raceStrategies } from './confirmation-strategy-racer';
 import { getTimeoutPromise } from './confirmation-strategy-timeout';
+
+export type TransactionWithLastValidBlockHeight = {
+    readonly lifetimeConstraint: Pick<TransactionBlockhashLifetime, 'lastValidBlockHeight'>;
+};
 
 interface WaitForDurableNonceTransactionConfirmationConfig extends BaseTransactionConfirmationStrategyConfig {
     getNonceInvalidationPromise: ReturnType<typeof createNonceInvalidationPromiseFactory>;
@@ -19,7 +23,7 @@ interface WaitForDurableNonceTransactionConfirmationConfig extends BaseTransacti
 interface WaitForRecentTransactionWithBlockhashLifetimeConfirmationConfig
     extends BaseTransactionConfirmationStrategyConfig {
     getBlockHeightExceedencePromise: ReturnType<typeof createBlockHeightExceedencePromiseFactory>;
-    transaction: Readonly<Transaction & TransactionWithBlockhashLifetime>;
+    transaction: Readonly<Transaction & TransactionWithLastValidBlockHeight>;
 }
 
 interface WaitForRecentTransactionWithTimeBasedLifetimeConfirmationConfig

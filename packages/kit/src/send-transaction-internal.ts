@@ -2,13 +2,13 @@ import type { Signature } from '@solana/keys';
 import type { Rpc, SendTransactionApi } from '@solana/rpc';
 import { Commitment, commitmentComparator } from '@solana/rpc-types';
 import {
+    TransactionWithLastValidBlockHeight,
     waitForDurableNonceTransactionConfirmation,
     waitForRecentTransactionConfirmation,
 } from '@solana/transaction-confirmation';
 import {
     FullySignedTransaction,
     getBase64EncodedWireTransaction,
-    TransactionWithBlockhashLifetime,
     TransactionWithDurableNonceLifetime,
 } from '@solana/transactions';
 
@@ -24,7 +24,7 @@ interface SendAndConfirmDurableNonceTransactionConfig
     transaction: FullySignedTransaction & TransactionWithDurableNonceLifetime;
 }
 
-interface SendAndConfirmTransactionWithBlockhashLifetimeConfig
+interface SendAndConfirmTransactionWithLastValidBlockHeightConfig
     extends SendTransactionBaseConfig,
         SendTransactionConfigWithoutEncoding {
     confirmRecentTransaction: (
@@ -33,7 +33,7 @@ interface SendAndConfirmTransactionWithBlockhashLifetimeConfig
             'getBlockHeightExceedencePromise' | 'getRecentSignatureConfirmationPromise'
         >,
     ) => Promise<void>;
-    transaction: FullySignedTransaction & TransactionWithBlockhashLifetime;
+    transaction: FullySignedTransaction & TransactionWithLastValidBlockHeight;
 }
 
 interface SendTransactionBaseConfig extends SendTransactionConfigWithoutEncoding {
@@ -111,14 +111,14 @@ export async function sendAndConfirmDurableNonceTransaction_INTERNAL_ONLY_DO_NOT
     return transactionSignature;
 }
 
-export async function sendAndConfirmTransactionWithBlockhashLifetime_INTERNAL_ONLY_DO_NOT_EXPORT({
+export async function sendAndConfirmTransactionWithLastValidBlockHeight_INTERNAL_ONLY_DO_NOT_EXPORT({
     abortSignal,
     commitment,
     confirmRecentTransaction,
     rpc,
     transaction,
     ...sendTransactionConfig
-}: SendAndConfirmTransactionWithBlockhashLifetimeConfig): Promise<Signature> {
+}: SendAndConfirmTransactionWithLastValidBlockHeightConfig): Promise<Signature> {
     const transactionSignature = await sendTransaction_INTERNAL_ONLY_DO_NOT_EXPORT({
         ...sendTransactionConfig,
         abortSignal,
