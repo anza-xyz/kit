@@ -40,7 +40,13 @@ export default async function Page(props: { params: Promise<{ slug?: string[] }>
 }
 
 export async function generateStaticParams() {
-    return apiSource.generateParams();
+    return apiSource.generateParams().filter(
+        params =>
+            // FIXME(#405): Build times on Vercel are so long as to make deploys impossible. For
+            // now, let's let Vercel generate API reference pages as they're visited (ISR -
+            // Incremental Static Generation).
+            params.slug.length === 0, // Except for the index page; generate that statically.
+    );
 }
 
 export async function generateMetadata(props: { params: Promise<{ slug?: string[] }> }) {
