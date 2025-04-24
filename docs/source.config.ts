@@ -14,6 +14,12 @@ export const docs = defineDocs({
 export default defineConfig({
     mdxOptions: {
         rehypeCodeOptions: {
+            langs: [
+                // FIXME(#403): If a popup itself contains a code fence in any language other than
+                // `ts`, the Shiki highlighter will throw an error that it hasn't loaded that
+                // language. Until we figure this out, preemptively load the `js` language.
+                'js',
+            ],
             themes: {
                 dark: 'github-dark',
                 light: 'github-light',

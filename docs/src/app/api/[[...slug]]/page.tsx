@@ -1,6 +1,6 @@
 import { apiSource } from '@/lib/source';
 import { Spread } from '@/lib/Spread';
-import { DocsPage, DocsBody, DocsCategory, DocsDescription, DocsTitle } from 'fumadocs-ui/page';
+import { DocsPage, DocsBody, DocsDescription, DocsTitle } from 'fumadocs-ui/page';
 import { notFound } from 'next/navigation';
 import defaultMdxComponents from 'fumadocs-ui/mdx';
 import { ImageZoom } from 'fumadocs-ui/components/image-zoom';
@@ -14,7 +14,6 @@ export default async function Page(props: { params: Promise<{ slug?: string[] }>
     if (!page) notFound();
 
     const MDX = page.data.body;
-    const hasCategory = page.file.name === 'index' && page.slugs.length > 0;
 
     return (
         <DocsPage toc={page.data.toc} full={page.data.full}>
@@ -36,7 +35,6 @@ export default async function Page(props: { params: Promise<{ slug?: string[] }>
                     }}
                 />
             </DocsBody>
-            {hasCategory && <DocsCategory page={page} from={apiSource} />}
         </DocsPage>
     );
 }

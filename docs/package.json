@@ -4,7 +4,7 @@
     "private": true,
     "scripts": {
         "build": "next build",
-        "dev": "next dev",
+        "dev": "next dev --turbo",
         "start": "next start",
         "postinstall": "fumadocs-mdx",
         "prebuild": "./build-api-docs.sh",
@@ -18,27 +18,28 @@
         "@solana/kit": "^2.1.0",
         "@solana/react": "^2.1.0",
         "@solana/web3.js": "^1.98.0",
-        "fumadocs-core": "15.0.15",
+        "fumadocs-core": "15.2.10",
         "fumadocs-docgen": "^2.0.0",
-        "fumadocs-mdx": "11.5.6",
-        "fumadocs-twoslash": "^3.1.0",
-        "fumadocs-ui": "15.0.15",
+        "fumadocs-mdx": "11.6.1",
+        "fumadocs-twoslash": "^3.1.1",
+        "fumadocs-ui": "15.2.10",
         "lucide-react": "^0.484.0",
-        "next": "15.2.4",
+        "next": "15.3.1",
         "react": "^19.0.0",
-        "react-dom": "^19.0.0"
+        "react-dom": "^19.0.0",
+        "twoslash": "^0.3.1"
     },
     "devDependencies": {
-        "@tailwindcss/postcss": "^4.0.9",
+        "@tailwindcss/postcss": "^4.1.4",
         "@types/mdx": "^2.0.13",
         "@types/node": "22.13.8",
         "@types/react": "^19.0.10",
         "@types/react-dom": "^19.0.4",
         "eslint": "^8",
-        "eslint-config-next": "15.2.0",
+        "eslint-config-next": "15.3.1",
         "postcss": "^8.5.3",
-        "tailwindcss": "^4.0.9",
-        "typescript": "^5.8.2"
+        "tailwindcss": "^4.1.4",
+        "typescript": "^5.8.3"
     },
     "packageManager": "pnpm@10.4.1"
 }

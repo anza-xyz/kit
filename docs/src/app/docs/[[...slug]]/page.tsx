@@ -1,6 +1,8 @@
 import { docsSource } from '@/lib/source';
 import { Spread } from '@/lib/Spread';
-import { DocsPage, DocsBody, DocsCategory, DocsDescription, DocsTitle } from 'fumadocs-ui/page';
+import { getPageTreePeers } from 'fumadocs-core/server';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { DocsPage, DocsBody, DocsDescription, DocsTitle } from 'fumadocs-ui/page';
 import { notFound } from 'next/navigation';
 import defaultMdxComponents from 'fumadocs-ui/mdx';
 import { ImageZoom } from 'fumadocs-ui/components/image-zoom';
@@ -36,7 +38,15 @@ export default async function Page(props: { params: Promise<{ slug?: string[] }>
                     }}
                 />
             </DocsBody>
-            {hasCategory && <DocsCategory page={page} from={docsSource} />}
+            {hasCategory && (
+                <Cards>
+                    {getPageTreePeers(docsSource.pageTree, page.url).map(peer => (
+                        <Card key={peer.url} title={peer.name} href={peer.url}>
+                            {peer.description}
+                        </Card>
+                    ))}
+                </Cards>
+            )}
         </DocsPage>
     );
 }
