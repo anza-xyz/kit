@@ -2,7 +2,7 @@ import { Signature } from '@solana/keys';
 import {
     getSignatureFromTransaction,
     Transaction,
-    TransactionBlockhashLifetime,
+    TransactionWithBlockhashLifetime,
     TransactionWithDurableNonceLifetime,
 } from '@solana/transactions';
 
@@ -11,8 +11,8 @@ import { createNonceInvalidationPromiseFactory } from './confirmation-strategy-n
 import { BaseTransactionConfirmationStrategyConfig, raceStrategies } from './confirmation-strategy-racer';
 import { getTimeoutPromise } from './confirmation-strategy-timeout';
 
-export type TransactionWithLastValidBlockHeight = {
-    readonly lifetimeConstraint: Pick<TransactionBlockhashLifetime, 'lastValidBlockHeight'>;
+export type TransactionWithLastValidBlockHeight = Omit<TransactionWithBlockhashLifetime, 'lifetimeConstraint'> & {
+    lifetimeConstraint: Omit<TransactionWithBlockhashLifetime['lifetimeConstraint'], 'blockhash'>;
 };
 
 interface WaitForDurableNonceTransactionConfirmationConfig extends BaseTransactionConfirmationStrategyConfig {

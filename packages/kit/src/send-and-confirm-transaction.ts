@@ -8,17 +8,17 @@ import {
 } from '@solana/transaction-confirmation';
 import { FullySignedTransaction } from '@solana/transactions';
 
-import { sendAndConfirmTransactionWithLastValidBlockHeight_INTERNAL_ONLY_DO_NOT_EXPORT } from './send-transaction-internal';
+import { sendAndConfirmTransactionWithBlockhashLifetime_INTERNAL_ONLY_DO_NOT_EXPORT } from './send-transaction-internal';
 
-type SendAndConfirmTransactionWithLastValidBlockHeightFunction = (
+type SendAndConfirmTransactionWithBlockhashLifetimeFunction = (
     transaction: FullySignedTransaction & TransactionWithLastValidBlockHeight,
     config: Omit<
-        Parameters<typeof sendAndConfirmTransactionWithLastValidBlockHeight_INTERNAL_ONLY_DO_NOT_EXPORT>[0],
+        Parameters<typeof sendAndConfirmTransactionWithBlockhashLifetime_INTERNAL_ONLY_DO_NOT_EXPORT>[0],
         'confirmRecentTransaction' | 'rpc' | 'transaction'
     >,
 ) => Promise<void>;
 
-type SendAndConfirmTransactionWithLastValidBlockHeightFactoryConfig<TCluster> = {
+type SendAndConfirmTransactionWithBlockhashLifetimeFactoryConfig<TCluster> = {
     /** An object that supports the {@link GetSignatureStatusesApi} and the {@link SendTransactionApi} of the Solana RPC API */
     rpc: Rpc<GetEpochInfoApi & GetSignatureStatusesApi & SendTransactionApi> & { '~cluster'?: TCluster };
     /** An object that supports the {@link SignatureNotificationsApi} and the {@link SlotNotificationsApi} of the Solana RPC Subscriptions API */
@@ -51,19 +51,19 @@ type SendAndConfirmTransactionWithLastValidBlockHeightFactoryConfig<TCluster> = 
 export function sendAndConfirmTransactionFactory({
     rpc,
     rpcSubscriptions,
-}: SendAndConfirmTransactionWithLastValidBlockHeightFactoryConfig<'devnet'>): SendAndConfirmTransactionWithLastValidBlockHeightFunction;
+}: SendAndConfirmTransactionWithBlockhashLifetimeFactoryConfig<'devnet'>): SendAndConfirmTransactionWithBlockhashLifetimeFunction;
 export function sendAndConfirmTransactionFactory({
     rpc,
     rpcSubscriptions,
-}: SendAndConfirmTransactionWithLastValidBlockHeightFactoryConfig<'testnet'>): SendAndConfirmTransactionWithLastValidBlockHeightFunction;
+}: SendAndConfirmTransactionWithBlockhashLifetimeFactoryConfig<'testnet'>): SendAndConfirmTransactionWithBlockhashLifetimeFunction;
 export function sendAndConfirmTransactionFactory({
     rpc,
     rpcSubscriptions,
-}: SendAndConfirmTransactionWithLastValidBlockHeightFactoryConfig<'mainnet'>): SendAndConfirmTransactionWithLastValidBlockHeightFunction;
+}: SendAndConfirmTransactionWithBlockhashLifetimeFactoryConfig<'mainnet'>): SendAndConfirmTransactionWithBlockhashLifetimeFunction;
 export function sendAndConfirmTransactionFactory<TCluster extends 'devnet' | 'mainnet' | 'testnet' | void = void>({
     rpc,
     rpcSubscriptions,
-}: SendAndConfirmTransactionWithLastValidBlockHeightFactoryConfig<TCluster>): SendAndConfirmTransactionWithLastValidBlockHeightFunction {
+}: SendAndConfirmTransactionWithBlockhashLifetimeFactoryConfig<TCluster>): SendAndConfirmTransactionWithBlockhashLifetimeFunction {
     const getBlockHeightExceedencePromise = createBlockHeightExceedencePromiseFactory({
         rpc,
         rpcSubscriptions,
@@ -85,7 +85,7 @@ export function sendAndConfirmTransactionFactory<TCluster extends 'devnet' | 'ma
         });
     }
     return async function sendAndConfirmTransaction(transaction, config) {
-        await sendAndConfirmTransactionWithLastValidBlockHeight_INTERNAL_ONLY_DO_NOT_EXPORT({
+        await sendAndConfirmTransactionWithBlockhashLifetime_INTERNAL_ONLY_DO_NOT_EXPORT({
             ...config,
             confirmRecentTransaction,
             rpc,

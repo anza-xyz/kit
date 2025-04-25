@@ -24,7 +24,7 @@ interface SendAndConfirmDurableNonceTransactionConfig
     transaction: FullySignedTransaction & TransactionWithDurableNonceLifetime;
 }
 
-interface SendAndConfirmTransactionWithLastValidBlockHeightConfig
+interface SendAndConfirmTransactionWithBlockhashLifetimeConfig
     extends SendTransactionBaseConfig,
         SendTransactionConfigWithoutEncoding {
     confirmRecentTransaction: (
@@ -111,14 +111,14 @@ export async function sendAndConfirmDurableNonceTransaction_INTERNAL_ONLY_DO_NOT
     return transactionSignature;
 }
 
-export async function sendAndConfirmTransactionWithLastValidBlockHeight_INTERNAL_ONLY_DO_NOT_EXPORT({
+export async function sendAndConfirmTransactionWithBlockhashLifetime_INTERNAL_ONLY_DO_NOT_EXPORT({
     abortSignal,
     commitment,
     confirmRecentTransaction,
     rpc,
     transaction,
     ...sendTransactionConfig
-}: SendAndConfirmTransactionWithLastValidBlockHeightConfig): Promise<Signature> {
+}: SendAndConfirmTransactionWithBlockhashLifetimeConfig): Promise<Signature> {
     const transactionSignature = await sendTransaction_INTERNAL_ONLY_DO_NOT_EXPORT({
         ...sendTransactionConfig,
         abortSignal,
