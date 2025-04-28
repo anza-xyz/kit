@@ -4,6 +4,9 @@ const withMDX = createMDX();
 
 /** @type {import('next').NextConfig} */
 const config = {
+    experimental: {
+        webpackMemoryOptimizations: true,
+    },
     reactStrictMode: true,
     serverExternalPackages: ['twoslash', 'typescript'],
 };
