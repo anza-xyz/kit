@@ -21,7 +21,7 @@
         "@solana/test-config": "workspace:*",
         "@solana/test-matchers": "workspace:*",
         "@solana/tsconfig": "workspace:*",
-        "@swc/jest": "^0.2.37",
+        "@swc/jest": "^0.2.38",
         "@types/jest": "^29.5.14",
         "@types/node": "^22",
         "@typescript-eslint/eslint-plugin": "^8.30.1",
