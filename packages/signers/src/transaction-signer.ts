@@ -30,7 +30,7 @@ export type TransactionSigner<TAddress extends string = string> =
  * import { isTransactionSigner } from '@solana/signers';
  *
  * const address = '1234..5678' as Address<'1234..5678'>;
- * isTransactionSigner({ address, signTransaction: async () => {} }); // true
+ * isTransactionSigner({ address, signTransactions: async () => {} }); // true
  * isTransactionSigner({ address, modifyAndSignTransaction: async () => {} }); // true
  * isTransactionSigner({ address, signAndSendTransaction: async () => {} }); // true
  * isTransactionSigner({ address }); // false
