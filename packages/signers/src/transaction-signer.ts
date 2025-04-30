@@ -31,8 +31,8 @@ export type TransactionSigner<TAddress extends string = string> =
  *
  * const address = '1234..5678' as Address<'1234..5678'>;
  * isTransactionSigner({ address, signTransactions: async () => {} }); // true
- * isTransactionSigner({ address, modifyAndSignTransaction: async () => {} }); // true
- * isTransactionSigner({ address, signAndSendTransaction: async () => {} }); // true
+ * isTransactionSigner({ address, modifyAndSignTransactions: async () => {} }); // true
+ * isTransactionSigner({ address, signAndSendTransactions: async () => {} }); // true
  * isTransactionSigner({ address }); // false
  * ```
  *
