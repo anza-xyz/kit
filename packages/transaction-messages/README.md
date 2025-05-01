@@ -171,9 +171,9 @@ function handleSubmit() {
 }
 ```
 
-#### `assertIsDurableNonceTransactionMessage()`
+#### `assertIsTransactionMessageWithDurableNonceLifetime()`
 
-From time to time you might acquire a transaction message that you expect to be a durable nonce transaction, from an untrusted network API or user input. To assert that such an arbitrary transaction is in fact a durable nonce transaction, use the `assertIsDurableNonceTransactionMessage` function.
+From time to time you might acquire a transaction message that you expect to be a durable nonce transaction, from an untrusted network API or user input. To assert that such an arbitrary transaction is in fact a durable nonce transaction, use the `assertIsTransactionMessageWithDurableNonceLifetime` function.
 
 See [`assertIsBlockhash()`](#assertisblockhash) for an example of how to use an assertion function.
 
