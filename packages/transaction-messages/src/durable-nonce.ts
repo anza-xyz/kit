@@ -8,6 +8,7 @@ import {
     createAdvanceNonceAccountInstruction,
     isAdvanceNonceAccountInstruction,
 } from './durable-nonce-instruction';
+import { ExcludeTransactionMessageLifetime } from './lifetime';
 import { BaseTransactionMessage } from './transaction-message';
 
 type DurableNonceConfig<
@@ -59,6 +60,14 @@ export interface TransactionMessageWithDurableNonceLifetime<
     ];
     readonly lifetimeConstraint: NonceLifetimeConstraint<TNonceValue>;
 }
+
+/**
+ * A helper type to exclude the durable nonce lifetime constraint from a transaction message.
+ */
+export type ExcludeTransactionMessageDurableNonceLifetime<TTransactionMessage extends BaseTransactionMessage> =
+    TTransactionMessage extends TransactionMessageWithDurableNonceLifetime
+        ? ExcludeTransactionMessageLifetime<TTransactionMessage>
+        : TTransactionMessage;
 
 /**
  * A type guard that returns `true` if the transaction message conforms to the
