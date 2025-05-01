@@ -9,7 +9,7 @@ import {
     setTransactionMessageLifetimeUsingBlockhash,
 } from '@solana/transaction-messages';
 
-import { IAccountSignerMeta, IInstructionWithSigners, ITransactionMessageWithSigners } from '../account-signer-meta';
+import { IAccountSignerMeta, IInstructionWithSigners, TransactionMessageWithSigners } from '../account-signer-meta';
 import { MessageModifyingSigner } from '../message-modifying-signer';
 import { MessagePartialSigner } from '../message-partial-signer';
 import { TransactionModifyingSigner } from '../transaction-modifying-signer';
@@ -29,7 +29,7 @@ export function createMockInstructionWithSigners(signers: TransactionSigner[]): 
 
 export function createMockTransactionMessageWithSigners(
     signers: TransactionSigner[],
-): CompilableTransactionMessage & ITransactionMessageWithSigners {
+): CompilableTransactionMessage & TransactionMessageWithSigners {
     const transaction = createTransactionMessage({ version: 0 });
     const transactionWithFeePayer = setTransactionMessageFeePayer(signers[0]?.address ?? '1111', transaction);
     const compilableTransaction = setTransactionMessageLifetimeUsingBlockhash(

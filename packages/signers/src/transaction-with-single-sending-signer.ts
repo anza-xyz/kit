@@ -6,7 +6,7 @@ import {
 import { Brand } from '@solana/nominal-types';
 import { CompilableTransactionMessage } from '@solana/transaction-messages';
 
-import { getSignersFromTransactionMessage, ITransactionMessageWithSigners } from './account-signer-meta';
+import { getSignersFromTransactionMessage, TransactionMessageWithSigners } from './account-signer-meta';
 import { isTransactionModifyingSigner } from './transaction-modifying-signer';
 import { isTransactionPartialSigner } from './transaction-partial-signer';
 import { isTransactionSendingSigner } from './transaction-sending-signer';
@@ -22,14 +22,14 @@ import { isTransactionSendingSigner } from './transaction-sending-signer';
  * import { assertIsTransactionMessageWithSingleSendingSigner } from '@solana/signers';
  *
  * assertIsTransactionMessageWithSingleSendingSigner(transactionMessage);
- * transactionMessage satisfies ITransactionMessageWithSingleSendingSigner;
+ * transactionMessage satisfies TransactionMessageWithSingleSendingSigner;
  * ```
  *
  * @see {@link isTransactionMessageWithSingleSendingSigner}
  * @see {@link assertIsTransactionMessageWithSingleSendingSigner}
  */
-export type ITransactionMessageWithSingleSendingSigner = Brand<
-    ITransactionMessageWithSigners,
+export type TransactionMessageWithSingleSendingSigner = Brand<
+    TransactionMessageWithSigners,
     'TransactionMessageWithSingleSendingSigner'
 >;
 
@@ -65,7 +65,7 @@ export type ITransactionMessageWithSingleSendingSigner = Brand<
  */
 export function isTransactionMessageWithSingleSendingSigner<TTransactionMessage extends CompilableTransactionMessage>(
     transaction: TTransactionMessage,
-): transaction is ITransactionMessageWithSingleSendingSigner & TTransactionMessage {
+): transaction is TransactionMessageWithSingleSendingSigner & TTransactionMessage {
     try {
         assertIsTransactionMessageWithSingleSendingSigner(transaction);
         return true;
@@ -100,7 +100,7 @@ export function assertIsTransactionMessageWithSingleSendingSigner<
     TTransactionMessage extends CompilableTransactionMessage,
 >(
     transaction: TTransactionMessage,
-): asserts transaction is ITransactionMessageWithSingleSendingSigner & TTransactionMessage {
+): asserts transaction is TransactionMessageWithSingleSendingSigner & TTransactionMessage {
     const signers = getSignersFromTransactionMessage(transaction);
     const sendingSigners = signers.filter(isTransactionSendingSigner);
 

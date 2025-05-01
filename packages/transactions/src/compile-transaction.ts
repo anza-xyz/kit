@@ -26,7 +26,7 @@ import { SignaturesMap, Transaction, TransactionMessageBytes } from './transacti
  *
  * - have a version and a list of zero or more instructions (ie. conform to
  *   {@link BaseTransactionMessage})
- * - have a fee payer set (ie. conform to {@link ITransactionMessageWithFeePayer})
+ * - have a fee payer set (ie. conform to {@link TransactionMessageWithFeePayer})
  * - have a lifetime specified (ie. conform to {@link TransactionMessageWithBlockhashLifetime} or
  *   {@link TransactionMessageWithDurableNonceLifetime})
  */
