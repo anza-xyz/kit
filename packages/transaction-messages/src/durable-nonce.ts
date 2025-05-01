@@ -88,12 +88,12 @@ export interface TransactionMessageWithDurableNonceLifetime<
  *
  * @example
  * ```ts
- * import { assertIsDurableNonceTransactionMessage } from '@solana/transaction-messages';
+ * import { assertIsTransactionMessageWithDurableNonceLifetime } from '@solana/transaction-messages';
  *
  * try {
  *     // If this type assertion function doesn't throw, then
  *     // Typescript will upcast `message` to `TransactionMessageWithDurableNonceLifetime`.
- *     assertIsDurableNonceTransactionMessage(message);
+ *     assertIsTransactionMessageWithDurableNonceLifetime(message);
  *     // At this point, `message` is a `TransactionMessageWithDurableNonceLifetime` that can be used
  *     // with the RPC.
  *     const { nonce, nonceAccountAddress } = message.lifetimeConstraint;
@@ -103,10 +103,10 @@ export interface TransactionMessageWithDurableNonceLifetime<
  * }
  * ```
  */
-export function assertIsDurableNonceTransactionMessage(
+export function assertIsTransactionMessageWithDurableNonceLifetime(
     transactionMessage: BaseTransactionMessage | (BaseTransactionMessage & TransactionMessageWithDurableNonceLifetime),
 ): asserts transactionMessage is BaseTransactionMessage & TransactionMessageWithDurableNonceLifetime {
-    if (!isDurableNonceTransaction(transactionMessage)) {
+    if (!isTransactionMessageWithDurableNonceLifetime(transactionMessage)) {
         throw new SolanaError(SOLANA_ERROR__TRANSACTION__EXPECTED_NONCE_LIFETIME);
     }
 }
@@ -212,7 +212,7 @@ function isAdvanceNonceAccountInstructionData(data: ReadonlyUint8Array): data is
  * }
  * ```
  */
-export function isDurableNonceTransaction(
+export function isTransactionMessageWithDurableNonceLifetime(
     transactionMessage: BaseTransactionMessage | (BaseTransactionMessage & TransactionMessageWithDurableNonceLifetime),
 ): transactionMessage is BaseTransactionMessage & TransactionMessageWithDurableNonceLifetime {
     return (
@@ -299,7 +299,7 @@ export function setTransactionMessageLifetimeUsingDurableNonce<
     if (firstInstruction && isAdvanceNonceAccountInstruction(firstInstruction)) {
         if (isAdvanceNonceAccountInstructionForNonce(firstInstruction, nonceAccountAddress, nonceAuthorityAddress)) {
             if (
-                isDurableNonceTransaction(transactionMessage) &&
+                isTransactionMessageWithDurableNonceLifetime(transactionMessage) &&
                 transactionMessage.lifetimeConstraint.nonce === nonce
             ) {
                 return transactionMessage as TransactionMessageWithDurableNonceLifetime<

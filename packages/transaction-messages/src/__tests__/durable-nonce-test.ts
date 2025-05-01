@@ -6,7 +6,7 @@ import type { Blockhash } from '@solana/rpc-types';
 
 import { TransactionMessageWithBlockhashLifetime } from '../blockhash';
 import {
-    assertIsDurableNonceTransactionMessage,
+    assertIsTransactionMessageWithDurableNonceLifetime,
     Nonce,
     setTransactionMessageLifetimeUsingDurableNonce,
     TransactionMessageWithDurableNonceLifetime,
@@ -59,7 +59,7 @@ describe('assertIsDurableNonceTransactionMessage()', () => {
     });
     it('throws when supplied a transaction with a nonce lifetime constraint but no instructions', () => {
         expect(() => {
-            assertIsDurableNonceTransactionMessage({
+            assertIsTransactionMessageWithDurableNonceLifetime({
                 ...durableNonceTx,
                 instructions: [],
             });
@@ -67,7 +67,7 @@ describe('assertIsDurableNonceTransactionMessage()', () => {
     });
     it('throws when supplied a transaction with a nonce lifetime constraint but an instruction at index 0 for a program other than the system program', () => {
         expect(() => {
-            assertIsDurableNonceTransactionMessage({
+            assertIsTransactionMessageWithDurableNonceLifetime({
                 ...durableNonceTx,
                 instructions: [
                     {
@@ -83,7 +83,7 @@ describe('assertIsDurableNonceTransactionMessage()', () => {
     });
     it('throws when supplied a transaction with a nonce lifetime constraint but a system program instruction at index 0 for something other than the `AdvanceNonceAccount` instruction', () => {
         expect(() => {
-            assertIsDurableNonceTransactionMessage({
+            assertIsTransactionMessageWithDurableNonceLifetime({
                 ...durableNonceTx,
                 instructions: [
                     {
@@ -99,7 +99,7 @@ describe('assertIsDurableNonceTransactionMessage()', () => {
     });
     it('throws when supplied a transaction with a nonce lifetime constraint but a system program instruction at index 0 with malformed accounts', () => {
         expect(() => {
-            assertIsDurableNonceTransactionMessage({
+            assertIsTransactionMessageWithDurableNonceLifetime({
                 ...durableNonceTx,
                 instructions: [
                     {
@@ -115,7 +115,7 @@ describe('assertIsDurableNonceTransactionMessage()', () => {
     });
     it('throws when supplied a transaction with an `AdvanceNonceAccount` instruction at index 0 but no lifetime constraint', () => {
         expect(() => {
-            assertIsDurableNonceTransactionMessage({
+            assertIsTransactionMessageWithDurableNonceLifetime({
                 ...durableNonceTx,
                 lifetimeConstraint: undefined,
             });
@@ -123,7 +123,7 @@ describe('assertIsDurableNonceTransactionMessage()', () => {
     });
     it('throws when supplied a transaction with an `AdvanceNonceAccount` instruction at index 0 but a blockhash lifetime constraint', () => {
         expect(() => {
-            assertIsDurableNonceTransactionMessage({
+            assertIsTransactionMessageWithDurableNonceLifetime({
                 ...durableNonceTx,
                 lifetimeConstraint: {
                     blockhash: '123' as Blockhash,
@@ -134,7 +134,7 @@ describe('assertIsDurableNonceTransactionMessage()', () => {
     });
     it('does not throw when supplied a durable nonce transaction', () => {
         expect(() => {
-            assertIsDurableNonceTransactionMessage({ ...durableNonceTx });
+            assertIsTransactionMessageWithDurableNonceLifetime({ ...durableNonceTx });
         }).not.toThrow();
     });
     it('does not throw when the nonce authority is a writable signer', () => {
@@ -159,7 +159,7 @@ describe('assertIsDurableNonceTransactionMessage()', () => {
             version: 0,
         } as const;
         expect(() => {
-            assertIsDurableNonceTransactionMessage({ ...transaction });
+            assertIsTransactionMessageWithDurableNonceLifetime({ ...transaction });
         }).not.toThrow();
     });
 });
