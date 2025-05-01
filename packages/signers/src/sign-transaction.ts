@@ -15,7 +15,7 @@ import {
     TransactionWithLifetime,
 } from '@solana/transactions';
 
-import { getSignersFromTransactionMessage, ITransactionMessageWithSigners } from './account-signer-meta';
+import { getSignersFromTransactionMessage, TransactionMessageWithSigners } from './account-signer-meta';
 import { deduplicateSigners } from './deduplicate-signers';
 import {
     isTransactionModifyingSigner,
@@ -35,7 +35,7 @@ import {
 import { isTransactionSigner, TransactionSigner } from './transaction-signer';
 import { assertIsTransactionMessageWithSingleSendingSigner } from './transaction-with-single-sending-signer';
 
-type CompilableTransactionMessageWithSigners = CompilableTransactionMessage & ITransactionMessageWithSigners;
+type CompilableTransactionMessageWithSigners = CompilableTransactionMessage & TransactionMessageWithSigners;
 
 /**
  * Extracts all {@link TransactionSigner | TransactionSigners} inside the provided
@@ -135,7 +135,7 @@ export async function partiallySignTransactionMessageWithSigners<
  * });
  *
  * // We now know the transaction is fully signed.
- * mySignedTransaction satisfies IFullySignedTransaction;
+ * mySignedTransaction satisfies FullySignedTransaction;
  * ```
  *
  * @see {@link partiallySignTransactionMessageWithSigners}

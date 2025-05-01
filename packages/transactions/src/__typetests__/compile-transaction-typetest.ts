@@ -2,10 +2,10 @@ import { Blockhash } from '@solana/rpc-types';
 import {
     BaseTransactionMessage,
     CompilableTransactionMessage,
-    ITransactionMessageWithFeePayer,
     Nonce,
     TransactionMessageWithBlockhashLifetime,
     TransactionMessageWithDurableNonceLifetime,
+    TransactionMessageWithFeePayer,
 } from '@solana/transaction-messages';
 
 import { compileTransaction } from '../compile-transaction';
@@ -21,35 +21,35 @@ import { Transaction } from '../transaction';
 // transaction message with blockhash lifetime
 compileTransaction(
     null as unknown as BaseTransactionMessage &
-        ITransactionMessageWithFeePayer &
-        TransactionMessageWithBlockhashLifetime,
+        TransactionMessageWithBlockhashLifetime &
+        TransactionMessageWithFeePayer,
 ) satisfies Readonly<Transaction & TransactionWithLifetime>;
 compileTransaction(
     null as unknown as BaseTransactionMessage &
-        ITransactionMessageWithFeePayer &
-        TransactionMessageWithBlockhashLifetime,
+        TransactionMessageWithBlockhashLifetime &
+        TransactionMessageWithFeePayer,
 ) satisfies Readonly<Transaction & TransactionWithBlockhashLifetime>;
 compileTransaction(
     null as unknown as BaseTransactionMessage &
-        ITransactionMessageWithFeePayer &
-        TransactionMessageWithBlockhashLifetime,
+        TransactionMessageWithBlockhashLifetime &
+        TransactionMessageWithFeePayer,
 ).lifetimeConstraint.blockhash satisfies Blockhash;
 
 // transaction message with durable nonce lifetime
 compileTransaction(
     null as unknown as BaseTransactionMessage &
-        ITransactionMessageWithFeePayer &
-        TransactionMessageWithDurableNonceLifetime,
+        TransactionMessageWithDurableNonceLifetime &
+        TransactionMessageWithFeePayer,
 ) satisfies Readonly<Transaction & TransactionWithLifetime>;
 compileTransaction(
     null as unknown as BaseTransactionMessage &
-        ITransactionMessageWithFeePayer &
-        TransactionMessageWithDurableNonceLifetime,
+        TransactionMessageWithDurableNonceLifetime &
+        TransactionMessageWithFeePayer,
 ) satisfies Readonly<Transaction & TransactionWithDurableNonceLifetime>;
 compileTransaction(
     null as unknown as BaseTransactionMessage &
-        ITransactionMessageWithFeePayer &
-        TransactionMessageWithDurableNonceLifetime,
+        TransactionMessageWithDurableNonceLifetime &
+        TransactionMessageWithFeePayer,
 ).lifetimeConstraint.nonce satisfies Nonce;
 
 // transaction message with unknown lifetime

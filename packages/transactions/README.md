@@ -26,7 +26,7 @@ Given a `TransactionMessage`, this function returns a `Transaction` object. This
 Whether a transaction message is ready to be compiled or not is enforced for you at the type level. In order to be signable, a transaction message must:
 
 - have a version and a list of zero or more instructions (ie. conform to `BaseTransactionMessage`)
-- have a fee payer set (ie. conform to `ITransactionMessageWithFeePayer`)
+- have a fee payer set (ie. conform to `TransactionMessageWithFeePayer`)
 - have a lifetime specified (ie. conform to `TransactionMessageWithBlockhashLifetime | TransactionMessageWithDurableNonceLifetime`)
 
 ## Signing transactions

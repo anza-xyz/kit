@@ -39,3 +39,6 @@ export * from './durable-nonce';
 export * from './fee-payer';
 export * from './instructions';
 export * from './transaction-message';
+
+// Remove in the next major version.
+export * from './deprecated';

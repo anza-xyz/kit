@@ -435,12 +435,12 @@ const myInstructionWithSigners: IInstruction & IInstructionWithSigners = {
 };
 ```
 
-#### `ITransactionMessageWithSigners`
+#### `TransactionMessageWithSigners`
 
 Composable type that allows `IAccountSignerMetas` to be used inside all of the transaction message's account metas.
 
 ```ts
-const myTransactionMessageWithSigners: BaseTransactionMessage & ITransactionMessageWithSigners = {
+const myTransactionMessageWithSigners: BaseTransactionMessage & TransactionMessageWithSigners = {
     instructions: [
         myInstructionA as IInstruction & IInstructionWithSigners,
         myInstructionB as IInstruction & IInstructionWithSigners,
@@ -552,7 +552,7 @@ const mySignedTransaction = await signTransactionMessageWithSigners(myTransactio
 });
 
 // We now know the transaction is fully signed.
-mySignedTransaction satisfies IFullySignedTransaction;
+mySignedTransaction satisfies FullySignedTransaction;
 ```
 
 #### `signAndSendTransactionMessageWithSigners()`

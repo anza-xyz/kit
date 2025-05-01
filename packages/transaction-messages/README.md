@@ -56,7 +56,7 @@ const message = createTransactionMessage({ version: 0 });
 
 ### Types
 
-#### `ITransactionMessageWithFeePayer`
+#### `TransactionMessageWithFeePayer`
 
 This type represents a transaction message for which a fee payer has been declared. A transaction must conform to this type to be compiled and landed on the network.
 
@@ -64,7 +64,7 @@ This type represents a transaction message for which a fee payer has been declar
 
 #### `setTransactionMessageFeePayer()`
 
-Given a base58-encoded address of a system account, this method will return a new transaction message having the same type as the one supplied plus the `ITransactionMessageWithFeePayer` type.
+Given a base58-encoded address of a system account, this method will return a new transaction message having the same type as the one supplied plus the `TransactionMessageWithFeePayer` type.
 
 ```ts
 import { address } from '@solana/addresses';

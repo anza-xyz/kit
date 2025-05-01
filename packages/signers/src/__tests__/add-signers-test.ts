@@ -3,11 +3,11 @@ import '@solana/test-matchers/toBeFrozenObject';
 import { Address } from '@solana/addresses';
 import { SOLANA_ERROR__SIGNER__ADDRESS_CANNOT_HAVE_MULTIPLE_SIGNERS, SolanaError } from '@solana/errors';
 import { AccountRole, IInstruction } from '@solana/instructions';
-import { BaseTransactionMessage, ITransactionMessageWithFeePayer } from '@solana/transaction-messages';
+import { BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
 
 import { IAccountSignerMeta, IInstructionWithSigners } from '../account-signer-meta';
 import { addSignersToInstruction, addSignersToTransactionMessage } from '../add-signers';
-import { ITransactionMessageWithFeePayerSigner } from '../fee-payer-signer';
+import { TransactionMessageWithFeePayerSigner } from '../fee-payer-signer';
 import { createMockTransactionModifyingSigner, createMockTransactionPartialSigner } from './__setup__';
 
 describe('addSignersToInstruction', () => {
@@ -193,7 +193,7 @@ describe('addSignersToTransactionMessage', () => {
 
     it('updates the fee payer if a matching signer is provided', () => {
         // Given a transaction with a fee payer address.
-        const transaction: BaseTransactionMessage & ITransactionMessageWithFeePayer = {
+        const transaction: BaseTransactionMessage & TransactionMessageWithFeePayer = {
             feePayer: { address: '1111' as Address },
             instructions: [],
             version: 0,
@@ -215,7 +215,7 @@ describe('addSignersToTransactionMessage', () => {
         const signerB = createMockTransactionModifyingSigner('1111' as Address);
 
         // And a transaction using fee payer signer A.
-        const transaction: BaseTransactionMessage & ITransactionMessageWithFeePayerSigner = {
+        const transaction: BaseTransactionMessage & TransactionMessageWithFeePayerSigner = {
             feePayer: signerA,
             instructions: [],
             version: 0,

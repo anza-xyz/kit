@@ -23,7 +23,7 @@ import {
 } from '../sign-transaction';
 import {
     assertIsTransactionMessageWithSingleSendingSigner,
-    ITransactionMessageWithSingleSendingSigner,
+    TransactionMessageWithSingleSendingSigner,
 } from '../transaction-with-single-sending-signer';
 import {
     createMockTransactionCompositeSigner,
@@ -590,7 +590,7 @@ describe('signAndSendTransactionMessageWithSigners', () => {
 
         // When we try to force sign and send this transaction.
         const promise = signAndSendTransactionMessageWithSigners(
-            transactionMessage as ITransactionMessageWithSingleSendingSigner & typeof transactionMessage,
+            transactionMessage as TransactionMessageWithSingleSendingSigner & typeof transactionMessage,
         );
 
         // Then we expect an error letting us know no sending mechanism was provided.

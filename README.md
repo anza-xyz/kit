@@ -50,9 +50,9 @@ The object-oriented design of the web3.js (1.x) API prevents optimizing compiler
 
 Read more about tree-shaking here:
 
--   [Mozilla Developer Docs: Tree Shaking](https://developer.mozilla.org/en-US/docs/Glossary/Tree_shaking)
--   [WebPack Docs: Tree Shaking](https://webpack.js.org/guides/tree-shaking/)
--   [Web.Dev Blog Article: Reduce JavaScript Payloads with Tree Shaking](https://web.dev/articles/reduce-javascript-payloads-with-tree-shaking)
+- [Mozilla Developer Docs: Tree Shaking](https://developer.mozilla.org/en-US/docs/Glossary/Tree_shaking)
+- [WebPack Docs: Tree Shaking](https://webpack.js.org/guides/tree-shaking/)
+- [Web.Dev Blog Article: Reduce JavaScript Payloads with Tree Shaking](https://web.dev/articles/reduce-javascript-payloads-with-tree-shaking)
 
 One example of an API that can’t be tree-shaken is the `Connection` class. It has dozens of methods, but because it’s a _class_ you have no choice but to include every method in your application’s final bundle, no matter how many you _actually_ use.
 
@@ -62,16 +62,16 @@ Kit is fully tree-shakable and will remain so, enforced by build-time checks. Op
 
 Kit is comprised of several smaller, modular packages under the `@solana` organization, including:
 
--   `@solana/accounts`: For fetching and decoding accounts
--   `@solana/codecs`: For composing data (de)serializers from a set of primitives or building custom ones
--   `@solana/errors`: For identifying and refining coded errors thrown in the `@solana` namespace
--   `@solana/rpc`: For sending RPC requests
--   `@solana/rpc-subscriptions`: For subscribing to RPC notifications
--   `@solana/signers`: For building message and/or transaction signer objects
--   `@solana/sysvars`: For fetching and decoding sysvar accounts
--   `@solana/transaction-messages`: For building and transforming Solana transaction message objects
--   `@solana/transactions`: For compiling and signing transactions for submission to the network
--   And many more!
+- `@solana/accounts`: For fetching and decoding accounts
+- `@solana/codecs`: For composing data (de)serializers from a set of primitives or building custom ones
+- `@solana/errors`: For identifying and refining coded errors thrown in the `@solana` namespace
+- `@solana/rpc`: For sending RPC requests
+- `@solana/rpc-subscriptions`: For subscribing to RPC notifications
+- `@solana/signers`: For building message and/or transaction signer objects
+- `@solana/sysvars`: For fetching and decoding sysvar accounts
+- `@solana/transaction-messages`: For building and transforming Solana transaction message objects
+- `@solana/transactions`: For compiling and signing transactions for submission to the network
+- And many more!
 
 Some of these packages are themselves composed of smaller packages. For instance, `@solana/rpc` is composed of `@solana/rpc-spec` (for core JSON RPC specification types), `@solana/rpc-api` (for the Solana-specific RPC methods), `@solana/rpc-transport-http` (for the default HTTP transport) and so on.
 
@@ -83,10 +83,10 @@ Depending on your use case and your tolerance for certain application behaviours
 
 The inability to customize web3.js up until now has been a source of frustration:
 
--   The Mango team wanted to customize the transaction confirmation strategy, but all of that functionality is hidden away behind `confirmTransaction` – a static method of `Connection`. [Here’s the code for `confirmTransaction` on GitHub](https://github.com/solana-labs/solana-web3.js/blob/69a8ad25ef09f9e6d5bff1ffa8428d9be0bd32ac/packages/library-legacy/src/connection.ts#L3734).
--   Solana developer ‘mPaella’ [wanted us to add a feature in the RPC](https://github.com/solana-labs/solana-web3.js/issues/1143#issuecomment-1435927152) that would failover to a set of backup URLs in case the primary one failed.
--   Solana developer ‘epicfaace’ wanted first-class support for automatic time-windowed batching in the RPC transport. [Here’s their pull request](https://github.com/solana-labs/solana/pull/23628).
--   Multiple folks have expressed the need for custom retry logic for failed requests or transactions. [Here’s a pull request from ‘dafyddd’](https://github.com/solana-labs/solana/pull/11811) and [another from ‘abrkn’](https://github.com/solana-labs/solana-web3.js/issues/1041) attempting to modify retry logic to suit their individual use cases.
+- The Mango team wanted to customize the transaction confirmation strategy, but all of that functionality is hidden away behind `confirmTransaction` – a static method of `Connection`. [Here’s the code for `confirmTransaction` on GitHub](https://github.com/solana-labs/solana-web3.js/blob/69a8ad25ef09f9e6d5bff1ffa8428d9be0bd32ac/packages/library-legacy/src/connection.ts#L3734).
+- Solana developer ‘mPaella’ [wanted us to add a feature in the RPC](https://github.com/solana-labs/solana-web3.js/issues/1143#issuecomment-1435927152) that would failover to a set of backup URLs in case the primary one failed.
+- Solana developer ‘epicfaace’ wanted first-class support for automatic time-windowed batching in the RPC transport. [Here’s their pull request](https://github.com/solana-labs/solana/pull/23628).
+- Multiple folks have expressed the need for custom retry logic for failed requests or transactions. [Here’s a pull request from ‘dafyddd’](https://github.com/solana-labs/solana/pull/11811) and [another from ‘abrkn’](https://github.com/solana-labs/solana-web3.js/issues/1041) attempting to modify retry logic to suit their individual use cases.
 
 Kit exposes far more of its internals, particularly where communication with an RPC is concerned, and allows willing developers the ability to compose new implementations from the default ones that manifest a nearly limitless array of customizations.
 
@@ -114,7 +114,7 @@ Class-based architecture also presents unique risks to developers who trigger th
 
 Read more about dual-package hazard:
 
--   [NodeJS: Dual Package Hazard](https://nodejs.org/api/packages.html#dual-package-hazard)
+- [NodeJS: Dual Package Hazard](https://nodejs.org/api/packages.html#dual-package-hazard)
 
 Kit implements no classes (with the notable exception of the `SolanaError` class) and implements the thinnest possible interfaces at function boundaries.
 
@@ -145,12 +145,12 @@ Kit ships with an implementation of the [JSON RPC specification](https://www.jso
 
 The main package responsible for managing communication with an RPC is `@solana/rpc`. However, this package makes use of more granular packages to break down the RPC logic into smaller pieces. Namely, these packages are:
 
--   `@solana/rpc`: Contains all logic related to sending Solana RPC calls.
--   `@solana/rpc-api`: Describes all Solana RPC methods using types.
--   `@solana/rpc-transport-http`: Provides a concrete implementation of an RPC transport using HTTP requests.
--   `@solana/rpc-spec`: Defines the JSON RPC spec for sending RPC requests.
--   `@solana/rpc-spec-types`: Shared JSON RPC specifications types and helpers that are used by both `@solana/rpc` and `@solana/rpc-subscriptions` (described in the next section).
--   `@solana/rpc-types`: Shared Solana RPC types and helpers that are used by both `@solana/rpc` and `@solana/rpc-subscriptions`.
+- `@solana/rpc`: Contains all logic related to sending Solana RPC calls.
+- `@solana/rpc-api`: Describes all Solana RPC methods using types.
+- `@solana/rpc-transport-http`: Provides a concrete implementation of an RPC transport using HTTP requests.
+- `@solana/rpc-spec`: Defines the JSON RPC spec for sending RPC requests.
+- `@solana/rpc-spec-types`: Shared JSON RPC specifications types and helpers that are used by both `@solana/rpc` and `@solana/rpc-subscriptions` (described in the next section).
+- `@solana/rpc-types`: Shared Solana RPC types and helpers that are used by both `@solana/rpc` and `@solana/rpc-subscriptions`.
 
 The main `@solana/kit` package re-exports the `@solana/rpc` package so, going forward, we will import RPC types and functions from the library directly.
 
@@ -481,9 +481,9 @@ const slot = await rpc.getSlot().send({ abortSignal: abortController.signal });
 
 Read more about `AbortController` here:
 
--   [Mozilla Developer Docs: `AbortController`](https://developer.mozilla.org/en-US/docs/Web/API/AbortController)
--   [Mozilla Developer Docs: `AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
--   [JavaScript.info: Fetch: Abort](https://javascript.info/fetch-abort)
+- [Mozilla Developer Docs: `AbortController`](https://developer.mozilla.org/en-US/docs/Web/API/AbortController)
+- [Mozilla Developer Docs: `AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
+- [JavaScript.info: Fetch: Abort](https://javascript.info/fetch-abort)
 
 ## RPC Subscriptions
 
@@ -491,12 +491,12 @@ Subscriptions in the legacy library do not allow custom retry logic and do not a
 
 The main package responsible for managing communication with RPC subscriptions is `@solana/rpc-subscriptions`. However, similarly to `@solana/rpc`, this package also makes use of more granular packages. These packages are:
 
--   `@solana/rpc-subscriptions`: Contains all logic related to subscribing to Solana RPC notifications.
--   `@solana/rpc-subscriptions-api`: Describes all Solana RPC subscriptions using types.
--   `@solana/rpc-subscriptions-channel-websocket`: Provides a concrete implementation of an RPC Subscriptions channel using WebSockets.
--   `@solana/rpc-subscriptions-spec`: Defines the JSON RPC spec for subscribing to RPC notifications.
--   `@solana/rpc-spec-types`: Shared JSON RPC specifications types and helpers that are used by both `@solana/rpc` and `@solana/rpc-subscriptions`.
--   `@solana/rpc-types`: Shared Solana RPC types and helpers that are used by both `@solana/rpc` and `@solana/rpc-subscriptions`.
+- `@solana/rpc-subscriptions`: Contains all logic related to subscribing to Solana RPC notifications.
+- `@solana/rpc-subscriptions-api`: Describes all Solana RPC subscriptions using types.
+- `@solana/rpc-subscriptions-channel-websocket`: Provides a concrete implementation of an RPC Subscriptions channel using WebSockets.
+- `@solana/rpc-subscriptions-spec`: Defines the JSON RPC spec for subscribing to RPC notifications.
+- `@solana/rpc-spec-types`: Shared JSON RPC specifications types and helpers that are used by both `@solana/rpc` and `@solana/rpc-subscriptions`.
+- `@solana/rpc-types`: Shared Solana RPC types and helpers that are used by both `@solana/rpc` and `@solana/rpc-subscriptions`.
 
 Since the main `@solana/kit` library also re-exports the `@solana/rpc-subscriptions` package we will import RPC Subscriptions types and functions directly from the main library going forward.
 
@@ -546,8 +546,8 @@ try {
 
 You can read more about `AsyncIterator` at the following links:
 
--   [Mozilla Developer Docs: `AsyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator)
--   [Luciano Mammino (Blog): JavaScript Async Iterators](https://www.nodejsdesignpatterns.com/blog/javascript-async-iterators/)
+- [Mozilla Developer Docs: `AsyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator)
+- [Luciano Mammino (Blog): JavaScript Async Iterators](https://www.nodejsdesignpatterns.com/blog/javascript-async-iterators/)
 
 ### Aborting RPC Subscriptions
 
@@ -579,9 +579,9 @@ console.log('Done.');
 
 Read more about `AbortController` at the following links:
 
--   [Mozilla Developer Docs: `AbortController`](https://developer.mozilla.org/en-US/docs/Web/API/AbortController)
--   [Mozilla Developer Docs: `AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
--   [JavaScript.info: Fetch: Abort](https://javascript.info/fetch-abort)
+- [Mozilla Developer Docs: `AbortController`](https://developer.mozilla.org/en-US/docs/Web/API/AbortController)
+- [Mozilla Developer Docs: `AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
+- [JavaScript.info: Fetch: Abort](https://javascript.info/fetch-abort)
 
 #### Cancelling Subscriptions
 
@@ -868,10 +868,10 @@ const transactionMessage = createTransactionMessage({ version: 0 });
 
 // Set the fee payer
 const transactionMessageWithFeePayer = setTransactionMessageFeePayer(feePayer, transactionMessage);
-//    ^? V0TransactionMessage & ITransactionMessageWithFeePayer
+//    ^? V0TransactionMessage & TransactionMessageWithFeePayer
 
 const transactionMessageWithFeePayerAndLifetime = setTransactionMessageLifetimeUsingBlockhash(
-    // ^? V0TransactionMessage & ITransactionMessageWithFeePayer & TransactionMessageWithBlockhashLifetime
+    // ^? V0TransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithBlockhashLifetime
     recentBlockhash,
     transactionMessageWithFeePayer,
 );
@@ -967,11 +967,11 @@ We have taken steps to make it easier to write data (de)serializers, especially 
 
 Solana’s codecs libraries are broken up into modular components so you only need to import the ones you need. They are:
 
--   `@solana/codecs-core`: The core codecs library for working with codecs serializers and creating custom ones
--   `@solana/codecs-numbers`: Used for serialization of numbers (little-endian and big-endian bytes, etc.)
--   `@solana/codecs-strings`: Used for serialization of strings
--   `@solana/codecs-data-structures`: Codecs and serializers for structs
--   `@solana/options`: Designed to build codecs and serializers for types that mimic Rust’s enums, which can include embedded data within their variants such as values, tuples, and structs
+- `@solana/codecs-core`: The core codecs library for working with codecs serializers and creating custom ones
+- `@solana/codecs-numbers`: Used for serialization of numbers (little-endian and big-endian bytes, etc.)
+- `@solana/codecs-strings`: Used for serialization of strings
+- `@solana/codecs-data-structures`: Codecs and serializers for structs
+- `@solana/options`: Designed to build codecs and serializers for types that mimic Rust’s enums, which can include embedded data within their variants such as values, tuples, and structs
 
 These packages are included in the main `@solana/kit` library but you may also import them from `@solana/codecs` if you only need the codecs.
 
@@ -1287,14 +1287,14 @@ const instruction = getCreateLookupTableInstruction({
 
 On top of instruction builders, these clients offer a variety of utilities such as:
 
--   Instruction codecs — e.g. `getTransferSolInstructionDataCodec`.
--   Account types — e.g. `AddressLookupTable`.
--   Account codecs — e.g. `getAddressLookupTableAccountDataCodec`.
--   Account helpers — e.g. `fetchAddressLookupTable`.
--   PDA helpers — e.g. `findAddressLookupTablePda`, `fetchAddressLookupTableFromSeeds`.
--   Defined types and their codecs — e.g. `NonceState`, `getNonceStateCodec`.
--   Program helpers — e.g. `SYSTEM_PROGRAM_ADDRESS`, `SystemAccount` enum, `identifySystemInstruction`.
--   And much more!
+- Instruction codecs — e.g. `getTransferSolInstructionDataCodec`.
+- Account types — e.g. `AddressLookupTable`.
+- Account codecs — e.g. `getAddressLookupTableAccountDataCodec`.
+- Account helpers — e.g. `fetchAddressLookupTable`.
+- PDA helpers — e.g. `findAddressLookupTablePda`, `fetchAddressLookupTableFromSeeds`.
+- Defined types and their codecs — e.g. `NonceState`, `getNonceStateCodec`.
+- Program helpers — e.g. `SYSTEM_PROGRAM_ADDRESS`, `SystemAccount` enum, `identifySystemInstruction`.
+- And much more!
 
 Here’s another example that fetches an `AddressLookupTable` PDA from its seeds.
 
@@ -1331,15 +1331,15 @@ pnpm create solana-program
 
 This [`create-solana-program`](https://github.com/solana-program/create-solana-program) installer will create a new repository including:
 
--   An example program using the framework of your choice (Anchor coming soon).
--   Generated clients for any of the selected clients.
--   A set of scripts that allows you to:
-    -   Start a local validator including all programs and accounts you depend on.
-    -   Build, lint and test your programs.
-    -   Generate IDLs from your programs.
-    -   Generate clients from the generated IDLs.
-    -   Build and test each of your clients.
--   GitHub Actions pipelines to test your program, test your clients, and even manually publish new packages or crates for your clients. (Coming soon).
+- An example program using the framework of your choice (Anchor coming soon).
+- Generated clients for any of the selected clients.
+- A set of scripts that allows you to:
+    - Start a local validator including all programs and accounts you depend on.
+    - Build, lint and test your programs.
+    - Generate IDLs from your programs.
+    - Generate clients from the generated IDLs.
+    - Build and test each of your clients.
+- GitHub Actions pipelines to test your program, test your clients, and even manually publish new packages or crates for your clients. (Coming soon).
 
 When selecting the JavaScript client, you will get a fully generated library compatible with Kit much like the `@solana-program` packages showcased above.
 
@@ -1454,12 +1454,12 @@ See more in the package’s [README on GitHub](https://github.com/anza-xyz/kit/t
 
 You can see all development of this library and associated GraphQL tooling in the Kit repository on GitHub.
 
--   https://github.com/anza-xyz/kit
+- https://github.com/anza-xyz/kit
 
 You can follow along with program client generator development in the `@solana-program` org and the `@codama-idl/codama` repository.
 
--   https://github.com/solana-program/
--   https://github.com/codama-idl/codama
+- https://github.com/solana-program/
+- https://github.com/codama-idl/codama
 
 Solana Labs develops these tools in public, as open source. We encourage any and all developers who would like to work on these tools to contribute to the codebase.
 

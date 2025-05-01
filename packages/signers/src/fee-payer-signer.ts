@@ -1,9 +1,9 @@
-import { BaseTransactionMessage, ITransactionMessageWithFeePayer } from '@solana/transaction-messages';
+import { BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
 
 import { TransactionSigner } from './transaction-signer';
 
 /**
- * Alternative to {@link ITransactionMessageWithFeePayer} that uses a {@link TransactionSigner} for the fee payer.
+ * Alternative to {@link TransactionMessageWithFeePayer} that uses a {@link TransactionSigner} for the fee payer.
  *
  * @typeParam TAddress - Supply a string literal to define a fee payer having a particular address.
  * @typeParam TSigner - Optionally provide a narrower type for the {@link TransactionSigner}.
@@ -11,16 +11,16 @@ import { TransactionSigner } from './transaction-signer';
  * @example
  * ```ts
  * import { BaseTransactionMessage } from '@solana/transaction-messages';
- * import { generateKeyPairSigner, ITransactionMessageWithFeePayerSigner } from '@solana/signers';
+ * import { generateKeyPairSigner, TransactionMessageWithFeePayerSigner } from '@solana/signers';
  *
- * const transactionMessage: BaseTransactionMessage & ITransactionMessageWithFeePayerSigner = {
+ * const transactionMessage: BaseTransactionMessage & TransactionMessageWithFeePayerSigner = {
  *     feePayer: await generateKeyPairSigner(),
  *     instructions: [],
  *     version: 0,
  * };
  * ```
  */
-export interface ITransactionMessageWithFeePayerSigner<
+export interface TransactionMessageWithFeePayerSigner<
     TAddress extends string = string,
     TSigner extends TransactionSigner<TAddress> = TransactionSigner<TAddress>,
 > {
@@ -50,11 +50,11 @@ export interface ITransactionMessageWithFeePayerSigner<
 export function setTransactionMessageFeePayerSigner<
     TFeePayerAddress extends string,
     TTransactionMessage extends BaseTransactionMessage &
-        Partial<ITransactionMessageWithFeePayer | ITransactionMessageWithFeePayerSigner>,
+        Partial<TransactionMessageWithFeePayer | TransactionMessageWithFeePayerSigner>,
 >(
     feePayer: TransactionSigner<TFeePayerAddress>,
     transactionMessage: TTransactionMessage,
-): ITransactionMessageWithFeePayerSigner<TFeePayerAddress> & Omit<TTransactionMessage, 'feePayer'> {
+): Omit<TTransactionMessage, 'feePayer'> & TransactionMessageWithFeePayerSigner<TFeePayerAddress> {
     Object.freeze(feePayer);
     const out = { ...transactionMessage, feePayer };
     Object.freeze(out);

@@ -1,12 +1,12 @@
 import { AccountRole, IAccountLookupMeta, IAccountMeta, IInstruction } from '@solana/instructions';
 import {
     BaseTransactionMessage,
-    ITransactionMessageWithFeePayer,
+    TransactionMessageWithFeePayer,
     TransactionVersion,
 } from '@solana/transaction-messages';
 
 import { deduplicateSigners } from './deduplicate-signers';
-import { ITransactionMessageWithFeePayerSigner } from './fee-payer-signer';
+import { TransactionMessageWithFeePayerSigner } from './fee-payer-signer';
 import { isTransactionSigner, TransactionSigner } from './transaction-signer';
 
 /**
@@ -103,22 +103,22 @@ export type IInstructionWithSigners<
  * ```ts
  * import { IInstruction } from '@solana/instructions';
  * import { BaseTransactionMessage } from '@solana/transaction-messages';
- * import { generateKeyPairSigner, IInstructionWithSigners, ITransactionMessageWithSigners } from '@solana/signers';
+ * import { generateKeyPairSigner, IInstructionWithSigners, TransactionMessageWithSigners } from '@solana/signers';
  *
  * const signer = await generateKeyPairSigner();
  * const firstInstruction: IInstruction = { ... };
  * const secondInstruction: IInstructionWithSigners = { ... };
- * const transactionMessage: BaseTransactionMessage & ITransactionMessageWithSigners = {
+ * const transactionMessage: BaseTransactionMessage & TransactionMessageWithSigners = {
  *     feePayer: signer,
  *     instructions: [firstInstruction, secondInstruction],
  * }
  * ```
  */
-export type ITransactionMessageWithSigners<
+export type TransactionMessageWithSigners<
     TAddress extends string = string,
     TSigner extends TransactionSigner<TAddress> = TransactionSigner<TAddress>,
     TAccounts extends readonly IAccountMetaWithSigner<TSigner>[] = readonly IAccountMetaWithSigner<TSigner>[],
-> = Partial<ITransactionMessageWithFeePayer<TAddress> | ITransactionMessageWithFeePayerSigner<TAddress, TSigner>> &
+> = Partial<TransactionMessageWithFeePayer<TAddress> | TransactionMessageWithFeePayerSigner<TAddress, TSigner>> &
     Pick<
         BaseTransactionMessage<TransactionVersion, IInstruction & IInstructionWithSigners<TSigner, TAccounts>>,
         'instructions'
@@ -160,7 +160,7 @@ export function getSignersFromInstruction<TSigner extends TransactionSigner = Tr
 
 /**
  * Extracts and deduplicates all {@link TransactionSigner | TransactionSigners} stored
- * inside a given {@link ITransactionMessageWithSigners | transaction message}.
+ * inside a given {@link TransactionMessageWithSigners | transaction message}.
  *
  * This includes any {@link TransactionSigner | TransactionSigners} stored
  * as the fee payer or in the instructions of the transaction message.
@@ -174,7 +174,7 @@ export function getSignersFromInstruction<TSigner extends TransactionSigner = Tr
  * @example
  * ```ts
  * import { IInstruction } from '@solana/instructions';
- * import { IInstructionWithSigners, ITransactionMessageWithSigners, getSignersFromTransactionMessage } from '@solana/signers';
+ * import { IInstructionWithSigners, TransactionMessageWithSigners, getSignersFromTransactionMessage } from '@solana/signers';
  *
  * const signerA = { address: address('1111..1111'), signTransactions: async () => {} };
  * const signerB = { address: address('2222..2222'), signTransactions: async () => {} };
@@ -186,7 +186,7 @@ export function getSignersFromInstruction<TSigner extends TransactionSigner = Tr
  *     programAddress: address('1234..5678'),
  *     accounts: [{ address: signerB.address, signer: signerB, ... }],
  * };
- * const transactionMessage: ITransactionMessageWithSigners = {
+ * const transactionMessage: TransactionMessageWithSigners = {
  *     feePayer: signerA,
  *     instructions: [firstInstruction, secondInstruction],
  * }
@@ -198,7 +198,7 @@ export function getSignersFromInstruction<TSigner extends TransactionSigner = Tr
 export function getSignersFromTransactionMessage<
     TAddress extends string = string,
     TSigner extends TransactionSigner<TAddress> = TransactionSigner<TAddress>,
-    TTransactionMessage extends ITransactionMessageWithSigners<TAddress, TSigner> = ITransactionMessageWithSigners<
+    TTransactionMessage extends TransactionMessageWithSigners<TAddress, TSigner> = TransactionMessageWithSigners<
         TAddress,
         TSigner
     >,

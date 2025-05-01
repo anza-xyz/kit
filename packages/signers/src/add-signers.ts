@@ -1,8 +1,8 @@
 import { Address } from '@solana/addresses';
 import { IInstruction, isSignerRole } from '@solana/instructions';
-import { BaseTransactionMessage, ITransactionMessageWithFeePayer } from '@solana/transaction-messages';
+import { BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
 
-import { IAccountSignerMeta, IInstructionWithSigners, ITransactionMessageWithSigners } from './account-signer-meta';
+import { IAccountSignerMeta, IInstructionWithSigners, TransactionMessageWithSigners } from './account-signer-meta';
 import { deduplicateSigners } from './deduplicate-signers';
 import { isTransactionSigner, TransactionSigner } from './transaction-signer';
 
@@ -106,14 +106,14 @@ export function addSignersToInstruction<TInstruction extends IInstruction>(
  */
 export function addSignersToTransactionMessage<TTransactionMessage extends BaseTransactionMessage>(
     signers: TransactionSigner[],
-    transactionMessage: TTransactionMessage | (ITransactionMessageWithSigners & TTransactionMessage),
-): ITransactionMessageWithSigners & TTransactionMessage {
+    transactionMessage: TTransactionMessage | (TransactionMessageWithSigners & TTransactionMessage),
+): TransactionMessageWithSigners & TTransactionMessage {
     const feePayerSigner = hasAddressOnlyFeePayer(transactionMessage)
         ? signers.find(signer => signer.address === transactionMessage.feePayer.address)
         : undefined;
 
     if (!feePayerSigner && transactionMessage.instructions.length === 0) {
-        return transactionMessage as ITransactionMessageWithSigners & TTransactionMessage;
+        return transactionMessage as TransactionMessageWithSigners & TTransactionMessage;
     }
 
     return Object.freeze({
@@ -124,7 +124,7 @@ export function addSignersToTransactionMessage<TTransactionMessage extends BaseT
 }
 
 function hasAddressOnlyFeePayer(
-    message: BaseTransactionMessage & Partial<ITransactionMessageWithFeePayer>,
+    message: BaseTransactionMessage & Partial<TransactionMessageWithFeePayer>,
 ): message is BaseTransactionMessage & { feePayer: { address: Address } } {
     return (
         !!message &&
