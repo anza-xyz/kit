@@ -1,16 +1,9 @@
+import { Address, assertIsAddress, getAddressDecoder, getAddressEncoder, isAddress } from '@solana/addresses';
+import { combineCodec, createEncoder, FixedSizeCodec, FixedSizeDecoder, FixedSizeEncoder } from '@solana/codecs-core';
 import {
-    combineCodec,
-    Decoder,
-    Encoder,
-    fixDecoderSize,
-    FixedSizeCodec,
-    FixedSizeDecoder,
-    FixedSizeEncoder,
-    fixEncoderSize,
-    transformEncoder,
-} from '@solana/codecs-core';
-import { getBase58Decoder, getBase58Encoder } from '@solana/codecs-strings';
-import {
+    isSolanaError,
+    SOLANA_ERROR__ADDRESSES__INVALID_BYTE_LENGTH,
+    SOLANA_ERROR__ADDRESSES__STRING_LENGTH_OUT_OF_RANGE,
     SOLANA_ERROR__BLOCKHASH_STRING_LENGTH_OUT_OF_RANGE,
     SOLANA_ERROR__INVALID_BLOCKHASH_BYTE_LENGTH,
     SolanaError,
@@ -18,19 +11,6 @@ import {
 import { Brand, EncodedString } from '@solana/nominal-types';
 
 export type Blockhash = Brand<EncodedString<string, 'base58'>, 'Blockhash'>;
-
-let memoizedBase58Encoder: Encoder<string> | undefined;
-let memoizedBase58Decoder: Decoder<string> | undefined;
-
-function getMemoizedBase58Encoder(): Encoder<string> {
-    if (!memoizedBase58Encoder) memoizedBase58Encoder = getBase58Encoder();
-    return memoizedBase58Encoder;
-}
-
-function getMemoizedBase58Decoder(): Decoder<string> {
-    if (!memoizedBase58Decoder) memoizedBase58Decoder = getBase58Decoder();
-    return memoizedBase58Decoder;
-}
 
 /**
  * A type guard that returns `true` if the input string conforms to the {@link Blockhash} type, and
@@ -51,23 +31,7 @@ function getMemoizedBase58Decoder(): Decoder<string> {
  * ```
  */
 export function isBlockhash(putativeBlockhash: string): putativeBlockhash is Blockhash {
-    // Fast-path; see if the input string is of an acceptable length.
-    if (
-        // Lowest value (32 bytes of zeroes)
-        putativeBlockhash.length < 32 ||
-        // Highest value (32 bytes of 255)
-        putativeBlockhash.length > 44
-    ) {
-        return false;
-    }
-    // Slow-path; actually attempt to decode the input string.
-    const base58Encoder = getMemoizedBase58Encoder();
-    const bytes = base58Encoder.encode(putativeBlockhash);
-    const numBytes = bytes.byteLength;
-    if (numBytes !== 32) {
-        return false;
-    }
-    return true;
+    return isAddress(putativeBlockhash);
 }
 
 /**
@@ -96,25 +60,16 @@ export function isBlockhash(putativeBlockhash: string): putativeBlockhash is Blo
  * ```
  */
 export function assertIsBlockhash(putativeBlockhash: string): asserts putativeBlockhash is Blockhash {
-    // Fast-path; see if the input string is of an acceptable length.
-    if (
-        // Lowest value (32 bytes of zeroes)
-        putativeBlockhash.length < 32 ||
-        // Highest value (32 bytes of 255)
-        putativeBlockhash.length > 44
-    ) {
-        throw new SolanaError(SOLANA_ERROR__BLOCKHASH_STRING_LENGTH_OUT_OF_RANGE, {
-            actualLength: putativeBlockhash.length,
-        });
-    }
-    // Slow-path; actually attempt to decode the input string.
-    const base58Encoder = getMemoizedBase58Encoder();
-    const bytes = base58Encoder.encode(putativeBlockhash);
-    const numBytes = bytes.byteLength;
-    if (numBytes !== 32) {
-        throw new SolanaError(SOLANA_ERROR__INVALID_BLOCKHASH_BYTE_LENGTH, {
-            actualLength: numBytes,
-        });
+    try {
+        assertIsAddress(putativeBlockhash);
+    } catch (error) {
+        if (isSolanaError(error, SOLANA_ERROR__ADDRESSES__STRING_LENGTH_OUT_OF_RANGE)) {
+            throw new SolanaError(SOLANA_ERROR__BLOCKHASH_STRING_LENGTH_OUT_OF_RANGE, error.context);
+        }
+        if (isSolanaError(error, SOLANA_ERROR__ADDRESSES__INVALID_BYTE_LENGTH)) {
+            throw new SolanaError(SOLANA_ERROR__INVALID_BLOCKHASH_BYTE_LENGTH, error.context);
+        }
+        throw error;
     }
 }
 
@@ -164,9 +119,14 @@ export function blockhash(putativeBlockhash: string): Blockhash {
  * ```
  */
 export function getBlockhashEncoder(): FixedSizeEncoder<Blockhash, 32> {
-    return transformEncoder(fixEncoderSize(getMemoizedBase58Encoder(), 32), putativeBlockhash =>
-        blockhash(putativeBlockhash),
-    );
+    const addressEncoder = getAddressEncoder();
+    return createEncoder({
+        fixedSize: 32,
+        write: (value: string, bytes, offset) => {
+            assertIsBlockhash(value);
+            return addressEncoder.write(value as string as Address, bytes, offset);
+        },
+    });
 }
 
 /**
@@ -188,7 +148,7 @@ export function getBlockhashEncoder(): FixedSizeEncoder<Blockhash, 32> {
  * ```
  */
 export function getBlockhashDecoder(): FixedSizeDecoder<Blockhash, 32> {
-    return fixDecoderSize(getMemoizedBase58Decoder(), 32) as FixedSizeDecoder<Blockhash, 32>;
+    return getAddressDecoder() as FixedSizeDecoder<string, 32> as FixedSizeDecoder<Blockhash, 32>;
 }
 
 /**
