@@ -1,5 +1,5 @@
 import { SOLANA_ERROR__TRANSACTION__EXPECTED_BLOCKHASH_LIFETIME, SolanaError } from '@solana/errors';
-import { assertIsBlockhash, type Blockhash } from '@solana/rpc-types';
+import { type Blockhash, isBlockhash } from '@solana/rpc-types';
 
 import { TransactionMessageWithDurableNonceLifetime } from './durable-nonce';
 import { BaseTransactionMessage } from './transaction-message';
@@ -63,17 +63,12 @@ export interface TransactionMessageWithBlockhashLifetime {
 export function isTransactionMessageWithBlockhashLifetime(
     transactionMessage: BaseTransactionMessage | (BaseTransactionMessage & TransactionMessageWithBlockhashLifetime),
 ): transactionMessage is BaseTransactionMessage & TransactionMessageWithBlockhashLifetime {
-    const lifetimeConstraintShapeMatches =
+    return (
         'lifetimeConstraint' in transactionMessage &&
         typeof transactionMessage.lifetimeConstraint.blockhash === 'string' &&
-        typeof transactionMessage.lifetimeConstraint.lastValidBlockHeight === 'bigint';
-    if (!lifetimeConstraintShapeMatches) return false;
-    try {
-        assertIsBlockhash(transactionMessage.lifetimeConstraint.blockhash);
-        return true;
-    } catch {
-        return false;
-    }
+        typeof transactionMessage.lifetimeConstraint.lastValidBlockHeight === 'bigint' &&
+        isBlockhash(transactionMessage.lifetimeConstraint.blockhash)
+    );
 }
 
 /**
