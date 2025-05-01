@@ -143,7 +143,7 @@ export async function getComputeUnitEstimateForTransactionMessage_INTERNAL_ONLY_
      *         - either a recent blockhash lifetime or a nonce.
      */
     const isDurableNonceTransactionMessage = isTransactionMessageWithDurableNonceLifetime(transactionMessage);
-    let compilableTransactionMessage;
+    let compilableTransactionMessage: CompilableTransactionMessage;
     if (isDurableNonceTransactionMessage || isTransactionMessageWithBlockhashLifetime(transactionMessage)) {
         compilableTransactionMessage = transactionMessage;
     } else {
@@ -163,7 +163,7 @@ export async function getComputeUnitEstimateForTransactionMessage_INTERNAL_ONLY_
         compilableTransactionMessage = appendTransactionMessageInstruction(
             maxComputeUnitLimitInstruction,
             compilableTransactionMessage,
-        );
+        ) as CompilableTransactionMessage;
     } else {
         const nextInstructions = [...compilableTransactionMessage.instructions];
         nextInstructions.splice(existingSetComputeUnitLimitInstructionIndex, 1, maxComputeUnitLimitInstruction);

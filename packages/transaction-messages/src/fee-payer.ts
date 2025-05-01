@@ -11,6 +11,14 @@ export interface TransactionMessageWithFeePayer<TAddress extends string = string
 }
 
 /**
+ * A helper type to exclude the fee payer from a transaction message.
+ */
+type ExcludeTransactionMessageFeePayer<TTransactionMessage extends BaseTransactionMessage> = Omit<
+    TTransactionMessage,
+    'feePayer'
+>;
+
+/**
  * Given a base58-encoded address of a system account, this method will return a new transaction
  * message having the same type as the one supplied plus the {@link TransactionMessageWithFeePayer}
  * type.
@@ -30,7 +38,7 @@ export function setTransactionMessageFeePayer<
 >(
     feePayer: Address<TFeePayerAddress>,
     transactionMessage: TTransactionMessage,
-): Omit<TTransactionMessage, 'feePayer'> & TransactionMessageWithFeePayer<TFeePayerAddress> {
+): ExcludeTransactionMessageFeePayer<TTransactionMessage> & TransactionMessageWithFeePayer<TFeePayerAddress> {
     if (
         'feePayer' in transactionMessage &&
         feePayer === transactionMessage.feePayer?.address &&
