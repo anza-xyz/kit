@@ -197,9 +197,20 @@ export function setTransactionMessageLifetimeUsingDurableNonce<
         nonceAccountAddress,
         nonceAuthorityAddress,
     }: DurableNonceConfig<TNonceAccountAddress, TNonceAuthorityAddress, TNonceValue>,
-    transactionMessage: TTransactionMessage | (TransactionMessageWithDurableNonceLifetime & TTransactionMessage),
-): TransactionMessageWithDurableNonceLifetime<TNonceAccountAddress, TNonceAuthorityAddress, TNonceValue> &
-    TTransactionMessage {
+    transactionMessage: TTransactionMessage,
+): SetTransactionMessageWithDurableNonceLifetime<
+    TTransactionMessage,
+    TNonceAccountAddress,
+    TNonceAuthorityAddress,
+    TNonceValue
+> {
+    type ReturnType = SetTransactionMessageWithDurableNonceLifetime<
+        TTransactionMessage,
+        TNonceAccountAddress,
+        TNonceAuthorityAddress,
+        TNonceValue
+    >;
+
     let newInstructions: [
         AdvanceNonceAccountInstruction<TNonceAccountAddress, TNonceAuthorityAddress>,
         ...IInstruction[],
@@ -212,12 +223,7 @@ export function setTransactionMessageLifetimeUsingDurableNonce<
                 isTransactionMessageWithDurableNonceLifetime(transactionMessage) &&
                 transactionMessage.lifetimeConstraint.nonce === nonce
             ) {
-                return transactionMessage as TransactionMessageWithDurableNonceLifetime<
-                    TNonceAccountAddress,
-                    TNonceAuthorityAddress,
-                    TNonceValue
-                > &
-                    TTransactionMessage;
+                return transactionMessage as unknown as ReturnType;
             } else {
                 // we already have the right first instruction, leave it as-is
                 newInstructions = [firstInstruction, ...transactionMessage.instructions.slice(1)];
@@ -240,9 +246,29 @@ export function setTransactionMessageLifetimeUsingDurableNonce<
     return Object.freeze({
         ...transactionMessage,
         instructions: Object.freeze(newInstructions),
-        lifetimeConstraint: Object.freeze({
-            nonce,
-        }),
-    }) as TransactionMessageWithDurableNonceLifetime<TNonceAccountAddress, TNonceAuthorityAddress, TNonceValue> &
-        TTransactionMessage;
+        lifetimeConstraint: Object.freeze({ nonce }),
+    }) as unknown as ReturnType;
 }
+
+/**
+ * Helper type that transforms a given transaction message type into a new one that has the
+ * `AdvanceNonceAccount` instruction as the first instruction and a lifetime constraint
+ * representing the nonce value.
+ */
+type SetTransactionMessageWithDurableNonceLifetime<
+    TTransactionMessage extends BaseTransactionMessage,
+    TNonceAccountAddress extends string = string,
+    TNonceAuthorityAddress extends string = string,
+    TNonceValue extends string = string,
+> = Omit<TTransactionMessage, 'instructions'> & {
+    readonly instructions: TTransactionMessage['instructions'] extends readonly [
+        AdvanceNonceAccountInstruction,
+        ...infer TTail extends readonly IInstruction[],
+    ]
+        ? readonly [AdvanceNonceAccountInstruction<TNonceAccountAddress, TNonceAuthorityAddress>, ...TTail]
+        : readonly [
+              AdvanceNonceAccountInstruction<TNonceAccountAddress, TNonceAuthorityAddress>,
+              ...TTransactionMessage['instructions'],
+          ];
+    readonly lifetimeConstraint: NonceLifetimeConstraint<TNonceValue>;
+};

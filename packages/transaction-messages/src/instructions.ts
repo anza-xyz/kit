@@ -1,14 +1,29 @@
+import { IInstruction } from '@solana/instructions';
+
 import { ExcludeTransactionMessageDurableNonceLifetime } from './durable-nonce';
 import { BaseTransactionMessage } from './transaction-message';
 
 /**
- * A helper type to reset the instructions of a transaction message to a new array of instructions.
+ * A helper type to append instructions to a transaction message
+ * without losing type information about the current instructions.
  */
-type ResetTransactionMessageInstructions<TTransactionMessage extends BaseTransactionMessage> = Omit<
-    TTransactionMessage,
-    'instructions'
-> &
-    Pick<BaseTransactionMessage, 'instructions'>;
+type AppendTransactionMessageInstructions<
+    TTransactionMessage extends BaseTransactionMessage,
+    TInstructions extends readonly IInstruction[],
+> = Omit<TTransactionMessage, 'instructions'> & {
+    readonly instructions: readonly [...TTransactionMessage['instructions'], ...TInstructions];
+};
+
+/**
+ * A helper type to prepend instructions to a transaction message
+ * without losing type information about the current instructions.
+ */
+type PrependTransactionMessageInstructions<
+    TTransactionMessage extends BaseTransactionMessage,
+    TInstructions extends readonly IInstruction[],
+> = Omit<TTransactionMessage, 'instructions'> & {
+    readonly instructions: readonly [...TInstructions, ...TTransactionMessage['instructions']];
+};
 
 /**
  * Given an instruction, this method will return a new transaction message with that instruction
@@ -31,10 +46,13 @@ type ResetTransactionMessageInstructions<TTransactionMessage extends BaseTransac
  * );
  * ```
  */
-export function appendTransactionMessageInstruction<TTransactionMessage extends BaseTransactionMessage>(
-    instruction: TTransactionMessage['instructions'][number],
+export function appendTransactionMessageInstruction<
+    TTransactionMessage extends BaseTransactionMessage,
+    TInstruction extends IInstruction,
+>(
+    instruction: TInstruction,
     transactionMessage: TTransactionMessage,
-): ResetTransactionMessageInstructions<TTransactionMessage> {
+): AppendTransactionMessageInstructions<TTransactionMessage, [TInstruction]> {
     return appendTransactionMessageInstructions([instruction], transactionMessage);
 }
 
@@ -65,13 +83,19 @@ export function appendTransactionMessageInstruction<TTransactionMessage extends 
  * );
  * ```
  */
-export function appendTransactionMessageInstructions<TTransactionMessage extends BaseTransactionMessage>(
-    instructions: ReadonlyArray<TTransactionMessage['instructions'][number]>,
+export function appendTransactionMessageInstructions<
+    TTransactionMessage extends BaseTransactionMessage,
+    const TInstructions extends readonly IInstruction[],
+>(
+    instructions: TInstructions,
     transactionMessage: TTransactionMessage,
-): ResetTransactionMessageInstructions<TTransactionMessage> {
+): AppendTransactionMessageInstructions<TTransactionMessage, TInstructions> {
     return Object.freeze({
         ...transactionMessage,
-        instructions: Object.freeze([...transactionMessage.instructions, ...instructions]),
+        instructions: Object.freeze([
+            ...(transactionMessage.instructions as TTransactionMessage['instructions']),
+            ...instructions,
+        ] as readonly [...TTransactionMessage['instructions'], ...TInstructions]),
     });
 }
 
@@ -96,10 +120,16 @@ export function appendTransactionMessageInstructions<TTransactionMessage extends
  * );
  * ```
  */
-export function prependTransactionMessageInstruction<TTransactionMessage extends BaseTransactionMessage>(
-    instruction: TTransactionMessage['instructions'][number],
+export function prependTransactionMessageInstruction<
+    TTransactionMessage extends BaseTransactionMessage,
+    TInstruction extends IInstruction,
+>(
+    instruction: TInstruction,
     transactionMessage: TTransactionMessage,
-): ExcludeTransactionMessageDurableNonceLifetime<ResetTransactionMessageInstructions<TTransactionMessage>> {
+): PrependTransactionMessageInstructions<
+    ExcludeTransactionMessageDurableNonceLifetime<TTransactionMessage>,
+    [TInstruction]
+> {
     return prependTransactionMessageInstructions([instruction], transactionMessage);
 }
 
@@ -130,12 +160,21 @@ export function prependTransactionMessageInstruction<TTransactionMessage extends
  * );
  * ```
  */
-export function prependTransactionMessageInstructions<TTransactionMessage extends BaseTransactionMessage>(
-    instructions: ReadonlyArray<TTransactionMessage['instructions'][number]>,
+export function prependTransactionMessageInstructions<
+    TTransactionMessage extends BaseTransactionMessage,
+    const TInstructions extends readonly IInstruction[],
+>(
+    instructions: TInstructions,
     transactionMessage: TTransactionMessage,
-): ExcludeTransactionMessageDurableNonceLifetime<ResetTransactionMessageInstructions<TTransactionMessage>> {
+): PrependTransactionMessageInstructions<
+    ExcludeTransactionMessageDurableNonceLifetime<TTransactionMessage>,
+    TInstructions
+> {
     return Object.freeze({
-        ...transactionMessage,
-        instructions: Object.freeze([...instructions, ...transactionMessage.instructions]),
-    }) as ExcludeTransactionMessageDurableNonceLifetime<TTransactionMessage>;
+        ...(transactionMessage as ExcludeTransactionMessageDurableNonceLifetime<TTransactionMessage>),
+        instructions: Object.freeze([
+            ...instructions,
+            ...(transactionMessage.instructions as TTransactionMessage['instructions']),
+        ] as readonly [...TInstructions, ...TTransactionMessage['instructions']]),
+    });
 }

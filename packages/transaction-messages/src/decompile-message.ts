@@ -18,9 +18,9 @@ import type { getCompiledAddressTableLookups } from './compile/address-table-loo
 import { createTransactionMessage } from './create-transaction-message';
 import { Nonce, setTransactionMessageLifetimeUsingDurableNonce } from './durable-nonce';
 import { isAdvanceNonceAccountInstruction } from './durable-nonce-instruction';
-import { setTransactionMessageFeePayer } from './fee-payer';
+import { setTransactionMessageFeePayer, TransactionMessageWithFeePayer } from './fee-payer';
 import { appendTransactionMessageInstruction } from './instructions';
-import { TransactionVersion } from './transaction-message';
+import { BaseTransactionMessage, TransactionVersion } from './transaction-message';
 
 function getAccountMetas(message: CompiledTransactionMessage): IAccountMeta[] {
     const { header } = message;
@@ -249,9 +249,10 @@ export function decompileTransactionMessage(
         createTransactionMessage({ version: compiledTransactionMessage.version as TransactionVersion }),
         m => setTransactionMessageFeePayer(feePayer, m),
         m =>
-            instructions.reduce((acc, instruction) => {
-                return appendTransactionMessageInstruction(instruction, acc);
-            }, m),
+            instructions.reduce(
+                (acc, instruction) => appendTransactionMessageInstruction(instruction, acc),
+                m as BaseTransactionMessage & TransactionMessageWithFeePayer,
+            ),
         m =>
             'blockhash' in lifetimeConstraint
                 ? setTransactionMessageLifetimeUsingBlockhash(lifetimeConstraint, m)
