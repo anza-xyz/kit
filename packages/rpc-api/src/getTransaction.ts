@@ -63,9 +63,9 @@ type TransactionMetaBase = Readonly<{
 type AddressTableLookup = Readonly<{
     /** The address of the address lookup table account. */
     accountKey: Address;
-    /** Indices of accounts in a lookup table to load as read-only. */
-    readableIndexes: readonly number[];
-    /** Indices of accounts in a lookup table to load as writable. */
+    /** Indexes of accounts in a lookup table to load as read-only. */
+    readonlyIndexes: readonly number[];
+    /** Indexes of accounts in a lookup table to load as writable. */
     writableIndexes: readonly number[];
 }>;
 

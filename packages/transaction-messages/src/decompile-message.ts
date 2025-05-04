@@ -88,8 +88,16 @@ function getAddressLookupMetas(
     // we know that for each lookup, knownLookups[lookup.lookupTableAddress] is defined
     for (const lookup of compiledAddressTableLookups) {
         const addresses = addressesByLookupTableAddress[lookup.lookupTableAddress];
+        const readonlyIndexes =
+            lookup.readonlyIndexes ??
+            /** @deprecated Remove in a future major version */
+            lookup.readableIndices;
+        const writableIndexes =
+            lookup.writableIndexes ??
+            /** @deprecated Remove in a future major version */
+            lookup.writableIndices;
 
-        const highestIndex = Math.max(...lookup.readableIndices, ...lookup.writableIndices);
+        const highestIndex = Math.max(...readonlyIndexes, ...writableIndexes);
         if (highestIndex >= addresses.length) {
             throw new SolanaError(
                 SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_ADDRESS_LOOKUP_TABLE_INDEX_OUT_OF_RANGE,
@@ -101,7 +109,7 @@ function getAddressLookupMetas(
             );
         }
 
-        const readOnlyForLookup: IAccountLookupMeta[] = lookup.readableIndices.map(r => ({
+        const readOnlyForLookup: IAccountLookupMeta[] = readonlyIndexes.map(r => ({
             address: addresses[r],
             addressIndex: r,
             lookupTableAddress: lookup.lookupTableAddress,
@@ -109,7 +117,7 @@ function getAddressLookupMetas(
         }));
         readOnlyMetas.push(...readOnlyForLookup);
 
-        const writableForLookup: IAccountLookupMeta[] = lookup.writableIndices.map(w => ({
+        const writableForLookup: IAccountLookupMeta[] = writableIndexes.map(w => ({
             address: addresses[w],
             addressIndex: w,
             lookupTableAddress: lookup.lookupTableAddress,

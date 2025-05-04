@@ -42,7 +42,7 @@ export const transactionTypeDefs = /* GraphQL */ `
 
     type TransactionMessageAddressTableLookup {
         accountKey: Address
-        readableIndexes: [Int]
+        readonlyIndexes: [Int]
         writableIndexes: [Int]
     }
 

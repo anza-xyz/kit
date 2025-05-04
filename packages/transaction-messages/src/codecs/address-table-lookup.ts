@@ -16,16 +16,17 @@ type AddressTableLookup = ReturnType<typeof getCompiledAddressTableLookups>[numb
 let memoizedAddressTableLookupEncoder: VariableSizeEncoder<AddressTableLookup> | undefined;
 export function getAddressTableLookupEncoder(): VariableSizeEncoder<AddressTableLookup> {
     if (!memoizedAddressTableLookupEncoder) {
+        const indexEncoder = getArrayEncoder(getU8Encoder(), { size: getShortU16Encoder() }) as Encoder<
+            readonly number[]
+        >;
         memoizedAddressTableLookupEncoder = getStructEncoder([
             ['lookupTableAddress', getAddressEncoder()],
-            [
-                'writableIndices',
-                getArrayEncoder(getU8Encoder(), { size: getShortU16Encoder() }) as Encoder<readonly number[]>,
-            ],
-            [
-                'readableIndices',
-                getArrayEncoder(getU8Encoder(), { size: getShortU16Encoder() }) as Encoder<readonly number[]>,
-            ],
+            /** @deprecated Remove in a future major version */
+            ['readableIndices', indexEncoder],
+            ['readonlyIndexes', indexEncoder],
+            ['writableIndexes', indexEncoder],
+            /** @deprecated Remove in a future major version */
+            ['writableIndices', indexEncoder],
         ]);
     }
 
@@ -35,10 +36,15 @@ export function getAddressTableLookupEncoder(): VariableSizeEncoder<AddressTable
 let memoizedAddressTableLookupDecoder: VariableSizeDecoder<AddressTableLookup> | undefined;
 export function getAddressTableLookupDecoder(): VariableSizeDecoder<AddressTableLookup> {
     if (!memoizedAddressTableLookupDecoder) {
+        const indexEncoder = getArrayDecoder(getU8Decoder(), { size: getShortU16Decoder() });
         memoizedAddressTableLookupDecoder = getStructDecoder([
             ['lookupTableAddress', getAddressDecoder()],
-            ['writableIndices', getArrayDecoder(getU8Decoder(), { size: getShortU16Decoder() })],
-            ['readableIndices', getArrayDecoder(getU8Decoder(), { size: getShortU16Decoder() })],
+            /** @deprecated Remove in a future major version */
+            ['readableIndices', indexEncoder],
+            ['readonlyIndexes', indexEncoder],
+            ['writableIndexes', indexEncoder],
+            /** @deprecated Remove in a future major version */
+            ['writableIndices', indexEncoder],
         ]);
     }
 
