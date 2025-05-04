@@ -41,7 +41,6 @@
         "web3"
     ],
     "scripts": {
-        "compile:docs": "typedoc",
         "benchmark": "./src/__benchmarks__/run.ts",
         "compile:docs": "typedoc",
         "compile:js": "tsup --config build-scripts/tsup.config.package.ts",
