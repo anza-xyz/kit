@@ -10,6 +10,8 @@ env:
   # Among other things, opts out of Turborepo telemetry
   # See https://consoledonottrack.com/
   DO_NOT_TRACK: '1'
+  NEXT_TELEMETRY_DISABLED: '1'
+  VERCEL_TELEMETRY_DISABLED: '1'
   # Some tasks slow down considerably on GitHub Actions runners when concurrency is high
   TURBO_CONCURRENCY: 1
   # Enables Turborepo Remote Caching.
