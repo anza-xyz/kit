@@ -52,4 +52,4 @@ jobs:
         run: |
           vercel pull --token="$VERCEL_TOKEN" --yes --environment=production
           vercel build --token="$VERCEL_TOKEN" --prod
-          vercel deploy --token="$VERCEL_TOKEN" --prebuilt --prod
+          vercel deploy --token="$VERCEL_TOKEN" --archive=tgz --prebuilt --prod
