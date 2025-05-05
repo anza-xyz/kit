@@ -2,7 +2,7 @@ import { createKeyPairFromBytes } from '@solana/keys';
 import { Keypair } from '@solana/web3.js';
 
 /**
- * Converts a legacy [Keypair](https://solana-labs.github.io/solana-web3.js/classes/Keypair.html)
+ * Converts a legacy [Keypair](https://solana-foundation.github.io/solana-web3.js/classes/Keypair.html)
  * object to a native Ed25519 {@link CryptoKeyPair} object.
  *
  * @example
