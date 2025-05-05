@@ -19,7 +19,7 @@ function convertSignatures(transaction: VersionedTransaction, staticAccountKeys:
 }
 
 /**
- * This can be used to convert a legacy [VersionedTransaction](https://solana-labs.github.io/solana-web3.js/classes/VersionedTransaction.html)
+ * This can be used to convert a legacy [VersionedTransaction](https://solana-foundation.github.io/solana-web3.js/classes/VersionedTransaction.html)
  * object to a {@link Transaction}.
  *
  * @example
