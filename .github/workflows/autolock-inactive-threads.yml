@@ -17,7 +17,7 @@ jobs:
   action:
     runs-on: ubuntu-latest
     steps:
-      - uses: dessant/lock-threads@v4
+      - uses: dessant/lock-threads@1bf7ec25051fe7c00bdd17e6a7cf3d7bfb7dc771
         with:
           github-token: ${{ github.token }}
           issue-inactive-days: '7'
@@ -30,3 +30,4 @@ jobs:
           pr-comment: >
             Because there has been no activity on this PR for 14 days since it was merged, it has 
             been automatically locked. Please open a new issue if it requires a follow up.
+          process-only: 'issues, prs'
