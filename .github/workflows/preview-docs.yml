@@ -50,7 +50,14 @@ jobs:
         run: |
           vercel pull --token="$VERCEL_TOKEN" --yes --environment=preview
           vercel build --token="$VERCEL_TOKEN" --prod=false
-          DEPLOY_URL=$(vercel deploy --token="$VERCEL_TOKEN" --archive=tgz --env GITHUB_PR_NUMBER="$PR_NUMBER" --env GITHUB_PR_BRANCH="$BRANCH_NAME" --prebuilt --prod=false 2>&1 | grep -o 'https://[a-zA-Z0-9.-]*\.vercel\.app' | tail -1)
+          DEPLOY_OUTPUT=$(vercel deploy --token="$VERCEL_TOKEN" --archive=tgz --env GITHUB_PR_NUMBER="$PR_NUMBER" --env GITHUB_PR_BRANCH="$BRANCH_NAME" --prebuilt --prod=false 2>&1)
+          DEPLOY_EXIT_CODE=$?
+          if [ $DEPLOY_EXIT_CODE -ne 0 ]; then
+            echo "Vercel deploy failed:"
+            echo "$DEPLOY_OUTPUT"
+            exit $DEPLOY_EXIT_CODE
+          fi
+          DEPLOY_URL=$(echo "$DEPLOY_OUTPUT" | grep -o 'https://[a-zA-Z0-9.-]*\.vercel\.app' | tail -1)
           echo "preview_url=$DEPLOY_URL" >> $GITHUB_OUTPUT
 
       - name: Comment on PR with Preview URL
