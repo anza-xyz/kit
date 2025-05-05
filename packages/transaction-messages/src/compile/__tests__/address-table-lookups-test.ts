@@ -94,7 +94,7 @@ describe('getCompiledAddressTableLookups', () => {
             },
         ] as OrderedAccounts;
         const compiledAddressTableLookups = getCompiledAddressTableLookups(orderedAccounts);
-        expect(compiledAddressTableLookups).toHaveProperty('0.readableIndices', [30, 50, 40]);
-        expect(compiledAddressTableLookups).toHaveProperty('0.writableIndices', [20, 10]);
+        expect(compiledAddressTableLookups).toHaveProperty('0.readonlyIndexes', [30, 50, 40]);
+        expect(compiledAddressTableLookups).toHaveProperty('0.writableIndexes', [20, 10]);
     });
 });

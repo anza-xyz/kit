@@ -2,6 +2,7 @@ import { getAddressDecoder, getAddressEncoder } from '@solana/addresses';
 import {
     combineCodec,
     type Encoder,
+    transformDecoder,
     type VariableSizeCodec,
     type VariableSizeDecoder,
     type VariableSizeEncoder,
@@ -21,12 +22,8 @@ export function getAddressTableLookupEncoder(): VariableSizeEncoder<AddressTable
         >;
         memoizedAddressTableLookupEncoder = getStructEncoder([
             ['lookupTableAddress', getAddressEncoder()],
-            /** @deprecated Remove in a future major version */
-            ['readableIndices', indexEncoder],
-            ['readonlyIndexes', indexEncoder],
             ['writableIndexes', indexEncoder],
-            /** @deprecated Remove in a future major version */
-            ['writableIndices', indexEncoder],
+            ['readonlyIndexes', indexEncoder],
         ]);
     }
 
@@ -37,17 +34,26 @@ let memoizedAddressTableLookupDecoder: VariableSizeDecoder<AddressTableLookup> |
 export function getAddressTableLookupDecoder(): VariableSizeDecoder<AddressTableLookup> {
     if (!memoizedAddressTableLookupDecoder) {
         const indexEncoder = getArrayDecoder(getU8Decoder(), { size: getShortU16Decoder() });
-        memoizedAddressTableLookupDecoder = getStructDecoder([
-            ['lookupTableAddress', getAddressDecoder()],
-            /** @deprecated Remove in a future major version */
-            ['readableIndices', indexEncoder],
-            ['readonlyIndexes', indexEncoder],
-            ['writableIndexes', indexEncoder],
-            /** @deprecated Remove in a future major version */
-            ['writableIndices', indexEncoder],
-        ]);
+        // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
+        memoizedAddressTableLookupDecoder = transformDecoder(
+            getStructDecoder([
+                ['lookupTableAddress', getAddressDecoder()],
+                ['writableIndexes', indexEncoder],
+                ['readonlyIndexes', indexEncoder],
+            ]),
+            lookupTable =>
+                'readableIndices' in lookupTable
+                    ? ({
+                          ...lookupTable,
+                          readonlyIndexes: lookupTable.readableIndices,
+                          // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
+                          writableIndexes: lookupTable.writableIndices,
+                      } as AddressTableLookup)
+                    : lookupTable,
+        );
     }
 
+    // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
     return memoizedAddressTableLookupDecoder;
 }
 

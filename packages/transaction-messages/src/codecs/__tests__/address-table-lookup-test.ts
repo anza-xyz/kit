@@ -19,10 +19,11 @@ describe('Address table lookup codec', () => {
             });
             it('serializes an `AddressTableLookup` according to the spec', () => {
                 expect(
+                    // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                     addressTableLookup.encode({
                         lookupTableAddress: 'k7FaK87WHGVXzkaoHb7CdVPgkKDQhZ29VLDeBVbDfYn' as Address, // decodes to [11{32}]
-                        readableIndices: [33, 22],
-                        writableIndices: [44],
+                        readonlyIndexes: [33, 22],
+                        writableIndexes: [44],
                     } as AddressTableLookup),
                 ).toEqual(
                     // prettier-ignore
@@ -65,8 +66,8 @@ describe('Address table lookup codec', () => {
                 const [lookup, offset] = addressTableLookup.read(byteArray, 0);
                 expect(lookup).toEqual({
                     lookupTableAddress: 'k7FaK87WHGVXzkaoHb7CdVPgkKDQhZ29VLDeBVbDfYn' as Address, // decodes to [11{32}]
-                    readableIndices: [33, 22],
-                    writableIndices: [44],
+                    readonlyIndexes: [33, 22],
+                    writableIndexes: [44],
                 });
                 // Expect the entire byte array to have been consumed.
                 expect(offset).toBe(byteArray.byteLength);
