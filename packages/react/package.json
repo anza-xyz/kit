@@ -89,7 +89,7 @@
         "@types/react": "^19",
         "@types/react-test-renderer": "^19",
         "react": "^19",
-        "react-error-boundary": "^5.0.0",
+        "react-error-boundary": "^6.0.0",
         "react-test-renderer": "^19"
     },
     "peerDependencies": {
