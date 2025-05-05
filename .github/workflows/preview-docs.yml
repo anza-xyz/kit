@@ -59,4 +59,4 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PREVIEW_URL: '${{ steps.vercel_deploy.outputs.preview_url }}'
         run: |
-          gh pr comment $PR_NUMBER --body "Documentation Preview: $PREVIEW_URL" --edit-last
+          gh pr comment $PR_NUMBER --body "Documentation Preview: $PREVIEW_URL" --create-if-none --edit-last
