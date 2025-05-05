@@ -1,0 +1,60 @@
+name: Preview Documentation
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  # Among other things, opts out of Turborepo telemetry
+  # See https://consoledonottrack.com/
+  DO_NOT_TRACK: '1'
+  # Some tasks slow down considerably on GitHub Actions runners when concurrency is high
+  TURBO_CONCURRENCY: 1
+  # Enables Turborepo Remote Caching.
+  TURBO_REMOTE_CACHE_SIGNATURE_KEY: ${{ secrets.TURBO_REMOTE_CACHE_SIGNATURE_KEY }}
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+
+jobs:
+  preview-docs:
+    runs-on: ubuntu-latest
+    name: Build Documentation Preview
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        uses: ./.github/workflows/actions/install-dependencies
+
+      - name: Install Isolated Docs Dependencies
+        working-directory: ./docs/
+        shell: bash
+        run: pnpm install --ignore-workspace
+
+      - name: Install Vercel CLI
+        run: pnpm install -g vercel
+
+      - name: Deploy to Vercel
+        id: vercel_deploy
+        env:
+          BRANCH_NAME: ${{ github.head_ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_DOCS_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          vercel pull --token="$VERCEL_TOKEN" --yes --environment=preview
+          vercel build --token="$VERCEL_TOKEN" --prod=false
+          DEPLOY_URL=$(vercel deploy --token="$VERCEL_TOKEN" --env GITHUB_PR_NUMBER="$PR_NUMBER" --env GITHUB_PR_BRANCH="$BRANCH_NAME" --prebuilt --prod=false 2>&1 | grep -o 'https://[a-zA-Z0-9.-]*\.vercel\.app' | tail -1)
+          echo "preview_url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+
+      - name: Comment on PR with Preview URL
+        permissions:
+          pull-requests: write
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PREVIEW_URL: '${{ steps.vercel_deploy.outputs.preview_url }}'
+        run: gh pr comment $PR_NUMBER --body "Documentation Preview: $PREVIEW_URL" --edit-last
