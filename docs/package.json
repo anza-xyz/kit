@@ -17,7 +17,7 @@
         "@solana/compat": "^2.1.0",
         "@solana/kit": "^2.1.0",
         "@solana/react": "^2.1.0",
-        "@solana/web3.js": "^1.98.0",
+        "@solana/web3.js": "^1.98.2",
         "fumadocs-core": "15.2.10",
         "fumadocs-docgen": "^2.0.0",
         "fumadocs-mdx": "11.6.1",
