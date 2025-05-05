@@ -34,7 +34,7 @@ jobs:
         run: pnpm turbo compile:js --concurrency=${TURBO_CONCURRENCY:-1}
 
       - name: BundleMon
-        uses: lironer/bundlemon-action@v1
+        uses: lironer/bundlemon-action@cadbdd58f86faf1900725ef69d455444124b3748
         env:
           # Always compare to the main branch; prevents stacked PRs from being
           # compared to the wrong mergebase (ie. the PR beneath the current one)
