@@ -2,7 +2,7 @@ import { Address } from '@solana/addresses';
 import { PublicKey } from '@solana/web3.js';
 
 /**
- * Converts a legacy [PublicKey](https://solana-labs.github.io/solana-web3.js/classes/PublicKey.html)
+ * Converts a legacy [PublicKey](https://solana-foundation.github.io/solana-web3.js/classes/PublicKey.html)
  * object to an {@link Address}.
  *
  * @example
