@@ -16,7 +16,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  stale:
+  manage-stale-threads:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/stale@v6

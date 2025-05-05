@@ -9,7 +9,7 @@ permissions:
   issues: write
 
 jobs:
-  action:
+  label:
     runs-on: ubuntu-latest
     steps:
       - uses: dessant/label-actions@102faf474a544be75fbaf4df54e73d3c515a0e65

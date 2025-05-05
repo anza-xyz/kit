@@ -22,6 +22,9 @@ env:
 
 jobs:
   build-and-publish-to-npm:
+    permissions:
+      contents: write
+      pull-requests: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -45,8 +48,6 @@ jobs:
 
       - name: Create Changesets Pull Request or Publish to NPM
         id: changesets
-        permissions:
-          pull-requests: write
         uses: changesets/action@ff7179cf129faeb3e444f56e6290adef5901f936
         with:
           # Some tasks slow down considerably on GitHub Actions runners when concurrency is high
@@ -57,8 +58,6 @@ jobs:
           PUBLISH_TAG: latest
 
       - name: Push Git Tag
-        permissions:
-          contents: write
         if: steps.changesets.outputs.published == 'true'
         run: |
           VERSION_TAG=v$(cd packages/kit/ && pnpm pkg get version | grep -o '"\([^"]\)\+"$' | tr -d \")

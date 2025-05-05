@@ -24,6 +24,8 @@ env:
 
 jobs:
   build-and-publish-snapshots-to-npm:
+    permissions:
+      pull-requests: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -46,8 +48,6 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish Canary Releases
-        permissions:
-          pull-requests: write
         run: |
           find packages/* -maxdepth 0 -type d -print0 | \
             xargs -t0 -n 1 -I {} \

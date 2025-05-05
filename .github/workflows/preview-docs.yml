@@ -19,6 +19,8 @@ env:
 
 jobs:
   preview-docs:
+    permissions:
+      pull-requests: write
     runs-on: ubuntu-latest
     name: Build Documentation Preview
     steps:
@@ -52,8 +54,6 @@ jobs:
           echo "preview_url=$DEPLOY_URL" >> $GITHUB_OUTPUT
 
       - name: Comment on PR with Preview URL
-        permissions:
-          pull-requests: write
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}

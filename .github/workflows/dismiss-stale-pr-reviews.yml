@@ -10,7 +10,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  dismiss_stale_approvals:
+  dismiss-stale-approvals:
     runs-on: ubuntu-latest
     steps:
       - name: Dismiss Stale PR Reviews

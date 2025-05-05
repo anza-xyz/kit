@@ -22,7 +22,9 @@ env:
   TURBO_TEAM: ${{ vars.TURBO_TEAM }}
 
 jobs:
-  build:
+  measure-bundlesize:
+    permissions:
+      pull-requests: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -37,8 +39,6 @@ jobs:
         run: pnpm turbo compile:js --concurrency=${TURBO_CONCURRENCY:-1}
 
       - name: BundleMon
-        permissions:
-          pull-requests: write
         uses: lironer/bundlemon-action@cadbdd58f86faf1900725ef69d455444124b3748
         env:
           # Always compare to the main branch; prevents stacked PRs from being
