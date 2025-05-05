@@ -1,6 +1,6 @@
 # Kit documentation
 
-Documentation website for Kit, built with [Fumadocs](<(https://github.com/fuma-nama/fumadocs)>).
+Documentation website for Kit, built with [Fumadocs](https://github.com/fuma-nama/fumadocs).
 
 ## Install dependencies
 
