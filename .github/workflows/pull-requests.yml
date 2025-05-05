@@ -3,6 +3,9 @@ name: Pull requests
 on:
   pull_request:
 
+permissions:
+  contents: read
+
 env:
   # Among other things, opts out of Turborepo telemetry
   # See https://consoledonottrack.com/

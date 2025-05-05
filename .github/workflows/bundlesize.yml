@@ -7,6 +7,9 @@ on:
   pull_request:
     types: [synchronize, opened, reopened]
 
+permissions:
+  contents: read
+
 env:
   # Among other things, opts out of Turborepo telemetry
   # See https://consoledonottrack.com/
@@ -34,6 +37,8 @@ jobs:
         run: pnpm turbo compile:js --concurrency=${TURBO_CONCURRENCY:-1}
 
       - name: BundleMon
+        permissions:
+          pull-requests: write
         uses: lironer/bundlemon-action@cadbdd58f86faf1900725ef69d455444124b3748
         env:
           # Always compare to the main branch; prevents stacked PRs from being

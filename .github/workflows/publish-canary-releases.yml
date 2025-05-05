@@ -8,6 +8,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 env:
   # Among other things, opts out of Turborepo telemetry
   # See https://consoledonottrack.com/
@@ -43,6 +46,8 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish Canary Releases
+        permissions:
+          pull-requests: write
         run: |
           find packages/* -maxdepth 0 -type d -print0 | \
             xargs -t0 -n 1 -I {} \
