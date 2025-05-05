@@ -2,12 +2,7 @@ name: Dismiss Stale PR Reviews
 
 on:
   pull_request:
-    types: [
-        opened,
-        synchronize,
-        reopened,
-      ]
-
+    types: [opened, synchronize, reopened]
 
 permissions:
   actions: read
@@ -20,6 +15,6 @@ jobs:
     steps:
       - name: Dismiss Stale PR Reviews
         if: ${{ !contains('OWNER,MEMBER,COLLABORATOR', github.event.pull_request.author_association) }}
-        uses: withgraphite/dismiss-stale-approvals@main
+        uses: withgraphite/dismiss-stale-approvals@15571275d9bf7410e51244e259cd8f9f554879c8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
