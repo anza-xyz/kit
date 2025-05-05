@@ -16,7 +16,7 @@ This is the JavaScript SDK for building Solana apps for Node, web, and React Nat
 > [!NOTE]
 > Did you expect to find `@solana/web3.js` here? You're in the right place! We have renamed the 2.x line of `@solana/web3.js` to `@solana/kit`.
 >
-> The code for the 1.x line of `@solana/web3.js` can be found [here](https://github.com/solana-labs/solana-web3.js/tree/maintenance/v1.x) and the documentation [here](https://solana-labs.github.io/solana-web3.js/).
+> The code for the 1.x line of `@solana/web3.js` can be found [here](https://github.com/solana-labs/solana-web3.js/tree/maintenance/v1.x) and the documentation [here](https://solana-foundation.github.io/solana-web3.js/).
 
 # Installation
 
