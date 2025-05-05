@@ -4,7 +4,7 @@ import { TransactionInstruction } from '@solana/web3.js';
 import { fromLegacyPublicKey } from './address';
 
 /**
- * This can be used to convert a legacy [`TransactionInstruction`](https://solana-labs.github.io/solana-web3.js/classes/TransactionInstruction.html)
+ * This can be used to convert a legacy [`TransactionInstruction`](https://solana-foundation.github.io/solana-web3.js/classes/TransactionInstruction.html)
  * object to an {@link IInstruction}.
  *
  * @example
