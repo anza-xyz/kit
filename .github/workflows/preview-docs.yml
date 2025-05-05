@@ -37,6 +37,7 @@ jobs:
         run: pnpm install -g vercel
 
       - name: Deploy to Vercel
+        shell: bash
         id: vercel_deploy
         env:
           BRANCH_NAME: ${{ github.head_ref }}
