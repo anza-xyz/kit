@@ -48,7 +48,7 @@ jobs:
 
       - name: Create Changesets Pull Request or Publish to NPM
         id: changesets
-        uses: changesets/action@ff7179cf129faeb3e444f56e6290adef5901f936
+        uses: changesets/action@06245a4e0a36c064a573d4150030f5ec548e4fcc # v1.4.10
         with:
           # Some tasks slow down considerably on GitHub Actions runners when concurrency is high
           publish: pnpm turbo publish-packages --concurrency=1
