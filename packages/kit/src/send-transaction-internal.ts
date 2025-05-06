@@ -9,6 +9,7 @@ import {
 import {
     FullySignedTransaction,
     getBase64EncodedWireTransaction,
+    Transaction,
     TransactionWithDurableNonceLifetime,
 } from '@solana/transactions';
 
@@ -21,7 +22,7 @@ interface SendAndConfirmDurableNonceTransactionConfig
             'getNonceInvalidationPromise' | 'getRecentSignatureConfirmationPromise'
         >,
     ) => Promise<void>;
-    transaction: FullySignedTransaction & TransactionWithDurableNonceLifetime;
+    transaction: FullySignedTransaction & Transaction & TransactionWithDurableNonceLifetime;
 }
 
 interface SendAndConfirmTransactionWithBlockhashLifetimeConfig
@@ -33,14 +34,14 @@ interface SendAndConfirmTransactionWithBlockhashLifetimeConfig
             'getBlockHeightExceedencePromise' | 'getRecentSignatureConfirmationPromise'
         >,
     ) => Promise<void>;
-    transaction: FullySignedTransaction & TransactionWithLastValidBlockHeight;
+    transaction: FullySignedTransaction & Transaction & TransactionWithLastValidBlockHeight;
 }
 
 interface SendTransactionBaseConfig extends SendTransactionConfigWithoutEncoding {
     abortSignal?: AbortSignal;
     commitment: Commitment;
     rpc: Rpc<SendTransactionApi>;
-    transaction: FullySignedTransaction;
+    transaction: FullySignedTransaction & Transaction;
 }
 
 type SendTransactionConfigWithoutEncoding = Omit<

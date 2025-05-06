@@ -13,12 +13,14 @@ One way to tackle this would be to encode the transaction ourselves using `getBa
 
 ```ts twoslash
 import {
+    Transaction,
     FullySignedTransaction,
     TransactionWithBlockhashLifetime,
     Rpc,
     SolanaRpcApi,
 } from '@solana/kit';
-const signedTransaction = null as unknown as FullySignedTransaction &
+const signedTransaction = null as unknown as Transaction &
+    FullySignedTransaction &
     TransactionWithBlockhashLifetime;
 const rpc = null as unknown as Rpc<SolanaRpcApi>;
 // ---cut-before---
@@ -34,12 +36,14 @@ However, Kit offers a helper function that does that for us whilst providing som
 
 ```ts twoslash
 import {
+    Transaction,
     FullySignedTransaction,
     TransactionWithBlockhashLifetime,
     Rpc,
     SolanaRpcApi,
 } from '@solana/kit';
-const signedTransaction = null as unknown as FullySignedTransaction &
+const signedTransaction = null as unknown as Transaction &
+    FullySignedTransaction &
     TransactionWithBlockhashLifetime;
 const rpc = null as unknown as Rpc<SolanaRpcApi>;
 // ---cut-before---
@@ -64,6 +68,7 @@ Both accept RPC and RPC Subscriptions objects and return a function that sends a
 
 ```ts twoslash
 import {
+    Transaction,
     FullySignedTransaction,
     TransactionWithBlockhashLifetime,
     Rpc,
@@ -71,7 +76,8 @@ import {
     RpcSubscriptions,
     SolanaRpcSubscriptionsApi,
 } from '@solana/kit';
-const signedTransaction = null as unknown as FullySignedTransaction &
+const signedTransaction = null as unknown as Transaction &
+    FullySignedTransaction &
     TransactionWithBlockhashLifetime;
 const rpc = null as unknown as Rpc<SolanaRpcApi>;
 const rpcSubscriptions = null as unknown as RpcSubscriptions<SolanaRpcSubscriptionsApi>;
@@ -92,6 +98,7 @@ As such, Kit decouples these two distinct concepts by offering a `getSignatureFr
 
 ```ts twoslash
 import {
+    Transaction,
     FullySignedTransaction,
     TransactionWithBlockhashLifetime,
     Rpc,
@@ -99,7 +106,8 @@ import {
     RpcSubscriptions,
     SolanaRpcSubscriptionsApi,
 } from '@solana/kit';
-const signedTransaction = null as unknown as FullySignedTransaction &
+const signedTransaction = null as unknown as Transaction &
+    FullySignedTransaction &
     TransactionWithBlockhashLifetime;
 const rpc = null as unknown as Rpc<SolanaRpcApi>;
 const rpcSubscriptions = null as unknown as RpcSubscriptions<SolanaRpcSubscriptionsApi>;

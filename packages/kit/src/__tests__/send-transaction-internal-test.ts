@@ -5,6 +5,7 @@ import {
     Base64EncodedWireTransaction,
     FullySignedTransaction,
     getBase64EncodedWireTransaction,
+    Transaction,
     TransactionWithBlockhashLifetime,
     TransactionWithDurableNonceLifetime,
 } from '@solana/transactions';
@@ -21,7 +22,7 @@ const FOREVER_PROMISE = new Promise(() => {
 });
 
 describe('sendAndConfirmTransaction', () => {
-    const MOCK_TRANSACTION = {} as FullySignedTransaction & TransactionWithBlockhashLifetime;
+    const MOCK_TRANSACTION = {} as FullySignedTransaction & Transaction & TransactionWithBlockhashLifetime;
     let confirmRecentTransaction: jest.Mock;
     let createPendingRequest: jest.Mock;
     let rpc: Rpc<SendTransactionApi>;
@@ -176,6 +177,7 @@ describe('sendAndConfirmTransaction', () => {
 
 describe('sendAndConfirmDurableNonceTransaction', () => {
     const MOCK_DURABLE_NONCE_TRANSACTION = {} as unknown as FullySignedTransaction &
+        Transaction &
         TransactionWithDurableNonceLifetime;
     let confirmDurableNonceTransaction: jest.Mock;
     let createPendingRequest: jest.Mock;

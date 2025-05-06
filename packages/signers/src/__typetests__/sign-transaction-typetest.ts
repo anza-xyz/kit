@@ -89,7 +89,7 @@ import { TransactionMessageWithSingleSendingSigner } from '../transaction-with-s
         TransactionMessageWithFeePayer &
         TransactionMessageWithSigners;
     signTransactionMessageWithSigners(transactionMessage) satisfies Promise<
-        Readonly<FullySignedTransaction & TransactionWithBlockhashLifetime>
+        Readonly<FullySignedTransaction & Transaction & TransactionWithBlockhashLifetime>
     >;
 }
 
@@ -100,7 +100,7 @@ import { TransactionMessageWithSingleSendingSigner } from '../transaction-with-s
         TransactionMessageWithFeePayer &
         TransactionMessageWithSigners;
     signTransactionMessageWithSigners(transactionMessage) satisfies Promise<
-        Readonly<FullySignedTransaction & TransactionWithDurableNonceLifetime>
+        Readonly<FullySignedTransaction & Transaction & TransactionWithDurableNonceLifetime>
     >;
 }
 
@@ -111,7 +111,7 @@ import { TransactionMessageWithSingleSendingSigner } from '../transaction-with-s
         TransactionMessageWithLifetime &
         TransactionMessageWithSigners;
     signTransactionMessageWithSigners(transactionMessage) satisfies Promise<
-        Readonly<FullySignedTransaction & TransactionWithLifetime>
+        Readonly<FullySignedTransaction & Transaction & TransactionWithLifetime>
     >;
 }
 

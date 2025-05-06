@@ -17,7 +17,7 @@ import { Transaction } from './transaction';
  * Represents a transaction that is signed by all of its required signers. Being fully signed is a
  * prerequisite of functions designed to land transactions on the network.
  */
-export type FullySignedTransaction = NominalType<'transactionSignedness', 'fullySigned'> & Transaction;
+export type FullySignedTransaction = NominalType<'transactionSignedness', 'fullySigned'>;
 
 let base58Decoder: Decoder<string> | undefined;
 
@@ -71,10 +71,10 @@ function uint8ArraysEqual(arr1: Uint8Array, arr2: Uint8Array) {
  * @see {@link signTransaction} if you want to assert that the transaction has all of its required
  * signatures after signing.
  */
-export async function partiallySignTransaction<T extends Transaction & TransactionWithLifetime>(
+export async function partiallySignTransaction<TTransaction extends Transaction & TransactionWithLifetime>(
     keyPairs: CryptoKeyPair[],
-    transaction: T,
-): Promise<T> {
+    transaction: TTransaction,
+): Promise<TTransaction> {
     let newSignatures: Record<Address, SignatureBytes> | undefined;
     let unexpectedSigners: Set<Address> | undefined;
 
@@ -147,10 +147,10 @@ export async function partiallySignTransaction<T extends Transaction & Transacti
  * @see {@link partiallySignTransaction} if you want to sign the transaction without asserting that
  * the resulting transaction is fully signed.
  */
-export async function signTransaction<T extends Transaction & TransactionWithLifetime>(
+export async function signTransaction<TTransaction extends Transaction & TransactionWithLifetime>(
     keyPairs: CryptoKeyPair[],
-    transaction: T,
-): Promise<FullySignedTransaction & T> {
+    transaction: TTransaction,
+): Promise<FullySignedTransaction & TTransaction> {
     const out = await partiallySignTransaction(keyPairs, transaction);
     assertIsFullySignedTransaction(out);
     Object.freeze(out);

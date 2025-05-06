@@ -484,10 +484,12 @@ import {
     createSolanaRpcSubscriptions,
     FullySignedTransaction,
     TransactionWithBlockhashLifetime,
+    Transaction,
 } from '@solana/kit';
 const rpc = createSolanaRpc('https://api.devnet.solana.com');
 const rpcSubscriptions = createSolanaRpcSubscriptions('wss://api.devnet.solana.com');
-const signedTransaction = null as unknown as FullySignedTransaction &
+const signedTransaction = null as unknown as Transaction &
+    FullySignedTransaction &
     TransactionWithBlockhashLifetime;
 // ---cut-end---
 
