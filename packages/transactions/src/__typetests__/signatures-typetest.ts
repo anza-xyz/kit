@@ -26,7 +26,7 @@ import { Transaction } from '../transaction';
 // signTransaction
 {
     const transaction = null as unknown as Transaction & { some: 1 };
-    signTransaction([], transaction) satisfies Promise<FullySignedTransaction & { some: 1 }>;
+    signTransaction([], transaction) satisfies Promise<FullySignedTransaction & Transaction & { some: 1 }>;
 }
 
 // isFullySignedTransaction
