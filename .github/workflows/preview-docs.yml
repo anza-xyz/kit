@@ -21,6 +21,7 @@ env:
 
 jobs:
   preview-docs:
+    if: github.actor != 'dependabot[bot]'
     permissions:
       pull-requests: write
     runs-on: ubuntu-latest
