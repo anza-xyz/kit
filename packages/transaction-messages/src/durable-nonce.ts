@@ -10,6 +10,7 @@ import {
 } from './durable-nonce-instruction';
 import { ExcludeTransactionMessageLifetime } from './lifetime';
 import { BaseTransactionMessage } from './transaction-message';
+import { ExcludeTransactionMessageWithinSizeLimit } from './transaction-message-size';
 
 type DurableNonceConfig<
     TNonceAccountAddress extends string = string,
@@ -260,7 +261,15 @@ type SetTransactionMessageWithDurableNonceLifetime<
     TNonceAccountAddress extends string = string,
     TNonceAuthorityAddress extends string = string,
     TNonceValue extends string = string,
-> = Omit<TTransactionMessage, 'instructions'> & {
+> = Omit<
+    // 1. The transaction message only grows in size if it currently has a different (or no) lifetime.
+    TTransactionMessage extends TransactionMessageWithDurableNonceLifetime
+        ? TTransactionMessage
+        : ExcludeTransactionMessageWithinSizeLimit<TTransactionMessage>,
+    // 2. Remove the instructions array as we are going to replace it with a new one.
+    'instructions'
+> & {
+    // 3. Replace or prepend the first instruction with the advance nonce account instruction.
     readonly instructions: TTransactionMessage['instructions'] extends readonly [
         AdvanceNonceAccountInstruction,
         ...infer TTail extends readonly IInstruction[],
@@ -270,5 +279,6 @@ type SetTransactionMessageWithDurableNonceLifetime<
               AdvanceNonceAccountInstruction<TNonceAccountAddress, TNonceAuthorityAddress>,
               ...TTransactionMessage['instructions'],
           ];
+    // 4. Set the lifetime constraint to the nonce value.
     readonly lifetimeConstraint: NonceLifetimeConstraint<TNonceValue>;
 };

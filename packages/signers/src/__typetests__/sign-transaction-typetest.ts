@@ -4,12 +4,14 @@ import {
     CompilableTransactionMessage,
     TransactionMessageWithBlockhashLifetime,
     TransactionMessageWithDurableNonceLifetime,
+    TransactionMessageWithinSizeLimit,
 } from '@solana/transaction-messages';
 import {
     FullySignedTransaction,
     Transaction,
     TransactionWithBlockhashLifetime,
     TransactionWithDurableNonceLifetime,
+    TransactionWithinSizeLimit,
     TransactionWithLifetime,
 } from '@solana/transactions';
 
@@ -50,6 +52,15 @@ type CompilableTransactionMessageWithSigners = CompilableTransactionMessage & Tr
 }
 
 {
+    // [partiallySignTransactionMessageWithSigners]: returns a transaction with a `TransactionWithinSizeLimit` flag
+    const transactionMessage = null as unknown as CompilableTransactionMessageWithSigners &
+        TransactionMessageWithinSizeLimit;
+    partiallySignTransactionMessageWithSigners(transactionMessage) satisfies Promise<
+        Readonly<Transaction & TransactionWithinSizeLimit>
+    >;
+}
+
+{
     // [signTransactionMessageWithSigners]: returns a fully signed transaction with a blockhash lifetime
     const transactionMessage = null as unknown as CompilableTransactionMessageWithSigners &
         TransactionMessageWithBlockhashLifetime;
@@ -72,6 +83,15 @@ type CompilableTransactionMessageWithSigners = CompilableTransactionMessage & Tr
     const transactionMessage = null as unknown as CompilableTransactionMessageWithSigners;
     signTransactionMessageWithSigners(transactionMessage) satisfies Promise<
         Readonly<FullySignedTransaction & TransactionWithLifetime>
+    >;
+}
+
+{
+    // [signTransactionMessageWithSigners]: returns a transaction with a `TransactionWithinSizeLimit` flag
+    const transactionMessage = null as unknown as CompilableTransactionMessageWithSigners &
+        TransactionMessageWithinSizeLimit;
+    signTransactionMessageWithSigners(transactionMessage) satisfies Promise<
+        Readonly<FullySignedTransaction & Transaction & TransactionWithinSizeLimit>
     >;
 }
 

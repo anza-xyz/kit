@@ -1,8 +1,15 @@
 import { TransactionMessage, TransactionVersion } from './transaction-message';
+import { TransactionMessageWithinSizeLimit } from './transaction-message-size';
 
 type TransactionConfig<TVersion extends TransactionVersion> = Readonly<{
     version: TVersion;
 }>;
+
+type EmptyTransactionMessage<TVersion extends TransactionVersion> = Omit<
+    Extract<TransactionMessage, { version: TVersion }>,
+    'instructions'
+> &
+    TransactionMessageWithinSizeLimit & { instructions: readonly [] };
 
 /**
  * Given a {@link TransactionVersion} this method will return an empty transaction having the
@@ -17,12 +24,9 @@ type TransactionConfig<TVersion extends TransactionVersion> = Readonly<{
  */
 export function createTransactionMessage<TVersion extends TransactionVersion>(
     config: TransactionConfig<TVersion>,
-): Omit<Extract<TransactionMessage, { version: TVersion }>, 'instructions'> & { instructions: readonly [] };
-export function createTransactionMessage<TVersion extends TransactionVersion>({
-    version,
-}: TransactionConfig<TVersion>): TransactionMessage {
+): EmptyTransactionMessage<TVersion> {
     return Object.freeze({
         instructions: Object.freeze([]),
-        version,
-    }) as TransactionMessage;
+        version: config.version,
+    }) as EmptyTransactionMessage<TVersion>;
 }

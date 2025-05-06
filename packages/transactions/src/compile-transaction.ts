@@ -3,16 +3,14 @@ import {
     compileTransactionMessage,
     getCompiledTransactionMessageEncoder,
     isTransactionMessageWithBlockhashLifetime,
-    TransactionMessageWithBlockhashLifetime,
-    TransactionMessageWithDurableNonceLifetime,
 } from '@solana/transaction-messages';
 
-import {
-    TransactionWithBlockhashLifetime,
-    TransactionWithDurableNonceLifetime,
-    TransactionWithLifetime,
-} from './lifetime';
-import { SignaturesMap, Transaction, TransactionMessageBytes } from './transaction';
+import type { TransactionWithLifetime } from './lifetime';
+import type {
+    SignaturesMap,
+    TransactionFromCompilableTransactionMessage,
+    TransactionMessageBytes,
+} from './transaction';
 
 /**
  * Returns a {@link Transaction} object for a given {@link TransactionMessage}.
@@ -30,21 +28,11 @@ import { SignaturesMap, Transaction, TransactionMessageBytes } from './transacti
  * - have a lifetime specified (ie. conform to {@link TransactionMessageWithBlockhashLifetime} or
  *   {@link TransactionMessageWithDurableNonceLifetime})
  */
-export function compileTransaction(
-    transactionMessage: CompilableTransactionMessage & TransactionMessageWithBlockhashLifetime,
-): Readonly<Transaction & TransactionWithBlockhashLifetime>;
+export function compileTransaction<TTransactionMessage extends CompilableTransactionMessage>(
+    transactionMessage: TTransactionMessage,
+): Readonly<TransactionFromCompilableTransactionMessage<TTransactionMessage>> {
+    type ReturnType = Readonly<TransactionFromCompilableTransactionMessage<TTransactionMessage>>;
 
-export function compileTransaction(
-    transactionMessage: CompilableTransactionMessage & TransactionMessageWithDurableNonceLifetime,
-): Readonly<Transaction & TransactionWithDurableNonceLifetime>;
-
-export function compileTransaction(
-    transactionMessage: CompilableTransactionMessage,
-): Readonly<Transaction & TransactionWithLifetime>;
-
-export function compileTransaction(
-    transactionMessage: CompilableTransactionMessage,
-): Readonly<Transaction & TransactionWithLifetime> {
     const compiledMessage = compileTransactionMessage(transactionMessage);
     const messageBytes = getCompiledTransactionMessageEncoder().encode(compiledMessage) as TransactionMessageBytes;
 
@@ -67,11 +55,9 @@ export function compileTransaction(
         };
     }
 
-    const transaction: Transaction & TransactionWithLifetime = {
+    return Object.freeze({
         lifetimeConstraint,
         messageBytes: messageBytes,
         signatures: Object.freeze(signatures),
-    };
-
-    return Object.freeze(transaction);
+    }) as ReturnType;
 }
