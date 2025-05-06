@@ -1,8 +1,10 @@
+import { Brand } from '@solana/nominal-types';
+
 export type Slot = bigint;
 export type Epoch = bigint;
 
 // Specifically being used to denote micro-lamports, which are 0.000001 lamports.
-export type MicroLamports = bigint & { readonly __brand: unique symbol };
+export type MicroLamports = Brand<bigint, 'MicroLamports'>;
 export type SignedLamports = bigint;
 
 // FIXME(solana-labs/solana/issues/30341)

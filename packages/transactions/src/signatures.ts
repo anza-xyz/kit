@@ -8,6 +8,7 @@ import {
     SolanaError,
 } from '@solana/errors';
 import { Signature, SignatureBytes, signBytes } from '@solana/keys';
+import { NominalType } from '@solana/nominal-types';
 
 import { Transaction } from './transaction';
 
@@ -15,9 +16,7 @@ import { Transaction } from './transaction';
  * Represents a transaction that is signed by all of its required signers. Being fully signed is a
  * prerequisite of functions designed to land transactions on the network.
  */
-export interface FullySignedTransaction extends Transaction {
-    readonly __brand: unique symbol;
-}
+export type FullySignedTransaction = NominalType<'transactionSignedness', 'fullySigned'> & Transaction;
 
 let base58Decoder: Decoder<string> | undefined;
 

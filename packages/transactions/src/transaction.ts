@@ -1,9 +1,10 @@
 import { Address } from '@solana/addresses';
 import { ReadonlyUint8Array } from '@solana/codecs-core';
 import { SignatureBytes } from '@solana/keys';
+import { Brand, EncodedString } from '@solana/nominal-types';
 
-export type TransactionMessageBytes = ReadonlyUint8Array & { readonly __brand: unique symbol };
-export type TransactionMessageBytesBase64 = string & { readonly __serializedMessageBytesBase64: unique symbol };
+export type TransactionMessageBytes = Brand<ReadonlyUint8Array, 'TransactionMessageBytes'>;
+export type TransactionMessageBytesBase64 = Brand<EncodedString<string, 'base64'>, 'TransactionMessageBytesBase64'>;
 
 type OrderedMap<K extends string, V> = Record<K, V>;
 export type SignaturesMap = OrderedMap<Address, SignatureBytes | null>;

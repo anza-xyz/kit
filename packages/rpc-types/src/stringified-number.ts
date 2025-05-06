@@ -1,11 +1,12 @@
 import { SOLANA_ERROR__MALFORMED_NUMBER_STRING, SolanaError } from '@solana/errors';
+import { Brand } from '@solana/nominal-types';
 
 /**
  * This type represents a number which has been encoded as a string for transit over a transport
  * where loss of precision when using the native number type is a concern. The JSON-RPC is such a
  * transport.
  */
-export type StringifiedNumber = string & { readonly __brand: unique symbol };
+export type StringifiedNumber = Brand<string, 'StringifiedNumber'>;
 
 /**
  * A type guard that returns `true` if the input string parses as a `Number`, and refines its type

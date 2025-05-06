@@ -3,6 +3,7 @@ import {
     SOLANA_ERROR__SIGNER__TRANSACTION_SENDING_SIGNER_MISSING,
     SolanaError,
 } from '@solana/errors';
+import { Brand } from '@solana/nominal-types';
 import { CompilableTransactionMessage } from '@solana/transaction-messages';
 
 import { getSignersFromTransactionMessage, ITransactionMessageWithSigners } from './account-signer-meta';
@@ -27,9 +28,10 @@ import { isTransactionSendingSigner } from './transaction-sending-signer';
  * @see {@link isTransactionMessageWithSingleSendingSigner}
  * @see {@link assertIsTransactionMessageWithSingleSendingSigner}
  */
-export type ITransactionMessageWithSingleSendingSigner = ITransactionMessageWithSigners & {
-    readonly __transactionWithSingleSendingSigner: unique symbol;
-};
+export type ITransactionMessageWithSingleSendingSigner = Brand<
+    ITransactionMessageWithSigners,
+    'TransactionMessageWithSingleSendingSigner'
+>;
 
 /**
  * Checks whether the provided transaction has exactly one {@link TransactionSendingSigner}.

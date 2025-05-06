@@ -12,6 +12,7 @@ import {
     WritableAccount,
     WritableSignerAccount,
 } from '@solana/instructions';
+import { Brand } from '@solana/nominal-types';
 
 import { BaseTransactionMessage } from './transaction-message';
 
@@ -27,9 +28,7 @@ type AdvanceNonceAccountInstruction<
         ]
     > &
     IInstructionWithData<AdvanceNonceAccountInstructionData>;
-type AdvanceNonceAccountInstructionData = Uint8Array & {
-    readonly __brand: unique symbol;
-};
+type AdvanceNonceAccountInstructionData = Brand<Uint8Array, 'AdvanceNonceAccountInstructionData'>;
 type DurableNonceConfig<
     TNonceAccountAddress extends string = string,
     TNonceAuthorityAddress extends string = string,
@@ -40,7 +39,7 @@ type DurableNonceConfig<
     readonly nonceAuthorityAddress: Address<TNonceAuthorityAddress>;
 }>;
 /** Represents a string that is particularly known to be the base58-encoded value of a nonce. */
-export type Nonce<TNonceValue extends string = string> = TNonceValue & { readonly __brand: unique symbol };
+export type Nonce<TNonceValue extends string = string> = Brand<TNonceValue, 'Nonce'>;
 /**
  * A constraint which, when applied to a transaction message, makes that transaction message
  * eligible to land on the network.

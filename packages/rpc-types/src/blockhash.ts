@@ -15,8 +15,9 @@ import {
     SOLANA_ERROR__INVALID_BLOCKHASH_BYTE_LENGTH,
     SolanaError,
 } from '@solana/errors';
+import { Brand, EncodedString } from '@solana/nominal-types';
 
-export type Blockhash = string & { readonly __brand: unique symbol };
+export type Blockhash = Brand<EncodedString<string, 'base58'>, 'Blockhash'>;
 
 let memoizedBase58Encoder: Encoder<string> | undefined;
 let memoizedBase58Decoder: Decoder<string> | undefined;

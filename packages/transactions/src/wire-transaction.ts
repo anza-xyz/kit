@@ -1,12 +1,11 @@
 import { getBase64Decoder } from '@solana/codecs-strings';
+import { Brand, EncodedString } from '@solana/nominal-types';
 
 import { getTransactionEncoder } from './codecs';
 import { Transaction } from './transaction';
 
 /** Represents the wire format of a transaction as a base64-encoded string. */
-export type Base64EncodedWireTransaction = string & {
-    readonly __brand: unique symbol;
-};
+export type Base64EncodedWireTransaction = Brand<EncodedString<string, 'base64'>, 'Base64EncodedWireTransaction'>;
 
 /**
  * Given a signed transaction, this method returns the transaction as a string that conforms to the

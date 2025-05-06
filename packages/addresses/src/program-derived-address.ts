@@ -11,6 +11,7 @@ import {
     SOLANA_ERROR__ADDRESSES__PDA_ENDS_WITH_PDA_MARKER,
     SolanaError,
 } from '@solana/errors';
+import { Brand } from '@solana/nominal-types';
 
 import { Address, assertIsAddress, getAddressCodec, isAddress } from './address';
 import { compressedPointBytesAreOnCurve } from './curve';
@@ -32,9 +33,7 @@ export type ProgramDerivedAddress<TAddress extends string = string> = Readonly<
  * Represents an integer in the range [0,255] used in the derivation of a program derived address to
  * ensure that it does not fall on the Ed25519 curve.
  */
-export type ProgramDerivedAddressBump = number & {
-    readonly __brand: unique symbol;
-};
+export type ProgramDerivedAddressBump = Brand<number, 'ProgramDerivedAddressBump'>;
 
 /**
  * A type guard that returns `true` if the input tuple conforms to the {@link ProgramDerivedAddress}

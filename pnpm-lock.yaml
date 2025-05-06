@@ -344,6 +344,9 @@ importers:
       '@solana/errors':
         specifier: workspace:*
         version: link:../errors
+      '@solana/nominal-types':
+        specifier: workspace:*
+        version: link:../nominal-types
       typescript:
         specifier: '>=5.3.3'
         version: 5.8.2
@@ -561,6 +564,9 @@ importers:
       '@solana/errors':
         specifier: workspace:*
         version: link:../errors
+      '@solana/nominal-types':
+        specifier: workspace:*
+        version: link:../nominal-types
       typescript:
         specifier: '>=5.3.3'
         version: 5.8.2
@@ -1025,6 +1031,9 @@ importers:
       '@solana/functional':
         specifier: workspace:*
         version: link:../functional
+      '@solana/nominal-types':
+        specifier: workspace:*
+        version: link:../nominal-types
       '@solana/rpc-spec-types':
         specifier: workspace:*
         version: link:../rpc-spec-types
@@ -1080,6 +1089,9 @@ importers:
       '@solana/errors':
         specifier: workspace:*
         version: link:../errors
+      '@solana/nominal-types':
+        specifier: workspace:*
+        version: link:../nominal-types
       typescript:
         specifier: '>=5.3.3'
         version: 5.8.2
@@ -1101,6 +1113,9 @@ importers:
       '@solana/keys':
         specifier: workspace:*
         version: link:../keys
+      '@solana/nominal-types':
+        specifier: workspace:*
+        version: link:../nominal-types
       '@solana/transaction-messages':
         specifier: workspace:*
         version: link:../transaction-messages
@@ -1262,6 +1277,9 @@ importers:
       '@solana/instructions':
         specifier: workspace:*
         version: link:../instructions
+      '@solana/nominal-types':
+        specifier: workspace:*
+        version: link:../nominal-types
       '@solana/rpc-types':
         specifier: workspace:*
         version: link:../rpc-types
@@ -1302,6 +1320,9 @@ importers:
       '@solana/keys':
         specifier: workspace:*
         version: link:../keys
+      '@solana/nominal-types':
+        specifier: workspace:*
+        version: link:../nominal-types
       '@solana/rpc-types':
         specifier: workspace:*
         version: link:../rpc-types

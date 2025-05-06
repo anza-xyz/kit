@@ -10,13 +10,14 @@ import {
 } from '@solana/codecs-core';
 import { getU64Decoder, getU64Encoder, NumberCodec, NumberDecoder, NumberEncoder } from '@solana/codecs-numbers';
 import { SOLANA_ERROR__LAMPORTS_OUT_OF_RANGE, SolanaError } from '@solana/errors';
+import { Brand } from '@solana/nominal-types';
 
 /**
  * Represents an integer value denominated in Lamports (ie. $1 \times 10^{-9}$ ◎).
  *
  * It is represented as a `bigint` in client code and an `u64` in server code.
  */
-export type Lamports = bigint & { readonly __brand: unique symbol };
+export type Lamports = Brand<bigint, 'Lamports'>;
 
 // Largest possible value to be represented by a u64
 const maxU64Value = 18446744073709551615n; // 2n ** 64n - 1n

@@ -1,10 +1,11 @@
 import { SOLANA_ERROR__MALFORMED_BIGINT_STRING, SolanaError } from '@solana/errors';
+import { Brand } from '@solana/nominal-types';
 
 /**
  * This type represents a `bigint` which has been encoded as a string for transit over a transport
  * that does not support `bigint` values natively. The JSON-RPC is such a transport.
  */
-export type StringifiedBigInt = string & { readonly __brand: unique symbol };
+export type StringifiedBigInt = Brand<string, 'StringifiedBigInt'>;
 
 /**
  * A type guard that returns `true` if the input string parses as a `BigInt`, and refines its type

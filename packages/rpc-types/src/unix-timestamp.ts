@@ -1,11 +1,12 @@
 import { SOLANA_ERROR__TIMESTAMP_OUT_OF_RANGE, SolanaError } from '@solana/errors';
+import { Brand } from '@solana/nominal-types';
 
 /**
  * This type represents a Unix timestamp in _seconds_.
  *
  * It is represented as a `bigint` in client code and an `i64` in server code.
  */
-export type UnixTimestamp = bigint & { readonly __brand: unique symbol };
+export type UnixTimestamp = Brand<bigint, 'UnixTimestamp'>;
 
 // Largest possible value to be represented by an i64
 const maxI64Value = 9223372036854775807n; // 2n ** 63n - 1n

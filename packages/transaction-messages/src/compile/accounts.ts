@@ -19,6 +19,7 @@ import {
     WritableAccountLookup,
     WritableSignerAccount,
 } from '@solana/instructions';
+import { Brand } from '@solana/nominal-types';
 
 export const enum AddressMapEntryType {
     FEE_PAYER,
@@ -35,7 +36,7 @@ type FeePayerAccountEntry = Omit<WritableSignerAccount, 'address'> & {
 type LookupTableAccountEntry = Omit<ReadonlyAccountLookup | WritableAccountLookup, 'address'> & {
     [TYPE]: AddressMapEntryType.LOOKUP_TABLE;
 };
-export type OrderedAccounts = (IAccountLookupMeta | IAccountMeta)[] & { readonly __brand: unique symbol };
+export type OrderedAccounts = Brand<(IAccountLookupMeta | IAccountMeta)[], 'OrderedAccounts'>;
 type StaticAccountEntry = Omit<
     ReadonlyAccount | ReadonlySignerAccount | WritableAccount | WritableSignerAccount,
     'address'

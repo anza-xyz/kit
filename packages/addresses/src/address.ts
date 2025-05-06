@@ -15,6 +15,7 @@ import {
     SOLANA_ERROR__ADDRESSES__STRING_LENGTH_OUT_OF_RANGE,
     SolanaError,
 } from '@solana/errors';
+import { Brand, EncodedString } from '@solana/nominal-types';
 
 /**
  * Represents a string that validates as a Solana address. Functions that require well-formed
@@ -23,9 +24,7 @@ import {
  * Whenever you need to validate an arbitrary string as a base58-encoded address, use the
  * {@link address}, {@link assertIsAddress}, or {@link isAddress} functions in this package.
  */
-export type Address<TAddress extends string = string> = TAddress & {
-    readonly __brand: unique symbol;
-};
+export type Address<TAddress extends string = string> = Brand<EncodedString<TAddress, 'base58'>, 'Address'>;
 
 let memoizedBase58Encoder: Encoder<string> | undefined;
 let memoizedBase58Decoder: Decoder<string> | undefined;

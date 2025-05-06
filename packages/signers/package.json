@@ -77,6 +77,7 @@
         "@solana/errors": "workspace:*",
         "@solana/instructions": "workspace:*",
         "@solana/keys": "workspace:*",
+        "@solana/nominal-types": "workspace:*",
         "@solana/transaction-messages": "workspace:*",
         "@solana/transactions": "workspace:*"
     },

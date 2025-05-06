@@ -6,13 +6,14 @@ import {
     SOLANA_ERROR__KEYS__SIGNATURE_STRING_LENGTH_OUT_OF_RANGE,
     SolanaError,
 } from '@solana/errors';
+import { Brand, EncodedString } from '@solana/nominal-types';
 
 import { ED25519_ALGORITHM_IDENTIFIER } from './algorithm';
 
 /**
  * A 64-byte Ed25519 signature as a base58-encoded string.
  */
-export type Signature = string & { readonly __brand: unique symbol };
+export type Signature = Brand<EncodedString<string, 'base58'>, 'Signature'>;
 /**
  * A 64-byte Ed25519 signature.
  *
@@ -20,7 +21,7 @@ export type Signature = string & { readonly __brand: unique symbol };
  * produced by signing some known bytes using the private key associated with some known public key,
  * use the {@link verifySignature} function in this package.
  */
-export type SignatureBytes = Uint8Array & { readonly __brand: unique symbol };
+export type SignatureBytes = Brand<Uint8Array, 'SignatureBytes'>;
 
 let base58Encoder: Encoder<string> | undefined;
 
