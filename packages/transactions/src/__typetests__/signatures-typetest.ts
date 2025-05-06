@@ -25,12 +25,12 @@ import { Transaction } from '../transaction';
 // signTransaction
 {
     const transaction = null as unknown as Transaction & { some: 1 };
-    signTransaction([], transaction) satisfies Promise<FullySignedTransaction & { some: 1 }>;
+    signTransaction([], transaction) satisfies Promise<FullySignedTransaction & Transaction & { some: 1 }>;
 }
 
 // assertTransactionIsFullySigned
 {
     const transaction = null as unknown as Transaction & { some: 1 };
     assertTransactionIsFullySigned(transaction);
-    transaction satisfies FullySignedTransaction & { some: 1 };
+    transaction satisfies FullySignedTransaction & Transaction & { some: 1 };
 }

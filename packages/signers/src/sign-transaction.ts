@@ -72,32 +72,28 @@ type CompilableTransactionMessageWithSigners = CompilableTransactionMessage & Tr
  * @see {@link signAndSendTransactionMessageWithSigners}
  */
 export async function partiallySignTransactionMessageWithSigners<
-    TTransactionMessage extends CompilableTransactionMessageWithSigners &
-        TransactionMessageWithBlockhashLifetime = CompilableTransactionMessageWithSigners &
-        TransactionMessageWithBlockhashLifetime,
+    TTransactionMessage extends CompilableTransactionMessageWithSigners & TransactionMessageWithBlockhashLifetime,
 >(
     transactionMessage: TTransactionMessage,
     config?: TransactionPartialSignerConfig,
 ): Promise<Transaction & TransactionWithBlockhashLifetime>;
 
 export async function partiallySignTransactionMessageWithSigners<
-    TTransactionMessage extends CompilableTransactionMessageWithSigners &
-        TransactionMessageWithDurableNonceLifetime = CompilableTransactionMessageWithSigners &
-        TransactionMessageWithDurableNonceLifetime,
+    TTransactionMessage extends CompilableTransactionMessageWithSigners & TransactionMessageWithDurableNonceLifetime,
 >(
     transactionMessage: TTransactionMessage,
     config?: TransactionPartialSignerConfig,
 ): Promise<Readonly<Transaction & TransactionWithDurableNonceLifetime>>;
 
 export async function partiallySignTransactionMessageWithSigners<
-    TTransactionMessage extends CompilableTransactionMessageWithSigners = CompilableTransactionMessageWithSigners,
+    TTransactionMessage extends CompilableTransactionMessageWithSigners,
 >(
     transactionMessage: TTransactionMessage,
     config?: TransactionPartialSignerConfig,
 ): Promise<Readonly<Transaction & TransactionWithLifetime>>;
 
 export async function partiallySignTransactionMessageWithSigners<
-    TTransactionMessage extends CompilableTransactionMessageWithSigners = CompilableTransactionMessageWithSigners,
+    TTransactionMessage extends CompilableTransactionMessageWithSigners,
 >(
     transactionMessage: TTransactionMessage,
     config?: TransactionPartialSignerConfig,
@@ -142,36 +138,32 @@ export async function partiallySignTransactionMessageWithSigners<
  * @see {@link signAndSendTransactionMessageWithSigners}
  */
 export async function signTransactionMessageWithSigners<
-    TTransactionMessage extends CompilableTransactionMessageWithSigners &
-        TransactionMessageWithBlockhashLifetime = CompilableTransactionMessageWithSigners &
-        TransactionMessageWithBlockhashLifetime,
+    TTransactionMessage extends CompilableTransactionMessageWithSigners & TransactionMessageWithBlockhashLifetime,
 >(
     transactionMessage: TTransactionMessage,
     config?: TransactionPartialSignerConfig,
-): Promise<Readonly<FullySignedTransaction & TransactionWithBlockhashLifetime>>;
+): Promise<Readonly<FullySignedTransaction & Transaction & TransactionWithBlockhashLifetime>>;
 
 export async function signTransactionMessageWithSigners<
-    TTransactionMessage extends CompilableTransactionMessageWithSigners &
-        TransactionMessageWithDurableNonceLifetime = CompilableTransactionMessageWithSigners &
-        TransactionMessageWithDurableNonceLifetime,
+    TTransactionMessage extends CompilableTransactionMessageWithSigners & TransactionMessageWithDurableNonceLifetime,
 >(
     transactionMessage: TTransactionMessage,
     config?: TransactionPartialSignerConfig,
-): Promise<Readonly<FullySignedTransaction & TransactionWithDurableNonceLifetime>>;
+): Promise<Readonly<FullySignedTransaction & Transaction & TransactionWithDurableNonceLifetime>>;
 
 export async function signTransactionMessageWithSigners<
-    TTransactionMessage extends CompilableTransactionMessageWithSigners = CompilableTransactionMessageWithSigners,
+    TTransactionMessage extends CompilableTransactionMessageWithSigners,
 >(
     transactionMessage: TTransactionMessage,
     config?: TransactionPartialSignerConfig,
-): Promise<Readonly<FullySignedTransaction & TransactionWithLifetime>>;
+): Promise<Readonly<FullySignedTransaction & Transaction & TransactionWithLifetime>>;
 
 export async function signTransactionMessageWithSigners<
-    TTransactionMessage extends CompilableTransactionMessageWithSigners = CompilableTransactionMessageWithSigners,
+    TTransactionMessage extends CompilableTransactionMessageWithSigners,
 >(
     transactionMessage: TTransactionMessage,
     config?: TransactionPartialSignerConfig,
-): Promise<Readonly<FullySignedTransaction & TransactionWithLifetime>> {
+): Promise<Readonly<FullySignedTransaction & Transaction & TransactionWithLifetime>> {
     const signedTransaction = await partiallySignTransactionMessageWithSigners(transactionMessage, config);
     assertTransactionIsFullySigned(signedTransaction);
     return signedTransaction;
@@ -228,7 +220,7 @@ export async function signTransactionMessageWithSigners<
  *
  */
 export async function signAndSendTransactionMessageWithSigners<
-    TTransactionMessage extends CompilableTransactionMessageWithSigners = CompilableTransactionMessageWithSigners,
+    TTransactionMessage extends CompilableTransactionMessageWithSigners,
 >(transaction: TTransactionMessage, config?: TransactionSendingSignerConfig): Promise<SignatureBytes> {
     assertIsTransactionMessageWithSingleSendingSigner(transaction);
 
