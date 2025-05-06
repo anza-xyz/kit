@@ -5,5 +5,5 @@
     },
     "display": "@solana/fast-stable-stringify",
     "extends": "../tsconfig/base.json",
-    "include": ["src"]
+    "include": ["../build-scripts/build-time-constants.d.ts", "src"]
 }

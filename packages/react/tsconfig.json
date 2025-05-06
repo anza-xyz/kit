@@ -6,5 +6,5 @@
     },
     "display": "@solana/react",
     "extends": "../tsconfig/base.json",
-    "include": ["./eslint.config.mjs", "src"]
+    "include": ["../build-scripts/build-time-constants.d.ts", "./eslint.config.mjs", "src"]
 }

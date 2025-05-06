@@ -6,5 +6,5 @@
     },
     "display": "Fetch Implementation",
     "extends": "@solana/tsconfig/base.json",
-    "include": ["src"]
+    "include": ["../build-scripts/build-time-constants.d.ts", "src"]
 }

@@ -7,5 +7,5 @@
         "outDir": "./dist/types"
     },
     "extends": "./tsconfig.json",
-    "include": ["src/index.browser.ts"]
+    "include": ["../build-scripts/build-time-constants.d.ts", "src/index.browser.ts"]
 }
