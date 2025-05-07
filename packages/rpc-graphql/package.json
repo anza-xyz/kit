@@ -75,7 +75,7 @@
         "@solana/codecs-strings": "workspace:*",
         "@solana/fast-stable-stringify": "workspace:*",
         "dataloader": "^2.2.3",
-        "graphql": "^16.10.0"
+        "graphql": "^16.11.0"
     },
     "devDependencies": {
         "@solana/addresses": "workspace:*",
