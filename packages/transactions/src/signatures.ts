@@ -151,9 +151,28 @@ export async function signTransaction<T extends Transaction>(
     transaction: T,
 ): Promise<FullySignedTransaction & T> {
     const out = await partiallySignTransaction(keyPairs, transaction);
-    assertTransactionIsFullySigned(out);
+    assertIsFullySignedTransaction(out);
     Object.freeze(out);
     return out;
+}
+
+/**
+ * Checks whether a given {@link Transaction} is fully signed.
+ *
+ * @example
+ * ```ts
+ * import { isFullySignedTransaction } from '@solana/transactions';
+ *
+ * const transaction = getTransactionDecoder().decode(transactionBytes);
+ * if (isFullySignedTransaction(transaction)) {
+ *   // At this point we know that the transaction is signed and can be sent to the network.
+ * }
+ * ```
+ */
+export function isFullySignedTransaction<TTransaction extends Transaction>(
+    transaction: TTransaction,
+): transaction is FullySignedTransaction & TTransaction {
+    return Object.entries(transaction.signatures).every(([_, signatureBytes]) => !!signatureBytes);
 }
 
 /**
@@ -163,13 +182,13 @@ export async function signTransaction<T extends Transaction>(
  *
  * @example
  * ```ts
- * import { assertTransactionIsFullySigned } from '@solana/transactions';
+ * import { assertIsFullySignedTransaction } from '@solana/transactions';
  *
  * const transaction = getTransactionDecoder().decode(transactionBytes);
  * try {
  *     // If this type assertion function doesn't throw, then Typescript will upcast `transaction`
  *     // to `FullySignedTransaction`.
- *     assertTransactionIsFullySigned(transaction);
+ *     assertIsFullySignedTransaction(transaction);
  *     // At this point we know that the transaction is signed and can be sent to the network.
  *     await sendAndConfirmTransaction(transaction, { commitment: 'confirmed' });
  * } catch(e) {
@@ -178,10 +197,11 @@ export async function signTransaction<T extends Transaction>(
  *     }
  *     throw;
  * }
+ * ```
  */
-export function assertTransactionIsFullySigned(
-    transaction: Transaction,
-): asserts transaction is FullySignedTransaction {
+export function assertIsFullySignedTransaction<TTransaction extends Transaction>(
+    transaction: TTransaction,
+): asserts transaction is FullySignedTransaction & TTransaction {
     const missingSigs: Address[] = [];
     Object.entries(transaction.signatures).forEach(([address, signatureBytes]) => {
         if (!signatureBytes) {

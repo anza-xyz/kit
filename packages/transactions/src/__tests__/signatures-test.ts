@@ -11,8 +11,9 @@ import {
 import { SignatureBytes, signBytes } from '@solana/keys';
 
 import {
-    assertTransactionIsFullySigned,
+    assertIsFullySignedTransaction,
     getSignatureFromTransaction,
+    isFullySignedTransaction,
     partiallySignTransaction,
     signTransaction,
 } from '../signatures';
@@ -398,7 +399,47 @@ describe('signTransaction', () => {
     });
 });
 
-describe('assertTransactionIsFullySigned', () => {
+describe('isFullySignedTransaction', () => {
+    const mockPublicKeyAddressA = 'A' as Address;
+    const mockSignatureA = new Uint8Array(0) as SignatureBytes;
+    const mockPublicKeyAddressB = 'B' as Address;
+    const mockSignatureB = new Uint8Array(1) as SignatureBytes;
+
+    it('returns false if the transaction has missing signatures', () => {
+        const signatures: SignaturesMap = {};
+        signatures[mockPublicKeyAddressA] = null;
+        const transaction: Transaction = {
+            messageBytes: new Uint8Array() as ReadonlyUint8Array as TransactionMessageBytes,
+            signatures,
+        };
+
+        expect(isFullySignedTransaction(transaction)).toBe(false);
+    });
+
+    it('returns true if the transaction is signed by all its signers', () => {
+        const signatures: SignaturesMap = {};
+        signatures[mockPublicKeyAddressA] = mockSignatureA;
+        signatures[mockPublicKeyAddressB] = mockSignatureB;
+        const transaction: Transaction = {
+            messageBytes: new Uint8Array() as ReadonlyUint8Array as TransactionMessageBytes,
+            signatures,
+        };
+
+        expect(isFullySignedTransaction(transaction)).toBe(true);
+    });
+
+    it('return true if the transaction has no signatures', () => {
+        const signatures: SignaturesMap = {};
+        const transaction: Transaction = {
+            messageBytes: new Uint8Array() as ReadonlyUint8Array as TransactionMessageBytes,
+            signatures,
+        };
+
+        expect(isFullySignedTransaction(transaction)).toBe(true);
+    });
+});
+
+describe('assertIsFullySignedTransaction', () => {
     const mockPublicKeyAddressA = 'A' as Address;
     const mockSignatureA = new Uint8Array(0) as SignatureBytes;
     const mockPublicKeyAddressB = 'B' as Address;
@@ -412,7 +453,7 @@ describe('assertTransactionIsFullySigned', () => {
             signatures,
         };
 
-        expect(() => assertTransactionIsFullySigned(transaction)).toThrow(
+        expect(() => assertIsFullySignedTransaction(transaction)).toThrow(
             new SolanaError(SOLANA_ERROR__TRANSACTION__SIGNATURES_MISSING, {
                 addresses: [mockPublicKeyAddressA],
             }),
@@ -428,7 +469,7 @@ describe('assertTransactionIsFullySigned', () => {
             signatures,
         };
 
-        expect(() => assertTransactionIsFullySigned(transaction)).toThrow(
+        expect(() => assertIsFullySignedTransaction(transaction)).toThrow(
             new SolanaError(SOLANA_ERROR__TRANSACTION__SIGNATURES_MISSING, {
                 addresses: [mockPublicKeyAddressA, mockPublicKeyAddressB],
             }),
@@ -443,7 +484,7 @@ describe('assertTransactionIsFullySigned', () => {
             signatures,
         };
 
-        expect(() => assertTransactionIsFullySigned(transaction)).not.toThrow();
+        expect(() => assertIsFullySignedTransaction(transaction)).not.toThrow();
     });
 
     it('does not throw if the transaction is signed by all its signers', () => {
@@ -455,7 +496,7 @@ describe('assertTransactionIsFullySigned', () => {
             signatures,
         };
 
-        expect(() => assertTransactionIsFullySigned(transaction)).not.toThrow();
+        expect(() => assertIsFullySignedTransaction(transaction)).not.toThrow();
     });
 
     it('does not throw if the transaction has no signatures', () => {
@@ -464,6 +505,6 @@ describe('assertTransactionIsFullySigned', () => {
             messageBytes: new Uint8Array() as ReadonlyUint8Array as TransactionMessageBytes,
             signatures,
         };
-        expect(() => assertTransactionIsFullySigned(transaction)).not.toThrow();
+        expect(() => assertIsFullySignedTransaction(transaction)).not.toThrow();
     });
 });

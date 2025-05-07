@@ -2,7 +2,7 @@ import { SOLANA_ERROR__SIGNER__TRANSACTION_SENDING_SIGNER_MISSING, SolanaError }
 import { SignatureBytes } from '@solana/keys';
 import { CompilableTransactionMessage } from '@solana/transaction-messages';
 import {
-    assertTransactionIsFullySigned,
+    assertIsFullySignedTransaction,
     compileTransaction,
     FullySignedTransaction,
     Transaction,
@@ -118,7 +118,7 @@ export async function signTransactionMessageWithSigners<
     config?: TransactionPartialSignerConfig,
 ): Promise<FullySignedTransaction & TransactionFromCompilableTransactionMessage<TTransactionMessage>> {
     const signedTransaction = await partiallySignTransactionMessageWithSigners(transactionMessage, config);
-    assertTransactionIsFullySigned(signedTransaction);
+    assertIsFullySignedTransaction(signedTransaction);
     return signedTransaction;
 }
 
