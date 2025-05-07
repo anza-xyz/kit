@@ -39,7 +39,7 @@ importers:
         version: link:packages/build-scripts
       '@solana/eslint-config-solana':
         specifier: ^4.0.0
-        version: 4.0.0(@eslint/js@9.26.0)(@types/eslint__js@8.42.3)(eslint-plugin-jest@28.11.0(@typescript-eslint/eslint-plugin@8.32.0(@typescript-eslint/parser@8.29.1(eslint@9.26.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.26.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.26.0(jiti@1.21.7))(jest@30.0.0-alpha.6(@types/node@22.15.13)(ts-node@10.9.2(@swc/core@1.11.22)(@types/node@22.15.13)(typescript@5.8.3)))(typescript@5.8.3))(eslint-plugin-react-hooks@5.2.0(eslint@9.26.0(jiti@1.21.7)))(eslint-plugin-simple-import-sort@12.1.1(eslint@9.26.0(jiti@1.21.7)))(eslint-plugin-sort-keys-fix@1.1.2)(eslint-plugin-typescript-sort-keys@3.3.0(@typescript-eslint/parser@8.29.1(eslint@9.26.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.26.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.26.0(jiti@1.21.7))(globals@16.0.0)(jest@30.0.0-alpha.6(@types/node@22.15.13)(ts-node@10.9.2(@swc/core@1.11.22)(@types/node@22.15.13)(typescript@5.8.3)))(typescript-eslint@8.17.0(eslint@9.26.0(jiti@1.21.7))(typescript@5.8.3))(typescript@5.8.3)
+        version: 4.0.0(@eslint/js@9.26.0)(@types/eslint__js@8.42.3)(eslint-plugin-jest@28.11.0(@typescript-eslint/eslint-plugin@8.32.0(@typescript-eslint/parser@8.29.1(eslint@9.26.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.26.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.26.0(jiti@1.21.7))(jest@30.0.0-alpha.6(@types/node@22.15.13)(ts-node@10.9.2(@swc/core@1.11.22)(@types/node@22.15.13)(typescript@5.8.3)))(typescript@5.8.3))(eslint-plugin-react-hooks@5.2.0(eslint@9.26.0(jiti@1.21.7)))(eslint-plugin-simple-import-sort@12.1.1(eslint@9.26.0(jiti@1.21.7)))(eslint-plugin-sort-keys-fix@1.1.2)(eslint-plugin-typescript-sort-keys@3.3.0(@typescript-eslint/parser@8.29.1(eslint@9.26.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.26.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.26.0(jiti@1.21.7))(globals@16.1.0)(jest@30.0.0-alpha.6(@types/node@22.15.13)(ts-node@10.9.2(@swc/core@1.11.22)(@types/node@22.15.13)(typescript@5.8.3)))(typescript-eslint@8.17.0(eslint@9.26.0(jiti@1.21.7))(typescript@5.8.3))(typescript@5.8.3)
       '@solana/prettier-config-solana':
         specifier: 0.0.5
         version: 0.0.5(prettier@3.5.3)
@@ -217,8 +217,8 @@ importers:
         specifier: ^0.4.20
         version: 0.4.20(eslint@9.26.0(jiti@1.21.7))
       globals:
-        specifier: ^16.0.0
-        version: 16.0.0
+        specifier: ^16.1.0
+        version: 16.1.0
       vite:
         specifier: ^6.3.5
         version: 6.3.5(@types/node@22.15.13)(jiti@1.21.7)(terser@5.18.0)(tsx@4.19.3)(yaml@2.7.1)
@@ -5345,8 +5345,8 @@ packages:
     resolution: {integrity: sha512-oahGvuMGQlPw/ivIYBjVSrWAfWLBeku5tpPE2fOPLi+WHffIWbuh2tCjhyQhTBPMf5E9jDEH4FOmTYgYwbKwtQ==}
     engines: {node: '>=18'}
 
-  globals@16.0.0:
-    resolution: {integrity: sha512-iInW14XItCXET01CQFqudPOWP2jYMl7T+QRQT+UNcR/iQncN/F0UNpgd76iFkBPgNQb4+X3LV9tLJYzwh+Gl3A==}
+  globals@16.1.0:
+    resolution: {integrity: sha512-aibexHNbb/jiUSObBgpHLj+sIuUmJnYcgXBlrfsiDZ9rt4aF2TFRbyLgZ2iFQuVZ1K5Mx3FVkbKRSgKrbK3K2g==}
     engines: {node: '>=18'}
 
   globby@11.1.0:
@@ -10285,7 +10285,7 @@ snapshots:
       commander: 13.1.0
       typescript: 5.8.3
 
-  ? '@solana/eslint-config-solana@4.0.0(@eslint/js@9.26.0)(@types/eslint__js@8.42.3)(eslint-plugin-jest@28.11.0(@typescript-eslint/eslint-plugin@8.32.0(@typescript-eslint/parser@8.29.1(eslint@9.26.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.26.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.26.0(jiti@1.21.7))(jest@30.0.0-alpha.6(@types/node@22.15.13)(ts-node@10.9.2(@swc/core@1.11.22)(@types/node@22.15.13)(typescript@5.8.3)))(typescript@5.8.3))(eslint-plugin-react-hooks@5.2.0(eslint@9.26.0(jiti@1.21.7)))(eslint-plugin-simple-import-sort@12.1.1(eslint@9.26.0(jiti@1.21.7)))(eslint-plugin-sort-keys-fix@1.1.2)(eslint-plugin-typescript-sort-keys@3.3.0(@typescript-eslint/parser@8.29.1(eslint@9.26.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.26.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.26.0(jiti@1.21.7))(globals@16.0.0)(jest@30.0.0-alpha.6(@types/node@22.15.13)(ts-node@10.9.2(@swc/core@1.11.22)(@types/node@22.15.13)(typescript@5.8.3)))(typescript-eslint@8.17.0(eslint@9.26.0(jiti@1.21.7))(typescript@5.8.3))(typescript@5.8.3)'
+  ? '@solana/eslint-config-solana@4.0.0(@eslint/js@9.26.0)(@types/eslint__js@8.42.3)(eslint-plugin-jest@28.11.0(@typescript-eslint/eslint-plugin@8.32.0(@typescript-eslint/parser@8.29.1(eslint@9.26.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.26.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.26.0(jiti@1.21.7))(jest@30.0.0-alpha.6(@types/node@22.15.13)(ts-node@10.9.2(@swc/core@1.11.22)(@types/node@22.15.13)(typescript@5.8.3)))(typescript@5.8.3))(eslint-plugin-react-hooks@5.2.0(eslint@9.26.0(jiti@1.21.7)))(eslint-plugin-simple-import-sort@12.1.1(eslint@9.26.0(jiti@1.21.7)))(eslint-plugin-sort-keys-fix@1.1.2)(eslint-plugin-typescript-sort-keys@3.3.0(@typescript-eslint/parser@8.29.1(eslint@9.26.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.26.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.26.0(jiti@1.21.7))(globals@16.1.0)(jest@30.0.0-alpha.6(@types/node@22.15.13)(ts-node@10.9.2(@swc/core@1.11.22)(@types/node@22.15.13)(typescript@5.8.3)))(typescript-eslint@8.17.0(eslint@9.26.0(jiti@1.21.7))(typescript@5.8.3))(typescript@5.8.3)'
   : dependencies:
       '@eslint/js': 9.26.0
       '@types/eslint__js': 8.42.3
@@ -10295,7 +10295,7 @@ snapshots:
       eslint-plugin-simple-import-sort: 12.1.1(eslint@9.26.0(jiti@1.21.7))
       eslint-plugin-sort-keys-fix: 1.1.2
       eslint-plugin-typescript-sort-keys: 3.3.0(@typescript-eslint/parser@8.29.1(eslint@9.26.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.26.0(jiti@1.21.7))(typescript@5.8.3)
-      globals: 16.0.0
+      globals: 16.1.0
       jest: 30.0.0-alpha.6(@types/node@22.15.13)(ts-node@10.9.2(@swc/core@1.11.22)(@types/node@22.15.13)(typescript@5.8.3))
       typescript: 5.8.3
       typescript-eslint: 8.17.0(eslint@9.26.0(jiti@1.21.7))(typescript@5.8.3)
@@ -12094,7 +12094,7 @@ snapshots:
 
   globals@14.0.0: {}
 
-  globals@16.0.0: {}
+  globals@16.1.0: {}
 
   globby@11.1.0:
     dependencies:
