@@ -1138,7 +1138,7 @@ const signedTransaction = await signTransaction([], transactionMessage);
 
 // Asserts the transaction is a `FullySignedTransaction`
 // Throws an error if any signatures are missing!
-assertTransactionIsFullySigned(signedTransaction);
+assertIsFullySignedTransaction(signedTransaction);
 
 await sendAndConfirmTransaction(signedTransaction);
 ```

@@ -18,11 +18,11 @@ import { getErrorMessage } from './message-formatter';
  *     SOLANA_ERROR__TRANSACTION__FEE_PAYER_SIGNATURE_MISSING,
  *     isSolanaError,
  * } from '@solana/errors';
- * import { assertTransactionIsFullySigned, getSignatureFromTransaction } from '@solana/transactions';
+ * import { assertIsFullySignedTransaction, getSignatureFromTransaction } from '@solana/transactions';
  *
  * try {
  *     const transactionSignature = getSignatureFromTransaction(tx);
- *     assertTransactionIsFullySigned(tx);
+ *     assertIsFullySignedTransaction(tx);
  *     /* ... *\/
  * } catch (e) {
  *     if (isSolanaError(e, SOLANA_ERROR__TRANSACTION__SIGNATURES_MISSING)) {
