@@ -13,15 +13,15 @@ import {
     TransactionWithLifetime,
 } from '@solana/transactions';
 
-import { ITransactionMessageWithSigners } from '../account-signer-meta';
+import { TransactionMessageWithSigners } from '../account-signer-meta';
 import {
     partiallySignTransactionMessageWithSigners,
     signAndSendTransactionMessageWithSigners,
     signTransactionMessageWithSigners,
 } from '../sign-transaction';
-import { ITransactionMessageWithSingleSendingSigner } from '../transaction-with-single-sending-signer';
+import { TransactionMessageWithSingleSendingSigner } from '../transaction-with-single-sending-signer';
 
-type CompilableTransactionMessageWithSigners = CompilableTransactionMessage & ITransactionMessageWithSigners;
+type CompilableTransactionMessageWithSigners = CompilableTransactionMessage & TransactionMessageWithSigners;
 
 {
     // [partiallySignTransactionMessageWithSigners]: returns a transaction with a blockhash lifetime
@@ -78,6 +78,6 @@ type CompilableTransactionMessageWithSigners = CompilableTransactionMessage & IT
 {
     // [signAndSendTransactionMessageWithSigners]: returns a signature
     const transactionMessage = null as unknown as CompilableTransactionMessageWithSigners &
-        ITransactionMessageWithSingleSendingSigner;
+        TransactionMessageWithSingleSendingSigner;
     signAndSendTransactionMessageWithSigners(transactionMessage) satisfies Promise<SignatureBytes>;
 }

@@ -495,7 +495,7 @@ export const SolanaErrorMessages: Readonly<{
         'More than one `TransactionSendingSigner` was identified.',
     [SOLANA_ERROR__SIGNER__TRANSACTION_SENDING_SIGNER_MISSING]:
         'No `TransactionSendingSigner` was identified. Please provide a valid ' +
-        '`ITransactionWithSingleSendingSigner` transaction.',
+        '`TransactionWithSingleSendingSigner` transaction.',
     [SOLANA_ERROR__SIGNER__WALLET_MULTISIGN_UNIMPLEMENTED]:
         'Wallet account signers do not support signing multiple messages/transactions in a single operation',
     [SOLANA_ERROR__SUBTLE_CRYPTO__CANNOT_EXPORT_NON_EXTRACTABLE_KEY]: 'Cannot export a non-extractable key.',

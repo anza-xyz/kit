@@ -1,7 +1,7 @@
 import { IInstruction } from '@solana/instructions';
 import { TransactionMessage } from '@solana/transaction-messages';
 
-import { IInstructionWithSigners, ITransactionMessageWithSigners } from '../account-signer-meta';
+import { IInstructionWithSigners, TransactionMessageWithSigners } from '../account-signer-meta';
 import { addSignersToInstruction, addSignersToTransactionMessage } from '../add-signers';
 import { TransactionSigner } from '../transaction-signer';
 
@@ -25,6 +25,6 @@ const message = null as unknown as TransactionMessage;
     // It adds the `WithSigners` type expansion to the transaction message
     {
         const messageWithSigners = addSignersToTransactionMessage([aliceSigner, bobSigner], message);
-        messageWithSigners satisfies ITransactionMessageWithSigners;
+        messageWithSigners satisfies TransactionMessageWithSigners;
     }
 }

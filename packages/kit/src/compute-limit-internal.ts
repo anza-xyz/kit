@@ -19,9 +19,9 @@ import {
     CompilableTransactionMessage,
     isDurableNonceTransaction,
     isTransactionMessageWithBlockhashLifetime,
-    ITransactionMessageWithFeePayer,
     setTransactionMessageLifetimeUsingBlockhash,
     TransactionMessage,
+    TransactionMessageWithFeePayer,
 } from '@solana/transaction-messages';
 import { compileTransaction, getBase64EncodedWireTransaction } from '@solana/transactions';
 
@@ -42,7 +42,7 @@ type ComputeUnitEstimateForTransactionMessageConfig = Readonly<{
      */
     minContextSlot?: Slot;
     rpc: Rpc<SimulateTransactionApi>;
-    transactionMessage: CompilableTransactionMessage | (ITransactionMessageWithFeePayer & TransactionMessage);
+    transactionMessage: CompilableTransactionMessage | (TransactionMessage & TransactionMessageWithFeePayer);
 }>;
 
 const COMPUTE_BUDGET_PROGRAM_ADDRESS =
