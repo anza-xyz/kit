@@ -147,6 +147,7 @@ import {
     SOLANA_ERROR__TIMESTAMP_OUT_OF_RANGE,
     SOLANA_ERROR__TRANSACTION__ADDRESS_MISSING,
     SOLANA_ERROR__TRANSACTION__ADDRESSES_CANNOT_SIGN_TRANSACTION,
+    SOLANA_ERROR__TRANSACTION__EXCEEDS_SIZE_LIMIT,
     SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_ADDRESS_LOOKUP_TABLE_CONTENTS_MISSING,
     SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_ADDRESS_LOOKUP_TABLE_INDEX_OUT_OF_RANGE,
     SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_PROGRAM_ADDRESS_NOT_FOUND,
@@ -174,6 +175,9 @@ type TypedArrayMutableProperties = 'copyWithin' | 'fill' | 'reverse' | 'set' | '
 interface ReadonlyUint8Array extends Omit<Uint8Array, TypedArrayMutableProperties> {
     readonly [n: number]: number;
 }
+
+/** A amount of bytes. */
+type Bytes = number;
 
 /**
  * A map of every {@link SolanaError} code to the type of its `context` property.
@@ -574,6 +578,10 @@ export type SolanaErrorContext = DefaultUnspecifiedErrorContextToUndefined<
         };
         [SOLANA_ERROR__TRANSACTION__ADDRESS_MISSING]: {
             index: number;
+        };
+        [SOLANA_ERROR__TRANSACTION__EXCEEDS_SIZE_LIMIT]: {
+            transactionSize: Bytes;
+            transactionSizeLimit: Bytes;
         };
         [SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_ADDRESS_LOOKUP_TABLE_CONTENTS_MISSING]: {
             lookupTableAddresses: string[];

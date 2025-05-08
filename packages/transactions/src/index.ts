@@ -13,4 +13,6 @@ export * from './lifetime';
 export * from './compile-transaction';
 export * from './signatures';
 export * from './wire-transaction';
+export * from './transaction-message-size';
+export * from './transaction-size';
 export * from './transaction';
