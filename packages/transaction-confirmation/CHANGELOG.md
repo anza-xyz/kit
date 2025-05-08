@@ -1,5 +1,42 @@
 # @solana/transaction-confirmation
 
+## 2.1.1
+
+### Patch Changes
+
+- [#473](https://github.com/anza-xyz/kit/pull/473) [`36a9dee`](https://github.com/anza-xyz/kit/commit/36a9dee4e6cbd72020dc74777fe394130b9a5f46) Thanks [@steveluscher](https://github.com/steveluscher)! - The identity of all branded types has changed in such a way that the types from v2.1.1 will be compatible with any other version going forward, which is not the case for versions v2.1.0 and before.
+
+    If you end up with a mix of versions in your project prior to v2.1.1 (eg. `@solana/addresses@2.0.0` and `@solana/addresses@2.1.0`) you may discover that branded types like `Address` raise a type error, even though they are runtime compatible. Your options are:
+
+    1. Always make sure that you have exactly one instance of each `@solana/*` dependency in your project at any given time
+    2. Upgrade all of your `@solana/*` dependencies to v2.1.1 at minimum, even if their minor or patch versions differ.
+    3. Suppress the type errors using a comment like the following:
+        ```ts
+        const myAddress = address('1234..5678'); // from @solana/addresses@2.0.0
+        const myAccount = await fetchEncodedAccount(
+            // imports @solana/addresses@2.1.0
+            rpc,
+            // @ts-expect-error Address types mismatch between installed versions of @solana/addresses
+            myAddress,
+        );
+        ```
+
+- [#409](https://github.com/anza-xyz/kit/pull/409) [`24a329d`](https://github.com/anza-xyz/kit/commit/24a329dda1434aaf450d1d35b022ee77556ac415) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Loosen lifetime constraint on sendAndConfirmTransaction to only require lastValidBlockHeight
+
+- [#236](https://github.com/anza-xyz/kit/pull/236) [`ca1d4ec`](https://github.com/anza-xyz/kit/commit/ca1d4ec7ddd641ca813f79f8ca06d225f29419e2) Thanks [@steveluscher](https://github.com/steveluscher)! - The minimum TypeScript version is now 5.3.3
+
+- Updated dependencies [[`36a9dee`](https://github.com/anza-xyz/kit/commit/36a9dee4e6cbd72020dc74777fe394130b9a5f46), [`41b679c`](https://github.com/anza-xyz/kit/commit/41b679c2646029c9c7f005de55fba687e3c89e8a), [`41b679c`](https://github.com/anza-xyz/kit/commit/41b679c2646029c9c7f005de55fba687e3c89e8a), [`776e18d`](https://github.com/anza-xyz/kit/commit/776e18d75c759a839608069c61da3f70b775540b), [`ca1d4ec`](https://github.com/anza-xyz/kit/commit/ca1d4ec7ddd641ca813f79f8ca06d225f29419e2)]:
+    - @solana/transaction-messages@2.1.1
+    - @solana/rpc-subscriptions@2.1.1
+    - @solana/codecs-strings@2.1.1
+    - @solana/transactions@2.1.1
+    - @solana/addresses@2.1.1
+    - @solana/rpc-types@2.1.1
+    - @solana/promises@2.1.1
+    - @solana/errors@2.1.1
+    - @solana/keys@2.1.1
+    - @solana/rpc@2.1.1
+
 ## 2.1.0
 
 ### Patch Changes
