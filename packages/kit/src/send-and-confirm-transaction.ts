@@ -6,12 +6,12 @@ import {
     TransactionWithLastValidBlockHeight,
     waitForRecentTransactionConfirmation,
 } from '@solana/transaction-confirmation';
-import { FullySignedTransaction, Transaction } from '@solana/transactions';
+import { SendableTransaction, Transaction } from '@solana/transactions';
 
 import { sendAndConfirmTransactionWithBlockhashLifetime_INTERNAL_ONLY_DO_NOT_EXPORT } from './send-transaction-internal';
 
 type SendAndConfirmTransactionWithBlockhashLifetimeFunction = (
-    transaction: FullySignedTransaction & Transaction & TransactionWithLastValidBlockHeight,
+    transaction: SendableTransaction & Transaction & TransactionWithLastValidBlockHeight,
     config: Omit<
         Parameters<typeof sendAndConfirmTransactionWithBlockhashLifetime_INTERNAL_ONLY_DO_NOT_EXPORT>[0],
         'confirmRecentTransaction' | 'rpc' | 'transaction'
