@@ -3,8 +3,8 @@ import type { Rpc, SendTransactionApi } from '@solana/rpc';
 import type { Commitment } from '@solana/rpc-types';
 import {
     Base64EncodedWireTransaction,
-    FullySignedTransaction,
     getBase64EncodedWireTransaction,
+    SendableTransaction,
     Transaction,
     TransactionWithBlockhashLifetime,
     TransactionWithDurableNonceLifetime,
@@ -22,7 +22,7 @@ const FOREVER_PROMISE = new Promise(() => {
 });
 
 describe('sendAndConfirmTransaction', () => {
-    const MOCK_TRANSACTION = {} as FullySignedTransaction & Transaction & TransactionWithBlockhashLifetime;
+    const MOCK_TRANSACTION = {} as SendableTransaction & Transaction & TransactionWithBlockhashLifetime;
     let confirmRecentTransaction: jest.Mock;
     let createPendingRequest: jest.Mock;
     let rpc: Rpc<SendTransactionApi>;
@@ -176,7 +176,7 @@ describe('sendAndConfirmTransaction', () => {
 });
 
 describe('sendAndConfirmDurableNonceTransaction', () => {
-    const MOCK_DURABLE_NONCE_TRANSACTION = {} as unknown as FullySignedTransaction &
+    const MOCK_DURABLE_NONCE_TRANSACTION = {} as unknown as SendableTransaction &
         Transaction &
         TransactionWithDurableNonceLifetime;
     let confirmDurableNonceTransaction: jest.Mock;

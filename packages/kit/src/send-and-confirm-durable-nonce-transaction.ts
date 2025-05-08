@@ -5,12 +5,12 @@ import {
     createRecentSignatureConfirmationPromiseFactory,
     waitForDurableNonceTransactionConfirmation,
 } from '@solana/transaction-confirmation';
-import { FullySignedTransaction, Transaction, TransactionWithDurableNonceLifetime } from '@solana/transactions';
+import { SendableTransaction, Transaction, TransactionWithDurableNonceLifetime } from '@solana/transactions';
 
 import { sendAndConfirmDurableNonceTransaction_INTERNAL_ONLY_DO_NOT_EXPORT } from './send-transaction-internal';
 
 type SendAndConfirmDurableNonceTransactionFunction = (
-    transaction: FullySignedTransaction & Transaction & TransactionWithDurableNonceLifetime,
+    transaction: SendableTransaction & Transaction & TransactionWithDurableNonceLifetime,
     config: Omit<
         Parameters<typeof sendAndConfirmDurableNonceTransaction_INTERNAL_ONLY_DO_NOT_EXPORT>[0],
         'confirmDurableNonceTransaction' | 'rpc' | 'transaction'

@@ -1,10 +1,10 @@
 import type { Rpc, SendTransactionApi } from '@solana/rpc';
-import { FullySignedTransaction, Transaction } from '@solana/transactions';
+import { SendableTransaction, Transaction } from '@solana/transactions';
 
 import { sendTransaction_INTERNAL_ONLY_DO_NOT_EXPORT } from './send-transaction-internal';
 
 type SendTransactionWithoutConfirmingFunction = (
-    transaction: FullySignedTransaction & Transaction,
+    transaction: SendableTransaction & Transaction,
     config: Omit<Parameters<typeof sendTransaction_INTERNAL_ONLY_DO_NOT_EXPORT>[0], 'rpc' | 'transaction'>,
 ) => Promise<void>;
 

@@ -37,7 +37,20 @@ In order to be landed on the network, a transaction must be signed by all of the
 
 #### `FullySignedTransaction`
 
-This type represents a transaction that is signed by all of its required signers. Being fully signed is a prerequisite of functions designed to land transactions on the network.
+This type represents a transaction that is signed by all of its required signers.
+
+#### `TransactionWithSizeLimit`
+
+This type represents a transaction that is under or equal to the maximum size limit for transactions on the Solana network.
+
+#### `SendableTransaction`
+
+This type represents a transaction that has all the required conditions to be sent to the network. Namely:
+
+- It must be fully signed (ie. conform to `FullySignedTransaction`)
+- It must be within size limit (ie. conform to `TransactionWithSizeLimit`)
+
+The `SendableTransaction` type is a prerequisite of functions designed to land transactions on the network.
 
 ### Functions
 

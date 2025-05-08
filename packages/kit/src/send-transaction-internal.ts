@@ -7,8 +7,8 @@ import {
     waitForRecentTransactionConfirmation,
 } from '@solana/transaction-confirmation';
 import {
-    FullySignedTransaction,
     getBase64EncodedWireTransaction,
+    SendableTransaction,
     Transaction,
     TransactionWithDurableNonceLifetime,
 } from '@solana/transactions';
@@ -22,7 +22,7 @@ interface SendAndConfirmDurableNonceTransactionConfig
             'getNonceInvalidationPromise' | 'getRecentSignatureConfirmationPromise'
         >,
     ) => Promise<void>;
-    transaction: FullySignedTransaction & Transaction & TransactionWithDurableNonceLifetime;
+    transaction: SendableTransaction & Transaction & TransactionWithDurableNonceLifetime;
 }
 
 interface SendAndConfirmTransactionWithBlockhashLifetimeConfig
@@ -34,14 +34,14 @@ interface SendAndConfirmTransactionWithBlockhashLifetimeConfig
             'getBlockHeightExceedencePromise' | 'getRecentSignatureConfirmationPromise'
         >,
     ) => Promise<void>;
-    transaction: FullySignedTransaction & Transaction & TransactionWithLastValidBlockHeight;
+    transaction: SendableTransaction & Transaction & TransactionWithLastValidBlockHeight;
 }
 
 interface SendTransactionBaseConfig extends SendTransactionConfigWithoutEncoding {
     abortSignal?: AbortSignal;
     commitment: Commitment;
     rpc: Rpc<SendTransactionApi>;
-    transaction: FullySignedTransaction & Transaction;
+    transaction: SendableTransaction & Transaction;
 }
 
 type SendTransactionConfigWithoutEncoding = Omit<
