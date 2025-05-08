@@ -120,6 +120,8 @@ export function setTransactionMessageLifetimeUsingBlockhash<
     blockhashLifetimeConstraint: BlockhashLifetimeConstraint,
     transactionMessage: TTransactionMessage,
 ): ExcludeTransactionMessageLifetime<TTransactionMessage> & TransactionMessageWithBlockhashLifetime {
+    type ReturnType = ExcludeTransactionMessageLifetime<TTransactionMessage> & TransactionMessageWithBlockhashLifetime;
+
     if (
         'lifetimeConstraint' in transactionMessage &&
         transactionMessage.lifetimeConstraint &&
@@ -127,13 +129,11 @@ export function setTransactionMessageLifetimeUsingBlockhash<
         transactionMessage.lifetimeConstraint.blockhash === blockhashLifetimeConstraint.blockhash &&
         transactionMessage.lifetimeConstraint.lastValidBlockHeight === blockhashLifetimeConstraint.lastValidBlockHeight
     ) {
-        return transactionMessage as ExcludeTransactionMessageLifetime<TTransactionMessage> &
-            TransactionMessageWithBlockhashLifetime;
+        return transactionMessage as ReturnType;
     }
-    const out = {
+
+    return Object.freeze({
         ...transactionMessage,
         lifetimeConstraint: Object.freeze(blockhashLifetimeConstraint),
-    };
-    Object.freeze(out);
-    return out as ExcludeTransactionMessageLifetime<TTransactionMessage> & TransactionMessageWithBlockhashLifetime;
+    }) as ReturnType;
 }

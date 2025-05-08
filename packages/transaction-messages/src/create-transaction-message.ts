@@ -17,7 +17,7 @@ type TransactionConfig<TVersion extends TransactionVersion> = Readonly<{
  */
 export function createTransactionMessage<TVersion extends TransactionVersion>(
     config: TransactionConfig<TVersion>,
-): Extract<TransactionMessage, { version: TVersion }>;
+): Omit<Extract<TransactionMessage, { version: TVersion }>, 'instructions'> & { instructions: readonly [] };
 export function createTransactionMessage<TVersion extends TransactionVersion>({
     version,
 }: TransactionConfig<TVersion>): TransactionMessage {

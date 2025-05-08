@@ -1,5 +1,9 @@
 import type { Address } from '@solana/addresses';
+import { pipe } from '@solana/functional';
+import { IInstruction } from '@solana/instructions';
 
+import { CompilableTransactionMessage } from '../compilable-transaction-message';
+import { createTransactionMessage } from '../create-transaction-message';
 import {
     assertIsTransactionMessageWithDurableNonceLifetime,
     isTransactionMessageWithDurableNonceLifetime,
@@ -8,6 +12,8 @@ import {
     TransactionMessageWithDurableNonceLifetime,
 } from '../durable-nonce';
 import { AdvanceNonceAccountInstruction } from '../durable-nonce-instruction';
+import { setTransactionMessageFeePayer } from '../fee-payer';
+import { appendTransactionMessageInstruction } from '../instructions';
 import { BaseTransactionMessage, TransactionMessage } from '../transaction-message';
 
 const mockNonceConfig = {
@@ -16,6 +22,13 @@ const mockNonceConfig = {
     nonceAuthorityAddress: null as unknown as Address<'nonceAuthority'>,
 };
 
+const newMockNonceConfig = {
+    nonce: null as unknown as Nonce<'newNonce'>,
+    nonceAccountAddress: null as unknown as Address<'newNonce'>,
+    nonceAuthorityAddress: null as unknown as Address<'newNonceAuthority'>,
+};
+
+type InstructionA = IInstruction & { identifier: 'A' };
 type LegacyTransactionMessage = Extract<TransactionMessage, { version: 'legacy' }>;
 type V0TransactionMessage = Extract<TransactionMessage, { version: 0 }>;
 
@@ -71,5 +84,44 @@ type V0TransactionMessage = Extract<TransactionMessage, { version: 0 }>;
         newMessage satisfies LegacyTransactionMessage & TransactionMessageWithDurableNonceLifetime & { some: 1 };
         // @ts-expect-error Should not be a v0 message.
         newMessage satisfies TransactionMessageWithDurableNonceLifetime & V0TransactionMessage & { some: 1 };
+    }
+
+    // It prepends the nonce instruction to the transaction message.
+    {
+        const feePayer = null as unknown as Address;
+        const message = pipe(
+            createTransactionMessage({ version: 0 }),
+            m => setTransactionMessageFeePayer(feePayer, m),
+            m => appendTransactionMessageInstruction(null as unknown as InstructionA, m),
+            m => setTransactionMessageLifetimeUsingDurableNonce(mockNonceConfig, m),
+        );
+
+        message satisfies CompilableTransactionMessage;
+        message satisfies BaseTransactionMessage &
+            TransactionMessageWithDurableNonceLifetime<'nonce', 'nonceAuthority', 'nonce'>;
+        message.instructions satisfies readonly [
+            AdvanceNonceAccountInstruction<'nonce', 'nonceAuthority'>,
+            InstructionA,
+        ];
+    }
+
+    // It replaces the existing nonce instruction with the new one.
+    {
+        const feePayer = null as unknown as Address;
+        const message = pipe(
+            createTransactionMessage({ version: 0 }),
+            m => setTransactionMessageFeePayer(feePayer, m),
+            m => appendTransactionMessageInstruction(null as unknown as InstructionA, m),
+            m => setTransactionMessageLifetimeUsingDurableNonce(mockNonceConfig, m),
+            m => setTransactionMessageLifetimeUsingDurableNonce(newMockNonceConfig, m),
+        );
+
+        message satisfies CompilableTransactionMessage;
+        message satisfies BaseTransactionMessage &
+            TransactionMessageWithDurableNonceLifetime<'newNonce', 'newNonceAuthority', 'newNonce'>;
+        message.instructions satisfies readonly [
+            AdvanceNonceAccountInstruction<'newNonce', 'newNonceAuthority'>,
+            InstructionA,
+        ];
     }
 }
