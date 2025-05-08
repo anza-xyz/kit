@@ -17,8 +17,8 @@ import { Blockhash, Commitment, Slot } from '@solana/rpc-types';
 import {
     appendTransactionMessageInstruction,
     CompilableTransactionMessage,
-    isDurableNonceTransaction,
     isTransactionMessageWithBlockhashLifetime,
+    isTransactionMessageWithDurableNonceLifetime,
     setTransactionMessageLifetimeUsingBlockhash,
     TransactionMessage,
     TransactionMessageWithFeePayer,
@@ -142,7 +142,7 @@ export async function getComputeUnitEstimateForTransactionMessage_INTERNAL_ONLY_
      * STEP 1: Make sure the transaction message will not fail in simulation for lack of a lifetime
      *         - either a recent blockhash lifetime or a nonce.
      */
-    const isDurableNonceTransactionMessage = isDurableNonceTransaction(transactionMessage);
+    const isDurableNonceTransactionMessage = isTransactionMessageWithDurableNonceLifetime(transactionMessage);
     let compilableTransactionMessage;
     if (isDurableNonceTransactionMessage || isTransactionMessageWithBlockhashLifetime(transactionMessage)) {
         compilableTransactionMessage = transactionMessage;
