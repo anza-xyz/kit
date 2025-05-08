@@ -473,10 +473,11 @@ import {
   createSolanaRpcSubscriptions,
   FullySignedTransaction,
   TransactionWithBlockhashLifetime,
+  Transaction,
 } from "@solana/kit";
 const rpc = createSolanaRpc("https://api.devnet.solana.com");
 const rpcSubscriptions = createSolanaRpcSubscriptions("wss://api.devnet.solana.com");
-const signedTransaction = null as unknown as FullySignedTransaction & TransactionWithBlockhashLifetime;
+const signedTransaction = null as unknown as Transaction & FullySignedTransaction & TransactionWithBlockhashLifetime;
 // ---cut-end---
 
 // Create a send and confirm function from your RPC and RPC Subscriptions objects.
