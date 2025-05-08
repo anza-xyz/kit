@@ -16,11 +16,8 @@ import { CompilableTransactionMessage } from './compilable-transaction-message';
 import { CompiledTransactionMessage } from './compile';
 import type { getCompiledAddressTableLookups } from './compile/address-table-lookups';
 import { createTransactionMessage } from './create-transaction-message';
-import {
-    isAdvanceNonceAccountInstruction,
-    Nonce,
-    setTransactionMessageLifetimeUsingDurableNonce,
-} from './durable-nonce';
+import { Nonce, setTransactionMessageLifetimeUsingDurableNonce } from './durable-nonce';
+import { isAdvanceNonceAccountInstruction } from './durable-nonce-instruction';
 import { setTransactionMessageFeePayer } from './fee-payer';
 import { appendTransactionMessageInstruction } from './instructions';
 import { TransactionVersion } from './transaction-message';
