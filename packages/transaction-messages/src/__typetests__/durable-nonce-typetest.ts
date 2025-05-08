@@ -2,6 +2,7 @@ import type { Address } from '@solana/addresses';
 import { pipe } from '@solana/functional';
 import { IInstruction } from '@solana/instructions';
 
+import { TransactionMessageWithBlockhashLifetime } from '../blockhash';
 import { CompilableTransactionMessage } from '../compilable-transaction-message';
 import { createTransactionMessage } from '../create-transaction-message';
 import {
@@ -15,6 +16,7 @@ import { AdvanceNonceAccountInstruction } from '../durable-nonce-instruction';
 import { setTransactionMessageFeePayer } from '../fee-payer';
 import { appendTransactionMessageInstruction } from '../instructions';
 import { BaseTransactionMessage, TransactionMessage } from '../transaction-message';
+import { TransactionMessageWithinSizeLimit } from '../transaction-message-size';
 
 const mockNonceConfig = {
     nonce: null as unknown as Nonce<'nonce'>,
@@ -123,5 +125,32 @@ type V0TransactionMessage = Extract<TransactionMessage, { version: 0 }>;
             AdvanceNonceAccountInstruction<'newNonce', 'newNonceAuthority'>,
             InstructionA,
         ];
+    }
+
+    // It keeps the size limit type safety if we are only updating the durable nonce lifetime.
+    {
+        const message = null as unknown as BaseTransactionMessage &
+            TransactionMessageWithDurableNonceLifetime &
+            TransactionMessageWithinSizeLimit;
+        const newMessage = setTransactionMessageLifetimeUsingDurableNonce(mockNonceConfig, message);
+        newMessage satisfies TransactionMessageWithinSizeLimit;
+    }
+
+    // It removes the size limit type safety if we previously has a blockhash lifetime.
+    {
+        const message = null as unknown as BaseTransactionMessage &
+            TransactionMessageWithBlockhashLifetime &
+            TransactionMessageWithinSizeLimit;
+        const newMessage = setTransactionMessageLifetimeUsingDurableNonce(mockNonceConfig, message);
+        // @ts-expect-error The message may no longer be within size limit.
+        newMessage satisfies TransactionMessageWithinSizeLimit;
+    }
+
+    // It removes the size limit type safety if we previously had no lifetime set.
+    {
+        const message = null as unknown as BaseTransactionMessage & TransactionMessageWithinSizeLimit;
+        const newMessage = setTransactionMessageLifetimeUsingDurableNonce(mockNonceConfig, message);
+        // @ts-expect-error The message may no longer be within size limit.
+        newMessage satisfies TransactionMessageWithinSizeLimit;
     }
 }

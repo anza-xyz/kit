@@ -1,5 +1,5 @@
 import { SOLANA_ERROR__TRANSACTION__EXCEEDS_SIZE_LIMIT, SolanaError } from '@solana/errors';
-import type { CompilableTransactionMessage } from '@solana/transaction-messages';
+import type { CompilableTransactionMessage, TransactionMessageWithinSizeLimit } from '@solana/transaction-messages';
 
 import { compileTransaction } from './compile-transaction';
 import { getTransactionSize, TRANSACTION_SIZE_LIMIT } from './transaction-size';
@@ -15,12 +15,6 @@ import { getTransactionSize, TRANSACTION_SIZE_LIMIT } from './transaction-size';
 export function getTransactionMessageSize(transactionMessage: CompilableTransactionMessage): number {
     return getTransactionSize(compileTransaction(transactionMessage));
 }
-
-/**
- * A type guard that checks if a transaction message is within the size limit
- * when compiled into a transaction.
- */
-export type TransactionMessageWithinSizeLimit = { readonly __within_size_limit: unique symbol };
 
 /**
  * Checks if a transaction message is within the size limit

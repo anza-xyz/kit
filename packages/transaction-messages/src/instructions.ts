@@ -2,6 +2,7 @@ import { IInstruction } from '@solana/instructions';
 
 import { ExcludeTransactionMessageDurableNonceLifetime } from './durable-nonce';
 import { BaseTransactionMessage } from './transaction-message';
+import { ExcludeTransactionMessageWithinSizeLimit } from './transaction-message-size';
 
 /**
  * A helper type to append instructions to a transaction message
@@ -10,7 +11,7 @@ import { BaseTransactionMessage } from './transaction-message';
 type AppendTransactionMessageInstructions<
     TTransactionMessage extends BaseTransactionMessage,
     TInstructions extends readonly IInstruction[],
-> = Omit<TTransactionMessage, 'instructions'> & {
+> = Omit<ExcludeTransactionMessageWithinSizeLimit<TTransactionMessage>, 'instructions'> & {
     readonly instructions: readonly [...TTransactionMessage['instructions'], ...TInstructions];
 };
 
@@ -21,7 +22,10 @@ type AppendTransactionMessageInstructions<
 type PrependTransactionMessageInstructions<
     TTransactionMessage extends BaseTransactionMessage,
     TInstructions extends readonly IInstruction[],
-> = Omit<TTransactionMessage, 'instructions'> & {
+> = Omit<
+    ExcludeTransactionMessageWithinSizeLimit<ExcludeTransactionMessageDurableNonceLifetime<TTransactionMessage>>,
+    'instructions'
+> & {
     readonly instructions: readonly [...TInstructions, ...TTransactionMessage['instructions']];
 };
 
@@ -126,10 +130,7 @@ export function prependTransactionMessageInstruction<
 >(
     instruction: TInstruction,
     transactionMessage: TTransactionMessage,
-): PrependTransactionMessageInstructions<
-    ExcludeTransactionMessageDurableNonceLifetime<TTransactionMessage>,
-    [TInstruction]
-> {
+): PrependTransactionMessageInstructions<TTransactionMessage, [TInstruction]> {
     return prependTransactionMessageInstructions([instruction], transactionMessage);
 }
 
@@ -166,10 +167,7 @@ export function prependTransactionMessageInstructions<
 >(
     instructions: TInstructions,
     transactionMessage: TTransactionMessage,
-): PrependTransactionMessageInstructions<
-    ExcludeTransactionMessageDurableNonceLifetime<TTransactionMessage>,
-    TInstructions
-> {
+): PrependTransactionMessageInstructions<TTransactionMessage, TInstructions> {
     return Object.freeze({
         ...(transactionMessage as ExcludeTransactionMessageDurableNonceLifetime<TTransactionMessage>),
         instructions: Object.freeze([
