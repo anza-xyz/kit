@@ -1,4 +1,4 @@
-import { IInstruction } from '@solana/instructions';
+import { Instruction } from '@solana/instructions';
 
 import { ExcludeTransactionMessageDurableNonceLifetime } from './durable-nonce';
 import { BaseTransactionMessage } from './transaction-message';
@@ -10,7 +10,7 @@ import { ExcludeTransactionMessageWithinSizeLimit } from './transaction-message-
  */
 type AppendTransactionMessageInstructions<
     TTransactionMessage extends BaseTransactionMessage,
-    TInstructions extends readonly IInstruction[],
+    TInstructions extends readonly Instruction[],
 > = Omit<ExcludeTransactionMessageWithinSizeLimit<TTransactionMessage>, 'instructions'> & {
     readonly instructions: readonly [...TTransactionMessage['instructions'], ...TInstructions];
 };
@@ -21,7 +21,7 @@ type AppendTransactionMessageInstructions<
  */
 type PrependTransactionMessageInstructions<
     TTransactionMessage extends BaseTransactionMessage,
-    TInstructions extends readonly IInstruction[],
+    TInstructions extends readonly Instruction[],
 > = Omit<
     ExcludeTransactionMessageWithinSizeLimit<ExcludeTransactionMessageDurableNonceLifetime<TTransactionMessage>>,
     'instructions'
@@ -52,7 +52,7 @@ type PrependTransactionMessageInstructions<
  */
 export function appendTransactionMessageInstruction<
     TTransactionMessage extends BaseTransactionMessage,
-    TInstruction extends IInstruction,
+    TInstruction extends Instruction,
 >(
     instruction: TInstruction,
     transactionMessage: TTransactionMessage,
@@ -89,7 +89,7 @@ export function appendTransactionMessageInstruction<
  */
 export function appendTransactionMessageInstructions<
     TTransactionMessage extends BaseTransactionMessage,
-    const TInstructions extends readonly IInstruction[],
+    const TInstructions extends readonly Instruction[],
 >(
     instructions: TInstructions,
     transactionMessage: TTransactionMessage,
@@ -126,7 +126,7 @@ export function appendTransactionMessageInstructions<
  */
 export function prependTransactionMessageInstruction<
     TTransactionMessage extends BaseTransactionMessage,
-    TInstruction extends IInstruction,
+    TInstruction extends Instruction,
 >(
     instruction: TInstruction,
     transactionMessage: TTransactionMessage,
@@ -163,7 +163,7 @@ export function prependTransactionMessageInstruction<
  */
 export function prependTransactionMessageInstructions<
     TTransactionMessage extends BaseTransactionMessage,
-    const TInstructions extends readonly IInstruction[],
+    const TInstructions extends readonly Instruction[],
 >(
     instructions: TInstructions,
     transactionMessage: TTransactionMessage,

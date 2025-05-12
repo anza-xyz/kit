@@ -1,5 +1,5 @@
 import { Address } from '@solana/addresses';
-import { AccountRole, IInstruction } from '@solana/instructions';
+import { AccountRole, Instruction } from '@solana/instructions';
 import type { Blockhash } from '@solana/rpc-types';
 import { CompilableTransactionMessage } from '@solana/transaction-messages';
 import {
@@ -9,7 +9,7 @@ import {
     setTransactionMessageLifetimeUsingBlockhash,
 } from '@solana/transaction-messages';
 
-import { IAccountSignerMeta, IInstructionWithSigners, TransactionMessageWithSigners } from '../account-signer-meta';
+import { AccountSignerMeta, InstructionWithSigners, TransactionMessageWithSigners } from '../account-signer-meta';
 import { MessageModifyingSigner } from '../message-modifying-signer';
 import { MessagePartialSigner } from '../message-partial-signer';
 import { TransactionModifyingSigner } from '../transaction-modifying-signer';
@@ -17,10 +17,10 @@ import { TransactionPartialSigner } from '../transaction-partial-signer';
 import { TransactionSendingSigner } from '../transaction-sending-signer';
 import { TransactionSigner } from '../transaction-signer';
 
-export function createMockInstructionWithSigners(signers: TransactionSigner[]): IInstruction & IInstructionWithSigners {
+export function createMockInstructionWithSigners(signers: TransactionSigner[]): Instruction & InstructionWithSigners {
     return {
         accounts: signers.map(
-            (signer): IAccountSignerMeta => ({ address: signer.address, role: AccountRole.READONLY_SIGNER, signer }),
+            (signer): AccountSignerMeta => ({ address: signer.address, role: AccountRole.READONLY_SIGNER, signer }),
         ),
         data: new Uint8Array([]),
         programAddress: '11111111111111111111111111111111' as Address,

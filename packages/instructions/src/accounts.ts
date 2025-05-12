@@ -20,31 +20,31 @@ import { AccountRole } from './roles';
  * type RentSysvar = ReadonlyAccount<'SysvarRent111111111111111111111111111111111'>;
  * ```
  */
-export interface IAccountMeta<TAddress extends string = string> {
+export interface AccountMeta<TAddress extends string = string> {
     readonly address: Address<TAddress>;
     readonly role: AccountRole;
 }
 
 /**
- * @see {@link IAccountMeta}
+ * @see {@link AccountMeta}
  */
-export type ReadonlyAccount<TAddress extends string = string> = IAccountMeta<TAddress> & {
+export type ReadonlyAccount<TAddress extends string = string> = AccountMeta<TAddress> & {
     readonly role: AccountRole.READONLY;
 };
 /**
- * @see {@link IAccountMeta}
+ * @see {@link AccountMeta}
  */
-export type WritableAccount<TAddress extends string = string> = IAccountMeta<TAddress> & { role: AccountRole.WRITABLE };
+export type WritableAccount<TAddress extends string = string> = AccountMeta<TAddress> & { role: AccountRole.WRITABLE };
 /**
- * @see {@link IAccountMeta}
+ * @see {@link AccountMeta}
  */
-export type ReadonlySignerAccount<TAddress extends string = string> = IAccountMeta<TAddress> & {
+export type ReadonlySignerAccount<TAddress extends string = string> = AccountMeta<TAddress> & {
     role: AccountRole.READONLY_SIGNER;
 };
 /**
- * @see {@link IAccountMeta}
+ * @see {@link AccountMeta}
  */
-export type WritableSignerAccount<TAddress extends string = string> = IAccountMeta<TAddress> & {
+export type WritableSignerAccount<TAddress extends string = string> = AccountMeta<TAddress> & {
     role: AccountRole.WRITABLE_SIGNER;
 };
 
@@ -69,7 +69,7 @@ export type WritableSignerAccount<TAddress extends string = string> = IAccountMe
  * >;
  * ```
  */
-export interface IAccountLookupMeta<TAddress extends string = string, TLookupTableAddress extends string = string> {
+export interface AccountLookupMeta<TAddress extends string = string, TLookupTableAddress extends string = string> {
     readonly address: Address<TAddress>;
     readonly addressIndex: number;
     readonly lookupTableAddress: Address<TLookupTableAddress>;
@@ -77,16 +77,16 @@ export interface IAccountLookupMeta<TAddress extends string = string, TLookupTab
 }
 
 /**
- * @see {@link IAccountLookupMeta}
+ * @see {@link AccountLookupMeta}
  */
 export type ReadonlyAccountLookup<
     TAddress extends string = string,
     TLookupTableAddress extends string = string,
-> = IAccountLookupMeta<TAddress, TLookupTableAddress> & { readonly role: AccountRole.READONLY };
+> = AccountLookupMeta<TAddress, TLookupTableAddress> & { readonly role: AccountRole.READONLY };
 /**
- * @see {@link IAccountLookupMeta}
+ * @see {@link AccountLookupMeta}
  */
 export type WritableAccountLookup<
     TAddress extends string = string,
     TLookupTableAddress extends string = string,
-> = IAccountLookupMeta<TAddress, TLookupTableAddress> & { readonly role: AccountRole.WRITABLE };
+> = AccountLookupMeta<TAddress, TLookupTableAddress> & { readonly role: AccountRole.WRITABLE };

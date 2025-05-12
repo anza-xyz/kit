@@ -1,7 +1,7 @@
 import '@solana/test-matchers/toBeFrozenObject';
 
 import { Address } from '@solana/addresses';
-import { IInstruction } from '@solana/instructions';
+import { Instruction } from '@solana/instructions';
 
 import {
     appendTransactionMessageInstruction,
@@ -20,8 +20,8 @@ const PROGRAM_C =
 
 describe('Transaction instruction helpers', () => {
     let baseTx: BaseTransactionMessage;
-    let exampleInstruction: IInstruction<string>;
-    let secondExampleInstruction: IInstruction<string>;
+    let exampleInstruction: Instruction<string>;
+    let secondExampleInstruction: Instruction<string>;
     beforeEach(() => {
         baseTx = {
             instructions: [

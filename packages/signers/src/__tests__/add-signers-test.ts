@@ -2,10 +2,10 @@ import '@solana/test-matchers/toBeFrozenObject';
 
 import { Address } from '@solana/addresses';
 import { SOLANA_ERROR__SIGNER__ADDRESS_CANNOT_HAVE_MULTIPLE_SIGNERS, SolanaError } from '@solana/errors';
-import { AccountRole, IInstruction } from '@solana/instructions';
+import { AccountRole, Instruction } from '@solana/instructions';
 import { BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
 
-import { IAccountSignerMeta, IInstructionWithSigners } from '../account-signer-meta';
+import { AccountSignerMeta, InstructionWithSigners } from '../account-signer-meta';
 import { addSignersToInstruction, addSignersToTransactionMessage } from '../add-signers';
 import { TransactionMessageWithFeePayerSigner } from '../fee-payer-signer';
 import { createMockTransactionModifyingSigner, createMockTransactionPartialSigner } from './__setup__';
@@ -13,7 +13,7 @@ import { createMockTransactionModifyingSigner, createMockTransactionPartialSigne
 describe('addSignersToInstruction', () => {
     it('adds signers to the account metas of the instruction', () => {
         // Given an instruction with signer account metas.
-        const instruction: IInstruction = {
+        const instruction: Instruction = {
             accounts: [
                 { address: '1111' as Address, role: AccountRole.READONLY_SIGNER },
                 { address: '2222' as Address, role: AccountRole.WRITABLE_SIGNER },
@@ -39,13 +39,13 @@ describe('addSignersToInstruction', () => {
     it('ignores account metas that already have a signer', () => {
         // Given an instruction with a signer account metas that already has a signer A attached to it.
         const signerA = createMockTransactionPartialSigner('1111' as Address);
-        const instruction: IInstruction & IInstructionWithSigners = {
+        const instruction: Instruction & InstructionWithSigners = {
             accounts: [
                 {
                     address: '1111' as Address,
                     role: AccountRole.READONLY_SIGNER,
                     signer: signerA,
-                } as IAccountSignerMeta,
+                } as AccountSignerMeta,
             ],
             data: new Uint8Array([]),
             programAddress: '9999' as Address,
@@ -63,7 +63,7 @@ describe('addSignersToInstruction', () => {
 
     it('ignores account metas that do not have a signer role', () => {
         // Given an instruction with a non-signer account metas.
-        const instruction: IInstruction = {
+        const instruction: Instruction = {
             accounts: [{ address: '1111' as Address, role: AccountRole.WRITABLE }],
             data: new Uint8Array([]),
             programAddress: '9999' as Address,
@@ -81,7 +81,7 @@ describe('addSignersToInstruction', () => {
 
     it('can add the same signer to multiple account metas', () => {
         // Given an instruction with two signer account metas that share the same address.
-        const instruction: IInstruction = {
+        const instruction: Instruction = {
             accounts: [
                 { address: '1111' as Address, role: AccountRole.READONLY_SIGNER },
                 { address: '1111' as Address, role: AccountRole.WRITABLE_SIGNER },
@@ -103,7 +103,7 @@ describe('addSignersToInstruction', () => {
 
     it('fails if two distincts signers are provided for the same address', () => {
         // Given an instruction with a signer account meta.
-        const instruction: IInstruction = {
+        const instruction: Instruction = {
             accounts: [{ address: '1111' as Address, role: AccountRole.READONLY_SIGNER }],
             data: new Uint8Array([]),
             programAddress: '9999' as Address,
@@ -126,7 +126,7 @@ describe('addSignersToInstruction', () => {
 
     it('freezes the returned instruction', () => {
         // Given an instruction with a signer account metas.
-        const instruction: IInstruction = {
+        const instruction: Instruction = {
             accounts: [{ address: '1111' as Address, role: AccountRole.READONLY_SIGNER }],
             data: new Uint8Array([]),
             programAddress: '9999' as Address,
@@ -143,7 +143,7 @@ describe('addSignersToInstruction', () => {
 
     it('returns the instruction as-is if it has no account metas', () => {
         // Given an instruction with no account metas.
-        const instruction: IInstruction = {
+        const instruction: Instruction = {
             accounts: [],
             data: new Uint8Array([]),
             programAddress: '9999' as Address,
@@ -160,12 +160,12 @@ describe('addSignersToInstruction', () => {
 describe('addSignersToTransactionMessage', () => {
     it('adds signers to the account metas of the transaction', () => {
         // Given a transaction with two instructions with signer account metas.
-        const instructionA: IInstruction = {
+        const instructionA: Instruction = {
             accounts: [{ address: '1111' as Address, role: AccountRole.READONLY_SIGNER }],
             data: new Uint8Array([]),
             programAddress: '8888' as Address,
         };
-        const instructionB: IInstruction = {
+        const instructionB: Instruction = {
             accounts: [{ address: '2222' as Address, role: AccountRole.WRITABLE_SIGNER }],
             data: new Uint8Array([]),
             programAddress: '9999' as Address,

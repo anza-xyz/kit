@@ -1,7 +1,7 @@
 import '@solana/test-matchers/toBeFrozenObject';
 
 import { Address } from '@solana/addresses';
-import { AccountRole, IInstruction, ReadonlySignerAccount, WritableAccount } from '@solana/instructions';
+import { AccountRole, Instruction, ReadonlySignerAccount, WritableAccount } from '@solana/instructions';
 import type { Blockhash } from '@solana/rpc-types';
 
 import { TransactionMessageWithBlockhashLifetime } from '../blockhash';
@@ -140,7 +140,7 @@ describe('assertIsDurableNonceTransactionMessage()', () => {
     it('does not throw when the nonce authority is a writable signer', () => {
         const advanceDurableNonceInstruction = createMockAdvanceNonceAccountInstruction(NONCE_CONSTRAINT);
         const { accounts } = advanceDurableNonceInstruction;
-        const updatedInstruction: IInstruction = {
+        const updatedInstruction: Instruction = {
             ...advanceDurableNonceInstruction,
             accounts: [
                 accounts[0],

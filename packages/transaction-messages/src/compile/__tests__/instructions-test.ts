@@ -1,5 +1,5 @@
 import { Address } from '@solana/addresses';
-import { AccountRole, IInstruction } from '@solana/instructions';
+import { AccountRole, Instruction } from '@solana/instructions';
 
 import { OrderedAccounts } from '../../compile/accounts';
 import { getCompiledInstructions } from '../../compile/instructions';
@@ -50,7 +50,7 @@ describe('getCompiledInstructions', () => {
                 ],
                 programAddress: programAddressAtIndex1,
             },
-        ] as IInstruction[];
+        ] as Instruction[];
         const compiledInstructions = getCompiledInstructions(instructions, [
             { address: getMockAddress(), role: AccountRole.WRITABLE_SIGNER },
             { address: programAddressAtIndex1, role: AccountRole.READONLY },

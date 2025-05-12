@@ -1,6 +1,6 @@
 import { Address } from '@solana/addresses';
 import { SOLANA_ERROR__TRANSACTION__EXPECTED_NONCE_LIFETIME, SolanaError } from '@solana/errors';
-import { IInstruction } from '@solana/instructions';
+import { Instruction } from '@solana/instructions';
 import { Brand } from '@solana/nominal-types';
 
 import {
@@ -57,7 +57,7 @@ export interface TransactionMessageWithDurableNonceLifetime<
     readonly instructions: readonly [
         // The first instruction *must* be the system program's `AdvanceNonceAccount` instruction.
         AdvanceNonceAccountInstruction<TNonceAccountAddress, TNonceAuthorityAddress>,
-        ...IInstruction[],
+        ...Instruction[],
     ];
     readonly lifetimeConstraint: NonceLifetimeConstraint<TNonceValue>;
 }
@@ -214,7 +214,7 @@ export function setTransactionMessageLifetimeUsingDurableNonce<
 
     let newInstructions: [
         AdvanceNonceAccountInstruction<TNonceAccountAddress, TNonceAuthorityAddress>,
-        ...IInstruction[],
+        ...Instruction[],
     ];
 
     const firstInstruction = transactionMessage.instructions[0];
@@ -272,7 +272,7 @@ type SetTransactionMessageWithDurableNonceLifetime<
     // 3. Replace or prepend the first instruction with the advance nonce account instruction.
     readonly instructions: TTransactionMessage['instructions'] extends readonly [
         AdvanceNonceAccountInstruction,
-        ...infer TTail extends readonly IInstruction[],
+        ...infer TTail extends readonly Instruction[],
     ]
         ? readonly [AdvanceNonceAccountInstruction<TNonceAccountAddress, TNonceAuthorityAddress>, ...TTail]
         : readonly [

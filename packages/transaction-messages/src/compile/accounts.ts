@@ -5,10 +5,10 @@ import {
     SolanaError,
 } from '@solana/errors';
 import {
+    AccountLookupMeta,
+    AccountMeta,
     AccountRole,
-    IAccountLookupMeta,
-    IAccountMeta,
-    IInstruction,
+    Instruction,
     isSignerRole,
     isWritableRole,
     mergeRoles,
@@ -36,7 +36,7 @@ type FeePayerAccountEntry = Omit<WritableSignerAccount, 'address'> & {
 type LookupTableAccountEntry = Omit<ReadonlyAccountLookup | WritableAccountLookup, 'address'> & {
     [TYPE]: AddressMapEntryType.LOOKUP_TABLE;
 };
-export type OrderedAccounts = Brand<(IAccountLookupMeta | IAccountMeta)[], 'OrderedAccounts'>;
+export type OrderedAccounts = Brand<(AccountLookupMeta | AccountMeta)[], 'OrderedAccounts'>;
 type StaticAccountEntry = Omit<
     ReadonlyAccount | ReadonlySignerAccount | WritableAccount | WritableSignerAccount,
     'address'
@@ -55,7 +55,7 @@ function upsert(
 const TYPE = Symbol('AddressMapTypeProperty');
 export const ADDRESS_MAP_TYPE_PROPERTY: typeof TYPE = TYPE;
 
-export function getAddressMapFromInstructions(feePayer: Address, instructions: readonly IInstruction[]): AddressMap {
+export function getAddressMapFromInstructions(feePayer: Address, instructions: readonly Instruction[]): AddressMap {
     const addressMap: AddressMap = {
         [feePayer]: { [TYPE]: AddressMapEntryType.FEE_PAYER, role: AccountRole.WRITABLE_SIGNER },
     };
@@ -200,7 +200,7 @@ export function getAddressMapFromInstructions(feePayer: Address, instructions: r
 
 export function getOrderedAccountsFromAddressMap(addressMap: AddressMap): OrderedAccounts {
     let addressComparator: ReturnType<typeof getAddressComparator>;
-    const orderedAccounts: (IAccountLookupMeta | IAccountMeta)[] = Object.entries(addressMap)
+    const orderedAccounts: (AccountLookupMeta | AccountMeta)[] = Object.entries(addressMap)
         .sort(([leftAddress, leftEntry], [rightAddress, rightEntry]) => {
             // STEP 1: Rapid precedence check. Fee payer, then static addresses, then lookups.
             if (leftEntry[TYPE] !== rightEntry[TYPE]) {

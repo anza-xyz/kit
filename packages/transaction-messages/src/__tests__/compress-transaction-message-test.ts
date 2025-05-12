@@ -2,7 +2,7 @@ import '@solana/test-matchers/toBeFrozenObject';
 
 import { Address } from '@solana/addresses';
 import { pipe } from '@solana/functional';
-import { AccountRole, IAccountLookupMeta, IAccountMeta, IInstruction } from '@solana/instructions';
+import { AccountLookupMeta, AccountMeta, AccountRole, Instruction } from '@solana/instructions';
 
 import { AddressesByLookupTableAddress } from '../addresses-by-lookup-table-address';
 import { compressTransactionMessageUsingAddressLookupTables } from '../compress-transaction-message';
@@ -37,7 +37,7 @@ describe('compressTransactionMessageUsingAddressLookupTables', () => {
 
         const result = compressTransactionMessageUsingAddressLookupTables(transactionMessage, lookupTables);
 
-        const expectedLookupMeta: IAccountLookupMeta = {
+        const expectedLookupMeta: AccountLookupMeta = {
             address,
             addressIndex: 0,
             lookupTableAddress,
@@ -72,7 +72,7 @@ describe('compressTransactionMessageUsingAddressLookupTables', () => {
 
         const result = compressTransactionMessageUsingAddressLookupTables(transactionMessage, lookupTables);
 
-        const expectedLookupMeta: IAccountLookupMeta = {
+        const expectedLookupMeta: AccountLookupMeta = {
             address,
             addressIndex: 0,
             lookupTableAddress,
@@ -86,7 +86,7 @@ describe('compressTransactionMessageUsingAddressLookupTables', () => {
         const address = 'address1' as Address;
         const lookupTableAddress = 'lookupTableAddress' as Address;
 
-        const accountMeta: IAccountMeta = {
+        const accountMeta: AccountMeta = {
             address,
             role: AccountRole.READONLY_SIGNER,
         };
@@ -114,7 +114,7 @@ describe('compressTransactionMessageUsingAddressLookupTables', () => {
         const address = 'address1' as Address;
         const lookupTableAddress = 'lookupTableAddress' as Address;
 
-        const accountMeta: IAccountMeta = {
+        const accountMeta: AccountMeta = {
             address,
             role: AccountRole.WRITABLE_SIGNER,
         };
@@ -142,7 +142,7 @@ describe('compressTransactionMessageUsingAddressLookupTables', () => {
         const address = 'address1' as Address;
         const lookupTableAddress = 'lookupTableAddress' as Address;
 
-        const lookupMeta: IAccountLookupMeta = {
+        const lookupMeta: AccountLookupMeta = {
             address,
             addressIndex: 0,
             lookupTableAddress,
@@ -198,14 +198,14 @@ describe('compressTransactionMessageUsingAddressLookupTables', () => {
 
         const result = compressTransactionMessageUsingAddressLookupTables(transactionMessage, lookupTables);
 
-        const expectedLookupMeta1: IAccountLookupMeta = {
+        const expectedLookupMeta1: AccountLookupMeta = {
             address: address1,
             addressIndex: 0,
             lookupTableAddress,
             role: AccountRole.READONLY,
         };
 
-        const expectedLookupMeta2: IAccountLookupMeta = {
+        const expectedLookupMeta2: AccountLookupMeta = {
             address: address2,
             addressIndex: 1,
             lookupTableAddress,
@@ -256,7 +256,7 @@ describe('compressTransactionMessageUsingAddressLookupTables', () => {
 
         const result = compressTransactionMessageUsingAddressLookupTables(transactionMessage, lookupTables);
 
-        const expectedLookupMeta: IAccountLookupMeta = {
+        const expectedLookupMeta: AccountLookupMeta = {
             address: address,
             addressIndex: 0,
             lookupTableAddress,
@@ -299,14 +299,14 @@ describe('compressTransactionMessageUsingAddressLookupTables', () => {
 
         const result = compressTransactionMessageUsingAddressLookupTables(transactionMessage, lookupTables);
 
-        const expectedLookupMeta1: IAccountLookupMeta = {
+        const expectedLookupMeta1: AccountLookupMeta = {
             address: address1,
             addressIndex: 0,
             lookupTableAddress: lookupTableAddress1,
             role: AccountRole.READONLY,
         };
 
-        const expectedLookupMeta2: IAccountLookupMeta = {
+        const expectedLookupMeta2: AccountLookupMeta = {
             address: address2,
             addressIndex: 0,
             lookupTableAddress: lookupTableAddress2,
@@ -433,7 +433,7 @@ describe('compressTransactionMessageUsingAddressLookupTables', () => {
         const address = 'address1' as Address;
         const lookupTableAddress = 'lookupTableAddress' as Address;
 
-        const instruction: IInstruction = {
+        const instruction: Instruction = {
             accounts: [
                 {
                     address,

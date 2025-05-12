@@ -406,24 +406,24 @@ It also provides helper functions that deduplicate and extract signers from inst
 
 ### Types
 
-#### `IAccountSignerMeta`
+#### `AccountSignerMeta`
 
-Alternative `IAccountMeta` definition for signer accounts that allows us to store `TransactionSigners` inside it.
+Alternative `AccountMeta` definition for signer accounts that allows us to store `TransactionSigners` inside it.
 
 ```ts
-const mySignerMeta: IAccountSignerMeta = {
+const mySignerMeta: AccountSignerMeta = {
     address: myTransactionSigner.address,
     role: AccountRole.READONLY_SIGNER,
     signer: myTransactionSigner,
 };
 ```
 
-#### `IInstructionWithSigners`
+#### `InstructionWithSigners`
 
-Composable type that allows `IAccountSignerMetas` to be used inside the instruction's `accounts` array.
+Composable type that allows `AccountSignerMetas` to be used inside the instruction's `accounts` array.
 
 ```ts
-const myInstructionWithSigners: IInstruction & IInstructionWithSigners = {
+const myInstructionWithSigners: Instruction & InstructionWithSigners = {
     programAddress: address('1234..5678'),
     accounts: [
         {
@@ -437,14 +437,14 @@ const myInstructionWithSigners: IInstruction & IInstructionWithSigners = {
 
 #### `TransactionMessageWithSigners`
 
-Composable type that allows `IAccountSignerMetas` to be used inside all of the transaction message's account metas.
+Composable type that allows `AccountSignerMetas` to be used inside all of the transaction message's account metas.
 
 ```ts
 const myTransactionMessageWithSigners: BaseTransactionMessage & TransactionMessageWithSigners = {
     instructions: [
-        myInstructionA as IInstruction & IInstructionWithSigners,
-        myInstructionB as IInstruction & IInstructionWithSigners,
-        myInstructionC as IInstruction,
+        myInstructionA as Instruction & InstructionWithSigners,
+        myInstructionB as Instruction & InstructionWithSigners,
+        myInstructionC as Instruction,
     ],
     version: 0,
 };
@@ -459,7 +459,7 @@ Extracts and deduplicates all signers stored inside the account metas of an inst
 ```ts
 const mySignerA = { address: address('1111..1111'), signTransactions: async () => {} };
 const mySignerB = { address: address('2222..2222'), signTransactions: async () => {} };
-const myInstructionWithSigners: IInstructionWithSigners = {
+const myInstructionWithSigners: InstructionWithSigners = {
     programAddress: address('1234..5678'),
     accounts: [
         { address: mySignerA.address, role: AccountRole.READONLY_SIGNER, signer: mySignerA },
@@ -489,7 +489,7 @@ Helper function that adds the provided signers to any of the applicable account 
 - Must not have an attached signer already.
 
 ```ts
-const myInstruction: IInstruction = {
+const myInstruction: Instruction = {
     accounts: [
         { address: '1111' as Address, role: AccountRole.READONLY_SIGNER },
         { address: '2222' as Address, role: AccountRole.WRITABLE_SIGNER },

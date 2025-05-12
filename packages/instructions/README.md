@@ -26,7 +26,7 @@ The purpose for which an account participates in a transaction is described by t
 | `AccountRole.READONLY_SIGNER` | &#x2705;   | &#x274c;     |
 | `AccountRole.WRITABLE_SIGNER` | &#x2705;   | &#x2705;     |
 
-### `IAccountMeta<TAddress>`
+### `AccountMeta<TAddress>`
 
 This type represents an account's address and metadata about its mutability and whether it must be a signer of the transaction.
 
@@ -45,7 +45,7 @@ For example, you could type the rent sysvar account like this:
 type RentSysvar = ReadonlyAccount<'SysvarRent111111111111111111111111111111111'>;
 ```
 
-### `IAccountLookupMeta<TAddress, TLookupTableAddress>`
+### `AccountLookupMeta<TAddress, TLookupTableAddress>`
 
 This type represents a lookup of the account's address in an address lookup table. It specifies which lookup table account in which to perform the lookup, the index of the desired account address in that table, and metadata about its mutability. Notably, account addresses obtained via lookups may not act as signers.
 
@@ -65,20 +65,20 @@ type RentSysvar = ReadonlyLookupAccount<
 >;
 ```
 
-### `IInstruction<TProgramAddress>`
+### `Instruction<TProgramAddress>`
 
 Use this to specify an instruction destined for a given program.
 
 ```ts
-type StakeProgramInstruction = IInstruction<'StakeConfig11111111111111111111111111111111'>;
+type StakeProgramInstruction = Instruction<'StakeConfig11111111111111111111111111111111'>;
 ```
 
-### `IInstructionWithAccounts<TAccounts>`
+### `InstructionWithAccounts<TAccounts>`
 
 Use this type to specify an instruction that loads certain accounts.
 
 ```ts
-type InstructionWithTwoAccounts = IInstructionWithAccounts<
+type InstructionWithTwoAccounts = InstructionWithAccounts<
     [
         WritableAccount, // First account
         RentSysvar, // Second account
@@ -86,7 +86,7 @@ type InstructionWithTwoAccounts = IInstructionWithAccounts<
 >;
 ```
 
-### `IInstructionWithData<TData>`
+### `InstructionWithData<TData>`
 
 Use this type to specify an instruction whose data conforms to a certain type. This is most useful when you have a branded `Uint8Array` that represents a particular instruction's data.
 
@@ -96,15 +96,15 @@ For example, here is how the `AdvanceNonce` instruction is typed.
 type AdvanceNonceAccountInstruction<
     TNonceAccountAddress extends string = string,
     TNonceAuthorityAddress extends string = string,
-> = IInstruction<'11111111111111111111111111111111'> &
-    IInstructionWithAccounts<
+> = Instruction<'11111111111111111111111111111111'> &
+    InstructionWithAccounts<
         [
             WritableAccount<TNonceAccountAddress>,
             ReadonlyAccount<'SysvarRecentB1ockHashes11111111111111111111'>,
             ReadonlySignerAccount<TNonceAuthorityAddress>,
         ]
     > &
-    IInstructionWithData<AdvanceNonceAccountInstructionData>;
+    InstructionWithData<AdvanceNonceAccountInstructionData>;
 ```
 
 ## Functions

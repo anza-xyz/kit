@@ -5,7 +5,7 @@ import {
     assertIsInstructionForProgram,
     assertIsInstructionWithAccounts,
     assertIsInstructionWithData,
-    IInstruction,
+    Instruction,
     isInstructionForProgram,
     isInstructionWithAccounts,
     isInstructionWithData,
@@ -16,14 +16,14 @@ const programAddress = 'address' as Address;
 
 describe('isInstructionForProgram', () => {
     it('returns true when the instruction has the given program address', () => {
-        const instruction: IInstruction = {
+        const instruction: Instruction = {
             programAddress,
         };
         expect(isInstructionForProgram(instruction, programAddress)).toBe(true);
     });
 
     it('returns false when the instruction does not have the given program address', () => {
-        const instruction: IInstruction = {
+        const instruction: Instruction = {
             programAddress,
         };
         const address = 'abc' as Address;
@@ -33,7 +33,7 @@ describe('isInstructionForProgram', () => {
 
 describe('assertIsInstructionForProgram', () => {
     it('does not throw when the instruction has the given program address', () => {
-        const instruction: IInstruction = {
+        const instruction: Instruction = {
             programAddress,
         };
         const assert = () => assertIsInstructionForProgram(instruction, programAddress);
@@ -41,7 +41,7 @@ describe('assertIsInstructionForProgram', () => {
     });
 
     it('throws when the instruction does not have the given program address', () => {
-        const instruction: IInstruction = {
+        const instruction: Instruction = {
             programAddress,
         };
         const address = 'abc' as Address;
@@ -52,7 +52,7 @@ describe('assertIsInstructionForProgram', () => {
 
 describe('isInstructionWithAccounts', () => {
     it('returns true when the instruction has an array of accounts', () => {
-        const instruction: IInstruction = {
+        const instruction: Instruction = {
             accounts: [
                 {
                     address: 'abc' as Address,
@@ -65,7 +65,7 @@ describe('isInstructionWithAccounts', () => {
     });
 
     it('returns true when the instruction has an empty array of accounts', () => {
-        const instruction: IInstruction = {
+        const instruction: Instruction = {
             accounts: [],
             programAddress,
         };
@@ -73,7 +73,7 @@ describe('isInstructionWithAccounts', () => {
     });
 
     it('returns false when the instruction does not have accounts defined', () => {
-        const instruction: IInstruction = {
+        const instruction: Instruction = {
             programAddress,
         };
         expect(isInstructionWithAccounts(instruction)).toBe(false);
@@ -82,7 +82,7 @@ describe('isInstructionWithAccounts', () => {
 
 describe('assertIsInstructionWithAccounts', () => {
     it('does not throw when the instruction has an array of accounts', () => {
-        const instruction: IInstruction = {
+        const instruction: Instruction = {
             accounts: [
                 {
                     address: 'abc' as Address,
@@ -96,7 +96,7 @@ describe('assertIsInstructionWithAccounts', () => {
     });
 
     it('does not throw when the instruction has an empty array of accounts', () => {
-        const instruction: IInstruction = {
+        const instruction: Instruction = {
             accounts: [],
             programAddress,
         };
@@ -105,7 +105,7 @@ describe('assertIsInstructionWithAccounts', () => {
     });
 
     it('throws when the instruction does not have accounts defined', () => {
-        const instruction: IInstruction = {
+        const instruction: Instruction = {
             programAddress,
         };
         const assert = () => assertIsInstructionWithAccounts(instruction);
@@ -115,7 +115,7 @@ describe('assertIsInstructionWithAccounts', () => {
 
 describe('isInstructionWithData', () => {
     it('returns true when the instruction has a non-empty data', () => {
-        const instruction: IInstruction = {
+        const instruction: Instruction = {
             data: new Uint8Array([1, 2, 3, 4]),
             programAddress,
         };
@@ -123,7 +123,7 @@ describe('isInstructionWithData', () => {
     });
 
     it('returns true when the instruction has an empty data', () => {
-        const instruction: IInstruction = {
+        const instruction: Instruction = {
             data: new Uint8Array([]),
             programAddress,
         };
@@ -131,7 +131,7 @@ describe('isInstructionWithData', () => {
     });
 
     it('returns false when the instruction does not have data defined', () => {
-        const instruction: IInstruction = {
+        const instruction: Instruction = {
             programAddress,
         };
         expect(isInstructionWithData(instruction)).toBe(false);
@@ -140,7 +140,7 @@ describe('isInstructionWithData', () => {
 
 describe('assertIsInstructionWithData', () => {
     it('does not throw when the instruction has a non-empty data', () => {
-        const instruction: IInstruction = {
+        const instruction: Instruction = {
             data: new Uint8Array([1, 2, 3, 4]),
             programAddress,
         };
@@ -149,7 +149,7 @@ describe('assertIsInstructionWithData', () => {
     });
 
     it('does not throw when the instruction has an empty data', () => {
-        const instruction: IInstruction = {
+        const instruction: Instruction = {
             data: new Uint8Array([]),
             programAddress,
         };
@@ -158,7 +158,7 @@ describe('assertIsInstructionWithData', () => {
     });
 
     it('throws when the instruction does not have data defined', () => {
-        const instruction: IInstruction = {
+        const instruction: Instruction = {
             programAddress,
         };
         const assert = () => assertIsInstructionWithData(instruction);

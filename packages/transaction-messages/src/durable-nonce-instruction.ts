@@ -2,9 +2,9 @@ import { Address } from '@solana/addresses';
 import { ReadonlyUint8Array } from '@solana/codecs-core';
 import {
     AccountRole,
-    IInstruction,
-    IInstructionWithAccounts,
-    IInstructionWithData,
+    Instruction,
+    InstructionWithAccounts,
+    InstructionWithData,
     isSignerRole,
     ReadonlyAccount,
     ReadonlySignerAccount,
@@ -16,15 +16,15 @@ import { Brand } from '@solana/nominal-types';
 export type AdvanceNonceAccountInstruction<
     TNonceAccountAddress extends string = string,
     TNonceAuthorityAddress extends string = string,
-> = IInstruction<'11111111111111111111111111111111'> &
-    IInstructionWithAccounts<
+> = Instruction<'11111111111111111111111111111111'> &
+    InstructionWithAccounts<
         readonly [
             WritableAccount<TNonceAccountAddress>,
             ReadonlyAccount<'SysvarRecentB1ockHashes11111111111111111111'>,
             ReadonlySignerAccount<TNonceAuthorityAddress> | WritableSignerAccount<TNonceAuthorityAddress>,
         ]
     > &
-    IInstructionWithData<AdvanceNonceAccountInstructionData>;
+    InstructionWithData<AdvanceNonceAccountInstructionData>;
 
 type AdvanceNonceAccountInstructionData = Brand<Uint8Array, 'AdvanceNonceAccountInstructionData'>;
 
@@ -84,7 +84,7 @@ export function createAdvanceNonceAccountInstruction<
  * ```
  */
 export function isAdvanceNonceAccountInstruction(
-    instruction: IInstruction,
+    instruction: Instruction,
 ): instruction is AdvanceNonceAccountInstruction {
     return (
         instruction.programAddress === SYSTEM_PROGRAM_ADDRESS &&

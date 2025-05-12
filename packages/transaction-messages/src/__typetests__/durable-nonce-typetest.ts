@@ -1,6 +1,6 @@
 import type { Address } from '@solana/addresses';
 import { pipe } from '@solana/functional';
-import { IInstruction } from '@solana/instructions';
+import { Instruction } from '@solana/instructions';
 
 import { TransactionMessageWithBlockhashLifetime } from '../blockhash';
 import { CompilableTransactionMessage } from '../compilable-transaction-message';
@@ -30,7 +30,7 @@ const newMockNonceConfig = {
     nonceAuthorityAddress: null as unknown as Address<'newNonceAuthority'>,
 };
 
-type InstructionA = IInstruction & { identifier: 'A' };
+type InstructionA = Instruction & { identifier: 'A' };
 type LegacyTransactionMessage = Extract<TransactionMessage, { version: 'legacy' }>;
 type V0TransactionMessage = Extract<TransactionMessage, { version: 0 }>;
 

@@ -1,5 +1,5 @@
 import { Address, getAddressComparator } from '@solana/addresses';
-import { AccountRole, IAccountLookupMeta, IInstruction } from '@solana/instructions';
+import { AccountLookupMeta, AccountRole, Instruction } from '@solana/instructions';
 
 import {
     ADDRESS_MAP_TYPE_PROPERTY as TYPE,
@@ -20,7 +20,7 @@ type TestCase = {
         | typeof STATIC_ENTRY_READONLY_SIGNER
         | typeof STATIC_ENTRY_WRITABLE
         | typeof STATIC_ENTRY_WRITABLE_SIGNER;
-    instructionOrder: [string, (i: IInstruction[]) => IInstruction[]];
+    instructionOrder: [string, (i: Instruction[]) => Instruction[]];
     lutRole: AccountRoleEnumName;
     role: AccountRoleEnumName;
     staticRole: AccountRoleEnumName;
@@ -39,10 +39,10 @@ let _nextMockAddress = 0;
 function getMockAddress() {
     return `${_nextMockAddress++}` as Address;
 }
-function forwardOrder(i: IInstruction[]) {
+function forwardOrder(i: Instruction[]) {
     return i;
 }
-function reverseOrder(i: IInstruction[]) {
+function reverseOrder(i: Instruction[]) {
     return i.reverse();
 }
 
@@ -141,7 +141,7 @@ describe('getAddressMapFromInstructions', () => {
                             addressIndex: 0,
                             lookupTableAddress: getMockAddress(),
                             role: AccountRole[role],
-                        } as IAccountLookupMeta<typeof commonAddress>,
+                        } as AccountLookupMeta<typeof commonAddress>,
                     ],
                     programAddress: getMockAddress(),
                 },

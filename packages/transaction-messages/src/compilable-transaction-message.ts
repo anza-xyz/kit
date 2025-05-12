@@ -1,4 +1,4 @@
-import { IInstruction } from '@solana/instructions';
+import { Instruction } from '@solana/instructions';
 
 import { TransactionMessageWithFeePayer } from './fee-payer';
 import { TransactionMessageWithLifetime } from './lifetime';
@@ -11,5 +11,5 @@ import { BaseTransactionMessage, TransactionVersion } from './transaction-messag
  */
 export type CompilableTransactionMessage<
     TVersion extends TransactionVersion = TransactionVersion,
-    TInstruction extends IInstruction = IInstruction,
+    TInstruction extends Instruction = Instruction,
 > = BaseTransactionMessage<TVersion, TInstruction> & TransactionMessageWithFeePayer & TransactionMessageWithLifetime;

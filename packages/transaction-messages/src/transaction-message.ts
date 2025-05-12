@@ -1,19 +1,16 @@
-import { IAccountMeta, IInstruction } from '@solana/instructions';
+import { AccountMeta, Instruction } from '@solana/instructions';
 
 export type BaseTransactionMessage<
     TVersion extends TransactionVersion = TransactionVersion,
-    TInstruction extends IInstruction = IInstruction,
+    TInstruction extends Instruction = Instruction,
 > = Readonly<{
     instructions: readonly TInstruction[];
     version: TVersion;
 }>;
 
-type ILegacyInstruction<TProgramAddress extends string = string> = IInstruction<
-    TProgramAddress,
-    readonly IAccountMeta[]
->;
-type LegacyTransactionMessage = BaseTransactionMessage<'legacy', ILegacyInstruction>;
-type V0TransactionMessage = BaseTransactionMessage<0, IInstruction>;
+type LegacyInstruction<TProgramAddress extends string = string> = Instruction<TProgramAddress, readonly AccountMeta[]>;
+type LegacyTransactionMessage = BaseTransactionMessage<'legacy', LegacyInstruction>;
+type V0TransactionMessage = BaseTransactionMessage<0, Instruction>;
 
 export type TransactionMessage = LegacyTransactionMessage | V0TransactionMessage;
 export type TransactionVersion = 'legacy' | 0;

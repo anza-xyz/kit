@@ -7,7 +7,7 @@ import {
     SolanaError,
 } from '@solana/errors';
 import { pipe } from '@solana/functional';
-import { AccountRole, IAccountLookupMeta, IAccountMeta, IInstruction } from '@solana/instructions';
+import { AccountLookupMeta, AccountMeta, AccountRole, Instruction } from '@solana/instructions';
 import type { Blockhash } from '@solana/rpc-types';
 
 import { AddressesByLookupTableAddress } from './addresses-by-lookup-table-address';
@@ -22,13 +22,13 @@ import { setTransactionMessageFeePayer, TransactionMessageWithFeePayer } from '.
 import { appendTransactionMessageInstruction } from './instructions';
 import { BaseTransactionMessage, TransactionVersion } from './transaction-message';
 
-function getAccountMetas(message: CompiledTransactionMessage): IAccountMeta[] {
+function getAccountMetas(message: CompiledTransactionMessage): AccountMeta[] {
     const { header } = message;
     const numWritableSignerAccounts = header.numSignerAccounts - header.numReadonlySignerAccounts;
     const numWritableNonSignerAccounts =
         message.staticAccounts.length - header.numSignerAccounts - header.numReadonlyNonSignerAccounts;
 
-    const accountMetas: IAccountMeta[] = [];
+    const accountMetas: AccountMeta[] = [];
 
     let accountIndex = 0;
     for (let i = 0; i < numWritableSignerAccounts; i++) {
@@ -69,7 +69,7 @@ function getAccountMetas(message: CompiledTransactionMessage): IAccountMeta[] {
 function getAddressLookupMetas(
     compiledAddressTableLookups: ReturnType<typeof getCompiledAddressTableLookups>,
     addressesByLookupTableAddress: AddressesByLookupTableAddress,
-): IAccountLookupMeta[] {
+): AccountLookupMeta[] {
     // check that all message lookups are known
     const compiledAddressTableLookupAddresses = compiledAddressTableLookups.map(l => l.lookupTableAddress);
     const missing = compiledAddressTableLookupAddresses.filter(a => addressesByLookupTableAddress[a] === undefined);
@@ -79,8 +79,8 @@ function getAddressLookupMetas(
         });
     }
 
-    const readOnlyMetas: IAccountLookupMeta[] = [];
-    const writableMetas: IAccountLookupMeta[] = [];
+    const readOnlyMetas: AccountLookupMeta[] = [];
+    const writableMetas: AccountLookupMeta[] = [];
 
     // we know that for each lookup, knownLookups[lookup.lookupTableAddress] is defined
     for (const lookup of compiledAddressTableLookups) {
@@ -106,7 +106,7 @@ function getAddressLookupMetas(
             );
         }
 
-        const readOnlyForLookup: IAccountLookupMeta[] = readonlyIndexes.map(r => ({
+        const readOnlyForLookup: AccountLookupMeta[] = readonlyIndexes.map(r => ({
             address: addresses[r],
             addressIndex: r,
             lookupTableAddress: lookup.lookupTableAddress,
@@ -114,7 +114,7 @@ function getAddressLookupMetas(
         }));
         readOnlyMetas.push(...readOnlyForLookup);
 
-        const writableForLookup: IAccountLookupMeta[] = writableIndexes.map(w => ({
+        const writableForLookup: AccountLookupMeta[] = writableIndexes.map(w => ({
             address: addresses[w],
             addressIndex: w,
             lookupTableAddress: lookup.lookupTableAddress,
@@ -128,8 +128,8 @@ function getAddressLookupMetas(
 
 function convertInstruction(
     instruction: CompiledTransactionMessage['instructions'][0],
-    accountMetas: IAccountMeta[],
-): IInstruction {
+    accountMetas: AccountMeta[],
+): Instruction {
     const programAddress = accountMetas[instruction.programAddressIndex]?.address;
     if (!programAddress) {
         throw new SolanaError(SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_PROGRAM_ADDRESS_NOT_FOUND, {
@@ -160,7 +160,7 @@ type LifetimeConstraint =
 
 function getLifetimeConstraint(
     messageLifetimeToken: string,
-    firstInstruction?: IInstruction,
+    firstInstruction?: Instruction,
     lastValidBlockHeight?: bigint,
 ): LifetimeConstraint {
     if (!firstInstruction || !isAdvanceNonceAccountInstruction(firstInstruction)) {
@@ -234,7 +234,7 @@ export function decompileTransactionMessage(
             : [];
     const transactionMetas = [...accountMetas, ...accountLookupMetas];
 
-    const instructions: IInstruction[] = compiledTransactionMessage.instructions.map(compiledInstruction =>
+    const instructions: Instruction[] = compiledTransactionMessage.instructions.map(compiledInstruction =>
         convertInstruction(compiledInstruction, transactionMetas),
     );
 

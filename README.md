@@ -1168,7 +1168,7 @@ const stillNotNonceTransactionMessage = {
 };
 
 stillNotNonceTransactionMessage satisfies TransactionMessageWithDurableNonceLifetime;
-// => 'readonly IInstruction<string>[]' is not assignable to type 'readonly [AdvanceNonceAccountInstruction<string, string>, ...IInstruction<string>[]]'
+// => 'readonly Instruction<string>[]' is not assignable to type 'readonly [AdvanceNonceAccountInstruction<string, string>, ...Instruction<string>[]]'
 
 const validNonceTransactionMessage = pipe(
     createTransactionMessage({ version: 0 }),

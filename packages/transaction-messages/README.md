@@ -181,15 +181,15 @@ See [`assertIsBlockhash()`](#assertisblockhash) for an example of how to use an 
 
 ### Types
 
-#### `IInstruction`
+#### `Instruction`
 
 This type represents an instruction to be issued to a program. Objects that conform to this type have a `programAddress` property that is the base58-encoded address of the program in question.
 
-#### `IInstructionWithAccounts`
+#### `InstructionWithAccounts`
 
-This type represents an instruction that specifies a list of accounts that a program may read from, write to, or require be signers of the transaction itself. Objects that conform to this type have an `accounts` property that is an array of `IAccountMeta | IAccountLookupMeta` in the order the instruction requires.
+This type represents an instruction that specifies a list of accounts that a program may read from, write to, or require be signers of the transaction itself. Objects that conform to this type have an `accounts` property that is an array of `AccountMeta | AccountLookupMeta` in the order the instruction requires.
 
-#### `IInstructionWithData`
+#### `InstructionWithData`
 
 This type represents an instruction that supplies some data as input to the program. Objects that conform to this type have a `data` property that can be any type of `Uint8Array`.
 
@@ -234,7 +234,7 @@ This type represents a mapping of lookup table addresses to the addresses of the
 
 #### `compressTransactionMessageUsingAddressLookupTables`
 
-Given a transaction message and a mapping of lookup tables to the addresses stored in them, this function will return a new transaction message with the same instructions but with all non-signer accounts that are found in the given lookup tables represented by an `IAccountLookupMeta` instead of an `IAccountMeta`.
+Given a transaction message and a mapping of lookup tables to the addresses stored in them, this function will return a new transaction message with the same instructions but with all non-signer accounts that are found in the given lookup tables represented by an `AccountLookupMeta` instead of an `AccountMeta`.
 
 This means that these accounts will take up less space in the compiled transaction message. This size reduction is most significant when the transaction includes many accounts from the same lookup table.
 

@@ -47,7 +47,7 @@ const transaction = fromVersionedTransaction(legacyVersionedTransaction);
 
 ### `fromLegacyTransactionInstruction()`
 
-This can be used to convert a legacy `TransactionInstruction` object to a `IInstruction` object.
+This can be used to convert a legacy `TransactionInstruction` object to a `Instruction` object.
 
 ```ts
 import { fromLegacyTransactionInstruction } from '@solana/compat';

@@ -19,17 +19,17 @@ import {
 import { BaseTransactionMessage } from '../transaction-message';
 import { TransactionMessageWithinSizeLimit } from '../transaction-message-size';
 
-type IInstruction = BaseTransactionMessage['instructions'][number];
-type InstructionA = IInstruction & { identifier: 'A' };
-type InstructionB = IInstruction & { identifier: 'B' };
-type InstructionC = IInstruction & { identifier: 'C' };
+type Instruction = BaseTransactionMessage['instructions'][number];
+type InstructionA = Instruction & { identifier: 'A' };
+type InstructionB = Instruction & { identifier: 'B' };
+type InstructionC = Instruction & { identifier: 'C' };
 
 // [DESCRIBE] appendTransactionMessageInstruction
 {
     // It returns the same TransactionMessage type
     {
         const message = null as unknown as BaseTransactionMessage & { some: 1 };
-        const newMessage = appendTransactionMessageInstruction(null as unknown as IInstruction, message);
+        const newMessage = appendTransactionMessageInstruction(null as unknown as Instruction, message);
         newMessage satisfies BaseTransactionMessage & { some: 1 };
     }
 
@@ -48,7 +48,7 @@ type InstructionC = IInstruction & { identifier: 'C' };
     {
         const message = null as unknown as BaseTransactionMessage;
         const newMessage = appendTransactionMessageInstruction(null as unknown as InstructionA, message);
-        newMessage.instructions satisfies readonly [...IInstruction[], InstructionA];
+        newMessage.instructions satisfies readonly [...Instruction[], InstructionA];
     }
 
     // It keeps the blockhash lifetime type safety.
@@ -86,7 +86,7 @@ type InstructionC = IInstruction & { identifier: 'C' };
     // It removes the size limit type safety.
     {
         const message = null as unknown as BaseTransactionMessage & TransactionMessageWithinSizeLimit;
-        const newMessage = appendTransactionMessageInstruction(null as unknown as IInstruction, message);
+        const newMessage = appendTransactionMessageInstruction(null as unknown as Instruction, message);
         // @ts-expect-error Potentially no longer within size limit.
         newMessage satisfies TransactionMessageWithinSizeLimit;
     }
@@ -97,7 +97,7 @@ type InstructionC = IInstruction & { identifier: 'C' };
     // It returns the same TransactionMessage type
     {
         const message = null as unknown as BaseTransactionMessage & { some: 1 };
-        const newMessage = appendTransactionMessageInstructions(null as unknown as IInstruction[], message);
+        const newMessage = appendTransactionMessageInstructions(null as unknown as Instruction[], message);
         newMessage satisfies BaseTransactionMessage & { some: 1 };
     }
 
@@ -122,13 +122,13 @@ type InstructionC = IInstruction & { identifier: 'C' };
             [null as unknown as InstructionA, null as unknown as InstructionB],
             message,
         );
-        newMessage.instructions satisfies readonly [...IInstruction[], InstructionA, InstructionB];
+        newMessage.instructions satisfies readonly [...Instruction[], InstructionA, InstructionB];
     }
 
     // It removes the size limit type safety.
     {
         const message = null as unknown as BaseTransactionMessage & TransactionMessageWithinSizeLimit;
-        const newMessage = appendTransactionMessageInstructions([null as unknown as IInstruction], message);
+        const newMessage = appendTransactionMessageInstructions([null as unknown as Instruction], message);
         // @ts-expect-error Potentially no longer within size limit.
         newMessage satisfies TransactionMessageWithinSizeLimit;
     }
@@ -139,7 +139,7 @@ type InstructionC = IInstruction & { identifier: 'C' };
     // It returns the same TransactionMessage type
     {
         const message = null as unknown as BaseTransactionMessage & { some: 1 };
-        const newMessage = prependTransactionMessageInstruction(null as unknown as IInstruction, message);
+        const newMessage = prependTransactionMessageInstruction(null as unknown as Instruction, message);
         newMessage satisfies BaseTransactionMessage & { some: 1 };
     }
 
@@ -147,7 +147,7 @@ type InstructionC = IInstruction & { identifier: 'C' };
     {
         const message = null as unknown as BaseTransactionMessage &
             TransactionMessageWithDurableNonceLifetime & { some: 1 };
-        const newMessage = prependTransactionMessageInstruction(null as unknown as IInstruction, message);
+        const newMessage = prependTransactionMessageInstruction(null as unknown as Instruction, message);
         newMessage satisfies BaseTransactionMessage & { some: 1 };
         // @ts-expect-error The durable nonce transaction message type should be stripped.
         newMessage satisfies TransactionMessageWithDurableNonceLifetime;
@@ -157,7 +157,7 @@ type InstructionC = IInstruction & { identifier: 'C' };
     {
         const message = null as unknown as BaseTransactionMessage &
             TransactionMessageWithBlockhashLifetime & { some: 1 };
-        const newMessage = prependTransactionMessageInstruction(null as unknown as IInstruction, message);
+        const newMessage = prependTransactionMessageInstruction(null as unknown as Instruction, message);
         newMessage satisfies BaseTransactionMessage & TransactionMessageWithBlockhashLifetime & { some: 1 };
     }
 
@@ -176,7 +176,7 @@ type InstructionC = IInstruction & { identifier: 'C' };
     {
         const message = null as unknown as BaseTransactionMessage;
         const newMessage = prependTransactionMessageInstruction(null as unknown as InstructionA, message);
-        newMessage.instructions satisfies readonly [InstructionA, ...IInstruction[]];
+        newMessage.instructions satisfies readonly [InstructionA, ...Instruction[]];
     }
 
     // It keeps the blockhash lifetime type safety.
@@ -216,7 +216,7 @@ type InstructionC = IInstruction & { identifier: 'C' };
     // It removes the size limit type safety.
     {
         const message = null as unknown as BaseTransactionMessage & TransactionMessageWithinSizeLimit;
-        const newMessage = prependTransactionMessageInstruction(null as unknown as IInstruction, message);
+        const newMessage = prependTransactionMessageInstruction(null as unknown as Instruction, message);
         // @ts-expect-error Potentially no longer within size limit.
         newMessage satisfies TransactionMessageWithinSizeLimit;
     }
@@ -227,7 +227,7 @@ type InstructionC = IInstruction & { identifier: 'C' };
     // It returns the same TransactionMessage type
     {
         const message = null as unknown as BaseTransactionMessage & { some: 1 };
-        const newMessage = prependTransactionMessageInstructions(null as unknown as IInstruction[], message);
+        const newMessage = prependTransactionMessageInstructions(null as unknown as Instruction[], message);
         newMessage satisfies BaseTransactionMessage & { some: 1 };
     }
 
@@ -235,7 +235,7 @@ type InstructionC = IInstruction & { identifier: 'C' };
     {
         const message = null as unknown as BaseTransactionMessage &
             TransactionMessageWithDurableNonceLifetime & { some: 1 };
-        const newMessage = prependTransactionMessageInstructions(null as unknown as IInstruction[], message);
+        const newMessage = prependTransactionMessageInstructions(null as unknown as Instruction[], message);
         newMessage satisfies BaseTransactionMessage & { some: 1 };
         // @ts-expect-error The durable nonce transaction message type should be stripped.
         newMessage satisfies TransactionMessageWithDurableNonceLifetime;
@@ -262,13 +262,13 @@ type InstructionC = IInstruction & { identifier: 'C' };
             [null as unknown as InstructionA, null as unknown as InstructionB],
             message,
         );
-        newMessage.instructions satisfies readonly [InstructionA, InstructionB, ...IInstruction[]];
+        newMessage.instructions satisfies readonly [InstructionA, InstructionB, ...Instruction[]];
     }
 
     // It removes the size limit type safety.
     {
         const message = null as unknown as BaseTransactionMessage & TransactionMessageWithinSizeLimit;
-        const newMessage = prependTransactionMessageInstructions([null as unknown as IInstruction], message);
+        const newMessage = prependTransactionMessageInstructions([null as unknown as Instruction], message);
         // @ts-expect-error Potentially no longer within size limit.
         newMessage satisfies TransactionMessageWithinSizeLimit;
     }
