@@ -12,6 +12,7 @@ import pressAnyKeyPrompt from '@solana/example-utils/pressAnyKeyPrompt.js';
 import {
     address,
     appendTransactionMessageInstruction,
+    assertIsSendableTransaction,
     createKeyPairSignerFromBytes,
     createSolanaRpc,
     createSolanaRpcSubscriptions,
@@ -183,6 +184,7 @@ log.warn(
         'connections. Use Chrome.',
 );
 try {
+    assertIsSendableTransaction(signedTransaction);
     await sendAndConfirmTransaction(signedTransaction, { commitment: 'confirmed' });
     log.info('[success] Transfer confirmed');
     await pressAnyKeyPrompt('Press any key to quit');
