@@ -6,7 +6,7 @@ import {
     SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_ADDRESS_LOOKUP_TABLE_INDEX_OUT_OF_RANGE,
     SolanaError,
 } from '@solana/errors';
-import { AccountRole, IAccountLookupMeta, IAccountMeta, IInstruction } from '@solana/instructions';
+import { AccountLookupMeta, AccountMeta, AccountRole, Instruction } from '@solana/instructions';
 
 import { CompiledTransactionMessage } from '../compile';
 import { decompileTransactionMessage } from '../decompile-message';
@@ -93,7 +93,7 @@ describe('decompileTransactionMessage', () => {
             };
 
             const transaction = decompileTransactionMessage(compiledTransaction);
-            const expectedInstruction: IInstruction = {
+            const expectedInstruction: Instruction = {
                 programAddress,
             };
             expect(transaction.instructions).toStrictEqual([expectedInstruction]);
@@ -133,7 +133,7 @@ describe('decompileTransactionMessage', () => {
 
             const transaction = decompileTransactionMessage(compiledTransaction);
 
-            const expectedInstruction: IInstruction = {
+            const expectedInstruction: Instruction = {
                 accounts: [
                     {
                         address: 'H4RdPRWYk3pKw2CkNznxQK6J6herjgQke2pzFJW4GC6x' as Address,
@@ -215,7 +215,7 @@ describe('decompileTransactionMessage', () => {
 
             const transaction = decompileTransactionMessage(compiledTransaction);
 
-            const expectedInstructions: IInstruction[] = [
+            const expectedInstructions: Instruction[] = [
                 {
                     programAddress: '3hpECiFPtnyxoWqWqcVyfBUDhPKSZXWDduNXFywo8ncP' as Address,
                 },
@@ -337,7 +337,7 @@ describe('decompileTransactionMessage', () => {
 
             const transaction = decompileTransactionMessage(compiledTransaction);
 
-            const expectedInstruction: IInstruction = {
+            const expectedInstruction: Instruction = {
                 accounts: [
                     {
                         address: nonceAccountAddress,
@@ -432,7 +432,7 @@ describe('decompileTransactionMessage', () => {
 
             const transaction = decompileTransactionMessage(compiledTransaction);
 
-            const expectedInstruction: IInstruction = {
+            const expectedInstruction: Instruction = {
                 accounts: [
                     {
                         address: nonceAccountAddress,
@@ -495,7 +495,7 @@ describe('decompileTransactionMessage', () => {
 
             const transaction = decompileTransactionMessage(compiledTransaction);
 
-            const expectedInstructions: IInstruction[] = [
+            const expectedInstructions: Instruction[] = [
                 {
                     accounts: [
                         {
@@ -670,7 +670,7 @@ describe('decompileTransactionMessage', () => {
                     addressesByLookupTableAddress: lookupTables,
                 });
 
-                const expectedAccountLookupMeta: IAccountLookupMeta = {
+                const expectedAccountLookupMeta: AccountLookupMeta = {
                     address: addressInLookup,
                     addressIndex: 0,
                     lookupTableAddress,
@@ -725,7 +725,7 @@ describe('decompileTransactionMessage', () => {
                     addressesByLookupTableAddress: lookupTables,
                 });
 
-                const expectedAccountLookupMetas: IAccountLookupMeta[] = [
+                const expectedAccountLookupMetas: AccountLookupMeta[] = [
                     {
                         address: addressInLookup1,
                         addressIndex: 0,
@@ -783,7 +783,7 @@ describe('decompileTransactionMessage', () => {
                     addressesByLookupTableAddress: lookupTables,
                 });
 
-                const expectedAccountLookupMeta: IAccountLookupMeta = {
+                const expectedAccountLookupMeta: AccountLookupMeta = {
                     address: addressInLookup,
                     addressIndex: 0,
                     lookupTableAddress,
@@ -838,7 +838,7 @@ describe('decompileTransactionMessage', () => {
                     addressesByLookupTableAddress: lookupTables,
                 });
 
-                const expectedAccountLookupMetas: IAccountLookupMeta[] = [
+                const expectedAccountLookupMetas: AccountLookupMeta[] = [
                     {
                         address: addressInLookup1,
                         addressIndex: 0,
@@ -901,7 +901,7 @@ describe('decompileTransactionMessage', () => {
                     addressesByLookupTableAddress: lookupTables,
                 });
 
-                const expectedAccountLookupMetas: IAccountLookupMeta[] = [
+                const expectedAccountLookupMetas: AccountLookupMeta[] = [
                     // writable is first since we used account indices [2,3]
                     {
                         address: addressInLookup2,
@@ -962,12 +962,12 @@ describe('decompileTransactionMessage', () => {
                     addressesByLookupTableAddress: lookupTables,
                 });
 
-                const expectedAccountMeta: IAccountMeta = {
+                const expectedAccountMeta: AccountMeta = {
                     address: staticAddress,
                     role: AccountRole.READONLY,
                 };
 
-                const expectedAccountLookupMeta: IAccountLookupMeta = {
+                const expectedAccountLookupMeta: AccountLookupMeta = {
                     address: addressInLookup,
                     addressIndex: 0,
                     lookupTableAddress,
@@ -1026,14 +1026,14 @@ describe('decompileTransactionMessage', () => {
                     addressesByLookupTableAddress: lookupTables,
                 });
 
-                const expectedAccountLookupMeta1: IAccountLookupMeta = {
+                const expectedAccountLookupMeta1: AccountLookupMeta = {
                     address: addressInLookup1,
                     addressIndex: 0,
                     lookupTableAddress,
                     role: AccountRole.READONLY,
                 };
 
-                const expectedAccountLookupMeta2: IAccountLookupMeta = {
+                const expectedAccountLookupMeta2: AccountLookupMeta = {
                     address: addressInLookup2,
                     addressIndex: 2,
                     lookupTableAddress,
@@ -1230,7 +1230,7 @@ describe('decompileTransactionMessage', () => {
                     addressesByLookupTableAddress: lookupTables,
                 });
 
-                const expectedAccountLookupMetas: IAccountLookupMeta[] = [
+                const expectedAccountLookupMetas: AccountLookupMeta[] = [
                     {
                         address: addressInLookup1,
                         addressIndex: 0,
@@ -1296,7 +1296,7 @@ describe('decompileTransactionMessage', () => {
                     addressesByLookupTableAddress: lookupTables,
                 });
 
-                const expectedAccountLookupMetas: IAccountLookupMeta[] = [
+                const expectedAccountLookupMetas: AccountLookupMeta[] = [
                     {
                         address: addressInLookup1,
                         addressIndex: 0,
@@ -1374,7 +1374,7 @@ describe('decompileTransactionMessage', () => {
                     addressesByLookupTableAddress: lookupTables,
                 });
 
-                const expectedAccountLookupMetas: IAccountLookupMeta[] = [
+                const expectedAccountLookupMetas: AccountLookupMeta[] = [
                     {
                         address: writableAddressInLookup1,
                         addressIndex: 1,
@@ -1468,7 +1468,7 @@ describe('decompileTransactionMessage', () => {
                     addressesByLookupTableAddress: lookupTables,
                 });
 
-                const expectedAccountLookupMetasInstruction1: IAccountLookupMeta[] = [
+                const expectedAccountLookupMetasInstruction1: AccountLookupMeta[] = [
                     // index 2 - writable from lookup1
                     {
                         address: writableAddressInLookup1,
@@ -1485,7 +1485,7 @@ describe('decompileTransactionMessage', () => {
                     },
                 ];
 
-                const expectedAccountLookupMetasInstruction2: IAccountLookupMeta[] = [
+                const expectedAccountLookupMetasInstruction2: AccountLookupMeta[] = [
                     // index 3 - writable from lookup2
                     {
                         address: writableAddressInLookup2,

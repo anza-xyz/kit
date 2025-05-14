@@ -1,8 +1,8 @@
 import { Address } from '@solana/addresses';
-import { IInstruction, isSignerRole } from '@solana/instructions';
-import { BaseTransactionMessage, ITransactionMessageWithFeePayer } from '@solana/transaction-messages';
+import { Instruction, isSignerRole } from '@solana/instructions';
+import { BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
 
-import { IAccountSignerMeta, IInstructionWithSigners, ITransactionMessageWithSigners } from './account-signer-meta';
+import { AccountSignerMeta, InstructionWithSigners, TransactionMessageWithSigners } from './account-signer-meta';
 import { deduplicateSigners } from './deduplicate-signers';
 import { isTransactionSigner, TransactionSigner } from './transaction-signer';
 
@@ -19,10 +19,10 @@ import { isTransactionSigner, TransactionSigner } from './transaction-signer';
  *
  * @example
  * ```ts
- * import { AccountRole, IInstruction } from '@solana/instructions';
+ * import { AccountRole, Instruction } from '@solana/instructions';
  * import { addSignersToInstruction, TransactionSigner } from '@solana/signers';
  *
- * const instruction: IInstruction = {
+ * const instruction: Instruction = {
  *     accounts: [
  *         { address: '1111' as Address, role: AccountRole.READONLY_SIGNER },
  *         { address: '2222' as Address, role: AccountRole.WRITABLE_SIGNER },
@@ -41,12 +41,12 @@ import { isTransactionSigner, TransactionSigner } from './transaction-signer';
  * // instructionWithSigners.accounts[1].signer === signerB
  * ```
  */
-export function addSignersToInstruction<TInstruction extends IInstruction>(
+export function addSignersToInstruction<TInstruction extends Instruction>(
     signers: TransactionSigner[],
-    instruction: TInstruction | (IInstructionWithSigners & TInstruction),
-): IInstructionWithSigners & TInstruction {
+    instruction: TInstruction | (InstructionWithSigners & TInstruction),
+): InstructionWithSigners & TInstruction {
     if (!instruction.accounts || instruction.accounts.length === 0) {
-        return instruction as IInstructionWithSigners & TInstruction;
+        return instruction as InstructionWithSigners & TInstruction;
     }
 
     const signerByAddress = new Map(deduplicateSigners(signers).map(signer => [signer.address, signer]));
@@ -57,7 +57,7 @@ export function addSignersToInstruction<TInstruction extends IInstruction>(
             if (!isSignerRole(account.role) || 'signer' in account || !signer) {
                 return account;
             }
-            return Object.freeze({ ...account, signer } as IAccountSignerMeta);
+            return Object.freeze({ ...account, signer } as AccountSignerMeta);
         }),
     });
 }
@@ -76,15 +76,15 @@ export function addSignersToInstruction<TInstruction extends IInstruction>(
  *
  * @example
  * ```ts
- * import { AccountRole, IInstruction } from '@solana/instructions';
+ * import { AccountRole, Instruction } from '@solana/instructions';
  * import { BaseTransactionMessage } from '@solana/transaction-messages';
  * import { addSignersToTransactionMessage, TransactionSigner } from '@solana/signers';
  *
- * const instructionA: IInstruction = {
+ * const instructionA: Instruction = {
  *     accounts: [{ address: '1111' as Address, role: AccountRole.READONLY_SIGNER }],
  *     // ...
  * };
- * const instructionB: IInstruction = {
+ * const instructionB: Instruction = {
  *     accounts: [{ address: '2222' as Address, role: AccountRole.WRITABLE_SIGNER }],
  *     // ...
  * };
@@ -106,14 +106,14 @@ export function addSignersToInstruction<TInstruction extends IInstruction>(
  */
 export function addSignersToTransactionMessage<TTransactionMessage extends BaseTransactionMessage>(
     signers: TransactionSigner[],
-    transactionMessage: TTransactionMessage | (ITransactionMessageWithSigners & TTransactionMessage),
-): ITransactionMessageWithSigners & TTransactionMessage {
+    transactionMessage: TTransactionMessage | (TransactionMessageWithSigners & TTransactionMessage),
+): TransactionMessageWithSigners & TTransactionMessage {
     const feePayerSigner = hasAddressOnlyFeePayer(transactionMessage)
         ? signers.find(signer => signer.address === transactionMessage.feePayer.address)
         : undefined;
 
     if (!feePayerSigner && transactionMessage.instructions.length === 0) {
-        return transactionMessage as ITransactionMessageWithSigners & TTransactionMessage;
+        return transactionMessage as TransactionMessageWithSigners & TTransactionMessage;
     }
 
     return Object.freeze({
@@ -124,7 +124,7 @@ export function addSignersToTransactionMessage<TTransactionMessage extends BaseT
 }
 
 function hasAddressOnlyFeePayer(
-    message: BaseTransactionMessage & Partial<ITransactionMessageWithFeePayer>,
+    message: BaseTransactionMessage & Partial<TransactionMessageWithFeePayer>,
 ): message is BaseTransactionMessage & { feePayer: { address: Address } } {
     return (
         !!message &&

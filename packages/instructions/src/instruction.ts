@@ -7,19 +7,19 @@ import {
     SolanaError,
 } from '@solana/errors';
 
-import { IAccountLookupMeta, IAccountMeta } from './accounts';
+import { AccountLookupMeta, AccountMeta } from './accounts';
 
 /**
  * An instruction destined for a given program.
  *
  * @example
  * ```ts
- * type StakeProgramInstruction = IInstruction<'StakeConfig11111111111111111111111111111111'>;
+ * type StakeProgramInstruction = Instruction<'StakeConfig11111111111111111111111111111111'>;
  * ```
  */
-export interface IInstruction<
+export interface Instruction<
     TProgramAddress extends string = string,
-    TAccounts extends readonly (IAccountLookupMeta | IAccountMeta)[] = readonly (IAccountLookupMeta | IAccountMeta)[],
+    TAccounts extends readonly (AccountLookupMeta | AccountMeta)[] = readonly (AccountLookupMeta | AccountMeta)[],
 > {
     readonly accounts?: TAccounts;
     readonly data?: ReadonlyUint8Array;
@@ -31,7 +31,7 @@ export interface IInstruction<
  *
  * @example
  * ```ts
- * type InstructionWithTwoAccounts = IInstructionWithAccounts<
+ * type InstructionWithTwoAccounts = InstructionWithAccounts<
  *     [
  *         WritableAccount, // First account
  *         RentSysvar, // Second account
@@ -39,19 +39,19 @@ export interface IInstruction<
  * >;
  * ```
  */
-export interface IInstructionWithAccounts<TAccounts extends readonly (IAccountLookupMeta | IAccountMeta)[]>
-    extends IInstruction {
+export interface InstructionWithAccounts<TAccounts extends readonly (AccountLookupMeta | AccountMeta)[]>
+    extends Instruction {
     readonly accounts: TAccounts;
 }
 
-export function isInstructionForProgram<TProgramAddress extends string, TInstruction extends IInstruction>(
+export function isInstructionForProgram<TProgramAddress extends string, TInstruction extends Instruction>(
     instruction: TInstruction,
     programAddress: Address<TProgramAddress>,
 ): instruction is TInstruction & { programAddress: Address<TProgramAddress> } {
     return instruction.programAddress === programAddress;
 }
 
-export function assertIsInstructionForProgram<TProgramAddress extends string, TInstruction extends IInstruction>(
+export function assertIsInstructionForProgram<TProgramAddress extends string, TInstruction extends Instruction>(
     instruction: TInstruction,
     programAddress: Address<TProgramAddress>,
 ): asserts instruction is TInstruction & { programAddress: Address<TProgramAddress> } {
@@ -64,16 +64,16 @@ export function assertIsInstructionForProgram<TProgramAddress extends string, TI
 }
 
 export function isInstructionWithAccounts<
-    TAccounts extends readonly (IAccountLookupMeta | IAccountMeta)[] = readonly (IAccountLookupMeta | IAccountMeta)[],
-    TInstruction extends IInstruction = IInstruction,
->(instruction: TInstruction): instruction is IInstructionWithAccounts<TAccounts> & TInstruction {
+    TAccounts extends readonly (AccountLookupMeta | AccountMeta)[] = readonly (AccountLookupMeta | AccountMeta)[],
+    TInstruction extends Instruction = Instruction,
+>(instruction: TInstruction): instruction is InstructionWithAccounts<TAccounts> & TInstruction {
     return instruction.accounts !== undefined;
 }
 
 export function assertIsInstructionWithAccounts<
-    TAccounts extends readonly (IAccountLookupMeta | IAccountMeta)[] = readonly (IAccountLookupMeta | IAccountMeta)[],
-    TInstruction extends IInstruction = IInstruction,
->(instruction: TInstruction): asserts instruction is IInstructionWithAccounts<TAccounts> & TInstruction {
+    TAccounts extends readonly (AccountLookupMeta | AccountMeta)[] = readonly (AccountLookupMeta | AccountMeta)[],
+    TInstruction extends Instruction = Instruction,
+>(instruction: TInstruction): asserts instruction is InstructionWithAccounts<TAccounts> & TInstruction {
     if (instruction.accounts === undefined) {
         throw new SolanaError(SOLANA_ERROR__INSTRUCTION__EXPECTED_TO_HAVE_ACCOUNTS, {
             data: instruction.data,
@@ -93,32 +93,32 @@ export function assertIsInstructionWithAccounts<
  * type AdvanceNonceAccountInstruction<
  *     TNonceAccountAddress extends string = string,
  *     TNonceAuthorityAddress extends string = string,
- * > = IInstruction<'11111111111111111111111111111111'> &
- *     IInstructionWithAccounts<
+ * > = Instruction<'11111111111111111111111111111111'> &
+ *     InstructionWithAccounts<
  *         [
  *             WritableAccount<TNonceAccountAddress>,
  *             ReadonlyAccount<'SysvarRecentB1ockHashes11111111111111111111'>,
  *             ReadonlySignerAccount<TNonceAuthorityAddress>,
  *         ]
  *     > &
- *     IInstructionWithData<AdvanceNonceAccountInstructionData>;
+ *     InstructionWithData<AdvanceNonceAccountInstructionData>;
  * ```
  */
-export interface IInstructionWithData<TData extends ReadonlyUint8Array> extends IInstruction {
+export interface InstructionWithData<TData extends ReadonlyUint8Array> extends Instruction {
     readonly data: TData;
 }
 
 export function isInstructionWithData<
     TData extends ReadonlyUint8Array = ReadonlyUint8Array,
-    TInstruction extends IInstruction = IInstruction,
->(instruction: TInstruction): instruction is IInstructionWithData<TData> & TInstruction {
+    TInstruction extends Instruction = Instruction,
+>(instruction: TInstruction): instruction is InstructionWithData<TData> & TInstruction {
     return instruction.data !== undefined;
 }
 
 export function assertIsInstructionWithData<
     TData extends ReadonlyUint8Array = ReadonlyUint8Array,
-    TInstruction extends IInstruction = IInstruction,
->(instruction: TInstruction): asserts instruction is IInstructionWithData<TData> & TInstruction {
+    TInstruction extends Instruction = Instruction,
+>(instruction: TInstruction): asserts instruction is InstructionWithData<TData> & TInstruction {
     if (instruction.data === undefined) {
         throw new SolanaError(SOLANA_ERROR__INSTRUCTION__EXPECTED_TO_HAVE_DATA, {
             accountAddresses: instruction.accounts?.map(a => a.address),

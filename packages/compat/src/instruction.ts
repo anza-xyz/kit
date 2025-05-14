@@ -1,11 +1,11 @@
-import { AccountRole, IInstruction } from '@solana/instructions';
+import { AccountRole, Instruction } from '@solana/instructions';
 import { TransactionInstruction } from '@solana/web3.js';
 
 import { fromLegacyPublicKey } from './address';
 
 /**
  * This can be used to convert a legacy [`TransactionInstruction`](https://solana-foundation.github.io/solana-web3.js/classes/TransactionInstruction.html)
- * object to an {@link IInstruction}.
+ * object to an {@link Instruction}.
  *
  * @example
  * ```ts
@@ -16,7 +16,7 @@ import { fromLegacyPublicKey } from './address';
  * const instruction = fromLegacyTransactionInstruction(legacyInstruction);
  * ```
  */
-export function fromLegacyTransactionInstruction(legacyInstruction: TransactionInstruction): IInstruction {
+export function fromLegacyTransactionInstruction(legacyInstruction: TransactionInstruction): Instruction {
     const data = legacyInstruction.data?.byteLength > 0 ? Uint8Array.from(legacyInstruction.data) : undefined;
     const accounts = legacyInstruction.keys.map(accountMeta =>
         Object.freeze({

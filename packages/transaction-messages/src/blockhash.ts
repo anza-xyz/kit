@@ -1,7 +1,7 @@
 import { SOLANA_ERROR__TRANSACTION__EXPECTED_BLOCKHASH_LIFETIME, SolanaError } from '@solana/errors';
-import { assertIsBlockhash, type Blockhash } from '@solana/rpc-types';
+import { type Blockhash, isBlockhash } from '@solana/rpc-types';
 
-import { TransactionMessageWithDurableNonceLifetime } from './durable-nonce';
+import { ExcludeTransactionMessageLifetime, TransactionMessageWithLifetime } from './lifetime';
 import { BaseTransactionMessage } from './transaction-message';
 
 /**
@@ -63,17 +63,12 @@ export interface TransactionMessageWithBlockhashLifetime {
 export function isTransactionMessageWithBlockhashLifetime(
     transactionMessage: BaseTransactionMessage | (BaseTransactionMessage & TransactionMessageWithBlockhashLifetime),
 ): transactionMessage is BaseTransactionMessage & TransactionMessageWithBlockhashLifetime {
-    const lifetimeConstraintShapeMatches =
+    return (
         'lifetimeConstraint' in transactionMessage &&
         typeof transactionMessage.lifetimeConstraint.blockhash === 'string' &&
-        typeof transactionMessage.lifetimeConstraint.lastValidBlockHeight === 'bigint';
-    if (!lifetimeConstraintShapeMatches) return false;
-    try {
-        assertIsBlockhash(transactionMessage.lifetimeConstraint.blockhash);
-        return true;
-    } catch {
-        return false;
-    }
+        typeof transactionMessage.lifetimeConstraint.lastValidBlockHeight === 'bigint' &&
+        isBlockhash(transactionMessage.lifetimeConstraint.blockhash)
+    );
 }
 
 /**
@@ -120,36 +115,25 @@ export function assertIsTransactionMessageWithBlockhashLifetime(
  * ```
  */
 export function setTransactionMessageLifetimeUsingBlockhash<
-    TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithDurableNonceLifetime,
+    TTransactionMessage extends BaseTransactionMessage & Partial<TransactionMessageWithLifetime>,
 >(
     blockhashLifetimeConstraint: BlockhashLifetimeConstraint,
     transactionMessage: TTransactionMessage,
-): Omit<TTransactionMessage, 'lifetimeConstraint'> & TransactionMessageWithBlockhashLifetime;
+): ExcludeTransactionMessageLifetime<TTransactionMessage> & TransactionMessageWithBlockhashLifetime {
+    type ReturnType = ExcludeTransactionMessageLifetime<TTransactionMessage> & TransactionMessageWithBlockhashLifetime;
 
-export function setTransactionMessageLifetimeUsingBlockhash<
-    TTransactionMessage extends
-        | BaseTransactionMessage
-        | (BaseTransactionMessage & TransactionMessageWithBlockhashLifetime),
->(
-    blockhashLifetimeConstraint: BlockhashLifetimeConstraint,
-    transactionMessage: TTransactionMessage,
-): TransactionMessageWithBlockhashLifetime & TTransactionMessage;
-
-export function setTransactionMessageLifetimeUsingBlockhash(
-    blockhashLifetimeConstraint: BlockhashLifetimeConstraint,
-    transactionMessage: BaseTransactionMessage | (BaseTransactionMessage & TransactionMessageWithBlockhashLifetime),
-) {
     if (
         'lifetimeConstraint' in transactionMessage &&
+        transactionMessage.lifetimeConstraint &&
+        'blockhash' in transactionMessage.lifetimeConstraint &&
         transactionMessage.lifetimeConstraint.blockhash === blockhashLifetimeConstraint.blockhash &&
         transactionMessage.lifetimeConstraint.lastValidBlockHeight === blockhashLifetimeConstraint.lastValidBlockHeight
     ) {
-        return transactionMessage;
+        return transactionMessage as ReturnType;
     }
-    const out = {
+
+    return Object.freeze({
         ...transactionMessage,
         lifetimeConstraint: Object.freeze(blockhashLifetimeConstraint),
-    };
-    Object.freeze(out);
-    return out;
+    }) as ReturnType;
 }

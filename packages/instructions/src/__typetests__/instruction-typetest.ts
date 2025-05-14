@@ -1,14 +1,14 @@
 import { Address } from '@solana/addresses';
 import { ReadonlyUint8Array } from '@solana/codecs-core';
 
-import { IAccountLookupMeta, IAccountMeta } from '../accounts';
+import { AccountLookupMeta, AccountMeta } from '../accounts';
 import {
     assertIsInstructionForProgram,
     assertIsInstructionWithAccounts,
     assertIsInstructionWithData,
-    IInstruction,
-    IInstructionWithAccounts,
-    IInstructionWithData,
+    Instruction,
+    InstructionWithAccounts,
+    InstructionWithData,
     isInstructionForProgram,
     isInstructionWithAccounts,
     isInstructionWithData,
@@ -16,55 +16,55 @@ import {
 
 // narrowing using if checks
 {
-    const instruction = {} as unknown as IInstruction;
+    const instruction = {} as unknown as Instruction;
 
     // @ts-expect-error instruction might not have accounts
-    instruction satisfies IInstructionWithAccounts<readonly (IAccountLookupMeta | IAccountMeta)[]>;
+    instruction satisfies InstructionWithAccounts<readonly (AccountLookupMeta | AccountMeta)[]>;
 
     // @ts-expect-error instruction might not have data
-    instruction satisfies IInstructionWithData<ReadonlyUint8Array>;
+    instruction satisfies InstructionWithData<ReadonlyUint8Array>;
 
     if (isInstructionWithAccounts(instruction) && isInstructionWithData(instruction)) {
-        instruction satisfies IInstruction &
-            IInstructionWithAccounts<readonly (IAccountLookupMeta | IAccountMeta)[]> &
-            IInstructionWithData<ReadonlyUint8Array>;
+        instruction satisfies Instruction &
+            InstructionWithAccounts<readonly (AccountLookupMeta | AccountMeta)[]> &
+            InstructionWithData<ReadonlyUint8Array>;
     }
 }
 
 // narrowing using assertions
 {
-    const instruction = {} as unknown as IInstruction;
+    const instruction = {} as unknown as Instruction;
 
     // @ts-expect-error instruction might not have accounts
-    instruction satisfies IInstructionWithAccounts<readonly (IAccountLookupMeta | IAccountMeta)[]>;
+    instruction satisfies InstructionWithAccounts<readonly (AccountLookupMeta | AccountMeta)[]>;
 
     // @ts-expect-error instruction might not have data
-    instruction satisfies IInstructionWithData<ReadonlyUint8Array>;
+    instruction satisfies InstructionWithData<ReadonlyUint8Array>;
 
     assertIsInstructionWithAccounts(instruction);
-    instruction satisfies IInstruction & IInstructionWithAccounts<readonly (IAccountLookupMeta | IAccountMeta)[]>;
+    instruction satisfies Instruction & InstructionWithAccounts<readonly (AccountLookupMeta | AccountMeta)[]>;
 
     assertIsInstructionWithData(instruction);
-    instruction satisfies IInstruction &
-        IInstructionWithAccounts<readonly (IAccountLookupMeta | IAccountMeta)[]> &
-        IInstructionWithData<ReadonlyUint8Array>;
+    instruction satisfies Instruction &
+        InstructionWithAccounts<readonly (AccountLookupMeta | AccountMeta)[]> &
+        InstructionWithData<ReadonlyUint8Array>;
 }
 
 // narrowing by program address
 {
-    const instruction = {} as unknown as IInstruction;
+    const instruction = {} as unknown as Instruction;
     const myAddress = '1111' as Address<'1111'>;
     type MyAddress = typeof myAddress;
 
     // @ts-expect-error instruction might not have the right address
-    instruction satisfies IInstruction<MyAddress>;
+    instruction satisfies Instruction<MyAddress>;
 
     if (isInstructionForProgram(instruction, myAddress)) {
-        instruction satisfies IInstruction<MyAddress>;
-        instruction satisfies IInstruction<'1111'>;
+        instruction satisfies Instruction<MyAddress>;
+        instruction satisfies Instruction<'1111'>;
     }
 
     assertIsInstructionForProgram(instruction, myAddress);
-    instruction satisfies IInstruction<MyAddress>;
-    instruction satisfies IInstruction<'1111'>;
+    instruction satisfies Instruction<MyAddress>;
+    instruction satisfies Instruction<'1111'>;
 }

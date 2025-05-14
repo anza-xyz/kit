@@ -18,7 +18,7 @@ export type RpcResponseTransformer<TResponse = unknown> = {
     (response: RpcResponse, request: RpcRequest): RpcResponse<TResponse>;
 };
 
-interface IHasIdentifier {
+interface HasIdentifier {
     readonly id: string;
 }
 
@@ -28,5 +28,5 @@ type RpcErrorResponsePayload = Readonly<{
     message: string;
 }>;
 
-export type RpcResponseData<TResponse> = IHasIdentifier &
+export type RpcResponseData<TResponse> = HasIdentifier &
     Readonly<{ error: RpcErrorResponsePayload } | { result: TResponse }>;

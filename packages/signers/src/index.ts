@@ -90,3 +90,6 @@ export * from './transaction-sending-signer';
 export * from './transaction-signer';
 export * from './transaction-with-single-sending-signer';
 export * from './types';
+
+// Remove in the next major version.
+export * from './deprecated';

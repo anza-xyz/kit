@@ -8,7 +8,7 @@ import {
 import { AccountRole } from '@solana/instructions';
 import { Rpc, SimulateTransactionApi } from '@solana/rpc';
 import { Blockhash, TransactionError } from '@solana/rpc-types';
-import { ITransactionMessageWithFeePayer, Nonce, TransactionMessage } from '@solana/transaction-messages';
+import { Nonce, TransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
 
 import { getComputeUnitEstimateForTransactionMessage_INTERNAL_ONLY_DO_NOT_EXPORT } from '../compute-limit-internal';
 
@@ -23,7 +23,7 @@ const MOCK_BLOCKHASH_LIFETIME_CONSTRAINT = {
 
 describe('getComputeUnitEstimateForTransactionMessage_INTERNAL_ONLY_DO_NOT_EXPORT', () => {
     let sendSimulateTransactionRequest: jest.Mock;
-    let mockTransactionMessage: ITransactionMessageWithFeePayer & TransactionMessage;
+    let mockTransactionMessage: TransactionMessage & TransactionMessageWithFeePayer;
     let rpc: Rpc<SimulateTransactionApi>;
     let simulateTransaction: jest.Mock;
     beforeEach(() => {

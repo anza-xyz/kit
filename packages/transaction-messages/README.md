@@ -56,7 +56,7 @@ const message = createTransactionMessage({ version: 0 });
 
 ### Types
 
-#### `ITransactionMessageWithFeePayer`
+#### `TransactionMessageWithFeePayer`
 
 This type represents a transaction message for which a fee payer has been declared. A transaction must conform to this type to be compiled and landed on the network.
 
@@ -64,7 +64,7 @@ This type represents a transaction message for which a fee payer has been declar
 
 #### `setTransactionMessageFeePayer()`
 
-Given a base58-encoded address of a system account, this method will return a new transaction message having the same type as the one supplied plus the `ITransactionMessageWithFeePayer` type.
+Given a base58-encoded address of a system account, this method will return a new transaction message having the same type as the one supplied plus the `TransactionMessageWithFeePayer` type.
 
 ```ts
 import { address } from '@solana/addresses';
@@ -171,9 +171,9 @@ function handleSubmit() {
 }
 ```
 
-#### `assertIsDurableNonceTransactionMessage()`
+#### `assertIsTransactionMessageWithDurableNonceLifetime()`
 
-From time to time you might acquire a transaction message that you expect to be a durable nonce transaction, from an untrusted network API or user input. To assert that such an arbitrary transaction is in fact a durable nonce transaction, use the `assertIsDurableNonceTransactionMessage` function.
+From time to time you might acquire a transaction message that you expect to be a durable nonce transaction, from an untrusted network API or user input. To assert that such an arbitrary transaction is in fact a durable nonce transaction, use the `assertIsTransactionMessageWithDurableNonceLifetime` function.
 
 See [`assertIsBlockhash()`](#assertisblockhash) for an example of how to use an assertion function.
 
@@ -181,15 +181,15 @@ See [`assertIsBlockhash()`](#assertisblockhash) for an example of how to use an 
 
 ### Types
 
-#### `IInstruction`
+#### `Instruction`
 
 This type represents an instruction to be issued to a program. Objects that conform to this type have a `programAddress` property that is the base58-encoded address of the program in question.
 
-#### `IInstructionWithAccounts`
+#### `InstructionWithAccounts`
 
-This type represents an instruction that specifies a list of accounts that a program may read from, write to, or require be signers of the transaction itself. Objects that conform to this type have an `accounts` property that is an array of `IAccountMeta | IAccountLookupMeta` in the order the instruction requires.
+This type represents an instruction that specifies a list of accounts that a program may read from, write to, or require be signers of the transaction itself. Objects that conform to this type have an `accounts` property that is an array of `AccountMeta | AccountLookupMeta` in the order the instruction requires.
 
-#### `IInstructionWithData`
+#### `InstructionWithData`
 
 This type represents an instruction that supplies some data as input to the program. Objects that conform to this type have a `data` property that can be any type of `Uint8Array`.
 
@@ -234,7 +234,7 @@ This type represents a mapping of lookup table addresses to the addresses of the
 
 #### `compressTransactionMessageUsingAddressLookupTables`
 
-Given a transaction message and a mapping of lookup tables to the addresses stored in them, this function will return a new transaction message with the same instructions but with all non-signer accounts that are found in the given lookup tables represented by an `IAccountLookupMeta` instead of an `IAccountMeta`.
+Given a transaction message and a mapping of lookup tables to the addresses stored in them, this function will return a new transaction message with the same instructions but with all non-signer accounts that are found in the given lookup tables represented by an `AccountLookupMeta` instead of an `AccountMeta`.
 
 This means that these accounts will take up less space in the compiled transaction message. This size reduction is most significant when the transaction includes many accounts from the same lookup table.
 

@@ -2,9 +2,10 @@
 import { Signature } from '@solana/keys';
 
 import {
-    assertTransactionIsFullySigned,
+    assertIsFullySignedTransaction,
     FullySignedTransaction,
     getSignatureFromTransaction,
+    isFullySignedTransaction,
     partiallySignTransaction,
     signTransaction,
 } from '..';
@@ -28,9 +29,17 @@ import { Transaction } from '../transaction';
     signTransaction([], transaction) satisfies Promise<FullySignedTransaction & { some: 1 }>;
 }
 
-// assertTransactionIsFullySigned
+// isFullySignedTransaction
 {
     const transaction = null as unknown as Transaction & { some: 1 };
-    assertTransactionIsFullySigned(transaction);
-    transaction satisfies FullySignedTransaction & { some: 1 };
+    if (isFullySignedTransaction(transaction)) {
+        transaction satisfies FullySignedTransaction & Transaction & { some: 1 };
+    }
+}
+
+// assertIsFullySignedTransaction
+{
+    const transaction = null as unknown as Transaction & { some: 1 };
+    assertIsFullySignedTransaction(transaction);
+    transaction satisfies FullySignedTransaction & Transaction & { some: 1 };
 }

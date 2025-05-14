@@ -6,22 +6,17 @@ import {
     SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT,
     SolanaError,
 } from '@solana/errors';
-import {
-    IInstruction,
-    IInstructionWithData,
-    isInstructionForProgram,
-    isInstructionWithData,
-} from '@solana/instructions';
+import { Instruction, InstructionWithData, isInstructionForProgram, isInstructionWithData } from '@solana/instructions';
 import { Rpc, SimulateTransactionApi } from '@solana/rpc';
 import { Blockhash, Commitment, Slot } from '@solana/rpc-types';
 import {
     appendTransactionMessageInstruction,
     CompilableTransactionMessage,
-    isDurableNonceTransaction,
     isTransactionMessageWithBlockhashLifetime,
-    ITransactionMessageWithFeePayer,
+    isTransactionMessageWithDurableNonceLifetime,
     setTransactionMessageLifetimeUsingBlockhash,
     TransactionMessage,
+    TransactionMessageWithFeePayer,
 } from '@solana/transaction-messages';
 import { compileTransaction, getBase64EncodedWireTransaction } from '@solana/transactions';
 
@@ -42,7 +37,7 @@ type ComputeUnitEstimateForTransactionMessageConfig = Readonly<{
      */
     minContextSlot?: Slot;
     rpc: Rpc<SimulateTransactionApi>;
-    transactionMessage: CompilableTransactionMessage | (ITransactionMessageWithFeePayer & TransactionMessage);
+    transactionMessage: CompilableTransactionMessage | (TransactionMessage & TransactionMessageWithFeePayer);
 }>;
 
 const COMPUTE_BUDGET_PROGRAM_ADDRESS =
@@ -55,7 +50,7 @@ const INVALID_BUT_SUFFICIENT_FOR_COMPILATION_BLOCKHASH = {
 } as const;
 const SET_COMPUTE_UNIT_LIMIT_INSTRUCTION_INDEX = 0x02;
 
-function createComputeUnitLimitInstruction(units: number): IInstruction<typeof COMPUTE_BUDGET_PROGRAM_ADDRESS> {
+function createComputeUnitLimitInstruction(units: number): Instruction<typeof COMPUTE_BUDGET_PROGRAM_ADDRESS> {
     const data = new Uint8Array(5);
     data[0] = SET_COMPUTE_UNIT_LIMIT_INSTRUCTION_INDEX;
     getU32Encoder().write(units, data, 1 /* offset */);
@@ -66,8 +61,8 @@ function createComputeUnitLimitInstruction(units: number): IInstruction<typeof C
 }
 
 function isSetComputeLimitInstruction(
-    instruction: IInstruction,
-): instruction is IInstruction<typeof COMPUTE_BUDGET_PROGRAM_ADDRESS> & IInstructionWithData<Uint8Array> {
+    instruction: Instruction,
+): instruction is Instruction<typeof COMPUTE_BUDGET_PROGRAM_ADDRESS> & InstructionWithData<Uint8Array> {
     return (
         isInstructionForProgram(instruction, COMPUTE_BUDGET_PROGRAM_ADDRESS) &&
         isInstructionWithData(instruction) &&
@@ -142,8 +137,8 @@ export async function getComputeUnitEstimateForTransactionMessage_INTERNAL_ONLY_
      * STEP 1: Make sure the transaction message will not fail in simulation for lack of a lifetime
      *         - either a recent blockhash lifetime or a nonce.
      */
-    const isDurableNonceTransactionMessage = isDurableNonceTransaction(transactionMessage);
-    let compilableTransactionMessage;
+    const isDurableNonceTransactionMessage = isTransactionMessageWithDurableNonceLifetime(transactionMessage);
+    let compilableTransactionMessage: CompilableTransactionMessage;
     if (isDurableNonceTransactionMessage || isTransactionMessageWithBlockhashLifetime(transactionMessage)) {
         compilableTransactionMessage = transactionMessage;
     } else {
@@ -163,7 +158,7 @@ export async function getComputeUnitEstimateForTransactionMessage_INTERNAL_ONLY_
         compilableTransactionMessage = appendTransactionMessageInstruction(
             maxComputeUnitLimitInstruction,
             compilableTransactionMessage,
-        );
+        ) as CompilableTransactionMessage;
     } else {
         const nextInstructions = [...compilableTransactionMessage.instructions];
         nextInstructions.splice(existingSetComputeUnitLimitInstructionIndex, 1, maxComputeUnitLimitInstruction);

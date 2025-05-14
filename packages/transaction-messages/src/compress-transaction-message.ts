@@ -1,5 +1,5 @@
 import { Address } from '@solana/addresses';
-import { AccountRole, IAccountLookupMeta, IAccountMeta, IInstruction, isSignerRole } from '@solana/instructions';
+import { AccountLookupMeta, AccountMeta, AccountRole, Instruction, isSignerRole } from '@solana/instructions';
 
 import { AddressesByLookupTableAddress } from './addresses-by-lookup-table-address';
 import { BaseTransactionMessage, TransactionMessage } from './transaction-message';
@@ -13,7 +13,7 @@ function findAddressInLookupTables(
     address: Address,
     role: AccountRole.READONLY | AccountRole.WRITABLE,
     addressesByLookupTableAddress: AddressesByLookupTableAddress,
-): IAccountLookupMeta | undefined {
+): AccountLookupMeta | undefined {
     for (const [lookupTableAddress, addresses] of Object.entries(addressesByLookupTableAddress)) {
         for (let i = 0; i < addresses.length; i++) {
             if (address === addresses[i]) {
@@ -30,14 +30,14 @@ function findAddressInLookupTables(
 
 type TransactionMessageNotLegacy = Exclude<TransactionMessage, { version: 'legacy' }>;
 
-// Each account can be IAccountLookupMeta | IAccountMeta
-type WidenInstructionAccounts<TInstruction extends IInstruction> =
-    TInstruction extends IInstruction<infer TProgramAddress, infer TAccounts>
-        ? IInstruction<
+// Each account can be AccountLookupMeta | AccountMeta
+type WidenInstructionAccounts<TInstruction extends Instruction> =
+    TInstruction extends Instruction<infer TProgramAddress, infer TAccounts>
+        ? Instruction<
               TProgramAddress,
               {
-                  [K in keyof TAccounts]: TAccounts[K] extends IAccountMeta<infer TAddress>
-                      ? IAccountLookupMeta<TAddress> | IAccountMeta<TAddress>
+                  [K in keyof TAccounts]: TAccounts[K] extends AccountMeta<infer TAddress>
+                      ? AccountLookupMeta<TAddress> | AccountMeta<TAddress>
                       : TAccounts[K];
               }
           >
@@ -57,8 +57,8 @@ type WidenTransactionMessageInstructions<TTransactionMessage extends Transaction
 /**
  * Given a transaction message and a mapping of lookup tables to the addresses stored in them, this
  * function will return a new transaction message with the same instructions but with all non-signer
- * accounts that are found in the given lookup tables represented by an {@link IAccountLookupMeta}
- * instead of an {@link IAccountMeta}.
+ * accounts that are found in the given lookup tables represented by an {@link AccountLookupMeta}
+ * instead of an {@link AccountMeta}.
  *
  * This means that these accounts will take up less space in the compiled transaction message. This
  * size reduction is most significant when the transaction includes many accounts from the same
@@ -90,7 +90,7 @@ export function compressTransactionMessageUsingAddressLookupTables<
 ): TTransactionMessage | WidenTransactionMessageInstructions<TTransactionMessage> {
     const lookupTableAddresses = new Set(Object.values(addressesByLookupTableAddress).flatMap(a => a));
 
-    const newInstructions: IInstruction[] = [];
+    const newInstructions: Instruction[] = [];
     let updatedAnyInstructions = false;
     for (const instruction of transactionMessage.instructions) {
         if (!instruction.accounts) {
@@ -98,7 +98,7 @@ export function compressTransactionMessageUsingAddressLookupTables<
             continue;
         }
 
-        const newAccounts: Mutable<NonNullable<IInstruction['accounts']>> = [];
+        const newAccounts: Mutable<NonNullable<Instruction['accounts']>> = [];
         let updatedAnyAccounts = false;
         for (const account of instruction.accounts) {
             // If the address is already a lookup, is not in any lookup tables, or is a signer role, return as-is

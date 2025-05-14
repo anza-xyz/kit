@@ -1,6 +1,13 @@
-import { Address } from '@solana/addresses';
-import { Blockhash, Slot } from '@solana/rpc-types';
-import { Nonce } from '@solana/transaction-messages';
+import type { Address } from '@solana/addresses';
+import type { Blockhash, Slot } from '@solana/rpc-types';
+import type {
+    CompilableTransactionMessage,
+    Nonce,
+    TransactionMessageWithBlockhashLifetime,
+    TransactionMessageWithDurableNonceLifetime,
+} from '@solana/transaction-messages';
+
+import type { Transaction } from './transaction';
 
 /**
  * A constraint which, when applied to a transaction, makes that transaction eligible to land on the
@@ -78,3 +85,20 @@ export type TransactionWithBlockhashLifetime = {
 export type TransactionWithDurableNonceLifetime = {
     readonly lifetimeConstraint: TransactionDurableNonceLifetime;
 };
+
+/**
+ * Helper type that sets the lifetime constraint of a transaction message to be the same as the
+ * lifetime constraint of the provided transaction message.
+ */
+export type SetTransactionLifetimeFromCompilableTransactionMessage<
+    TTransaction extends Transaction,
+    TTransactionMessage extends CompilableTransactionMessage,
+> =
+    // Note that we have to compare the `lifetimeConstraint` properties explicitly because the
+    // `CompilableTransactionMessage` contains the union of all possible lifetime constraints
+    // and therefore would always match the first condition.
+    TTransactionMessage['lifetimeConstraint'] extends TransactionMessageWithBlockhashLifetime['lifetimeConstraint']
+        ? TransactionWithBlockhashLifetime & TTransaction
+        : TTransactionMessage['lifetimeConstraint'] extends TransactionMessageWithDurableNonceLifetime['lifetimeConstraint']
+          ? TransactionWithDurableNonceLifetime & TTransaction
+          : TransactionWithLifetime & TTransaction;

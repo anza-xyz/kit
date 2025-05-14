@@ -2,7 +2,7 @@ import '@solana/test-matchers/toBeFrozenObject';
 
 import { Address } from '@solana/addresses';
 
-import { ITransactionMessageWithFeePayer, setTransactionMessageFeePayer } from '../fee-payer';
+import { setTransactionMessageFeePayer, TransactionMessageWithFeePayer } from '../fee-payer';
 import { BaseTransactionMessage } from '../transaction-message';
 
 const EXAMPLE_FEE_PAYER_A =
@@ -23,7 +23,7 @@ describe('setTransactionMessageFeePayer', () => {
         expect(txWithFeePayerA).toHaveProperty('feePayer', { address: EXAMPLE_FEE_PAYER_A });
     });
     describe('given a transaction with a fee payer already set', () => {
-        let txWithFeePayerA: BaseTransactionMessage & ITransactionMessageWithFeePayer;
+        let txWithFeePayerA: BaseTransactionMessage & TransactionMessageWithFeePayer;
         beforeEach(() => {
             txWithFeePayerA = {
                 ...baseTx,

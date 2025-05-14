@@ -3,7 +3,7 @@ import '@solana/test-matchers/toBeFrozenObject';
 import { ImplicitArrayBuffer } from 'node:buffer';
 
 import { address } from '@solana/addresses';
-import { AccountRole, IInstruction } from '@solana/instructions';
+import { AccountRole, Instruction } from '@solana/instructions';
 import { PublicKey, TransactionInstruction } from '@solana/web3.js';
 
 import { fromLegacyPublicKey } from '../address';
@@ -39,7 +39,7 @@ describe('fromLegacyTransactionInstruction', () => {
 
         const converted = fromLegacyTransactionInstruction(instruction);
 
-        expect(converted).toStrictEqual<IInstruction>({
+        expect(converted).toStrictEqual<Instruction>({
             accounts: [
                 {
                     address: address('7EqQdEULxWcraVx3mXKFjc84LhCkMGZCkRuDpvcMwJeK'),
@@ -129,7 +129,7 @@ describe('fromLegacyTransactionInstruction', () => {
 
         const converted = fromLegacyTransactionInstruction(instruction);
 
-        expect(converted).toStrictEqual<IInstruction>({
+        expect(converted).toStrictEqual<Instruction>({
             data,
             programAddress: fromLegacyPublicKey(new PublicKey(programId)),
         });
@@ -155,7 +155,7 @@ describe('fromLegacyTransactionInstruction', () => {
 
         const converted = fromLegacyTransactionInstruction(instruction);
 
-        expect(converted).toStrictEqual<IInstruction>({
+        expect(converted).toStrictEqual<Instruction>({
             accounts: [
                 {
                     address: address('7EqQdEULxWcraVx3mXKFjc84LhCkMGZCkRuDpvcMwJeK'),
@@ -189,7 +189,7 @@ describe('fromLegacyTransactionInstruction', () => {
 
         const converted = fromLegacyTransactionInstruction(instruction);
 
-        expect(converted).toStrictEqual<IInstruction>({
+        expect(converted).toStrictEqual<Instruction>({
             accounts: [
                 {
                     address: address('F7Kzv7G6p1PvHXL1xXLPTm4myKWpLjnVphCV8ABZJfgT'),
@@ -217,7 +217,7 @@ describe('fromLegacyTransactionInstruction', () => {
 
         const converted = fromLegacyTransactionInstruction(instruction);
 
-        expect(converted).toStrictEqual<IInstruction>({
+        expect(converted).toStrictEqual<Instruction>({
             accounts: [
                 {
                     address: address('F7Kzv7G6p1PvHXL1xXLPTm4myKWpLjnVphCV8ABZJfgT'),

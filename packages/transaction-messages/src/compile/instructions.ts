@@ -1,6 +1,6 @@
 import { Address } from '@solana/addresses';
 import { ReadonlyUint8Array } from '@solana/codecs-core';
-import { IInstruction } from '@solana/instructions';
+import { Instruction } from '@solana/instructions';
 
 import { OrderedAccounts } from './accounts';
 
@@ -28,7 +28,7 @@ function getAccountIndex(orderedAccounts: OrderedAccounts) {
 }
 
 export function getCompiledInstructions(
-    instructions: readonly IInstruction[],
+    instructions: readonly Instruction[],
     orderedAccounts: OrderedAccounts,
 ): CompiledInstruction[] {
     const accountIndex = getAccountIndex(orderedAccounts);
