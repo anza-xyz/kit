@@ -65,7 +65,7 @@ type CompilableTransactionMessageWithSigners = CompilableTransactionMessage & Tr
     const transactionMessage = null as unknown as CompilableTransactionMessageWithSigners &
         TransactionMessageWithBlockhashLifetime;
     signTransactionMessageWithSigners(transactionMessage) satisfies Promise<
-        Readonly<FullySignedTransaction & TransactionWithBlockhashLifetime>
+        Readonly<FullySignedTransaction & Transaction & TransactionWithBlockhashLifetime>
     >;
 }
 
@@ -74,7 +74,7 @@ type CompilableTransactionMessageWithSigners = CompilableTransactionMessage & Tr
     const transactionMessage = null as unknown as CompilableTransactionMessageWithSigners &
         TransactionMessageWithDurableNonceLifetime;
     signTransactionMessageWithSigners(transactionMessage) satisfies Promise<
-        Readonly<FullySignedTransaction & TransactionWithDurableNonceLifetime>
+        Readonly<FullySignedTransaction & Transaction & TransactionWithDurableNonceLifetime>
     >;
 }
 
@@ -82,7 +82,7 @@ type CompilableTransactionMessageWithSigners = CompilableTransactionMessage & Tr
     // [signTransactionMessageWithSigners]: returns a fully signed transaction with an unknown lifetime
     const transactionMessage = null as unknown as CompilableTransactionMessageWithSigners;
     signTransactionMessageWithSigners(transactionMessage) satisfies Promise<
-        Readonly<FullySignedTransaction & TransactionWithLifetime>
+        Readonly<FullySignedTransaction & Transaction & TransactionWithLifetime>
     >;
 }
 
