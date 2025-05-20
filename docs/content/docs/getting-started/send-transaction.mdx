@@ -12,8 +12,8 @@ The most common way to send transactions is via the `sendTransaction` RPC method
 One way to tackle this would be to encode the transaction ourselves using `getBase64EncodedWireTransaction` and pass it to the `sendTransaction` RPC method like so.
 
 ```ts twoslash
-import { FullySignedTransaction, TransactionWithBlockhashLifetime, Rpc, SolanaRpcApi } from "@solana/kit";
-const signedTransaction = null as unknown as FullySignedTransaction & TransactionWithBlockhashLifetime;
+import { Transaction, FullySignedTransaction, TransactionWithBlockhashLifetime, Rpc, SolanaRpcApi } from "@solana/kit";
+const signedTransaction = null as unknown as Transaction & FullySignedTransaction & TransactionWithBlockhashLifetime;
 const rpc = null as unknown as Rpc<SolanaRpcApi>;
 // ---cut-before---
 import { getBase64EncodedWireTransaction } from "@solana/kit";
@@ -25,8 +25,8 @@ await rpc.sendTransaction(encodedTransaction, { preflightCommitment: "confirmed"
 However, Kit offers a helper function that does that for us whilst providing some sensible default values. This function is called `sendTransactionWithoutConfirmingFactory` and, given an RPC object, it returns a function that sends transactions without waiting for confirmation.
 
 ```ts twoslash
-import { FullySignedTransaction, TransactionWithBlockhashLifetime, Rpc, SolanaRpcApi } from "@solana/kit";
-const signedTransaction = null as unknown as FullySignedTransaction & TransactionWithBlockhashLifetime;
+import { Transaction, FullySignedTransaction, TransactionWithBlockhashLifetime, Rpc, SolanaRpcApi } from "@solana/kit";
+const signedTransaction = null as unknown as Transaction & FullySignedTransaction & TransactionWithBlockhashLifetime;
 const rpc = null as unknown as Rpc<SolanaRpcApi>;
 // ---cut-before---
 import { sendTransactionWithoutConfirmingFactory } from "@solana/kit";
@@ -50,6 +50,7 @@ Both accept RPC and RPC Subscriptions objects and return a function that sends a
 
 ```ts twoslash
 import {
+  Transaction,
   FullySignedTransaction,
   TransactionWithBlockhashLifetime,
   Rpc,
@@ -57,7 +58,7 @@ import {
   RpcSubscriptions,
   SolanaRpcSubscriptionsApi,
 } from "@solana/kit";
-const signedTransaction = null as unknown as FullySignedTransaction & TransactionWithBlockhashLifetime;
+const signedTransaction = null as unknown as Transaction & FullySignedTransaction & TransactionWithBlockhashLifetime;
 const rpc = null as unknown as Rpc<SolanaRpcApi>;
 const rpcSubscriptions = null as unknown as RpcSubscriptions<SolanaRpcSubscriptionsApi>;
 // ---cut-before---
@@ -77,6 +78,7 @@ As such, Kit decouples these two distinct concepts by offering a `getSignatureFr
 
 ```ts twoslash
 import {
+  Transaction,
   FullySignedTransaction,
   TransactionWithBlockhashLifetime,
   Rpc,
@@ -84,7 +86,7 @@ import {
   RpcSubscriptions,
   SolanaRpcSubscriptionsApi,
 } from "@solana/kit";
-const signedTransaction = null as unknown as FullySignedTransaction & TransactionWithBlockhashLifetime;
+const signedTransaction = null as unknown as Transaction & FullySignedTransaction & TransactionWithBlockhashLifetime;
 const rpc = null as unknown as Rpc<SolanaRpcApi>;
 const rpcSubscriptions = null as unknown as RpcSubscriptions<SolanaRpcSubscriptionsApi>;
 // ---cut-before---
