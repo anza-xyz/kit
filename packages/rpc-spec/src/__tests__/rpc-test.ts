@@ -77,7 +77,7 @@ describe('JSON-RPC 2.0', () => {
         });
         it('should not be thenable', () => {
             expect.assertions(1);
-            expect((rpc as { then?: unknown }).then).toBeUndefined();
+            expect(rpc).not.toHaveProperty('then');
         });
     });
     describe('when calling a method having a concrete implementation', () => {
