@@ -35,10 +35,10 @@ type PendingRpcSubscriptionsRequestBuilder<TSubscriptionMethodImplementations> =
 type PendingRpcSubscriptionsRequestReturnTypeMapper<TSubscriptionMethodImplementation> =
     // Check that this property of the TRpcSubscriptionMethods interface is, in fact, a function.
     TSubscriptionMethodImplementation extends Callable
-    ? (
-        ...args: Parameters<TSubscriptionMethodImplementation>
-    ) => PendingRpcSubscriptionsRequest<ReturnType<TSubscriptionMethodImplementation>>
-    : never;
+        ? (
+              ...args: Parameters<TSubscriptionMethodImplementation>
+          ) => PendingRpcSubscriptionsRequest<ReturnType<TSubscriptionMethodImplementation>>
+        : never;
 
 /**
  * Creates a {@link RpcSubscriptions} instance given a
@@ -56,9 +56,6 @@ export function createSubscriptionRpc<TRpcSubscriptionsApiMethods>(
             return false;
         },
         get(target, p, receiver) {
-            if (p === 'then') {
-                return undefined;
-            }
             return function (...rawParams: unknown[]) {
                 const notificationName = p.toString();
                 const createRpcSubscriptionPlan = Reflect.get(target, notificationName, receiver);
