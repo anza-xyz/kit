@@ -1,103 +1,103 @@
 import { Address } from '@solana/addresses';
 import { SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM, SolanaError } from '@solana/errors';
 import { pipe } from '@solana/functional';
-import { appendTransactionMessageInstruction, createTransactionMessage } from '@solana/transaction-messages';
+import {
+    appendTransactionMessageInstruction,
+    createTransactionMessage,
+    TransactionMessage,
+} from '@solana/transaction-messages';
 
 import { isProgramError } from '../program-error';
 
 describe('isProgramError', () => {
-    it('identifies an error as a custom program error', () => {
-        // Given a transaction message with a single instruction.
-        const programAddress = '1111' as Address;
-        const tx = pipe(createTransactionMessage({ version: 0 }), tx =>
-            appendTransactionMessageInstruction({ programAddress }, tx),
-        );
-
-        // And a custom program error on the instruction.
-        const error = new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM, {
-            code: 42,
-            index: 0,
+    const programAddress = '1111' as Address;
+    describe('when the error carries a responsible program address', () => {
+        let error: SolanaError;
+        beforeEach(() => {
+            error = new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM, {
+                code: 42,
+                index: 0,
+                responsibleProgramAddress: programAddress,
+            });
         });
-
-        // Then we expect the error to be identified as a program error.
-        expect(isProgramError(error, tx, programAddress)).toBe(true);
+        it('identifies the error as a custom program error', () => {
+            expect(isProgramError(error, programAddress)).toBe(true);
+        });
+        it('matches the provided custom program error code', () => {
+            expect(isProgramError(error, programAddress, 42)).toBe(true);
+        });
+        it('returns false if the program address does not match', () => {
+            expect(isProgramError(error, '2222' as Address)).toBe(false);
+        });
+        it('returns false if the custom program error code does not match', () => {
+            expect(isProgramError(error, programAddress, 43)).toBe(false);
+        });
     });
-
-    it('matches the provided custom program error code', () => {
-        // Given a transaction message with a single instruction.
-        const programAddress = '1111' as Address;
-        const tx = pipe(createTransactionMessage({ version: 0 }), tx =>
-            appendTransactionMessageInstruction({ programAddress }, tx),
-        );
-
-        // And a custom program error with code 42.
-        const error = new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM, {
-            code: 42,
-            index: 0,
+    describe('when the error does not carry a responsible program address but the user supplied a transaction message', () => {
+        let error: SolanaError;
+        let transactionMessage: TransactionMessage;
+        beforeEach(() => {
+            error = new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM, {
+                code: 42,
+                index: 0,
+            });
+            transactionMessage = pipe(createTransactionMessage({ version: 0 }), m =>
+                appendTransactionMessageInstruction({ programAddress }, m),
+            );
         });
-
-        // When we specify the custom program error code 42.
-        const result = isProgramError(error, tx, programAddress, 42);
-
-        // Then we expect the result to be true.
-        expect(result).toBe(true);
+        it('uses the transaction message to identify the error as a custom program error', () => {
+            expect(isProgramError(error, transactionMessage, programAddress)).toBe(true);
+        });
+        it('uses the transaction message to match the provided custom program error code', () => {
+            expect(isProgramError(error, transactionMessage, programAddress, 42)).toBe(true);
+        });
+        it('returns false if the program address does not match', () => {
+            expect(isProgramError(error, transactionMessage, '2222' as Address)).toBe(false);
+        });
+        it('returns false if the custom program error code does not match', () => {
+            expect(isProgramError(error, transactionMessage, programAddress, 43)).toBe(false);
+        });
     });
-
-    it('returns false if the program address does not match', () => {
-        // Given a transaction message with a program A instruction.
-        const programA = '1111' as Address;
-        const tx = pipe(createTransactionMessage({ version: 0 }), tx =>
-            appendTransactionMessageInstruction({ programAddress: programA }, tx),
-        );
-
-        // And a custom program error on the instruction.
-        const error = new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM, {
-            code: 42,
-            index: 0,
+    describe('when the error carries a responsible program address and the user supplied a transaction message', () => {
+        let error: SolanaError;
+        let transactionMessage: TransactionMessage;
+        beforeEach(() => {
+            error = new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM, {
+                code: 42,
+                index: 0,
+                responsibleProgramAddress: programAddress,
+            });
+            transactionMessage = pipe(createTransactionMessage({ version: 0 }), m =>
+                appendTransactionMessageInstruction({ programAddress: '2222' as Address }, m),
+            );
         });
-
-        // When we try to identify the error as a program error for program B.
-        const programB = '2222' as Address;
-        const result = isProgramError(error, tx, programB);
-
-        // Then we expect the result to be false.
-        expect(result).toBe(false);
+        it('uses the responsible program address in the error context to identify the error as a custom program error', () => {
+            expect(isProgramError(error, transactionMessage, programAddress)).toBe(true);
+        });
+        it('uses the responsible program address in the error context to match the provided custom program error code', () => {
+            expect(isProgramError(error, transactionMessage, programAddress, 42)).toBe(true);
+        });
+        it('returns false if the program address does not match, ignoring the contents of the transaction message', () => {
+            expect(isProgramError(error, transactionMessage, '2222' as Address)).toBe(false);
+        });
+        it('returns false if the custom program error code does not match', () => {
+            expect(isProgramError(error, transactionMessage, programAddress, 43)).toBe(false);
+        });
     });
-
-    it('returns false if the instruction is missing', () => {
-        // Given a transaction message with a single instruction.
-        const programAddress = '1111' as Address;
-        const tx = pipe(createTransactionMessage({ version: 0 }), tx =>
-            appendTransactionMessageInstruction({ programAddress }, tx),
-        );
-
-        // And a custom program error pointing to a missing instruction.
-        const error = new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM, {
-            code: 42,
-            index: 999,
+    describe('when the error does not carry a responsible program address and the user supplied a transaction message in which the referenced top-level instruction can not be found', () => {
+        let error: SolanaError;
+        let transactionMessage: TransactionMessage;
+        beforeEach(() => {
+            error = new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM, {
+                code: 42,
+                index: 999,
+            });
+            transactionMessage = pipe(createTransactionMessage({ version: 0 }), m =>
+                appendTransactionMessageInstruction({ programAddress }, m),
+            );
         });
-
-        // Then we expect the error not to be identified as a program error.
-        expect(isProgramError(error, tx, programAddress)).toBe(false);
-    });
-
-    it('returns false if the custom program error code does not match', () => {
-        // Given a transaction message with a single instruction.
-        const programAddress = '1111' as Address;
-        const tx = pipe(createTransactionMessage({ version: 0 }), tx =>
-            appendTransactionMessageInstruction({ programAddress }, tx),
-        );
-
-        // And a custom program error on the instruction with code 42.
-        const error = new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM, {
-            code: 42,
-            index: 0,
+        it('returns false', () => {
+            expect(isProgramError(error, transactionMessage, programAddress)).toBe(false);
         });
-
-        // When we try to identify the error as a program error with code 43.
-        const result = isProgramError(error, tx, programAddress, 43);
-
-        // Then we expect the result to be false.
-        expect(result).toBe(false);
     });
 });
