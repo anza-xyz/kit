@@ -75,6 +75,10 @@ describe('JSON-RPC 2.0', () => {
             const sendPromise = rpc.someMethod().send();
             await expect(sendPromise).rejects.toThrow(transportError);
         });
+        it('should not be thenable', () => {
+            expect.assertions(1);
+            expect((rpc as { then?: unknown }).then).toBeUndefined();
+        });
     });
     describe('when calling a method having a concrete implementation', () => {
         let rpc: Rpc<TestRpcMethods>;
