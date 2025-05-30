@@ -27,6 +27,3 @@ test-ledger/
 
 # ignore JetBrains IDE
 .idea
-
-# Ignore VS Code IDE
-.vscode
