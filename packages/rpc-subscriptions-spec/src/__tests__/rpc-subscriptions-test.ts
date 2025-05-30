@@ -28,6 +28,6 @@ describe('createSubscriptionRpc', () => {
     });
 
     it('should not be thenable', () => {
-        expect((rpcSubscriptions as { then?: unknown }).then).toBeUndefined();
+        expect(rpcSubscriptions).not.toHaveProperty('then');
     });
 });
