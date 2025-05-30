@@ -20,7 +20,6 @@ This package contains helpers for identifying custom program errors. It can be u
 This function identifies whether an error -- typically caused by a transaction failure -- is a custom program error from the provided program address. It takes the following parameters:
 
 - The `error` to identify.
-- The `transactionMessage` object that failed to execute. Since the RPC response only provides the index of the failed instruction, the transaction message is required to determine its program address.
 - The `programAddress` of the program from which the error is expected to have originated.
 - Optionally, the expected error `code` of the custom program error. When provided, the function will check that the custom program error code matches the given value.
 
@@ -28,9 +27,9 @@ This function identifies whether an error -- typically caused by a transaction f
 try {
     // Send and confirm your transaction.
 } catch (error) {
-    if (isProgramError(error, transactionMessage, myProgramAddress, 42)) {
+    if (isProgramError(error, myProgramAddress, 42)) {
         // Handle custom program error 42 from this program.
-    } else if (isProgramError(error, transactionMessage, myProgramAddress)) {
+    } else if (isProgramError(error, myProgramAddress)) {
         // Handle all other custom program errors from this program.
     } else {
         throw error;
