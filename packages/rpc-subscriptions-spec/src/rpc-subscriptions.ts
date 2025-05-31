@@ -56,6 +56,9 @@ export function createSubscriptionRpc<TRpcSubscriptionsApiMethods>(
             return false;
         },
         get(target, p, receiver) {
+            if (p === 'then') {
+                return undefined;
+            }
             return function (...rawParams: unknown[]) {
                 const notificationName = p.toString();
                 const createRpcSubscriptionPlan = Reflect.get(target, notificationName, receiver);

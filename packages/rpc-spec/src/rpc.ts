@@ -72,6 +72,9 @@ function makeProxy<TRpcMethods, TRpcTransport extends RpcTransport>(
             return false;
         },
         get(target, p, receiver) {
+            if (p === 'then') {
+                return undefined;
+            }
             return function (...rawParams: unknown[]) {
                 const methodName = p.toString();
                 const getApiPlan = Reflect.get(target, methodName, receiver);
