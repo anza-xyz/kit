@@ -90,6 +90,7 @@ export interface RpcSimulateTransactionResult {
         programId: string;
     } | null;
     unitsConsumed: number | null;
+    loadedAccountsDataSize: number | null;
 }
 
 export function getSolanaErrorFromJsonRpcError(putativeErrorResponse: unknown): SolanaError {

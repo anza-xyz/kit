@@ -117,6 +117,8 @@ type SimulateTransactionApiResponseBase = Readonly<{
     }> | null;
     /** The number of compute budget units consumed during the processing of this transaction */
     unitsConsumed?: bigint;
+    /** The number of bytes of all accounts loaded by this transaction */
+    loadedAccountsDataSize?: bigint;
 }>;
 
 type SimulateTransactionApiResponseWithAccounts<T extends AccountInfoBase> = Readonly<{
