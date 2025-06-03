@@ -2,10 +2,13 @@ import { Blockhash } from '@solana/rpc-types';
 
 import {
     assertIsTransactionMessageWithBlockhashLifetime,
+    fillMissingTransactionMessageLifetimeUsingProvisoryBlockhash,
     isTransactionMessageWithBlockhashLifetime,
     setTransactionMessageLifetimeUsingBlockhash,
+    setTransactionMessageLifetimeUsingProvisoryBlockhash,
     TransactionMessageWithBlockhashLifetime,
 } from '../blockhash';
+import { TransactionMessageWithDurableNonceLifetime } from '../durable-nonce';
 import { BaseTransactionMessage, TransactionMessage } from '../transaction-message';
 
 const mockBlockhash = null as unknown as Blockhash;
@@ -66,5 +69,61 @@ type V0TransactionMessage = Extract<TransactionMessage, { version: 0 }>;
         newMessage satisfies LegacyTransactionMessage & TransactionMessageWithBlockhashLifetime & { some: 1 };
         // @ts-expect-error Should not be a v0 message.
         newMessage satisfies TransactionMessageWithBlockhashLifetime & V0TransactionMessage & { some: 1 };
+    }
+}
+
+// [DESCRIBE] setTransactionMessageLifetimeUsingProvisoryBlockhash
+{
+    // It sets the blockhash lifetime on the transaction message.
+    {
+        const message = null as unknown as TransactionMessage;
+        const newMessage = setTransactionMessageLifetimeUsingProvisoryBlockhash(message);
+        newMessage satisfies TransactionMessage & TransactionMessageWithBlockhashLifetime;
+        // @ts-expect-error Should not be a durable nonce lifetime.
+        newMessage satisfies TransactionMessage & TransactionMessageWithDurableNonceLifetime;
+    }
+
+    // It overrides existing lifetime constraints on the transaction message.
+    {
+        const message = null as unknown as TransactionMessage & TransactionMessageWithDurableNonceLifetime;
+        const newMessage = setTransactionMessageLifetimeUsingProvisoryBlockhash(message);
+        newMessage satisfies TransactionMessage & TransactionMessageWithBlockhashLifetime;
+        // @ts-expect-error Should not be a durable nonce lifetime.
+        newMessage satisfies TransactionMessage & TransactionMessageWithDurableNonceLifetime;
+    }
+
+    // It keeps any extra properties on the transaction message.
+    {
+        const message = null as unknown as TransactionMessage & { some: 1 };
+        const newMessage = setTransactionMessageLifetimeUsingProvisoryBlockhash(message);
+        newMessage satisfies TransactionMessage & TransactionMessageWithBlockhashLifetime & { some: 1 };
+    }
+}
+
+// [DESCRIBE] fillMissingTransactionMessageLifetimeUsingProvisoryBlockhash
+{
+    // It sets the blockhash lifetime on the transaction message.
+    {
+        const message = null as unknown as TransactionMessage;
+        const newMessage = fillMissingTransactionMessageLifetimeUsingProvisoryBlockhash(message);
+        newMessage satisfies TransactionMessage & TransactionMessageWithBlockhashLifetime;
+        // @ts-expect-error Should not be a durable nonce lifetime.
+        newMessage satisfies TransactionMessage & TransactionMessageWithDurableNonceLifetime;
+    }
+
+    // It does not override existing lifetime constraints on the transaction message.
+    {
+        const message = null as unknown as TransactionMessage & TransactionMessageWithDurableNonceLifetime;
+        const newMessage = fillMissingTransactionMessageLifetimeUsingProvisoryBlockhash(message);
+        newMessage satisfies TransactionMessage & TransactionMessageWithDurableNonceLifetime;
+        // @ts-expect-error Should not be a blockhash lifetime.
+        newMessage satisfies TransactionMessage & TransactionMessageWithBlockhashLifetime;
+    }
+
+    // It keeps any extra properties on the transaction message.
+    {
+        const message = null as unknown as TransactionMessage & { some: 1 };
+        const newMessage = fillMissingTransactionMessageLifetimeUsingProvisoryBlockhash(message);
+        newMessage satisfies TransactionMessage & TransactionMessageWithBlockhashLifetime & { some: 1 };
     }
 }

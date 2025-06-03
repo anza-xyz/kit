@@ -5,7 +5,10 @@ import type { Blockhash } from '@solana/rpc-types';
 
 import {
     assertIsTransactionMessageWithBlockhashLifetime,
+    fillMissingTransactionMessageLifetimeUsingProvisoryBlockhash,
+    PROVISORY_BLOCKHASH_LIFETIME_CONSTRAINT,
     setTransactionMessageLifetimeUsingBlockhash,
+    setTransactionMessageLifetimeUsingProvisoryBlockhash,
     TransactionMessageWithBlockhashLifetime,
 } from '../blockhash';
 import { BaseTransactionMessage } from '../transaction-message';
@@ -142,6 +145,78 @@ describe('setTransactionMessageLifetimeUsingBlockhash', () => {
             BLOCKHASH_CONSTRAINT_A,
             baseTx,
         );
+        expect(txWithBlockhashLifetimeConstraint.lifetimeConstraint).toBeFrozenObject();
+    });
+});
+
+describe('setTransactionMessageLifetimeUsingProvisoryBlockhash', () => {
+    let baseTx: BaseTransactionMessage;
+    beforeEach(() => {
+        baseTx = { instructions: [], version: 0 };
+    });
+    it('sets the provisory lifetime constraint on the transaction message', () => {
+        const txWithBlockhashLifetimeConstraint = setTransactionMessageLifetimeUsingProvisoryBlockhash(baseTx);
+        expect(txWithBlockhashLifetimeConstraint).toHaveProperty(
+            'lifetimeConstraint',
+            PROVISORY_BLOCKHASH_LIFETIME_CONSTRAINT,
+        );
+    });
+    it('overrides the existing blockhash lifetime constraint with the provisory one', () => {
+        const EXISTING_BLOCKHASH_CONSTRAINT = {
+            blockhash: 'F7vmkY3DTaxfagttWjQweib42b6ZHADSx94Tw8gHx3W7' as Blockhash,
+            lastValidBlockHeight: 123n,
+        };
+        const txWithBlockhashLifetimeConstraint = { ...baseTx, lifetimeConstraint: EXISTING_BLOCKHASH_CONSTRAINT };
+        const updatedTxWithBlockhashLifetimeConstraint = setTransactionMessageLifetimeUsingProvisoryBlockhash(
+            txWithBlockhashLifetimeConstraint,
+        );
+        expect(updatedTxWithBlockhashLifetimeConstraint).toHaveProperty(
+            'lifetimeConstraint',
+            PROVISORY_BLOCKHASH_LIFETIME_CONSTRAINT,
+        );
+    });
+    it('freezes the object', () => {
+        const txWithBlockhashLifetimeConstraint = setTransactionMessageLifetimeUsingProvisoryBlockhash(baseTx);
+        expect(txWithBlockhashLifetimeConstraint).toBeFrozenObject();
+    });
+    it('freezes the blockhash constraint', () => {
+        const txWithBlockhashLifetimeConstraint = setTransactionMessageLifetimeUsingProvisoryBlockhash(baseTx);
+        expect(txWithBlockhashLifetimeConstraint.lifetimeConstraint).toBeFrozenObject();
+    });
+});
+
+describe('fillMissingTransactionMessageLifetimeUsingProvisoryBlockhash', () => {
+    let baseTx: BaseTransactionMessage;
+    beforeEach(() => {
+        baseTx = { instructions: [], version: 0 };
+    });
+    it('sets the provisory lifetime constraint on the transaction message', () => {
+        const txWithBlockhashLifetimeConstraint = fillMissingTransactionMessageLifetimeUsingProvisoryBlockhash(baseTx);
+        expect(txWithBlockhashLifetimeConstraint).toHaveProperty(
+            'lifetimeConstraint',
+            PROVISORY_BLOCKHASH_LIFETIME_CONSTRAINT,
+        );
+    });
+    it('does not override the existing blockhash lifetime constraint with the provisory one', () => {
+        const EXISTING_BLOCKHASH_CONSTRAINT = {
+            blockhash: 'F7vmkY3DTaxfagttWjQweib42b6ZHADSx94Tw8gHx3W7' as Blockhash,
+            lastValidBlockHeight: 123n,
+        };
+        const txWithBlockhashLifetimeConstraint = { ...baseTx, lifetimeConstraint: EXISTING_BLOCKHASH_CONSTRAINT };
+        const updatedTxWithBlockhashLifetimeConstraint = fillMissingTransactionMessageLifetimeUsingProvisoryBlockhash(
+            txWithBlockhashLifetimeConstraint,
+        );
+        expect(updatedTxWithBlockhashLifetimeConstraint).toHaveProperty(
+            'lifetimeConstraint',
+            EXISTING_BLOCKHASH_CONSTRAINT,
+        );
+    });
+    it('freezes the object', () => {
+        const txWithBlockhashLifetimeConstraint = fillMissingTransactionMessageLifetimeUsingProvisoryBlockhash(baseTx);
+        expect(txWithBlockhashLifetimeConstraint).toBeFrozenObject();
+    });
+    it('freezes the blockhash constraint', () => {
+        const txWithBlockhashLifetimeConstraint = fillMissingTransactionMessageLifetimeUsingProvisoryBlockhash(baseTx);
         expect(txWithBlockhashLifetimeConstraint.lifetimeConstraint).toBeFrozenObject();
     });
 });
