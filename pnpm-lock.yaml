@@ -534,6 +534,21 @@ importers:
         specifier: '>=5.3.3'
         version: 5.8.2
 
+  packages/instruction-plans:
+    dependencies:
+      '@solana/instructions':
+        specifier: workspace:*
+        version: link:../instructions
+      '@solana/transaction-messages':
+        specifier: workspace:*
+        version: link:../transaction-messages
+      '@solana/transactions':
+        specifier: workspace:*
+        version: link:../transactions
+      typescript:
+        specifier: '>=5.3.3'
+        version: 5.8.3
+
   packages/instructions:
     dependencies:
       '@solana/codecs-core':
