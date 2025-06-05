@@ -84,13 +84,13 @@ export interface RpcSimulateTransactionResult {
               )[];
           }[]
         | null;
+    loadedAccountsDataSize: number | null;
     logs: string[] | null;
     returnData: {
         data: [string, 'base64'];
         programId: string;
     } | null;
     unitsConsumed: number | null;
-    loadedAccountsDataSize: number | null;
 }
 
 export function getSolanaErrorFromJsonRpcError(putativeErrorResponse: unknown): SolanaError {
