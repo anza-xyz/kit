@@ -343,6 +343,7 @@ function getAllowedNumericKeypaths(): AllowedNumericKeypaths<RpcApi<SolanaRpcApi
                 ['delinquent', KEYPATH_WILDCARD, 'commission'],
             ],
             simulateTransaction: [
+		[KEYPATH_WILDCARD, 'loadedAccountsDataSize'],
                 ...jsonParsedAccountsConfigs.map(c => ['value', 'accounts', KEYPATH_WILDCARD, ...c]),
                 ...innerInstructionsConfigs.map(c => ['value', 'innerInstructions', KEYPATH_WILDCARD, ...c]),
             ],
