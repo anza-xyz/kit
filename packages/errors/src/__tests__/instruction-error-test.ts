@@ -66,18 +66,55 @@ describe('getSolanaErrorFromInstructionError', () => {
     it.each(EXPECTED_ERROR_CODES)(
         'produces the correct `SolanaError` for a `%s` error',
         (transactionError, expectedCode) => {
+            const error = getSolanaErrorFromInstructionError(123, transactionError, '1111', 42);
+            expect(error).toEqual(
+                new SolanaError(expectedCode as SolanaErrorCode, {
+                    index: 123,
+                    innerIndex: 42,
+                    responsibleProgramAddress: '1111',
+                }),
+            );
+        },
+    );
+    it.each(EXPECTED_ERROR_CODES)(
+        'produces the correct `SolanaError` for a pre-solana-transaction-error 3.0.0 `%s` error',
+        (transactionError, expectedCode) => {
             const error = getSolanaErrorFromInstructionError(123, transactionError);
             expect(error).toEqual(new SolanaError(expectedCode as SolanaErrorCode, { index: 123 }));
         },
     );
     it.each(EXPECTED_ERROR_CODES)(
-        'produces the correct `SolanaError` for a `%s` error with a bigint index',
+        'produces the correct `SolanaError` for a `%s` error with a bigint instruction indices',
+        (transactionError, expectedCode) => {
+            const error = getSolanaErrorFromInstructionError(123n, transactionError, '1111', 42n);
+            expect(error).toEqual(
+                new SolanaError(expectedCode as SolanaErrorCode, {
+                    index: 123,
+                    innerIndex: 42,
+                    responsibleProgramAddress: '1111',
+                }),
+            );
+        },
+    );
+    it.each(EXPECTED_ERROR_CODES)(
+        'produces the correct `SolanaError` for a pre-solana-transaction-error 3.0.0 `%s` error with a bigint index',
         (transactionError, expectedCode) => {
             const error = getSolanaErrorFromInstructionError(123n, transactionError);
             expect(error).toEqual(new SolanaError(expectedCode as SolanaErrorCode, { index: 123 }));
         },
     );
     it('produces the correct `SolanaError` for a `Custom` error', () => {
+        const error = getSolanaErrorFromInstructionError(123, { Custom: 789 }, '1111', 42n);
+        expect(error).toEqual(
+            new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM, {
+                code: 789,
+                index: 123,
+                innerIndex: 42,
+                responsibleProgramAddress: '1111',
+            }),
+        );
+    });
+    it('produces the correct `SolanaError` for a a pre-solana-transaction-error 3.0.0 `Custom` error', () => {
         const error = getSolanaErrorFromInstructionError(123, { Custom: 789 });
         expect(error).toEqual(
             new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM, {
@@ -87,6 +124,17 @@ describe('getSolanaErrorFromInstructionError', () => {
         );
     });
     it('produces the correct `SolanaError` for a `Custom` error with a bigint code', () => {
+        const error = getSolanaErrorFromInstructionError(123, { Custom: 789n }, '1111', 42);
+        expect(error).toEqual(
+            new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM, {
+                code: 789,
+                index: 123,
+                innerIndex: 42,
+                responsibleProgramAddress: '1111',
+            }),
+        );
+    });
+    it('produces the correct `SolanaError` for a pre-solana-transaction-error 3.0.0 `Custom` error with a bigint code', () => {
         const error = getSolanaErrorFromInstructionError(123, { Custom: 789n });
         expect(error).toEqual(
             new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM, {
@@ -96,6 +144,17 @@ describe('getSolanaErrorFromInstructionError', () => {
         );
     });
     it('produces the correct `SolanaError` for a `BorshIoError` error', () => {
+        const error = getSolanaErrorFromInstructionError(123, { BorshIoError: 'abc' }, '1111', 42);
+        expect(error).toEqual(
+            new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__BORSH_IO_ERROR, {
+                encodedData: 'abc',
+                index: 123,
+                innerIndex: 42,
+                responsibleProgramAddress: '1111',
+            }),
+        );
+    });
+    it('produces the correct `SolanaError` for a pre-solana-transaction-error 3.0.0 `BorshIoError` error', () => {
         const error = getSolanaErrorFromInstructionError(123, { BorshIoError: 'abc' });
         expect(error).toEqual(
             new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__BORSH_IO_ERROR, {
@@ -105,6 +164,17 @@ describe('getSolanaErrorFromInstructionError', () => {
         );
     });
     it("returns the unknown error when encountering an enum name that's missing from the map", () => {
+        const error = getSolanaErrorFromInstructionError(123, 'ThisDoesNotExist', '1111', 42);
+        expect(error).toEqual(
+            new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN, {
+                errorName: 'ThisDoesNotExist',
+                index: 123,
+                innerIndex: 42,
+                responsibleProgramAddress: '1111',
+            }),
+        );
+    });
+    it("returns the unknown pre-solana-transaction-error 3.0.0 error when encountering an enum name that's missing from the map", () => {
         const error = getSolanaErrorFromInstructionError(123, 'ThisDoesNotExist');
         expect(error).toEqual(
             new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN, {
@@ -121,6 +191,19 @@ describe('getSolanaErrorFromInstructionError', () => {
                 errorName: 'ThisDoesNotExist',
                 index: 123,
                 instructionErrorContext: expectedContext,
+            }),
+        );
+    });
+    it("returns the unknown pre-solana-transaction-error 3.0.0 error when encountering an enum struct that's missing from the map", () => {
+        const expectedContext = {} as const;
+        const error = getSolanaErrorFromInstructionError(123, { ThisDoesNotExist: expectedContext }, '1111', 42);
+        expect(error).toEqual(
+            new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN, {
+                errorName: 'ThisDoesNotExist',
+                index: 123,
+                innerIndex: 42,
+                instructionErrorContext: expectedContext,
+                responsibleProgramAddress: '1111',
             }),
         );
     });
