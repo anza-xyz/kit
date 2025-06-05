@@ -1,5 +1,15 @@
 # @solana/rpc-spec
 
+## 2.2.0
+
+### Patch Changes
+
+- [#508](https://github.com/anza-xyz/kit/pull/508) [`304a44f`](https://github.com/anza-xyz/kit/commit/304a44fc68401001af45b1088eea825d8f437677) Thanks [@calintje](https://github.com/calintje)! - Fix RPC objects incorrectly appearing as thenable Promises which caused silent program termination when awaited.
+
+- Updated dependencies [[`93609aa`](https://github.com/anza-xyz/kit/commit/93609aa31dbd83086d0debd41aa2f8e9a0809761), [`b7dfe03`](https://github.com/anza-xyz/kit/commit/b7dfe033a8e929d7a598d8bfea546e9ef4207639)]:
+    - @solana/errors@2.2.0
+    - @solana/rpc-spec-types@2.2.0
+
 ## 2.1.1
 
 ### Patch Changes
