@@ -1,5 +1,20 @@
 # @solana/rpc
 
+## 2.2.0
+
+### Patch Changes
+
+- Updated dependencies [[`93609aa`](https://github.com/anza-xyz/kit/commit/93609aa31dbd83086d0debd41aa2f8e9a0809761), [`304a44f`](https://github.com/anza-xyz/kit/commit/304a44fc68401001af45b1088eea825d8f437677), [`b7dfe03`](https://github.com/anza-xyz/kit/commit/b7dfe033a8e929d7a598d8bfea546e9ef4207639)]:
+    - @solana/errors@2.2.0
+    - @solana/rpc-spec@2.2.0
+    - @solana/rpc-api@2.2.0
+    - @solana/rpc-transformers@2.2.0
+    - @solana/rpc-transport-http@2.2.0
+    - @solana/rpc-types@2.2.0
+    - @solana/fast-stable-stringify@2.2.0
+    - @solana/functional@2.2.0
+    - @solana/rpc-spec-types@2.2.0
+
 ## 2.1.1
 
 ### Patch Changes
