@@ -137,3 +137,77 @@ export function setTransactionMessageLifetimeUsingBlockhash<
         lifetimeConstraint: Object.freeze(blockhashLifetimeConstraint),
     }) as ReturnType;
 }
+
+/**
+ * An invalid blockhash lifetime constraint used as a placeholder for
+ * transaction messages that are not yet ready to be compiled.
+ *
+ * This enables various operations on the transaction message, such as
+ * simulating it or calculating its transaction size, whilst defering
+ * the actual blockhash to a later stage.
+ */
+export const PROVISORY_BLOCKHASH_LIFETIME_CONSTRAINT: BlockhashLifetimeConstraint = {
+    blockhash: '11111111111111111111111111111111' as Blockhash,
+    lastValidBlockHeight: 0n, // This is not included in compiled transactions; it can be anything.
+};
+
+/**
+ * Sets a provisory blockhash lifetime constraint on the transaction message
+ * if and only if it doesn't already have a lifetime constraint.
+ *
+ * Contrary to {@link setTransactionMessageLifetimeUsingProvisoryBlockhash},
+ * this function will not set a provisory blockhash lifetime constraint
+ * if the transaction message already has a set lifetime.
+ *
+ * @typeParam TTransactionMessage - The type of the transaction message to fill.
+ *
+ * @example
+ * ```ts
+ * import { createTransactionMessage, fillMissingTransactionMessageLifetimeUsingProvisoryBlockhash } from '@solana/kit';
+ *
+ * const transactionMessageWithLifetime = pipe(
+ *   createTransactionMessage({ version: 0 }),
+ *   fillMissingTransactionMessageLifetimeUsingProvisoryBlockhash,
+ * )
+ * ```
+ */
+export function fillMissingTransactionMessageLifetimeUsingProvisoryBlockhash<
+    TTransactionMessage extends BaseTransactionMessage,
+>(
+    transactionMessage: TTransactionMessage,
+): TTransactionMessage extends TransactionMessageWithLifetime
+    ? TTransactionMessage
+    : TransactionMessageWithBlockhashLifetime & TTransactionMessage {
+    type ReturnType = TTransactionMessage extends TransactionMessageWithLifetime
+        ? TTransactionMessage
+        : TransactionMessageWithBlockhashLifetime & TTransactionMessage;
+
+    if ('lifetimeConstraint' in transactionMessage) {
+        return transactionMessage as ReturnType;
+    }
+
+    return setTransactionMessageLifetimeUsingProvisoryBlockhash(transactionMessage) as ReturnType;
+}
+
+/**
+ * Sets a provisory blockhash lifetime constraint on the transaction message.
+ *
+ * @typeParam TTransactionMessage - The type of the transaction message to fill.
+ *
+ * @example
+ * ```ts
+ * import { createTransactionMessage, setTransactionMessageLifetimeUsingProvisoryBlockhash } from '@solana/kit';
+ *
+ * const transactionMessageWithLifetime = pipe(
+ *   createTransactionMessage({ version: 0 }),
+ *   setTransactionMessageLifetimeUsingProvisoryBlockhash,
+ * )
+ * ```
+ */
+export function setTransactionMessageLifetimeUsingProvisoryBlockhash<
+    TTransactionMessage extends BaseTransactionMessage,
+>(
+    transactionMessage: TTransactionMessage,
+): ExcludeTransactionMessageLifetime<TTransactionMessage> & TransactionMessageWithBlockhashLifetime {
+    return setTransactionMessageLifetimeUsingBlockhash(PROVISORY_BLOCKHASH_LIFETIME_CONSTRAINT, transactionMessage);
+}
