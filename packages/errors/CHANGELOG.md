@@ -1,5 +1,19 @@
 # @solana/errors
 
+## 2.2.0
+
+### Minor Changes
+
+- [#426](https://github.com/anza-xyz/kit/pull/426) [`b7dfe03`](https://github.com/anza-xyz/kit/commit/b7dfe033a8e929d7a598d8bfea546e9ef4207639) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Deprecate the `I` prefix of four transaction message types to stay consistent with the rest of them. Namely, the following types are renamed and their old names are marked as deprecated:
+    - `ITransactionMessageWithFeePayer` -> `TransactionMessageWithFeePayer`
+    - `ITransactionMessageWithFeePayerSigner` -> `TransactionMessageWithFeePayerSigner`
+    - `ITransactionMessageWithSigners` -> `TransactionMessageWithSigners`
+    - `ITransactionMessageWithSingleSendingSigner` -> `TransactionMessageWithSingleSendingSigner`
+
+### Patch Changes
+
+- [#425](https://github.com/anza-xyz/kit/pull/425) [`93609aa`](https://github.com/anza-xyz/kit/commit/93609aa31dbd83086d0debd41aa2f8e9a0809761) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add a variety of types, constants and functions to help with transaction sizes and their limits
+
 ## 2.1.1
 
 ### Patch Changes
