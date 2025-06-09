@@ -1,3 +1,5 @@
+import { Address } from '@solana/addresses';
+
 type CustomProgramError = number;
 
 // Keep synced with RPC source: https://github.com/anza-xyz/agave/blob/master/sdk/program/src/instruction.rs
@@ -57,8 +59,10 @@ type InstructionError =
     | { BorshIoError: string }
     | { Custom: CustomProgramError };
 
-type InstructionIndex = number;
 type AccountIndex = number;
+type InnerInstructionIndex = Address;
+type OuterInstructionIndex = number;
+type ResponsibleProgramAddress = number;
 
 // Keep synced with RPC source: https://github.com/anza-xyz/agave/blob/master/sdk/src/transaction/error.rs
 export type TransactionError =
@@ -95,7 +99,11 @@ export type TransactionError =
     | 'WouldExceedMaxAccountCostLimit'
     | 'WouldExceedMaxBlockCostLimit'
     | 'WouldExceedMaxVoteCostLimit'
-    | { DuplicateInstruction: InstructionIndex }
-    | { InstructionError: [InstructionIndex, InstructionError] }
+    | {
+          InstructionError:
+              | [OuterInstructionIndex, InstructionError, null, null] // Pre `solana-transaction-error` 3.0.0
+              | [OuterInstructionIndex, InstructionError, ResponsibleProgramAddress, InnerInstructionIndex | null];
+      }
+    | { DuplicateInstruction: OuterInstructionIndex }
     | { InsufficientFundsForRent: { account_index: AccountIndex } }
     | { ProgramExecutionTemporarilyRestricted: { account_index: AccountIndex } };
