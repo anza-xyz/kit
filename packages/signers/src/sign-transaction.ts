@@ -173,7 +173,7 @@ export async function signTransactionMessageWithSigners<
  *
  */
 export async function signAndSendTransactionMessageWithSigners<
-    TTransactionMessage extends CompilableTransactionMessageWithSigners = CompilableTransactionMessageWithSigners,
+    TTransactionMessage extends CompilableTransactionMessageWithSigners,
 >(transaction: TTransactionMessage, config?: TransactionSendingSignerConfig): Promise<SignatureBytes> {
     assertIsTransactionMessageWithSingleSendingSigner(transaction);
 
