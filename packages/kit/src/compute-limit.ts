@@ -53,6 +53,8 @@ type ComputeUnitEstimateForTransactionMessageFunction = (
  *
  * @param config
  *
+ * @deprecated Use `estimateComputeUnitLimitFactory` from `@solana-program/compute-budget` instead.
+ *
  * @example
  * ```ts
  * import { getSetComputeUnitLimitInstruction } from '@solana-program/compute-budget';
