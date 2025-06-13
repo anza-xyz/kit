@@ -1,6 +1,8 @@
 {
     "$schema": "https://json.schemastore.org/tsconfig",
     "compilerOptions": {
+        "module": "es2022",
+        "target": "es2017",
         "types": ["node"]
     },
     "display": "Build Scripts",
