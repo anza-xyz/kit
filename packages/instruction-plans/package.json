@@ -74,11 +74,13 @@
     "dependencies": {
         "@solana/errors": "workspace:*",
         "@solana/instructions": "workspace:*",
+        "@solana/promises": "workspace:*",
         "@solana/transaction-messages": "workspace:*",
         "@solana/transactions": "workspace:*"
     },
     "devDependencies": {
         "@solana/addresses": "workspace:*",
+        "@solana/codecs": "workspace:*",
         "@solana/functional": "workspace:*"
     },
     "peerDependencies": {
