@@ -104,6 +104,9 @@ function resolveTokenExtensionType(extensionResult: Token2022ExtensionResult) {
     if (extensionResult.extension === 'cpiGuard') {
         return 'SplTokenExtensionCpiGuard';
     }
+    if (extensionResult.extension === 'unparseableExtension') {
+        return 'SplTokenExtensionUnparseable';
+    }
 }
 
 export const accountTypeResolvers = {
