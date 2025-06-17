@@ -52,8 +52,8 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
           vercel pull --token="$VERCEL_TOKEN" --yes --environment=preview
-          vercel build --token="$VERCEL_TOKEN" --prod=false
-          DEPLOY_OUTPUT=$(vercel deploy --token="$VERCEL_TOKEN" --archive=tgz --env GITHUB_PR_NUMBER="$PR_NUMBER" --env GITHUB_PR_BRANCH="$BRANCH_NAME" --prebuilt --prod=false 2>&1)
+          vercel build --token="$VERCEL_TOKEN" --target=preview
+          DEPLOY_OUTPUT=$(vercel deploy --token="$VERCEL_TOKEN" --archive=tgz --env GITHUB_PR_NUMBER="$PR_NUMBER" --env GITHUB_PR_BRANCH="$BRANCH_NAME" --prebuilt --target=preview 2>&1)
           DEPLOY_EXIT_CODE=$?
           if [ $DEPLOY_EXIT_CODE -ne 0 ]; then
             echo "Vercel deploy failed:"
