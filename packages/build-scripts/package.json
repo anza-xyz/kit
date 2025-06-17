@@ -4,12 +4,12 @@
     "private": true,
     "files": [
         "register-node-globals.mjs",
-        "tsup.config.library.ts",
-        "tsup.config.package.ts"
+        "bundle.library.ts",
+        "bundle.package.ts"
     ],
     "devDependencies": {
+        "@types/bun": "^1.2.16",
         "@types/jscodeshift": "^17.3.0",
-        "browserslist-to-esbuild": "^2.1.1",
         "jscodeshift": "^17.3.0"
     },
     "engines": {

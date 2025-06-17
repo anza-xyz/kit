@@ -37,7 +37,7 @@
     ],
     "sideEffects": false,
     "scripts": {
-        "compile:js": "tsup",
+        "compile:js": "pnpm bun ../build-scripts/bundle.shim.ts",
         "compile:typedefs": "tsc -p ./tsconfig.declarations.json",
         "dev": "jest -c ../../node_modules/@solana/test-config/jest-dev.config.ts --rootDir . --watch",
         "style:fix": "pnpm eslint --fix src && pnpm prettier --log-level warn --ignore-unknown --write ./*",
