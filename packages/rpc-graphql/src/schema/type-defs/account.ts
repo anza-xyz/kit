@@ -216,6 +216,13 @@ export const accountTypeDefs = /* GraphQL */ `
     }
 
     """
+    Token-2022 Extension: Unparseable
+    """
+    type SplTokenExtensionUnparseable implements SplTokenExtension {
+        extension: String
+    }
+
+    """
     Token-2022 Extension: ConfidentialTransferAccount
     """
     type SplTokenExtensionConfidentialTransferAccount implements SplTokenExtension {
