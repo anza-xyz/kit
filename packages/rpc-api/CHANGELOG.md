@@ -1,5 +1,22 @@
 # @solana/rpc-api
 
+## 2.2.0
+
+### Patch Changes
+
+- Updated dependencies [[`6ccbf01`](https://github.com/anza-xyz/kit/commit/6ccbf012703fce1cb40388b0f4e1ffaeffea838a), [`53e1336`](https://github.com/anza-xyz/kit/commit/53e1336149878c84048e0fde5c7e7ace6cc1e97f), [`eb61d94`](https://github.com/anza-xyz/kit/commit/eb61d94786e212fc23778d445a94b86d2b1b024f), [`bbcb913`](https://github.com/anza-xyz/kit/commit/bbcb913839d33abc746f38d6e65e7bfd30cd2ac6), [`93609aa`](https://github.com/anza-xyz/kit/commit/93609aa31dbd83086d0debd41aa2f8e9a0809761), [`304a44f`](https://github.com/anza-xyz/kit/commit/304a44fc68401001af45b1088eea825d8f437677), [`b7dfe03`](https://github.com/anza-xyz/kit/commit/b7dfe033a8e929d7a598d8bfea546e9ef4207639), [`e6c0568`](https://github.com/anza-xyz/kit/commit/e6c0568ef34fdc04075af27eb102851123a02be0), [`810d6ab`](https://github.com/anza-xyz/kit/commit/810d6abafe1b7ea46ed63c491db1f5d6c16397ab)]:
+    - @solana/transaction-messages@2.2.0
+    - @solana/transactions@2.2.0
+    - @solana/errors@2.2.0
+    - @solana/rpc-spec@2.2.0
+    - @solana/addresses@2.2.0
+    - @solana/codecs-core@2.2.0
+    - @solana/codecs-strings@2.2.0
+    - @solana/keys@2.2.0
+    - @solana/rpc-transformers@2.2.0
+    - @solana/rpc-types@2.2.0
+    - @solana/rpc-parsed-types@2.2.0
+
 ## 2.1.1
 
 ### Patch Changes
