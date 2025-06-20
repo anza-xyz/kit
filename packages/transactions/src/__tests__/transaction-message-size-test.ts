@@ -1,12 +1,11 @@
 import { address } from '@solana/addresses';
 import { SOLANA_ERROR__TRANSACTION__EXCEEDS_SIZE_LIMIT, SolanaError } from '@solana/errors';
 import { pipe } from '@solana/functional';
-import type { Blockhash } from '@solana/rpc-types';
 import {
     appendTransactionMessageInstruction,
     createTransactionMessage,
     setTransactionMessageFeePayer,
-    setTransactionMessageLifetimeUsingBlockhash,
+    setTransactionMessageLifetimeUsingProvisoryBlockhash,
 } from '@solana/transaction-messages';
 
 import {
@@ -16,14 +15,9 @@ import {
 } from '../transaction-message-size';
 import { TRANSACTION_SIZE_LIMIT } from '../transaction-size';
 
-const MOCK_BLOCKHASH = {
-    blockhash: '11111111111111111111111111111111' as Blockhash,
-    lastValidBlockHeight: 0n,
-};
-
 const SMALL_TRANSACTION_MESSAGE = pipe(
     createTransactionMessage({ version: 0 }),
-    m => setTransactionMessageLifetimeUsingBlockhash(MOCK_BLOCKHASH, m),
+    setTransactionMessageLifetimeUsingProvisoryBlockhash,
     m => setTransactionMessageFeePayer(address('22222222222222222222222222222222222222222222'), m),
 );
 
