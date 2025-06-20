@@ -67,35 +67,58 @@ const ORDERED_ERROR_NAMES = [
 ];
 
 export function getSolanaErrorFromInstructionError(
-    /**
-     * The index of the instruction inside the transaction.
-     */
-    index: bigint | number,
+    outerInstructionIndex: bigint | number,
     instructionError: string | { [key: string]: unknown },
+    responsibleProgramAddress: string,
+    innerInstructionIndex?: bigint | number,
+): SolanaError;
+// Pre `solana-transaction-error` 3.0.0
+export function getSolanaErrorFromInstructionError(
+    outerInstructionIndex: bigint | number,
+    instructionError: string | { [key: string]: unknown },
+): SolanaError;
+export function getSolanaErrorFromInstructionError(
+    outerInstructionIndex: bigint | number,
+    instructionError: string | { [key: string]: unknown },
+    responsibleProgramAddress?: string,
+    innerInstructionIndex?: bigint | number,
 ): SolanaError {
-    const numberIndex = Number(index);
+    const numberOuterInstructionIndex = Number(outerInstructionIndex);
+    const numberInnerInstructionIndex = innerInstructionIndex ? Number(innerInstructionIndex) : innerInstructionIndex;
     return getSolanaErrorFromRpcError(
         {
             errorCodeBaseOffset: 4615001,
             getErrorContext(errorCode, rpcErrorName, rpcErrorContext) {
+                const innerIndexProp = responsibleProgramAddress ? { innerIndex: numberInnerInstructionIndex } : null;
+                const responsibleProgramAddressProp = responsibleProgramAddress ? { responsibleProgramAddress } : null;
                 if (errorCode === SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN) {
                     return {
                         errorName: rpcErrorName,
-                        index: numberIndex,
+                        index: numberOuterInstructionIndex,
+                        ...innerIndexProp,
                         ...(rpcErrorContext !== undefined ? { instructionErrorContext: rpcErrorContext } : null),
+                        ...responsibleProgramAddressProp,
                     };
                 } else if (errorCode === SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM) {
                     return {
                         code: Number(rpcErrorContext as bigint | number),
-                        index: numberIndex,
+                        index: numberOuterInstructionIndex,
+                        ...innerIndexProp,
+                        ...responsibleProgramAddressProp,
                     };
                 } else if (errorCode === SOLANA_ERROR__INSTRUCTION_ERROR__BORSH_IO_ERROR) {
                     return {
                         encodedData: rpcErrorContext as string,
-                        index: numberIndex,
+                        index: numberOuterInstructionIndex,
+                        ...innerIndexProp,
+                        ...responsibleProgramAddressProp,
                     };
                 }
-                return { index: numberIndex };
+                return {
+                    index: numberOuterInstructionIndex,
+                    ...innerIndexProp,
+                    ...responsibleProgramAddressProp,
+                };
             },
             orderedErrorNames: ORDERED_ERROR_NAMES,
             rpcEnumError: instructionError,

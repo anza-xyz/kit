@@ -165,7 +165,17 @@ import {
 } from './codes';
 import { RpcSimulateTransactionResult } from './json-rpc-error';
 
-type BasicInstructionErrorContext<T extends SolanaErrorCode> = Readonly<{ [P in T]: { index: number } }>;
+type BasicInstructionErrorContext<T extends SolanaErrorCode> = Readonly<{
+    [P in T]:
+        | {
+              index: number;
+              innerIndex?: number;
+              responsibleProgramAddress: string;
+          }
+        | {
+              index: number;
+          };
+}>;
 
 type DefaultUnspecifiedErrorContextToUndefined<T> = {
     [P in SolanaErrorCode]: P extends keyof T ? T[P] : undefined;
@@ -381,19 +391,44 @@ export type SolanaErrorContext = DefaultUnspecifiedErrorContextToUndefined<
             minRange: number;
             variant: number;
         };
-        [SOLANA_ERROR__INSTRUCTION_ERROR__BORSH_IO_ERROR]: {
-            encodedData: string;
-            index: number;
-        };
-        [SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM]: {
-            code: number;
-            index: number;
-        };
-        [SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN]: {
-            errorName: string;
-            index: number;
-            instructionErrorContext?: unknown;
-        };
+        [SOLANA_ERROR__INSTRUCTION_ERROR__BORSH_IO_ERROR]:
+            | {
+                  encodedData: string;
+                  index: number;
+                  innerIndex?: number;
+                  responsibleProgramAddress: string;
+              }
+            // Pre `solana-transaction-error` 3.0.0
+            | {
+                  encodedData: string;
+                  index: number;
+              };
+        [SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM]:
+            | {
+                  code: number;
+                  index: number;
+                  innerIndex?: number;
+                  responsibleProgramAddress: string;
+              }
+            // Pre `solana-transaction-error` 3.0.0
+            | {
+                  code: number;
+                  index: number;
+              };
+        [SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN]:
+            | {
+                  errorName: string;
+                  index: number;
+                  innerIndex?: number;
+                  instructionErrorContext?: unknown;
+                  responsibleProgramAddress: string;
+              }
+            // Pre `solana-transaction-error` 3.0.0
+            | {
+                  errorName: string;
+                  index: number;
+                  instructionErrorContext?: unknown;
+              };
         [SOLANA_ERROR__INSTRUCTION__EXPECTED_TO_HAVE_ACCOUNTS]: {
             data?: ReadonlyUint8Array;
             programAddress: string;
