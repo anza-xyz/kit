@@ -40,7 +40,7 @@
         "jest-runner-prettier": "^1.0.0",
         "jest-watch-master": "^1.0.0",
         "jest-watch-select-projects": "^2.0.0",
-        "jest-watch-typeahead": "^2.2.2",
+        "jest-watch-typeahead": "^3.0.1",
         "prettier": "^3.5",
         "ts-node": "^10.9.2",
         "tsup": "^8.5.0",
