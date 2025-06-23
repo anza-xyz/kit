@@ -29,7 +29,6 @@ const config: Partial<Config.InitialProjectOptions> = {
         path.resolve(__dirname, 'setup-whatwg-fetch.ts'),
     ],
     testEnvironment: path.resolve(__dirname, 'browser-environment.ts'),
-    testEnvironmentOptions: {},
     testPathIgnorePatterns: [...(commonConfig.testPathIgnorePatterns ?? []), '-test.node.ts$'],
 };
 

@@ -53,25 +53,46 @@ describe('SolanaError', () => {
             expect(errorWithCause.cause).toBe(cause);
         });
     });
-    describe.each(['cause'])('given an error with only the `%s` property from `ErrorOptions` present', propName => {
+    describe.each(['cause'])('given an error with the `%s` property from `ErrorOptions` present', propName => {
         let errorOptionValue: unknown;
         let errorWithOption: SolanaError;
-        beforeEach(() => {
-            errorOptionValue = Symbol();
-            errorWithOption = new SolanaError(
-                // @ts-expect-error Mock error codes don't conform to `SolanaErrorCode`
-                123,
-                { [propName]: errorOptionValue },
-            );
+        describe('as the only property', () => {
+            beforeEach(() => {
+                errorOptionValue = Symbol();
+                errorWithOption = new SolanaError(
+                    // @ts-expect-error Mock error codes don't conform to `SolanaErrorCode`
+                    123,
+                    { [propName]: errorOptionValue },
+                );
+            });
+            it('omits the error option from its context', () => {
+                expect(errorWithOption.context).not.toHaveProperty(propName);
+            });
+            it('calls the message formatter with the error option omitted', () => {
+                expect(getErrorMessage).toHaveBeenCalledWith(123, undefined);
+            });
         });
-        it('omits the error option from its context', () => {
-            expect(errorWithOption.context).not.toHaveProperty(propName);
-        });
-        it('calls the message formatter with the error option omitted', () => {
-            expect(getErrorMessage).toHaveBeenCalledWith(
-                123,
-                expect.not.objectContaining({ [propName]: errorOptionValue }),
-            );
+        describe('as one among other properties', () => {
+            beforeEach(() => {
+                errorOptionValue = Symbol();
+                errorWithOption = new SolanaError(
+                    // @ts-expect-error Mock error codes don't conform to `SolanaErrorCode`
+                    123,
+                    {
+                        other: 'prop',
+                        [propName]: errorOptionValue,
+                    },
+                );
+            });
+            it('omits the error option from its context', () => {
+                expect(errorWithOption.context).not.toHaveProperty(propName);
+            });
+            it('calls the message formatter with the error option omitted', () => {
+                expect(getErrorMessage).toHaveBeenCalledWith(
+                    123,
+                    expect.not.objectContaining({ [propName]: errorOptionValue }),
+                );
+            });
         });
     });
     it('sets its message to the output of the message formatter', async () => {
