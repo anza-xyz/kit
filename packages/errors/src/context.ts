@@ -595,7 +595,7 @@ export type SolanaErrorContext = DefaultUnspecifiedErrorContextToUndefined<
             index: number;
         };
         [SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT]: {
-            unitsConsumed: number;
+            unitsConsumed: bigint;
         };
         [SOLANA_ERROR__TRANSACTION__INVOKED_PROGRAMS_CANNOT_PAY_FEES]: {
             programAddress: string;
