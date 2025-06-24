@@ -1,4 +1,5 @@
 import { TestEnvironment } from 'jest-environment-jsdom';
+import { protectProperties } from 'jest-util';
 
 export default class BrowserEnvironment extends TestEnvironment {
     async setup() {
@@ -9,5 +10,6 @@ export default class BrowserEnvironment extends TestEnvironment {
          * https://github.com/jestjs/jest/issues/7780#issuecomment-615890410
          */
         this.global.Uint8Array = globalThis.Uint8Array;
+        protectProperties(this.global['Uint8Array']);
     }
 }

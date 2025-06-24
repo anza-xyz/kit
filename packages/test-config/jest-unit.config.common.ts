@@ -10,6 +10,9 @@ const config: Partial<Config.InitialProjectOptions> = {
         path.resolve(__dirname, 'setup-define-version-constant.ts'),
         path.resolve(__dirname, 'setup-webcrypto.ts'),
     ],
+    testEnvironmentOptions: {
+        globalsCleanup: 'on',
+    },
     testPathIgnorePatterns: ['__setup__.ts'],
     transform: {
         '^.+\\.(ts|js)x?$': [

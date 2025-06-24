@@ -1,0 +1,17 @@
+diff --git a/build/index.js b/build/index.js
+index d3b8c6792cac5d7690809791ee5a67b0310df478..10e869733cd630af55d2380952570cca20c5b329 100644
+--- a/build/index.js
++++ b/build/index.js
+@@ -1983,7 +1983,11 @@ function createMessageAndCause(error) {
+         if (seen.has(value)) return;
+         seen.add(value); // stop circular references
+       }
+-      return value === undefined ? String(undefined) : value;
++      return value === undefined
++        ? String(undefined)
++        : typeof value === 'bigint'
++          ? `${value.toString()}n`
++          : value;
+     });
+   }
+   return error.message;
