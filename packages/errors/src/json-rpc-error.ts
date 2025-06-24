@@ -89,7 +89,7 @@ export interface RpcSimulateTransactionResult {
         data: [string, 'base64'];
         programId: string;
     } | null;
-    unitsConsumed: number | null;
+    unitsConsumed: bigint | null;
 }
 
 export function getSolanaErrorFromJsonRpcError(putativeErrorResponse: unknown): SolanaError {

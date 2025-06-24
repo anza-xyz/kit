@@ -249,7 +249,7 @@ describe('sendTransaction', () => {
                 innerInstructions: null,
                 logs: [],
                 returnData: null,
-                unitsConsumed: 0,
+                unitsConsumed: 0n,
             }),
         );
     });
@@ -284,7 +284,7 @@ describe('sendTransaction', () => {
                 innerInstructions: null,
                 logs: [],
                 returnData: null,
-                unitsConsumed: 0,
+                unitsConsumed: 0n,
             }),
         );
     });
@@ -316,7 +316,7 @@ describe('sendTransaction', () => {
                 innerInstructions: null,
                 logs: [],
                 returnData: null,
-                unitsConsumed: 0,
+                unitsConsumed: 0n,
             }),
         );
     });
