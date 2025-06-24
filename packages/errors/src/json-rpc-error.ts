@@ -85,6 +85,7 @@ export interface RpcSimulateTransactionResult {
           }[]
         | null;
     logs: string[] | null;
+    replacementBlockhash: string | null;
     returnData: {
         data: [string, 'base64'];
         programId: string;
