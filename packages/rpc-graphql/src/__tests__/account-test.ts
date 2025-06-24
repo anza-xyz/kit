@@ -1250,8 +1250,10 @@ describe('account', () => {
         describe('token-2022 extensions', () => {
             // See scripts/fixtures/spl-token-22-mint-mega-token.json
             const megaMintAddress = '5gSwsLGzyCwgwPJSnxjsQCaFeE19ZFaibHMLky9TDFim';
-            // See scripts/fixtures/spl-token-22-mint-mega-token-member.json
-            const megaMemberAddress = 'CXZDzjSrQ5jPaBgk6ckTQrLPTnUURiY2GnAgVCS9Fggz';
+            // See scripts/fixtures/spl-token-22-mint-with-token-group-account.json
+            const tokenGroupMintAddress = '6sN6TS566ttRqmQzSTKxuHBtb8rPNZoqZeiERggev7zW';
+            // See scripts/fixtures/spl-token-22-mint-with-token-group-member-account.json
+            const tokenGroupMemberAddress = 'A2ka2DEVUy1Jm8iuPbXETSKFZQ2wDTq5HW8SrJqMiCi3';
             // See scripts/fixtures/spl-token-22-account-mega-token-member.json
             const megaAccountAddress = 'aUg6iJ3p43hTJsxHrQ1KfqMQYStoFvqcSJRcc51cYzK';
             it('mint-close-authority', async () => {
@@ -1778,8 +1780,7 @@ describe('account', () => {
                     },
                 });
             });
-            // FIXME(https://github.com/anza-xyz/kit/issues/556)
-            it.failing('token-group', async () => {
+            it('token-group', async () => {
                 expect.assertions(1);
                 const source = /* GraphQL */ `
                     query testQuery($address: Address!) {
@@ -1802,7 +1803,7 @@ describe('account', () => {
                         }
                     }
                 `;
-                const result = await rpcGraphQL.query(source, { address: megaMintAddress });
+                const result = await rpcGraphQL.query(source, { address: tokenGroupMintAddress });
                 expect(result).toMatchObject({
                     data: {
                         account: {
@@ -1823,8 +1824,7 @@ describe('account', () => {
                     },
                 });
             });
-            // FIXME(https://github.com/anza-xyz/kit/issues/556)
-            it.failing('token-group-member', async () => {
+            it('token-group-member', async () => {
                 expect.assertions(1);
                 const source = /* GraphQL */ `
                     query testQuery($address: Address!) {
@@ -1846,7 +1846,7 @@ describe('account', () => {
                         }
                     }
                 `;
-                const result = await rpcGraphQL.query(source, { address: megaMemberAddress });
+                const result = await rpcGraphQL.query(source, { address: tokenGroupMemberAddress });
                 expect(result).toMatchObject({
                     data: {
                         account: {
