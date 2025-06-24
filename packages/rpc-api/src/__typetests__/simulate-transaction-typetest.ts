@@ -1,4 +1,8 @@
 import type { PendingRpcRequest, Rpc } from '@solana/rpc-spec';
+import {
+    TransactionForFullMetaInnerInstructionsParsed,
+    TransactionForFullMetaInnerInstructionsUnparsed,
+} from '@solana/rpc-types';
 import { Base64EncodedWireTransaction, TransactionBlockhashLifetime } from '@solana/transactions';
 
 import type { SimulateTransactionApi } from '../simulateTransaction';
@@ -45,6 +49,31 @@ const base64Transaction = 'SomeTx11111111111111111111111111111' as Base64Encoded
             // `replaceRecentBlockhash` omitted
             sigVerify: true,
         });
+    }
+}
+
+// [DESCRIBE] `innerInstructions`.
+{
+    // It materializes inner instructions in the repsonse when `true`
+    {
+        rpc.simulateTransaction(base64Transaction, {
+            encoding: 'base64',
+            innerInstructions: true,
+        }) satisfies PendingRpcRequest<{
+            value: TransactionForFullMetaInnerInstructionsParsed | TransactionForFullMetaInnerInstructionsUnparsed;
+        }>;
+    }
+    // It does not materialize inner instructions in the repsonse when `false` or omitted
+    {
+        rpc.simulateTransaction(base64Transaction, {
+            encoding: 'base64',
+            innerInstructions: false,
+            // @ts-expect-error `innerInstructions` should not be a property on the response
+        }) satisfies PendingRpcRequest<{ value: { innerInstructions: unknown } }>;
+        rpc.simulateTransaction(base64Transaction, {
+            encoding: 'base64',
+            // @ts-expect-error `innerInstructions` should not be a property on the response
+        }) satisfies PendingRpcRequest<{ value: { innerInstructions: unknown } }>;
     }
 }
 
