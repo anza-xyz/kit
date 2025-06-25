@@ -1,65 +1,42 @@
 import { SOLANA_ERROR__ADDRESSES__INVALID_SEEDS_POINT_ON_CURVE, SolanaError } from '@solana/errors';
+import { Brand } from '@solana/nominal-types';
 
 import { type Address, getAddressCodec, isAddress } from './address';
 import { compressedPointBytesAreOnCurve } from './curve-internal';
 
 /**
- * A type guard that returns `true` if the input string conforms to the {@link Address} type, the input string is on
- * the ED25519 curve, and refines its type for use in your application.
+ * Represents a string that validates as an off-curve Solana address. Functions that require well-formed
+ * off-curve addresses should specify their inputs in terms of this type.
  *
- * @example
- * ```ts
- * import { isAddressOnCurve } from '@solana/addresses';
- *
- * if (isAddressOnCurve(ownerAddress)) {
- *     // At this point, `ownerAddress` has been refined to a
- *     // `Address` that can be used with the RPC.
- *     const { value: lamports } = await rpc.getBalance(ownerAddress).send();
- *     setBalanceLamports(lamports);
- * } else {
- *     setError(`${ownerAddress} is not on-curve`);
- * }
- * ```
+ * Whenever you need to validate an arbitrary string as a base58-encoded off-curve address, use the
+ * {@link offCurveAddress}, {@link assertIsOffCurveAddress}, or {@link isOffCurveAddress} functions in this package.
  */
-export function isAddressOnCurve(putativeAddress: string): putativeAddress is Address<typeof putativeAddress> {
-    if (!isAddress(putativeAddress)) return false;
-    const base58EncodedAddressCodec = getAddressCodec();
-    const addressBytes = new Uint8Array(base58EncodedAddressCodec.encode(putativeAddress));
-    if (compressedPointBytesAreOnCurve(addressBytes)) return false;
-    return true;
-}
+export type OffCurveAddress<TAddress extends string = string> = Brand<Address<TAddress>, 'OffCurveAddress'>;
 
 /**
- * From time to time you might acquire a string, that you expect to validate as an on-curve address,
- * from an untrusted network API or user input. Use this function to assert that such an
- * arbitrary string is a base58-encoded address that is on-curve.
+ * A type guard that returns `true` if the input string conforms to the {@link OffCurveAddress} type,
+ * and refines its type for use in your application.
  *
  * @example
  * ```ts
- * import { assertIsAddressOnCurve } from '@solana/addresses';
+ * import { isOffCurveAddress } from '@solana/addresses';
  *
- * // Imagine a function that fetches an account's balance when a user submits a form.
- * function handleSubmit() {
- *     // We know only that the input conforms to the `string` type.
- *     const address: string = accountAddressInput.value;
- *     try {
- *         // If this type assertion function doesn't throw, then
- *         // Typescript will upcast `address` to `Address`.
- *         assertIsAddressOnCurve(address);
- *         // At this point, `address` is an `Address` that can be used with the RPC.
- *         const balanceInLamports = await rpc.getBalance(address).send();
- *     } catch (e) {
- *         // `address` turned out to NOT be a base58-encoded on-curve address
- *     }
+ * if (isOffCurveAddress(accountAddress)) {
+ *     // At this point, `accountAddress` has been refined to a
+ *     // `OffCurveAddress` that can be used within your business logic.
+ *     const { value: account } = await rpc.getAccountInfo(accountAddress).send();
+ * } else {
+ *     setError(`${accountAddress} is not off-curve`);
  * }
  * ```
  */
-export function assertIsAddressOnCurve(
-    putativeAddress: string,
-): asserts putativeAddress is Address<typeof putativeAddress> {
-    if (!isAddressOnCurve(putativeAddress)) {
-        throw new SolanaError(SOLANA_ERROR__ADDRESSES__INVALID_SEEDS_POINT_ON_CURVE);
-    }
+export function isOffCurveAddress(
+    putativeOffCurveAddress: string,
+): putativeOffCurveAddress is OffCurveAddress<typeof putativeOffCurveAddress> {
+    if (!isAddress(putativeOffCurveAddress)) return false;
+    const addressBytes = new Uint8Array(getAddressCodec().encode(putativeOffCurveAddress));
+    if (compressedPointBytesAreOnCurve(addressBytes)) return true;
+    return false;
 }
 
 /**
@@ -69,7 +46,7 @@ export function assertIsAddressOnCurve(
  *
  * @example
  * ```ts
- * import { assertIsAddressOffCurve } from '@solana/addresses';
+ * import { assertIsOffCurveAddress } from '@solana/addresses';
  *
  * // Imagine a function that fetches an account's balance when a user submits a form.
  * function handleSubmit() {
@@ -78,7 +55,7 @@ export function assertIsAddressOnCurve(
  *     try {
  *         // If this type assertion function doesn't throw, then
  *         // Typescript will upcast `address` to `Address`.
- *         assertIsAddressOffCurve(address);
+ *         assertIsOffCurveAddress(address);
  *         // At this point, `address` is an `Address` that can be used with the RPC.
  *         const balanceInLamports = await rpc.getBalance(address).send();
  *     } catch (e) {
@@ -87,10 +64,21 @@ export function assertIsAddressOnCurve(
  * }
  * ```
  */
-export function assertIsAddressOffCurve(
-    putativeAddress: string,
-): asserts putativeAddress is Address<typeof putativeAddress> {
-    if (isAddressOnCurve(putativeAddress)) {
+export function assertIsOffCurveAddress(
+    putativeOffCurveAddress: string,
+): asserts putativeOffCurveAddress is OffCurveAddress<typeof putativeOffCurveAddress> {
+    if (isOffCurveAddress(putativeOffCurveAddress)) {
         throw new SolanaError(SOLANA_ERROR__ADDRESSES__INVALID_SEEDS_POINT_ON_CURVE);
     }
+}
+
+/**
+ * Combines _asserting_ that a string is an off-curve address with _coercing_ it to the
+ * {@link OffCurveAddress} type. It's most useful with untrusted input.
+ */
+export function offCurveAddress<TAddress extends string = string>(
+    putativeOffCurveAddress: TAddress,
+): OffCurveAddress<TAddress> {
+    assertIsOffCurveAddress(putativeOffCurveAddress);
+    return putativeOffCurveAddress as OffCurveAddress<TAddress>;
 }

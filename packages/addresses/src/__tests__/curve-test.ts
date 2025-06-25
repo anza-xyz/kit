@@ -1,4 +1,4 @@
-import { isAddressOnCurve } from '../curve';
+import { isOffCurveAddress } from '../curve';
 import { compressedPointBytesAreOnCurve } from '../curve-internal';
 
 const OFF_CURVE_KEY_BYTES = [
@@ -43,14 +43,14 @@ describe('compressedPointBytesAreOnCurve', () => {
     });
 });
 
-describe('isAddressOnCurve', () => {
-    it.each(OFF_CURVE_ADDRESSES)('returns false when an address does not lie on the Ed25519 curve [%#]', address => {
-        expect(isAddressOnCurve(address)).toBe(false);
+describe('isOffCurveAddress', () => {
+    it.each(OFF_CURVE_ADDRESSES)('returns true when an address does not lie on the Ed25519 curve [%#]', address => {
+        expect(isOffCurveAddress(address)).toBe(true);
     });
-    it.each(ON_CURVE_ADDRESSES)('returns true when an address lies on the Ed25519 curve [%#]', address => {
-        expect(isAddressOnCurve(address)).toBe(true);
+    it.each(ON_CURVE_ADDRESSES)('returns false when an address lies on the Ed25519 curve [%#]', address => {
+        expect(isOffCurveAddress(address)).toBe(false);
     });
     it('returns false when an invalid address is provided', () => {
-        expect(isAddressOnCurve('not_a_real_address')).toBe(false);
+        expect(isOffCurveAddress('not_a_real_address')).toBe(false);
     });
 });
