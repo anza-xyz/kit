@@ -1,7 +1,11 @@
 import { Address } from '@solana/addresses';
 import { AccountRole, Instruction } from '@solana/instructions';
 import type { Blockhash } from '@solana/rpc-types';
-import { CompilableTransactionMessage } from '@solana/transaction-messages';
+import {
+    TransactionMessage,
+    TransactionMessageWithFeePayer,
+    TransactionMessageWithLifetime,
+} from '@solana/transaction-messages';
 import {
     appendTransactionMessageInstruction,
     createTransactionMessage,
@@ -29,7 +33,10 @@ export function createMockInstructionWithSigners(signers: TransactionSigner[]): 
 
 export function createMockTransactionMessageWithSigners(
     signers: TransactionSigner[],
-): CompilableTransactionMessage & TransactionMessageWithSigners {
+): TransactionMessage &
+    TransactionMessageWithFeePayer &
+    TransactionMessageWithLifetime &
+    TransactionMessageWithSigners {
     const transaction = createTransactionMessage({ version: 0 });
     const transactionWithFeePayer = setTransactionMessageFeePayer(signers[0]?.address ?? '1111', transaction);
     const compilableTransaction = setTransactionMessageLifetimeUsingBlockhash(
