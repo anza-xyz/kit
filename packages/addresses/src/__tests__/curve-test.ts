@@ -1,4 +1,5 @@
 import { compressedPointBytesAreOnCurve } from '../curve-internal';
+import { isAddressOnCurve } from '../curve';
 
 const OFF_CURVE_KEY_BYTES = [
     new Uint8Array([
@@ -10,6 +11,7 @@ const OFF_CURVE_KEY_BYTES = [
         159, 87, 94, 122, 251, 246, 136, 75,
     ]),
 ];
+
 const ON_CURVE_KEY_BYTES = [
     new Uint8Array([
         107, 141, 87, 175, 101, 27, 216, 58, 238, 95, 193, 175, 21, 151, 207, 102, 28, 107, 157, 178, 69, 77, 203, 89,
@@ -21,11 +23,34 @@ const ON_CURVE_KEY_BYTES = [
     ]),
 ];
 
+const OFF_CURVE_ADDRESSES = [
+    'nick6zJc6HpW3kfBm4xS2dmbuVRyb5F3AnUvj5ymzR5', // "wallet" account
+    '11111111111111111111111111111111', // system program
+    'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA', // legacy token program
+    'SQDS4ep65T869zMMBKyuUq6aD6EgTu8psMjkvj52pCf', // Squads multi-sig program
+];
+const ON_CURVE_ADDRESSES = [
+    'CCMCWh4FudPEmY6Q1AVi5o8mQMXkHYkJUmZfzRGdcJ9P', // ATA
+    '2DRxyJDsDccGL6mb8PLMsKQTCU3C7xUq8aprz53VcW4k', // random Squads multi-sig account
+];
+
 describe('compressedPointBytesAreOnCurve', () => {
     it.each(OFF_CURVE_KEY_BYTES)('returns false when a public key does not lie on the Ed25519 curve [%#]', bytes => {
         expect(compressedPointBytesAreOnCurve(bytes)).toBe(false);
     });
     it.each(ON_CURVE_KEY_BYTES)('returns true when a public key lies on the Ed25519 curve [%#]', bytes => {
         expect(compressedPointBytesAreOnCurve(bytes)).toBe(true);
+    });
+});
+
+describe('isAddressOnCurve', () => {
+    it.each(OFF_CURVE_ADDRESSES)('returns false when an address does not lie on the Ed25519 curve [%#]', address => {
+        expect(isAddressOnCurve(address)).toBe(false);
+    });
+    it.each(ON_CURVE_ADDRESSES)('returns true when an address lies on the Ed25519 curve [%#]', address => {
+        expect(isAddressOnCurve(address)).toBe(true);
+    });
+    it('returns false when an invalid address is provided', () => {
+        expect(isAddressOnCurve('not_a_real_address')).toBe(false);
     });
 });
