@@ -39,6 +39,7 @@ export * from './durable-nonce';
 export { isAdvanceNonceAccountInstruction } from './durable-nonce-instruction';
 export * from './fee-payer';
 export * from './instructions';
+export * from './lifetime';
 export * from './transaction-message-size';
 export * from './transaction-message';
 
