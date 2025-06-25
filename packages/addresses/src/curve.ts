@@ -1,4 +1,5 @@
 import { SOLANA_ERROR__ADDRESSES__INVALID_SEEDS_POINT_ON_CURVE, SolanaError } from '@solana/errors';
+
 import { type Address, getAddressCodec, isAddress } from './address';
 import { compressedPointBytesAreOnCurve } from './curve-internal';
 
