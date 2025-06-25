@@ -86,6 +86,15 @@ describe('getProgramDerivedAddress()', () => {
             }),
         ).resolves.toStrictEqual(['6V76gtKMCmVVjrx4sxR9uB868HtZbL3piKEmadC7rSgf', 255]);
     });
+    it('returns a program derived address given a program address and a address seed', async () => {
+        expect.assertions(1);
+        await expect(
+            getProgramDerivedAddress({
+                programAddress: 'EKaNRGA37uiGRyRPMap5EZg9cmbT5mt7KWrGwKwAQ3rK' as Address,
+                seeds: ['9Lk19gWJhcS5dXXuPbDJ1A3QfNWXzxXv4EnFyGHxgEu7' as Address],
+            }),
+        ).resolves.toStrictEqual(['CsPaeTk8tn5B3guQt8yuok6uxrGEg8GFyDtHhRQkj71M', 253]);
+    });
     it('returns a program derived address after having tried multiple bump seeds given a program address and a string seed', async () => {
         expect.assertions(1);
         await expect(

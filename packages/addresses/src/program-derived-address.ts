@@ -88,7 +88,7 @@ type SeedInput = Readonly<{
     seed: Seed;
 }>;
 
-type Seed = ReadonlyUint8Array | string;
+type Seed = ReadonlyUint8Array | string | Address;
 
 const MAX_SEED_LENGTH = 32;
 const MAX_SEEDS = 16;
@@ -106,8 +106,16 @@ async function createProgramDerivedAddress({ programAddress, seeds }: ProgramDer
         });
     }
     let textEncoder: TextEncoder;
+    const base58EncodedAddressCodec = getAddressCodec();
     const seedBytes = seeds.reduce((acc, seed, ii) => {
-        const bytes = typeof seed === 'string' ? (textEncoder ||= new TextEncoder()).encode(seed) : seed;
+        let bytes: ReadonlyUint8Array;
+        if (typeof seed === 'string') {
+            bytes = isAddress(seed)
+                ? base58EncodedAddressCodec.encode(seed)
+                : (textEncoder ||= new TextEncoder()).encode(seed);
+        } else {
+            bytes = seed;
+        }
         if (bytes.byteLength > MAX_SEED_LENGTH) {
             throw new SolanaError(SOLANA_ERROR__ADDRESSES__MAX_PDA_SEED_LENGTH_EXCEEDED, {
                 actual: bytes.byteLength,
@@ -118,7 +126,6 @@ async function createProgramDerivedAddress({ programAddress, seeds }: ProgramDer
         acc.push(...bytes);
         return acc;
     }, [] as number[]);
-    const base58EncodedAddressCodec = getAddressCodec();
     const programAddressBytes = base58EncodedAddressCodec.encode(programAddress);
     const addressBytesBuffer = await crypto.subtle.digest(
         'SHA-256',
