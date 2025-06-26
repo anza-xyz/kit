@@ -59,6 +59,18 @@ import { TransactionMessageWithSingleSendingSigner } from '../transaction-with-s
 }
 
 {
+    // [partiallySignTransactionMessageWithSigners]: returns a transaction with no lifetime constraint
+    const transactionMessage = null as unknown as BaseTransactionMessage &
+        TransactionMessageWithFeePayer &
+        TransactionMessageWithSigners;
+    partiallySignTransactionMessageWithSigners(transactionMessage) satisfies Promise<Readonly<Transaction>>;
+    // @ts-expect-error Expects no lifetime constraint
+    partiallySignTransactionMessageWithSigners(transactionMessage) satisfies Promise<
+        Readonly<Transaction & TransactionWithLifetime>
+    >;
+}
+
+{
     // [partiallySignTransactionMessageWithSigners]: returns a transaction with a `TransactionWithinSizeLimit` flag
     const transactionMessage = null as unknown as BaseTransactionMessage &
         TransactionMessageWithFeePayer &
@@ -100,6 +112,18 @@ import { TransactionMessageWithSingleSendingSigner } from '../transaction-with-s
         TransactionMessageWithSigners;
     signTransactionMessageWithSigners(transactionMessage) satisfies Promise<
         Readonly<FullySignedTransaction & TransactionWithLifetime>
+    >;
+}
+
+{
+    // [signTransactionMessageWithSigners]: returns a transaction with no lifetime constraint
+    const transactionMessage = null as unknown as BaseTransactionMessage &
+        TransactionMessageWithFeePayer &
+        TransactionMessageWithSigners;
+    signTransactionMessageWithSigners(transactionMessage) satisfies Promise<Readonly<Transaction>>;
+    // @ts-expect-error Expects no lifetime constraint
+    signTransactionMessageWithSigners(transactionMessage) satisfies Promise<
+        Readonly<Transaction & TransactionWithLifetime>
     >;
 }
 
