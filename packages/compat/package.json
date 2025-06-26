@@ -80,7 +80,6 @@
         "@solana/transactions": "workspace:*"
     },
     "devDependencies": {
-        "@solana/keys": "workspace:*",
         "@solana/web3.js": "^1"
     },
     "peerDependencies": {
