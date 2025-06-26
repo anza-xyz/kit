@@ -360,8 +360,14 @@ transaction.sign([payer, authority]);
 ```ts twoslash title="Kit"
 import { compileTransaction, generateKeyPair, signTransaction } from "@solana/kit";
 // ---cut-start---
-import { CompilableTransactionMessage, TransactionMessageWithBlockhashLifetime } from "@solana/kit";
-const transactionMessage = null as unknown as CompilableTransactionMessage & TransactionMessageWithBlockhashLifetime;
+import {
+  BaseTransactionMessage,
+  ITransactionMessageWithFeePayer,
+  TransactionMessageWithBlockhashLifetime,
+} from "@solana/kit";
+const transactionMessage = null as unknown as BaseTransactionMessage &
+  ITransactionMessageWithFeePayer &
+  TransactionMessageWithBlockhashLifetime;
 // ---cut-end---
 
 const [payer, authority] = await Promise.all([generateKeyPair(), generateKeyPair()]);
