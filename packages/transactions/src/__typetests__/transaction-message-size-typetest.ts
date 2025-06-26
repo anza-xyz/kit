@@ -1,4 +1,8 @@
-import { CompilableTransactionMessage, TransactionMessageWithinSizeLimit } from '@solana/transaction-messages';
+import {
+    BaseTransactionMessage,
+    TransactionMessageWithFeePayer,
+    TransactionMessageWithinSizeLimit,
+} from '@solana/transaction-messages';
 
 import {
     assertIsTransactionMessageWithinSizeLimit,
@@ -9,17 +13,20 @@ import {
 {
     // It narrows the type of the transaction message to include the `TransactionMessageWithinSizeLimit` flag.
     {
-        const transactionMessage = null as unknown as CompilableTransactionMessage;
+        const transactionMessage = null as unknown as BaseTransactionMessage & TransactionMessageWithFeePayer;
         if (isTransactionMessageWithinSizeLimit(transactionMessage)) {
-            transactionMessage satisfies CompilableTransactionMessage & TransactionMessageWithinSizeLimit;
+            transactionMessage satisfies BaseTransactionMessage &
+                TransactionMessageWithFeePayer &
+                TransactionMessageWithinSizeLimit;
         }
     }
 
     // It keeps any extra properties from the transaction message.
     {
-        const transactionMessage = null as unknown as CompilableTransactionMessage & { some: 1 };
+        const transactionMessage = null as unknown as BaseTransactionMessage &
+            TransactionMessageWithFeePayer & { some: 1 };
         if (isTransactionMessageWithinSizeLimit(transactionMessage)) {
-            transactionMessage satisfies CompilableTransactionMessage & { some: 1 };
+            transactionMessage satisfies BaseTransactionMessage & TransactionMessageWithFeePayer & { some: 1 };
         }
     }
 }
@@ -28,15 +35,18 @@ import {
 {
     // It narrows the type of the transaction message to include the `TransactionMessageWithinSizeLimit` flag.
     {
-        const transactionMessage = null as unknown as CompilableTransactionMessage;
+        const transactionMessage = null as unknown as BaseTransactionMessage & TransactionMessageWithFeePayer;
         assertIsTransactionMessageWithinSizeLimit(transactionMessage);
-        transactionMessage satisfies CompilableTransactionMessage & TransactionMessageWithinSizeLimit;
+        transactionMessage satisfies BaseTransactionMessage &
+            TransactionMessageWithFeePayer &
+            TransactionMessageWithinSizeLimit;
     }
 
     // It keeps any extra properties from the transaction message.
     {
-        const transactionMessage = null as unknown as CompilableTransactionMessage & { some: 1 };
+        const transactionMessage = null as unknown as BaseTransactionMessage &
+            TransactionMessageWithFeePayer & { some: 1 };
         assertIsTransactionMessageWithinSizeLimit(transactionMessage);
-        transactionMessage satisfies CompilableTransactionMessage & { some: 1 };
+        transactionMessage satisfies BaseTransactionMessage & TransactionMessageWithFeePayer & { some: 1 };
     }
 }

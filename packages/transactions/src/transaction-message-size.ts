@@ -1,5 +1,9 @@
 import { SOLANA_ERROR__TRANSACTION__EXCEEDS_SIZE_LIMIT, SolanaError } from '@solana/errors';
-import type { CompilableTransactionMessage, TransactionMessageWithinSizeLimit } from '@solana/transaction-messages';
+import type {
+    BaseTransactionMessage,
+    TransactionMessageWithFeePayer,
+    TransactionMessageWithinSizeLimit,
+} from '@solana/transaction-messages';
 
 import { compileTransaction } from './compile-transaction';
 import { getTransactionSize, TRANSACTION_SIZE_LIMIT } from './transaction-size';
@@ -12,7 +16,9 @@ import { getTransactionSize, TRANSACTION_SIZE_LIMIT } from './transaction-size';
  * const transactionSize = getTransactionMessageSize(transactionMessage);
  * ```
  */
-export function getTransactionMessageSize(transactionMessage: CompilableTransactionMessage): number {
+export function getTransactionMessageSize(
+    transactionMessage: BaseTransactionMessage & TransactionMessageWithFeePayer,
+): number {
     return getTransactionSize(compileTransaction(transactionMessage));
 }
 
@@ -29,7 +35,9 @@ export function getTransactionMessageSize(transactionMessage: CompilableTransact
  * }
  * ```
  */
-export function isTransactionMessageWithinSizeLimit<TTransactionMessage extends CompilableTransactionMessage>(
+export function isTransactionMessageWithinSizeLimit<
+    TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer,
+>(
     transactionMessage: TTransactionMessage,
 ): transactionMessage is TransactionMessageWithinSizeLimit & TTransactionMessage {
     return getTransactionMessageSize(transactionMessage) <= TRANSACTION_SIZE_LIMIT;
@@ -50,7 +58,9 @@ export function isTransactionMessageWithinSizeLimit<TTransactionMessage extends 
  * transactionMessage satisfies TransactionMessageWithinSizeLimit;
  * ```
  */
-export function assertIsTransactionMessageWithinSizeLimit<TTransactionMessage extends CompilableTransactionMessage>(
+export function assertIsTransactionMessageWithinSizeLimit<
+    TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer,
+>(
     transactionMessage: TTransactionMessage,
 ): asserts transactionMessage is TransactionMessageWithinSizeLimit & TTransactionMessage {
     const transactionSize = getTransactionMessageSize(transactionMessage);
