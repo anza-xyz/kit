@@ -8,13 +8,10 @@ import {
 } from '@solana/errors';
 import { Instruction, InstructionWithData, isInstructionForProgram, isInstructionWithData } from '@solana/instructions';
 import { Rpc, SimulateTransactionApi } from '@solana/rpc';
-import { Blockhash, Commitment, Slot } from '@solana/rpc-types';
+import { Commitment, Slot } from '@solana/rpc-types';
 import {
     appendTransactionMessageInstruction,
-    CompilableTransactionMessage,
-    isTransactionMessageWithBlockhashLifetime,
     isTransactionMessageWithDurableNonceLifetime,
-    setTransactionMessageLifetimeUsingBlockhash,
     TransactionMessage,
     TransactionMessageWithFeePayer,
 } from '@solana/transaction-messages';
@@ -37,17 +34,11 @@ type ComputeUnitEstimateForTransactionMessageConfig = Readonly<{
      */
     minContextSlot?: Slot;
     rpc: Rpc<SimulateTransactionApi>;
-    transactionMessage: CompilableTransactionMessage | (TransactionMessage & TransactionMessageWithFeePayer);
+    transactionMessage: TransactionMessage & TransactionMessageWithFeePayer;
 }>;
 
 const COMPUTE_BUDGET_PROGRAM_ADDRESS =
     'ComputeBudget111111111111111111111111111111' as Address<'ComputeBudget111111111111111111111111111111'>;
-// HACK: Since the `compileTransaction()` method will not compile a transaction with no lifetime we
-// supply a dummy lifetime.
-const INVALID_BUT_SUFFICIENT_FOR_COMPILATION_BLOCKHASH = {
-    blockhash: '11111111111111111111111111111111' as Blockhash,
-    lastValidBlockHeight: 0n, // This is not included in compiled transactions; it can be anything.
-} as const;
 const SET_COMPUTE_UNIT_LIMIT_INSTRUCTION_INDEX = 0x02;
 
 function createComputeUnitLimitInstruction(units: number): Instruction<typeof COMPUTE_BUDGET_PROGRAM_ADDRESS> {
@@ -134,43 +125,24 @@ export async function getComputeUnitEstimateForTransactionMessage_INTERNAL_ONLY_
     ...simulateConfig
 }: ComputeUnitEstimateForTransactionMessageConfig): Promise<number> {
     /**
-     * STEP 1: Make sure the transaction message will not fail in simulation for lack of a lifetime
-     *         - either a recent blockhash lifetime or a nonce.
-     */
-    const isDurableNonceTransactionMessage = isTransactionMessageWithDurableNonceLifetime(transactionMessage);
-    let compilableTransactionMessage: CompilableTransactionMessage;
-    if (isDurableNonceTransactionMessage || isTransactionMessageWithBlockhashLifetime(transactionMessage)) {
-        compilableTransactionMessage = transactionMessage;
-    } else {
-        compilableTransactionMessage = setTransactionMessageLifetimeUsingBlockhash(
-            INVALID_BUT_SUFFICIENT_FOR_COMPILATION_BLOCKHASH,
-            transactionMessage,
-        );
-    }
-    /**
-     * STEP 2: Ensure that the message has a `SetComputeLimit` instruction. The set compute limit
+     * STEP 1: Ensure that the message has a `SetComputeLimit` instruction. The set compute limit
      *         instruction itself consumes compute units, so it must be included in the simulation.
      */
     const existingSetComputeUnitLimitInstructionIndex =
         transactionMessage.instructions.findIndex(isSetComputeLimitInstruction);
     const maxComputeUnitLimitInstruction = createComputeUnitLimitInstruction(1_400_000 /* MAX_COMPUTE_UNIT_LIMIT */);
     if (existingSetComputeUnitLimitInstructionIndex === -1) {
-        compilableTransactionMessage = appendTransactionMessageInstruction(
-            maxComputeUnitLimitInstruction,
-            compilableTransactionMessage,
-        ) as CompilableTransactionMessage;
+        transactionMessage = appendTransactionMessageInstruction(maxComputeUnitLimitInstruction, transactionMessage);
     } else {
-        const nextInstructions = [...compilableTransactionMessage.instructions];
+        const nextInstructions = [...transactionMessage.instructions];
         nextInstructions.splice(existingSetComputeUnitLimitInstructionIndex, 1, maxComputeUnitLimitInstruction);
-        compilableTransactionMessage = Object.freeze({
-            ...compilableTransactionMessage,
-            instructions: nextInstructions,
-        } as typeof compilableTransactionMessage);
+        transactionMessage = Object.freeze({ ...transactionMessage, instructions: nextInstructions });
     }
     /**
-     * STEP 3: Simulate the transaction to measure its compute unit consumption.
+     * STEP 2: Simulate the transaction to measure its compute unit consumption.
      */
-    const compiledTransaction = compileTransaction(compilableTransactionMessage);
+    const isDurableNonceTransactionMessage = isTransactionMessageWithDurableNonceLifetime(transactionMessage);
+    const compiledTransaction = compileTransaction(transactionMessage);
     const wireTransactionBytes = getBase64EncodedWireTransaction(compiledTransaction);
     try {
         const {
