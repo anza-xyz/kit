@@ -1,16 +1,14 @@
 import {
-    CompilableTransactionMessage,
+    BaseTransactionMessage,
     compileTransactionMessage,
     getCompiledTransactionMessageEncoder,
     isTransactionMessageWithBlockhashLifetime,
+    isTransactionMessageWithDurableNonceLifetime,
+    TransactionMessageWithFeePayer,
 } from '@solana/transaction-messages';
 
 import type { TransactionWithLifetime } from './lifetime';
-import type {
-    SignaturesMap,
-    TransactionFromCompilableTransactionMessage,
-    TransactionMessageBytes,
-} from './transaction';
+import type { SignaturesMap, TransactionFromTransactionMessage, TransactionMessageBytes } from './transaction';
 
 /**
  * Returns a {@link Transaction} object for a given {@link TransactionMessage}.
@@ -28,10 +26,10 @@ import type {
  * - have a lifetime specified (ie. conform to {@link TransactionMessageWithBlockhashLifetime} or
  *   {@link TransactionMessageWithDurableNonceLifetime})
  */
-export function compileTransaction<TTransactionMessage extends CompilableTransactionMessage>(
+export function compileTransaction<TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer>(
     transactionMessage: TTransactionMessage,
-): Readonly<TransactionFromCompilableTransactionMessage<TTransactionMessage>> {
-    type ReturnType = Readonly<TransactionFromCompilableTransactionMessage<TTransactionMessage>>;
+): Readonly<TransactionFromTransactionMessage<TTransactionMessage>> {
+    type ReturnType = Readonly<TransactionFromTransactionMessage<TTransactionMessage>>;
 
     const compiledMessage = compileTransactionMessage(transactionMessage);
     const messageBytes = getCompiledTransactionMessageEncoder().encode(compiledMessage) as TransactionMessageBytes;
@@ -42,13 +40,13 @@ export function compileTransaction<TTransactionMessage extends CompilableTransac
         signatures[signerAddress] = null;
     }
 
-    let lifetimeConstraint: TransactionWithLifetime['lifetimeConstraint'];
+    let lifetimeConstraint: TransactionWithLifetime['lifetimeConstraint'] | undefined;
     if (isTransactionMessageWithBlockhashLifetime(transactionMessage)) {
         lifetimeConstraint = {
             blockhash: transactionMessage.lifetimeConstraint.blockhash,
             lastValidBlockHeight: transactionMessage.lifetimeConstraint.lastValidBlockHeight,
         };
-    } else {
+    } else if (isTransactionMessageWithDurableNonceLifetime(transactionMessage)) {
         lifetimeConstraint = {
             nonce: transactionMessage.lifetimeConstraint.nonce,
             nonceAccountAddress: transactionMessage.instructions[0].accounts[0].address,
@@ -56,7 +54,7 @@ export function compileTransaction<TTransactionMessage extends CompilableTransac
     }
 
     return Object.freeze({
-        lifetimeConstraint,
+        ...(lifetimeConstraint ? { lifetimeConstraint } : undefined),
         messageBytes: messageBytes,
         signatures: Object.freeze(signatures),
     }) as ReturnType;
