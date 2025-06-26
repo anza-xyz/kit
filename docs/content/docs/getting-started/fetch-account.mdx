@@ -208,7 +208,8 @@ Since some of its data is optional, we'll use the `unwrapOption` helper to conve
 ```ts twoslash title="src/index.ts"
 // @filename: client.ts
 import {
-    CompilableTransactionMessage,
+    BaseTransactionMessage,
+    TransactionMessageWithFeePayer,
     MessageSigner,
     Rpc,
     RpcSubscriptions,
@@ -218,7 +219,9 @@ import {
     sendAndConfirmTransactionFactory,
 } from '@solana/kit';
 export type Client = {
-    estimateAndSetComputeUnitLimit: <T extends CompilableTransactionMessage>(
+    estimateAndSetComputeUnitLimit: <
+        T extends BaseTransactionMessage & TransactionMessageWithFeePayer,
+    >(
         transactionMessage: T,
     ) => Promise<T>;
     rpc: Rpc<SolanaRpcApi>;

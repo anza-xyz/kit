@@ -274,7 +274,8 @@ Finally, let's update our main `tutorial` function to execute the `createMint` f
 ```ts twoslash title="src/index.ts"
 // @filename: client.ts
 import {
-    CompilableTransactionMessage,
+    BaseTransactionMessage,
+    TransactionMessageWithFeePayer,
     MessageSigner,
     Rpc,
     RpcSubscriptions,
@@ -284,7 +285,9 @@ import {
     sendAndConfirmTransactionFactory,
 } from '@solana/kit';
 export type Client = {
-    estimateAndSetComputeUnitLimit: <T extends CompilableTransactionMessage>(
+    estimateAndSetComputeUnitLimit: <
+        T extends BaseTransactionMessage & TransactionMessageWithFeePayer,
+    >(
         transactionMessage: T,
     ) => Promise<T>;
     rpc: Rpc<SolanaRpcApi>;
