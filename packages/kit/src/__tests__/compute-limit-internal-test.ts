@@ -40,13 +40,15 @@ describe('getComputeUnitEstimateForTransactionMessage_INTERNAL_ONLY_DO_NOT_EXPOR
     });
     it('aborts the `simulateTransaction` request when aborted', () => {
         const abortController = new AbortController();
+        const transactionMessage = {
+            ...mockTransactionMessage,
+            lifetimeConstraint: MOCK_BLOCKHASH_LIFETIME_CONSTRAINT,
+        };
+
         getComputeUnitEstimateForTransactionMessage_INTERNAL_ONLY_DO_NOT_EXPORT({
             abortSignal: abortController.signal,
             rpc,
-            transactionMessage: {
-                ...mockTransactionMessage,
-                lifetimeConstraint: MOCK_BLOCKHASH_LIFETIME_CONSTRAINT,
-            },
+            transactionMessage,
         }).catch(() => {});
         expect(sendSimulateTransactionRequest).toHaveBeenCalledWith({
             abortSignal: expect.objectContaining({ aborted: false }),
@@ -168,34 +170,36 @@ describe('getComputeUnitEstimateForTransactionMessage_INTERNAL_ONLY_DO_NOT_EXPOR
         });
     });
     it('does not ask for a replacement blockhash when the transaction message is a durable nonce transaction', () => {
+        const transactionMessage = {
+            ...mockTransactionMessage,
+            instructions: [
+                {
+                    accounts: [
+                        {
+                            address: '7wJFRFuAE9x5Ptnz2VoBWsfecTCfuuM2sQCpECGypnTU' as Address,
+                            role: AccountRole.WRITABLE,
+                        },
+                        {
+                            address: 'SysvarRecentB1ockHashes11111111111111111111' as Address,
+                            role: AccountRole.READONLY,
+                        },
+                        {
+                            address: 'HzMoc78z1VNNf9nwD4Czt6CDYEb9LVD8KsVGP46FEmyJ' as Address,
+                            role: AccountRole.READONLY_SIGNER,
+                        },
+                    ],
+                    data: new Uint8Array([4, 0, 0, 0]),
+                    programAddress: '11111111111111111111111111111111' as Address,
+                },
+            ],
+            lifetimeConstraint: {
+                nonce: 'BzAqD6382v5r1pcELoi8HWrBDV4dSL9NGemMn2JYAhxc' as Nonce,
+            },
+        };
+
         getComputeUnitEstimateForTransactionMessage_INTERNAL_ONLY_DO_NOT_EXPORT({
             rpc,
-            transactionMessage: {
-                ...mockTransactionMessage,
-                instructions: [
-                    {
-                        accounts: [
-                            {
-                                address: '7wJFRFuAE9x5Ptnz2VoBWsfecTCfuuM2sQCpECGypnTU' as Address,
-                                role: AccountRole.WRITABLE,
-                            },
-                            {
-                                address: 'SysvarRecentB1ockHashes11111111111111111111' as Address,
-                                role: AccountRole.READONLY,
-                            },
-                            {
-                                address: 'HzMoc78z1VNNf9nwD4Czt6CDYEb9LVD8KsVGP46FEmyJ' as Address,
-                                role: AccountRole.READONLY_SIGNER,
-                            },
-                        ],
-                        data: new Uint8Array([4, 0, 0, 0]),
-                        programAddress: '11111111111111111111111111111111' as Address,
-                    },
-                ],
-                lifetimeConstraint: {
-                    nonce: 'BzAqD6382v5r1pcELoi8HWrBDV4dSL9NGemMn2JYAhxc' as Nonce,
-                },
-            },
+            transactionMessage,
         }).catch(() => {});
         expect(simulateTransaction).toHaveBeenCalledWith(
             expect.anything(),
@@ -203,12 +207,14 @@ describe('getComputeUnitEstimateForTransactionMessage_INTERNAL_ONLY_DO_NOT_EXPOR
         );
     });
     it('asks for a replacement blockhash even when the transaction message has a blockhash lifetime', () => {
+        const transactionMessage = {
+            ...mockTransactionMessage,
+            lifetimeConstraint: MOCK_BLOCKHASH_LIFETIME_CONSTRAINT,
+        };
+
         getComputeUnitEstimateForTransactionMessage_INTERNAL_ONLY_DO_NOT_EXPORT({
             rpc,
-            transactionMessage: {
-                ...mockTransactionMessage,
-                lifetimeConstraint: MOCK_BLOCKHASH_LIFETIME_CONSTRAINT,
-            },
+            transactionMessage,
         }).catch(() => {});
         expect(simulateTransaction).toHaveBeenCalledWith(
             expect.anything(),

@@ -3,7 +3,6 @@ import { pipe } from '@solana/functional';
 import { Instruction } from '@solana/instructions';
 
 import { TransactionMessageWithBlockhashLifetime } from '../blockhash';
-import { CompilableTransactionMessage } from '../compilable-transaction-message';
 import { createTransactionMessage } from '../create-transaction-message';
 import {
     assertIsTransactionMessageWithDurableNonceLifetime,
@@ -13,7 +12,7 @@ import {
     TransactionMessageWithDurableNonceLifetime,
 } from '../durable-nonce';
 import { AdvanceNonceAccountInstruction } from '../durable-nonce-instruction';
-import { setTransactionMessageFeePayer } from '../fee-payer';
+import { setTransactionMessageFeePayer, TransactionMessageWithFeePayer } from '../fee-payer';
 import { appendTransactionMessageInstruction } from '../instructions';
 import { BaseTransactionMessage, TransactionMessage } from '../transaction-message';
 import { TransactionMessageWithinSizeLimit } from '../transaction-message-size';
@@ -98,9 +97,8 @@ type V0TransactionMessage = Extract<TransactionMessage, { version: 0 }>;
             m => setTransactionMessageLifetimeUsingDurableNonce(mockNonceConfig, m),
         );
 
-        message satisfies CompilableTransactionMessage;
-        message satisfies BaseTransactionMessage &
-            TransactionMessageWithDurableNonceLifetime<'nonce', 'nonceAuthority', 'nonce'>;
+        message satisfies BaseTransactionMessage & TransactionMessageWithFeePayer;
+        message satisfies TransactionMessageWithDurableNonceLifetime<'nonce', 'nonceAuthority', 'nonce'>;
         message.instructions satisfies readonly [
             AdvanceNonceAccountInstruction<'nonce', 'nonceAuthority'>,
             InstructionA,
@@ -118,9 +116,8 @@ type V0TransactionMessage = Extract<TransactionMessage, { version: 0 }>;
             m => setTransactionMessageLifetimeUsingDurableNonce(newMockNonceConfig, m),
         );
 
-        message satisfies CompilableTransactionMessage;
-        message satisfies BaseTransactionMessage &
-            TransactionMessageWithDurableNonceLifetime<'newNonce', 'newNonceAuthority', 'newNonce'>;
+        message satisfies BaseTransactionMessage & TransactionMessageWithFeePayer;
+        message satisfies TransactionMessageWithDurableNonceLifetime<'newNonce', 'newNonceAuthority', 'newNonce'>;
         message.instructions satisfies readonly [
             AdvanceNonceAccountInstruction<'newNonce', 'newNonceAuthority'>,
             InstructionA,
