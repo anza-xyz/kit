@@ -1,7 +1,9 @@
 import { Address } from '@solana/addresses';
 
 import { TransactionMessageWithBlockhashLifetime } from '../../blockhash';
-import { CompilableTransactionMessage } from '../../compilable-transaction-message';
+import { TransactionMessageWithFeePayer } from '../../fee-payer';
+import { TransactionMessageWithLifetime } from '../../lifetime';
+import { BaseTransactionMessage } from '../../transaction-message';
 import { getCompiledAddressTableLookups } from '../address-table-lookups';
 import { getCompiledMessageHeader } from '../header';
 import { getCompiledInstructions } from '../instructions';
@@ -19,7 +21,7 @@ const MOCK_LIFETIME_CONSTRAINT =
     'SOME_CONSTRAINT' as unknown as TransactionMessageWithBlockhashLifetime['lifetimeConstraint'];
 
 describe('compileTransactionMessage', () => {
-    let baseTx: CompilableTransactionMessage;
+    let baseTx: BaseTransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithLifetime;
     beforeEach(() => {
         baseTx = {
             feePayer: { address: 'abc' as Address<'abc'> },
