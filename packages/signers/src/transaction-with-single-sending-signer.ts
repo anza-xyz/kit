@@ -4,7 +4,7 @@ import {
     SolanaError,
 } from '@solana/errors';
 import { Brand } from '@solana/nominal-types';
-import { CompilableTransactionMessage } from '@solana/transaction-messages';
+import { BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
 
 import { getSignersFromTransactionMessage, TransactionMessageWithSigners } from './account-signer-meta';
 import { isTransactionModifyingSigner } from './transaction-modifying-signer';
@@ -63,9 +63,9 @@ export type TransactionMessageWithSingleSendingSigner = Brand<
  * @see {@link signAndSendTransactionMessageWithSigners}
  * @see {@link assertIsTransactionMessageWithSingleSendingSigner}
  */
-export function isTransactionMessageWithSingleSendingSigner<TTransactionMessage extends CompilableTransactionMessage>(
-    transaction: TTransactionMessage,
-): transaction is TransactionMessageWithSingleSendingSigner & TTransactionMessage {
+export function isTransactionMessageWithSingleSendingSigner<
+    TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer,
+>(transaction: TTransactionMessage): transaction is TransactionMessageWithSingleSendingSigner & TTransactionMessage {
     try {
         assertIsTransactionMessageWithSingleSendingSigner(transaction);
         return true;
@@ -97,7 +97,7 @@ export function isTransactionMessageWithSingleSendingSigner<TTransactionMessage 
  * @see {@link isTransactionMessageWithSingleSendingSigner}
  */
 export function assertIsTransactionMessageWithSingleSendingSigner<
-    TTransactionMessage extends CompilableTransactionMessage,
+    TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer,
 >(
     transaction: TTransactionMessage,
 ): asserts transaction is TransactionMessageWithSingleSendingSigner & TTransactionMessage {
