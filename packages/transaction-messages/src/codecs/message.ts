@@ -49,7 +49,13 @@ function getPreludeStructEncoderTuple() {
         ['version', getTransactionVersionEncoder()],
         ['header', getMessageHeaderEncoder()],
         ['staticAccounts', getArrayEncoder(getAddressEncoder(), { size: getShortU16Encoder() })],
-        ['lifetimeToken', fixEncoderSize(getBase58Encoder(), 32)],
+        [
+            'lifetimeToken',
+            transformEncoder(
+                fixEncoderSize(getBase58Encoder(), 32),
+                (lifetimeToken: string | undefined): string => lifetimeToken ?? '11111111111111111111111111111111',
+            ),
+        ],
         ['instructions', getArrayEncoder(getInstructionEncoder(), { size: getShortU16Encoder() })],
     ] as const;
 }
@@ -59,7 +65,12 @@ function getPreludeStructDecoderTuple() {
         ['version', getTransactionVersionDecoder() as Decoder<number>],
         ['header', getMessageHeaderDecoder()],
         ['staticAccounts', getArrayDecoder(getAddressDecoder(), { size: getShortU16Decoder() })],
-        ['lifetimeToken', fixDecoderSize(getBase58Decoder(), 32)],
+        [
+            'lifetimeToken',
+            transformDecoder(fixDecoderSize(getBase58Decoder(), 32), (lifetimeToken: string): string | undefined =>
+                lifetimeToken === '11111111111111111111111111111111' ? undefined : lifetimeToken,
+            ),
+        ],
         ['instructions', getArrayDecoder(getInstructionDecoder(), { size: getShortU16Decoder() })],
         ['addressTableLookups', getAddressTableLookupArrayDecoder()],
     ] as const;

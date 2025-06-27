@@ -1,4 +1,3 @@
-import { TransactionMessageWithBlockhashLifetime } from '../blockhash';
 import { TransactionMessageWithFeePayer } from '../fee-payer';
 import { TransactionMessageWithLifetime } from '../lifetime';
 import { BaseTransactionMessage } from '../transaction-message';
@@ -23,7 +22,7 @@ type BaseCompiledTransactionMessage = Readonly<{
      * In the case of a transaction message with a nonce lifetime constraint, this will be the value
      * of the nonce itself. In all other cases this will be a recent blockhash.
      */
-    lifetimeToken: ReturnType<typeof getCompiledLifetimeToken>;
+    lifetimeToken?: ReturnType<typeof getCompiledLifetimeToken>;
     /** A list of addresses indicating which accounts to load */
     staticAccounts: ReturnType<typeof getCompiledStaticAccounts>;
 }>;
@@ -48,11 +47,6 @@ type VersionedCompiledTransactionMessage = BaseCompiledTransactionMessage &
         addressTableLookups?: ReturnType<typeof getCompiledAddressTableLookups>;
         version: number;
     }>;
-
-const EMPTY_BLOCKHASH_LIFETIME_CONSTRAINT = {
-    blockhash: '11111111111111111111111111111111',
-    lastValidBlockHeight: 0n,
-} as TransactionMessageWithBlockhashLifetime['lifetimeConstraint'];
 
 /**
  * Converts the type of transaction message data structure that you create in your application to
@@ -79,16 +73,14 @@ export function compileTransactionMessage(
         transactionMessage.instructions,
     );
     const orderedAccounts = getOrderedAccountsFromAddressMap(addressMap);
-    const lifetimeConstraint =
-        (transactionMessage as Partial<TransactionMessageWithLifetime>).lifetimeConstraint ??
-        EMPTY_BLOCKHASH_LIFETIME_CONSTRAINT;
+    const lifetimeConstraint = (transactionMessage as Partial<TransactionMessageWithLifetime>).lifetimeConstraint;
     return {
         ...(transactionMessage.version !== 'legacy'
             ? { addressTableLookups: getCompiledAddressTableLookups(orderedAccounts) }
             : null),
+        ...(lifetimeConstraint ? { lifetimeToken: getCompiledLifetimeToken(lifetimeConstraint) } : null),
         header: getCompiledMessageHeader(orderedAccounts),
         instructions: getCompiledInstructions(transactionMessage.instructions, orderedAccounts),
-        lifetimeToken: getCompiledLifetimeToken(lifetimeConstraint),
         staticAccounts: getCompiledStaticAccounts(orderedAccounts),
         version: transactionMessage.version,
     };

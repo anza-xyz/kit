@@ -11,6 +11,7 @@ import { AccountLookupMeta, AccountMeta, AccountRole, Instruction } from '@solan
 import { CompiledTransactionMessage } from '../compile';
 import { decompileTransactionMessage } from '../decompile-message';
 import { Nonce } from '../durable-nonce';
+import { TransactionMessageWithLifetime } from '../lifetime';
 
 describe('decompileTransactionMessage', () => {
     const U64_MAX = 2n ** 64n - 1n;
@@ -36,7 +37,7 @@ describe('decompileTransactionMessage', () => {
 
             expect(transaction.version).toBe(0);
             expect(transaction.feePayer.address).toEqual(feePayer);
-            expect(transaction.lifetimeConstraint).toEqual({
+            expect((transaction as TransactionMessageWithLifetime).lifetimeConstraint).toEqual({
                 blockhash,
                 lastValidBlockHeight: U64_MAX,
             });
@@ -56,7 +57,7 @@ describe('decompileTransactionMessage', () => {
             };
 
             const transaction = decompileTransactionMessage(compiledTransaction);
-            expect(transaction.lifetimeConstraint).toBeFrozenObject();
+            expect((transaction as TransactionMessageWithLifetime).lifetimeConstraint).toBeFrozenObject();
         });
 
         it('converts a transaction with version legacy', () => {
@@ -244,7 +245,7 @@ describe('decompileTransactionMessage', () => {
             };
 
             const transaction = decompileTransactionMessage(compiledTransaction, { lastValidBlockHeight: 100n });
-            expect(transaction.lifetimeConstraint).toEqual({
+            expect((transaction as TransactionMessageWithLifetime).lifetimeConstraint).toEqual({
                 blockhash,
                 lastValidBlockHeight: 100n,
             });
@@ -358,7 +359,7 @@ describe('decompileTransactionMessage', () => {
 
             expect(transaction.instructions).toStrictEqual([expectedInstruction]);
             expect(transaction.feePayer.address).toStrictEqual(nonceAuthorityAddress);
-            expect(transaction.lifetimeConstraint).toStrictEqual({ nonce });
+            expect((transaction as TransactionMessageWithLifetime).lifetimeConstraint).toStrictEqual({ nonce });
         });
 
         it('freezes the nonce lifetime constraint', () => {
@@ -394,7 +395,7 @@ describe('decompileTransactionMessage', () => {
             };
 
             const transaction = decompileTransactionMessage(compiledTransaction);
-            expect(transaction.lifetimeConstraint).toBeFrozenObject();
+            expect((transaction as TransactionMessageWithLifetime).lifetimeConstraint).toBeFrozenObject();
         });
 
         it('converts a transaction with one instruction which is advance nonce (fee payer is not nonce authority)', () => {
@@ -534,7 +535,7 @@ describe('decompileTransactionMessage', () => {
             ];
 
             expect(transaction.instructions).toStrictEqual(expectedInstructions);
-            expect(transaction.lifetimeConstraint).toStrictEqual({ nonce });
+            expect((transaction as TransactionMessageWithLifetime).lifetimeConstraint).toStrictEqual({ nonce });
         });
 
         it('freezes the instructions within the transaction', () => {
