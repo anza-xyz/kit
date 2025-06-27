@@ -68,7 +68,6 @@ describe('programAccounts', () => {
                     programAccounts(programAddress: $programAddress, commitment: $commitment) {
                         executable
                         lamports
-                        rentEpoch
                     }
                 }
             `;
@@ -79,7 +78,6 @@ describe('programAccounts', () => {
                         {
                             executable: expect.any(Boolean),
                             lamports: expect.any(BigInt),
-                            rentEpoch: expect.any(BigInt),
                         },
                     ]),
                 },

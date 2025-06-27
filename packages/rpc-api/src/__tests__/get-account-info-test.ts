@@ -37,7 +37,6 @@ describe('getAccountInfo', () => {
                         executable: false,
                         lamports: 5000000n,
                         owner: '11111111111111111111111111111111',
-                        rentEpoch: 18446744073709551615n,
                         space: 9n,
                     },
                 });
@@ -225,7 +224,6 @@ describe('getAccountInfo', () => {
                         executable: false,
                         lamports: 10290815n,
                         owner: 'AddressLookupTab1e1111111111111111111111111',
-                        rentEpoch: 0n,
                         space: 1304n,
                     },
                 });
@@ -259,7 +257,6 @@ describe('getAccountInfo', () => {
                         executable: true,
                         lamports: 10290815n,
                         owner: 'BPFLoaderUpgradeab1e11111111111111111111111',
-                        rentEpoch: 0n,
                         space: 36n,
                     },
                 });
@@ -306,7 +303,6 @@ describe('getAccountInfo', () => {
                         executable: false,
                         lamports: 10290815n,
                         owner: 'Config1111111111111111111111111111111111111',
-                        rentEpoch: 0n,
                         space: 643n,
                     },
                 });
@@ -341,7 +337,6 @@ describe('getAccountInfo', () => {
                         executable: false,
                         lamports: 960480n,
                         owner: 'Config1111111111111111111111111111111111111',
-                        rentEpoch: 0n,
                         space: 10n,
                     },
                 });
@@ -379,7 +374,6 @@ describe('getAccountInfo', () => {
                         executable: false,
                         lamports: 10290815n,
                         owner: '11111111111111111111111111111111',
-                        rentEpoch: 0n,
                         space: 80n,
                     },
                 });
@@ -417,7 +411,6 @@ describe('getAccountInfo', () => {
                         executable: false,
                         lamports: 10290815n,
                         owner: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
-                        rentEpoch: 0n,
                         space: 82n,
                     },
                 });
@@ -460,7 +453,6 @@ describe('getAccountInfo', () => {
                         executable: false,
                         lamports: 10290815n,
                         owner: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
-                        rentEpoch: 0n,
                         space: 165n,
                     },
                 });
@@ -500,7 +492,6 @@ describe('getAccountInfo', () => {
                         executable: false,
                         lamports: 10290815n,
                         owner: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
-                        rentEpoch: 0n,
                         space: 355n,
                     },
                 });
@@ -560,7 +551,6 @@ describe('getAccountInfo', () => {
                         executable: false,
                         lamports: 10290815n,
                         owner: 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb',
-                        rentEpoch: 0n,
                         space: 278n,
                     },
                 });
@@ -615,7 +605,6 @@ describe('getAccountInfo', () => {
                         executable: false,
                         lamports: 10290815n,
                         owner: 'Stake11111111111111111111111111111111111111',
-                        rentEpoch: 0n,
                         space: 200n,
                     },
                 });
@@ -651,7 +640,6 @@ describe('getAccountInfo', () => {
                         executable: false,
                         lamports: 1009200n,
                         owner: 'Sysvar1111111111111111111111111111111111111',
-                        rentEpoch: 0n,
                         space: 17n,
                     },
                 });
@@ -1147,7 +1135,6 @@ describe('getAccountInfo', () => {
                         executable: false,
                         lamports: 10290815n,
                         owner: 'Vote111111111111111111111111111111111111111',
-                        rentEpoch: 0n,
                         space: 3762n,
                     },
                 });

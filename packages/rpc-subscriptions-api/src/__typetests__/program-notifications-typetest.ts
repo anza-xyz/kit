@@ -24,7 +24,6 @@ type TNotificationBase = Readonly<{
         executable: boolean;
         lamports: Lamports;
         owner: Address;
-        rentEpoch: bigint;
     }>;
     pubkey: Address;
 }>;
