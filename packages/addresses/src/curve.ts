@@ -33,10 +33,11 @@ export type OffCurveAddress<TAddress extends string = string> = Brand<Address<TA
 export function isOffCurveAddress(
     putativeOffCurveAddress: string,
 ): putativeOffCurveAddress is OffCurveAddress<typeof putativeOffCurveAddress> {
-    if (!isAddress(putativeOffCurveAddress)) return false;
+    if (!isAddress(putativeOffCurveAddress)) {
+        return false;
+    }
     const addressBytes = new Uint8Array(getAddressCodec().encode(putativeOffCurveAddress));
-    if (compressedPointBytesAreOnCurve(addressBytes)) return true;
-    return false;
+    return compressedPointBytesAreOnCurve(addressBytes);
 }
 
 /**
