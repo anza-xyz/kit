@@ -36,7 +36,7 @@ export function isOffCurveAddress(
     if (!isAddress(putativeOffCurveAddress)) {
         return false;
     }
-    const addressBytes = new Uint8Array(getAddressCodec().encode(putativeOffCurveAddress));
+    const addressBytes = getAddressCodec().encode(putativeOffCurveAddress);
     return compressedPointBytesAreOnCurve(addressBytes);
 }
 
