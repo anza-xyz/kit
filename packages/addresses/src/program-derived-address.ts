@@ -14,7 +14,7 @@ import {
 import { Brand } from '@solana/nominal-types';
 
 import { Address, assertIsAddress, getAddressCodec, isAddress } from './address';
-import { compressedPointBytesAreOnCurve } from './curve';
+import { compressedPointBytesAreOnCurve } from './curve-internal';
 
 /**
  * A tuple representing a program derived address (derived from the address of some program and a

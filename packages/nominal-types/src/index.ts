@@ -20,8 +20,31 @@
  * @packageDocumentation
  */
 
+type AffinePointValidity = 'invalid' | 'valid';
 type CompressionFormat = 'zstd';
 type StringEncoding = 'base58' | 'base64';
+
+/**
+ * Use this to produce a new type that satisfies the original type, but adds extra type information
+ * that marks the type as being an affine point over a field that either lies on a given curve
+ * (is valid) or does not (is invalid).
+ *
+ * @typeParam T - The underlying type
+ * @typeParam TValidity - Whether the point is valid or invalid
+ *
+ * @example
+ * ```ts
+ * const address = 'dv1ZAGvdsz5hHLwWXsVnM94hWf1pjbKVau1QVkaMJ92';
+ * const onCurveAddress = address as AffinePoint<typeof address, 'valid'>;
+ *
+ * onCurveAddress satisfies AffinePoint<'dv1ZAGvdsz5hHLwWXsVnM94hWf1pjbKVau1QVkaMJ92', 'valid'>; // OK
+ * onCurveAddress satisfies AffinePoint<string, 'valid'>; // OK
+ * onCurveAddress satisfies AffinePoint<string, 'invalid'>; // ERROR
+ * address satisfies AffinePoint<string, 'valid'>; // ERROR
+ * address satisfies AffinePoint<string, 'invalid'>; // ERROR
+ * ```
+ */
+export type AffinePoint<T, TValidity extends AffinePointValidity> = NominalType<'affinePoint', TValidity> & T;
 
 /**
  * Use this to produce a new type that satisfies the original type, but not the other way around.
