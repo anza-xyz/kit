@@ -1,5 +1,5 @@
 import { SOLANA_ERROR__ADDRESSES__INVALID_OFF_CURVE_ADDRESS, SolanaError } from '@solana/errors';
-import type { Brand } from '@solana/nominal-types';
+import type { AffinePoint } from '@solana/nominal-types';
 
 import { type Address, getAddressCodec, isAddress } from './address';
 import { compressedPointBytesAreOnCurve } from './curve-internal';
@@ -11,7 +11,7 @@ import { compressedPointBytesAreOnCurve } from './curve-internal';
  * Whenever you need to validate an arbitrary string as a base58-encoded off-curve address, use the
  * {@link offCurveAddress}, {@link assertIsOffCurveAddress}, or {@link isOffCurveAddress} functions in this package.
  */
-export type OffCurveAddress<TAddress extends string = string> = Brand<Address<TAddress>, 'OffCurveAddress'>;
+export type OffCurveAddress<TAddress extends string = string> = AffinePoint<Address<TAddress>, 'invalid'>;
 
 /**
  * A type guard that returns `true` if the input string conforms to the {@link OffCurveAddress} type,
