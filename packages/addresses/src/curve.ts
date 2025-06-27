@@ -1,21 +1,21 @@
 import { SOLANA_ERROR__ADDRESSES__INVALID_OFF_CURVE_ADDRESS, SolanaError } from '@solana/errors';
 import type { AffinePoint } from '@solana/nominal-types';
 
-import { type Address, getAddressCodec, isAddress } from './address';
+import { type Address, getAddressCodec } from './address';
 import { compressedPointBytesAreOnCurve } from './curve-internal';
 
 /**
- * Represents a string that validates as an off-curve Solana address. Functions that require well-formed
- * off-curve addresses should specify their inputs in terms of this type.
+ * Represents a {@link Address} that validates as being off-curve. Functions that require off-curve
+ * addresses should specify their inputs in terms of this type.
  *
- * Whenever you need to validate an arbitrary string as a base58-encoded off-curve address, use the
- * {@link offCurveAddress}, {@link assertIsOffCurveAddress}, or {@link isOffCurveAddress} functions in this package.
+ * Whenever you need to validate an address as being off-curve, use the {@link offCurveAddress},
+ * {@link assertIsOffCurveAddress}, or {@link isOffCurveAddress} functions in this package.
  */
 export type OffCurveAddress<TAddress extends string = string> = AffinePoint<Address<TAddress>, 'invalid'>;
 
 /**
- * A type guard that returns `true` if the input string conforms to the {@link OffCurveAddress} type,
- * and refines its type for use in your application.
+ * A type guard that returns `true` if the input address conforms to the {@link OffCurveAddress}
+ * type, and refines its type for use in your application.
  *
  * @example
  * ```ts
@@ -30,20 +30,17 @@ export type OffCurveAddress<TAddress extends string = string> = AffinePoint<Addr
  * }
  * ```
  */
-export function isOffCurveAddress(
-    putativeOffCurveAddress: string,
-): putativeOffCurveAddress is OffCurveAddress<typeof putativeOffCurveAddress> {
-    if (!isAddress(putativeOffCurveAddress)) {
-        return false;
-    }
+export function isOffCurveAddress<TAddress extends Address>(
+    putativeOffCurveAddress: TAddress,
+): putativeOffCurveAddress is OffCurveAddress<TAddress> {
     const addressBytes = getAddressCodec().encode(putativeOffCurveAddress);
     return compressedPointBytesAreOnCurve(addressBytes);
 }
 
 /**
- * From time to time you might acquire a string, that you expect to validate as an off-curve address,
- * from an untrusted network API or user input. Use this function to assert that such an
- * arbitrary string is a base58-encoded address that is off-curve.
+ * From time to time you might acquire a {@link Address}, that you expect to validate as an
+ * off-curve address, from an untrusted source. Use this function to assert that such an address is
+ * off-curve.
  *
  * @example
  * ```ts
@@ -56,8 +53,11 @@ export function isOffCurveAddress(
  *     try {
  *         // If this type assertion function doesn't throw, then
  *         // Typescript will upcast `address` to `Address`.
+ *         assertIsAddress(address);
+ *         // If this type assertion function doesn't throw, then
+ *         // Typescript will upcast `address` to `OffCurveAddress`.
  *         assertIsOffCurveAddress(address);
- *         // At this point, `address` is an `Address` that can be used with the RPC.
+ *         // At this point, `address` is an `OffCurveAddress` that can be used with the RPC.
  *         const balanceInLamports = await rpc.getBalance(address).send();
  *     } catch (e) {
  *         // `address` turned out to NOT be a base58-encoded off-curve address
@@ -65,19 +65,19 @@ export function isOffCurveAddress(
  * }
  * ```
  */
-export function assertIsOffCurveAddress(
-    putativeOffCurveAddress: string,
-): asserts putativeOffCurveAddress is OffCurveAddress<typeof putativeOffCurveAddress> {
+export function assertIsOffCurveAddress<TAddress extends Address>(
+    putativeOffCurveAddress: TAddress,
+): asserts putativeOffCurveAddress is OffCurveAddress<TAddress> {
     if (!isOffCurveAddress(putativeOffCurveAddress)) {
         throw new SolanaError(SOLANA_ERROR__ADDRESSES__INVALID_OFF_CURVE_ADDRESS);
     }
 }
 
 /**
- * Combines _asserting_ that a string is an off-curve address with _coercing_ it to the
+ * Combines _asserting_ that a {@link Address} is off-curve with _coercing_ it to the
  * {@link OffCurveAddress} type. It's most useful with untrusted input.
  */
-export function offCurveAddress<TAddress extends string = string>(
+export function offCurveAddress<TAddress extends Address>(
     putativeOffCurveAddress: TAddress,
 ): OffCurveAddress<TAddress> {
     assertIsOffCurveAddress(putativeOffCurveAddress);

@@ -1,4 +1,11 @@
-import { isOffCurveAddress } from '../curve';
+import {
+    SOLANA_ERROR__ADDRESSES__INVALID_BYTE_LENGTH,
+    SOLANA_ERROR__ADDRESSES__STRING_LENGTH_OUT_OF_RANGE,
+    SolanaError,
+} from '@solana/errors';
+
+import { address } from '../address';
+import { assertIsOffCurveAddress, isOffCurveAddress } from '../curve';
 import { compressedPointBytesAreOnCurve } from '../curve-internal';
 
 const OFF_CURVE_KEY_BYTES = [
@@ -28,11 +35,11 @@ const OFF_CURVE_ADDRESSES = [
     '11111111111111111111111111111111', // system program
     'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA', // legacy token program
     'SQDS4ep65T869zMMBKyuUq6aD6EgTu8psMjkvj52pCf', // Squads multi-sig program
-];
+].map(address);
 const ON_CURVE_ADDRESSES = [
     'CCMCWh4FudPEmY6Q1AVi5o8mQMXkHYkJUmZfzRGdcJ9P', // ATA
     '2DRxyJDsDccGL6mb8PLMsKQTCU3C7xUq8aprz53VcW4k', // random Squads multi-sig account
-];
+].map(address);
 
 describe('compressedPointBytesAreOnCurve', () => {
     it.each(OFF_CURVE_KEY_BYTES)('returns false when a public key does not lie on the Ed25519 curve [%#]', bytes => {
@@ -50,7 +57,29 @@ describe('isOffCurveAddress', () => {
     it.each(ON_CURVE_ADDRESSES)('returns false when an address lies on the Ed25519 curve [%#]', address => {
         expect(isOffCurveAddress(address)).toBe(false);
     });
-    it('returns false when an invalid address is provided', () => {
-        expect(isOffCurveAddress('not_a_real_address')).toBe(false);
+    it('throws when supplied a non-base58 string', () => {
+        expect(() => {
+            assertIsOffCurveAddress(
+                // @ts-expect-error Pass corrupt data for the sake of this test.
+                'not-a-base-58-encoded-string',
+            );
+        }).toThrow(
+            new SolanaError(SOLANA_ERROR__ADDRESSES__STRING_LENGTH_OUT_OF_RANGE, {
+                actualLength: 28,
+            }),
+        );
+    });
+    it('throws when the decoded byte array has a length other than 32 bytes', () => {
+        expect(() => {
+            assertIsOffCurveAddress(
+                // 31 bytes [128, ..., 128]
+                // @ts-expect-error Pass corrupt data for the sake of this test.
+                '2xea9jWJ9eca3dFiefTeSPP85c6qXqunCqL2h2JNffM',
+            );
+        }).toThrow(
+            new SolanaError(SOLANA_ERROR__ADDRESSES__INVALID_BYTE_LENGTH, {
+                actualLength: 31,
+            }),
+        );
     });
 });
