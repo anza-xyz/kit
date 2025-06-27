@@ -10,7 +10,7 @@ import {
     compileTransaction,
     FullySignedTransaction,
     Transaction,
-    TransactionFromCompilableTransactionMessage,
+    TransactionFromTransactionMessage,
     TransactionWithLifetime,
 } from '@solana/transactions';
 
@@ -76,7 +76,7 @@ export async function partiallySignTransactionMessageWithSigners<
 >(
     transactionMessage: TTransactionMessage,
     config?: TransactionPartialSignerConfig,
-): Promise<TransactionFromCompilableTransactionMessage<TTransactionMessage>> {
+): Promise<TransactionFromTransactionMessage<TTransactionMessage>> {
     const { partialSigners, modifyingSigners } = categorizeTransactionSigners(
         deduplicateSigners(getSignersFromTransactionMessage(transactionMessage).filter(isTransactionSigner)),
         { identifySendingSigner: false },
@@ -124,7 +124,7 @@ export async function signTransactionMessageWithSigners<
 >(
     transactionMessage: TTransactionMessage,
     config?: TransactionPartialSignerConfig,
-): Promise<FullySignedTransaction & TransactionFromCompilableTransactionMessage<TTransactionMessage>> {
+): Promise<FullySignedTransaction & TransactionFromTransactionMessage<TTransactionMessage>> {
     const signedTransaction = await partiallySignTransactionMessageWithSigners(transactionMessage, config);
     assertIsFullySignedTransaction(signedTransaction);
     return signedTransaction;
@@ -299,8 +299,8 @@ async function signModifyingAndPartialTransactionSigners<
     modifyingSigners: readonly TransactionModifyingSigner[] = [],
     partialSigners: readonly TransactionPartialSigner[] = [],
     config?: TransactionModifyingSignerConfig,
-): Promise<TransactionFromCompilableTransactionMessage<TTransactionMessage>> {
-    type ReturnType = TransactionFromCompilableTransactionMessage<TTransactionMessage>;
+): Promise<TransactionFromTransactionMessage<TTransactionMessage>> {
+    type ReturnType = TransactionFromTransactionMessage<TTransactionMessage>;
 
     // serialize the transaction
     const transaction = compileTransaction(transactionMessage);

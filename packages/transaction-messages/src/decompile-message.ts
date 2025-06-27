@@ -12,7 +12,6 @@ import type { Blockhash } from '@solana/rpc-types';
 
 import { AddressesByLookupTableAddress } from './addresses-by-lookup-table-address';
 import { setTransactionMessageLifetimeUsingBlockhash } from './blockhash';
-import { CompilableTransactionMessage } from './compilable-transaction-message';
 import { CompiledTransactionMessage } from './compile';
 import type { getCompiledAddressTableLookups } from './compile/address-table-lookups';
 import { createTransactionMessage } from './create-transaction-message';
@@ -20,6 +19,7 @@ import { Nonce, setTransactionMessageLifetimeUsingDurableNonce } from './durable
 import { isAdvanceNonceAccountInstruction } from './durable-nonce-instruction';
 import { setTransactionMessageFeePayer, TransactionMessageWithFeePayer } from './fee-payer';
 import { appendTransactionMessageInstruction } from './instructions';
+import { TransactionMessageWithLifetime } from './lifetime';
 import { BaseTransactionMessage, TransactionVersion } from './transaction-message';
 
 function getAccountMetas(message: CompiledTransactionMessage): AccountMeta[] {
@@ -216,7 +216,7 @@ export type DecompileTransactionMessageConfig = {
 export function decompileTransactionMessage(
     compiledTransactionMessage: CompiledTransactionMessage,
     config?: DecompileTransactionMessageConfig,
-): CompilableTransactionMessage {
+): BaseTransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithLifetime {
     const feePayer = compiledTransactionMessage.staticAccounts[0];
     if (!feePayer) {
         throw new SolanaError(SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_FEE_PAYER_MISSING);

@@ -7,6 +7,8 @@ import {
     compileTransactionMessage,
     getCompiledTransactionMessageEncoder,
     Nonce,
+    setTransactionMessageLifetimeUsingDurableNonce,
+    TransactionMessageWithBlockhashLifetime,
 } from '@solana/transaction-messages';
 
 import { compileTransaction } from '../compile-transaction';
@@ -41,12 +43,7 @@ describe('compileTransactionMessage', () => {
         });
     });
 
-    const emptyMockTransactionMessage = {
-        lifetimeConstraint: {
-            blockhash: '4'.repeat(44) as Blockhash,
-            lastValidBlockHeight: 1n,
-        },
-    } as TransactionMessage;
+    const emptyMockTransactionMessage = { instructions: [] } as unknown as TransactionMessage;
 
     it('compiles the supplied `TransactionMessage` and sets the `messageBytes` property to the result', () => {
         const transaction = compileTransaction(emptyMockTransactionMessage);
@@ -79,7 +76,7 @@ describe('compileTransactionMessage', () => {
                 blockhash: 'D5vmAVFNZFaBBZNJ17tMaVrcsQ9DZViL9bAZn1n1Kxer' as Blockhash,
                 lastValidBlockHeight: 1n,
             },
-        } as TransactionMessage;
+        } as TransactionMessage & TransactionMessageWithBlockhashLifetime;
         const transaction = compileTransaction(transactionMessage);
         expect(transaction.lifetimeConstraint).toStrictEqual({
             blockhash: 'D5vmAVFNZFaBBZNJ17tMaVrcsQ9DZViL9bAZn1n1Kxer' as Blockhash,
@@ -88,20 +85,14 @@ describe('compileTransactionMessage', () => {
     });
 
     it('returns a durable nonce lifetime constraint when the transaction message has a nonce constraint', () => {
-        const transactionMessage = {
-            instructions: [
-                {
-                    accounts: [
-                        {
-                            address: 'nonceAddress' as Address,
-                        },
-                    ],
-                },
-            ],
-            lifetimeConstraint: {
+        const transactionMessage = setTransactionMessageLifetimeUsingDurableNonce(
+            {
                 nonce: 'b' as Nonce,
+                nonceAccountAddress: 'nonceAddress' as Address,
+                nonceAuthorityAddress: 'nonceAuthorityAddress' as Address,
             },
-        } as unknown as TransactionMessage;
+            emptyMockTransactionMessage,
+        );
         const transaction = compileTransaction(transactionMessage);
         expect(transaction.lifetimeConstraint).toStrictEqual({
             nonce: 'b' as Nonce,

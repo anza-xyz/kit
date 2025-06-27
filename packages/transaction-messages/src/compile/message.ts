@@ -1,4 +1,7 @@
-import { CompilableTransactionMessage } from '../compilable-transaction-message';
+import { TransactionMessageWithBlockhashLifetime } from '../blockhash';
+import { TransactionMessageWithFeePayer } from '../fee-payer';
+import { TransactionMessageWithLifetime } from '../lifetime';
+import { BaseTransactionMessage } from '../transaction-message';
 import { getAddressMapFromInstructions, getOrderedAccountsFromAddressMap } from './accounts';
 import { getCompiledAddressTableLookups } from './address-table-lookups';
 import { getCompiledMessageHeader } from './header';
@@ -46,6 +49,11 @@ type VersionedCompiledTransactionMessage = BaseCompiledTransactionMessage &
         version: number;
     }>;
 
+const EMPTY_BLOCKHASH_LIFETIME_CONSTRAINT = {
+    blockhash: '11111111111111111111111111111111',
+    lastValidBlockHeight: 0n,
+} as TransactionMessageWithBlockhashLifetime['lifetimeConstraint'];
+
 /**
  * Converts the type of transaction message data structure that you create in your application to
  * the type of transaction message data structure that can be encoded for execution on the network.
@@ -58,26 +66,29 @@ type VersionedCompiledTransactionMessage = BaseCompiledTransactionMessage &
  * @see {@link decompileTransactionMessage}
  */
 export function compileTransactionMessage(
-    transactionMessage: CompilableTransactionMessage & Readonly<{ version: 'legacy' }>,
+    transactionMessage: BaseTransactionMessage & Readonly<{ version: 'legacy' }> & TransactionMessageWithFeePayer,
 ): LegacyCompiledTransactionMessage;
 export function compileTransactionMessage(
-    transactionMessage: CompilableTransactionMessage,
+    transactionMessage: BaseTransactionMessage & TransactionMessageWithFeePayer,
 ): VersionedCompiledTransactionMessage;
 export function compileTransactionMessage(
-    transactionMessage: CompilableTransactionMessage,
+    transactionMessage: BaseTransactionMessage & TransactionMessageWithFeePayer,
 ): CompiledTransactionMessage {
     const addressMap = getAddressMapFromInstructions(
         transactionMessage.feePayer.address,
         transactionMessage.instructions,
     );
     const orderedAccounts = getOrderedAccountsFromAddressMap(addressMap);
+    const lifetimeConstraint =
+        (transactionMessage as Partial<TransactionMessageWithLifetime>).lifetimeConstraint ??
+        EMPTY_BLOCKHASH_LIFETIME_CONSTRAINT;
     return {
         ...(transactionMessage.version !== 'legacy'
             ? { addressTableLookups: getCompiledAddressTableLookups(orderedAccounts) }
             : null),
         header: getCompiledMessageHeader(orderedAccounts),
         instructions: getCompiledInstructions(transactionMessage.instructions, orderedAccounts),
-        lifetimeToken: getCompiledLifetimeToken(transactionMessage.lifetimeConstraint),
+        lifetimeToken: getCompiledLifetimeToken(lifetimeConstraint),
         staticAccounts: getCompiledStaticAccounts(orderedAccounts),
         version: transactionMessage.version,
     };
