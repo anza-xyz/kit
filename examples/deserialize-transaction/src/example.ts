@@ -315,6 +315,9 @@ const decompiledTransactionMessage = await decompileTransactionMessageFetchingLo
 log.info(`[step 3] The transaction fee payer is ${decompiledTransactionMessage.feePayer.address}`);
 
 // And the lifetime constraint:
+if (!('lifetimeConstraint' in decompiledTransactionMessage)) {
+    throw new Error('We expect a lifetime');
+}
 log.info(decompiledTransactionMessage.lifetimeConstraint, '[step 3] The transaction lifetime constraint');
 
 /**

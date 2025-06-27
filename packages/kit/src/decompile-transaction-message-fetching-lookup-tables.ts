@@ -27,7 +27,10 @@ export async function decompileTransactionMessageFetchingLookupTables(
     compiledTransactionMessage: CompiledTransactionMessage,
     rpc: Rpc<GetMultipleAccountsApi>,
     config?: DecompileTransactionMessageFetchingLookupTablesConfig,
-): Promise<BaseTransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithLifetime> {
+): Promise<
+    | (BaseTransactionMessage & TransactionMessageWithFeePayer)
+    | (BaseTransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithLifetime)
+> {
     const lookupTables =
         'addressTableLookups' in compiledTransactionMessage &&
         compiledTransactionMessage.addressTableLookups !== undefined &&

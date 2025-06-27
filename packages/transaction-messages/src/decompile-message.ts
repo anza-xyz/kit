@@ -216,7 +216,9 @@ export type DecompileTransactionMessageConfig = {
 export function decompileTransactionMessage(
     compiledTransactionMessage: CompiledTransactionMessage,
     config?: DecompileTransactionMessageConfig,
-): BaseTransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithLifetime {
+):
+    | (BaseTransactionMessage & TransactionMessageWithFeePayer)
+    | (BaseTransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithLifetime) {
     const feePayer = compiledTransactionMessage.staticAccounts[0];
     if (!feePayer) {
         throw new SolanaError(SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_FEE_PAYER_MISSING);
@@ -239,11 +241,13 @@ export function decompileTransactionMessage(
     );
 
     const firstInstruction = instructions[0];
-    const lifetimeConstraint = getLifetimeConstraint(
-        compiledTransactionMessage.lifetimeToken,
-        firstInstruction,
-        config?.lastValidBlockHeight,
-    );
+    const lifetimeConstraint = compiledTransactionMessage.lifetimeToken
+        ? getLifetimeConstraint(
+              compiledTransactionMessage.lifetimeToken,
+              firstInstruction,
+              config?.lastValidBlockHeight,
+          )
+        : undefined;
 
     return pipe(
         createTransactionMessage({ version: compiledTransactionMessage.version as TransactionVersion }),
@@ -253,9 +257,11 @@ export function decompileTransactionMessage(
                 (acc, instruction) => appendTransactionMessageInstruction(instruction, acc),
                 m as BaseTransactionMessage & TransactionMessageWithFeePayer,
             ),
-        m =>
-            'blockhash' in lifetimeConstraint
+        m => {
+            if (!lifetimeConstraint) return m;
+            return 'blockhash' in lifetimeConstraint
                 ? setTransactionMessageLifetimeUsingBlockhash(lifetimeConstraint, m)
-                : setTransactionMessageLifetimeUsingDurableNonce(lifetimeConstraint, m),
+                : setTransactionMessageLifetimeUsingDurableNonce(lifetimeConstraint, m);
+        },
     );
 }
