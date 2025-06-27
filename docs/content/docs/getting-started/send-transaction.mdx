@@ -104,7 +104,8 @@ With all that new knowledge in hand, let's update our `Client` object to include
 
 ```ts twoslash title="src/client.ts"
 import {
-  CompilableTransactionMessage,
+  BaseTransactionMessage,
+  TransactionMessageWithFeePayer,
   MessageSigner,
   Rpc,
   RpcSubscriptions,
@@ -115,7 +116,9 @@ import {
 const rpc = null as unknown as Rpc<SolanaRpcApi>;
 const rpcSubscriptions = null as unknown as RpcSubscriptions<SolanaRpcSubscriptionsApi>;
 const wallet = null as unknown as TransactionSigner & MessageSigner;
-const estimateAndSetComputeUnitLimit = null as unknown as <T extends CompilableTransactionMessage>(
+const estimateAndSetComputeUnitLimit = null as unknown as <
+  T extends BaseTransactionMessage & TransactionMessageWithFeePayer,
+>(
   transactionMessage: T,
 ) => Promise<T>;
 // ---cut-before---
@@ -125,7 +128,9 @@ import {
 } from "@solana/kit";
 
 export type Client = {
-  estimateAndSetComputeUnitLimit: <T extends CompilableTransactionMessage>(transactionMessage: T) => Promise<T>;
+  estimateAndSetComputeUnitLimit: <T extends BaseTransactionMessage & TransactionMessageWithFeePayer>(
+    transactionMessage: T,
+  ) => Promise<T>;
   rpc: Rpc<SolanaRpcApi>;
   rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
   sendAndConfirmTransaction: ReturnType<typeof sendAndConfirmTransactionFactory>; // [!code ++]
@@ -164,7 +169,8 @@ And with that, our `createMint` function is complete!
 ```ts twoslash title="src/create-mint.ts"
 // @filename: client.ts
 import {
-  CompilableTransactionMessage,
+  BaseTransactionMessage,
+  TransactionMessageWithFeePayer,
   MessageSigner,
   Rpc,
   RpcSubscriptions,
@@ -174,7 +180,9 @@ import {
   sendAndConfirmTransactionFactory,
 } from "@solana/kit";
 export type Client = {
-  estimateAndSetComputeUnitLimit: <T extends CompilableTransactionMessage>(transactionMessage: T) => Promise<T>;
+  estimateAndSetComputeUnitLimit: <T extends BaseTransactionMessage & TransactionMessageWithFeePayer>(
+    transactionMessage: T,
+  ) => Promise<T>;
   rpc: Rpc<SolanaRpcApi>;
   rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
   sendAndConfirmTransaction: ReturnType<typeof sendAndConfirmTransactionFactory>;
@@ -247,7 +255,8 @@ Finally, let's update our main `tutorial` function to execute the `createMint` f
 ```ts twoslash title="src/index.ts"
 // @filename: client.ts
 import {
-  CompilableTransactionMessage,
+  BaseTransactionMessage,
+  TransactionMessageWithFeePayer,
   MessageSigner,
   Rpc,
   RpcSubscriptions,
@@ -257,7 +266,9 @@ import {
   sendAndConfirmTransactionFactory,
 } from "@solana/kit";
 export type Client = {
-  estimateAndSetComputeUnitLimit: <T extends CompilableTransactionMessage>(transactionMessage: T) => Promise<T>;
+  estimateAndSetComputeUnitLimit: <T extends BaseTransactionMessage & TransactionMessageWithFeePayer>(
+    transactionMessage: T,
+  ) => Promise<T>;
   rpc: Rpc<SolanaRpcApi>;
   rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
   sendAndConfirmTransaction: ReturnType<typeof sendAndConfirmTransactionFactory>;
