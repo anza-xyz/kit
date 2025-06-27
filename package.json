@@ -29,7 +29,7 @@
         "agadoo": "^3.0.0",
         "bundlemon": "^3.1.0",
         "eslint": "^9.28.0",
-        "eslint-plugin-jest": "^28.11.0",
+        "eslint-plugin-jest": "^29.0.1",
         "eslint-plugin-react-hooks": "^5.2.0",
         "eslint-plugin-simple-import-sort": "^12.1.1",
         "eslint-plugin-sort-keys-fix": "^1.1.2",
