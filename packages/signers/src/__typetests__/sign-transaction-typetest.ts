@@ -1,10 +1,12 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import { SignatureBytes } from '@solana/keys';
 import {
-    CompilableTransactionMessage,
+    BaseTransactionMessage,
     TransactionMessageWithBlockhashLifetime,
     TransactionMessageWithDurableNonceLifetime,
+    TransactionMessageWithFeePayer,
     TransactionMessageWithinSizeLimit,
+    TransactionMessageWithLifetime,
 } from '@solana/transaction-messages';
 import {
     FullySignedTransaction,
@@ -23,12 +25,12 @@ import {
 } from '../sign-transaction';
 import { TransactionMessageWithSingleSendingSigner } from '../transaction-with-single-sending-signer';
 
-type CompilableTransactionMessageWithSigners = CompilableTransactionMessage & TransactionMessageWithSigners;
-
 {
     // [partiallySignTransactionMessageWithSigners]: returns a transaction with a blockhash lifetime
-    const transactionMessage = null as unknown as CompilableTransactionMessageWithSigners &
-        TransactionMessageWithBlockhashLifetime;
+    const transactionMessage = null as unknown as BaseTransactionMessage &
+        TransactionMessageWithBlockhashLifetime &
+        TransactionMessageWithFeePayer &
+        TransactionMessageWithSigners;
     partiallySignTransactionMessageWithSigners(transactionMessage) satisfies Promise<
         Readonly<Transaction & TransactionWithBlockhashLifetime>
     >;
@@ -36,8 +38,10 @@ type CompilableTransactionMessageWithSigners = CompilableTransactionMessage & Tr
 
 {
     // [partiallySignTransactionMessageWithSigners]: returns a transaction with a durable nonce lifetime
-    const transactionMessage = null as unknown as CompilableTransactionMessageWithSigners &
-        TransactionMessageWithDurableNonceLifetime;
+    const transactionMessage = null as unknown as BaseTransactionMessage &
+        TransactionMessageWithDurableNonceLifetime &
+        TransactionMessageWithFeePayer &
+        TransactionMessageWithSigners;
     partiallySignTransactionMessageWithSigners(transactionMessage) satisfies Promise<
         Readonly<Transaction & TransactionWithDurableNonceLifetime>
     >;
@@ -45,7 +49,10 @@ type CompilableTransactionMessageWithSigners = CompilableTransactionMessage & Tr
 
 {
     // [partiallySignTransactionMessageWithSigners]: returns a transaction with an unknown lifetime
-    const transactionMessage = null as unknown as CompilableTransactionMessageWithSigners;
+    const transactionMessage = null as unknown as BaseTransactionMessage &
+        TransactionMessageWithFeePayer &
+        TransactionMessageWithLifetime &
+        TransactionMessageWithSigners;
     partiallySignTransactionMessageWithSigners(transactionMessage) satisfies Promise<
         Readonly<Transaction & TransactionWithLifetime>
     >;
@@ -53,8 +60,11 @@ type CompilableTransactionMessageWithSigners = CompilableTransactionMessage & Tr
 
 {
     // [partiallySignTransactionMessageWithSigners]: returns a transaction with a `TransactionWithinSizeLimit` flag
-    const transactionMessage = null as unknown as CompilableTransactionMessageWithSigners &
-        TransactionMessageWithinSizeLimit;
+    const transactionMessage = null as unknown as BaseTransactionMessage &
+        TransactionMessageWithFeePayer &
+        TransactionMessageWithinSizeLimit &
+        TransactionMessageWithLifetime &
+        TransactionMessageWithSigners;
     partiallySignTransactionMessageWithSigners(transactionMessage) satisfies Promise<
         Readonly<Transaction & TransactionWithinSizeLimit>
     >;
@@ -62,8 +72,10 @@ type CompilableTransactionMessageWithSigners = CompilableTransactionMessage & Tr
 
 {
     // [signTransactionMessageWithSigners]: returns a fully signed transaction with a blockhash lifetime
-    const transactionMessage = null as unknown as CompilableTransactionMessageWithSigners &
-        TransactionMessageWithBlockhashLifetime;
+    const transactionMessage = null as unknown as BaseTransactionMessage &
+        TransactionMessageWithBlockhashLifetime &
+        TransactionMessageWithFeePayer &
+        TransactionMessageWithSigners;
     signTransactionMessageWithSigners(transactionMessage) satisfies Promise<
         Readonly<FullySignedTransaction & TransactionWithBlockhashLifetime>
     >;
@@ -71,8 +83,10 @@ type CompilableTransactionMessageWithSigners = CompilableTransactionMessage & Tr
 
 {
     // [signTransactionMessageWithSigners]: returns a fully signed transaction with a durable nonce lifetime
-    const transactionMessage = null as unknown as CompilableTransactionMessageWithSigners &
-        TransactionMessageWithDurableNonceLifetime;
+    const transactionMessage = null as unknown as BaseTransactionMessage &
+        TransactionMessageWithDurableNonceLifetime &
+        TransactionMessageWithFeePayer &
+        TransactionMessageWithSigners;
     signTransactionMessageWithSigners(transactionMessage) satisfies Promise<
         Readonly<FullySignedTransaction & TransactionWithDurableNonceLifetime>
     >;
@@ -80,7 +94,10 @@ type CompilableTransactionMessageWithSigners = CompilableTransactionMessage & Tr
 
 {
     // [signTransactionMessageWithSigners]: returns a fully signed transaction with an unknown lifetime
-    const transactionMessage = null as unknown as CompilableTransactionMessageWithSigners;
+    const transactionMessage = null as unknown as BaseTransactionMessage &
+        TransactionMessageWithFeePayer &
+        TransactionMessageWithLifetime &
+        TransactionMessageWithSigners;
     signTransactionMessageWithSigners(transactionMessage) satisfies Promise<
         Readonly<FullySignedTransaction & TransactionWithLifetime>
     >;
@@ -88,8 +105,11 @@ type CompilableTransactionMessageWithSigners = CompilableTransactionMessage & Tr
 
 {
     // [signTransactionMessageWithSigners]: returns a transaction with a `TransactionWithinSizeLimit` flag
-    const transactionMessage = null as unknown as CompilableTransactionMessageWithSigners &
-        TransactionMessageWithinSizeLimit;
+    const transactionMessage = null as unknown as BaseTransactionMessage &
+        TransactionMessageWithFeePayer &
+        TransactionMessageWithinSizeLimit &
+        TransactionMessageWithLifetime &
+        TransactionMessageWithSigners;
     signTransactionMessageWithSigners(transactionMessage) satisfies Promise<
         Readonly<FullySignedTransaction & Transaction & TransactionWithinSizeLimit>
     >;
@@ -97,7 +117,10 @@ type CompilableTransactionMessageWithSigners = CompilableTransactionMessage & Tr
 
 {
     // [signAndSendTransactionMessageWithSigners]: returns a signature
-    const transactionMessage = null as unknown as CompilableTransactionMessageWithSigners &
+    const transactionMessage = null as unknown as BaseTransactionMessage &
+        TransactionMessageWithFeePayer &
+        TransactionMessageWithLifetime &
+        TransactionMessageWithSigners &
         TransactionMessageWithSingleSendingSigner;
     signAndSendTransactionMessageWithSigners(transactionMessage) satisfies Promise<SignatureBytes>;
 }
