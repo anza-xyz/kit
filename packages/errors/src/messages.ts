@@ -15,6 +15,7 @@ import {
     SOLANA_ERROR__ADDRESSES__INVALID_BASE58_ENCODED_ADDRESS,
     SOLANA_ERROR__ADDRESSES__INVALID_BYTE_LENGTH,
     SOLANA_ERROR__ADDRESSES__INVALID_ED25519_PUBLIC_KEY,
+    SOLANA_ERROR__ADDRESSES__INVALID_OFF_CURVE_ADDRESS,
     SOLANA_ERROR__ADDRESSES__INVALID_SEEDS_POINT_ON_CURVE,
     SOLANA_ERROR__ADDRESSES__MALFORMED_PDA,
     SOLANA_ERROR__ADDRESSES__MAX_NUMBER_OF_PDA_SEEDS_EXCEEDED,
@@ -256,6 +257,8 @@ export const SolanaErrorMessages: Readonly<{
     [SOLANA_ERROR__ADDRESSES__INVALID_BYTE_LENGTH]:
         'Expected base58 encoded address to decode to a byte array of length 32. Actual length: $actualLength.',
     [SOLANA_ERROR__ADDRESSES__INVALID_ED25519_PUBLIC_KEY]: 'The `CryptoKey` must be an `Ed25519` public key.',
+    [SOLANA_ERROR__ADDRESSES__INVALID_OFF_CURVE_ADDRESS]:
+        '$putativeOffCurveAddress is not a base58-encoded off-curve address.',
     [SOLANA_ERROR__ADDRESSES__INVALID_SEEDS_POINT_ON_CURVE]: 'Invalid seeds; point must fall off the Ed25519 curve.',
     [SOLANA_ERROR__ADDRESSES__MALFORMED_PDA]:
         'Expected given program derived address to have the following format: [Address, ProgramDerivedAddressBump].',

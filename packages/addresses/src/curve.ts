@@ -1,5 +1,5 @@
-import { SOLANA_ERROR__ADDRESSES__INVALID_SEEDS_POINT_ON_CURVE, SolanaError } from '@solana/errors';
-import { Brand } from '@solana/nominal-types';
+import { SOLANA_ERROR__ADDRESSES__INVALID_OFF_CURVE_ADDRESS, SolanaError } from '@solana/errors';
+import type { Brand } from '@solana/nominal-types';
 
 import { type Address, getAddressCodec, isAddress } from './address';
 import { compressedPointBytesAreOnCurve } from './curve-internal';
@@ -67,8 +67,8 @@ export function isOffCurveAddress(
 export function assertIsOffCurveAddress(
     putativeOffCurveAddress: string,
 ): asserts putativeOffCurveAddress is OffCurveAddress<typeof putativeOffCurveAddress> {
-    if (isOffCurveAddress(putativeOffCurveAddress)) {
-        throw new SolanaError(SOLANA_ERROR__ADDRESSES__INVALID_SEEDS_POINT_ON_CURVE);
+    if (!isOffCurveAddress(putativeOffCurveAddress)) {
+        throw new SolanaError(SOLANA_ERROR__ADDRESSES__INVALID_OFF_CURVE_ADDRESS);
     }
 }
 
