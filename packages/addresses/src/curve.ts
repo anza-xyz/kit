@@ -5,7 +5,7 @@ import { type Address, getAddressCodec } from './address';
 import { compressedPointBytesAreOnCurve } from './curve-internal';
 
 /**
- * Represents a {@link Address} that validates as being off-curve. Functions that require off-curve
+ * Represents an {@link Address} that validates as being off-curve. Functions that require off-curve
  * addresses should specify their inputs in terms of this type.
  *
  * Whenever you need to validate an address as being off-curve, use the {@link offCurveAddress},
@@ -38,7 +38,7 @@ export function isOffCurveAddress<TAddress extends Address>(
 }
 
 /**
- * From time to time you might acquire a {@link Address}, that you expect to validate as an
+ * From time to time you might acquire an {@link Address}, that you expect to validate as an
  * off-curve address, from an untrusted source. Use this function to assert that such an address is
  * off-curve.
  *
@@ -74,7 +74,7 @@ export function assertIsOffCurveAddress<TAddress extends Address>(
 }
 
 /**
- * Combines _asserting_ that a {@link Address} is off-curve with _coercing_ it to the
+ * Combines _asserting_ that an {@link Address} is off-curve with _coercing_ it to the
  * {@link OffCurveAddress} type. It's most useful with untrusted input.
  */
 export function offCurveAddress<TAddress extends Address>(
