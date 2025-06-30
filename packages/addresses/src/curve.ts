@@ -81,5 +81,5 @@ export function offCurveAddress<TAddress extends Address>(
     putativeOffCurveAddress: TAddress,
 ): OffCurveAddress<TAddress> {
     assertIsOffCurveAddress(putativeOffCurveAddress);
-    return putativeOffCurveAddress as OffCurveAddress<TAddress>;
+    return putativeOffCurveAddress;
 }
