@@ -230,7 +230,8 @@ import {
   SolanaRpcSubscriptionsApi,
   TransactionSigner,
   MessageSigner,
-  CompilableTransactionMessage,
+  BaseTransactionMessage,
+  ITransactionMessageWithFeePayer,
 } from "@solana/kit";
 import { getCreateAccountInstruction } from "@solana-program/system";
 import { getInitializeMintInstruction } from "@solana-program/token";
@@ -240,7 +241,7 @@ type Client = {
   wallet: TransactionSigner & MessageSigner;
 };
 const client = {} as Client;
-const transactionMessage = null as unknown as CompilableTransactionMessage;
+const transactionMessage = null as unknown as BaseTransactionMessage & ITransactionMessageWithFeePayer;
 // ---cut-before---
 import { getComputeUnitEstimateForTransactionMessageFactory, prependTransactionMessageInstruction } from "@solana/kit";
 import { getSetComputeUnitLimitInstruction } from "@solana-program/compute-budget";
@@ -271,12 +272,15 @@ import {
 } from "@solana/kit";
 // ---cut-before---
 import {
-  CompilableTransactionMessage, // [!code ++]
+  BaseTransactionMessage, // [!code ++]
+  ITransactionMessageWithFeePayer, // [!code ++]
   // ...
 } from "@solana/kit";
 
 export type Client = {
-  estimateAndSetComputeUnitLimit: <T extends CompilableTransactionMessage>(transactionMessage: T) => Promise<T>; // [!code ++]
+  estimateAndSetComputeUnitLimit: <T extends BaseTransactionMessage & ITransactionMessageWithFeePayer>(
+    transactionMessage: T,
+  ) => Promise<T>; // [!code ++]
   rpc: Rpc<SolanaRpcApi>;
   rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
   wallet: TransactionSigner & MessageSigner;
@@ -293,10 +297,13 @@ import {
   SolanaRpcSubscriptionsApi,
   TransactionSigner,
   MessageSigner,
-  CompilableTransactionMessage,
+  BaseTransactionMessage,
+  ITransactionMessageWithFeePayer,
 } from "@solana/kit";
 export type Client = {
-  estimateAndSetComputeUnitLimit: <T extends CompilableTransactionMessage>(transactionMessage: T) => Promise<T>; // [!code ++]
+  estimateAndSetComputeUnitLimit: <T extends BaseTransactionMessage & ITransactionMessageWithFeePayer>(
+    transactionMessage: T,
+  ) => Promise<T>;
   rpc: Rpc<SolanaRpcApi>;
   rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
   wallet: TransactionSigner & MessageSigner;
@@ -319,7 +326,9 @@ export async function createClient(): Promise<Client> {
 
     // Create a function to estimate and set the compute unit limit. // [!code ++]
     const estimateComputeUnitLimit = getComputeUnitEstimateForTransactionMessageFactory({ rpc }); // [!code ++]
-    const estimateAndSetComputeUnitLimit = async <T extends CompilableTransactionMessage>(transactionMessage: T) => {
+    const estimateAndSetComputeUnitLimit = async <T extends BaseTransactionMessage & ITransactionMessageWithFeePayer>( // [!code ++]
+      transactionMessage: T, // [!code ++]
+    ) => {
       // [!code ++]
       const computeUnitsEstimate = await estimateComputeUnitLimit(transactionMessage); // [!code ++]
       return prependTransactionMessageInstruction(
@@ -346,12 +355,15 @@ import {
   SolanaRpcSubscriptionsApi,
   TransactionSigner,
   MessageSigner,
-  CompilableTransactionMessage,
+  BaseTransactionMessage,
+  ITransactionMessageWithFeePayer,
 } from "@solana/kit";
 import { getCreateAccountInstruction } from "@solana-program/system";
 import { getInitializeMintInstruction } from "@solana-program/token";
 type Client = {
-  estimateAndSetComputeUnitLimit: <T extends CompilableTransactionMessage>(transactionMessage: T) => Promise<T>;
+  estimateAndSetComputeUnitLimit: <T extends BaseTransactionMessage & ITransactionMessageWithFeePayer>(
+    transactionMessage: T,
+  ) => Promise<T>;
   rpc: Rpc<SolanaRpcApi>;
   rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
   wallet: TransactionSigner & MessageSigner;
@@ -385,8 +397,8 @@ const transactionMessage = await pipe(
 Our transaction message is now fully configured and ready to be signed. Since we have been providing signer objects every step of the way, our transaction message already knows how to sign itself. All that is left to do is call `signTransactionMessageWithSigners`. This helper function will extract and deduplicate all the signers from the transaction message and use them to sign the message. As the message is signed, it is compiled into a new `Transaction` type that contains the compiled message and all of its signatures.
 
 ```ts twoslash
-import { CompilableTransactionMessage } from "@solana/kit";
-const transactionMessage = null as unknown as CompilableTransactionMessage;
+import { BaseTransactionMessage, ITransactionMessageWithFeePayer } from "@solana/kit";
+const transactionMessage = null as unknown as BaseTransactionMessage & ITransactionMessageWithFeePayer;
 // ---cut-before---
 import { signTransactionMessageWithSigners } from "@solana/kit";
 
@@ -406,10 +418,13 @@ import {
   SolanaRpcSubscriptionsApi,
   TransactionSigner,
   MessageSigner,
-  CompilableTransactionMessage,
+  BaseTransactionMessage,
+  ITransactionMessageWithFeePayer,
 } from "@solana/kit";
 export type Client = {
-  estimateAndSetComputeUnitLimit: <T extends CompilableTransactionMessage>(transactionMessage: T) => Promise<T>;
+  estimateAndSetComputeUnitLimit: <T extends BaseTransactionMessage & ITransactionMessageWithFeePayer>(
+    transactionMessage: T,
+  ) => Promise<T>;
   rpc: Rpc<SolanaRpcApi>;
   rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
   wallet: TransactionSigner & MessageSigner;

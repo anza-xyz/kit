@@ -208,7 +208,7 @@ const myTransactionModifyingSigner: TransactionModifyingSigner<'1234..5678'> = {
 
 #### `TransactionSendingSigner<TAddress>`
 
-An interface that signs one or multiple transactions before sending them immediately to the blockchain. It defines a `signAndSendTransactions` function that returns the transaction signature (i.e. its identifier) for each provided `CompilableTransaction`. This interface is required for PDA wallets and other types of wallets that don't provide an interface for signing transactions without sending them.
+An interface that signs one or multiple transactions before sending them immediately to the blockchain. It defines a `signAndSendTransactions` function that returns the transaction signature (i.e. its identifier) for each provided `Transaction`. This interface is required for PDA wallets and other types of wallets that don't provide an interface for signing transactions without sending them.
 
 Note that it is also possible for such signers to modify the provided transactions before signing and sending them. This enables use cases where the modified transactions cannot be shared with the app and thus must be sent directly.
 
