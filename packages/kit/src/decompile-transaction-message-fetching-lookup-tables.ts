@@ -1,9 +1,11 @@
 import { type FetchAccountsConfig } from '@solana/accounts';
 import type { GetMultipleAccountsApi, Rpc } from '@solana/rpc';
 import {
-    CompilableTransactionMessage,
+    BaseTransactionMessage,
     CompiledTransactionMessage,
     decompileTransactionMessage,
+    TransactionMessageWithFeePayer,
+    TransactionMessageWithLifetime,
 } from '@solana/transaction-messages';
 
 import { fetchAddressesForLookupTables } from './fetch-lookup-tables';
@@ -25,7 +27,7 @@ export async function decompileTransactionMessageFetchingLookupTables(
     compiledTransactionMessage: CompiledTransactionMessage,
     rpc: Rpc<GetMultipleAccountsApi>,
     config?: DecompileTransactionMessageFetchingLookupTablesConfig,
-): Promise<CompilableTransactionMessage> {
+): Promise<BaseTransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithLifetime> {
     const lookupTables =
         'addressTableLookups' in compiledTransactionMessage &&
         compiledTransactionMessage.addressTableLookups !== undefined &&
