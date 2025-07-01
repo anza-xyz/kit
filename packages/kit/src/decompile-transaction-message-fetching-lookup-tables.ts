@@ -3,6 +3,7 @@ import type { GetMultipleAccountsApi, Rpc } from '@solana/rpc';
 import {
     BaseTransactionMessage,
     CompiledTransactionMessage,
+    CompiledTransactionMessageWithLifetime,
     decompileTransactionMessage,
     TransactionMessageWithFeePayer,
     TransactionMessageWithLifetime,
@@ -24,7 +25,7 @@ type DecompileTransactionMessageFetchingLookupTablesConfig = FetchAccountsConfig
  * @param config
  */
 export async function decompileTransactionMessageFetchingLookupTables(
-    compiledTransactionMessage: CompiledTransactionMessage,
+    compiledTransactionMessage: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime,
     rpc: Rpc<GetMultipleAccountsApi>,
     config?: DecompileTransactionMessageFetchingLookupTablesConfig,
 ): Promise<BaseTransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithLifetime> {

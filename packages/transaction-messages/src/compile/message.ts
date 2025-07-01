@@ -1,4 +1,3 @@
-import { TransactionMessageWithBlockhashLifetime } from '../blockhash';
 import { TransactionMessageWithFeePayer } from '../fee-payer';
 import { TransactionMessageWithLifetime } from '../lifetime';
 import { BaseTransactionMessage } from '../transaction-message';
@@ -16,14 +15,6 @@ type BaseCompiledTransactionMessage = Readonly<{
      */
     header: ReturnType<typeof getCompiledMessageHeader>;
     instructions: ReturnType<typeof getCompiledInstructions>;
-    /**
-     * 32 bytes of data observed by the transaction proposed that makes a transaction eligible to
-     * land on the network.
-     *
-     * In the case of a transaction message with a nonce lifetime constraint, this will be the value
-     * of the nonce itself. In all other cases this will be a recent blockhash.
-     */
-    lifetimeToken: ReturnType<typeof getCompiledLifetimeToken>;
     /** A list of addresses indicating which accounts to load */
     staticAccounts: ReturnType<typeof getCompiledStaticAccounts>;
 }>;
@@ -37,6 +28,17 @@ type BaseCompiledTransactionMessage = Readonly<{
  */
 export type CompiledTransactionMessage = LegacyCompiledTransactionMessage | VersionedCompiledTransactionMessage;
 
+export type CompiledTransactionMessageWithLifetime = Readonly<{
+    /**
+     * 32 bytes of data observed by the transaction proposed that makes a transaction eligible to
+     * land on the network.
+     *
+     * In the case of a transaction message with a nonce lifetime constraint, this will be the value
+     * of the nonce itself. In all other cases this will be a recent blockhash.
+     */
+    lifetimeToken: ReturnType<typeof getCompiledLifetimeToken>;
+}>;
+
 type LegacyCompiledTransactionMessage = BaseCompiledTransactionMessage &
     Readonly<{
         version: 'legacy';
@@ -49,11 +51,6 @@ type VersionedCompiledTransactionMessage = BaseCompiledTransactionMessage &
         version: number;
     }>;
 
-const EMPTY_BLOCKHASH_LIFETIME_CONSTRAINT = {
-    blockhash: '11111111111111111111111111111111',
-    lastValidBlockHeight: 0n,
-} as TransactionMessageWithBlockhashLifetime['lifetimeConstraint'];
-
 /**
  * Converts the type of transaction message data structure that you create in your application to
  * the type of transaction message data structure that can be encoded for execution on the network.
@@ -65,31 +62,41 @@ const EMPTY_BLOCKHASH_LIFETIME_CONSTRAINT = {
  *
  * @see {@link decompileTransactionMessage}
  */
-export function compileTransactionMessage(
-    transactionMessage: BaseTransactionMessage & Readonly<{ version: 'legacy' }> & TransactionMessageWithFeePayer,
-): LegacyCompiledTransactionMessage;
-export function compileTransactionMessage(
-    transactionMessage: BaseTransactionMessage & TransactionMessageWithFeePayer,
-): VersionedCompiledTransactionMessage;
-export function compileTransactionMessage(
-    transactionMessage: BaseTransactionMessage & TransactionMessageWithFeePayer,
-): CompiledTransactionMessage {
+export function compileTransactionMessage<
+    TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer,
+>(transactionMessage: TTransactionMessage): CompiledTransactionMessageFromTransactionMessage<TTransactionMessage> {
+    type ReturnType = CompiledTransactionMessageFromTransactionMessage<TTransactionMessage>;
+
     const addressMap = getAddressMapFromInstructions(
         transactionMessage.feePayer.address,
         transactionMessage.instructions,
     );
     const orderedAccounts = getOrderedAccountsFromAddressMap(addressMap);
-    const lifetimeConstraint =
-        (transactionMessage as Partial<TransactionMessageWithLifetime>).lifetimeConstraint ??
-        EMPTY_BLOCKHASH_LIFETIME_CONSTRAINT;
+    const lifetimeConstraint = (transactionMessage as Partial<TransactionMessageWithLifetime>).lifetimeConstraint;
+
     return {
         ...(transactionMessage.version !== 'legacy'
             ? { addressTableLookups: getCompiledAddressTableLookups(orderedAccounts) }
             : null),
+        ...(lifetimeConstraint ? { lifetimeToken: getCompiledLifetimeToken(lifetimeConstraint) } : null),
         header: getCompiledMessageHeader(orderedAccounts),
         instructions: getCompiledInstructions(transactionMessage.instructions, orderedAccounts),
-        lifetimeToken: getCompiledLifetimeToken(lifetimeConstraint),
         staticAccounts: getCompiledStaticAccounts(orderedAccounts),
         version: transactionMessage.version,
-    };
+    } as ReturnType;
 }
+
+type CompiledTransactionMessageFromTransactionMessage<TTransactionMessage extends BaseTransactionMessage> =
+    ForwardTransactionMessageLifetime<ForwardTransactionMessageVersion<TTransactionMessage>, TTransactionMessage>;
+
+type ForwardTransactionMessageVersion<TTransactionMessage extends BaseTransactionMessage> =
+    TTransactionMessage extends Readonly<{ version: 'legacy' }>
+        ? LegacyCompiledTransactionMessage
+        : VersionedCompiledTransactionMessage;
+
+type ForwardTransactionMessageLifetime<
+    TCompiledTransactionMessage extends CompiledTransactionMessage,
+    TTransactionMessage extends BaseTransactionMessage,
+> = TTransactionMessage extends TransactionMessageWithLifetime
+    ? CompiledTransactionMessageWithLifetime & TCompiledTransactionMessage
+    : TCompiledTransactionMessage;

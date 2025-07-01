@@ -8,7 +8,7 @@ import {
 } from '@solana/errors';
 import { AccountLookupMeta, AccountMeta, AccountRole, Instruction } from '@solana/instructions';
 
-import { CompiledTransactionMessage } from '../compile';
+import { CompiledTransactionMessage, CompiledTransactionMessageWithLifetime } from '../compile';
 import { decompileTransactionMessage } from '../decompile-message';
 import { Nonce } from '../durable-nonce';
 
@@ -20,7 +20,7 @@ describe('decompileTransactionMessage', () => {
         const blockhash = 'J4yED2jcMAHyQUg61DBmm4njmEydUr2WqrV9cdEcDDgL';
 
         it('converts a transaction with no instructions', () => {
-            const compiledTransaction: CompiledTransactionMessage = {
+            const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                 header: {
                     numReadonlyNonSignerAccounts: 0,
                     numReadonlySignerAccounts: 0,
@@ -43,7 +43,7 @@ describe('decompileTransactionMessage', () => {
         });
 
         it('freezes the blockhash lifetime constraint', () => {
-            const compiledTransaction: CompiledTransactionMessage = {
+            const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                 header: {
                     numReadonlyNonSignerAccounts: 0,
                     numReadonlySignerAccounts: 0,
@@ -60,7 +60,7 @@ describe('decompileTransactionMessage', () => {
         });
 
         it('converts a transaction with version legacy', () => {
-            const compiledTransaction: CompiledTransactionMessage = {
+            const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                 header: {
                     numReadonlyNonSignerAccounts: 0,
                     numReadonlySignerAccounts: 0,
@@ -79,7 +79,7 @@ describe('decompileTransactionMessage', () => {
         it('converts a transaction with one instruction with no accounts or data', () => {
             const programAddress = 'HZMKVnRrWLyQLwPLTTLKtY7ET4Cf7pQugrTr9eTBrpsf' as Address;
 
-            const compiledTransaction: CompiledTransactionMessage = {
+            const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                 header: {
                     numReadonlyNonSignerAccounts: 1,
                     // fee payer
@@ -102,7 +102,7 @@ describe('decompileTransactionMessage', () => {
         it('converts a transaction with one instruction with accounts and data', () => {
             const programAddress = 'HZMKVnRrWLyQLwPLTTLKtY7ET4Cf7pQugrTr9eTBrpsf' as Address;
 
-            const compiledTransaction: CompiledTransactionMessage = {
+            const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                 header: {
                     numReadonlyNonSignerAccounts: 2, // 1 passed into instruction + 1 program
                     numReadonlySignerAccounts: 1,
@@ -162,7 +162,7 @@ describe('decompileTransactionMessage', () => {
         it('freezes the instruction accounts', () => {
             const programAddress = 'HZMKVnRrWLyQLwPLTTLKtY7ET4Cf7pQugrTr9eTBrpsf' as Address;
 
-            const compiledTransaction: CompiledTransactionMessage = {
+            const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                 header: {
                     numReadonlyNonSignerAccounts: 2, // 1 passed into instruction + 1 program
                     numReadonlySignerAccounts: 1,
@@ -196,7 +196,7 @@ describe('decompileTransactionMessage', () => {
         });
 
         it('converts a transaction with multiple instructions', () => {
-            const compiledTransaction: CompiledTransactionMessage = {
+            const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                 header: {
                     numReadonlyNonSignerAccounts: 3, // 3 programs
                     numReadonlySignerAccounts: 0,
@@ -231,7 +231,7 @@ describe('decompileTransactionMessage', () => {
         });
 
         it('converts a transaction with a given lastValidBlockHeight', () => {
-            const compiledTransaction: CompiledTransactionMessage = {
+            const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                 header: {
                     numReadonlyNonSignerAccounts: 0,
                     numReadonlySignerAccounts: 0,
@@ -253,7 +253,7 @@ describe('decompileTransactionMessage', () => {
         it('freezes the instructions within the transaction', () => {
             const programAddress = 'HZMKVnRrWLyQLwPLTTLKtY7ET4Cf7pQugrTr9eTBrpsf' as Address;
 
-            const compiledTransaction: CompiledTransactionMessage = {
+            const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                 header: {
                     numReadonlyNonSignerAccounts: 1,
                     // fee payer
@@ -273,7 +273,7 @@ describe('decompileTransactionMessage', () => {
         it('freezes the instructions array', () => {
             const programAddress = 'HZMKVnRrWLyQLwPLTTLKtY7ET4Cf7pQugrTr9eTBrpsf' as Address;
 
-            const compiledTransaction: CompiledTransactionMessage = {
+            const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                 header: {
                     numReadonlyNonSignerAccounts: 1,
                     // fee payer
@@ -304,7 +304,7 @@ describe('decompileTransactionMessage', () => {
         const recentBlockhashesSysvarAddress = 'SysvarRecentB1ockHashes11111111111111111111' as Address;
 
         it('converts a transaction with one instruction which is advance nonce (fee payer is nonce authority)', () => {
-            const compiledTransaction: CompiledTransactionMessage = {
+            const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                 header: {
                     numReadonlyNonSignerAccounts: 2, // recent blockhashes sysvar, system program
                     numReadonlySignerAccounts: 0, // nonce authority already added as fee payer
@@ -362,7 +362,7 @@ describe('decompileTransactionMessage', () => {
         });
 
         it('freezes the nonce lifetime constraint', () => {
-            const compiledTransaction: CompiledTransactionMessage = {
+            const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                 header: {
                     numReadonlyNonSignerAccounts: 2, // recent blockhashes sysvar, system program
                     numReadonlySignerAccounts: 0, // nonce authority already added as fee payer
@@ -398,7 +398,7 @@ describe('decompileTransactionMessage', () => {
         });
 
         it('converts a transaction with one instruction which is advance nonce (fee payer is not nonce authority)', () => {
-            const compiledTransaction: CompiledTransactionMessage = {
+            const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                 header: {
                     numReadonlyNonSignerAccounts: 2, // recent blockhashes sysvar, system program
                     numReadonlySignerAccounts: 1, // nonce authority
@@ -454,7 +454,7 @@ describe('decompileTransactionMessage', () => {
         });
 
         it('converts a durable nonce transaction with multiple instruction', () => {
-            const compiledTransaction: CompiledTransactionMessage = {
+            const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                 header: {
                     numReadonlyNonSignerAccounts: 4, // recent blockhashes sysvar, system program, 2 other program addresses
                     numReadonlySignerAccounts: 0, // nonce authority already added as fee payer
@@ -538,7 +538,7 @@ describe('decompileTransactionMessage', () => {
         });
 
         it('freezes the instructions within the transaction', () => {
-            const compiledTransaction: CompiledTransactionMessage = {
+            const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                 header: {
                     numReadonlyNonSignerAccounts: 4, // recent blockhashes sysvar, system program, 2 other program addresses
                     numReadonlySignerAccounts: 0, // nonce authority already added as fee payer
@@ -584,7 +584,7 @@ describe('decompileTransactionMessage', () => {
         });
 
         it('freezes the instructions array', () => {
-            const compiledTransaction: CompiledTransactionMessage = {
+            const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                 header: {
                     numReadonlyNonSignerAccounts: 4, // recent blockhashes sysvar, system program, 2 other program addresses
                     numReadonlySignerAccounts: 0, // nonce authority already added as fee payer
@@ -641,7 +641,7 @@ describe('decompileTransactionMessage', () => {
                     [lookupTableAddress]: [addressInLookup],
                 };
 
-                const compiledTransaction: CompiledTransactionMessage = {
+                const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                     addressTableLookups: [
                         // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
@@ -696,7 +696,7 @@ describe('decompileTransactionMessage', () => {
                     ],
                 };
 
-                const compiledTransaction: CompiledTransactionMessage = {
+                const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                     addressTableLookups: [
                         // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
@@ -754,7 +754,7 @@ describe('decompileTransactionMessage', () => {
                     [lookupTableAddress]: [addressInLookup],
                 };
 
-                const compiledTransaction: CompiledTransactionMessage = {
+                const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                     addressTableLookups: [
                         // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
@@ -809,7 +809,7 @@ describe('decompileTransactionMessage', () => {
                     ],
                 };
 
-                const compiledTransaction: CompiledTransactionMessage = {
+                const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                     addressTableLookups: [
                         // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
@@ -872,7 +872,7 @@ describe('decompileTransactionMessage', () => {
                     ],
                 };
 
-                const compiledTransaction: CompiledTransactionMessage = {
+                const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                     addressTableLookups: [
                         // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
@@ -933,7 +933,7 @@ describe('decompileTransactionMessage', () => {
 
                 const staticAddress = 'GbRuWcHyNaVuE9rJE4sKpkHYa9k76VJBCCwGtf87ikH3' as Address;
 
-                const compiledTransaction: CompiledTransactionMessage = {
+                const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                     addressTableLookups: [
                         // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
@@ -993,7 +993,7 @@ describe('decompileTransactionMessage', () => {
                     ],
                 };
 
-                const compiledTransaction: CompiledTransactionMessage = {
+                const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                     addressTableLookups: [
                         // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
@@ -1055,7 +1055,7 @@ describe('decompileTransactionMessage', () => {
             });
 
             it('throws if the lookup table is not passed in', () => {
-                const compiledTransaction: CompiledTransactionMessage = {
+                const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                     addressTableLookups: [
                         // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
@@ -1097,7 +1097,7 @@ describe('decompileTransactionMessage', () => {
                     [lookupTableAddress]: [addressInLookup],
                 };
 
-                const compiledTransaction: CompiledTransactionMessage = {
+                const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                     addressTableLookups: [
                         // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
@@ -1142,7 +1142,7 @@ describe('decompileTransactionMessage', () => {
                     [lookupTableAddress]: [addressInLookup],
                 };
 
-                const compiledTransaction: CompiledTransactionMessage = {
+                const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                     addressTableLookups: [
                         // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
@@ -1195,7 +1195,7 @@ describe('decompileTransactionMessage', () => {
                     [lookupTableAddress2]: [addressInLookup2],
                 };
 
-                const compiledTransaction: CompiledTransactionMessage = {
+                const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                     addressTableLookups: [
                         // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
@@ -1261,7 +1261,7 @@ describe('decompileTransactionMessage', () => {
                     [lookupTableAddress2]: [addressInLookup2],
                 };
 
-                const compiledTransaction: CompiledTransactionMessage = {
+                const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                     addressTableLookups: [
                         // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
@@ -1330,7 +1330,7 @@ describe('decompileTransactionMessage', () => {
                     [lookupTableAddress2]: [readonlyAddressInLookup2, writableAddressInLookup2],
                 };
 
-                const compiledTransaction: CompiledTransactionMessage = {
+                const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                     addressTableLookups: [
                         // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
@@ -1420,7 +1420,7 @@ describe('decompileTransactionMessage', () => {
                     [lookupTableAddress2]: [readonlyAddressInLookup2, writableAddressInLookup2],
                 };
 
-                const compiledTransaction: CompiledTransactionMessage = {
+                const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                     addressTableLookups: [
                         // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
@@ -1515,7 +1515,7 @@ describe('decompileTransactionMessage', () => {
             });
 
             it('throws if multiple lookup tables are not passed in', () => {
-                const compiledTransaction: CompiledTransactionMessage = {
+                const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                     addressTableLookups: [
                         // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
