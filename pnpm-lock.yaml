@@ -1059,8 +1059,8 @@ importers:
         specifier: '>=5.3.3'
         version: 5.8.2
       undici-types:
-        specifier: ^7.9.0
-        version: 7.9.0
+        specifier: ^7.11.0
+        version: 7.11.0
     devDependencies:
       tinybench:
         specifier: ^4.0.1
@@ -7002,11 +7002,11 @@ packages:
   ufo@1.6.1:
     resolution: {integrity: sha512-9a4/uxlTWJ4+a5i0ooc1rU7C7YOw3wT+UGqdeNNHWnOF9qcMBgLRS+4IYUqbczewFx4mLEig6gawh7X6mFlEkA==}
 
+  undici-types@7.11.0:
+    resolution: {integrity: sha512-kt1ZriHTi7MU+Z/r9DOdAI3ONdaR3M3csEaRc6ewa4f4dTvX4cQCbJ4NkEn0ohE4hHtq85+PhPSTY+pO/1PwgA==}
+
   undici-types@7.8.0:
     resolution: {integrity: sha512-9UJ2xGDvQ43tYyVMpuHlsgApydB8ZKfVYTsLDhXkFL/6gfkp+U8xTGdh8pMJv1SpZna0zxG1DwsKZsreLbXBxw==}
-
-  undici-types@7.9.0:
-    resolution: {integrity: sha512-TotbsoWjj1gHRlCBRKtFCKTg3HeHE87dLe3DkuWzQKlyQ0LQXP4pLTb3fBUhdcODdOoT8BkB4zdOShW57NH1rw==}
 
   undici@7.10.0:
     resolution: {integrity: sha512-u5otvFBOBZvmdjWLVW+5DAc9Nkq8f24g0O9oY7qw2JVIF1VocIFoyz9JFkuVOS2j41AufeO0xnlweJ2RLT8nGw==}
@@ -13963,9 +13963,9 @@ snapshots:
 
   ufo@1.6.1: {}
 
-  undici-types@7.8.0: {}
+  undici-types@7.11.0: {}
 
-  undici-types@7.9.0: {}
+  undici-types@7.8.0: {}
 
   undici@7.10.0: {}
 
