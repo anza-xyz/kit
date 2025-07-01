@@ -1,6 +1,90 @@
 ---
 title: Key pairs
-description: Generate and manage native cryptographic key pairs
+description: Sign and verify messages and transactions using Ed25519 keys
 ---
 
+## Introduction
+
+Kit uses the primitives built-in to JavaScript’s Web Crypto API to perform cryptography. This keeps your applications small, and confers to them the security and performance characteristics of the runtime's native cryptography functions.
+
+Ed25519 keys created or imported using the native APIs are compatible with all of Kit's cryptographic features. Kit also offers several helpers to generate, import, and transform key material.
+
+<Callout title="Looking for Signers instead?">
+  Keys are a low-level primitive. While it's important to know how they work, in a Solana application it's often more
+  appropriate to deal with key material in terms of the accounts and wallets that sign a transaction or message. The
+  [Signers](/concepts/signers) API offers an ergonomic way to build and sign transactions using accounts and their
+  associated keys.
+</Callout>
+
+## Installation
+
+Key management functions are **included within the `@solana/kit` library** but you may also install them using their standalone package.
+
+```package-install
+@solana/keys
+```
+
+<Callout title="Not all runtimes support the cryptography required by Solana" type="warn">
+  When deploying your application to a JavaScript runtime that lacks support for the Ed25519 digital signature
+  algorithm, [import our polyfill](#polyfill) before invoking any operations that create or make use of `CryptoKey`
+  objects.
+</Callout>
+
+## What is a key pair?
+
 TODO
+
+## Runtime Support
+
+All major JavaScript runtimes support the Ed25519 digital signature algorithm required by Solana.
+
+|                      | Runtime              | Min version   | Since    |
+| -------------------: | -------------------- | ------------- | -------- |
+| **Desktop browsers** | Chrome               | v137          | May 2025 |
+|                      | Edge                 | v137          | May 2025 |
+|                      | Firefox              | v130          | Sep 2024 |
+|                      | Safari               | v17           | Sep 2023 |
+|  **Mobile browsers** | Android browser      | v137          | May 2025 |
+|                      | Firefox for Android  | v139          | May 2025 |
+|                      | Mobile Safari        | iOS 17        | Sep 2023 |
+|  **Server runtimes** | Bun                  | v1.2.6        | Mar 2025 |
+|                      | Cloudflare `workerd` | v1.20230419.0 | Apr 2023 |
+|                      | Deno                 | v1.26.1       | Oct 2022 |
+|                      | Node.js              | v18.4.0       | Jun 2022 |
+|                      | Vercel Edge          | v2.3.0        | May 2023 |
+
+For additional up-to-date details on runtimes' implementation status, visit https://github.com/WICG/webcrypto-secure-curves/issues/20.
+
+### Ed25519 Polyfill [#polyfill]
+
+To use keys in a runtime without Ed25519 digital signature algorithm support, install the following polyfill.
+
+```package-install
+@solana/webcrypto-ed25519-polyfill
+```
+
+Then import and install it before invoking any operations that create or make use of `CryptoKey` objects.
+
+```ts twoslash
+import { install } from "@solana/webcrypto-ed25519-polyfill";
+
+// Calling this will shim methods on `SubtleCrypto`, adding Ed25519 support.
+install();
+
+// Now you can do this, in environments that do not otherwise support Ed25519.
+const keyPair = await crypto.subtle.generateKey({ name: "Ed25519" }, false, ["sign"]);
+```
+
+Wherever you call `install()`, make sure the call is made only once, and before any key operation requiring Ed25519 support is performed.
+
+<Callout title="Security warning" type="warn">
+  Because the polyfill's implementation of Ed25519 key generation exists in userspace, it can't guarantee that the keys
+  you generate with it are non-exportable. Untrusted code running in your JavaScript context may still be able to gain
+  access to and/or exfiltrate secret key material.
+</Callout>
+
+<Callout title="Storing polyfilled keys in IndexedDB" type="warn">
+  Native `CryptoKeys` can be stored in IndexedDB, but the keys created by this polyfill can not. This is because, unlike
+  native `CryptoKeys`, our polyfilled key objects can not implement the [structured clone
+  algorithm](https://www.w3.org/TR/WebCryptoAPI/#cryptokey-interface-clone).
+</Callout>
