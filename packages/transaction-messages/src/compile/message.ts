@@ -16,14 +16,6 @@ type BaseCompiledTransactionMessage = Readonly<{
      */
     header: ReturnType<typeof getCompiledMessageHeader>;
     instructions: ReturnType<typeof getCompiledInstructions>;
-    /**
-     * 32 bytes of data observed by the transaction proposed that makes a transaction eligible to
-     * land on the network.
-     *
-     * In the case of a transaction message with a nonce lifetime constraint, this will be the value
-     * of the nonce itself. In all other cases this will be a recent blockhash.
-     */
-    lifetimeToken: ReturnType<typeof getCompiledLifetimeToken>;
     /** A list of addresses indicating which accounts to load */
     staticAccounts: ReturnType<typeof getCompiledStaticAccounts>;
 }>;
@@ -36,6 +28,17 @@ type BaseCompiledTransactionMessage = Readonly<{
  * accounts sourced from account lookup tables are lost to compilation.
  */
 export type CompiledTransactionMessage = LegacyCompiledTransactionMessage | VersionedCompiledTransactionMessage;
+
+export type CompiledTransactionMessageWithLifetime = Readonly<{
+    /**
+     * 32 bytes of data observed by the transaction proposed that makes a transaction eligible to
+     * land on the network.
+     *
+     * In the case of a transaction message with a nonce lifetime constraint, this will be the value
+     * of the nonce itself. In all other cases this will be a recent blockhash.
+     */
+    lifetimeToken: ReturnType<typeof getCompiledLifetimeToken>;
+}>;
 
 type LegacyCompiledTransactionMessage = BaseCompiledTransactionMessage &
     Readonly<{
@@ -65,15 +68,11 @@ const EMPTY_BLOCKHASH_LIFETIME_CONSTRAINT = {
  *
  * @see {@link decompileTransactionMessage}
  */
-export function compileTransactionMessage(
-    transactionMessage: BaseTransactionMessage & Readonly<{ version: 'legacy' }> & TransactionMessageWithFeePayer,
-): LegacyCompiledTransactionMessage;
-export function compileTransactionMessage(
-    transactionMessage: BaseTransactionMessage & TransactionMessageWithFeePayer,
-): VersionedCompiledTransactionMessage;
-export function compileTransactionMessage(
-    transactionMessage: BaseTransactionMessage & TransactionMessageWithFeePayer,
-): CompiledTransactionMessage {
+export function compileTransactionMessage<
+    TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer,
+>(transactionMessage: TTransactionMessage): CompiledTransactionMessageFromTransactionMessage<TTransactionMessage> {
+    type ReturnType = CompiledTransactionMessageFromTransactionMessage<TTransactionMessage>;
+
     const addressMap = getAddressMapFromInstructions(
         transactionMessage.feePayer.address,
         transactionMessage.instructions,
@@ -82,6 +81,7 @@ export function compileTransactionMessage(
     const lifetimeConstraint =
         (transactionMessage as Partial<TransactionMessageWithLifetime>).lifetimeConstraint ??
         EMPTY_BLOCKHASH_LIFETIME_CONSTRAINT;
+
     return {
         ...(transactionMessage.version !== 'legacy'
             ? { addressTableLookups: getCompiledAddressTableLookups(orderedAccounts) }
@@ -91,5 +91,20 @@ export function compileTransactionMessage(
         lifetimeToken: getCompiledLifetimeToken(lifetimeConstraint),
         staticAccounts: getCompiledStaticAccounts(orderedAccounts),
         version: transactionMessage.version,
-    };
+    } as ReturnType;
 }
+
+type CompiledTransactionMessageFromTransactionMessage<TTransactionMessage extends BaseTransactionMessage> =
+    ForwardTransactionMessageLifetime<ForwardTransactionMessageVersion<TTransactionMessage>, TTransactionMessage>;
+
+type ForwardTransactionMessageVersion<TTransactionMessage extends BaseTransactionMessage> =
+    TTransactionMessage extends Readonly<{ version: 'legacy' }>
+        ? LegacyCompiledTransactionMessage
+        : VersionedCompiledTransactionMessage;
+
+type ForwardTransactionMessageLifetime<
+    TCompiledTransactionMessage extends CompiledTransactionMessage,
+    TTransactionMessage extends BaseTransactionMessage,
+> = TTransactionMessage extends TransactionMessageWithLifetime
+    ? CompiledTransactionMessageWithLifetime & TCompiledTransactionMessage
+    : TCompiledTransactionMessage;

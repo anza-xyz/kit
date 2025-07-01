@@ -4,6 +4,7 @@ import type { GetMultipleAccountsApi, Rpc } from '@solana/rpc';
 import type { Blockhash, Lamports } from '@solana/rpc-types';
 import {
     CompiledTransactionMessage,
+    CompiledTransactionMessageWithLifetime,
     decompileTransactionMessage,
     TransactionMessage,
 } from '@solana/transaction-messages';
@@ -20,7 +21,7 @@ describe('decompileTransactionMessageFetchingLookupTables', () => {
     };
 
     describe('for a legacy transaction', () => {
-        const compiledTransactionMessage: CompiledTransactionMessage = {
+        const compiledTransactionMessage: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
             // no `addressTableLookups` field
             header: {
                 numReadonlyNonSignerAccounts: 0,
@@ -89,7 +90,7 @@ describe('decompileTransactionMessageFetchingLookupTables', () => {
     });
 
     describe('for a versioned transaction with no `addressTableLookups` field', () => {
-        const compiledTransactionMessage: CompiledTransactionMessage = {
+        const compiledTransactionMessage: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
             // no `addressTableLookups` field
             header: {
                 numReadonlyNonSignerAccounts: 0,
@@ -158,7 +159,7 @@ describe('decompileTransactionMessageFetchingLookupTables', () => {
     });
 
     describe('for a versioned transaction with empty `addressTableLookups`', () => {
-        const compiledTransactionMessage: CompiledTransactionMessage = {
+        const compiledTransactionMessage: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
             addressTableLookups: [],
             header: {
                 numReadonlyNonSignerAccounts: 0,
@@ -230,7 +231,7 @@ describe('decompileTransactionMessageFetchingLookupTables', () => {
         const lookupTableAddress1 = '1111' as Address;
         const lookupTableAddress2 = '2222' as Address;
 
-        const compiledTransactionMessage: CompiledTransactionMessage = {
+        const compiledTransactionMessage: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
             addressTableLookups: [
                 // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                 {

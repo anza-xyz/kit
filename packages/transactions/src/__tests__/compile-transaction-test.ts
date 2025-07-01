@@ -4,6 +4,7 @@ import { Address } from '@solana/addresses';
 import { Blockhash } from '@solana/rpc-types';
 import {
     CompiledTransactionMessage,
+    CompiledTransactionMessageWithLifetime,
     compileTransactionMessage,
     getCompiledTransactionMessageEncoder,
     Nonce,
@@ -34,7 +35,7 @@ describe('compileTransactionMessage', () => {
         lifetimeToken: 'a',
         staticAccounts: [mockAddressA, mockAddressB],
         version: 0,
-    } as CompiledTransactionMessage;
+    } as CompiledTransactionMessage & CompiledTransactionMessageWithLifetime;
     const mockCompiledMessageBytes = new Uint8Array(Array(100)).fill(1);
     beforeEach(() => {
         (compileTransactionMessage as jest.Mock).mockReturnValue(mockCompiledMessage);
