@@ -1,10 +1,6 @@
 import { SOLANA_ERROR__SIGNER__TRANSACTION_SENDING_SIGNER_MISSING, SolanaError } from '@solana/errors';
 import { SignatureBytes } from '@solana/keys';
-import {
-    BaseTransactionMessage,
-    TransactionMessageWithFeePayer,
-    TransactionMessageWithLifetime,
-} from '@solana/transaction-messages';
+import { BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
 import {
     assertIsFullySignedTransaction,
     compileTransaction,
@@ -69,10 +65,7 @@ import { assertIsTransactionMessageWithSingleSendingSigner } from './transaction
  * @see {@link signAndSendTransactionMessageWithSigners}
  */
 export async function partiallySignTransactionMessageWithSigners<
-    TTransactionMessage extends BaseTransactionMessage &
-        TransactionMessageWithFeePayer &
-        TransactionMessageWithLifetime &
-        TransactionMessageWithSigners,
+    TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithSigners,
 >(
     transactionMessage: TTransactionMessage,
     config?: TransactionPartialSignerConfig,
@@ -117,10 +110,7 @@ export async function partiallySignTransactionMessageWithSigners<
  * @see {@link signAndSendTransactionMessageWithSigners}
  */
 export async function signTransactionMessageWithSigners<
-    TTransactionMessage extends BaseTransactionMessage &
-        TransactionMessageWithFeePayer &
-        TransactionMessageWithLifetime &
-        TransactionMessageWithSigners,
+    TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithSigners,
 >(
     transactionMessage: TTransactionMessage,
     config?: TransactionPartialSignerConfig,
@@ -181,10 +171,7 @@ export async function signTransactionMessageWithSigners<
  *
  */
 export async function signAndSendTransactionMessageWithSigners<
-    TTransactionMessage extends BaseTransactionMessage &
-        TransactionMessageWithFeePayer &
-        TransactionMessageWithLifetime &
-        TransactionMessageWithSigners,
+    TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithSigners,
 >(transaction: TTransactionMessage, config?: TransactionSendingSignerConfig): Promise<SignatureBytes> {
     assertIsTransactionMessageWithSingleSendingSigner(transaction);
 
@@ -290,10 +277,7 @@ function identifyTransactionModifyingSigners(
  * sequentially followed by the TransactionPartialSigners in parallel.
  */
 async function signModifyingAndPartialTransactionSigners<
-    TTransactionMessage extends BaseTransactionMessage &
-        TransactionMessageWithFeePayer &
-        TransactionMessageWithLifetime &
-        TransactionMessageWithSigners,
+    TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithSigners,
 >(
     transactionMessage: TTransactionMessage,
     modifyingSigners: readonly TransactionModifyingSigner[] = [],
