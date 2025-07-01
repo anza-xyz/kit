@@ -12,7 +12,7 @@ import type { Blockhash } from '@solana/rpc-types';
 
 import { AddressesByLookupTableAddress } from './addresses-by-lookup-table-address';
 import { setTransactionMessageLifetimeUsingBlockhash } from './blockhash';
-import { CompiledTransactionMessage } from './compile';
+import { CompiledTransactionMessage, CompiledTransactionMessageWithLifetime } from './compile';
 import type { getCompiledAddressTableLookups } from './compile/address-table-lookups';
 import { createTransactionMessage } from './create-transaction-message';
 import { Nonce, setTransactionMessageLifetimeUsingDurableNonce } from './durable-nonce';
@@ -214,7 +214,7 @@ export type DecompileTransactionMessageConfig = {
  * @see {@link compileTransactionMessage}
  */
 export function decompileTransactionMessage(
-    compiledTransactionMessage: CompiledTransactionMessage,
+    compiledTransactionMessage: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime,
     config?: DecompileTransactionMessageConfig,
 ): BaseTransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithLifetime {
     const feePayer = compiledTransactionMessage.staticAccounts[0];

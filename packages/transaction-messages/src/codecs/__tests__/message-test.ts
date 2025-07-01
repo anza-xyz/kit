@@ -1,7 +1,7 @@
 import { Address } from '@solana/addresses';
 import { Decoder, Encoder } from '@solana/codecs-core';
 
-import { CompiledTransactionMessage } from '../../compile/message';
+import { CompiledTransactionMessage, CompiledTransactionMessageWithLifetime } from '../../compile/message';
 import {
     getCompiledTransactionMessageCodec,
     getCompiledTransactionMessageDecoder,
@@ -11,7 +11,9 @@ import {
 describe.each([getCompiledTransactionMessageCodec, getCompiledTransactionMessageEncoder])(
     'Transaction message serializer %p',
     serializerFactory => {
-        let compiledMessage: Encoder<CompiledTransactionMessage>;
+        let compiledMessage: Encoder<
+            CompiledTransactionMessage | (CompiledTransactionMessage & CompiledTransactionMessageWithLifetime)
+        >;
         beforeEach(() => {
             compiledMessage = serializerFactory();
         });
