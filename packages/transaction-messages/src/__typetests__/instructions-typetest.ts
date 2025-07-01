@@ -2,14 +2,13 @@ import { Address } from '@solana/addresses';
 import { pipe } from '@solana/functional';
 
 import { setTransactionMessageLifetimeUsingBlockhash, TransactionMessageWithBlockhashLifetime } from '../blockhash';
-import { CompilableTransactionMessage } from '../compilable-transaction-message';
 import { createTransactionMessage } from '../create-transaction-message';
 import {
     setTransactionMessageLifetimeUsingDurableNonce,
     TransactionMessageWithDurableNonceLifetime,
 } from '../durable-nonce';
 import { AdvanceNonceAccountInstruction } from '../durable-nonce-instruction';
-import { setTransactionMessageFeePayer } from '../fee-payer';
+import { setTransactionMessageFeePayer, TransactionMessageWithFeePayer } from '../fee-payer';
 import {
     appendTransactionMessageInstruction,
     appendTransactionMessageInstructions,
@@ -62,8 +61,9 @@ type InstructionC = Instruction & { identifier: 'C' };
             m => appendTransactionMessageInstruction(null as unknown as InstructionA, m),
         );
 
-        message satisfies CompilableTransactionMessage;
-        message satisfies BaseTransactionMessage & TransactionMessageWithBlockhashLifetime;
+        message satisfies BaseTransactionMessage &
+            TransactionMessageWithBlockhashLifetime &
+            TransactionMessageWithFeePayer;
         message.instructions satisfies readonly [InstructionA];
     }
 
@@ -78,8 +78,9 @@ type InstructionC = Instruction & { identifier: 'C' };
             m => appendTransactionMessageInstruction(null as unknown as InstructionA, m),
         );
 
-        message satisfies CompilableTransactionMessage;
-        message satisfies BaseTransactionMessage & TransactionMessageWithDurableNonceLifetime;
+        message satisfies BaseTransactionMessage &
+            TransactionMessageWithDurableNonceLifetime &
+            TransactionMessageWithFeePayer;
         message.instructions satisfies readonly [AdvanceNonceAccountInstruction, InstructionA];
     }
 
@@ -190,8 +191,9 @@ type InstructionC = Instruction & { identifier: 'C' };
             m => prependTransactionMessageInstruction(null as unknown as InstructionA, m),
         );
 
-        message satisfies CompilableTransactionMessage;
-        message satisfies BaseTransactionMessage & TransactionMessageWithBlockhashLifetime;
+        message satisfies BaseTransactionMessage &
+            TransactionMessageWithBlockhashLifetime &
+            TransactionMessageWithFeePayer;
         message.instructions satisfies readonly [InstructionA];
     }
 
@@ -207,10 +209,9 @@ type InstructionC = Instruction & { identifier: 'C' };
         );
 
         message.instructions satisfies readonly [InstructionA, AdvanceNonceAccountInstruction];
+        message satisfies BaseTransactionMessage & TransactionMessageWithFeePayer;
         // @ts-expect-error No longer a durable nonce lifetime.
-        message satisfies CompilableTransactionMessage;
-        // @ts-expect-error No longer a durable nonce lifetime.
-        message satisfies BaseTransactionMessage & TransactionMessageWithDurableNonceLifetime;
+        message satisfies TransactionMessageWithDurableNonceLifetime;
     }
 
     // It removes the size limit type safety.

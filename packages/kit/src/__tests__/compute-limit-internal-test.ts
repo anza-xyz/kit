@@ -7,7 +7,7 @@ import {
 } from '@solana/errors';
 import { AccountRole } from '@solana/instructions';
 import { Rpc, SimulateTransactionApi } from '@solana/rpc';
-import { Blockhash, TransactionError } from '@solana/rpc-types';
+import { TransactionError } from '@solana/rpc-types';
 import { Nonce, TransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
 
 import { getComputeUnitEstimateForTransactionMessage_INTERNAL_ONLY_DO_NOT_EXPORT } from '../compute-limit-internal';
@@ -15,11 +15,6 @@ import { getComputeUnitEstimateForTransactionMessage_INTERNAL_ONLY_DO_NOT_EXPORT
 const FOREVER_PROMISE = new Promise(() => {
     /* never resolve */
 });
-
-const MOCK_BLOCKHASH_LIFETIME_CONSTRAINT = {
-    blockhash: 'GNtuHnNyW68wviopST3ki37Afv7LPphxfSwiHAkX5Q9H' as Blockhash,
-    lastValidBlockHeight: 0n,
-} as const;
 
 describe('getComputeUnitEstimateForTransactionMessage_INTERNAL_ONLY_DO_NOT_EXPORT', () => {
     let sendSimulateTransactionRequest: jest.Mock;
@@ -40,13 +35,11 @@ describe('getComputeUnitEstimateForTransactionMessage_INTERNAL_ONLY_DO_NOT_EXPOR
     });
     it('aborts the `simulateTransaction` request when aborted', () => {
         const abortController = new AbortController();
+
         getComputeUnitEstimateForTransactionMessage_INTERNAL_ONLY_DO_NOT_EXPORT({
             abortSignal: abortController.signal,
             rpc,
-            transactionMessage: {
-                ...mockTransactionMessage,
-                lifetimeConstraint: MOCK_BLOCKHASH_LIFETIME_CONSTRAINT,
-            },
+            transactionMessage: mockTransactionMessage,
         }).catch(() => {});
         expect(sendSimulateTransactionRequest).toHaveBeenCalledWith({
             abortSignal: expect.objectContaining({ aborted: false }),
@@ -57,15 +50,11 @@ describe('getComputeUnitEstimateForTransactionMessage_INTERNAL_ONLY_DO_NOT_EXPOR
         });
     });
     it('passes the expected basic input to the simulation request', () => {
-        const transactionMessage = {
-            ...mockTransactionMessage,
-            lifetimeConstraint: MOCK_BLOCKHASH_LIFETIME_CONSTRAINT,
-        };
         getComputeUnitEstimateForTransactionMessage_INTERNAL_ONLY_DO_NOT_EXPORT({
             commitment: 'finalized',
             minContextSlot: 42n,
             rpc,
-            transactionMessage,
+            transactionMessage: mockTransactionMessage,
         }).catch(() => {});
         expect(simulateTransaction).toHaveBeenCalledWith(
             expect.any(String),
@@ -94,7 +83,6 @@ describe('getComputeUnitEstimateForTransactionMessage_INTERNAL_ONLY_DO_NOT_EXPOR
             ]);
             const transactionMessage = {
                 ...mockTransactionMessage, // No `SetComputeUnitLimit` instruction
-                lifetimeConstraint: MOCK_BLOCKHASH_LIFETIME_CONSTRAINT,
             };
             getComputeUnitEstimateForTransactionMessage_INTERNAL_ONLY_DO_NOT_EXPORT({
                 rpc,
@@ -147,7 +135,6 @@ describe('getComputeUnitEstimateForTransactionMessage_INTERNAL_ONLY_DO_NOT_EXPOR
                     },
                     { programAddress: '4Kk4nA3F2nWHCcuyT8nR6oF7HQUQHmmzAVD5k8FQPKB2' as Address },
                 ],
-                lifetimeConstraint: MOCK_BLOCKHASH_LIFETIME_CONSTRAINT,
             };
             getComputeUnitEstimateForTransactionMessage_INTERNAL_ONLY_DO_NOT_EXPORT({
                 rpc,
@@ -168,34 +155,36 @@ describe('getComputeUnitEstimateForTransactionMessage_INTERNAL_ONLY_DO_NOT_EXPOR
         });
     });
     it('does not ask for a replacement blockhash when the transaction message is a durable nonce transaction', () => {
+        const transactionMessage = {
+            ...mockTransactionMessage,
+            instructions: [
+                {
+                    accounts: [
+                        {
+                            address: '7wJFRFuAE9x5Ptnz2VoBWsfecTCfuuM2sQCpECGypnTU' as Address,
+                            role: AccountRole.WRITABLE,
+                        },
+                        {
+                            address: 'SysvarRecentB1ockHashes11111111111111111111' as Address,
+                            role: AccountRole.READONLY,
+                        },
+                        {
+                            address: 'HzMoc78z1VNNf9nwD4Czt6CDYEb9LVD8KsVGP46FEmyJ' as Address,
+                            role: AccountRole.READONLY_SIGNER,
+                        },
+                    ],
+                    data: new Uint8Array([4, 0, 0, 0]),
+                    programAddress: '11111111111111111111111111111111' as Address,
+                },
+            ],
+            lifetimeConstraint: {
+                nonce: 'BzAqD6382v5r1pcELoi8HWrBDV4dSL9NGemMn2JYAhxc' as Nonce,
+            },
+        };
+
         getComputeUnitEstimateForTransactionMessage_INTERNAL_ONLY_DO_NOT_EXPORT({
             rpc,
-            transactionMessage: {
-                ...mockTransactionMessage,
-                instructions: [
-                    {
-                        accounts: [
-                            {
-                                address: '7wJFRFuAE9x5Ptnz2VoBWsfecTCfuuM2sQCpECGypnTU' as Address,
-                                role: AccountRole.WRITABLE,
-                            },
-                            {
-                                address: 'SysvarRecentB1ockHashes11111111111111111111' as Address,
-                                role: AccountRole.READONLY,
-                            },
-                            {
-                                address: 'HzMoc78z1VNNf9nwD4Czt6CDYEb9LVD8KsVGP46FEmyJ' as Address,
-                                role: AccountRole.READONLY_SIGNER,
-                            },
-                        ],
-                        data: new Uint8Array([4, 0, 0, 0]),
-                        programAddress: '11111111111111111111111111111111' as Address,
-                    },
-                ],
-                lifetimeConstraint: {
-                    nonce: 'BzAqD6382v5r1pcELoi8HWrBDV4dSL9NGemMn2JYAhxc' as Nonce,
-                },
-            },
+            transactionMessage,
         }).catch(() => {});
         expect(simulateTransaction).toHaveBeenCalledWith(
             expect.anything(),
@@ -205,10 +194,7 @@ describe('getComputeUnitEstimateForTransactionMessage_INTERNAL_ONLY_DO_NOT_EXPOR
     it('asks for a replacement blockhash even when the transaction message has a blockhash lifetime', () => {
         getComputeUnitEstimateForTransactionMessage_INTERNAL_ONLY_DO_NOT_EXPORT({
             rpc,
-            transactionMessage: {
-                ...mockTransactionMessage,
-                lifetimeConstraint: MOCK_BLOCKHASH_LIFETIME_CONSTRAINT,
-            },
+            transactionMessage: mockTransactionMessage,
         }).catch(() => {});
         expect(simulateTransaction).toHaveBeenCalledWith(
             expect.anything(),

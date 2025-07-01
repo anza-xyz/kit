@@ -12,7 +12,6 @@ import {
     address,
     appendTransactionMessageInstruction,
     Blockhash,
-    CompilableTransactionMessage,
     compileTransaction,
     createKeyPairSignerFromBytes,
     createKeyPairSignerFromPrivateKeyBytes,
@@ -26,6 +25,9 @@ import {
     pipe,
     setTransactionMessageFeePayerSigner,
     setTransactionMessageLifetimeUsingBlockhash,
+    TransactionMessage,
+    TransactionMessageWithFeePayer,
+    TransactionMessageWithLifetime,
     TransactionPartialSigner,
     TransactionSigner,
 } from '@solana/kit';
@@ -85,7 +87,10 @@ async function signMessage(signer: MessagePartialSigner, message: string) {
  * SETUP: SIGN A TRANSACTION
  * This helper function signs a transaction message using the given signer.
  */
-async function signTransaction(signer: TransactionPartialSigner, transactionMessage: CompilableTransactionMessage) {
+async function signTransaction(
+    signer: TransactionPartialSigner,
+    transactionMessage: TransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithLifetime,
+) {
     const transaction = compileTransaction(transactionMessage);
     const [signatureDictionary] = await signer.signTransactions([transaction]);
     const signature = signatureDictionary[signer.address];
@@ -102,7 +107,9 @@ async function signTransaction(signer: TransactionPartialSigner, transactionMess
  * For instance, in our transfer SOL transaction message, we can
  * extract the fee payer and the transfer source as signers.
  */
-async function signTransactionWithSigners(transactionMessage: CompilableTransactionMessage) {
+async function signTransactionWithSigners(
+    transactionMessage: TransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithLifetime,
+) {
     const signedTransaction = await partiallySignTransactionMessageWithSigners(transactionMessage);
     const signature = signedTransaction.signatures[transactionMessage.feePayer.address];
     log.info(
