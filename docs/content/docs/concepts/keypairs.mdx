@@ -32,6 +32,202 @@ Key management functions are **included within the `@solana/kit` library** but y
 
 ## What is a key pair?
 
+A key pair is a data type composed of 256-bits of random data (the private key) and a Cartesian point (the public key) on the curve that is used to cryptographically sign and verify Solana transactions. The interface definition of `CryptoKeyPair` is:
+
+```ts
+interface CryptoKeyPair {
+  privateKey: CryptoKey;
+  publicKey: CryptoKey;
+}
+```
+
+Together, these keys represent an address on Solana and its owner. The 256-bit address is derived from the coordinates of the public key itself.
+
+## What is a key?
+
+A key is an object native to the JavaScript runtime that supports the [`CryptoKey`](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey) interface. You can use a `CryptoKey` with the native [`SubtleCrypto` API](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto) to sign messages and to verify signatures. Kit builds on these capabilities to enable the use of `CryptoKey` objects to sign and verify Solana transactions and off-chain messages.
+
+## Managing keys
+
+### Generating new keys
+
+You can use the native [`SubtleCrypto#generateKey`](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/generateKey) API, or the [`generateKeyPair()`](/api/functions/generateKeyPair) helper to create a new random key pair.
+
+<Tabs items={["SubtleCrypto API", "Kit"]}>
+  <Tab value="SubtleCrypto API">
+      ```ts twoslash
+      const keyPair = await crypto.subtle.generateKey(
+        /* algorithm */ { name: 'Ed25519' },
+        /* extractable */ false,
+        /* usages */ ['sign', 'verify'],
+      );
+      ```
+  </Tab>
+  <Tab value="Kit">
+    ```ts twoslash
+    import { generateKeyPair } from '@solana/kit';
+    const keyPair = await generateKeyPair();
+    ```
+  </Tab>
+</Tabs>
+
+This is useful in cases where you need to sign for the creation of a new account with a random address, using an ephemeral key pair that can be discarded after the account is created and assigned to a program.
+
+### Importing a key
+
+You can create a `CryptoKeyPair` using the 64 bytes of a pre-generated key. This is possible to do with the native [`SubtleCrypto#importKey`](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/importKey) API, but it is more convenient to use the helpers in Kit.
+
+```ts twoslash
+import { createKeyPairFromBytes } from "@solana/kit";
+const keyPair = await createKeyPairFromBytes(
+  new Uint8Array([
+    /* 32 bytes representing the private key */
+    /* 32 bytes representing the public key */
+  ]),
+);
+```
+
+In cases where you have only the 32 bytes representing the private key but not its associated public key, you can use a different function that will automatically derive the public key from the private key.
+
+```ts twoslash
+import { createKeyPairFromPrivateKeyBytes } from "@solana/kit";
+const keyPair = await createKeyPairFromPrivateKeyBytes(
+  new Uint8Array([
+    /* 32 bytes representing the private key */
+  ]),
+);
+```
+
+### Storing keys
+
+`CryptoKey` objects can be stored locally by runtimes that support the [IndexedDB API](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API).
+
+Given an instance of an `IDBDatabase` with an object store called `'MyKeyPairStore'`:
+
+```ts twoslash
+const db = await new Promise<IDBDatabase>((resolve, reject) => {
+  const request = indexedDB.open("MyDatabase", 1);
+  request.onupgradeneeded = (e) => {
+    const db = (e.target as IDBOpenDBRequest).result;
+    db.createObjectStore("MyKeyPairStore");
+  };
+  request.onsuccess = (e) => {
+    resolve((e.target as IDBOpenDBRequest).result);
+  };
+  request.onerror = (e) => {
+    reject((e.target as IDBOpenDBRequest).error);
+  };
+});
+```
+
+You can store a key pair like this:
+
+```ts twoslash
+const db = null as unknown as IDBDatabase;
+const keyPair = null as unknown as CryptoKeyPair;
+// ---cut-before---
+const transaction = db.transaction("MyKeyPairStore", "readwrite");
+const store = transaction.objectStore("MyKeyPairStore");
+await new Promise<void>((resolve, reject) => {
+  const request = store.put(keyPair, "myStoredKey");
+  request.onsuccess = () => resolve();
+  request.onerror = () => reject(request.error);
+});
+```
+
+And then later retrieve it like this:
+
+```ts twoslash
+const db = null as unknown as IDBDatabase;
+// ---cut-before---
+const transaction = db.transaction("MyKeyPairStore", "readonly");
+const store = transaction.objectStore("MyKeyPairStore");
+const loadedKeyPair = await new Promise<CryptoKeyPair>((resolve, reject) => {
+  const request = store.get("myStoredKey");
+  request.onsuccess = () => {
+    if (request.result) {
+      resolve(request.result);
+    } else {
+      reject(new Error("Key not found"));
+    }
+  };
+  request.onerror = () => reject(request.error);
+});
+```
+
+<Callout type="warn">
+  Keys stored in IndexedDB are local to the host, are subject to its [storage limits and eviction
+  criteria](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API#storage_limits_and_eviction_criteria), and
+  can not be accessed from a domain other than the one that stored them when the host is a web browser. Keys that are
+  evicted from storage or erased by the user can generally not be recovered.
+</Callout>
+
+### Exporting a key
+
+You can obtain the 32 bytes of any public key like this:
+
+```ts twoslash
+const publicKey = null as unknown as CryptoKey;
+// ---cut-before---
+const publicKeyBytes = new Uint8Array(await crypto.subtle.exportKey("raw", publicKey));
+```
+
+Exporting private key material requires a specially constructed `CryptoKey` with its extractable property set to `true`.
+
+```ts twoslash
+const keyPair = await crypto.subtle.generateKey(
+  /* algorithm */ { name: "Ed25519" },
+  /* extractable */ true,
+  //                ^^^^
+  /* usages */ ["sign", "verify"],
+);
+```
+
+You can then use that `CryptoKey` with the [`SubtleCrypto#exportKey`](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/exportKey) API. The last 32 bytes of a PKCS#8 export of the key are the private key bytes.
+
+```ts twoslash
+const privateKey = null as unknown as CryptoKey;
+// ---cut-before---
+const exportedPrivateKey = await crypto.subtle.exportKey("pkcs8", privateKey);
+const privateKeyBytes = new Uint8Array(exportedPrivateKey, exportedPrivateKey.byteLength - 32, 32);
+```
+
+<Callout title="Security warning" type="warn">
+  Exporting private key material in JavaScript is not recommended, and you should take extreme care when doing so.
+  Private key bytes exported through these APIs are vulnerable to theft (eg. by code running in your JavaScript sandbox)
+  and accidental logging (eg. to the console or to a third-party logger).
+</Callout>
+
+## Using private keys
+
+A private key is a `CryptoKey` whose `type` property is set to `'private'` and whose `usages` property includes `'sign'`.
+
+Private keys can be used by their owner to produce a digital signature of a specific message. You can think of a signature as representing the key owner's approval of, agreement to, or endorsement of the message. Private key owners must never share the key with anyone.
+
+### Signing messages
+
+TODO
+
+### Signing transactions
+
+In Kit, private keys are used to digitally sign transactions on behalf of account owners, to approve spending, transfers, and modifications to account data on the blockchain.
+
+TODO
+
+## Using public keys
+
+A public key is a `CryptoKey` whose `type` property is set to `'public'` and whose `usages` property includes `'verify'`.
+
+Solana uses public keys to verify that modifications to account data and balances through transactions are approved of by those who hold the private keys required to authorize such modifications. Kit generally only uses public keys to derive the address of their associated accounts, but it can also use public keys to enable your programs to verify arbitrary messages.
+
+### Verifying messages
+
+The public key associated with a given private key can be used by anyone to verify that a message was signed by the holder of the associated private key, as described above. The verification function requires the original message, a digital signature, and the public key associated with the owner who is believed to have produced that signature. Successful verification implies that the contents of the message signed by the owner are identical to the contents of the message that was given to the verification function. Key owners are free to share their public key with anyone they would like to grant the ability to verify their digital signatures.
+
+TODO
+
+### Deriving addresses
+
 TODO
 
 ## Runtime Support
