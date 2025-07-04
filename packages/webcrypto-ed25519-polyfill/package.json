@@ -69,7 +69,7 @@
         "maintained node versions"
     ],
     "dependencies": {
-        "@noble/ed25519": "^2.2.3"
+        "@noble/ed25519": "^2.3.0"
     },
     "devDependencies": {
         "@solana/crypto-impl": "workspace:*"
