@@ -10,10 +10,10 @@ Kit uses the primitives built-in to JavaScript’s Web Crypto API to perform cry
 Ed25519 keys created or imported using the native APIs are compatible with all of Kit's cryptographic features. Kit also offers several helpers to generate, import, and transform key material.
 
 <Callout title="Looking for Signers instead?">
-  Keys are a low-level primitive. While it's important to know how they work, in a Solana application it's often more
-  appropriate to deal with key material in terms of the accounts and wallets that sign a transaction or message. The
-  [Signers](/concepts/signers) API offers an ergonomic way to build and sign transactions using accounts and their
-  associated keys.
+    Keys are a low-level primitive. While it's important to know how they work, in a Solana
+    application it's often more appropriate to deal with key material in terms of the accounts and
+    wallets that sign a transaction or message. The [Signers](/concepts/signers) API offers an
+    ergonomic way to build and sign transactions using accounts and their associated keys.
 </Callout>
 
 ## Installation
@@ -25,9 +25,9 @@ Key management functions are **included within the `@solana/kit` library** but y
 ```
 
 <Callout title="Not all runtimes support the cryptography required by Solana" type="warn">
-  When deploying your application to a JavaScript runtime that lacks support for the Ed25519 digital signature
-  algorithm, [import our polyfill](#polyfill) before invoking any operations that create or make use of `CryptoKey`
-  objects.
+    When deploying your application to a JavaScript runtime that lacks support for the Ed25519
+    digital signature algorithm, [import our polyfill](#polyfill) before invoking any operations
+    that create or make use of `CryptoKey` objects.
 </Callout>
 
 ## What is a key pair?
@@ -36,8 +36,8 @@ A key pair is a data type composed of 256-bits of random data (the private key) 
 
 ```ts
 interface CryptoKeyPair {
-  privateKey: CryptoKey;
-  publicKey: CryptoKey;
+    privateKey: CryptoKey;
+    publicKey: CryptoKey;
 }
 ```
 
@@ -78,23 +78,23 @@ This is useful in cases where you need to sign for the creation of a new account
 You can create a `CryptoKeyPair` using the 64 bytes of a pre-generated key. This is possible to do with the native [`SubtleCrypto#importKey`](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/importKey) API, but it is more convenient to use the helpers in Kit.
 
 ```ts twoslash
-import { createKeyPairFromBytes } from "@solana/kit";
+import { createKeyPairFromBytes } from '@solana/kit';
 const keyPair = await createKeyPairFromBytes(
-  new Uint8Array([
-    /* 32 bytes representing the private key */
-    /* 32 bytes representing the public key */
-  ]),
+    new Uint8Array([
+        /* 32 bytes representing the private key */
+        /* 32 bytes representing the public key */
+    ]),
 );
 ```
 
 In cases where you have only the 32 bytes representing the private key but not its associated public key, you can use a different function that will automatically derive the public key from the private key.
 
 ```ts twoslash
-import { createKeyPairFromPrivateKeyBytes } from "@solana/kit";
+import { createKeyPairFromPrivateKeyBytes } from '@solana/kit';
 const keyPair = await createKeyPairFromPrivateKeyBytes(
-  new Uint8Array([
-    /* 32 bytes representing the private key */
-  ]),
+    new Uint8Array([
+        /* 32 bytes representing the private key */
+    ]),
 );
 ```
 
@@ -106,17 +106,17 @@ Given an instance of an `IDBDatabase` with an object store called `'MyKeyPairSto
 
 ```ts twoslash
 const db = await new Promise<IDBDatabase>((resolve, reject) => {
-  const request = indexedDB.open("MyDatabase", 1);
-  request.onupgradeneeded = (e) => {
-    const db = (e.target as IDBOpenDBRequest).result;
-    db.createObjectStore("MyKeyPairStore");
-  };
-  request.onsuccess = (e) => {
-    resolve((e.target as IDBOpenDBRequest).result);
-  };
-  request.onerror = (e) => {
-    reject((e.target as IDBOpenDBRequest).error);
-  };
+    const request = indexedDB.open('MyDatabase', 1);
+    request.onupgradeneeded = (e) => {
+        const db = (e.target as IDBOpenDBRequest).result;
+        db.createObjectStore('MyKeyPairStore');
+    };
+    request.onsuccess = (e) => {
+        resolve((e.target as IDBOpenDBRequest).result);
+    };
+    request.onerror = (e) => {
+        reject((e.target as IDBOpenDBRequest).error);
+    };
 });
 ```
 
@@ -126,12 +126,12 @@ You can store a key pair like this:
 const db = null as unknown as IDBDatabase;
 const keyPair = null as unknown as CryptoKeyPair;
 // ---cut-before---
-const transaction = db.transaction("MyKeyPairStore", "readwrite");
-const store = transaction.objectStore("MyKeyPairStore");
+const transaction = db.transaction('MyKeyPairStore', 'readwrite');
+const store = transaction.objectStore('MyKeyPairStore');
 await new Promise<void>((resolve, reject) => {
-  const request = store.put(keyPair, "myStoredKey");
-  request.onsuccess = () => resolve();
-  request.onerror = () => reject(request.error);
+    const request = store.put(keyPair, 'myStoredKey');
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
 });
 ```
 
@@ -140,26 +140,27 @@ And then later retrieve it like this:
 ```ts twoslash
 const db = null as unknown as IDBDatabase;
 // ---cut-before---
-const transaction = db.transaction("MyKeyPairStore", "readonly");
-const store = transaction.objectStore("MyKeyPairStore");
+const transaction = db.transaction('MyKeyPairStore', 'readonly');
+const store = transaction.objectStore('MyKeyPairStore');
 const loadedKeyPair = await new Promise<CryptoKeyPair>((resolve, reject) => {
-  const request = store.get("myStoredKey");
-  request.onsuccess = () => {
-    if (request.result) {
-      resolve(request.result);
-    } else {
-      reject(new Error("Key not found"));
-    }
-  };
-  request.onerror = () => reject(request.error);
+    const request = store.get('myStoredKey');
+    request.onsuccess = () => {
+        if (request.result) {
+            resolve(request.result);
+        } else {
+            reject(new Error('Key not found'));
+        }
+    };
+    request.onerror = () => reject(request.error);
 });
 ```
 
 <Callout type="warn">
-  Keys stored in IndexedDB are local to the host, are subject to its [storage limits and eviction
-  criteria](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API#storage_limits_and_eviction_criteria), and
-  can not be accessed from a domain other than the one that stored them when the host is a web browser. Keys that are
-  evicted from storage or erased by the user can generally not be recovered.
+    Keys stored in IndexedDB are local to the host, are subject to its [storage limits and eviction
+    criteria](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API#storage_limits_and_eviction_criteria),
+    and can not be accessed from a domain other than the one that stored them when the host is a web
+    browser. Keys that are evicted from storage or erased by the user can generally not be
+    recovered.
 </Callout>
 
 ### Exporting a key
@@ -169,17 +170,17 @@ You can obtain the 32 bytes of any public key like this:
 ```ts twoslash
 const keyPair = null as unknown as CryptoKeyPair;
 // ---cut-before---
-const publicKeyBytes = new Uint8Array(await crypto.subtle.exportKey("raw", keyPair.publicKey));
+const publicKeyBytes = new Uint8Array(await crypto.subtle.exportKey('raw', keyPair.publicKey));
 ```
 
 Exporting private key material requires a specially constructed `CryptoKey` with its extractable property set to `true`.
 
 ```ts twoslash
 const keyPair = await crypto.subtle.generateKey(
-  /* algorithm */ { name: "Ed25519" },
-  /* extractable */ true,
-  //                ^^^^
-  /* usages */ ["sign", "verify"],
+    /* algorithm */ { name: 'Ed25519' },
+    /* extractable */ true,
+    //                ^^^^
+    /* usages */ ['sign', 'verify'],
 );
 ```
 
@@ -188,14 +189,15 @@ You can then use that `CryptoKey` with the [`SubtleCrypto#exportKey`](https://de
 ```ts twoslash
 const keyPair = null as unknown as CryptoKeyPair;
 // ---cut-before---
-const exportedPrivateKey = await crypto.subtle.exportKey("pkcs8", keyPair.privateKey);
+const exportedPrivateKey = await crypto.subtle.exportKey('pkcs8', keyPair.privateKey);
 const privateKeyBytes = new Uint8Array(exportedPrivateKey, exportedPrivateKey.byteLength - 32, 32);
 ```
 
 <Callout title="Security warning" type="warn">
-  Exporting private key material in JavaScript is not recommended, and you should take extreme care when doing so.
-  Private key bytes exported through these APIs are vulnerable to theft (eg. by code running in your JavaScript sandbox)
-  and accidental logging (eg. to the console or to a third-party logger).
+    Exporting private key material in JavaScript is not recommended, and you should take extreme
+    care when doing so. Private key bytes exported through these APIs are vulnerable to theft (eg.
+    by code running in your JavaScript sandbox) and accidental logging (eg. to the console or to a
+    third-party logger).
 </Callout>
 
 ## Using private keys
@@ -209,10 +211,10 @@ Private keys can be used by their owner to produce a digital signature of a spec
 Any data that you can serialize as a `Uint8Array` can be signed with a `CryptoKey`.
 
 ```ts twoslash
-import { ReadonlyUint8Array } from "@solana/kit";
+import { ReadonlyUint8Array } from '@solana/kit';
 // ---cut-before---
-import { getU32Encoder, getUtf8Encoder } from "@solana/kit";
-const messageFromText = getUtf8Encoder().encode("🎉");
+import { getU32Encoder, getUtf8Encoder } from '@solana/kit';
+const messageFromText = getUtf8Encoder().encode('🎉');
 const messageFromU32 = getU32Encoder().encode(0xdeadbeef);
 const messageOfBytes = new Uint8Array([1, 2, 3]);
 ```
@@ -222,18 +224,19 @@ Supply a message and a private key to the [`signBytes()`](/api/functions/signByt
 ```ts twoslash
 const bobsKeyPair = null as unknown as CryptoKeyPair;
 // ---cut-before---
-import { getUtf8Encoder, signBytes } from "@solana/kit";
-const message = getUtf8Encoder().encode("The meeting is at 6:00pm");
+import { getUtf8Encoder, signBytes } from '@solana/kit';
+const message = getUtf8Encoder().encode('The meeting is at 6:00pm');
 const bobsSignature = await signBytes(bobsKeyPair.privateKey, message);
 console.log(bobsSignature);
 // @log: Uint8Array(64) [79, 43, 140, 65, 177, 35, 169, 61, 62, 228, 190, 202, 205, 143, 4, 35, 83, 228, 47, 76, 68, 62, 125, 140, 21, 102, 182, 105, 24, 238, 67, 40, 179, 255, 247, 136, 95, 119, 46, 244, 44, 224, 100, 111, 68, 110, 189, 224, 159, 144, 197, 181, 210, 132, 101, 226, 120, 200, 0, 102, 104, 65, 216, 3]
 ```
 
 <Callout type="info">
-  The same message and private key might produce a different signature every time you call this function. Some runtimes
-  produce randomized signatures as per
-  [draft-irtf-cfrg-det-sigs-with-noise](https://datatracker.ietf.org/doc/draft-irtf-cfrg-det-sigs-with-noise/) while
-  others produce deterministic signatures as per [RFC 8032](https://www.rfc-editor.org/rfc/rfc8032).
+    The same message and private key might produce a different signature every time you call this
+    function. Some runtimes produce randomized signatures as per
+    [draft-irtf-cfrg-det-sigs-with-noise](https://datatracker.ietf.org/doc/draft-irtf-cfrg-det-sigs-with-noise/)
+    while others produce deterministic signatures as per [RFC
+    8032](https://www.rfc-editor.org/rfc/rfc8032).
 </Callout>
 
 ### Signing transactions
@@ -241,11 +244,11 @@ console.log(bobsSignature);
 In Kit, private keys are used to digitally sign transactions on behalf of account owners, to approve spending, transfers, and modifications to account data on the blockchain.
 
 ```ts twoslash
-import { Transaction } from "@solana/kit";
+import { Transaction } from '@solana/kit';
 const transaction = null as unknown as Transaction;
 const bobsKeyPair = null as unknown as CryptoKeyPair;
 // ---cut-before---
-import { signTransaction } from "@solana/kit";
+import { signTransaction } from '@solana/kit';
 const signedTransaction = await signTransaction([bobsKeyPair], transaction);
 ```
 
@@ -264,37 +267,48 @@ The public key associated with a given private key can be used by anyone to veri
 If someone sends us a message and signature that they claim to be from the example above, we could use Bob's public key to verify that the signature was in fact the one produced by Bob and that the message was not modified in transit.
 
 ```ts twoslash
-import { SignatureBytes } from "@solana/kit";
+import { SignatureBytes } from '@solana/kit';
 const bobsPublicKey = null as unknown as CryptoKey;
 const supposedlyBobsSignature = null as unknown as SignatureBytes;
 // ---cut-before---
-import { getUtf8Encoder, verifySignature } from "@solana/kit";
+import { getUtf8Encoder, verifySignature } from '@solana/kit';
 const verificationSucceeded = await verifySignature(
-  bobsPublicKey,
-  supposedlyBobsSignature,
-  getUtf8Encoder().encode("The meeting is at 6:00pm"),
+    bobsPublicKey,
+    supposedlyBobsSignature,
+    getUtf8Encoder().encode('The meeting is at 6:00pm'),
 );
 if (!verificationSucceeded) {
-  throw new Error("Either the message was modified, the signature was not produced by Bob, or both");
+    throw new Error(
+        'Either the message was modified, the signature was not produced by Bob, or both',
+    );
 }
 ```
 
 Verification protects equally against false claims of who produced the signature as it does against false claims about what message was signed. Both of these will return `false`;
 
+{/* prettier-ignore */}
 ```ts twoslash
-import { SignatureBytes } from "@solana/kit";
+import { SignatureBytes } from '@solana/kit';
 const bobsPublicKey = null as unknown as CryptoKey;
 const bobsSignature = null as unknown as SignatureBytes;
 const mallorysSignature = null as unknown as SignatureBytes;
 const signature = null as unknown as SignatureBytes;
 // ---cut-before---
-import { getUtf8Encoder, verifySignature } from "@solana/kit";
+import { getUtf8Encoder, verifySignature } from '@solana/kit';
 // False claim that Bob signed the message when it was in fact Mallory
-await verifySignature(bobsPublicKey, mallorysSignature, getUtf8Encoder().encode("The meeting is at 6:00pm"));
-//                                   ^^^^^^^^^^^^^^^^^
+await verifySignature(
+    bobsPublicKey,
+    mallorysSignature,
+  //^^^^^^^^^^^^^^^^^
+    getUtf8Encoder().encode('The meeting is at 6:00pm'),
+);
 // False claim about the contents of the message
-await verifySignature(bobsPublicKey, bobsSignature, getUtf8Encoder().encode("The meeting is at 6:00am"));
-//                                                                                             ^^^^^^
+await verifySignature(
+    bobsPublicKey,
+    bobsSignature,
+    getUtf8Encoder().encode('The meeting is at 6:00am'),
+    //                                         ^^^^^^
+);
 ```
 
 ### Deriving addresses
@@ -304,7 +318,7 @@ The Solana address associated with any public key can be derived using the [`get
 ```ts twoslash
 const keyPair = null as unknown as CryptoKeyPair;
 // ---cut-before---
-import { getAddressFromPublicKey } from "@solana/kit";
+import { getAddressFromPublicKey } from '@solana/kit';
 const address = await getAddressFromPublicKey(keyPair.publicKey);
 ```
 
@@ -316,61 +330,63 @@ When you acquire a string that you expect to be a base58-encoded signature (eg. 
 
 ```ts twoslash
 // @noErrors: 1308
-import { GetSignatureStatusesApi, Rpc } from "@solana/kit";
+import { GetSignatureStatusesApi, Rpc } from '@solana/kit';
 const rpc = null as unknown as Rpc<GetSignatureStatusesApi>;
 const signatureInput = null as unknown as HTMLInputElement;
 // ---cut-before---
-import { assertIsSignature } from "@solana/kit";
+import { assertIsSignature } from '@solana/kit';
 
 // Imagine a function that asserts whether a user-supplied signature is valid or not.
 function handleSubmit() {
-  // We know only that what the user typed conforms to the `string` type.
-  const signature: string = signatureInput.value;
-  try {
-    // If this type assertion function doesn't throw, then
-    // Typescript will upcast `signature` to `Signature`.
-    assertIsSignature(signature);
-    // At this point, `signature` is a `Signature` that can be used with the RPC.
-    const {
-      value: [status],
-    } = await rpc.getSignatureStatuses([signature]).send();
-  } catch (e) {
-    // `signature` turned out not to be a base58-encoded signature
-  }
+    // We know only that what the user typed conforms to the `string` type.
+    const signature: string = signatureInput.value;
+    try {
+        // If this type assertion function doesn't throw, then
+        // Typescript will upcast `signature` to `Signature`.
+        assertIsSignature(signature);
+        // At this point, `signature` is a `Signature` that can be used with the RPC.
+        const {
+            value: [status],
+        } = await rpc.getSignatureStatuses([signature]).send();
+    } catch (e) {
+        // `signature` turned out not to be a base58-encoded signature
+    }
 }
 ```
 
 Similarly, you can use the [`isSignature()`](/api/functions/isSignature) type guard. It will return `true` if the input string conforms to the `Signature` type and will refine the type for use in your program from that point onward. This method does not throw in the opposite case.
 
 ```ts twoslash
-import { GetSignatureStatusesApi, Rpc } from "@solana/kit";
+import { GetSignatureStatusesApi, Rpc } from '@solana/kit';
 const rpc = null as unknown as Rpc<GetSignatureStatusesApi>;
-const signature = "";
+const signature = '';
 function setError(s: string) {}
-function setSignatureStatus(s: ReturnType<GetSignatureStatusesApi["getSignatureStatuses"]>["value"][number]) {}
+function setSignatureStatus(
+    s: ReturnType<GetSignatureStatusesApi['getSignatureStatuses']>['value'][number],
+) {}
 // ---cut-before---
-import { isSignature } from "@solana/kit";
+import { isSignature } from '@solana/kit';
 
 if (isSignature(signature)) {
-  // At this point, `signature` has been refined to a
-  // `Signature` that can be used with the RPC.
-  const {
-    value: [status],
-  } = await rpc.getSignatureStatuses([signature]).send();
-  setSignatureStatus(status);
+    // At this point, `signature` has been refined to a
+    // `Signature` that can be used with the RPC.
+    const {
+        value: [status],
+    } = await rpc.getSignatureStatuses([signature]).send();
+    setSignatureStatus(status);
 } else {
-  setError(`${signature} is not a transaction signature`);
+    setError(`${signature} is not a transaction signature`);
 }
 ```
 
 The [`signature()`](/api/functions/signature) helper combines _asserting_ that a string is an Ed25519 signature with _coercing_ it to the `Signature` type. It's best used with untrusted input.
 
 ```ts
-import { signature } from "@solana/keys";
+import { signature } from '@solana/keys';
 
 const signature = signature(userSuppliedSignature);
 const {
-  value: [status],
+    value: [status],
 } = await rpc.getSignatureStatuses([signature]).send();
 ```
 
@@ -406,25 +422,25 @@ To use keys in a runtime without Ed25519 digital signature algorithm support, in
 Then import and install it before invoking any operations that create or make use of `CryptoKey` objects.
 
 ```ts twoslash
-import { install } from "@solana/webcrypto-ed25519-polyfill";
+import { install } from '@solana/webcrypto-ed25519-polyfill';
 
 // Calling this will shim methods on `SubtleCrypto`, adding Ed25519 support.
 install();
 
 // Now you can do this, in environments that do not otherwise support Ed25519.
-const keyPair = await crypto.subtle.generateKey({ name: "Ed25519" }, false, ["sign"]);
+const keyPair = await crypto.subtle.generateKey({ name: 'Ed25519' }, false, ['sign']);
 ```
 
 Wherever you call `install()`, make sure the call is made only once, and before any key operation requiring Ed25519 support is performed.
 
 <Callout title="Security warning" type="warn">
-  Because the polyfill's implementation of Ed25519 key generation exists in userspace, it can't guarantee that the keys
-  you generate with it are non-exportable. Untrusted code running in your JavaScript context may still be able to gain
-  access to and/or exfiltrate secret key material.
+    Because the polyfill's implementation of Ed25519 key generation exists in userspace, it can't
+    guarantee that the keys you generate with it are non-exportable. Untrusted code running in your
+    JavaScript context may still be able to gain access to and/or exfiltrate secret key material.
 </Callout>
 
 <Callout title="Storing polyfilled keys in IndexedDB" type="warn">
-  Native `CryptoKeys` can be stored in IndexedDB, but the keys created by this polyfill can not. This is because, unlike
-  native `CryptoKeys`, our polyfilled key objects can not implement the [structured clone
-  algorithm](https://www.w3.org/TR/WebCryptoAPI/#cryptokey-interface-clone).
+    Native `CryptoKeys` can be stored in IndexedDB, but the keys created by this polyfill can not.
+    This is because, unlike native `CryptoKeys`, our polyfilled key objects can not implement the
+    [structured clone algorithm](https://www.w3.org/TR/WebCryptoAPI/#cryptokey-interface-clone).
 </Callout>

@@ -17,16 +17,16 @@ Let's also create a `start` script that runs `tsx src/index.ts` and a `validator
 
 ```json
 {
-  "name": "kit-tutorial",
-  "version": "1.0.0",
-  "scripts": {
-    "start": "tsx src/index.ts",
-    "validator": "solana-test-validator"
-  },
-  "dependencies": {
-    "@solana/kit": "^2.1.0",
-    "tsx": "^4.19.3"
-  }
+    "name": "kit-tutorial",
+    "version": "1.0.0",
+    "scripts": {
+        "start": "tsx src/index.ts",
+        "validator": "solana-test-validator"
+    },
+    "dependencies": {
+        "@solana/kit": "^2.1.0",
+        "tsx": "^4.19.3"
+    }
 }
 ```
 
@@ -41,35 +41,35 @@ The first two things we need are the RPC and RPC Subscriptions objects which all
 Let's create a new `src/client.ts` file and add the following `Client` type:
 
 ```ts twoslash
-import { Rpc, RpcSubscriptions, SolanaRpcApi, SolanaRpcSubscriptionsApi } from "@solana/kit";
+import { Rpc, RpcSubscriptions, SolanaRpcApi, SolanaRpcSubscriptionsApi } from '@solana/kit';
 
 export type Client = {
-  rpc: Rpc<SolanaRpcApi>;
-  rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+    rpc: Rpc<SolanaRpcApi>;
+    rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
 };
 ```
 
 Then, let's create a helper function to create a new cached `Client` object that we can use throughout our application:
 
 ```ts twoslash
-import { Rpc, RpcSubscriptions, SolanaRpcApi, SolanaRpcSubscriptionsApi } from "@solana/kit";
+import { Rpc, RpcSubscriptions, SolanaRpcApi, SolanaRpcSubscriptionsApi } from '@solana/kit';
 
 export type Client = {
-  rpc: Rpc<SolanaRpcApi>;
-  rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+    rpc: Rpc<SolanaRpcApi>;
+    rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
 };
 // ---cut-before---
-import { createSolanaRpc, createSolanaRpcSubscriptions } from "@solana/kit";
+import { createSolanaRpc, createSolanaRpcSubscriptions } from '@solana/kit';
 
 let client: Client | undefined;
 export function createClient(): Client {
-  if (!client) {
-    client = {
-      rpc: createSolanaRpc("http://127.0.0.1:8899"),
-      rpcSubscriptions: createSolanaRpcSubscriptions("ws://127.0.0.1:8900"),
-    };
-  }
-  return client;
+    if (!client) {
+        client = {
+            rpc: createSolanaRpc('http://127.0.0.1:8899'),
+            rpcSubscriptions: createSolanaRpcSubscriptions('ws://127.0.0.1:8900'),
+        };
+    }
+    return client;
 }
 ```
 
@@ -84,27 +84,27 @@ We can do this by creating an `Address` type via the `address` helper and fetchi
 
 ```ts twoslash
 // @filename: client.ts
-import { Rpc, RpcSubscriptions, SolanaRpcApi, SolanaRpcSubscriptionsApi } from "@solana/kit";
+import { Rpc, RpcSubscriptions, SolanaRpcApi, SolanaRpcSubscriptionsApi } from '@solana/kit';
 export type Client = {
-  rpc: Rpc<SolanaRpcApi>;
-  rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+    rpc: Rpc<SolanaRpcApi>;
+    rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
 };
 export function createClient(): Client {
-  return {} as Client;
+    return {} as Client;
 }
 // @filename: index.ts
 // ---cut-before---
-import { address } from "@solana/kit";
-import { createClient } from "./client";
+import { address } from '@solana/kit';
+import { createClient } from './client';
 
 // Run the tutorial.
 tutorial();
 
 async function tutorial() {
-  const client = createClient();
-  const account = address("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
-  const { value: balance } = await client.rpc.getBalance(account).send();
-  console.log(`Balance: ${balance} lamports.`);
+    const client = createClient();
+    const account = address('TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb');
+    const { value: balance } = await client.rpc.getBalance(account).send();
+    console.log(`Balance: ${balance} lamports.`);
 }
 ```
 

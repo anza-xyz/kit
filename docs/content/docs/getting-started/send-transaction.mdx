@@ -12,27 +12,41 @@ The most common way to send transactions is via the `sendTransaction` RPC method
 One way to tackle this would be to encode the transaction ourselves using `getBase64EncodedWireTransaction` and pass it to the `sendTransaction` RPC method like so.
 
 ```ts twoslash
-import { FullySignedTransaction, TransactionWithBlockhashLifetime, Rpc, SolanaRpcApi } from "@solana/kit";
-const signedTransaction = null as unknown as FullySignedTransaction & TransactionWithBlockhashLifetime;
+import {
+    FullySignedTransaction,
+    TransactionWithBlockhashLifetime,
+    Rpc,
+    SolanaRpcApi,
+} from '@solana/kit';
+const signedTransaction = null as unknown as FullySignedTransaction &
+    TransactionWithBlockhashLifetime;
 const rpc = null as unknown as Rpc<SolanaRpcApi>;
 // ---cut-before---
-import { getBase64EncodedWireTransaction } from "@solana/kit";
+import { getBase64EncodedWireTransaction } from '@solana/kit';
 
 const encodedTransaction = getBase64EncodedWireTransaction(signedTransaction);
-await rpc.sendTransaction(encodedTransaction, { preflightCommitment: "confirmed", encoding: "base64" }).send();
+await rpc
+    .sendTransaction(encodedTransaction, { preflightCommitment: 'confirmed', encoding: 'base64' })
+    .send();
 ```
 
 However, Kit offers a helper function that does that for us whilst providing some sensible default values. This function is called `sendTransactionWithoutConfirmingFactory` and, given an RPC object, it returns a function that sends transactions without waiting for confirmation.
 
 ```ts twoslash
-import { FullySignedTransaction, TransactionWithBlockhashLifetime, Rpc, SolanaRpcApi } from "@solana/kit";
-const signedTransaction = null as unknown as FullySignedTransaction & TransactionWithBlockhashLifetime;
+import {
+    FullySignedTransaction,
+    TransactionWithBlockhashLifetime,
+    Rpc,
+    SolanaRpcApi,
+} from '@solana/kit';
+const signedTransaction = null as unknown as FullySignedTransaction &
+    TransactionWithBlockhashLifetime;
 const rpc = null as unknown as Rpc<SolanaRpcApi>;
 // ---cut-before---
-import { sendTransactionWithoutConfirmingFactory } from "@solana/kit";
+import { sendTransactionWithoutConfirmingFactory } from '@solana/kit';
 
 const sendTransaction = sendTransactionWithoutConfirmingFactory({ rpc });
-await sendTransaction(signedTransaction, { commitment: "confirmed" });
+await sendTransaction(signedTransaction, { commitment: 'confirmed' });
 ```
 
 ## Confirmation strategies
@@ -50,21 +64,22 @@ Both accept RPC and RPC Subscriptions objects and return a function that sends a
 
 ```ts twoslash
 import {
-  FullySignedTransaction,
-  TransactionWithBlockhashLifetime,
-  Rpc,
-  SolanaRpcApi,
-  RpcSubscriptions,
-  SolanaRpcSubscriptionsApi,
-} from "@solana/kit";
-const signedTransaction = null as unknown as FullySignedTransaction & TransactionWithBlockhashLifetime;
+    FullySignedTransaction,
+    TransactionWithBlockhashLifetime,
+    Rpc,
+    SolanaRpcApi,
+    RpcSubscriptions,
+    SolanaRpcSubscriptionsApi,
+} from '@solana/kit';
+const signedTransaction = null as unknown as FullySignedTransaction &
+    TransactionWithBlockhashLifetime;
 const rpc = null as unknown as Rpc<SolanaRpcApi>;
 const rpcSubscriptions = null as unknown as RpcSubscriptions<SolanaRpcSubscriptionsApi>;
 // ---cut-before---
-import { sendAndConfirmTransactionFactory } from "@solana/kit";
+import { sendAndConfirmTransactionFactory } from '@solana/kit';
 
 const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
-await sendAndConfirmTransaction(signedTransaction, { commitment: "confirmed" });
+await sendAndConfirmTransaction(signedTransaction, { commitment: 'confirmed' });
 ```
 
 ## Transaction signatures
@@ -77,25 +92,26 @@ As such, Kit decouples these two distinct concepts by offering a `getSignatureFr
 
 ```ts twoslash
 import {
-  FullySignedTransaction,
-  TransactionWithBlockhashLifetime,
-  Rpc,
-  SolanaRpcApi,
-  RpcSubscriptions,
-  SolanaRpcSubscriptionsApi,
-} from "@solana/kit";
-const signedTransaction = null as unknown as FullySignedTransaction & TransactionWithBlockhashLifetime;
+    FullySignedTransaction,
+    TransactionWithBlockhashLifetime,
+    Rpc,
+    SolanaRpcApi,
+    RpcSubscriptions,
+    SolanaRpcSubscriptionsApi,
+} from '@solana/kit';
+const signedTransaction = null as unknown as FullySignedTransaction &
+    TransactionWithBlockhashLifetime;
 const rpc = null as unknown as Rpc<SolanaRpcApi>;
 const rpcSubscriptions = null as unknown as RpcSubscriptions<SolanaRpcSubscriptionsApi>;
 // ---cut-before---
-import { getSignatureFromTransaction, sendAndConfirmTransactionFactory } from "@solana/kit";
+import { getSignatureFromTransaction, sendAndConfirmTransactionFactory } from '@solana/kit';
 
 // Access the transaction signature.
 const signature = getSignatureFromTransaction(signedTransaction);
 
 // Send and confirm the transaction.
 const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
-await sendAndConfirmTransaction(signedTransaction, { commitment: "confirmed" });
+await sendAndConfirmTransaction(signedTransaction, { commitment: 'confirmed' });
 ```
 
 ## Update `client.ts`
@@ -104,52 +120,57 @@ With all that new knowledge in hand, let's update our `Client` object to include
 
 ```ts twoslash title="src/client.ts"
 import {
-  CompilableTransactionMessage,
-  MessageSigner,
-  Rpc,
-  RpcSubscriptions,
-  SolanaRpcApi,
-  SolanaRpcSubscriptionsApi,
-  TransactionSigner,
-} from "@solana/kit";
+    CompilableTransactionMessage,
+    MessageSigner,
+    Rpc,
+    RpcSubscriptions,
+    SolanaRpcApi,
+    SolanaRpcSubscriptionsApi,
+    TransactionSigner,
+} from '@solana/kit';
 const rpc = null as unknown as Rpc<SolanaRpcApi>;
 const rpcSubscriptions = null as unknown as RpcSubscriptions<SolanaRpcSubscriptionsApi>;
 const wallet = null as unknown as TransactionSigner & MessageSigner;
 const estimateAndSetComputeUnitLimit = null as unknown as <T extends CompilableTransactionMessage>(
-  transactionMessage: T,
+    transactionMessage: T,
 ) => Promise<T>;
 // ---cut-before---
 import {
-  sendAndConfirmTransactionFactory, // [!code ++]
-  // ...
-} from "@solana/kit";
+    sendAndConfirmTransactionFactory, // [!code ++]
+    // ...
+} from '@solana/kit';
 
 export type Client = {
-  estimateAndSetComputeUnitLimit: <T extends CompilableTransactionMessage>(transactionMessage: T) => Promise<T>;
-  rpc: Rpc<SolanaRpcApi>;
-  rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
-  sendAndConfirmTransaction: ReturnType<typeof sendAndConfirmTransactionFactory>; // [!code ++]
-  wallet: TransactionSigner & MessageSigner;
+    estimateAndSetComputeUnitLimit: <T extends CompilableTransactionMessage>(
+        transactionMessage: T,
+    ) => Promise<T>;
+    rpc: Rpc<SolanaRpcApi>;
+    rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+    sendAndConfirmTransaction: ReturnType<typeof sendAndConfirmTransactionFactory>; // [!code ++]
+    wallet: TransactionSigner & MessageSigner;
 };
 
 let client: Client | undefined;
 export async function createClient(): Promise<Client> {
-  if (!client) {
-    // ...
+    if (!client) {
+        // ...
 
-    // Create a function to send and confirm transactions. // [!code ++]
-    const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions }); // [!code ++]
+        // Create a function to send and confirm transactions. // [!code ++]
+        const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({
+            rpc,
+            rpcSubscriptions,
+        }); // [!code ++]
 
-    // Store the client.
-    client = {
-      estimateAndSetComputeUnitLimit,
-      rpc,
-      rpcSubscriptions,
-      sendAndConfirmTransaction, // [!code ++]
-      wallet,
-    };
-  }
-  return client;
+        // Store the client.
+        client = {
+            estimateAndSetComputeUnitLimit,
+            rpc,
+            rpcSubscriptions,
+            sendAndConfirmTransaction, // [!code ++]
+            wallet,
+        };
+    }
+    return client;
 }
 ```
 
@@ -164,79 +185,85 @@ And with that, our `createMint` function is complete!
 ```ts twoslash title="src/create-mint.ts"
 // @filename: client.ts
 import {
-  CompilableTransactionMessage,
-  MessageSigner,
-  Rpc,
-  RpcSubscriptions,
-  SolanaRpcApi,
-  SolanaRpcSubscriptionsApi,
-  TransactionSigner,
-  sendAndConfirmTransactionFactory,
-} from "@solana/kit";
+    CompilableTransactionMessage,
+    MessageSigner,
+    Rpc,
+    RpcSubscriptions,
+    SolanaRpcApi,
+    SolanaRpcSubscriptionsApi,
+    TransactionSigner,
+    sendAndConfirmTransactionFactory,
+} from '@solana/kit';
 export type Client = {
-  estimateAndSetComputeUnitLimit: <T extends CompilableTransactionMessage>(transactionMessage: T) => Promise<T>;
-  rpc: Rpc<SolanaRpcApi>;
-  rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
-  sendAndConfirmTransaction: ReturnType<typeof sendAndConfirmTransactionFactory>;
-  wallet: TransactionSigner & MessageSigner;
+    estimateAndSetComputeUnitLimit: <T extends CompilableTransactionMessage>(
+        transactionMessage: T,
+    ) => Promise<T>;
+    rpc: Rpc<SolanaRpcApi>;
+    rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+    sendAndConfirmTransaction: ReturnType<typeof sendAndConfirmTransactionFactory>;
+    wallet: TransactionSigner & MessageSigner;
 };
 // @filename: create-mint.ts
 // ---cut-before---
 import {
-  appendTransactionMessageInstructions,
-  createTransactionMessage,
-  generateKeyPairSigner,
-  pipe,
-  setTransactionMessageFeePayerSigner,
-  setTransactionMessageLifetimeUsingBlockhash,
-  signTransactionMessageWithSigners,
-} from "@solana/kit";
-import { getCreateAccountInstruction } from "@solana-program/system";
-import { getInitializeMintInstruction, getMintSize, TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
+    appendTransactionMessageInstructions,
+    createTransactionMessage,
+    generateKeyPairSigner,
+    pipe,
+    setTransactionMessageFeePayerSigner,
+    setTransactionMessageLifetimeUsingBlockhash,
+    signTransactionMessageWithSigners,
+} from '@solana/kit';
+import { getCreateAccountInstruction } from '@solana-program/system';
+import {
+    getInitializeMintInstruction,
+    getMintSize,
+    TOKEN_PROGRAM_ADDRESS,
+} from '@solana-program/token';
 
-import type { Client } from "./client";
+import type { Client } from './client';
 
 export async function createMint(client: Client, options: { decimals?: number } = {}) {
-  // Prepare inputs.
-  const mintSize = getMintSize();
-  const [mint, mintRent, { value: latestBlockhash }] = await Promise.all([
-    generateKeyPairSigner(),
-    client.rpc.getMinimumBalanceForRentExemption(BigInt(mintSize)).send(),
-    client.rpc.getLatestBlockhash().send(),
-  ]);
+    // Prepare inputs.
+    const mintSize = getMintSize();
+    const [mint, mintRent, { value: latestBlockhash }] = await Promise.all([
+        generateKeyPairSigner(),
+        client.rpc.getMinimumBalanceForRentExemption(BigInt(mintSize)).send(),
+        client.rpc.getLatestBlockhash().send(),
+    ]);
 
-  // Build instructions.
-  const createAccountIx = getCreateAccountInstruction({
-    payer: client.wallet,
-    newAccount: mint,
-    space: mintSize,
-    lamports: mintRent,
-    programAddress: TOKEN_PROGRAM_ADDRESS,
-  });
-  const initializeMintIx = getInitializeMintInstruction({
-    mint: mint.address,
-    decimals: options.decimals ?? 0,
-    mintAuthority: client.wallet.address,
-    freezeAuthority: client.wallet.address,
-  });
+    // Build instructions.
+    const createAccountIx = getCreateAccountInstruction({
+        payer: client.wallet,
+        newAccount: mint,
+        space: mintSize,
+        lamports: mintRent,
+        programAddress: TOKEN_PROGRAM_ADDRESS,
+    });
+    const initializeMintIx = getInitializeMintInstruction({
+        mint: mint.address,
+        decimals: options.decimals ?? 0,
+        mintAuthority: client.wallet.address,
+        freezeAuthority: client.wallet.address,
+    });
 
-  // Build the transaction message.
-  const transactionMessage = await pipe(
-    createTransactionMessage({ version: 0 }),
-    (tx) => setTransactionMessageFeePayerSigner(client.wallet, tx),
-    (tx) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx),
-    (tx) => appendTransactionMessageInstructions([createAccountIx, initializeMintIx], tx),
-    (tx) => client.estimateAndSetComputeUnitLimit(tx),
-  );
+    // Build the transaction message.
+    const transactionMessage = await pipe(
+        createTransactionMessage({ version: 0 }),
+        (tx) => setTransactionMessageFeePayerSigner(client.wallet, tx),
+        (tx) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx),
+        (tx) => appendTransactionMessageInstructions([createAccountIx, initializeMintIx], tx),
+        (tx) => client.estimateAndSetComputeUnitLimit(tx),
+    );
 
-  // Compile the transaction message and sign it.
-  const signedTransaction = await signTransactionMessageWithSigners(transactionMessage);
+    // Compile the transaction message and sign it.
+    const signedTransaction = await signTransactionMessageWithSigners(transactionMessage);
 
-  // Send the transaction and wait for confirmation.
-  await client.sendAndConfirmTransaction(signedTransaction, { commitment: "confirmed" }); // [!code ++]
+    // Send the transaction and wait for confirmation.
+    await client.sendAndConfirmTransaction(signedTransaction, { commitment: 'confirmed' }); // [!code ++]
 
-  // Return the address of the created mint account. // [!code ++]
-  return mint.address; // [!code ++]
+    // Return the address of the created mint account. // [!code ++]
+    return mint.address; // [!code ++]
 }
 ```
 
@@ -247,40 +274,42 @@ Finally, let's update our main `tutorial` function to execute the `createMint` f
 ```ts twoslash title="src/index.ts"
 // @filename: client.ts
 import {
-  CompilableTransactionMessage,
-  MessageSigner,
-  Rpc,
-  RpcSubscriptions,
-  SolanaRpcApi,
-  SolanaRpcSubscriptionsApi,
-  TransactionSigner,
-  sendAndConfirmTransactionFactory,
-} from "@solana/kit";
+    CompilableTransactionMessage,
+    MessageSigner,
+    Rpc,
+    RpcSubscriptions,
+    SolanaRpcApi,
+    SolanaRpcSubscriptionsApi,
+    TransactionSigner,
+    sendAndConfirmTransactionFactory,
+} from '@solana/kit';
 export type Client = {
-  estimateAndSetComputeUnitLimit: <T extends CompilableTransactionMessage>(transactionMessage: T) => Promise<T>;
-  rpc: Rpc<SolanaRpcApi>;
-  rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
-  sendAndConfirmTransaction: ReturnType<typeof sendAndConfirmTransactionFactory>;
-  wallet: TransactionSigner & MessageSigner;
+    estimateAndSetComputeUnitLimit: <T extends CompilableTransactionMessage>(
+        transactionMessage: T,
+    ) => Promise<T>;
+    rpc: Rpc<SolanaRpcApi>;
+    rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+    sendAndConfirmTransaction: ReturnType<typeof sendAndConfirmTransactionFactory>;
+    wallet: TransactionSigner & MessageSigner;
 };
 export async function createClient() {
-  return {} as Client;
+    return {} as Client;
 }
 // @filename: create-mint.ts
-import { Address } from "@solana/kit";
-import { Client } from "./client";
+import { Address } from '@solana/kit';
+import { Client } from './client';
 export async function createMint(client: Client, options: { decimals?: number } = {}) {
-  return "" as Address;
+    return '' as Address;
 }
 // @filename: index.ts
 // ---cut-before---
-import { createClient } from "./client";
-import { createMint } from "./create-mint";
+import { createClient } from './client';
+import { createMint } from './create-mint';
 
 async function tutorial() {
-  const client = await createClient();
-  const mintAddress = await createMint(client, { decimals: 2 });
-  console.log(`Mint created: ${mintAddress}.`);
+    const client = await createClient();
+    const mintAddress = await createMint(client, { decimals: 2 });
+    console.log(`Mint created: ${mintAddress}.`);
 }
 ```
 
