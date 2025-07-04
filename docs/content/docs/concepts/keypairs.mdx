@@ -167,9 +167,9 @@ const loadedKeyPair = await new Promise<CryptoKeyPair>((resolve, reject) => {
 You can obtain the 32 bytes of any public key like this:
 
 ```ts twoslash
-const publicKey = null as unknown as CryptoKey;
+const keyPair = null as unknown as CryptoKeyPair;
 // ---cut-before---
-const publicKeyBytes = new Uint8Array(await crypto.subtle.exportKey("raw", publicKey));
+const publicKeyBytes = new Uint8Array(await crypto.subtle.exportKey("raw", keyPair.publicKey));
 ```
 
 Exporting private key material requires a specially constructed `CryptoKey` with its extractable property set to `true`.
@@ -186,9 +186,9 @@ const keyPair = await crypto.subtle.generateKey(
 You can then use that `CryptoKey` with the [`SubtleCrypto#exportKey`](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/exportKey) API. The last 32 bytes of a PKCS#8 export of the key are the private key bytes.
 
 ```ts twoslash
-const privateKey = null as unknown as CryptoKey;
+const keyPair = null as unknown as CryptoKeyPair;
 // ---cut-before---
-const exportedPrivateKey = await crypto.subtle.exportKey("pkcs8", privateKey);
+const exportedPrivateKey = await crypto.subtle.exportKey("pkcs8", keyPair.privateKey);
 const privateKeyBytes = new Uint8Array(exportedPrivateKey, exportedPrivateKey.byteLength - 32, 32);
 ```
 
@@ -206,13 +206,50 @@ Private keys can be used by their owner to produce a digital signature of a spec
 
 ### Signing messages
 
-TODO
+Any data that you can serialize as a `Uint8Array` can be signed with a `CryptoKey`.
+
+```ts twoslash
+import { ReadonlyUint8Array } from "@solana/kit";
+// ---cut-before---
+import { getU32Encoder, getUtf8Encoder } from "@solana/kit";
+const messageFromText = getUtf8Encoder().encode("🎉");
+const messageFromU32 = getU32Encoder().encode(0xdeadbeef);
+const messageOfBytes = new Uint8Array([1, 2, 3]);
+```
+
+Supply a message and a private key to the [`signBytes()`](/api/functions/signBytes) function to obtain a 64-byte digital signature.
+
+```ts twoslash
+const bobsKeyPair = null as unknown as CryptoKeyPair;
+// ---cut-before---
+import { getUtf8Encoder, signBytes } from "@solana/kit";
+const message = getUtf8Encoder().encode("The meeting is at 6:00pm");
+const bobsSignature = await signBytes(bobsKeyPair.privateKey, message);
+console.log(bobsSignature);
+// @log: Uint8Array(64) [79, 43, 140, 65, 177, 35, 169, 61, 62, 228, 190, 202, 205, 143, 4, 35, 83, 228, 47, 76, 68, 62, 125, 140, 21, 102, 182, 105, 24, 238, 67, 40, 179, 255, 247, 136, 95, 119, 46, 244, 44, 224, 100, 111, 68, 110, 189, 224, 159, 144, 197, 181, 210, 132, 101, 226, 120, 200, 0, 102, 104, 65, 216, 3]
+```
+
+<Callout type="info">
+  The same message and private key might produce a different signature every time you call this function. Some runtimes
+  produce randomized signatures as per
+  [draft-irtf-cfrg-det-sigs-with-noise](https://datatracker.ietf.org/doc/draft-irtf-cfrg-det-sigs-with-noise/) while
+  others produce deterministic signatures as per [RFC 8032](https://www.rfc-editor.org/rfc/rfc8032).
+</Callout>
 
 ### Signing transactions
 
 In Kit, private keys are used to digitally sign transactions on behalf of account owners, to approve spending, transfers, and modifications to account data on the blockchain.
 
-TODO
+```ts twoslash
+import { Transaction } from "@solana/kit";
+const transaction = null as unknown as Transaction;
+const bobsKeyPair = null as unknown as CryptoKeyPair;
+// ---cut-before---
+import { signTransaction } from "@solana/kit";
+const signedTransaction = await signTransaction([bobsKeyPair], transaction);
+```
+
+In practice, it's rare to sign transactions like this. Typically, you create a transaction message in your application, specify which accounts are required to sign it using the [Signers API](/concepts/signers), and then call [`signTransactionMessageWithSigners`](/api/functions/signTransactionMessageWithSigners) to turn it into a signed `Transaction`.
 
 ## Using public keys
 
@@ -220,15 +257,122 @@ A public key is a `CryptoKey` whose `type` property is set to `'public'` and who
 
 Solana uses public keys to verify that modifications to account data and balances through transactions are approved of by those who hold the private keys required to authorize such modifications. Kit generally only uses public keys to derive the address of their associated accounts, but it can also use public keys to enable your programs to verify arbitrary messages.
 
-### Verifying messages
+### Verifying signatures
 
 The public key associated with a given private key can be used by anyone to verify that a message was signed by the holder of the associated private key, as described above. The verification function requires the original message, a digital signature, and the public key associated with the owner who is believed to have produced that signature. Successful verification implies that the contents of the message signed by the owner are identical to the contents of the message that was given to the verification function. Key owners are free to share their public key with anyone they would like to grant the ability to verify their digital signatures.
 
-TODO
+If someone sends us a message and signature that they claim to be from the example above, we could use Bob's public key to verify that the signature was in fact the one produced by Bob and that the message was not modified in transit.
+
+```ts twoslash
+import { SignatureBytes } from "@solana/kit";
+const bobsPublicKey = null as unknown as CryptoKey;
+const supposedlyBobsSignature = null as unknown as SignatureBytes;
+// ---cut-before---
+import { getUtf8Encoder, verifySignature } from "@solana/kit";
+const verificationSucceeded = await verifySignature(
+  bobsPublicKey,
+  supposedlyBobsSignature,
+  getUtf8Encoder().encode("The meeting is at 6:00pm"),
+);
+if (!verificationSucceeded) {
+  throw new Error("Either the message was modified, the signature was not produced by Bob, or both");
+}
+```
+
+Verification protects equally against false claims of who produced the signature as it does against false claims about what message was signed. Both of these will return `false`;
+
+```ts twoslash
+import { SignatureBytes } from "@solana/kit";
+const bobsPublicKey = null as unknown as CryptoKey;
+const bobsSignature = null as unknown as SignatureBytes;
+const mallorysSignature = null as unknown as SignatureBytes;
+const signature = null as unknown as SignatureBytes;
+// ---cut-before---
+import { getUtf8Encoder, verifySignature } from "@solana/kit";
+// False claim that Bob signed the message when it was in fact Mallory
+await verifySignature(bobsPublicKey, mallorysSignature, getUtf8Encoder().encode("The meeting is at 6:00pm"));
+//                                   ^^^^^^^^^^^^^^^^^
+// False claim about the contents of the message
+await verifySignature(bobsPublicKey, bobsSignature, getUtf8Encoder().encode("The meeting is at 6:00am"));
+//                                                                                             ^^^^^^
+```
 
 ### Deriving addresses
 
-TODO
+The Solana address associated with any public key can be derived using the [`getAddressFromPublicKey()`](/api/functions/getAddressFromPublicKey) function.
+
+```ts twoslash
+const keyPair = null as unknown as CryptoKeyPair;
+// ---cut-before---
+import { getAddressFromPublicKey } from "@solana/kit";
+const address = await getAddressFromPublicKey(keyPair.publicKey);
+```
+
+## Signatures
+
+The [`SignatureBytes`](/api/type-aliases/SignatureBytes) type represents a 64-byte Ed25519 signature, and the [`Signature`](/api/type-aliases/Signature) type represents such a signature as a base58-encoded string.
+
+When you acquire a string that you expect to be a base58-encoded signature (eg. of a transaction) from an untrusted network API or user input you can assert it is in fact a base58-encoded byte array of sufficient length using the [`assertIsSignature()`](/api/functions/assertIsSignature) function.
+
+```ts twoslash
+// @noErrors: 1308
+import { GetSignatureStatusesApi, Rpc } from "@solana/kit";
+const rpc = null as unknown as Rpc<GetSignatureStatusesApi>;
+const signatureInput = null as unknown as HTMLInputElement;
+// ---cut-before---
+import { assertIsSignature } from "@solana/kit";
+
+// Imagine a function that asserts whether a user-supplied signature is valid or not.
+function handleSubmit() {
+  // We know only that what the user typed conforms to the `string` type.
+  const signature: string = signatureInput.value;
+  try {
+    // If this type assertion function doesn't throw, then
+    // Typescript will upcast `signature` to `Signature`.
+    assertIsSignature(signature);
+    // At this point, `signature` is a `Signature` that can be used with the RPC.
+    const {
+      value: [status],
+    } = await rpc.getSignatureStatuses([signature]).send();
+  } catch (e) {
+    // `signature` turned out not to be a base58-encoded signature
+  }
+}
+```
+
+Similarly, you can use the [`isSignature()`](/api/functions/isSignature) type guard. It will return `true` if the input string conforms to the `Signature` type and will refine the type for use in your program from that point onward. This method does not throw in the opposite case.
+
+```ts twoslash
+import { GetSignatureStatusesApi, Rpc } from "@solana/kit";
+const rpc = null as unknown as Rpc<GetSignatureStatusesApi>;
+const signature = "";
+function setError(s: string) {}
+function setSignatureStatus(s: ReturnType<GetSignatureStatusesApi["getSignatureStatuses"]>["value"][number]) {}
+// ---cut-before---
+import { isSignature } from "@solana/kit";
+
+if (isSignature(signature)) {
+  // At this point, `signature` has been refined to a
+  // `Signature` that can be used with the RPC.
+  const {
+    value: [status],
+  } = await rpc.getSignatureStatuses([signature]).send();
+  setSignatureStatus(status);
+} else {
+  setError(`${signature} is not a transaction signature`);
+}
+```
+
+The [`signature()`](/api/functions/signature) helper combines _asserting_ that a string is an Ed25519 signature with _coercing_ it to the `Signature` type. It's best used with untrusted input.
+
+```ts
+import { signature } from "@solana/keys";
+
+const signature = signature(userSuppliedSignature);
+const {
+  value: [status],
+} = await rpc.getSignatureStatuses([signature]).send();
+```
 
 ## Runtime Support
 
