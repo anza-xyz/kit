@@ -441,7 +441,7 @@ describe('signTransactionMessageWithSigners', () => {
         });
 
         // And the transaction is fully signed.
-        signedTransaction satisfies FullySignedTransaction;
+        signedTransaction satisfies FullySignedTransaction & Transaction;
 
         // And the signers were called with the expected parameters.
         expect(signerA.modifyAndSignTransactions).toHaveBeenCalledWith([unsignedTransaction], mockOptions);
