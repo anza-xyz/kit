@@ -9,12 +9,8 @@ describe('voteNotifications', () => {
         rpc = createLocalhostSolanaRpcSubscriptions();
     });
 
-    // FIXME: Re-enable once https://github.com/anza-xyz/agave/pull/6645 is live.
-    it.failing('produces vote notifications', async () => {
-        expect.assertions(
-            // FIXME: Set back to `1` once https://github.com/anza-xyz/agave/pull/6645 is live.
-            0,
-        );
+    it('produces vote notifications', async () => {
+        expect.assertions(1);
 
         const abortController = new AbortController();
         try {
