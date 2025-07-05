@@ -38,19 +38,26 @@ No matter which serialization strategy we use, Codecs abstract away its implemen
 Here's a quick example that encodes and decodes a simple `Person` type.
 
 ```ts twoslash
-import { Codec, addCodecSizePrefix, getUtf8Codec, getU32Codec, getStructCodec, ReadonlyUint8Array } from "@solana/kit";
+import {
+    Codec,
+    addCodecSizePrefix,
+    getUtf8Codec,
+    getU32Codec,
+    getStructCodec,
+    ReadonlyUint8Array,
+} from '@solana/kit';
 // ---cut-before---
 // Use composable codecs to build complex data structures.
 type Person = { name: string; age: number };
 const getPersonCodec = (): Codec<Person> =>
-  getStructCodec([
-    ["name", addCodecSizePrefix(getUtf8Codec(), getU32Codec())],
-    ["age", getU32Codec()],
-  ]);
+    getStructCodec([
+        ['name', addCodecSizePrefix(getUtf8Codec(), getU32Codec())],
+        ['age', getU32Codec()],
+    ]);
 
 // Use your own codecs to encode and decode data.
 const personCodec = getPersonCodec();
-const encodedPerson = personCodec.encode({ name: "John", age: 42 });
+const encodedPerson = personCodec.encode({ name: 'John', age: 42 });
 const decodedPerson = personCodec.decode(encodedPerson);
 ```
 
@@ -69,36 +76,50 @@ For instance, consider the following codecs available:
 By combining them together we can create a custom codec for the following `Person` type.
 
 ```ts twoslash
-import { Codec, addCodecSizePrefix, getUtf8Codec, getU32Codec, getStructCodec, getBooleanCodec } from "@solana/kit";
+import {
+    Codec,
+    addCodecSizePrefix,
+    getUtf8Codec,
+    getU32Codec,
+    getStructCodec,
+    getBooleanCodec,
+} from '@solana/kit';
 // ---cut-before---
 type Person = {
-  name: string;
-  age: number;
-  verified: boolean;
+    name: string;
+    age: number;
+    verified: boolean;
 };
 
 const getPersonCodec = (): Codec<Person> =>
-  getStructCodec([
-    ["name", addCodecSizePrefix(getUtf8Codec(), getU32Codec())],
-    ["age", getU32Codec()],
-    ["verified", getBooleanCodec()],
-  ]);
+    getStructCodec([
+        ['name', addCodecSizePrefix(getUtf8Codec(), getU32Codec())],
+        ['age', getU32Codec()],
+        ['verified', getBooleanCodec()],
+    ]);
 ```
 
 This function returns a `Codec` object which contains both an `encode` and `decode` function that can be used to convert a `Person` type to and from a `Uint8Array`.
 
 ```ts twoslash
-import { Codec, addCodecSizePrefix, getUtf8Codec, getU32Codec, getStructCodec, getBooleanCodec } from "@solana/kit";
+import {
+    Codec,
+    addCodecSizePrefix,
+    getUtf8Codec,
+    getU32Codec,
+    getStructCodec,
+    getBooleanCodec,
+} from '@solana/kit';
 type Person = { name: string; age: number; verified: boolean };
 const getPersonCodec = (): Codec<Person> =>
-  getStructCodec([
-    ["name", addCodecSizePrefix(getUtf8Codec(), getU32Codec())],
-    ["age", getU32Codec()],
-    ["verified", getBooleanCodec()],
-  ]);
+    getStructCodec([
+        ['name', addCodecSizePrefix(getUtf8Codec(), getU32Codec())],
+        ['age', getU32Codec()],
+        ['verified', getBooleanCodec()],
+    ]);
 // ---cut-before---
 const personCodec = getPersonCodec();
-const bytes = personCodec.encode({ name: "John", age: 42, verified: true });
+const bytes = personCodec.encode({ name: 'John', age: 42, verified: true });
 const person = personCodec.decode(bytes);
 ```
 
@@ -110,45 +131,45 @@ Whilst Codecs can both encode and decode, it is possible to only focus on encodi
 
 ```ts twoslash
 import {
-  Encoder,
-  addEncoderSizePrefix,
-  getUtf8Encoder,
-  getU32Encoder,
-  getStructEncoder,
-  getBooleanEncoder,
-} from "@solana/kit";
+    Encoder,
+    addEncoderSizePrefix,
+    getUtf8Encoder,
+    getU32Encoder,
+    getStructEncoder,
+    getBooleanEncoder,
+} from '@solana/kit';
 type Person = { name: string; age: number; verified: boolean };
 // ---cut-before---
 const getPersonEncoder = (): Encoder<Person> =>
-  getStructEncoder([
-    ["name", addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
-    ["age", getU32Encoder()],
-    ["verified", getBooleanEncoder()],
-  ]);
+    getStructEncoder([
+        ['name', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
+        ['age', getU32Encoder()],
+        ['verified', getBooleanEncoder()],
+    ]);
 
-const bytes = getPersonEncoder().encode({ name: "John", age: 42, verified: true });
+const bytes = getPersonEncoder().encode({ name: 'John', age: 42, verified: true });
 ```
 
 The same can be done for decoding the `Person` type by using Decoders like so.
 
 ```ts twoslash
 import {
-  Decoder,
-  addDecoderSizePrefix,
-  getUtf8Decoder,
-  getU32Decoder,
-  getStructDecoder,
-  getBooleanDecoder,
-} from "@solana/kit";
+    Decoder,
+    addDecoderSizePrefix,
+    getUtf8Decoder,
+    getU32Decoder,
+    getStructDecoder,
+    getBooleanDecoder,
+} from '@solana/kit';
 type Person = { name: string; age: number; verified: boolean };
 const bytes = null as unknown as Uint8Array;
 // ---cut-before---
 const getPersonDecoder = (): Decoder<Person> =>
-  getStructDecoder([
-    ["name", addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
-    ["age", getU32Decoder()],
-    ["verified", getBooleanDecoder()],
-  ]);
+    getStructDecoder([
+        ['name', addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
+        ['age', getU32Decoder()],
+        ['verified', getBooleanDecoder()],
+    ]);
 
 const person = getPersonDecoder().decode(bytes);
 ```
@@ -160,7 +181,7 @@ Separating Codecs into Encoders and Decoders is particularly good practice for l
 That's why this library offers a `combineCodec` helper that creates a `Codec` instance from a matching `Encoder` and `Decoder`.
 
 ```ts twoslash
-import { Codec, Encoder, Decoder, combineCodec } from "@solana/kit";
+import { Codec, Encoder, Decoder, combineCodec } from '@solana/kit';
 type Person = { name: string; age: number; verified: boolean };
 const getPersonEncoder = null as unknown as () => Encoder<Person>;
 const getPersonDecoder = null as unknown as () => Decoder<Person>;
@@ -175,8 +196,8 @@ type MyType = /* ... */;
 const getMyTypeEncoder = (): Encoder<MyType> => { /* ... */ };
 const getMyTypeDecoder = (): Decoder<MyType> => { /* ... */ };
 const getMyTypeCodec = (): Codec<MyType> => combineCodec(
-  getMyTypeEncoder(),
-  getMyTypeDecoder()
+    getMyTypeEncoder(),
+    getMyTypeDecoder(),
 );
 ```
 
@@ -185,7 +206,7 @@ const getMyTypeCodec = (): Codec<MyType> => combineCodec(
 When creating codecs, the encoded type is allowed to be looser than the decoded type. A good example of that is the u64 number codec:
 
 ```ts twoslash
-import { Codec, getU64Codec } from "@solana/kit";
+import { Codec, getU64Codec } from '@solana/kit';
 // ---cut-before---
 const u64Codec: Codec<number | bigint, bigint> = getU64Codec();
 ```
@@ -193,7 +214,7 @@ const u64Codec: Codec<number | bigint, bigint> = getU64Codec();
 As you can see, the first type parameter is looser since it accepts numbers or big integers, whereas the second type parameter only accepts big integers. That's because when _encoding_ a u64 number, you may provide either a `bigint` or a `number` for convenience. However, when you decode a u64 number, you will always get a `bigint` because not all u64 values can fit in a JavaScript `number` type.
 
 ```ts twoslash
-import { getU64Codec } from "@solana/kit";
+import { getU64Codec } from '@solana/kit';
 const u64Codec = getU64Codec();
 // ---cut-before---
 const bytes = u64Codec.encode(42);
@@ -206,40 +227,41 @@ Here's another example using an object with default values. You can read more ab
 
 ```ts twoslash
 import {
-  Codec,
-  Encoder,
-  Decoder,
-  transformEncoder,
-  getStructEncoder,
-  getStructDecoder,
-  addEncoderSizePrefix,
-  addDecoderSizePrefix,
-  getUtf8Encoder,
-  getUtf8Decoder,
-  getU32Encoder,
-  getU32Decoder,
-  combineCodec,
-} from "@solana/kit";
+    Codec,
+    Encoder,
+    Decoder,
+    transformEncoder,
+    getStructEncoder,
+    getStructDecoder,
+    addEncoderSizePrefix,
+    addDecoderSizePrefix,
+    getUtf8Encoder,
+    getUtf8Decoder,
+    getU32Encoder,
+    getU32Decoder,
+    combineCodec,
+} from '@solana/kit';
 // ---cut-before---
 type Person = { name: string; age: number };
 type PersonInput = { name: string; age?: number };
 
 const getPersonEncoder = (): Encoder<PersonInput> =>
-  transformEncoder(
-    getStructEncoder([
-      ["name", addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
-      ["age", getU32Encoder()],
-    ]),
-    (input) => ({ ...input, age: input.age ?? 42 }),
-  );
+    transformEncoder(
+        getStructEncoder([
+            ['name', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
+            ['age', getU32Encoder()],
+        ]),
+        (input) => ({ ...input, age: input.age ?? 42 }),
+    );
 
 const getPersonDecoder = (): Decoder<Person> =>
-  getStructDecoder([
-    ["name", addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
-    ["age", getU32Decoder()],
-  ]);
+    getStructDecoder([
+        ['name', addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
+        ['age', getU32Decoder()],
+    ]);
 
-const getPersonCodec = (): Codec<PersonInput, Person> => combineCodec(getPersonEncoder(), getPersonDecoder());
+const getPersonCodec = (): Codec<PersonInput, Person> =>
+    combineCodec(getPersonEncoder(), getPersonDecoder());
 ```
 
 ## Fixed-size and variable-size codecs
@@ -249,7 +271,7 @@ It is also worth noting that Codecs can either be of fixed size or variable size
 `FixedSizeCodecs` have a `fixedSize` number attribute that tells us exactly how big their encoded data is in bytes.
 
 ```ts twoslash
-import { FixedSizeCodec, getU32Codec } from "@solana/kit";
+import { FixedSizeCodec, getU32Codec } from '@solana/kit';
 // ---cut-before---
 const myCodec = getU32Codec();
 myCodec satisfies FixedSizeCodec<number>;
@@ -259,11 +281,11 @@ myCodec.fixedSize; // 4 bytes.
 On the other hand, `VariableSizeCodecs` do not know the size of their encoded data in advance. Instead, they will grab that information either from the provided encoded data or from the value to encode. For the former, we can simply access the length of the `Uint8Array`. For the latter, it provides a `getSizeFromValue` that tells us the encoded byte size of the provided value.
 
 ```ts twoslash
-import { VariableSizeCodec, getUtf8Codec, getU32Codec, addCodecSizePrefix } from "@solana/kit";
+import { VariableSizeCodec, getUtf8Codec, getU32Codec, addCodecSizePrefix } from '@solana/kit';
 // ---cut-before---
 const myCodec = addCodecSizePrefix(getUtf8Codec(), getU32Codec());
 myCodec satisfies VariableSizeCodec<string>;
-myCodec.getSizeFromValue("hello world"); // 4 + 11 bytes.
+myCodec.getSizeFromValue('hello world'); // 4 + 11 bytes.
 ```
 
 Also note that, if the `VariableSizeCodec` is bounded by a maximum size, it can be provided as a `maxSize` number attribute.
@@ -287,77 +309,77 @@ The `read` function accepts the `bytes` to decode from and the `offset` at each 
 - The second item should be the next offset to read from.
 
 ```ts twoslash
-import { createCodec, Offset } from "@solana/kit";
-const write = null as unknown as Parameters<typeof createCodec<number>>[0]["write"];
+import { createCodec, Offset } from '@solana/kit';
+const write = null as unknown as Parameters<typeof createCodec<number>>[0]['write'];
 const fixedSize = null as unknown as 1;
 // ---cut-before---
 createCodec({
-  read(bytes, offset) {
-    const value = bytes[offset];
-    return [value, offset + 1];
-  },
-  write,
-  fixedSize,
+    read(bytes, offset) {
+        const value = bytes[offset];
+        return [value, offset + 1];
+    },
+    write,
+    fixedSize,
 });
 ```
 
 Reciprocally, the `write` function accepts the `value` to encode, the array of `bytes` to write the encoded value to and the `offset` at which it should be written. It should encode the given value, insert it in the byte array, and provide the next offset to write to as the return value.
 
 ```ts twoslash
-import { createCodec } from "@solana/kit";
-const read = null as unknown as Parameters<typeof createCodec<number>>[0]["read"];
+import { createCodec } from '@solana/kit';
+const read = null as unknown as Parameters<typeof createCodec<number>>[0]['read'];
 const fixedSize = null as unknown as 1;
 // ---cut-before---
 createCodec({
-  write(value: number, bytes, offset) {
-    bytes.set([value], offset);
-    return offset + 1;
-  },
-  read,
-  fixedSize,
+    write(value: number, bytes, offset) {
+        bytes.set([value], offset);
+        return offset + 1;
+    },
+    read,
+    fixedSize,
 });
 ```
 
 Additionally, we must specify the size of the codec. If we are defining a `FixedSizeCodec`, we must simply provide the `fixedSize` number attribute. For `VariableSizeCodecs`, we must provide the `getSizeFromValue` function as described in the previous section.
 
 ```ts twoslash
-import { createCodec } from "@solana/kit";
+import { createCodec } from '@solana/kit';
 type Config = Parameters<typeof createCodec<string>>[0];
-const read = null as unknown as Config["read"];
-const write = null as unknown as Config["write"];
+const read = null as unknown as Config['read'];
+const write = null as unknown as Config['write'];
 // ---cut-before---
 // FixedSizeCodec.
 createCodec({
-  fixedSize: 1,
-  read,
-  write,
+    fixedSize: 1,
+    read,
+    write,
 });
 
 // VariableSizeCodec.
 createCodec({
-  getSizeFromValue: (value: string) => value.length,
-  read,
-  write,
+    getSizeFromValue: (value: string) => value.length,
+    read,
+    write,
 });
 ```
 
 Here's a concrete example of a custom codec that encodes any unsigned integer in a single byte. Since a single byte can only store integers from 0 to 255, if any other integer is provided it will take its modulo 256 to ensure it fits in a single byte. Because it always requires a single byte, that codec is a `FixedSizeCodec` of size `1`.
 
 ```ts twoslash
-import { createCodec } from "@solana/kit";
+import { createCodec } from '@solana/kit';
 
 const getModuloU8Codec = () =>
-  createCodec<number>({
-    fixedSize: 1,
-    read(bytes, offset) {
-      const value = bytes[offset];
-      return [value, offset + 1];
-    },
-    write(value, bytes, offset) {
-      bytes.set([value % 256], offset);
-      return offset + 1;
-    },
-  });
+    createCodec<number>({
+        fixedSize: 1,
+        read(bytes, offset) {
+            const value = bytes[offset];
+            return [value, offset + 1];
+        },
+        write(value, bytes, offset) {
+            bytes.set([value % 256], offset);
+            return offset + 1;
+        },
+    });
 ```
 
 Note that, it is also possible to create custom encoders and decoders separately by using the `createEncoder` and `createDecoder` functions respectively and then use the `combineCodec` function on them just like we were doing with composed codecs.
@@ -367,25 +389,25 @@ This approach is recommended to library maintainers as it allows their users to 
 Here's our previous modulo u8 example but split into separate `Encoder`, `Decoder` and `Codec` instances.
 
 ```ts twoslash
-import { createEncoder, createDecoder, combineCodec } from "@solana/kit";
+import { createEncoder, createDecoder, combineCodec } from '@solana/kit';
 
 const getModuloU8Encoder = () =>
-  createEncoder<number>({
-    fixedSize: 1,
-    write(value, bytes, offset) {
-      bytes.set([value % 256], offset);
-      return offset + 1;
-    },
-  });
+    createEncoder<number>({
+        fixedSize: 1,
+        write(value, bytes, offset) {
+            bytes.set([value % 256], offset);
+            return offset + 1;
+        },
+    });
 
 const getModuloU8Decoder = () =>
-  createDecoder<number>({
-    fixedSize: 1,
-    read(bytes, offset) {
-      const value = bytes[offset];
-      return [value, offset + 1];
-    },
-  });
+    createDecoder<number>({
+        fixedSize: 1,
+        read(bytes, offset) {
+            const value = bytes[offset];
+            return [value, offset + 1];
+        },
+    });
 
 const getModuloU8Codec = () => combineCodec(getModuloU8Encoder(), getModuloU8Decoder());
 ```
@@ -393,27 +415,27 @@ const getModuloU8Codec = () => combineCodec(getModuloU8Encoder(), getModuloU8Dec
 Here's another example returning a `VariableSizeCodec`. This one transforms a simple string composed of characters from `a` to `z` to a buffer of numbers from `1` to `26` where `0` bytes are spaces.
 
 ```ts twoslash
-import { createEncoder, createDecoder, combineCodec } from "@solana/kit";
+import { createEncoder, createDecoder, combineCodec } from '@solana/kit';
 
-const alphabet = " abcdefghijklmnopqrstuvwxyz";
+const alphabet = ' abcdefghijklmnopqrstuvwxyz';
 
 const getCipherEncoder = () =>
-  createEncoder<string>({
-    getSizeFromValue: (value) => value.length,
-    write(value, bytes, offset) {
-      const bytesToAdd = [...value].map((char) => alphabet.indexOf(char));
-      bytes.set(bytesToAdd, offset);
-      return offset + bytesToAdd.length;
-    },
-  });
+    createEncoder<string>({
+        getSizeFromValue: (value) => value.length,
+        write(value, bytes, offset) {
+            const bytesToAdd = [...value].map((char) => alphabet.indexOf(char));
+            bytes.set(bytesToAdd, offset);
+            return offset + bytesToAdd.length;
+        },
+    });
 
 const getCipherDecoder = () =>
-  createDecoder<string>({
-    read(bytes, offset) {
-      const value = [...bytes.slice(offset)].map((byte) => alphabet.charAt(byte)).join("");
-      return [value, bytes.length];
-    },
-  });
+    createDecoder<string>({
+        read(bytes, offset) {
+            const value = [...bytes.slice(offset)].map((byte) => alphabet.charAt(byte)).join('');
+            return [value, bytes.length];
+        },
+    });
 
 const getCipherCodec = () => combineCodec(getCipherEncoder(), getCipherDecoder());
 ```
@@ -506,10 +528,10 @@ const getCipherCodec = () => combineCodec(getCipherEncoder(), getCipherDecoder()
 One way of delimiting the size of a codec is to use sentinels. The `addCodecSentinel` function allows us to add a sentinel to the end of the encoded data and to read until that sentinel is found when decoding. It accepts any codec and a `Uint8Array` sentinel responsible for delimiting the encoded data.
 
 ```ts twoslash
-import { addCodecSentinel, getUtf8Codec } from "@solana/kit";
+import { addCodecSentinel, getUtf8Codec } from '@solana/kit';
 // ---cut-before---
 const codec = addCodecSentinel(getUtf8Codec(), new Uint8Array([255, 255]));
-codec.encode("hello");
+codec.encode('hello');
 // 0x68656c6c6fffff
 //   |        └-- Our sentinel.
 //   └-- Our encoded string.
@@ -518,22 +540,27 @@ codec.encode("hello");
 Note that the sentinel _must not_ be present in the encoded data and _must_ be present in the decoded data for this to work. If this is not the case, dedicated errors will be thrown.
 
 ```ts twoslash
-import { addCodecSentinel, getUtf8Codec } from "@solana/kit";
+import { addCodecSentinel, getUtf8Codec } from '@solana/kit';
 // ---cut-before---
 const sentinel = new Uint8Array([108, 108]); // 'll'
 const codec = addCodecSentinel(getUtf8Codec(), sentinel);
 
-codec.encode("hello"); // Throws: sentinel is in encoded data.
+codec.encode('hello'); // Throws: sentinel is in encoded data.
 codec.decode(new Uint8Array([1, 2, 3])); // Throws: sentinel missing in decoded data.
 ```
 
 Separate `addEncoderSentinel` and `addDecoderSentinel` functions are also available.
 
 ```ts twoslash
-import { addEncoderSentinel, addDecoderSentinel, getUtf8Encoder, getUtf8Decoder } from "@solana/kit";
+import {
+    addEncoderSentinel,
+    addDecoderSentinel,
+    getUtf8Encoder,
+    getUtf8Decoder,
+} from '@solana/kit';
 const sentinel = null as unknown as Uint8Array;
 // ---cut-before---
-const bytes = addEncoderSentinel(getUtf8Encoder(), sentinel).encode("hello");
+const bytes = addEncoderSentinel(getUtf8Encoder(), sentinel).encode('hello');
 const value = addDecoderSentinel(getUtf8Decoder(), sentinel).decode(bytes);
 ```
 
@@ -546,11 +573,11 @@ When encoding, the size of the encoded data is stored before the encoded data it
 For example, say we want to represent a variable-size base-58 string using a `u32` size prefix. Here's how we can use the `addCodecSizePrefix` function to achieve that.
 
 ```ts twoslash
-import { addCodecSizePrefix, getBase58Codec, getU32Codec } from "@solana/kit";
+import { addCodecSizePrefix, getBase58Codec, getU32Codec } from '@solana/kit';
 // ---cut-before---
 const getU32Base58Codec = () => addCodecSizePrefix(getBase58Codec(), getU32Codec());
 
-getU32Base58Codec().encode("hello world");
+getU32Base58Codec().encode('hello world');
 // 0x0b00000068656c6c6f20776f726c64
 //   |       └-- Our encoded base-58 string.
 //   └-- Our encoded u32 size prefix.
@@ -560,14 +587,14 @@ You may also use the `addEncoderSizePrefix` and `addDecoderSizePrefix` functions
 
 ```ts twoslash
 import {
-  addEncoderSizePrefix,
-  addDecoderSizePrefix,
-  getBase58Encoder,
-  getBase58Decoder,
-  getU32Encoder,
-  getU32Decoder,
-  combineCodec,
-} from "@solana/kit";
+    addEncoderSizePrefix,
+    addDecoderSizePrefix,
+    getBase58Encoder,
+    getBase58Decoder,
+    getU32Encoder,
+    getU32Decoder,
+    combineCodec,
+} from '@solana/kit';
 // ---cut-before---
 const getU32Base58Encoder = () => addEncoderSizePrefix(getBase58Encoder(), getU32Encoder());
 const getU32Base58Decoder = () => addDecoderSizePrefix(getBase58Decoder(), getU32Decoder());
@@ -579,7 +606,7 @@ const getU32Base58Codec = () => combineCodec(getU32Base58Encoder(), getU32Base58
 Checks if a `Uint8Array` contains another `Uint8Array` at a given offset.
 
 ```ts twoslash
-import { containsBytes } from "@solana/kit";
+import { containsBytes } from '@solana/kit';
 // ---cut-before---
 containsBytes(new Uint8Array([1, 2, 3, 4]), new Uint8Array([2, 3]), 1); // true
 containsBytes(new Uint8Array([1, 2, 3, 4]), new Uint8Array([2, 3]), 2); // false
@@ -590,7 +617,7 @@ containsBytes(new Uint8Array([1, 2, 3, 4]), new Uint8Array([2, 3]), 2); // false
 Pads or truncates a `Uint8Array` so it has the specified length.
 
 ```ts twoslash
-import { fixBytes } from "@solana/kit";
+import { fixBytes } from '@solana/kit';
 // ---cut-before---
 fixBytes(new Uint8Array([1, 2]), 4); // Uint8Array([1, 2, 0, 0])
 fixBytes(new Uint8Array([1, 2, 3, 4]), 2); // Uint8Array([1, 2])
@@ -603,7 +630,7 @@ The `fixCodecSize` function allows us to bind the size of a given codec to the g
 For instance, say we wanted to represent a base-58 string that uses exactly 32 bytes when decoded. Here's how we can use the `fixCodecSize` helper to achieve that.
 
 ```ts twoslash
-import { fixCodecSize, getBase58Codec } from "@solana/kit";
+import { fixCodecSize, getBase58Codec } from '@solana/kit';
 // ---cut-before---
 const get32BytesBase58Codec = () => fixCodecSize(getBase58Codec(), 32);
 ```
@@ -611,11 +638,18 @@ const get32BytesBase58Codec = () => fixCodecSize(getBase58Codec(), 32);
 You may also use the `fixEncoderSize` and `fixDecoderSize` functions to separate your codec logic like so:
 
 ```ts twoslash
-import { fixEncoderSize, fixDecoderSize, getBase58Encoder, getBase58Decoder, combineCodec } from "@solana/kit";
+import {
+    fixEncoderSize,
+    fixDecoderSize,
+    getBase58Encoder,
+    getBase58Decoder,
+    combineCodec,
+} from '@solana/kit';
 // ---cut-before---
 const get32BytesBase58Encoder = () => fixEncoderSize(getBase58Encoder(), 32);
 const get32BytesBase58Decoder = () => fixDecoderSize(getBase58Decoder(), 32);
-const get32BytesBase58Codec = () => combineCodec(get32BytesBase58Encoder(), get32BytesBase58Decoder());
+const get32BytesBase58Codec = () =>
+    combineCodec(get32BytesBase58Encoder(), get32BytesBase58Decoder());
 ```
 
 ### mergeBytes [!toc] [#merge-bytes]
@@ -623,7 +657,7 @@ const get32BytesBase58Codec = () => combineCodec(get32BytesBase58Encoder(), get3
 Concatenates an array of `Uint8Arrays` into a single `Uint8Array`.
 
 ```ts twoslash
-import { mergeBytes } from "@solana/kit";
+import { mergeBytes } from '@solana/kit';
 // ---cut-before---
 const bytes1 = new Uint8Array([0x01, 0x02]);
 const bytes2 = new Uint8Array([]);
@@ -639,7 +673,7 @@ The `offsetCodec` function is a powerful codec primitive that allows us to move 
 To understand how this works, let's take the following `biggerU32Codec` example which encodes a `u32` number inside an 8-byte buffer by using the [resizeCodec](#resize-codec) helper.
 
 ```ts twoslash
-import { resizeCodec, getU32Codec } from "@solana/kit";
+import { resizeCodec, getU32Codec } from '@solana/kit';
 // ---cut-before---
 const biggerU32Codec = resizeCodec(getU32Codec(), (size) => size + 4);
 biggerU32Codec.encode(0xffffffff);
@@ -651,11 +685,11 @@ biggerU32Codec.encode(0xffffffff);
 Now, let's say we want to move the offset of that codec 2 bytes forward so that the encoded number sits in the middle of the buffer. To achieve, this we can use the `offsetCodec` helper and provide a `preOffset` function that moves the "pre-offset" of the codec 2 bytes forward.
 
 ```ts twoslash
-import { offsetCodec, resizeCodec, getU32Codec } from "@solana/kit";
+import { offsetCodec, resizeCodec, getU32Codec } from '@solana/kit';
 const biggerU32Codec = resizeCodec(getU32Codec(), (size) => size + 4);
 // ---cut-before---
 const u32InTheMiddleCodec = offsetCodec(biggerU32Codec, {
-  preOffset: ({ preOffset }) => preOffset + 2,
+    preOffset: ({ preOffset }) => preOffset + 2,
 });
 u32InTheMiddleCodec.encode(0xffffffff);
 // 0x0000ffffffff0000
@@ -667,11 +701,11 @@ We refer to this offset as the "pre-offset" because, once the inner codec is enc
 By default, that "post-offset" is simply the addition of the "pre-offset" and the size of the encoded or decoded inner data.
 
 ```ts twoslash
-import { offsetCodec, resizeCodec, getU32Codec } from "@solana/kit";
+import { offsetCodec, resizeCodec, getU32Codec } from '@solana/kit';
 const biggerU32Codec = resizeCodec(getU32Codec(), (size) => size + 4);
 // ---cut-before---
 const u32InTheMiddleCodec = offsetCodec(biggerU32Codec, {
-  preOffset: ({ preOffset }) => preOffset + 2,
+    preOffset: ({ preOffset }) => preOffset + 2,
 });
 u32InTheMiddleCodec.encode(0xffffffff);
 // 0x0000ffffffff0000
@@ -683,12 +717,12 @@ u32InTheMiddleCodec.encode(0xffffffff);
 However, you may also provide a `postOffset` function to adjust the "post-offset". For instance, let's push the "post-offset" 2 bytes forward as well such that any further codecs will start doing their job at the end of our 8-byte `u32` number.
 
 ```ts twoslash
-import { offsetCodec, resizeCodec, getU32Codec } from "@solana/kit";
+import { offsetCodec, resizeCodec, getU32Codec } from '@solana/kit';
 const biggerU32Codec = resizeCodec(getU32Codec(), (size) => size + 4);
 // ---cut-before---
 const u32InTheMiddleCodec = offsetCodec(biggerU32Codec, {
-  preOffset: ({ preOffset }) => preOffset + 2,
-  postOffset: ({ postOffset }) => postOffset + 2,
+    preOffset: ({ preOffset }) => preOffset + 2,
+    postOffset: ({ postOffset }) => postOffset + 2,
 });
 u32InTheMiddleCodec.encode(0xffffffff);
 // 0x0000ffffffff0000
@@ -712,12 +746,12 @@ Additionally, the post-offset function also provides the following attributes:
 Note that you may also decide to ignore these attributes to achieve absolute offsets. However, relative offsets are usually recommended as they won't break your codecs when composed with other codecs.
 
 ```ts twoslash
-import { offsetCodec, resizeCodec, getU32Codec } from "@solana/kit";
+import { offsetCodec, resizeCodec, getU32Codec } from '@solana/kit';
 const biggerU32Codec = resizeCodec(getU32Codec(), (size) => size + 4);
 // ---cut-before---
 const u32InTheMiddleCodec = offsetCodec(biggerU32Codec, {
-  preOffset: () => 2,
-  postOffset: () => 8,
+    preOffset: () => 2,
+    postOffset: () => 8,
 });
 u32InTheMiddleCodec.encode(0xffffffff);
 // 0x0000ffffffff0000
@@ -726,7 +760,7 @@ u32InTheMiddleCodec.encode(0xffffffff);
 Also note that any negative offset or offset that exceeds the size of the byte array will throw a `SolanaError` of code `SOLANA_ERROR__CODECS__OFFSET_OUT_OF_RANGE`.
 
 ```ts twoslash
-import { offsetCodec, resizeCodec, getU32Codec } from "@solana/kit";
+import { offsetCodec, resizeCodec, getU32Codec } from '@solana/kit';
 const biggerU32Codec = resizeCodec(getU32Codec(), (size) => size + 4);
 // ---cut-before---
 const u32InTheEndCodec = offsetCodec(biggerU32Codec, { preOffset: () => -4 });
@@ -737,11 +771,11 @@ u32InTheEndCodec.encode(0xffffffff);
 To avoid this, you may use the `wrapBytes` function to wrap the offset around the byte array length. For instance, here's how we can use the `wrapBytes` function to move the pre-offset 4 bytes from the end of the byte array.
 
 ```ts twoslash
-import { offsetCodec, resizeCodec, getU32Codec } from "@solana/kit";
+import { offsetCodec, resizeCodec, getU32Codec } from '@solana/kit';
 const biggerU32Codec = resizeCodec(getU32Codec(), (size) => size + 4);
 // ---cut-before---
 const u32InTheEndCodec = offsetCodec(biggerU32Codec, {
-  preOffset: ({ wrapBytes }) => wrapBytes(-4),
+    preOffset: ({ wrapBytes }) => wrapBytes(-4),
 });
 u32InTheEndCodec.encode(0xffffffff);
 // 0x00000000ffffffff
@@ -753,20 +787,23 @@ The `offsetEncoder` and `offsetDecoder` functions can also be used to split your
 
 ```ts twoslash
 import {
-  offsetEncoder,
-  resizeEncoder,
-  getU32Encoder,
-  offsetDecoder,
-  resizeDecoder,
-  getU32Decoder,
-  combineCodec,
-} from "@solana/kit";
+    offsetEncoder,
+    resizeEncoder,
+    getU32Encoder,
+    offsetDecoder,
+    resizeDecoder,
+    getU32Decoder,
+    combineCodec,
+} from '@solana/kit';
 const biggerU32Encoder = resizeEncoder(getU32Encoder(), (size) => size + 4);
 const biggerU32Decoder = resizeDecoder(getU32Decoder(), (size) => size + 4);
 // ---cut-before---
-const getU32InTheMiddleEncoder = () => offsetEncoder(biggerU32Encoder, { preOffset: ({ preOffset }) => preOffset + 2 });
-const getU32InTheMiddleDecoder = () => offsetDecoder(biggerU32Decoder, { preOffset: ({ preOffset }) => preOffset + 2 });
-const getU32InTheMiddleCodec = () => combineCodec(getU32InTheMiddleEncoder(), getU32InTheMiddleDecoder());
+const getU32InTheMiddleEncoder = () =>
+    offsetEncoder(biggerU32Encoder, { preOffset: ({ preOffset }) => preOffset + 2 });
+const getU32InTheMiddleDecoder = () =>
+    offsetDecoder(biggerU32Decoder, { preOffset: ({ preOffset }) => preOffset + 2 });
+const getU32InTheMiddleCodec = () =>
+    combineCodec(getU32InTheMiddleEncoder(), getU32InTheMiddleDecoder());
 ```
 
 ### padBytes [!toc] [#pad-bytes]
@@ -774,7 +811,7 @@ const getU32InTheMiddleCodec = () => combineCodec(getU32InTheMiddleEncoder(), ge
 Pads a `Uint8Array` with zeroes (to the right) to the specified length.
 
 ```ts twoslash
-import { padBytes } from "@solana/kit";
+import { padBytes } from '@solana/kit';
 // ---cut-before---
 padBytes(new Uint8Array([1, 2]), 4); // Uint8Array([1, 2, 0, 0])
 padBytes(new Uint8Array([1, 2, 3, 4]), 2); // Uint8Array([1, 2, 3, 4])
@@ -785,7 +822,7 @@ padBytes(new Uint8Array([1, 2, 3, 4]), 2); // Uint8Array([1, 2, 3, 4])
 The `padLeftCodec` helper can be used to add padding to the left of a given codec. It accepts an `offset` number that tells us how big the padding should be.
 
 ```ts twoslash
-import { padLeftCodec, getU16Codec } from "@solana/kit";
+import { padLeftCodec, getU16Codec } from '@solana/kit';
 // ---cut-before---
 const leftPaddedCodec = padLeftCodec(getU16Codec(), 4);
 leftPaddedCodec.encode(0xffff);
@@ -799,7 +836,13 @@ Note that the `padLeftCodec` function is a simple wrapper around the `offsetCode
 Encoder-only and decoder-only helpers are available for these padding functions.
 
 ```ts twoslash
-import { padLeftEncoder, padLeftDecoder, getU16Encoder, getU16Decoder, combineCodec } from "@solana/kit";
+import {
+    padLeftEncoder,
+    padLeftDecoder,
+    getU16Encoder,
+    getU16Decoder,
+    combineCodec,
+} from '@solana/kit';
 // ---cut-before---
 const getMyPaddedEncoder = () => padLeftEncoder(getU16Encoder(), 6);
 const getMyPaddedDecoder = () => padLeftDecoder(getU16Decoder(), 6);
@@ -811,7 +854,7 @@ const getMyPaddedCodec = () => combineCodec(getMyPaddedEncoder(), getMyPaddedDec
 The `padRightCodec` helper can be used to add padding to the right of a given codec. It accepts an `offset` number that tells us how big the padding should be.
 
 ```ts twoslash
-import { padRightCodec, getU16Codec } from "@solana/kit";
+import { padRightCodec, getU16Codec } from '@solana/kit';
 // ---cut-before---
 const rightPaddedCodec = padRightCodec(getU16Codec(), 4);
 rightPaddedCodec.encode(0xffff);
@@ -825,7 +868,13 @@ Note that the `padRightCodec` function is a simple wrapper around the `offsetCod
 Encoder-only and decoder-only helpers are available for these padding functions.
 
 ```ts twoslash
-import { padRightEncoder, padRightDecoder, getU16Encoder, getU16Decoder, combineCodec } from "@solana/kit";
+import {
+    padRightEncoder,
+    padRightDecoder,
+    getU16Encoder,
+    getU16Decoder,
+    combineCodec,
+} from '@solana/kit';
 // ---cut-before---
 const getMyPaddedEncoder = () => padRightEncoder(getU16Encoder(), 6);
 const getMyPaddedDecoder = () => padRightDecoder(getU16Decoder(), 6);
@@ -837,7 +886,7 @@ const getMyPaddedCodec = () => combineCodec(getMyPaddedEncoder(), getMyPaddedDec
 The `resizeCodec` helper re-defines the size of a given codec by accepting a function that takes the current size of the codec and returns a new size. This works for both fixed-size and variable-size codecs.
 
 ```ts twoslash
-import { resizeCodec, getU32Codec, getUtf8Codec } from "@solana/kit";
+import { resizeCodec, getU32Codec, getUtf8Codec } from '@solana/kit';
 // ---cut-before---
 // Fixed-size codec.
 const getBiggerU32Codec = () => resizeCodec(getU32Codec(), (size) => size + 4);
@@ -848,7 +897,7 @@ getBiggerU32Codec().encode(42);
 
 // Variable-size codec.
 const getBiggerUtf8Codec = () => resizeCodec(getUtf8Codec(), (size) => size + 4);
-getBiggerUtf8Codec().encode("ABC");
+getBiggerUtf8Codec().encode('ABC');
 // 0x41424300000000
 //   |     └-- Empty buffer space caused by the resizeCodec function.
 //   └-- Our encoded string.
@@ -857,7 +906,7 @@ getBiggerUtf8Codec().encode("ABC");
 Note that the `resizeCodec` function doesn't change any encoded or decoded bytes, it merely tells the `encode` and `decode` functions how big the `Uint8Array` should be before delegating to their respective `write` and `read` functions. In fact, this is completely bypassed when using the `write` and `read` functions directly. For instance:
 
 ```ts twoslash
-import { resizeCodec, getU32Codec } from "@solana/kit";
+import { resizeCodec, getU32Codec } from '@solana/kit';
 // ---cut-before---
 const getBiggerU32Codec = () => resizeCodec(getU32Codec(), (size) => size + 4);
 
@@ -874,21 +923,28 @@ getBiggerU32Codec().write(42, myCustomBytes, 0);
 So when would it make sense to use the `resizeCodec` function? This function is particularly useful when combined with the [offsetCodec](#offset-codec) function. Whilst `offsetCodec` may help us push the offset forward — e.g. to skip some padding — it won't change the size of the encoded data which means the last bytes will be truncated by how much we pushed the offset forward. The `resizeCodec` function can be used to fix that. For instance, here's how we can use the `resizeCodec` and the `offsetCodec` functions together to create a struct codec that includes some padding.
 
 ```ts twoslash
-import { getStructCodec, getUtf8Codec, getU32Codec, offsetCodec, resizeCodec, fixCodecSize } from "@solana/kit";
+import {
+    getStructCodec,
+    getUtf8Codec,
+    getU32Codec,
+    offsetCodec,
+    resizeCodec,
+    fixCodecSize,
+} from '@solana/kit';
 // ---cut-before---
 const personCodec = getStructCodec([
-  ["name", fixCodecSize(getUtf8Codec(), 8)],
-  // There is a 4-byte padding between name and age.
-  [
-    "age",
-    offsetCodec(
-      resizeCodec(getU32Codec(), (size) => size + 4),
-      { preOffset: ({ preOffset }) => preOffset + 4 },
-    ),
-  ],
+    ['name', fixCodecSize(getUtf8Codec(), 8)],
+    // There is a 4-byte padding between name and age.
+    [
+        'age',
+        offsetCodec(
+            resizeCodec(getU32Codec(), (size) => size + 4),
+            { preOffset: ({ preOffset }) => preOffset + 4 },
+        ),
+    ],
 ]);
 
-personCodec.encode({ name: "Alice", age: 42 });
+personCodec.encode({ name: 'Alice', age: 42 });
 // 0x416c696365000000000000002a000000
 //   |               |       └-- Our encoded u32 (42).
 //   |               └-- The 4-bytes of padding we are skipping.
@@ -900,7 +956,13 @@ Note that this can be achieved using the [padLeftCodec](#pad-left-codec) helper 
 The `resizeEncoder` and `resizeDecoder` functions can also be used to split your codec logic into tree-shakeable functions.
 
 ```ts twoslash
-import { resizeEncoder, resizeDecoder, getU32Encoder, getU32Decoder, combineCodec } from "@solana/kit";
+import {
+    resizeEncoder,
+    resizeDecoder,
+    getU32Encoder,
+    getU32Decoder,
+    combineCodec,
+} from '@solana/kit';
 // ---cut-before---
 const getBiggerU32Encoder = () => resizeEncoder(getU32Encoder(), (size) => size + 4);
 const getBiggerU32Decoder = () => resizeDecoder(getU32Decoder(), (size) => size + 4);
@@ -912,7 +974,7 @@ const getBiggerU32Codec = () => combineCodec(getBiggerU32Encoder(), getBiggerU32
 The `reverseCodec` helper reverses the bytes of the provided `FixedSizeCodec`.
 
 ```ts twoslash
-import { reverseCodec, getU64Codec } from "@solana/kit";
+import { reverseCodec, getU64Codec } from '@solana/kit';
 // ---cut-before---
 const getBigEndianU64Codec = () => reverseCodec(getU64Codec());
 ```
@@ -920,7 +982,7 @@ const getBigEndianU64Codec = () => reverseCodec(getU64Codec());
 Note that number codecs can already do that for you via their `endian` option.
 
 ```ts twoslash
-import { getU64Codec, Endian } from "@solana/kit";
+import { getU64Codec, Endian } from '@solana/kit';
 // ---cut-before---
 const getBigEndianU64Codec = () => getU64Codec({ endian: Endian.Big });
 ```
@@ -928,7 +990,13 @@ const getBigEndianU64Codec = () => getU64Codec({ endian: Endian.Big });
 The `reverseEncoder` and `reverseDecoder` functions can also be used to achieve that.
 
 ```ts twoslash
-import { reverseEncoder, reverseDecoder, getU64Encoder, getU64Decoder, combineCodec } from "@solana/kit";
+import {
+    reverseEncoder,
+    reverseDecoder,
+    getU64Encoder,
+    getU64Decoder,
+    combineCodec,
+} from '@solana/kit';
 // ---cut-before---
 const getBigEndianU64Encoder = () => reverseEncoder(getU64Encoder());
 const getBigEndianU64Decoder = () => reverseDecoder(getU64Decoder());
@@ -942,16 +1010,16 @@ It is possible to transform a `Codec<T>` to a `Codec<U>` by providing two mappin
 For instance, here's how you would map a `u32` integer into a `string` representation of that number.
 
 ```ts twoslash
-import { transformCodec, getU32Codec } from "@solana/kit";
+import { transformCodec, getU32Codec } from '@solana/kit';
 // ---cut-before---
 const getStringU32Codec = () =>
-  transformCodec(
-    getU32Codec(),
-    (integerAsString: string): number => parseInt(integerAsString),
-    (integer: number): string => integer.toString(),
-  );
+    transformCodec(
+        getU32Codec(),
+        (integerAsString: string): number => parseInt(integerAsString),
+        (integer: number): string => integer.toString(),
+    );
 
-getStringU32Codec().encode("42"); // new Uint8Array([42])
+getStringU32Codec().encode('42'); // new Uint8Array([42])
 getStringU32Codec().decode(new Uint8Array([42])); // "42"
 ```
 
@@ -960,15 +1028,15 @@ If a `Codec` has [different From and To types](#different-from-and-to-types), sa
 To illustrate that, let's take our previous `getStringU32Codec` example but make it use a `getU64Codec` codec instead as it returns a `Codec<number | bigint, bigint>`. Additionally, let's make it so our `getStringU64Codec` function returns a `Codec<number | string, string>` so that it also accepts numbers when encoding values. Here's what our mapping functions look like:
 
 ```ts twoslash
-import { transformCodec, getU64Codec } from "@solana/kit";
+import { transformCodec, getU64Codec } from '@solana/kit';
 // ---cut-before---
 const getStringU64Codec = () =>
-  transformCodec(
-    getU64Codec(),
-    (integerInput: number | string): number | bigint =>
-      typeof integerInput === "string" ? BigInt(integerInput) : integerInput,
-    (integer: bigint): string => integer.toString(),
-  );
+    transformCodec(
+        getU64Codec(),
+        (integerInput: number | string): number | bigint =>
+            typeof integerInput === 'string' ? BigInt(integerInput) : integerInput,
+        (integer: bigint): string => integer.toString(),
+    );
 ```
 
 Note that the second function that maps the decoded type is optional. That means, you can omit it to simply update or loosen the type to encode whilst keeping the decoded type the same.
@@ -976,7 +1044,7 @@ Note that the second function that maps the decoded type is optional. That means
 This is particularly useful to provide default values to object structures. For instance, here's how we can map a `Person` codec to give a default value to its `age` attribute.
 
 ```ts twoslash
-import { transformCodec, getStructCodec, Codec } from "@solana/kit";
+import { transformCodec, getStructCodec, Codec } from '@solana/kit';
 // ---cut-before---
 type Person = { name: string; age: number };
 type PersonInput = { name: string; age?: number };
@@ -984,17 +1052,29 @@ type PersonInput = { name: string; age?: number };
 const getPersonCodec = null as unknown as () => Codec<Person>;
 // ---cut-end---
 const getPersonWithDefaultValueCodec = (): Codec<PersonInput, Person> =>
-  transformCodec(getPersonCodec(), (person: PersonInput): Person => ({ ...person, age: person.age ?? 42 }));
+    transformCodec(
+        getPersonCodec(),
+        (person: PersonInput): Person => ({ ...person, age: person.age ?? 42 }),
+    );
 ```
 
 Similar helpers exist to map `Encoder` and `Decoder` instances allowing you to separate your codec logic into tree-shakeable functions. Here's our `getStringU32Codec` written that way.
 
 ```ts twoslash
-import { transformEncoder, transformDecoder, getU32Encoder, getU32Decoder, combineCodec } from "@solana/kit";
+import {
+    transformEncoder,
+    transformDecoder,
+    getU32Encoder,
+    getU32Decoder,
+    combineCodec,
+} from '@solana/kit';
 // ---cut-before---
 const getStringU32Encoder = () =>
-  transformEncoder(getU32Encoder(), (integerAsString: string): number => parseInt(integerAsString));
-const getStringU32Decoder = () => transformDecoder(getU32Decoder(), (integer: number): string => integer.toString());
+    transformEncoder(getU32Encoder(), (integerAsString: string): number =>
+        parseInt(integerAsString),
+    );
+const getStringU32Decoder = () =>
+    transformDecoder(getU32Decoder(), (integer: number): string => integer.toString());
 const getStringU32Codec = () => combineCodec(getStringU32Encoder(), getStringU32Decoder());
 ```
 
@@ -1007,7 +1087,7 @@ Encodes and decodes **signed 8-bit integers**. It supports values from -127 (`-2
 Values can be provided as either `number` or `bigint`, but the decoded value is always a `number`.
 
 ```ts twoslash
-import { getI8Codec } from "@solana/kit";
+import { getI8Codec } from '@solana/kit';
 // ---cut-before---
 const codec = getI8Codec();
 const bytes = codec.encode(-42); // 0xd6
@@ -1023,7 +1103,7 @@ Encodes and decodes **signed 16-bit integers**. It supports values from -32,768 
 Values can be provided as either `number` or `bigint`, but the decoded value is always a `number`. Endianness can be specified using the `endian` option. The default is `Endian.Little`.
 
 ```ts twoslash
-import { getI16Codec, Endian } from "@solana/kit";
+import { getI16Codec, Endian } from '@solana/kit';
 // ---cut-before---
 // Little-endian.
 const codec = getI16Codec();
@@ -1045,7 +1125,7 @@ Encodes and decodes **signed 32-bit integers**. It supports values from -2,147,4
 Values can be provided as either `number` or `bigint`, but the decoded value is always a `number`. Endianness can be specified using the `endian` option. The default is `Endian.Little`.
 
 ```ts twoslash
-import { getI32Codec, Endian } from "@solana/kit";
+import { getI32Codec, Endian } from '@solana/kit';
 // ---cut-before---
 // Little-endian.
 const codec = getI32Codec();
@@ -1067,7 +1147,7 @@ Encodes and decodes **signed 64-bit integers**. It supports values from `-2^63` 
 Values can be provided as either `number` or `bigint`, but the decoded value is always a `bigint`. Endianness can be specified using the `endian` option. The default is `Endian.Little`.
 
 ```ts twoslash
-import { getI64Codec, Endian } from "@solana/kit";
+import { getI64Codec, Endian } from '@solana/kit';
 // ---cut-before---
 // Little-endian.
 const codec = getI64Codec();
@@ -1089,7 +1169,7 @@ Encodes and decodes **signed 128-bit integers**. It supports values from `-2^127
 Values can be provided as either `number` or `bigint`, but the decoded value is always a `bigint`. Endianness can be specified using the `endian` option. The default is `Endian.Little`.
 
 ```ts twoslash
-import { getI128Codec, Endian } from "@solana/kit";
+import { getI128Codec, Endian } from '@solana/kit';
 // ---cut-before---
 // Little-endian.
 const codec = getI128Codec();
@@ -1111,7 +1191,7 @@ Encodes and decodes **32-bit floating-point numbers**. Due to the [IEEE 754](htt
 Values can be provided as either `number` or `bigint`, but the decoded value is always a `number`. Endianness can be specified using the `endian` option. The default is `Endian.Little`.
 
 ```ts twoslash
-import { getF32Codec, Endian } from "@solana/kit";
+import { getF32Codec, Endian } from '@solana/kit';
 // ---cut-before---
 // Little-endian.
 const codec = getF32Codec();
@@ -1133,7 +1213,7 @@ Encodes and decodes **64-bit floating-point numbers**. Due to the [IEEE 754](htt
 Values can be provided as either `number` or `bigint`, but the decoded value is always a `number`. Endianness can be specified using the `endian` option. The default is `Endian.Little`.
 
 ```ts twoslash
-import { getF64Codec, Endian } from "@solana/kit";
+import { getF64Codec, Endian } from '@solana/kit';
 // ---cut-before---
 // Little-endian.
 const codec = getF64Codec();
@@ -1169,7 +1249,7 @@ In other words, the encoding scheme follows this structure:
 Values can be provided as either `number` or `bigint`, but the decoded value is always a `number`.
 
 ```ts twoslash
-import { getShortU16Codec } from "@solana/kit";
+import { getShortU16Codec } from '@solana/kit';
 // ---cut-before---
 const codec = getShortU16Codec();
 const bytes1 = codec.encode(42); // 0x2a
@@ -1190,7 +1270,7 @@ Encodes and decodes **unsigned 8-bit integers**. It supports values from 0 to 25
 Values can be provided as either `number` or `bigint`, but the decoded value is always a `number`.
 
 ```ts twoslash
-import { getU8Codec } from "@solana/kit";
+import { getU8Codec } from '@solana/kit';
 // ---cut-before---
 const codec = getU8Codec();
 const bytes = codec.encode(42); // 0x2a
@@ -1206,7 +1286,7 @@ Encodes and decodes **unsigned 16-bit integers**. It supports values from 0 to 6
 Values can be provided as either `number` or `bigint`, but the decoded value is always a `number`. Endianness can be specified using the `endian` option. The default is `Endian.Little`.
 
 ```ts twoslash
-import { getU16Codec, Endian } from "@solana/kit";
+import { getU16Codec, Endian } from '@solana/kit';
 // ---cut-before---
 // Little-endian.
 const codec = getU16Codec();
@@ -1228,7 +1308,7 @@ Encodes and decodes **unsigned 32-bit integers**. It supports values from 0 to 4
 Values can be provided as either `number` or `bigint`, but the decoded value is always a `number`. Endianness can be specified using the `endian` option. The default is `Endian.Little`.
 
 ```ts twoslash
-import { getU32Codec, Endian } from "@solana/kit";
+import { getU32Codec, Endian } from '@solana/kit';
 // ---cut-before---
 // Little-endian.
 const codec = getU32Codec();
@@ -1250,7 +1330,7 @@ Encodes and decodes **unsigned 64-bit integers**. It supports values from 0 to `
 Values can be provided as either `number` or `bigint`, but the decoded value is always a `bigint`. Endianness can be specified using the `endian` option. The default is `Endian.Little`.
 
 ```ts twoslash
-import { getU64Codec, Endian } from "@solana/kit";
+import { getU64Codec, Endian } from '@solana/kit';
 // ---cut-before---
 // Little-endian.
 const codec = getU64Codec();
@@ -1272,7 +1352,7 @@ Encodes and decodes **unsigned 128-bit integers**. It supports values from 0 to 
 Values can be provided as either `number` or `bigint`, but the decoded value is always a `bigint`. Endianness can be specified using the `endian` option. The default is `Endian.Little`.
 
 ```ts twoslash
-import { getU128Codec, Endian } from "@solana/kit";
+import { getU128Codec, Endian } from '@solana/kit';
 // ---cut-before---
 // Little-endian.
 const codec = getU128Codec();
@@ -1294,27 +1374,33 @@ const beValue = beCodec.decode(bytes); // 42
 Encodes and decodes **Base 10 strings**.
 
 ```ts twoslash
-import { getBase10Codec } from "@solana/kit";
+import { getBase10Codec } from '@solana/kit';
 // ---cut-before---
 const codec = getBase10Codec();
-const bytes = codec.encode("1024"); // 0x0400
+const bytes = codec.encode('1024'); // 0x0400
 const value = codec.decode(bytes); // "1024"
 ```
 
 This codec does not enforce a size boundary. It will encode and decode all bytes necessary to represent the string. To add size constraints to your codec, you may use utility functions such as [`fixCodecSize`](#fix-codec-size), [`addCodecSizePrefix`](#add-codec-size-prefix) or [`addCodecSentinel`](#add-codec-sentinel).
 
 ```ts twoslash
-import { getBase10Codec, fixCodecSize, addCodecSizePrefix, getU32Codec, addCodecSentinel } from "@solana/kit";
+import {
+    getBase10Codec,
+    fixCodecSize,
+    addCodecSizePrefix,
+    getU32Codec,
+    addCodecSentinel,
+} from '@solana/kit';
 // ---cut-before---
-fixCodecSize(getBase10Codec(), 4).encode("1024");
+fixCodecSize(getBase10Codec(), 4).encode('1024');
 // 0x04000000 (padded to 4 bytes)
 
-addCodecSizePrefix(getBase10Codec(), getU32Codec()).encode("1024");
+addCodecSizePrefix(getBase10Codec(), getU32Codec()).encode('1024');
 // 0x020000000400
 //   |       └-- The 2 bytes of content.
 //   └-- 4-byte prefix telling us to read 2 bytes.
 
-addCodecSentinel(getBase10Codec(), new Uint8Array([0xff, 0xff])).encode("1024");
+addCodecSentinel(getBase10Codec(), new Uint8Array([0xff, 0xff])).encode('1024');
 // 0x0400ffff
 //   |   └-- The sentinel signaling the end of the content.
 //   └-- The 2 bytes of content.
@@ -1327,27 +1413,33 @@ addCodecSentinel(getBase10Codec(), new Uint8Array([0xff, 0xff])).encode("1024");
 Encodes and decodes **Base 16 strings**.
 
 ```ts twoslash
-import { getBase16Codec } from "@solana/kit";
+import { getBase16Codec } from '@solana/kit';
 // ---cut-before---
 const codec = getBase16Codec();
-const bytes = codec.encode("deadface"); // 0xdeadface
+const bytes = codec.encode('deadface'); // 0xdeadface
 const value = codec.decode(bytes); // "deadface"
 ```
 
 This codec does not enforce a size boundary. It will encode and decode all bytes necessary to represent the string. To add size constraints to your codec, you may use utility functions such as [`fixCodecSize`](#fix-codec-size), [`addCodecSizePrefix`](#add-codec-size-prefix) or [`addCodecSentinel`](#add-codec-sentinel).
 
 ```ts twoslash
-import { getBase16Codec, fixCodecSize, addCodecSizePrefix, getU32Codec, addCodecSentinel } from "@solana/kit";
+import {
+    getBase16Codec,
+    fixCodecSize,
+    addCodecSizePrefix,
+    getU32Codec,
+    addCodecSentinel,
+} from '@solana/kit';
 // ---cut-before---
-fixCodecSize(getBase16Codec(), 2).encode("deadface");
+fixCodecSize(getBase16Codec(), 2).encode('deadface');
 // 0xdead (truncated to 2 bytes)
 
-addCodecSizePrefix(getBase16Codec(), getU32Codec()).encode("deadface");
+addCodecSizePrefix(getBase16Codec(), getU32Codec()).encode('deadface');
 // 0x04000000deadface
 //   |       └-- The 4 bytes of content.
 //   └-- 4-byte prefix telling us to read 4 bytes.
 
-addCodecSentinel(getBase16Codec(), new Uint8Array([0xff, 0xff])).encode("deadface");
+addCodecSentinel(getBase16Codec(), new Uint8Array([0xff, 0xff])).encode('deadface');
 // 0xdeadfaceffff
 //   |       └-- The sentinel signaling the end of the content.
 //   └-- The 4 bytes of content.
@@ -1360,27 +1452,33 @@ addCodecSentinel(getBase16Codec(), new Uint8Array([0xff, 0xff])).encode("deadfac
 Encodes and decodes **Base 58 strings**.
 
 ```ts twoslash
-import { getBase58Codec } from "@solana/kit";
+import { getBase58Codec } from '@solana/kit';
 // ---cut-before---
 const codec = getBase58Codec();
-const bytes = codec.encode("heLLo"); // 0x1b6a3070
+const bytes = codec.encode('heLLo'); // 0x1b6a3070
 const value = codec.decode(bytes); // "heLLo"
 ```
 
 This codec does not enforce a size boundary. It will encode and decode all bytes necessary to represent the string. To add size constraints to your codec, you may use utility functions such as [`fixCodecSize`](#fix-codec-size), [`addCodecSizePrefix`](#add-codec-size-prefix) or [`addCodecSentinel`](#add-codec-sentinel).
 
 ```ts twoslash
-import { getBase58Codec, fixCodecSize, addCodecSizePrefix, getU32Codec, addCodecSentinel } from "@solana/kit";
+import {
+    getBase58Codec,
+    fixCodecSize,
+    addCodecSizePrefix,
+    getU32Codec,
+    addCodecSentinel,
+} from '@solana/kit';
 // ---cut-before---
-fixCodecSize(getBase58Codec(), 2).encode("heLLo");
+fixCodecSize(getBase58Codec(), 2).encode('heLLo');
 // 0x1b6a (truncated to 2 bytes)
 
-addCodecSizePrefix(getBase58Codec(), getU32Codec()).encode("heLLo");
+addCodecSizePrefix(getBase58Codec(), getU32Codec()).encode('heLLo');
 // 0x040000001b6a3070
 //   |       └-- The 4 bytes of content.
 //   └-- 4-byte prefix telling us to read 4 bytes.
 
-addCodecSentinel(getBase58Codec(), new Uint8Array([0xff, 0xff])).encode("heLLo");
+addCodecSentinel(getBase58Codec(), new Uint8Array([0xff, 0xff])).encode('heLLo');
 // 0x1b6a3070ffff
 //   |       └-- The sentinel signaling the end of the content.
 //   └-- The 4 bytes of content.
@@ -1393,27 +1491,33 @@ addCodecSentinel(getBase58Codec(), new Uint8Array([0xff, 0xff])).encode("heLLo")
 Encodes and decodes **Base 64 strings**.
 
 ```ts twoslash
-import { getBase64Codec } from "@solana/kit";
+import { getBase64Codec } from '@solana/kit';
 // ---cut-before---
 const codec = getBase64Codec();
-const bytes = codec.encode("hello+world"); // 0x85e965a3ec28ae57
+const bytes = codec.encode('hello+world'); // 0x85e965a3ec28ae57
 const value = codec.decode(bytes); // "hello+world"
 ```
 
 This codec does not enforce a size boundary. It will encode and decode all bytes necessary to represent the string. To add size constraints to your codec, you may use utility functions such as [`fixCodecSize`](#fix-codec-size), [`addCodecSizePrefix`](#add-codec-size-prefix) or [`addCodecSentinel`](#add-codec-sentinel).
 
 ```ts twoslash
-import { getBase64Codec, fixCodecSize, addCodecSizePrefix, getU32Codec, addCodecSentinel } from "@solana/kit";
+import {
+    getBase64Codec,
+    fixCodecSize,
+    addCodecSizePrefix,
+    getU32Codec,
+    addCodecSentinel,
+} from '@solana/kit';
 // ---cut-before---
-fixCodecSize(getBase64Codec(), 4).encode("hello+world");
+fixCodecSize(getBase64Codec(), 4).encode('hello+world');
 // 0x85e965a3 (truncated to 4 bytes)
 
-addCodecSizePrefix(getBase64Codec(), getU32Codec()).encode("hello+world");
+addCodecSizePrefix(getBase64Codec(), getU32Codec()).encode('hello+world');
 // 0x0400000085e965a3ec28ae57
 //   |       └-- The 8 bytes of content.
 //   └-- 4-byte prefix telling us to read 8 bytes.
 
-addCodecSentinel(getBase64Codec(), new Uint8Array([0xff, 0xff])).encode("hello+world");
+addCodecSentinel(getBase64Codec(), new Uint8Array([0xff, 0xff])).encode('hello+world');
 // 0x85e965a3ec28ae57ffff
 //   |               └-- The sentinel signaling the end of the content.
 //   └-- The 8 bytes of content.
@@ -1426,29 +1530,35 @@ addCodecSentinel(getBase64Codec(), new Uint8Array([0xff, 0xff])).encode("hello+w
 The `getBaseXCodec` accepts a custom `alphabet` of `X` characters and **creates a base-X codec using that alphabet**. It does so by iteratively dividing by `X` and handling leading zeros.
 
 ```ts twoslash
-import { getBaseXCodec } from "@solana/kit";
+import { getBaseXCodec } from '@solana/kit';
 // ---cut-before---
-const codec = getBaseXCodec("0ehlo");
-const bytes = codec.encode("hello"); // 0x05bd
+const codec = getBaseXCodec('0ehlo');
+const bytes = codec.encode('hello'); // 0x05bd
 const value = codec.decode(bytes); // "hello"
 ```
 
 This codec does not enforce a size boundary. It will encode and decode all bytes necessary to represent the string. To add size constraints to your codec, you may use utility functions such as [`fixCodecSize`](#fix-codec-size), [`addCodecSizePrefix`](#add-codec-size-prefix) or [`addCodecSentinel`](#add-codec-sentinel).
 
 ```ts twoslash
-import { getBaseXCodec, fixCodecSize, addCodecSizePrefix, getU32Codec, addCodecSentinel } from "@solana/kit";
+import {
+    getBaseXCodec,
+    fixCodecSize,
+    addCodecSizePrefix,
+    getU32Codec,
+    addCodecSentinel,
+} from '@solana/kit';
 // ---cut-before---
-const codec = getBaseXCodec("0ehlo");
+const codec = getBaseXCodec('0ehlo');
 
-fixCodecSize(codec, 4).encode("hello");
+fixCodecSize(codec, 4).encode('hello');
 // 0x05bd0000 (padded to 4 bytes)
 
-addCodecSizePrefix(codec, getU32Codec()).encode("hello");
+addCodecSizePrefix(codec, getU32Codec()).encode('hello');
 // 0x0200000005bd
 //   |       └-- The 2 bytes of content.
 //   └-- 4-byte prefix telling us to read 2 bytes.
 
-addCodecSentinel(codec, new Uint8Array([0xff, 0xff])).encode("hello");
+addCodecSentinel(codec, new Uint8Array([0xff, 0xff])).encode('hello');
 // 0x05bdffff
 //   |   └-- The sentinel signaling the end of the content.
 //   └-- The 2 bytes of content.
@@ -1465,29 +1575,35 @@ It does so by re-slicing bytes into custom chunks of bits that are then mapped t
 This is typically used to create codecs whose alphabet's length is a power of 2 such as base-16 or base-64.
 
 ```ts twoslash
-import { getBaseXResliceCodec } from "@solana/kit";
+import { getBaseXResliceCodec } from '@solana/kit';
 // ---cut-before---
-const codec = getBaseXResliceCodec("elho", 2);
-const bytes = codec.encode("hellolol"); // 0x4aee
+const codec = getBaseXResliceCodec('elho', 2);
+const bytes = codec.encode('hellolol'); // 0x4aee
 const value = codec.decode(bytes); // "hellolol"
 ```
 
 This codec does not enforce a size boundary. It will encode and decode all bytes necessary to represent the string. To add size constraints to your codec, you may use utility functions such as [`fixCodecSize`](#fix-codec-size), [`addCodecSizePrefix`](#add-codec-size-prefix) or [`addCodecSentinel`](#add-codec-sentinel).
 
 ```ts twoslash
-import { getBaseXResliceCodec, fixCodecSize, addCodecSizePrefix, getU32Codec, addCodecSentinel } from "@solana/kit";
+import {
+    getBaseXResliceCodec,
+    fixCodecSize,
+    addCodecSizePrefix,
+    getU32Codec,
+    addCodecSentinel,
+} from '@solana/kit';
 // ---cut-before---
-const codec = getBaseXResliceCodec("elho", 2);
+const codec = getBaseXResliceCodec('elho', 2);
 
-fixCodecSize(codec, 4).encode("hellolol");
+fixCodecSize(codec, 4).encode('hellolol');
 // 0x4aee0000 (padded to 4 bytes)
 
-addCodecSizePrefix(codec, getU32Codec()).encode("hellolol");
+addCodecSizePrefix(codec, getU32Codec()).encode('hellolol');
 // 0x020000004aee
 //   |       └-- The 2 bytes of content.
 //   └-- 4-byte prefix telling us to read 2 bytes.
 
-addCodecSentinel(codec, new Uint8Array([0xff, 0xff])).encode("hellolol");
+addCodecSentinel(codec, new Uint8Array([0xff, 0xff])).encode('hellolol');
 // 0x4aeeffff
 //   |   └-- The sentinel signaling the end of the content.
 //   └-- The 2 bytes of content.
@@ -1500,27 +1616,33 @@ addCodecSentinel(codec, new Uint8Array([0xff, 0xff])).encode("hellolol");
 Encodes and decodes **UTF-8 strings**.
 
 ```ts twoslash
-import { getUtf8Codec } from "@solana/kit";
+import { getUtf8Codec } from '@solana/kit';
 // ---cut-before---
 const codec = getUtf8Codec();
-const bytes = codec.encode("hello"); // 0x68656c6c6f
+const bytes = codec.encode('hello'); // 0x68656c6c6f
 const value = codec.decode(bytes); // "hello"
 ```
 
 This codec does not enforce a size boundary. It will encode and decode all bytes necessary to represent the string. To add size constraints to your codec, you may use utility functions such as [`fixCodecSize`](#fix-codec-size), [`addCodecSizePrefix`](#add-codec-size-prefix) or [`addCodecSentinel`](#add-codec-sentinel).
 
 ```ts twoslash
-import { getUtf8Codec, fixCodecSize, addCodecSizePrefix, getU32Codec, addCodecSentinel } from "@solana/kit";
+import {
+    getUtf8Codec,
+    fixCodecSize,
+    addCodecSizePrefix,
+    getU32Codec,
+    addCodecSentinel,
+} from '@solana/kit';
 // ---cut-before---
-fixCodecSize(getUtf8Codec(), 4).encode("hello");
+fixCodecSize(getUtf8Codec(), 4).encode('hello');
 // 0x68656c6c (truncated to 4 bytes)
 
-addCodecSizePrefix(getUtf8Codec(), getU32Codec()).encode("hello");
+addCodecSizePrefix(getUtf8Codec(), getU32Codec()).encode('hello');
 // 0x0500000068656c6c6f
 //   |       └-- The 5 bytes of content.
 //   └-- 4-byte prefix telling us to read 5 bytes.
 
-addCodecSentinel(getUtf8Codec(), new Uint8Array([0xff, 0xff])).encode("hello");
+addCodecSentinel(getUtf8Codec(), new Uint8Array([0xff, 0xff])).encode('hello');
 // 0x68656c6c6fffff
 //   |         └-- The sentinel signaling the end of the content.
 //   └-- The 5 bytes of content.
@@ -1535,7 +1657,7 @@ addCodecSentinel(getUtf8Codec(), new Uint8Array([0xff, 0xff])).encode("hello");
 The `getArrayCodec` function accepts any codec of type `T` and returns a codec of type `Array<T>`.
 
 ```ts twoslash
-import { getArrayCodec, getU8Codec } from "@solana/kit";
+import { getArrayCodec, getU8Codec } from '@solana/kit';
 // ---cut-before---
 const codec = getArrayCodec(getU8Codec());
 const bytes = codec.encode([1, 2, 3]); // 0x03000000010203
@@ -1545,7 +1667,7 @@ const array = codec.decode(bytes); // [1, 2, 3]
 By default, the size of the array is stored as a `u32` prefix before encoding the items.
 
 ```ts twoslash
-import { getArrayCodec, getU8Codec } from "@solana/kit";
+import { getArrayCodec, getU8Codec } from '@solana/kit';
 // ---cut-before---
 getArrayCodec(getU8Codec()).encode([1, 2, 3]);
 // 0x03000000010203
@@ -1560,7 +1682,7 @@ However, you may use the `size` option to configure this behaviour. It can be on
 - `"remainder"`: When the string `"remainder"` is passed as a size, the codec will use the remainder of the bytes to encode/decode its items. This means the size is not stored or known in advance but simply inferred from the rest of the buffer. For instance, if we have an array of `u16` numbers and 10 bytes remaining, we know there are 5 items in this array.
 
 ```ts twoslash
-import { getArrayCodec, getU8Codec, getU16Codec } from "@solana/kit";
+import { getArrayCodec, getU8Codec, getU16Codec } from '@solana/kit';
 // ---cut-before---
 getArrayCodec(getU8Codec(), { size: getU16Codec() }).encode([1, 2, 3]);
 // 0x0300010203
@@ -1571,7 +1693,7 @@ getArrayCodec(getU8Codec(), { size: 3 }).encode([1, 2, 3]);
 // 0x010203
 //   └-- 3 items of 1 byte each. There must always be 3 items in the array.
 
-getArrayCodec(getU8Codec(), { size: "remainder" }).encode([1, 2, 3]);
+getArrayCodec(getU8Codec(), { size: 'remainder' }).encode([1, 2, 3]);
 // 0x010203
 //   └-- 3 items of 1 byte each. The size is inferred from the remainder of the bytes.
 ```
@@ -1583,7 +1705,7 @@ getArrayCodec(getU8Codec(), { size: "remainder" }).encode([1, 2, 3]);
 The `getBitArrayCodec` function returns a codec that encodes and decodes an array of booleans such that each boolean is represented by a single bit. It requires the size of the codec in bytes and an optional `backward` flag that can be used to reverse the order of the bits.
 
 ```ts twoslash
-import { getBitArrayCodec } from "@solana/kit";
+import { getBitArrayCodec } from '@solana/kit';
 // ---cut-before---
 const booleans = [true, false, true, false, true, false, true, false];
 
@@ -1601,7 +1723,7 @@ getBitArrayCodec(1, { backward: true }).encode(booleans);
 The `getBooleanCodec` function returns a `Codec<boolean>` that stores the boolean as `0` or `1` using a `u8` number by default.
 
 ```ts twoslash
-import { getBooleanCodec } from "@solana/kit";
+import { getBooleanCodec } from '@solana/kit';
 // ---cut-before---
 const codec = getBooleanCodec();
 const bytes = codec.encode(true); // 0x01
@@ -1611,7 +1733,7 @@ const value = codec.decode(bytes); // true
 You may configure that behaviour by providing an explicit number codec as the `size` option of the `getBooleanCodec` function. That number codec will then be used to encode and decode the values `0` and `1` accordingly.
 
 ```ts twoslash
-import { getBooleanCodec, getU16Codec, getU32Codec } from "@solana/kit";
+import { getBooleanCodec, getU16Codec, getU32Codec } from '@solana/kit';
 // ---cut-before---
 getBooleanCodec({ size: getU16Codec() }).encode(false); // 0x0000
 getBooleanCodec({ size: getU16Codec() }).encode(true); // 0x0100
@@ -1627,7 +1749,7 @@ getBooleanCodec({ size: getU32Codec() }).encode(true); // 0x01000000
 The `getBytesCodec` function returns a `Codec<Uint8Array>` meaning it converts `Uint8Arrays` to and from… `Uint8Arrays`! Whilst this might seem a bit useless, it can be useful when composed into other codecs. For example, you could use it in a struct codec to say that a particular field should be left unserialised.
 
 ```ts twoslash
-import { getBytesCodec } from "@solana/kit";
+import { getBytesCodec } from '@solana/kit';
 // ---cut-before---
 const codec = getBytesCodec();
 const bytes = codec.encode(new Uint8Array([42])); // 0x2a
@@ -1637,7 +1759,13 @@ const value = codec.decode(bytes); // 0x2a
 The `getBytesCodec` function will encode and decode `Uint8Arrays` using as many bytes as necessary. If you'd like to restrict the number of bytes used by this codec, you may combine it with utilities such as [`fixCodecSize`](#fix-codec-size), [`addCodecSizePrefix`](#add-codec-size-prefix) or [`addCodecSentinel`](#add-codec-sentinel).
 
 ```ts twoslash
-import { getBytesCodec, fixCodecSize, addCodecSizePrefix, getU32Codec, addCodecSentinel } from "@solana/kit";
+import {
+    getBytesCodec,
+    fixCodecSize,
+    addCodecSizePrefix,
+    getU32Codec,
+    addCodecSentinel,
+} from '@solana/kit';
 // ---cut-before---
 const value = new Uint8Array([42, 43]); // 0x2a2b
 
@@ -1662,7 +1790,7 @@ addCodecSentinel(getBytesCodec(), new Uint8Array([0xff, 0xff])).encode(value);
 The `getConstantCodec` function accepts any `Uint8Array` and returns a `Codec<void>`. When encoding, it will set the provided `Uint8Array` as-is. When decoding, it will assert that the next bytes contain the provided `Uint8Array` and move the offset forward.
 
 ```ts twoslash
-import { getConstantCodec } from "@solana/kit";
+import { getConstantCodec } from '@solana/kit';
 // ---cut-before---
 const codec = getConstantCodec(new Uint8Array([1, 2, 3]));
 
@@ -1687,9 +1815,9 @@ We use a special field named `__kind` to distinguish between the different varia
 
 ```ts twoslash
 type Message =
-  | { __kind: "quit" } // Empty variant.
-  | { __kind: "write"; fields: [string] } // Tuple variant.
-  | { __kind: "move"; x: number; y: number }; // Struct variant.
+    | { __kind: 'quit' } // Empty variant.
+    | { __kind: 'write'; fields: [string] } // Tuple variant.
+    | { __kind: 'move'; x: number; y: number }; // Struct variant.
 ```
 
 The `getDiscriminatedUnionCodec` function helps us encode and decode these discriminated unions.
@@ -1700,31 +1828,36 @@ Here is how we can create a discriminated union codec for our previous example.
 
 ```ts twoslash
 import {
-  getDiscriminatedUnionCodec,
-  getUnitCodec,
-  getStructCodec,
-  getTupleCodec,
-  getUtf8Codec,
-  getU32Codec,
-  addCodecSizePrefix,
-  getI32Codec,
-} from "@solana/kit";
+    getDiscriminatedUnionCodec,
+    getUnitCodec,
+    getStructCodec,
+    getTupleCodec,
+    getUtf8Codec,
+    getU32Codec,
+    addCodecSizePrefix,
+    getI32Codec,
+} from '@solana/kit';
 // ---cut-before---
 const messageCodec = getDiscriminatedUnionCodec([
-  // Empty variant.
-  ["quit", getUnitCodec()],
+    // Empty variant.
+    ['quit', getUnitCodec()],
 
-  // Tuple variant.
-  ["write", getStructCodec([["fields", getTupleCodec([addCodecSizePrefix(getUtf8Codec(), getU32Codec())])]])],
+    // Tuple variant.
+    [
+        'write',
+        getStructCodec([
+            ['fields', getTupleCodec([addCodecSizePrefix(getUtf8Codec(), getU32Codec())])],
+        ]),
+    ],
 
-  // Struct variant.
-  [
-    "move",
-    getStructCodec([
-      ["x", getI32Codec()],
-      ["y", getI32Codec()],
-    ]),
-  ],
+    // Struct variant.
+    [
+        'move',
+        getStructCodec([
+            ['x', getI32Codec()],
+            ['y', getI32Codec()],
+        ]),
+    ],
 ]);
 ```
 
@@ -1732,43 +1865,48 @@ And here's how we can use such a codec to encode discriminated unions. Notice th
 
 ```ts twoslash
 import {
-  getDiscriminatedUnionCodec,
-  getUnitCodec,
-  getStructCodec,
-  getTupleCodec,
-  getUtf8Codec,
-  getU32Codec,
-  addCodecSizePrefix,
-  getI32Codec,
-} from "@solana/kit";
+    getDiscriminatedUnionCodec,
+    getUnitCodec,
+    getStructCodec,
+    getTupleCodec,
+    getUtf8Codec,
+    getU32Codec,
+    addCodecSizePrefix,
+    getI32Codec,
+} from '@solana/kit';
 const messageCodec = getDiscriminatedUnionCodec([
-  // Empty variant.
-  ["quit", getUnitCodec()],
+    // Empty variant.
+    ['quit', getUnitCodec()],
 
-  // Tuple variant.
-  ["write", getStructCodec([["fields", getTupleCodec([addCodecSizePrefix(getUtf8Codec(), getU32Codec())])]])],
+    // Tuple variant.
+    [
+        'write',
+        getStructCodec([
+            ['fields', getTupleCodec([addCodecSizePrefix(getUtf8Codec(), getU32Codec())])],
+        ]),
+    ],
 
-  // Struct variant.
-  [
-    "move",
-    getStructCodec([
-      ["x", getI32Codec()],
-      ["y", getI32Codec()],
-    ]),
-  ],
+    // Struct variant.
+    [
+        'move',
+        getStructCodec([
+            ['x', getI32Codec()],
+            ['y', getI32Codec()],
+        ]),
+    ],
 ]);
 // ---cut-before---
-messageCodec.encode({ __kind: "quit" });
+messageCodec.encode({ __kind: 'quit' });
 // 0x00
 //   └-- 1-byte discriminator (Index 0 — the "quit" variant).
 
-messageCodec.encode({ __kind: "write", fields: ["Hi"] });
+messageCodec.encode({ __kind: 'write', fields: ['Hi'] });
 // 0x01020000004869
 //   | |       └-- utf8 string content ("Hi").
 //   | └-- u32 string prefix (2 characters).
 //   └-- 1-byte discriminator (Index 1 — the "write" variant).
 
-messageCodec.encode({ __kind: "move", x: 5, y: 6 });
+messageCodec.encode({ __kind: 'move', x: 5, y: 6 });
 // 0x020500000006000000
 //   | |       └-- Field y (6).
 //   | └-- Field x (5).
@@ -1779,40 +1917,42 @@ However, you may provide a number codec as the `size` option of the `getDiscrimi
 
 ```ts twoslash
 import {
-  getDiscriminatedUnionCodec,
-  getUnitCodec,
-  getStructCodec,
-  getTupleCodec,
-  getUtf8Codec,
-  getU32Codec,
-  addCodecSizePrefix,
-  getI32Codec,
-} from "@solana/kit";
+    getDiscriminatedUnionCodec,
+    getUnitCodec,
+    getStructCodec,
+    getTupleCodec,
+    getUtf8Codec,
+    getU32Codec,
+    addCodecSizePrefix,
+    getI32Codec,
+} from '@solana/kit';
 const quitCodec = getUnitCodec();
-const writeCodec = getStructCodec([["fields", getTupleCodec([addCodecSizePrefix(getUtf8Codec(), getU32Codec())])]]);
+const writeCodec = getStructCodec([
+    ['fields', getTupleCodec([addCodecSizePrefix(getUtf8Codec(), getU32Codec())])],
+]);
 const moveCodec = getStructCodec([
-  ["x", getI32Codec()],
-  ["y", getI32Codec()],
+    ['x', getI32Codec()],
+    ['y', getI32Codec()],
 ]);
 // ---cut-before---
 const u32MessageCodec = getDiscriminatedUnionCodec(
-  [
-    ["quit", quitCodec],
-    ["write", writeCodec],
-    ["move", moveCodec],
-  ],
-  { size: getU32Codec() },
+    [
+        ['quit', quitCodec],
+        ['write', writeCodec],
+        ['move', moveCodec],
+    ],
+    { size: getU32Codec() },
 );
 
-u32MessageCodec.encode({ __kind: "quit" });
+u32MessageCodec.encode({ __kind: 'quit' });
 // 0x00000000
 //   └------┘ 4-byte discriminator (Index 0).
 
-u32MessageCodec.encode({ __kind: "write", fields: ["Hi"] });
+u32MessageCodec.encode({ __kind: 'write', fields: ['Hi'] });
 // 0x01000000020000004869
 //   └------┘ 4-byte discriminator (Index 1).
 
-u32MessageCodec.encode({ __kind: "move", x: 5, y: 6 });
+u32MessageCodec.encode({ __kind: 'move', x: 5, y: 6 });
 // 0x020000000500000006000000
 //   └------┘ 4-byte discriminator (Index 2).
 ```
@@ -1821,69 +1961,73 @@ You may also customize the discriminator property — which defaults to `__kind`
 
 ```ts twoslash
 import {
-  getDiscriminatedUnionCodec,
-  getUnitCodec,
-  getStructCodec,
-  getTupleCodec,
-  getUtf8Codec,
-  getU32Codec,
-  addCodecSizePrefix,
-  getI32Codec,
-} from "@solana/kit";
+    getDiscriminatedUnionCodec,
+    getUnitCodec,
+    getStructCodec,
+    getTupleCodec,
+    getUtf8Codec,
+    getU32Codec,
+    addCodecSizePrefix,
+    getI32Codec,
+} from '@solana/kit';
 const quitCodec = getUnitCodec();
-const writeCodec = getStructCodec([["fields", getTupleCodec([addCodecSizePrefix(getUtf8Codec(), getU32Codec())])]]);
+const writeCodec = getStructCodec([
+    ['fields', getTupleCodec([addCodecSizePrefix(getUtf8Codec(), getU32Codec())])],
+]);
 const moveCodec = getStructCodec([
-  ["x", getI32Codec()],
-  ["y", getI32Codec()],
+    ['x', getI32Codec()],
+    ['y', getI32Codec()],
 ]);
 // ---cut-before---
 const messageCodec = getDiscriminatedUnionCodec(
-  [
-    ["quit", quitCodec],
-    ["write", writeCodec],
-    ["move", moveCodec],
-  ],
-  { discriminator: "message" },
+    [
+        ['quit', quitCodec],
+        ['write', writeCodec],
+        ['move', moveCodec],
+    ],
+    { discriminator: 'message' },
 );
 
-messageCodec.encode({ message: "quit" });
-messageCodec.encode({ message: "write", fields: ["Hi"] });
-messageCodec.encode({ message: "move", x: 5, y: 6 });
+messageCodec.encode({ message: 'quit' });
+messageCodec.encode({ message: 'write', fields: ['Hi'] });
+messageCodec.encode({ message: 'move', x: 5, y: 6 });
 ```
 
 Note that, the discriminator value of a variant may be any scalar value — such as `number`, `bigint`, `boolean`, a JavaScript `enum`, etc. For instance, the following is also valid:
 
 ```ts twoslash
 import {
-  getDiscriminatedUnionCodec,
-  getUnitCodec,
-  getStructCodec,
-  getTupleCodec,
-  getUtf8Codec,
-  getU32Codec,
-  addCodecSizePrefix,
-  getI32Codec,
-} from "@solana/kit";
+    getDiscriminatedUnionCodec,
+    getUnitCodec,
+    getStructCodec,
+    getTupleCodec,
+    getUtf8Codec,
+    getU32Codec,
+    addCodecSizePrefix,
+    getI32Codec,
+} from '@solana/kit';
 const quitCodec = getUnitCodec();
-const writeCodec = getStructCodec([["fields", getTupleCodec([addCodecSizePrefix(getUtf8Codec(), getU32Codec())])]]);
+const writeCodec = getStructCodec([
+    ['fields', getTupleCodec([addCodecSizePrefix(getUtf8Codec(), getU32Codec())])],
+]);
 const moveCodec = getStructCodec([
-  ["x", getI32Codec()],
-  ["y", getI32Codec()],
+    ['x', getI32Codec()],
+    ['y', getI32Codec()],
 ]);
 // ---cut-before---
 enum Message {
-  Quit,
-  Write,
-  Move,
+    Quit,
+    Write,
+    Move,
 }
 const messageCodec = getDiscriminatedUnionCodec([
-  [Message.Quit, quitCodec],
-  [Message.Write, writeCodec],
-  [Message.Move, moveCodec],
+    [Message.Quit, quitCodec],
+    [Message.Write, writeCodec],
+    [Message.Move, moveCodec],
 ]);
 
 messageCodec.encode({ __kind: Message.Quit });
-messageCodec.encode({ __kind: Message.Write, fields: ["Hi"] });
+messageCodec.encode({ __kind: Message.Write, fields: ['Hi'] });
 messageCodec.encode({ __kind: Message.Move, x: 5, y: 6 });
 ```
 
@@ -1894,11 +2038,11 @@ messageCodec.encode({ __kind: Message.Move, x: 5, y: 6 });
 The `getEnumCodec` function accepts a JavaScript enum constructor and returns a codec for encoding and decoding values of that enum.
 
 ```ts twoslash
-import { getEnumCodec } from "@solana/kit";
+import { getEnumCodec } from '@solana/kit';
 // ---cut-before---
 enum Direction {
-  Left,
-  Right,
+    Left,
+    Right,
 }
 
 const codec = getEnumCodec(Direction);
@@ -1909,25 +2053,25 @@ const direction = codec.decode(bytes); // Direction.Left
 When encoding an enum, you may either provide the value of the enum variant — e.g. `Direction.Left` — or its key — e.g. `'Left'`.
 
 ```ts twoslash
-import { getEnumCodec } from "@solana/kit";
+import { getEnumCodec } from '@solana/kit';
 enum Direction {
-  Left,
-  Right,
+    Left,
+    Right,
 }
 // ---cut-before---
 getEnumCodec(Direction).encode(Direction.Left); // 0x00
 getEnumCodec(Direction).encode(Direction.Right); // 0x01
-getEnumCodec(Direction).encode("Left"); // 0x00
-getEnumCodec(Direction).encode("Right"); // 0x01
+getEnumCodec(Direction).encode('Left'); // 0x00
+getEnumCodec(Direction).encode('Right'); // 0x01
 ```
 
 By default, a `u8` number is being used to store the enum value. However, a number codec may be passed as the `size` option to configure that behaviour.
 
 ```ts twoslash
-import { getEnumCodec, getU32Codec } from "@solana/kit";
+import { getEnumCodec, getU32Codec } from '@solana/kit';
 enum Direction {
-  Left,
-  Right,
+    Left,
+    Right,
 }
 // ---cut-before---
 const u32DirectionCodec = getEnumCodec(Direction, { size: getU32Codec() });
@@ -1938,23 +2082,23 @@ u32DirectionCodec.encode(Direction.Right); // 0x01000000
 This function also works with lexical enums — e.g. `enum Direction { Left = '←' }` — explicit numerical enums — e.g. `enum Speed { Left = 50 }` — and hybrid enums with a mix of both.
 
 ```ts twoslash
-import { getEnumCodec } from "@solana/kit";
+import { getEnumCodec } from '@solana/kit';
 // ---cut-before---
 enum Numbers {
-  One,
-  Five = 5,
-  Six,
-  Nine = "nine",
+    One,
+    Five = 5,
+    Six,
+    Nine = 'nine',
 }
 
 getEnumCodec(Numbers).encode(Numbers.One); // 0x00
 getEnumCodec(Numbers).encode(Numbers.Five); // 0x01
 getEnumCodec(Numbers).encode(Numbers.Six); // 0x02
 getEnumCodec(Numbers).encode(Numbers.Nine); // 0x03
-getEnumCodec(Numbers).encode("One"); // 0x00
-getEnumCodec(Numbers).encode("Five"); // 0x01
-getEnumCodec(Numbers).encode("Six"); // 0x02
-getEnumCodec(Numbers).encode("Nine"); // 0x03
+getEnumCodec(Numbers).encode('One'); // 0x00
+getEnumCodec(Numbers).encode('Five'); // 0x01
+getEnumCodec(Numbers).encode('Six'); // 0x02
+getEnumCodec(Numbers).encode('Nine'); // 0x03
 ```
 
 Notice how, by default, the index of the enum variant is used to encode the value of the enum. For instance, in the example above, `Numbers.Five` is encoded as `0x01` even though its value is `5`. This is also true for lexical enums.
@@ -1962,13 +2106,13 @@ Notice how, by default, the index of the enum variant is used to encode the valu
 However, when dealing with numerical enums that have explicit values, you may use the `useValuesAsDiscriminators` option to encode the value of the enum variant instead of its index.
 
 ```ts twoslash
-import { getEnumCodec } from "@solana/kit";
+import { getEnumCodec } from '@solana/kit';
 // ---cut-before---
 enum Numbers {
-  One,
-  Five = 5,
-  Six,
-  Nine = 9,
+    One,
+    Five = 5,
+    Six,
+    Nine = 9,
 }
 
 const codec = getEnumCodec(Numbers, { useValuesAsDiscriminators: true });
@@ -1976,20 +2120,20 @@ codec.encode(Numbers.One); // 0x00
 codec.encode(Numbers.Five); // 0x05
 codec.encode(Numbers.Six); // 0x06
 codec.encode(Numbers.Nine); // 0x09
-codec.encode("One"); // 0x00
-codec.encode("Five"); // 0x05
-codec.encode("Six"); // 0x06
-codec.encode("Nine"); // 0x09
+codec.encode('One'); // 0x00
+codec.encode('Five'); // 0x05
+codec.encode('Six'); // 0x06
+codec.encode('Nine'); // 0x09
 ```
 
 Note that when using the `useValuesAsDiscriminators` option on an enum that contains a lexical value, an error will be thrown.
 
 ```ts twoslash
-import { getEnumCodec } from "@solana/kit";
+import { getEnumCodec } from '@solana/kit';
 // ---cut-before---
 enum Lexical {
-  One,
-  Two = "two",
+    One,
+    Two = 'two',
 }
 getEnumCodec(Lexical, { useValuesAsDiscriminators: true }); // Throws an error.
 ```
@@ -2003,11 +2147,11 @@ The `getHiddenPrefixCodec` function allow us to prepend a list of hidden `Codec<
 When encoding, the hidden codecs will be encoded before the main codec and the offset will be moved accordingly. When decoding, the hidden codecs will be decoded but only the result of the main codec will be returned. This is particularly helpful when creating data structures that include constant values that should not be included in the final type.
 
 ```ts twoslash
-import { getHiddenPrefixCodec, getConstantCodec, getU16Codec } from "@solana/kit";
+import { getHiddenPrefixCodec, getConstantCodec, getU16Codec } from '@solana/kit';
 // ---cut-before---
 const codec = getHiddenPrefixCodec(getU16Codec(), [
-  getConstantCodec(new Uint8Array([1, 2, 3])),
-  getConstantCodec(new Uint8Array([4, 5, 6])),
+    getConstantCodec(new Uint8Array([1, 2, 3])),
+    getConstantCodec(new Uint8Array([4, 5, 6])),
 ]);
 
 codec.encode(42);
@@ -2028,11 +2172,11 @@ The `getHiddenSuffixCodec` function allow us to append a list of hidden `Codec<v
 When encoding, the hidden codecs will be encoded after the main codec and the offset will be moved accordingly. When decoding, the hidden codecs will be decoded but only the result of the main codec will be returned. This is particularly helpful when creating data structures that include constant values that should not be included in the final type.
 
 ```ts twoslash
-import { getHiddenSuffixCodec, getConstantCodec, getU16Codec } from "@solana/kit";
+import { getHiddenSuffixCodec, getConstantCodec, getU16Codec } from '@solana/kit';
 // ---cut-before---
 const codec = getHiddenSuffixCodec(getU16Codec(), [
-  getConstantCodec(new Uint8Array([1, 2, 3])),
-  getConstantCodec(new Uint8Array([4, 5, 6])),
+    getConstantCodec(new Uint8Array([1, 2, 3])),
+    getConstantCodec(new Uint8Array([4, 5, 6])),
 ]);
 
 codec.encode(42);
@@ -2051,28 +2195,28 @@ codec.decode(new Uint8Array([42, 0, 1, 2, 3, 4, 5, 6])); // 42
 The `getLiteralUnionCodec` function accepts an array of literal values — such as `string`, `number`, `boolean`, etc. — and returns a codec that encodes and decodes such values by using their index in the array. It uses TypeScript unions to represent all the possible values.
 
 ```ts twoslash
-import { getLiteralUnionCodec, FixedSizeCodec } from "@solana/kit";
+import { getLiteralUnionCodec, FixedSizeCodec } from '@solana/kit';
 // ---cut-before---
-const codec = getLiteralUnionCodec(["left", "right", "up", "down"]);
-codec satisfies FixedSizeCodec<"left" | "right" | "up" | "down">;
+const codec = getLiteralUnionCodec(['left', 'right', 'up', 'down']);
+codec satisfies FixedSizeCodec<'left' | 'right' | 'up' | 'down'>;
 
-const bytes = codec.encode("left"); // 0x00
+const bytes = codec.encode('left'); // 0x00
 const value = codec.decode(bytes); // 'left'
 ```
 
 It uses a `u8` number by default to store the index of the value. However, you may provide a number codec as the `size` option of the `getLiteralUnionCodec` function to customise that behaviour.
 
 ```ts twoslash
-import { getLiteralUnionCodec, getU32Codec } from "@solana/kit";
+import { getLiteralUnionCodec, getU32Codec } from '@solana/kit';
 // ---cut-before---
-const codec = getLiteralUnionCodec(["left", "right", "up", "down"], {
-  size: getU32Codec(),
+const codec = getLiteralUnionCodec(['left', 'right', 'up', 'down'], {
+    size: getU32Codec(),
 });
 
-codec.encode("left"); // 0x00000000
-codec.encode("right"); // 0x01000000
-codec.encode("up"); // 0x02000000
-codec.encode("down"); // 0x03000000
+codec.encode('left'); // 0x00000000
+codec.encode('right'); // 0x01000000
+codec.encode('up'); // 0x02000000
+codec.encode('down'); // 0x03000000
 ```
 
 `getLiteralUnionEncoder` and `getLiteralUnionDecoder` functions are also available.
@@ -2082,25 +2226,25 @@ codec.encode("down"); // 0x03000000
 The `getMapCodec` function accepts two codecs of type `K` and `V` and returns a codec of type `Map<K, V>`.
 
 ```ts twoslash
-import { getMapCodec, getU8Codec, getUtf8Codec, fixCodecSize } from "@solana/kit";
+import { getMapCodec, getU8Codec, getUtf8Codec, fixCodecSize } from '@solana/kit';
 // ---cut-before---
 const keyCodec = fixCodecSize(getUtf8Codec(), 8);
 const valueCodec = getU8Codec();
 const codec = getMapCodec(keyCodec, valueCodec);
 
-const bytes = codec.encode(new Map([["alice", 42]])); // 0x01000000616c6963650000002a
+const bytes = codec.encode(new Map([['alice', 42]])); // 0x01000000616c6963650000002a
 const map = codec.decode(bytes); // new Map([["alice", 42]])
 ```
 
 Each entry (key/value pair) is encoded one after the other with the key first and the value next. By default, the size of the map is stored as a `u32` prefix before encoding the entries.
 
 ```ts twoslash
-import { getMapCodec, getU8Codec, getUtf8Codec, fixCodecSize } from "@solana/kit";
+import { getMapCodec, getU8Codec, getUtf8Codec, fixCodecSize } from '@solana/kit';
 // ---cut-before---
 const codec = getMapCodec(fixCodecSize(getUtf8Codec(), 8), getU8Codec());
 const myMap = new Map<string, number>();
-myMap.set("alice", 42);
-myMap.set("bob", 5);
+myMap.set('alice', 42);
+myMap.set('bob', 5);
 
 codec.encode(myMap);
 // 0x02000000616c6963650000002a626f62000000000005
@@ -2118,14 +2262,14 @@ However, you may use the `size` option to configure this behaviour. It can be on
 - `"remainder"`: When the string `"remainder"` is passed as a size, the codec will use the remainder of the bytes to encode/decode its entries. This means the size is not stored or known in advance but simply inferred from the rest of the buffer. For instance, if we have a map of `u16` numbers and 10 bytes remaining, we know there are 5 entries in this map.
 
 ```ts twoslash
-import { getMapCodec, getU8Codec, getU16Codec, fixCodecSize, getUtf8Codec } from "@solana/kit";
+import { getMapCodec, getU8Codec, getU16Codec, fixCodecSize, getUtf8Codec } from '@solana/kit';
 // ---cut-before---
 const keyCodec = fixCodecSize(getUtf8Codec(), 8);
 const valueCodec = getU8Codec();
 
 const myMap = new Map<string, number>();
-myMap.set("alice", 42);
-myMap.set("bob", 5);
+myMap.set('alice', 42);
+myMap.set('bob', 5);
 
 getMapCodec(keyCodec, valueCodec, { size: getU16Codec() }).encode(myMap);
 // 0x0200616c6963650000002a626f62000000000005
@@ -2139,7 +2283,7 @@ getMapCodec(keyCodec, valueCodec, { size: 3 }).encode(myMap);
 //   └-- First entry.
 // There must always be 2 entries in the map.
 
-getMapCodec(keyCodec, valueCodec, { size: "remainder" }).encode(myMap);
+getMapCodec(keyCodec, valueCodec, { size: 'remainder' }).encode(myMap);
 // 0x616c6963650000002a626f62000000000005
 //   |                 └-- Second entry.
 //   └-- First entry.
@@ -2153,11 +2297,11 @@ getMapCodec(keyCodec, valueCodec, { size: "remainder" }).encode(myMap);
 The `getNullableCodec` function accepts a codec of type `T` and returns a codec of type `T | null`. It stores whether or not the item exists as a boolean prefix using a `u8` by default.
 
 ```ts twoslash
-import { getNullableCodec, getU32Codec, addCodecSizePrefix, getUtf8Codec } from "@solana/kit";
+import { getNullableCodec, getU32Codec, addCodecSizePrefix, getUtf8Codec } from '@solana/kit';
 // ---cut-before---
 const stringCodec = addCodecSizePrefix(getUtf8Codec(), getU32Codec());
 
-getNullableCodec(stringCodec).encode("Hi");
+getNullableCodec(stringCodec).encode('Hi');
 // 0x01020000004869
 //   | |       └-- utf8 string content ("Hi").
 //   | └-- u32 string prefix (2 characters).
@@ -2171,14 +2315,14 @@ getNullableCodec(stringCodec).encode(null);
 You may provide a number codec as the `prefix` option of the `getNullableCodec` function to configure how to store the boolean prefix.
 
 ```ts twoslash
-import { getNullableCodec, getU32Codec, addCodecSizePrefix, getUtf8Codec } from "@solana/kit";
+import { getNullableCodec, getU32Codec, addCodecSizePrefix, getUtf8Codec } from '@solana/kit';
 const stringCodec = addCodecSizePrefix(getUtf8Codec(), getU32Codec());
 // ---cut-before---
 const u32NullableStringCodec = getNullableCodec(stringCodec, {
-  prefix: getU32Codec(),
+    prefix: getU32Codec(),
 });
 
-u32NullableStringCodec.encode("Hi");
+u32NullableStringCodec.encode('Hi');
 // 0x01000000020000004869
 //   └------┘ 4-byte prefix (true).
 
@@ -2190,14 +2334,14 @@ u32NullableStringCodec.encode(null);
 Additionally, if the item is a `FixedSizeCodec`, you may set the `noneValue` option to `"zeroes"` to also make the returned nullable codec a `FixedSizeCodec`. To do so, it will pad `null` values with zeroes to match the length of existing values.
 
 ```ts twoslash
-import { getNullableCodec, fixCodecSize, getUtf8Codec } from "@solana/kit";
+import { getNullableCodec, fixCodecSize, getUtf8Codec } from '@solana/kit';
 // ---cut-before---
 const fixedNullableStringCodec = getNullableCodec(
-  fixCodecSize(getUtf8Codec(), 8), // Only works with fixed-size items.
-  { noneValue: "zeroes" },
+    fixCodecSize(getUtf8Codec(), 8), // Only works with fixed-size items.
+    { noneValue: 'zeroes' },
 );
 
-fixedNullableStringCodec.encode("Hi");
+fixedNullableStringCodec.encode('Hi');
 // 0x014869000000000000
 //   | └-- 8-byte utf8 string content ("Hi").
 //   └-- 1-byte prefix (true — The item exists).
@@ -2211,13 +2355,13 @@ fixedNullableStringCodec.encode(null);
 The `noneValue` option can also be set to an explicit byte array to use as the padding for `null` values. Note that, in this case, the returned codec will not be a `FixedSizeCodec` as the byte array representing `null` values may be of any length.
 
 ```ts twoslash
-import { getNullableCodec, getUtf8Codec } from "@solana/kit";
+import { getNullableCodec, getUtf8Codec } from '@solana/kit';
 // ---cut-before---
 const codec = getNullableCodec(getUtf8Codec(), {
-  noneValue: new Uint8Array([255]), // 0xff means null.
+    noneValue: new Uint8Array([255]), // 0xff means null.
 });
 
-codec.encode("Hi");
+codec.encode('Hi');
 // 0x014869
 //   | └-- 2-byte utf8 string content ("Hi").
 //   └-- 1-byte prefix (true — The item exists).
@@ -2231,18 +2375,18 @@ codec.encode(null);
 The `prefix` option of the `getNullableCodec` function can also be set to `null`, meaning no prefix will be used to determine whether the item exists. In this case, the codec will rely on the `noneValue` option to determine whether the item is `null`.
 
 ```ts twoslash
-import { getNullableCodec, getU16Codec } from "@solana/kit";
+import { getNullableCodec, getU16Codec } from '@solana/kit';
 // ---cut-before---
 const codecWithZeroNoneValue = getNullableCodec(getU16Codec(), {
-  noneValue: "zeroes", // 0x0000 means null.
-  prefix: null,
+    noneValue: 'zeroes', // 0x0000 means null.
+    prefix: null,
 });
 codecWithZeroNoneValue.encode(42); // 0x2a00
 codecWithZeroNoneValue.encode(null); // 0x0000
 
 const codecWithCustomNoneValue = getNullableCodec(getU16Codec(), {
-  noneValue: new Uint8Array([255]), // 0xff means null.
-  prefix: null,
+    noneValue: new Uint8Array([255]), // 0xff means null.
+    prefix: null,
 });
 codecWithCustomNoneValue.encode(42); // 0x2a00
 codecWithCustomNoneValue.encode(null); // 0xff
@@ -2277,12 +2421,19 @@ The `getOptionCodec` function accepts a codec of type `T` and returns a codec of
 It stores whether or not the item exists as a boolean prefix using a `u8` by default.
 
 ```ts twoslash
-import { getOptionCodec, getU32Codec, addCodecSizePrefix, getUtf8Codec, some, none } from "@solana/kit";
+import {
+    getOptionCodec,
+    getU32Codec,
+    addCodecSizePrefix,
+    getUtf8Codec,
+    some,
+    none,
+} from '@solana/kit';
 // ---cut-before---
 const stringCodec = addCodecSizePrefix(getUtf8Codec(), getU32Codec());
 
-getOptionCodec(stringCodec).encode("Hi");
-getOptionCodec(stringCodec).encode(some("Hi"));
+getOptionCodec(stringCodec).encode('Hi');
+getOptionCodec(stringCodec).encode(some('Hi'));
 // 0x01020000004869
 //   | |       └-- utf8 string content ("Hi").
 //   | └-- u32 string prefix (2 characters).
@@ -2297,14 +2448,21 @@ getOptionCodec(stringCodec).encode(none());
 You may provide a number codec as the `prefix` option of the `getOptionCodec` function to configure how to store the boolean prefix.
 
 ```ts twoslash
-import { getOptionCodec, getU32Codec, addCodecSizePrefix, getUtf8Codec, some, none } from "@solana/kit";
+import {
+    getOptionCodec,
+    getU32Codec,
+    addCodecSizePrefix,
+    getUtf8Codec,
+    some,
+    none,
+} from '@solana/kit';
 const stringCodec = addCodecSizePrefix(getUtf8Codec(), getU32Codec());
 // ---cut-before---
 const u32OptionStringCodec = getOptionCodec(stringCodec, {
-  prefix: getU32Codec(),
+    prefix: getU32Codec(),
 });
 
-u32OptionStringCodec.encode(some("Hi"));
+u32OptionStringCodec.encode(some('Hi'));
 // 0x01000000020000004869
 //   └------┘ 4-byte prefix (Some).
 
@@ -2316,14 +2474,14 @@ u32OptionStringCodec.encode(none());
 Additionally, if the item is a `FixedSizeCodec`, you may set the `noneValue` option to `"zeroes"` to also make the returned Option codec a `FixedSizeCodec`. To do so, it will pad `None` values with zeroes to match the length of existing values.
 
 ```ts twoslash
-import { getOptionCodec, fixCodecSize, getUtf8Codec, some, none } from "@solana/kit";
+import { getOptionCodec, fixCodecSize, getUtf8Codec, some, none } from '@solana/kit';
 // ---cut-before---
 const codec = getOptionCodec(
-  fixCodecSize(getUtf8Codec(), 8), // Only works with fixed-size items.
-  { noneValue: "zeroes" },
+    fixCodecSize(getUtf8Codec(), 8), // Only works with fixed-size items.
+    { noneValue: 'zeroes' },
 );
 
-codec.encode(some("Hi"));
+codec.encode(some('Hi'));
 // 0x014869000000000000
 //   | └-- 8-byte utf8 string content ("Hi").
 //   └-- 1-byte prefix (Some).
@@ -2337,13 +2495,13 @@ codec.encode(none());
 The `noneValue` option can also be set to an explicit byte array to use as the padding for `None` values. Note that, in this case, the returned codec will not be a `FixedSizeCodec` as the byte array representing `None` values may be of any length.
 
 ```ts twoslash
-import { getOptionCodec, getUtf8Codec, some, none } from "@solana/kit";
+import { getOptionCodec, getUtf8Codec, some, none } from '@solana/kit';
 // ---cut-before---
 const codec = getOptionCodec(getUtf8Codec(), {
-  noneValue: new Uint8Array([255]), // 0xff means None.
+    noneValue: new Uint8Array([255]), // 0xff means None.
 });
 
-codec.encode(some("Hi"));
+codec.encode(some('Hi'));
 // 0x014869
 //   | └-- 2-byte utf8 string content ("Hi").
 //   └-- 1-byte prefix (Some).
@@ -2357,18 +2515,18 @@ codec.encode(none());
 The `prefix` option of the `getOptionCodec` function can also be set to `null`, meaning no prefix will be used to determine whether the item exists. In this case, the codec will rely on the `noneValue` option to determine whether the item is `None`.
 
 ```ts twoslash
-import { getOptionCodec, getU16Codec, some, none } from "@solana/kit";
+import { getOptionCodec, getU16Codec, some, none } from '@solana/kit';
 // ---cut-before---
 const codecWithZeroNoneValue = getOptionCodec(getU16Codec(), {
-  noneValue: "zeroes", // 0x0000 means None.
-  prefix: null,
+    noneValue: 'zeroes', // 0x0000 means None.
+    prefix: null,
 });
 codecWithZeroNoneValue.encode(some(42)); // 0x2a00
 codecWithZeroNoneValue.encode(none()); // 0x0000
 
 const codecWithCustomNoneValue = getOptionCodec(getU16Codec(), {
-  noneValue: new Uint8Array([255]), // 0xff means None.
-  prefix: null,
+    noneValue: new Uint8Array([255]), // 0xff means None.
+    prefix: null,
 });
 codecWithCustomNoneValue.encode(some(42)); // 0x2a00
 codecWithCustomNoneValue.encode(none()); // 0xff
@@ -2377,7 +2535,7 @@ codecWithCustomNoneValue.encode(none()); // 0xff
 Note that if `prefix` is set to `null` and no `noneValue` is provided, the codec assume that the item exists if and only if some remaining bytes are available to decode. This could be useful to describe data structures that may or may not have additional data to the end of the buffer.
 
 ```ts twoslash
-import { getOptionCodec, getU16Codec, some, none } from "@solana/kit";
+import { getOptionCodec, getU16Codec, some, none } from '@solana/kit';
 // ---cut-before---
 const codec = getOptionCodec(getU16Codec(), { prefix: null });
 codec.encode(some(42)); // 0x2a00
@@ -2401,7 +2559,7 @@ To recap, here are all the possible configurations of the `getOptionCodec` funct
 The `getSetCodec` function accepts any codec of type `T` and returns a codec of type `Set<T>`.
 
 ```ts twoslash
-import { getSetCodec, getU8Codec } from "@solana/kit";
+import { getSetCodec, getU8Codec } from '@solana/kit';
 // ---cut-before---
 const codec = getSetCodec(getU8Codec());
 const bytes = codec.encode(new Set([1, 2, 3])); // 0x03000000010203
@@ -2411,7 +2569,7 @@ const value = codec.decode(bytes); // new Set([1, 2, 3])
 By default, the size of the set is stored as a `u32` prefix before encoding the items.
 
 ```ts twoslash
-import { getSetCodec, getU8Codec } from "@solana/kit";
+import { getSetCodec, getU8Codec } from '@solana/kit';
 // ---cut-before---
 getSetCodec(getU8Codec()).encode(new Set([1, 2, 3]));
 // 0x03000000010203
@@ -2426,7 +2584,7 @@ However, you may use the `size` option to configure this behaviour. It can be on
 - `"remainder"`: When the string `"remainder"` is passed as a size, the codec will use the remainder of the bytes to encode/decode its items. This means the size is not stored or known in advance but simply inferred from the rest of the buffer. For instance, if we have a set of `u16` numbers and 10 bytes remaining, we know there are 5 items in this set.
 
 ```ts twoslash
-import { getSetCodec, getU8Codec, getU16Codec } from "@solana/kit";
+import { getSetCodec, getU8Codec, getU16Codec } from '@solana/kit';
 // ---cut-before---
 getSetCodec(getU8Codec(), { size: getU16Codec() }).encode(new Set([1, 2, 3]));
 // 0x0300010203
@@ -2437,7 +2595,7 @@ getSetCodec(getU8Codec(), { size: 3 }).encode(new Set([1, 2, 3]));
 // 0x010203
 //   └-- 3 items of 1 byte each. There must always be 3 items in the set.
 
-getSetCodec(getU8Codec(), { size: "remainder" }).encode(new Set([1, 2, 3]));
+getSetCodec(getU8Codec(), { size: 'remainder' }).encode(new Set([1, 2, 3]));
 // 0x010203
 //   └-- 3 items of 1 byte each. The size is inferred from the remainder of the bytes.
 ```
@@ -2449,15 +2607,22 @@ getSetCodec(getU8Codec(), { size: "remainder" }).encode(new Set([1, 2, 3]));
 The `getStructCodec` function accepts any number of field codecs and returns a codec for an object containing all these fields. Each provided field is an array such that the first item is the name of the field and the second item is the codec used to encode and decode that field type.
 
 ```ts twoslash
-import { getStructCodec, getU8Codec, getUtf8Codec, addCodecSizePrefix, Codec, getU32Codec } from "@solana/kit";
+import {
+    getStructCodec,
+    getU8Codec,
+    getUtf8Codec,
+    addCodecSizePrefix,
+    Codec,
+    getU32Codec,
+} from '@solana/kit';
 // ---cut-before---
 type Person = { name: string; age: number };
 const personCodec: Codec<Person> = getStructCodec([
-  ["name", addCodecSizePrefix(getUtf8Codec(), getU32Codec())],
-  ["age", getU8Codec()],
+    ['name', addCodecSizePrefix(getUtf8Codec(), getU32Codec())],
+    ['age', getU8Codec()],
 ]);
 
-const bytes = personCodec.encode({ name: "alice", age: 42 });
+const bytes = personCodec.encode({ name: 'alice', age: 42 });
 // 0x05000000616c6963652a
 //   |                 └-- Age field.
 //   └-- Name field.
@@ -2473,11 +2638,22 @@ const person = personCodec.decode(bytes);
 The `getTupleCodec` function accepts any number of codecs — `T`, `U`, `V`, etc. — and returns a tuple codec of type `[T, U, V, …]` such that each item is in the order of the provided codecs.
 
 ```ts twoslash
-import { getTupleCodec, getU8Codec, getU64Codec, addCodecSizePrefix, getUtf8Codec, getU32Codec } from "@solana/kit";
+import {
+    getTupleCodec,
+    getU8Codec,
+    getU64Codec,
+    addCodecSizePrefix,
+    getUtf8Codec,
+    getU32Codec,
+} from '@solana/kit';
 // ---cut-before---
-const tupleCodec = getTupleCodec([addCodecSizePrefix(getUtf8Codec(), getU32Codec()), getU8Codec(), getU64Codec()]);
+const tupleCodec = getTupleCodec([
+    addCodecSizePrefix(getUtf8Codec(), getU32Codec()),
+    getU8Codec(),
+    getU64Codec(),
+]);
 
-const bytes = tupleCodec.encode(["alice", 42, 123]);
+const bytes = tupleCodec.encode(['alice', 42, 123]);
 // 0x05000000616c6963652a7b00000000000000
 //   |                 | └-- 3rd item (123).
 //   |                 └-- 2nd item (42).
@@ -2500,12 +2676,12 @@ It accepts the following arguments:
 - A `getIndexFromBytes` function which, given the byte array to decode at a given offset, returns the index of the codec that should be used to decode the next bytes.
 
 ```ts twoslash
-import { getUnionCodec, getU16Codec, getBooleanCodec, Codec } from "@solana/kit";
+import { getUnionCodec, getU16Codec, getBooleanCodec, Codec } from '@solana/kit';
 // ---cut-before---
 const codec: Codec<number | boolean> = getUnionCodec(
-  [getU16Codec(), getBooleanCodec()],
-  (value) => (typeof value === "number" ? 0 : 1),
-  (bytes, offset) => (bytes.slice(offset).length > 1 ? 0 : 1),
+    [getU16Codec(), getBooleanCodec()],
+    (value) => (typeof value === 'number' ? 0 : 1),
+    (bytes, offset) => (bytes.slice(offset).length > 1 ? 0 : 1),
 );
 
 codec.encode(42); // 0x2a00
@@ -2519,7 +2695,7 @@ codec.encode(true); // 0x01
 The `getUnitCodec` function returns a `Codec<void>` that encodes `undefined` into an empty `Uint8Array` and returns `undefined` without consuming any bytes when decoding. This is more of a low-level codec that can be used internally by other codecs. For instance, this is how [getDiscriminatedUnionCodec](#get-discriminated-union-codec) describes the codecs of empty variants.
 
 ```ts twoslash
-import { getUnitCodec } from "@solana/kit";
+import { getUnitCodec } from '@solana/kit';
 const anyBytes = null as unknown as Uint8Array;
 // ---cut-before---
 getUnitCodec().encode(undefined); // Empty Uint8Array

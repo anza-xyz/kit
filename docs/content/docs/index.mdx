@@ -6,7 +6,7 @@ description: Get started with Kit
 Kit is a JavaScript SDK for building Solana apps across environments like Node, the web, and React Native. It provides a comprehensive set of data types and helper functions, forming the foundation for interacting with Solana in JavaScript.
 
 <Callout title="Coming from Web3.js?">
-  Check out our [Upgrade guide](/docs/upgrade-guide) to see how Kit compares to Web3.js.
+    Check out our [Upgrade guide](/docs/upgrade-guide) to see how Kit compares to Web3.js.
 </Callout>
 
 ## Quick start
@@ -50,10 +50,14 @@ Use primitives provided by Kit to set up your project and start interacting with
 For example, if you are planning on sending transactions, you will likely need an RPC API, an RPC Subscriptions API and a "send and confirm" strategy.
 
 ```ts twoslash
-import { createSolanaRpc, createSolanaRpcSubscriptions, sendAndConfirmTransactionFactory } from "@solana/kit";
+import {
+    createSolanaRpc,
+    createSolanaRpcSubscriptions,
+    sendAndConfirmTransactionFactory,
+} from '@solana/kit';
 
-const rpc = createSolanaRpc("https://api.devnet.solana.com");
-const rpcSubscriptions = createSolanaRpcSubscriptions("wss://api.devnet.solana.com");
+const rpc = createSolanaRpc('https://api.devnet.solana.com');
+const rpcSubscriptions = createSolanaRpcSubscriptions('wss://api.devnet.solana.com');
 const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
 ```
 
