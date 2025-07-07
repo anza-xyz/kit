@@ -304,5 +304,36 @@ describe('executeRpcPubSubSubscriptionPlan', () => {
                 );
             });
         });
+        describe('and then acknowledges a subsequent subscription with a different subscription id', () => {
+            let secondAbortController: AbortController;
+            let priorSubscriptionId: number;
+            beforeEach(async () => {
+                jest.useFakeTimers();
+                priorSubscriptionId = expectedSubscriptionId;
+                secondAbortController = new AbortController();
+                executeRpcPubSubSubscriptionPlan({
+                    channel: mockChannel as RpcSubscriptionsChannel<unknown, unknown>,
+                    signal: secondAbortController.signal,
+                    subscribeRequest: { methodName: 'thingSubscribe', params: [] },
+                    unsubscribeMethodName: 'thingUnsubscribe',
+                }).catch(() => {});
+                await jest.runAllTimersAsync();
+                receiveMessage({ id: lastMessageId, jsonrpc: '2.0', result: (expectedSubscriptionId = 456) });
+            });
+            it('sends the unsubscribe message when the prior subscription aborts', () => {
+                mockSend.mockClear();
+                abortController.abort();
+                expect(mockSend).toHaveBeenCalledWith(
+                    expect.objectContaining({ method: 'thingUnsubscribe', params: [priorSubscriptionId] }),
+                );
+            });
+            it('sends the unsubscribe message when that latest subscription aborts', () => {
+                mockSend.mockClear();
+                secondAbortController.abort();
+                expect(mockSend).toHaveBeenCalledWith(
+                    expect.objectContaining({ method: 'thingUnsubscribe', params: [expectedSubscriptionId] }),
+                );
+            });
+        });
     });
 });
