@@ -34,7 +34,7 @@ export function isOffCurveAddress<TAddress extends Address>(
     putativeOffCurveAddress: TAddress,
 ): putativeOffCurveAddress is OffCurveAddress<TAddress> {
     const addressBytes = getAddressCodec().encode(putativeOffCurveAddress);
-    return compressedPointBytesAreOnCurve(addressBytes);
+    return compressedPointBytesAreOnCurve(addressBytes) === false;
 }
 
 /**
