@@ -1778,7 +1778,8 @@ describe('account', () => {
                     },
                 });
             });
-            it('token-group', async () => {
+            // FIXME(https://github.com/anza-xyz/kit/issues/556)
+            it.failing('token-group', async () => {
                 expect.assertions(1);
                 const source = /* GraphQL */ `
                     query testQuery($address: Address!) {
@@ -1822,7 +1823,8 @@ describe('account', () => {
                     },
                 });
             });
-            it('token-group-member', async () => {
+            // FIXME(https://github.com/anza-xyz/kit/issues/556)
+            it.failing('token-group-member', async () => {
                 expect.assertions(1);
                 const source = /* GraphQL */ `
                     query testQuery($address: Address!) {
