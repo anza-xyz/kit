@@ -30,13 +30,14 @@ const ON_CURVE_KEY_BYTES = [
     ]),
 ];
 
-const OFF_CURVE_ADDRESSES = [
+const ON_CURVE_ADDRESSES = [
     'nick6zJc6HpW3kfBm4xS2dmbuVRyb5F3AnUvj5ymzR5', // "wallet" account
     '11111111111111111111111111111111', // system program
     'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA', // legacy token program
     'SQDS4ep65T869zMMBKyuUq6aD6EgTu8psMjkvj52pCf', // Squads multi-sig program
 ].map(address);
-const ON_CURVE_ADDRESSES = [
+
+const OFF_CURVE_ADDRESSES = [
     'CCMCWh4FudPEmY6Q1AVi5o8mQMXkHYkJUmZfzRGdcJ9P', // ATA
     '2DRxyJDsDccGL6mb8PLMsKQTCU3C7xUq8aprz53VcW4k', // random Squads multi-sig account
 ].map(address);
