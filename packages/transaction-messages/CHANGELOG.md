@@ -1,5 +1,38 @@
 # @solana/transaction-messages
 
+## 2.3.0
+
+### Minor Changes
+
+- [#468](https://github.com/anza-xyz/kit/pull/468) [`6ccbf01`](https://github.com/anza-xyz/kit/commit/6ccbf012703fce1cb40388b0f4e1ffaeffea838a) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add, remove and forward the `TransactionMessageWithinSizeLimit` and `TransactionWithinSizeLimit` types in all helpers that may affect the size of a transaction or transaction message.
+
+- [#427](https://github.com/anza-xyz/kit/pull/427) [`eb61d94`](https://github.com/anza-xyz/kit/commit/eb61d94786e212fc23778d445a94b86d2b1b024f) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Rename `isDurableNonceTransaction` to `isTransactionMessageWithDurableNonceLifetime` and `assertIsDurableNonceTransactionMessage` to `assertIsTransactionMessageWithDurableNonceLifetime` for consistency with the blockhash lifetime. The old names are kept as aliases but marked as deprecated.
+
+- [#426](https://github.com/anza-xyz/kit/pull/426) [`b7dfe03`](https://github.com/anza-xyz/kit/commit/b7dfe033a8e929d7a598d8bfea546e9ef4207639) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Deprecate the `I` prefix of four transaction message types to stay consistent with the rest of them. Namely, the following types are renamed and their old names are marked as deprecated:
+    - `ITransactionMessageWithFeePayer` -> `TransactionMessageWithFeePayer`
+    - `ITransactionMessageWithFeePayerSigner` -> `TransactionMessageWithFeePayerSigner`
+    - `ITransactionMessageWithSigners` -> `TransactionMessageWithSigners`
+    - `ITransactionMessageWithSingleSendingSigner` -> `TransactionMessageWithSingleSendingSigner`
+
+- [#488](https://github.com/anza-xyz/kit/pull/488) [`810d6ab`](https://github.com/anza-xyz/kit/commit/810d6abafe1b7ea46ed63c491db1f5d6c16397ab) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Remove the `I` prefix on the following types: `IInstruction`, `IInstructionWithAccounts`, `IInstructionWithData`, `IInstructionWithSigners`, `IAccountMeta`, `IAccountLookupMeta` and `IAccountSignerMeta`. The old names are kept as aliases but marked as deprecated.
+
+### Patch Changes
+
+- [#432](https://github.com/anza-xyz/kit/pull/432) [`53e1336`](https://github.com/anza-xyz/kit/commit/53e1336149878c84048e0fde5c7e7ace6cc1e97f) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Keep type safety when appending or prepending instructions to transaction messages
+
+- [#430](https://github.com/anza-xyz/kit/pull/430) [`e6c0568`](https://github.com/anza-xyz/kit/commit/e6c0568ef34fdc04075af27eb102851123a02be0) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Introduce a new `TransactionMessageWithLifetime` type and special Exclude type helpers to remove information from transaction messages
+
+- Updated dependencies [[`363e3cc`](https://github.com/anza-xyz/kit/commit/363e3cc45db77a731bab1435b925fe0ad0af01df), [`eeac21d`](https://github.com/anza-xyz/kit/commit/eeac21d5fe4d8fb3ed3addee87872679ee37b4c4), [`93609aa`](https://github.com/anza-xyz/kit/commit/93609aa31dbd83086d0debd41aa2f8e9a0809761), [`b7dfe03`](https://github.com/anza-xyz/kit/commit/b7dfe033a8e929d7a598d8bfea546e9ef4207639), [`810d6ab`](https://github.com/anza-xyz/kit/commit/810d6abafe1b7ea46ed63c491db1f5d6c16397ab)]:
+    - @solana/errors@2.3.0
+    - @solana/instructions@2.3.0
+    - @solana/addresses@2.3.0
+    - @solana/codecs-core@2.3.0
+    - @solana/codecs-data-structures@2.3.0
+    - @solana/codecs-numbers@2.3.0
+    - @solana/rpc-types@2.3.0
+    - @solana/functional@2.3.0
+    - @solana/nominal-types@2.3.0
+
 ## 2.2.1
 
 ### Patch Changes
@@ -37,7 +70,6 @@
 - [#473](https://github.com/anza-xyz/kit/pull/473) [`36a9dee`](https://github.com/anza-xyz/kit/commit/36a9dee4e6cbd72020dc74777fe394130b9a5f46) Thanks [@steveluscher](https://github.com/steveluscher)! - The identity of all branded types has changed in such a way that the types from v2.1.1 will be compatible with any other version going forward, which is not the case for versions v2.1.0 and before.
 
     If you end up with a mix of versions in your project prior to v2.1.1 (eg. `@solana/addresses@2.0.0` and `@solana/addresses@2.1.0`) you may discover that branded types like `Address` raise a type error, even though they are runtime compatible. Your options are:
-
     1. Always make sure that you have exactly one instance of each `@solana/*` dependency in your project at any given time
     2. Upgrade all of your `@solana/*` dependencies to v2.1.1 at minimum, even if their minor or patch versions differ.
     3. Suppress the type errors using a comment like the following:
