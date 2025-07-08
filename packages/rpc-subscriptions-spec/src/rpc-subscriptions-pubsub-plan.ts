@@ -42,6 +42,13 @@ function decrementSubscriberCountAndReturnNewCount(channel: WeakKey, subscriptio
 function incrementSubscriberCount(channel: WeakKey, subscriptionId?: number): void {
     augmentSubscriberCountAndReturnNewCount(1, channel, subscriptionId);
 }
+function getSubscriberCountBySubscriptionIdForChannel(channel: WeakKey): Record<number, number> {
+    let subscriberCountBySubscriptionId = subscriberCountBySubscriptionIdByChannel.get(channel);
+    if (!subscriberCountBySubscriptionId) {
+        subscriberCountBySubscriptionIdByChannel.set(channel, (subscriberCountBySubscriptionId = {}));
+    }
+    return subscriberCountBySubscriptionId;
+}
 function augmentSubscriberCountAndReturnNewCount(
     amount: -1 | 1,
     channel: WeakKey,
@@ -50,17 +57,17 @@ function augmentSubscriberCountAndReturnNewCount(
     if (subscriptionId === undefined) {
         return;
     }
-    let subscriberCountBySubscriptionId = subscriberCountBySubscriptionIdByChannel.get(channel);
-    if (!subscriberCountBySubscriptionId && amount > 0) {
-        subscriberCountBySubscriptionIdByChannel.set(
-            channel,
-            (subscriberCountBySubscriptionId = { [subscriptionId]: 0 }),
-        );
+    const subscriberCountBySubscriptionId = getSubscriberCountBySubscriptionIdForChannel(channel);
+    if (!subscriberCountBySubscriptionId[subscriptionId] && amount > 0) {
+        subscriberCountBySubscriptionId[subscriptionId] = 0;
     }
-    if (subscriberCountBySubscriptionId?.[subscriptionId] !== undefined) {
-        return (subscriberCountBySubscriptionId[subscriptionId] =
-            amount + subscriberCountBySubscriptionId[subscriptionId]);
+    const newCount = amount + subscriberCountBySubscriptionId[subscriptionId];
+    if (newCount <= 0) {
+        delete subscriberCountBySubscriptionId[subscriptionId];
+    } else {
+        subscriberCountBySubscriptionId[subscriptionId] = newCount;
     }
+    return newCount;
 }
 
 const cache = new WeakMap();
