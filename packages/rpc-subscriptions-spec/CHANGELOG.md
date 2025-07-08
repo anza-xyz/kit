@@ -1,5 +1,17 @@
 # @solana/rpc-subscriptions-spec
 
+## 2.2.1
+
+### Patch Changes
+
+- [#633](https://github.com/anza-xyz/kit/pull/633) [`e881fca`](https://github.com/anza-xyz/kit/commit/e881fca9ea0154d0eeaec682697042f86502b86d) Thanks [@github-actions](https://github.com/apps/github-actions)! - Repaired a bug that could cause subscriptions to become 'stuck' and fail to send their unsubscribe message to the RPC, despite the last consumer in your app having released the subscription by calling `AbortController#abort()`
+
+- Updated dependencies []:
+    - @solana/errors@2.2.1
+    - @solana/promises@2.2.1
+    - @solana/rpc-spec-types@2.2.1
+    - @solana/subscribable@2.2.1
+
 ## 2.2.0
 
 ### Patch Changes
