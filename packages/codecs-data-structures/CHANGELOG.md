@@ -1,5 +1,14 @@
 # @solana/codecs-data-structures
 
+## 2.2.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/codecs-core@2.2.0
+    - @solana/codecs-numbers@2.2.0
+    - @solana/errors@2.2.0
+
 ## 2.1.1
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @solana/nominal-types
 
+## 2.2.0
+
+### Patch Changes
+
+- [`85925d6`](https://github.com/anza-xyz/kit/commit/85925d64308e91b59fb748c75e4b414012eb4893) Thanks [@nickfrosty](https://github.com/nickfrosty)! - Added `AffinePoint`; a nominal type that you can use to tag a value as representing an affine point over some field that is either valid or invalid from the perspective of some curve. Typically this will be used to tag an address as either on or off curve.
+
 ## 2.1.1
 
 ### Patch Changes
