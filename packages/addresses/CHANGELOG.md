@@ -1,5 +1,22 @@
 # @solana/addresses
 
+## 2.2.0
+
+### Minor Changes
+
+- [`85925d6`](https://github.com/anza-xyz/kit/commit/85925d64308e91b59fb748c75e4b414012eb4893) Thanks [@nickfrosty](https://github.com/nickfrosty)! - Added an `OffCurveAddress` type to represent addresses for which there is no associated private key. These are addresses that can not be signed for by keyholders, only by programs. An example of such an address is the address of an associated token account, for which only the Token Program can sign transactions that seek to modify its contents.
+
+    Also added an `offCurveAddress()` function that you can use to assert and coerce an `Address` to an `OffCurveAddress`, as well as an `isOffCurveAddress()` guard function, and a `assertIsOffCurveAddress()` assertion function.
+
+### Patch Changes
+
+- Updated dependencies [[`85925d6`](https://github.com/anza-xyz/kit/commit/85925d64308e91b59fb748c75e4b414012eb4893)]:
+    - @solana/nominal-types@2.2.0
+    - @solana/assertions@2.2.0
+    - @solana/codecs-core@2.2.0
+    - @solana/codecs-strings@2.2.0
+    - @solana/errors@2.2.0
+
 ## 2.1.1
 
 ### Patch Changes
