@@ -1,5 +1,7 @@
 # @solana/nominal-types
 
+## 2.2.1
+
 ## 2.2.0
 
 ### Patch Changes
