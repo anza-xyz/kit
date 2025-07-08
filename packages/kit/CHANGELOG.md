@@ -1,5 +1,29 @@
 # @solana/web3.js
 
+## 2.2.1
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/rpc-subscriptions@2.2.1
+    - @solana/transaction-confirmation@2.2.1
+    - @solana/accounts@2.2.1
+    - @solana/addresses@2.2.1
+    - @solana/codecs@2.2.1
+    - @solana/errors@2.2.1
+    - @solana/functional@2.2.1
+    - @solana/instructions@2.2.1
+    - @solana/keys@2.2.1
+    - @solana/programs@2.2.1
+    - @solana/rpc@2.2.1
+    - @solana/rpc-parsed-types@2.2.1
+    - @solana/rpc-spec-types@2.2.1
+    - @solana/rpc-types@2.2.1
+    - @solana/signers@2.2.1
+    - @solana/sysvars@2.2.1
+    - @solana/transaction-messages@2.2.1
+    - @solana/transactions@2.2.1
+
 ## 2.2.0
 
 ### Patch Changes

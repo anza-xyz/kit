@@ -1,5 +1,15 @@
 # @solana/rpc-subscriptions-channel-websocket
 
+## 2.2.1
+
+### Patch Changes
+
+- Updated dependencies [[`e881fca`](https://github.com/anza-xyz/kit/commit/e881fca9ea0154d0eeaec682697042f86502b86d)]:
+    - @solana/rpc-subscriptions-spec@2.2.1
+    - @solana/errors@2.2.1
+    - @solana/functional@2.2.1
+    - @solana/subscribable@2.2.1
+
 ## 2.2.0
 
 ### Patch Changes

@@ -1,5 +1,20 @@
 # @solana/transaction-messages
 
+## 2.2.1
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/addresses@2.2.1
+    - @solana/codecs-core@2.2.1
+    - @solana/codecs-data-structures@2.2.1
+    - @solana/codecs-numbers@2.2.1
+    - @solana/errors@2.2.1
+    - @solana/functional@2.2.1
+    - @solana/instructions@2.2.1
+    - @solana/nominal-types@2.2.1
+    - @solana/rpc-types@2.2.1
+
 ## 2.2.0
 
 ### Patch Changes
