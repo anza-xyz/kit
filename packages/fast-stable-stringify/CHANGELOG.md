@@ -1,5 +1,7 @@
 # @solana/fast-stable-stringify
 
+## 2.2.0
+
 ## 2.1.1
 
 ### Patch Changes
