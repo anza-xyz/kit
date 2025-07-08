@@ -1,6 +1,73 @@
 ---
 title: Signers
-description: Sign transactions and messages however you like
+description: Accounts with signing capabilities
 ---
 
-TODO
+## Introduction
+
+Signers are an abstraction that combines an account with an implementation that computes signatures on behalf of that account. No matter what actually computes the signature – a wallet app, a network API, the `SubtleCrypto` API, or a userspace implementation – so long as it implements the correct signer interface for your intended purpose, you can use it with all of Kit's signer-aware functions.
+
+Signers are designed to make it easier to build, sign, and send transactions by taking the guesswork out of which accounts' key pairs need to sign a transaction. Signer-aware APIs allow you to associate signer objects with each transaction instruction that requires them, enabling Kit's transaction planning, signing, and sending functions to automatically collect and invoke them.
+
+## Installation
+
+Signers are **included within the `@solana/kit` library** but you may also install them using their standalone package.
+
+```package-install
+@solana/signers
+```
+
+## What is a signer?
+
+All signers are wrappers around an [`Address`](/api/type-aliases/Address). This means that most APIs that require an `Address` can be made to accept a signer. Each specific type of signer adds one or more capabilities, such as the ability to sign a message or a transaction on behalf of the account with that address. Some even add the ability to sign _and_ send a transaction, which is common for wallets that you use in your browser or on your phone.
+
+```ts twoslash
+// @noErrors: 2769
+import {
+    createSignableMessage,
+    createTransactionMessage,
+    generateKeyPairSigner,
+    pipe,
+    setTransactionMessageFeePayerSigner,
+    signTransactionMessageWithSigners,
+} from '@solana/kit';
+
+// Generate a key pair signer.
+const mySigner = await generateKeyPairSigner();
+mySigner.address; // The address of the account
+
+// Sign one or multiple messages.
+const myMessage = createSignableMessage('Hello world!');
+const [messageSignatures] = await mySigner.signMessages([myMessage]);
+//                                ^^^^^^^^
+
+// Sign to pay fees for a transaction message
+const myTransactionMessage = pipe(
+    createTransactionMessage({ version: 0 }),
+    (m) => setTransactionMessageFeePayerSigner(mySigner, m),
+    //                                         ^^^^^^^^
+    // Add instructions, lifetime, etc.
+);
+const signedTransaction = await signTransactionMessageWithSigners(myTransactionMessage);
+```
+
+As you can see, this provides a consistent API regardless of how things are being signed behind the scenes. If tomorrow we need to use a browser wallet instead, we'd simply need to swap the `generateKeyPairSigner()` function with the signer factory of our choice.
+
+## Types of signers
+
+This package offers a total of five different types of signers that may be used in combination when applicable. Three of them allow us to sign transactions whereas the other two are used for regular message signing.
+
+They are separated into three categories:
+
+- **Partial signers**: Given a message or transaction, provide one or more signatures for it. These signers are not able to modify the given data which allows us to run many of them in parallel.
+- **Modifying signers**: Can choose to modify a message or transaction before signing it with zero or more private keys. Because modifying a message or transaction invalidates any pre-existing signatures over it, modifying signers must do their work before any other signer.
+- **Sending signers**: Given a transaction, signs it and sends it immediately to the blockchain. When applicable, the signer may also decide to modify the provided transaction before signing it. This interface accommodates wallets that simply cannot sign a transaction without sending it at the same time. This category of signers does not apply to regular messages.
+
+Thus, we end up with the following interfaces.
+
+|                                                            | Partial signers                                                          | Modifying signers                                                            | Sending signers                                                          |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| [`TransactionSigner`](/api/type-aliases/TransactionSigner) | [`TransactionPartialSigner`](/api/type-aliases/TransactionPartialSigner) | [`TransactionModifyingSigner`](/api/type-aliases/TransactionModifyingSigner) | [`TransactionSendingSigner`](/api/type-aliases/TransactionSendingSigner) |
+| [`MessageSigner`](/api/type-aliases/MessageSigner)         | [`MessagePartialSigner`](/api/type-aliases/MessagePartialSigner)         | [`MessageModifyingSigner`](/api/type-aliases/MessageModifyingSigner)         | N/A                                                                      |
+
+We will go through each of these five signer interfaces and their respective characteristics in the documentation below.

@@ -12,7 +12,7 @@ The Kit library uses the [native Crypto API](https://developer.mozilla.org/en-US
 To create a new keypair, you can use the `generateKeyPair` helper function. This will return an instance of the native `CryptoKeyPair` type.
 
 ```ts twoslash
-import { generateKeyPair } from "@solana/kit";
+import { generateKeyPair } from '@solana/kit';
 
 const wallet: CryptoKeyPair = await generateKeyPair();
 ```
@@ -30,7 +30,7 @@ Different types of signers are available for various use cases, but in this tuto
 We can use the `generateKeyPairSigner` function to create a new `KeyPairSigner` instance like so.
 
 ```ts twoslash
-import { generateKeyPairSigner } from "@solana/kit";
+import { generateKeyPairSigner } from '@solana/kit';
 
 const wallet = await generateKeyPairSigner();
 ```
@@ -40,11 +40,13 @@ As you can see, this is very similar to generating a `CryptoKeyPair`, but now we
 For instance, here's how we could replace our `KeyPairSigner` with a signer that uses an in-browser wallet instead.
 
 ```ts twoslash
-import { generateKeyPairSigner, KeyPairSigner, TransactionSigner } from "@solana/kit";
-import { useWalletAccountTransactionSendingSigner } from "@solana/react";
+import { generateKeyPairSigner, KeyPairSigner, TransactionSigner } from '@solana/kit';
+import { useWalletAccountTransactionSendingSigner } from '@solana/react';
 // ---cut-start---
 const account = null as unknown as Parameters<typeof useWalletAccountTransactionSendingSigner>[0];
-const currentChain = null as unknown as Parameters<typeof useWalletAccountTransactionSendingSigner>[1];
+const currentChain = null as unknown as Parameters<
+    typeof useWalletAccountTransactionSendingSigner
+>[1];
 // ---cut-end---
 
 let wallet: TransactionSigner;
@@ -60,24 +62,24 @@ Now that we know how to generate a new signer, let's make sure we give it some l
 
 ```ts twoslash
 import {
-  airdropFactory,
-  createSolanaRpc,
-  createSolanaRpcSubscriptions,
-  generateKeyPairSigner,
-  lamports,
-} from "@solana/kit";
+    airdropFactory,
+    createSolanaRpc,
+    createSolanaRpcSubscriptions,
+    generateKeyPairSigner,
+    lamports,
+} from '@solana/kit';
 
 // Create the RPC, RPC Subscriptions and airdrop function.
-const rpc = createSolanaRpc("http://127.0.0.1:8899");
-const rpcSubscriptions = createSolanaRpcSubscriptions("ws://127.0.0.1:8900");
+const rpc = createSolanaRpc('http://127.0.0.1:8899');
+const rpcSubscriptions = createSolanaRpcSubscriptions('ws://127.0.0.1:8900');
 const airdrop = airdropFactory({ rpc, rpcSubscriptions });
 
 // Generate a new wallet with 1 SOL.
 const wallet = await generateKeyPairSigner();
 await airdrop({
-  recipientAddress: wallet.address,
-  lamports: lamports(1_000_000_000n),
-  commitment: "confirmed",
+    recipientAddress: wallet.address,
+    lamports: lamports(1_000_000_000n),
+    commitment: 'confirmed',
 });
 ```
 
@@ -87,42 +89,48 @@ Since we're going to rely on this signer for the rest of the tutorial, let's adj
 
 ```ts twoslash title="src/client.ts"
 import {
-  createSolanaRpc,
-  createSolanaRpcSubscriptions,
-  Rpc,
-  RpcSubscriptions,
-  SolanaRpcApi,
-  SolanaRpcSubscriptionsApi,
-} from "@solana/kit";
+    createSolanaRpc,
+    createSolanaRpcSubscriptions,
+    Rpc,
+    RpcSubscriptions,
+    SolanaRpcApi,
+    SolanaRpcSubscriptionsApi,
+} from '@solana/kit';
 // ---cut-before---
-import { airdropFactory, generateKeyPairSigner, lamports, MessageSigner, TransactionSigner } from "@solana/kit";
+import {
+    airdropFactory,
+    generateKeyPairSigner,
+    lamports,
+    MessageSigner,
+    TransactionSigner,
+} from '@solana/kit';
 
 export type Client = {
-  rpc: Rpc<SolanaRpcApi>;
-  rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
-  wallet: TransactionSigner & MessageSigner;
+    rpc: Rpc<SolanaRpcApi>;
+    rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+    wallet: TransactionSigner & MessageSigner;
 };
 
 let client: Client | undefined;
 export async function createClient(): Promise<Client> {
-  if (!client) {
-    // Create RPC objects and airdrop function.
-    const rpc = createSolanaRpc("http://127.0.0.1:8899");
-    const rpcSubscriptions = createSolanaRpcSubscriptions("ws://127.0.0.1:8900");
-    const airdrop = airdropFactory({ rpc, rpcSubscriptions });
+    if (!client) {
+        // Create RPC objects and airdrop function.
+        const rpc = createSolanaRpc('http://127.0.0.1:8899');
+        const rpcSubscriptions = createSolanaRpcSubscriptions('ws://127.0.0.1:8900');
+        const airdrop = airdropFactory({ rpc, rpcSubscriptions });
 
-    // Create a wallet with lamports.
-    const wallet = await generateKeyPairSigner();
-    await airdrop({
-      recipientAddress: wallet.address,
-      lamports: lamports(1_000_000_000n),
-      commitment: "confirmed",
-    });
+        // Create a wallet with lamports.
+        const wallet = await generateKeyPairSigner();
+        await airdrop({
+            recipientAddress: wallet.address,
+            lamports: lamports(1_000_000_000n),
+            commitment: 'confirmed',
+        });
 
-    // Store the client.
-    client = { rpc, rpcSubscriptions, wallet };
-  }
-  return client;
+        // Store the client.
+        client = { rpc, rpcSubscriptions, wallet };
+    }
+    return client;
 }
 ```
 
@@ -130,26 +138,26 @@ Notice how we had to make the `createClient` function asynchronous since it now 
 
 ```ts twoslash title="src/index.ts"
 import {
-  Rpc,
-  RpcSubscriptions,
-  SolanaRpcApi,
-  SolanaRpcSubscriptionsApi,
-  TransactionSigner,
-  MessageSigner,
-} from "@solana/kit";
+    Rpc,
+    RpcSubscriptions,
+    SolanaRpcApi,
+    SolanaRpcSubscriptionsApi,
+    TransactionSigner,
+    MessageSigner,
+} from '@solana/kit';
 export type Client = {
-  rpc: Rpc<SolanaRpcApi>;
-  rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
-  wallet: TransactionSigner & MessageSigner;
+    rpc: Rpc<SolanaRpcApi>;
+    rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+    wallet: TransactionSigner & MessageSigner;
 };
 export async function createClient() {
-  return {} as Client;
+    return {} as Client;
 }
 // ---cut-before---
 async function tutorial() {
-  const client = await createClient();
-  const { value: balance } = await client.rpc.getBalance(client.wallet.address).send();
-  console.log(`Balance: ${balance} lamports.`);
+    const client = await createClient();
+    const { value: balance } = await client.rpc.getBalance(client.wallet.address).send();
+    console.log(`Balance: ${balance} lamports.`);
 }
 ```
 
