@@ -98,6 +98,7 @@ import {
     SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN,
     SOLANA_ERROR__INSTRUCTION_ERROR__UNSUPPORTED_PROGRAM_ID,
     SOLANA_ERROR__INSTRUCTION_ERROR__UNSUPPORTED_SYSVAR,
+    SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN,
     SOLANA_ERROR__INVALID_BLOCKHASH_BYTE_LENGTH,
     SOLANA_ERROR__INVALID_NONCE,
     SOLANA_ERROR__INVARIANT_VIOLATION__CACHED_ABORTABLE_ITERABLE_CACHE_ENTRY_MISSING,
@@ -395,6 +396,10 @@ export type SolanaErrorContext = DefaultUnspecifiedErrorContextToUndefined<
             errorName: string;
             index: number;
             instructionErrorContext?: unknown;
+        };
+        [SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN]: {
+            numBytesRequired: number;
+            numFreeBytes: number;
         };
         [SOLANA_ERROR__INSTRUCTION__EXPECTED_TO_HAVE_ACCOUNTS]: {
             data?: ReadonlyUint8Array;

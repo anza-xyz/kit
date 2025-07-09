@@ -1,6 +1,11 @@
 import '@solana/test-matchers/toBeFrozenObject';
 
 import { Address } from '@solana/addresses';
+import {
+    SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN,
+    SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_PACKER_ALREADY_COMPLETE,
+    SolanaError,
+} from '@solana/errors';
 import { pipe } from '@solana/functional';
 import { Instruction } from '@solana/instructions';
 import {
@@ -215,7 +220,9 @@ describe('getLinearMessagePackerInstructionPlan', () => {
             createInstruction(`[${expectedLength},2000)`),
         );
         expect(messagePacker.done()).toBe(true);
-        expect(() => messagePacker.packMessageToCapacity(message)).toThrow();
+        expect(() => messagePacker.packMessageToCapacity(message)).toThrow(
+            new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_PACKER_ALREADY_COMPLETE),
+        );
     });
     it('freezes created MessagePackerInstructionPlan objects', () => {
         const plan = getLinearMessagePackerInstructionPlan({
@@ -223,6 +230,22 @@ describe('getLinearMessagePackerInstructionPlan', () => {
             totalLength: 2000,
         });
         expect(plan).toBeFrozenObject();
+    });
+    it("throws if there isn't enough space on the provided message", () => {
+        jest.mocked(getTransactionMessageSize).mockReturnValueOnce(TRANSACTION_SIZE_LIMIT + 50);
+        jest.mocked(getTransactionMessageSize).mockReturnValueOnce(TRANSACTION_SIZE_LIMIT - 50);
+        const plan = getLinearMessagePackerInstructionPlan({
+            getInstruction: () => createInstruction('ignored'),
+            totalLength: 2000,
+        });
+
+        const messagePacker = plan.getMessagePacker();
+        expect(() => messagePacker.packMessageToCapacity(message)).toThrow(
+            new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN, {
+                numBytesRequired: 101,
+                numFreeBytes: 49,
+            }),
+        );
     });
     it('freezes the messagePacker returned by getMessagePacker', () => {
         const plan = getLinearMessagePackerInstructionPlan({
@@ -250,7 +273,22 @@ describe('getMessagePackerInstructionPlanFromInstructions', () => {
             createInstruction('B'),
         ]);
         expect(messagePacker.done()).toBe(true);
-        expect(() => messagePacker.packMessageToCapacity(message)).toThrow();
+        expect(() => messagePacker.packMessageToCapacity(message)).toThrow(
+            new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_PACKER_ALREADY_COMPLETE),
+        );
+    });
+    it("throws if there isn't enough space on the provided message", () => {
+        jest.mocked(getTransactionMessageSize).mockReturnValueOnce(TRANSACTION_SIZE_LIMIT - 100);
+        jest.mocked(getTransactionMessageSize).mockReturnValueOnce(TRANSACTION_SIZE_LIMIT + 50);
+        const plan = getMessagePackerInstructionPlanFromInstructions([createInstruction('A'), createInstruction('B')]);
+
+        const messagePacker = plan.getMessagePacker();
+        expect(() => messagePacker.packMessageToCapacity(message)).toThrow(
+            new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN, {
+                numBytesRequired: 150,
+                numFreeBytes: 100,
+            }),
+        );
     });
     it('freezes created MessagePackerInstructionPlan objects', () => {
         const plan = getMessagePackerInstructionPlanFromInstructions([createInstruction('A'), createInstruction('B')]);
@@ -282,7 +320,25 @@ describe('getReallocMessagePackerInstructionPlan', () => {
             createInstruction('Size: 4760'), // 15000 - REALLOC_LIMIT
         ]);
         expect(messagePacker.done()).toBe(true);
-        expect(() => messagePacker.packMessageToCapacity(message)).toThrow();
+        expect(() => messagePacker.packMessageToCapacity(message)).toThrow(
+            new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_PACKER_ALREADY_COMPLETE),
+        );
+    });
+    it("throws if there isn't enough space on the provided message", () => {
+        jest.mocked(getTransactionMessageSize).mockReturnValueOnce(TRANSACTION_SIZE_LIMIT - 100);
+        jest.mocked(getTransactionMessageSize).mockReturnValueOnce(TRANSACTION_SIZE_LIMIT + 50);
+        const plan = getReallocMessagePackerInstructionPlan({
+            getInstruction: () => createInstruction('ignored'),
+            totalSize: 15_000,
+        });
+
+        const messagePacker = plan.getMessagePacker();
+        expect(() => messagePacker.packMessageToCapacity(message)).toThrow(
+            new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN, {
+                numBytesRequired: 150,
+                numFreeBytes: 100,
+            }),
+        );
     });
     it('freezes created MessagePackerInstructionPlan objects', () => {
         const plan = getReallocMessagePackerInstructionPlan({

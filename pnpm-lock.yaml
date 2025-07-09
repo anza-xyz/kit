@@ -536,6 +536,9 @@ importers:
 
   packages/instruction-plans:
     dependencies:
+      '@solana/errors':
+        specifier: workspace:*
+        version: link:../errors
       '@solana/instructions':
         specifier: workspace:*
         version: link:../instructions
