@@ -18,7 +18,7 @@ export function getHumanReadableErrorMessage<TErrorCode extends SolanaErrorCode>
     code: TErrorCode,
     context: object = {},
 ): string {
-    const messageFormatString = SolanaErrorMessages[code];
+    const messageFormatString = SolanaErrorMessages[code] ?? "";
     if (messageFormatString.length === 0) {
         return '';
     }
