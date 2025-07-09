@@ -52,11 +52,11 @@ jobs:
         id: changesets
         uses: changesets/action@06245a4e0a36c064a573d4150030f5ec548e4fcc # v1.4.10
         with:
-          # Some tasks slow down considerably on GitHub Actions runners when concurrency is high
-          publish: >
-            pnpm turbo publish-packages --concurrency=1 && 
-            `# Changesets will only create the tags/release if it sees "New tag:" in the publish command's output`
-            `# See https://github.com/changesets/action/blob/06245a4e0a36c064a573d4150030f5ec548e4fcc/src/run.ts#L176`
+          # * Some tasks slow down considerably on GitHub Actions runners when concurrency is high
+          # * Changesets will only create the tags/release if it sees "New tag:" in the publish command's output
+          #   See https://github.com/changesets/action/blob/06245a4e0a36c064a573d4150030f5ec548e4fcc/src/run.ts#L176
+          publish: |
+            pnpm turbo publish-packages --concurrency=1
             echo 'New tag:'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
