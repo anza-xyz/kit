@@ -9204,7 +9204,7 @@ snapshots:
 
   '@jest/pattern@30.0.1':
     dependencies:
-      '@types/node': 24.0.10
+      '@types/node': 24.0.12
       jest-regex-util: 30.0.1
 
   '@jest/reporters@30.0.0-alpha.6':
@@ -9368,7 +9368,7 @@ snapshots:
       '@jest/schemas': 30.0.1
       '@types/istanbul-lib-coverage': 2.0.6
       '@types/istanbul-reports': 3.0.4
-      '@types/node': 24.0.10
+      '@types/node': 24.0.12
       '@types/yargs': 17.0.33
       chalk: 4.1.2
 
