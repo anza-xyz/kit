@@ -1,3 +1,8 @@
+import {
+    SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN,
+    SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_PACKER_ALREADY_COMPLETE,
+    SolanaError,
+} from '@solana/errors';
 import { Instruction } from '@solana/instructions';
 import {
     appendTransactionMessageInstruction,
@@ -233,7 +238,14 @@ export type MessagePackerInstructionPlan = Readonly<{
 export type MessagePacker = Readonly<{
     /** Checks whether the message packer has more instructions to pack into transaction messages. */
     done: () => boolean;
-    /** Packs the provided transaction message with instructions or throws if not possible. */
+    /**
+     * Packs the provided transaction message with instructions or throws if not possible.
+     *
+     * @throws {@link SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN}
+     *   if the provided transaction message cannot be used to fill the next instructions.
+     * @throws {@link SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_PACKER_ALREADY_COMPLETE}
+     *   if the message packer is already done and no more instructions can be packed.
+     */
     packMessageToCapacity: (
         transactionMessage: BaseTransactionMessage & TransactionMessageWithFeePayer,
     ) => BaseTransactionMessage & TransactionMessageWithFeePayer;
@@ -387,8 +399,7 @@ export function getLinearMessagePackerInstructionPlan({
                 done: () => offset >= totalBytes,
                 packMessageToCapacity: (message: BaseTransactionMessage & TransactionMessageWithFeePayer) => {
                     if (offset >= totalBytes) {
-                        // TODO: Coded error (next PR).
-                        throw new Error('message packer is already done');
+                        throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_PACKER_ALREADY_COMPLETE);
                     }
 
                     const baseTransactionSize = getTransactionMessageSize(
@@ -400,8 +411,9 @@ export function getLinearMessagePackerInstructionPlan({
                         1; /* Leeway for shortU16 numbers in transaction headers. */
 
                     if (freeSpace <= 0) {
-                        // TODO: Coded error (next PR).
-                        throw new Error('Cannot pack using provided message');
+                        throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN, {
+                            transactionMessage: message,
+                        });
                     }
 
                     const length = Math.min(totalBytes - offset, freeSpace);
@@ -451,8 +463,7 @@ export function getMessagePackerInstructionPlanFromInstructions<TInstruction ext
                 done: () => instructionIndex >= instructions.length,
                 packMessageToCapacity: (message: BaseTransactionMessage & TransactionMessageWithFeePayer) => {
                     if (instructionIndex >= instructions.length) {
-                        // TODO: Coded error (next PR).
-                        throw new Error('message packer is already done');
+                        throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_PACKER_ALREADY_COMPLETE);
                     }
 
                     for (let index = instructionIndex; index < instructions.length; index++) {
@@ -460,8 +471,10 @@ export function getMessagePackerInstructionPlanFromInstructions<TInstruction ext
 
                         if (getTransactionMessageSize(message) > TRANSACTION_SIZE_LIMIT) {
                             if (index === instructionIndex) {
-                                // TODO: Coded error (next PR).
-                                throw new Error('Cannot pack using provided message');
+                                throw new SolanaError(
+                                    SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN,
+                                    { transactionMessage: message },
+                                );
                             }
                             instructionIndex = index;
                             return message;
