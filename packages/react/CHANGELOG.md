@@ -1,5 +1,17 @@
 # @solana/react
 
+## 2.4.0
+
+### Patch Changes
+
+- Updated dependencies [[`93ae6f9`](https://github.com/anza-xyz/kit/commit/93ae6f96859019b6c7ea9a596ffb9b1be7a35e64), [`760fb83`](https://github.com/anza-xyz/kit/commit/760fb8319f6b53fa1baf05f9aa1246cb6c2caceb), [`a894d53`](https://github.com/anza-xyz/kit/commit/a894d53192d50b5d2217ada2cb715d71ef4f8f02), [`0bd053b`](https://github.com/anza-xyz/kit/commit/0bd053bfa40b095d37bea7b7cd695259ba5a9cdc), [`55d6b04`](https://github.com/anza-xyz/kit/commit/55d6b040764f5e32de9c94d1844529855233d845)]:
+    - @solana/signers@2.4.0
+    - @solana/transactions@2.4.0
+    - @solana/addresses@2.4.0
+    - @solana/errors@2.4.0
+    - @solana/keys@2.4.0
+    - @solana/promises@2.4.0
+
 ## 2.3.0
 
 ### Patch Changes

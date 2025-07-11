@@ -1,5 +1,17 @@
 # @solana/accounts
 
+## 2.4.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/addresses@2.4.0
+    - @solana/codecs-core@2.4.0
+    - @solana/codecs-strings@2.4.0
+    - @solana/errors@2.4.0
+    - @solana/rpc-spec@2.4.0
+    - @solana/rpc-types@2.4.0
+
 ## 2.3.0
 
 ### Patch Changes

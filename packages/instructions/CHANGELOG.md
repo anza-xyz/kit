@@ -1,5 +1,13 @@
 # @solana/instructions
 
+## 2.4.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/codecs-core@2.4.0
+    - @solana/errors@2.4.0
+
 ## 2.3.0
 
 ### Minor Changes

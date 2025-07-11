@@ -1,5 +1,17 @@
 # @solana/compat
 
+## 2.4.0
+
+### Patch Changes
+
+- Updated dependencies [[`a894d53`](https://github.com/anza-xyz/kit/commit/a894d53192d50b5d2217ada2cb715d71ef4f8f02), [`0bd053b`](https://github.com/anza-xyz/kit/commit/0bd053bfa40b095d37bea7b7cd695259ba5a9cdc), [`55d6b04`](https://github.com/anza-xyz/kit/commit/55d6b040764f5e32de9c94d1844529855233d845)]:
+    - @solana/transactions@2.4.0
+    - @solana/addresses@2.4.0
+    - @solana/codecs-core@2.4.0
+    - @solana/errors@2.4.0
+    - @solana/instructions@2.4.0
+    - @solana/keys@2.4.0
+
 ## 2.3.0
 
 ### Minor Changes
