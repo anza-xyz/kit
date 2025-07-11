@@ -1,5 +1,12 @@
 # @solana/subscribable
 
+## 2.4.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/errors@2.4.0
+
 ## 2.3.0
 
 ### Patch Changes

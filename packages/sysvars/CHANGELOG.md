@@ -1,5 +1,15 @@
 # @solana/sysvars
 
+## 2.4.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/accounts@2.4.0
+    - @solana/codecs@2.4.0
+    - @solana/errors@2.4.0
+    - @solana/rpc-types@2.4.0
+
 ## 2.3.0
 
 ### Patch Changes

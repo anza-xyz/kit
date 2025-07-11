@@ -1,5 +1,31 @@
 # @solana/transactions
 
+## 2.4.0
+
+### Minor Changes
+
+- [#583](https://github.com/anza-xyz/kit/pull/583) [`a894d53`](https://github.com/anza-xyz/kit/commit/a894d53192d50b5d2217ada2cb715d71ef4f8f02) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Allow transaction messages with no lifetime constraints in transaction size helpers — i.e. `getTransactionMessageSize`, `isTransactionMessageWithinSizeLimit` and `assertIsTransactionMessageWithinSizeLimit`.
+
+- [#574](https://github.com/anza-xyz/kit/pull/574) [`0bd053b`](https://github.com/anza-xyz/kit/commit/0bd053bfa40b095d37bea7b7cd695259ba5a9cdc) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add the `TransactionWithLifetime` requirement when signing transactions. This is because, whilst a lifetime may not always be required before compile a transaction message, it is always required when signing a transaction. Otherwise, the transaction signatures will be invalid when one is added later.
+
+- [#581](https://github.com/anza-xyz/kit/pull/581) [`55d6b04`](https://github.com/anza-xyz/kit/commit/55d6b040764f5e32de9c94d1844529855233d845) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Allow transaction messages with no lifetime constraints to be compiled. Renames `TransactionFromCompilableTransactionMessage` and `SetTransactionLifetimeFromCompilableTransactionMessage` type helpers to `TransactionFromTransactionMessage` and `SetTransactionLifetimeFromTransactionMessage` respectively, to reflect that they can now be used with transaction messages that do not have a lifetime constraint.
+
+### Patch Changes
+
+- Updated dependencies [[`760fb83`](https://github.com/anza-xyz/kit/commit/760fb8319f6b53fa1baf05f9aa1246cb6c2caceb), [`733605d`](https://github.com/anza-xyz/kit/commit/733605df84ce5f5ffea1e83eea8df74e08789642), [`55d6b04`](https://github.com/anza-xyz/kit/commit/55d6b040764f5e32de9c94d1844529855233d845)]:
+    - @solana/transaction-messages@2.4.0
+    - @solana/addresses@2.4.0
+    - @solana/codecs-core@2.4.0
+    - @solana/codecs-data-structures@2.4.0
+    - @solana/codecs-numbers@2.4.0
+    - @solana/codecs-strings@2.4.0
+    - @solana/errors@2.4.0
+    - @solana/functional@2.4.0
+    - @solana/instructions@2.4.0
+    - @solana/keys@2.4.0
+    - @solana/nominal-types@2.4.0
+    - @solana/rpc-types@2.4.0
+
 ## 2.3.0
 
 ### Minor Changes

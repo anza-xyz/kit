@@ -1,5 +1,7 @@
 # @solana/rpc-parsed-types
 
+## 2.4.0
+
 ## 2.3.0
 
 ## 2.2.1
