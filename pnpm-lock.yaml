@@ -212,7 +212,7 @@ importers:
         version: 19.1.6(@types/react@19.1.8)
       '@vitejs/plugin-react-swc':
         specifier: ^3.10.2
-        version: 3.10.2(vite@7.0.3(@types/node@24.0.12)(jiti@1.21.7)(terser@5.18.0)(tsx@4.20.3)(yaml@2.8.0))
+        version: 3.10.2(vite@7.0.4(@types/node@24.0.12)(jiti@1.21.7)(terser@5.18.0)(tsx@4.20.3)(yaml@2.8.0))
       eslint-plugin-react-refresh:
         specifier: ^0.4.20
         version: 0.4.20(eslint@9.30.1(jiti@1.21.7))
@@ -220,8 +220,8 @@ importers:
         specifier: ^16.3.0
         version: 16.3.0
       vite:
-        specifier: ^7.0.3
-        version: 7.0.3(@types/node@24.0.12)(jiti@1.21.7)(terser@5.18.0)(tsx@4.20.3)(yaml@2.8.0)
+        specifier: ^7.0.4
+        version: 7.0.4(@types/node@24.0.12)(jiti@1.21.7)(terser@5.18.0)(tsx@4.20.3)(yaml@2.8.0)
 
   examples/rpc-custom-api:
     dependencies:
@@ -7287,8 +7287,8 @@ packages:
     resolution: {integrity: sha512-6z3GW9x8G1gd+JIIgQQQxXuiJtCXeAjp6RaPEPLv62mH3iPHPxV6W3robxtCzNErRo6ZwTmzWhsbNvjyEBKzKA==}
     engines: {node: '>=10.12.0'}
 
-  vite@7.0.3:
-    resolution: {integrity: sha512-y2L5oJZF7bj4c0jgGYgBNSdIu+5HF+m68rn2cQXFbGoShdhV1phX9rbnxy9YXj82aS8MMsCLAAFkRxZeWdldrQ==}
+  vite@7.0.4:
+    resolution: {integrity: sha512-SkaSguuS7nnmV7mfJ8l81JGBFV7Gvzp8IzgE8A8t23+AxuNX61Q5H1Tpz5efduSN7NHC8nQXD3sKQKZAu5mNEA==}
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
     peerDependencies:
@@ -10965,11 +10965,11 @@ snapshots:
 
   '@ungap/structured-clone@1.2.0': {}
 
-  '@vitejs/plugin-react-swc@3.10.2(vite@7.0.3(@types/node@24.0.12)(jiti@1.21.7)(terser@5.18.0)(tsx@4.20.3)(yaml@2.8.0))':
+  '@vitejs/plugin-react-swc@3.10.2(vite@7.0.4(@types/node@24.0.12)(jiti@1.21.7)(terser@5.18.0)(tsx@4.20.3)(yaml@2.8.0))':
     dependencies:
       '@rolldown/pluginutils': 1.0.0-beta.11
       '@swc/core': 1.12.4
-      vite: 7.0.3(@types/node@24.0.12)(jiti@1.21.7)(terser@5.18.0)(tsx@4.20.3)(yaml@2.8.0)
+      vite: 7.0.4(@types/node@24.0.12)(jiti@1.21.7)(terser@5.18.0)(tsx@4.20.3)(yaml@2.8.0)
     transitivePeerDependencies:
       - '@swc/helpers'
 
@@ -14391,7 +14391,7 @@ snapshots:
       '@types/istanbul-lib-coverage': 2.0.6
       convert-source-map: 1.9.0
 
-  vite@7.0.3(@types/node@24.0.12)(jiti@1.21.7)(terser@5.18.0)(tsx@4.20.3)(yaml@2.8.0):
+  vite@7.0.4(@types/node@24.0.12)(jiti@1.21.7)(terser@5.18.0)(tsx@4.20.3)(yaml@2.8.0):
     dependencies:
       esbuild: 0.25.6
       fdir: 6.4.6(picomatch@4.0.2)
