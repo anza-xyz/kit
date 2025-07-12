@@ -342,6 +342,7 @@ describe('decompileTransactionMessage', () => {
                     {
                         address: nonceAccountAddress,
                         role: AccountRole.WRITABLE,
+                        static: true,
                     },
                     {
                         address: recentBlockhashesSysvarAddress,
@@ -437,6 +438,7 @@ describe('decompileTransactionMessage', () => {
                     {
                         address: nonceAccountAddress,
                         role: AccountRole.WRITABLE,
+                        static: true,
                     },
                     {
                         address: recentBlockhashesSysvarAddress,
@@ -501,6 +503,7 @@ describe('decompileTransactionMessage', () => {
                         {
                             address: nonceAccountAddress,
                             role: AccountRole.WRITABLE,
+                            static: true,
                         },
                         {
                             address: recentBlockhashesSysvarAddress,
@@ -627,7 +630,7 @@ describe('decompileTransactionMessage', () => {
             expect(transaction.instructions).toBeFrozenObject();
         });
     });
-
+    
     describe('for a transaction with address lookup tables', () => {
         const blockhash = 'J4yED2jcMAHyQUg61DBmm4njmEydUr2WqrV9cdEcDDgL';
         const programAddress = 'HZMKVnRrWLyQLwPLTTLKtY7ET4Cf7pQugrTr9eTBrpsf' as Address;
