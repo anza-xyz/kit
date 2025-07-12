@@ -23,6 +23,7 @@ import { AccountRole } from './roles';
 export interface AccountMeta<TAddress extends string = string> {
     readonly address: Address<TAddress>;
     readonly role: AccountRole;
+    readonly static?: boolean;
 }
 
 /**
@@ -46,6 +47,10 @@ export type ReadonlySignerAccount<TAddress extends string = string> = AccountMet
  */
 export type WritableSignerAccount<TAddress extends string = string> = AccountMeta<TAddress> & {
     role: AccountRole.WRITABLE_SIGNER;
+};
+
+export type StaticAccount<TAccount extends AccountMeta> = TAccount & {
+  readonly static: true;
 };
 
 /**
