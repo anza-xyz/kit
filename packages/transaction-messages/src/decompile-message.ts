@@ -35,6 +35,7 @@ function getAccountMetas(message: CompiledTransactionMessage): AccountMeta[] {
         accountMetas.push({
             address: message.staticAccounts[accountIndex],
             role: AccountRole.WRITABLE_SIGNER,
+            static: true,
         });
         accountIndex++;
     }
@@ -43,6 +44,7 @@ function getAccountMetas(message: CompiledTransactionMessage): AccountMeta[] {
         accountMetas.push({
             address: message.staticAccounts[accountIndex],
             role: AccountRole.READONLY_SIGNER,
+            static: true,
         });
         accountIndex++;
     }
@@ -51,6 +53,7 @@ function getAccountMetas(message: CompiledTransactionMessage): AccountMeta[] {
         accountMetas.push({
             address: message.staticAccounts[accountIndex],
             role: AccountRole.WRITABLE,
+            static: true,
         });
         accountIndex++;
     }
@@ -59,6 +62,7 @@ function getAccountMetas(message: CompiledTransactionMessage): AccountMeta[] {
         accountMetas.push({
             address: message.staticAccounts[accountIndex],
             role: AccountRole.READONLY,
+            static: true,
         });
         accountIndex++;
     }

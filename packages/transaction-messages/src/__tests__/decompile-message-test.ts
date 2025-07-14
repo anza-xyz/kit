@@ -138,18 +138,22 @@ describe('decompileTransactionMessage', () => {
                     {
                         address: 'H4RdPRWYk3pKw2CkNznxQK6J6herjgQke2pzFJW4GC6x' as Address,
                         role: AccountRole.WRITABLE_SIGNER,
+                        static: true,
                     },
                     {
                         address: 'G35QeFd4jpXWfRkuRKwn8g4vYrmn8DWJ5v88Kkpd8z1V' as Address,
                         role: AccountRole.READONLY_SIGNER,
+                        static: true,
                     },
                     {
                         address: '3LeBzRE9Yna5zi9R8vdT3MiNQYuEp4gJgVyhhwmqfCtd' as Address,
                         role: AccountRole.WRITABLE,
+                        static: true,
                     },
                     {
                         address: '8kud9bpNvfemXYdTFjs5cZ8fZinBkx8JAnhVmRwJZk5e' as Address,
                         role: AccountRole.READONLY,
+                        static: true,
                     },
                 ],
                 data: new Uint8Array([0, 1, 2, 3, 4]),
@@ -342,14 +346,17 @@ describe('decompileTransactionMessage', () => {
                     {
                         address: nonceAccountAddress,
                         role: AccountRole.WRITABLE,
+                        static: true,
                     },
                     {
                         address: recentBlockhashesSysvarAddress,
                         role: AccountRole.READONLY,
+                        static: true,
                     },
                     {
                         address: nonceAuthorityAddress,
                         role: AccountRole.WRITABLE_SIGNER,
+                        static: true,
                     },
                 ],
                 data: new Uint8Array([4, 0, 0, 0]),
@@ -437,14 +444,17 @@ describe('decompileTransactionMessage', () => {
                     {
                         address: nonceAccountAddress,
                         role: AccountRole.WRITABLE,
+                        static: true,
                     },
                     {
                         address: recentBlockhashesSysvarAddress,
                         role: AccountRole.READONLY,
+                        static: true,
                     },
                     {
                         address: nonceAuthorityAddress,
                         role: AccountRole.READONLY_SIGNER,
+                        static: true,
                     },
                 ],
                 data: new Uint8Array([4, 0, 0, 0]),
@@ -501,14 +511,17 @@ describe('decompileTransactionMessage', () => {
                         {
                             address: nonceAccountAddress,
                             role: AccountRole.WRITABLE,
+                            static: true,
                         },
                         {
                             address: recentBlockhashesSysvarAddress,
                             role: AccountRole.READONLY,
+                            static: true,
                         },
                         {
                             address: nonceAuthorityAddress,
                             role: AccountRole.WRITABLE_SIGNER,
+                            static: true,
                         },
                     ],
                     data: new Uint8Array([4, 0, 0, 0]),
@@ -519,10 +532,12 @@ describe('decompileTransactionMessage', () => {
                         {
                             address: nonceAuthorityAddress,
                             role: AccountRole.WRITABLE_SIGNER,
+                            static: true,
                         },
                         {
                             address: nonceAccountAddress,
                             role: AccountRole.WRITABLE,
+                            static: true,
                         },
                     ],
                     data: new Uint8Array([1, 2, 3, 4]),
@@ -627,7 +642,7 @@ describe('decompileTransactionMessage', () => {
             expect(transaction.instructions).toBeFrozenObject();
         });
     });
-
+    
     describe('for a transaction with address lookup tables', () => {
         const blockhash = 'J4yED2jcMAHyQUg61DBmm4njmEydUr2WqrV9cdEcDDgL';
         const programAddress = 'HZMKVnRrWLyQLwPLTTLKtY7ET4Cf7pQugrTr9eTBrpsf' as Address;
@@ -965,6 +980,7 @@ describe('decompileTransactionMessage', () => {
                 const expectedAccountMeta: AccountMeta = {
                     address: staticAddress,
                     role: AccountRole.READONLY,
+                    static: true,
                 };
 
                 const expectedAccountLookupMeta: AccountLookupMeta = {
