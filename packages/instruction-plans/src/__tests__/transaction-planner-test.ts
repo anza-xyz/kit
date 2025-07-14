@@ -14,6 +14,7 @@ import {
 import { getTransactionMessageSize, TRANSACTION_SIZE_LIMIT } from '@solana/transactions';
 
 import {
+    InstructionPlan,
     nonDivisibleSequentialInstructionPlan,
     parallelInstructionPlan,
     sequentialInstructionPlan,
@@ -27,8 +28,9 @@ import {
     sequentialTransactionPlan,
     SingleTransactionPlan,
     singleTransactionPlan,
+    TransactionPlan,
 } from '../transaction-plan';
-import { createTransactionPlanner } from '../transaction-planner';
+import { createTransactionPlanner, TransactionPlanner } from '../transaction-planner';
 import { createMessagePackerInstructionPlan, instructionFactory, transactionPercentFactory } from './__setup__';
 
 function createMockTransactionMessage(): BaseTransactionMessage & TransactionMessageWithFeePayer {
@@ -1648,6 +1650,68 @@ describe('createTransactionPlanner', () => {
             )) as ParallelTransactionPlan;
             expect(plan.plans[0]).toBeFrozenObject();
             expect(plan.plans[1]).toBeFrozenObject();
+        });
+    });
+
+    describe('abort signals', () => {
+        const FOREVER_PROMISE = new Promise(() => {
+            /* never resolve */
+        });
+
+        function runAndAbortPlanner(planner: TransactionPlanner, plan?: InstructionPlan): Promise<TransactionPlan> {
+            const abortController = new AbortController();
+            const promise = planner(plan ?? singleInstructionPlan(instructionFactory()('A', 42)), {
+                abortSignal: abortController.signal,
+            });
+            abortController.abort();
+            return promise;
+        }
+
+        it('can abort the planner should `createTransactionMessage` never resolve', async () => {
+            expect.assertions(1);
+            const foreverCreateMessage = jest.fn().mockReturnValue(FOREVER_PROMISE);
+            const planner = createTransactionPlanner({ createTransactionMessage: foreverCreateMessage });
+
+            const promise = runAndAbortPlanner(planner);
+            await expect(promise).rejects.toThrow('aborted');
+        });
+
+        it('can abort the planner should `onTransactionMessageUpdated` never resolve', async () => {
+            expect.assertions(1);
+            const foreverOnMessageUpdated = jest.fn().mockReturnValue(FOREVER_PROMISE);
+            const planner = createTransactionPlanner({
+                createTransactionMessage: createMockTransactionMessage,
+                onTransactionMessageUpdated: foreverOnMessageUpdated,
+            });
+
+            const promise = runAndAbortPlanner(planner);
+            await expect(promise).rejects.toThrow('aborted');
+        });
+
+        it('does not continue execution after being aborted in `createTransactionMessage` function', async () => {
+            expect.assertions(1);
+            const foreverCreateMessage = jest.fn().mockReturnValue(FOREVER_PROMISE);
+            const onMessageUpdated = jest.fn();
+            const planner = createTransactionPlanner({
+                createTransactionMessage: foreverCreateMessage,
+                onTransactionMessageUpdated: onMessageUpdated,
+            });
+
+            await runAndAbortPlanner(planner).catch(() => {});
+            expect(onMessageUpdated).not.toHaveBeenCalled();
+        });
+
+        it('does not continue execution after being aborted in `onTransactionMessageUpdated` function', async () => {
+            expect.assertions(1);
+            const createMessage = jest.fn();
+            const foreverOnMessageUpdated = jest.fn().mockReturnValue(FOREVER_PROMISE);
+            const planner = createTransactionPlanner({
+                createTransactionMessage: createMessage,
+                onTransactionMessageUpdated: foreverOnMessageUpdated,
+            });
+
+            await runAndAbortPlanner(planner).catch(() => {});
+            expect(createMessage).toHaveBeenCalledTimes(1);
         });
     });
 });
