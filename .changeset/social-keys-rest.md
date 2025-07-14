@@ -1,6 +1,6 @@
 ---
 '@solana/transaction-messages': minor
-'@solana/transactions': minor
+'@solana/transactions': major
 '@solana/signers': minor
 ---
 
