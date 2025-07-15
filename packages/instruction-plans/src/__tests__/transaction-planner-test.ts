@@ -1,14 +1,10 @@
 import '@solana/test-matchers/toBeFrozenObject';
 
-import { Address } from '@solana/addresses';
 import { SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN, SolanaError } from '@solana/errors';
-import { pipe } from '@solana/functional';
 import { Instruction } from '@solana/instructions';
 import {
     appendTransactionMessageInstructions,
     BaseTransactionMessage,
-    createTransactionMessage,
-    setTransactionMessageFeePayer,
     TransactionMessageWithFeePayer,
 } from '@solana/transaction-messages';
 import { getTransactionMessageSize, TRANSACTION_SIZE_LIMIT } from '@solana/transactions';
@@ -31,12 +27,16 @@ import {
     TransactionPlan,
 } from '../transaction-plan';
 import { createTransactionPlanner, TransactionPlanner } from '../transaction-planner';
-import { createMessagePackerInstructionPlan, instructionFactory, transactionPercentFactory } from './__setup__';
+import {
+    createMessage,
+    createMessagePackerInstructionPlan,
+    FOREVER_PROMISE,
+    instructionFactory,
+    transactionPercentFactory,
+} from './__setup__';
 
 function createMockTransactionMessage(): BaseTransactionMessage & TransactionMessageWithFeePayer {
-    return pipe(createTransactionMessage({ version: 0 }), m =>
-        setTransactionMessageFeePayer('E9Nykp3rSdza2moQutaJ3K3RSC8E5iFERX2SqLTsQfjJ' as Address, m),
-    );
+    return createMessage('mock-message');
 }
 
 function getHelpers(createTransactionMessage: () => BaseTransactionMessage & TransactionMessageWithFeePayer) {
@@ -1654,10 +1654,6 @@ describe('createTransactionPlanner', () => {
     });
 
     describe('abort signals', () => {
-        const FOREVER_PROMISE = new Promise(() => {
-            /* never resolve */
-        });
-
         function runAndAbortPlanner(planner: TransactionPlanner, plan?: InstructionPlan): Promise<TransactionPlan> {
             const abortController = new AbortController();
             const promise = planner(plan ?? singleInstructionPlan(instructionFactory()('A', 42)), {
