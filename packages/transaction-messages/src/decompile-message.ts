@@ -140,21 +140,8 @@ function convertInstruction(
             index: instruction.programAddressIndex,
         });
     }
-    const isAdvanceNonce = programAddress === '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'> &&
-        instruction && instruction.data &&
-        instruction.data.length === 4 &&
-        instruction.data[0] === 4 &&
-        instruction.data[1] === 0 &&
-        instruction.data[2] === 0 &&
-        instruction.data[3] === 0;
 
-    const accounts = instruction.accountIndices?.map((accountIndex, idx) => {
-        const accountMeta = accountMetas[accountIndex];
-        if (isAdvanceNonce && idx === 0) {
-            return { ...accountMeta, static: true };
-        }
-        return accountMeta;
-    });
+    const accounts = instruction.accountIndices?.map(accountIndex => accountMetas[accountIndex]);
     const { data } = instruction;
 
     return Object.freeze({
