@@ -1,10 +1,5 @@
 import '@solana/test-matchers/toBeFrozenObject';
 
-import { Address } from '@solana/addresses';
-import { pipe } from '@solana/functional';
-import { BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
-import { createTransactionMessage, setTransactionMessageFeePayer } from '@solana/transaction-messages';
-
 import {
     getAllSingleTransactionPlans,
     nonDivisibleSequentialTransactionPlan,
@@ -12,16 +7,7 @@ import {
     sequentialTransactionPlan,
     singleTransactionPlan,
 } from '../transaction-plan';
-
-function createMessage<TId extends string>(
-    id: TId,
-): BaseTransactionMessage & TransactionMessageWithFeePayer & { id: TId } {
-    return pipe(
-        createTransactionMessage({ version: 0 }),
-        m => setTransactionMessageFeePayer('E9Nykp3rSdza2moQutaJ3K3RSC8E5iFERX2SqLTsQfjJ' as Address, m),
-        m => Object.freeze({ ...m, id }),
-    );
-}
+import { createMessage } from './__setup__';
 
 describe('singleTransactionPlan', () => {
     it('creates SingleTransactionPlan objects', () => {

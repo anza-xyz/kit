@@ -1,17 +1,38 @@
 import { Address, getAddressDecoder } from '@solana/addresses';
 import { fixEncoderSize, getUtf8Encoder } from '@solana/codecs';
 import { SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN, SolanaError } from '@solana/errors';
+import { pipe } from '@solana/functional';
 import type { Instruction } from '@solana/instructions';
 import {
     appendTransactionMessageInstruction,
     type BaseTransactionMessage,
+    createTransactionMessage,
+    setTransactionMessageFeePayer,
     type TransactionMessageWithFeePayer,
 } from '@solana/transaction-messages';
-import { getTransactionMessageSize, TRANSACTION_SIZE_LIMIT } from '@solana/transactions';
+import { getTransactionMessageSize, Transaction, TRANSACTION_SIZE_LIMIT } from '@solana/transactions';
 
 import { MessagePackerInstructionPlan } from '../instruction-plan';
 
 const MINIMUM_INSTRUCTION_SIZE = 35;
+
+export const FOREVER_PROMISE = new Promise(() => {
+    /* never resolve */
+});
+
+export function createMessage<TId extends string>(
+    id: TId,
+): BaseTransactionMessage & TransactionMessageWithFeePayer & { id: TId } {
+    return pipe(
+        createTransactionMessage({ version: 0 }),
+        m => setTransactionMessageFeePayer('E9Nykp3rSdza2moQutaJ3K3RSC8E5iFERX2SqLTsQfjJ' as Address, m),
+        m => Object.freeze({ ...m, id }),
+    );
+}
+
+export function createTransaction<TId extends string>(id: TId): Transaction & { id: TId } {
+    return Object.freeze({ id }) as unknown as Transaction & { id: TId };
+}
 
 export function instructionFactory(baseSeed?: string) {
     const seedPrefix = baseSeed ? `${baseSeed}-` : '';

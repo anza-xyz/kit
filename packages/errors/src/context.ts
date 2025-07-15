@@ -98,6 +98,7 @@ import {
     SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN,
     SOLANA_ERROR__INSTRUCTION_ERROR__UNSUPPORTED_PROGRAM_ID,
     SOLANA_ERROR__INSTRUCTION_ERROR__UNSUPPORTED_SYSVAR,
+    SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN,
     SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN,
     SOLANA_ERROR__INVALID_BLOCKHASH_BYTE_LENGTH,
     SOLANA_ERROR__INVALID_NONCE,
@@ -398,6 +399,9 @@ export type SolanaErrorContext = DefaultUnspecifiedErrorContextToUndefined<
             errorName: string;
             index: number;
             instructionErrorContext?: unknown;
+        };
+        [SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN]: {
+            transactionPlanResult: unknown;
         };
         [SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN]: {
             numBytesRequired: number;
