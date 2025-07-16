@@ -2,15 +2,23 @@
     "name": "@solana/build-scripts",
     "version": "0.0.0",
     "private": true,
+    "type": "module",
     "files": [
         "register-node-globals.mjs",
         "tsup.config.library.ts",
         "tsup.config.package.ts"
     ],
     "devDependencies": {
+        "@manypkg/get-packages": "^3.0.0",
+        "@octokit/rest": "^22.0.0",
         "@types/jscodeshift": "^17.3.0",
+        "@types/minimist": "^1.2.5",
         "browserslist-to-esbuild": "^2.1.1",
-        "jscodeshift": "^17.3.0"
+        "jscodeshift": "^17.3.0",
+        "minimist": "^1.2.8",
+        "remark-parse": "^11.0.0",
+        "remark-stringify": "^11.0.0",
+        "unified": "^11.0.5"
     },
     "engines": {
         "node": ">=20.18.0"

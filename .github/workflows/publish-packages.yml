@@ -60,11 +60,11 @@ jobs:
           # Some tasks slow down considerably on GitHub Actions runners when concurrency is high
           TURBO_CONCURRENCY: 1
 
-      - name: Push Git Tag
+      - name: Create GitHub Release
         if: steps.changesets.outputs.published == 'true'
         run: |
-          VERSION_TAG=v$(cd packages/kit/ && pnpm pkg get version | grep -o '"\([^"]\)\+"$' | tr -d \")
-          if ! git ls-remote --tags | grep -q "$VERSION_TAG"; then git tag $VERSION_TAG && git push --tags; fi
+          cd ./packages/build-scripts/
+          ./create-github-release.ts
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
