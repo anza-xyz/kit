@@ -25,7 +25,8 @@ const config = minimist(process.argv.slice(2), {
     boolean: 'dry-run',
     string: 'token',
 });
-if (typeof config.token !== 'string') {
+const GITHUB_TOKEN = config.token ?? process.env.GH_TOKEN;
+if (typeof GITHUB_TOKEN !== 'string') {
     console.error(
         'The required --token argument was not provided. Please use it to supply a GitHub token with write permissions',
     );
@@ -33,7 +34,7 @@ if (typeof config.token !== 'string') {
 }
 
 const api = new Octokit({
-    auth: config.token,
+    auth: GITHUB_TOKEN,
 });
 
 const [
