@@ -1,4 +1,5 @@
 #!/usr/bin/env -S pnpm dlx tsx --
+import { execSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
@@ -8,7 +9,6 @@ import minimist from 'minimist';
 import remarkParse from 'remark-parse';
 import remarkStringify from 'remark-stringify';
 import { unified } from 'unified';
-import { execSync } from 'node:child_process';
 
 type Level = string;
 type PackageName = string;
