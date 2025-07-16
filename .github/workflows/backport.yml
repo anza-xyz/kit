@@ -5,7 +5,8 @@ on:
       - closed
       - labeled
 
-permissions: {}
+permissions:
+  pull_requests: write
 
 jobs:
   backport:
