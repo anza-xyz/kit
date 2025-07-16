@@ -6,7 +6,7 @@ on:
       - labeled
 
 permissions:
-  pull_requests: write
+  pull-requests: write
 
 jobs:
   backport:
