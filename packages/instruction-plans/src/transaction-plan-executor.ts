@@ -92,10 +92,17 @@ export function createTransactionPlanExecutor(config: TransactionPlanExecutorCon
 
         if (context.canceled) {
             const abortReason = abortSignal?.aborted ? abortSignal.reason : undefined;
-            throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
-                cause: findErrorFromTransactionPlanResult(transactionPlanResult) ?? abortReason,
-                transactionPlanResult,
+            const context = { cause: findErrorFromTransactionPlanResult(transactionPlanResult) ?? abortReason };
+            // Here we want the `transactionPlanResult` to be available in the error context
+            // so applications can create recovery plans but we don't want this object to be
+            // serialized with the error. This is why we set it as a non-enumerable property.
+            Object.defineProperty(context, 'transactionPlanResult', {
+                configurable: false,
+                enumerable: false,
+                value: transactionPlanResult,
+                writable: false,
             });
+            throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, context);
         }
 
         return transactionPlanResult;

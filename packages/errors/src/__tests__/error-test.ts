@@ -23,7 +23,7 @@ describe('SolanaError', () => {
             expect(errorWithContext.cause).toBeUndefined();
         });
         it('calls the message formatter with the code and context', () => {
-            expect(getErrorMessage).toHaveBeenCalledWith(123, { foo: 'bar' });
+            expect(getErrorMessage).toHaveBeenCalledWith(123, expect.objectContaining({ foo: 'bar' }));
         });
     });
     describe('given an error with no context', () => {

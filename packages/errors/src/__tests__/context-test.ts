@@ -84,4 +84,11 @@ describe('encodeContextObject', () => {
         const encodedContext = encodeContextObject(context);
         expect(atob(encodedContext)).toBe(EXPECTED_URL_ENCODED_CONTEXT);
     });
+    it('does not encode non-enumerable properties', () => {
+        const context = { a: 1, c: 3 };
+        Object.defineProperty(context, 'b', { enumerable: false, value: 2 });
+
+        const encodedContext = encodeContextObject(context);
+        expect(atob(encodedContext)).toBe('a=1&c=3');
+    });
 });
