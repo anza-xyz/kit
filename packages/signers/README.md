@@ -138,7 +138,7 @@ Creates a `SignableMessage` from a `Uint8Array` or a UTF-8 string. It optionally
 const myMessage = createSignableMessage(new Uint8Array([1, 2, 3]));
 const myMessageFromText = createSignableMessage('Hello world!');
 const myMessageWithSignatures = createSignableMessage('Hello world!', {
-    '1234..5678': new Uint8Array([1, 2, 3]),
+    [address('1234..5678')]: new Uint8Array([1, 2, 3]) as SignatureBytes,
 });
 ```
 
