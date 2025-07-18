@@ -8,6 +8,7 @@ import {
     isSignerRole,
     ReadonlyAccount,
     ReadonlySignerAccount,
+    StaticAccount,
     WritableAccount,
     WritableSignerAccount,
 } from '@solana/instructions';
@@ -19,7 +20,7 @@ export type AdvanceNonceAccountInstruction<
 > = Instruction<'11111111111111111111111111111111'> &
     InstructionWithAccounts<
         readonly [
-            WritableAccount<TNonceAccountAddress>,
+            StaticAccount<WritableAccount<TNonceAccountAddress>>,
             ReadonlyAccount<'SysvarRecentB1ockHashes11111111111111111111'>,
             ReadonlySignerAccount<TNonceAuthorityAddress> | WritableSignerAccount<TNonceAuthorityAddress>,
         ]
@@ -54,7 +55,7 @@ export function createAdvanceNonceAccountInstruction<
 ): AdvanceNonceAccountInstruction<TNonceAccountAddress, TNonceAuthorityAddress> {
     return {
         accounts: [
-            { address: nonceAccountAddress, role: AccountRole.WRITABLE },
+            { address: nonceAccountAddress, role: AccountRole.WRITABLE, static: true },
             {
                 address: RECENT_BLOCKHASHES_SYSVAR_ADDRESS,
                 role: AccountRole.READONLY,
