@@ -38,7 +38,7 @@ export type SignableMessage = Readonly<{
  * const message = createSignableMessage(new Uint8Array([1, 2, 3]));
  * const messageFromText = createSignableMessage('Hello world!');
  * const messageWithSignatures = createSignableMessage('Hello world!', {
- *     '1234..5678': new Uint8Array([1, 2, 3]),
+ *     [address('1234..5678')]: new Uint8Array([1, 2, 3]) as SignatureBytes,
  * });
  * ```
  */
