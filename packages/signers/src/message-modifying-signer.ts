@@ -17,7 +17,7 @@ export type MessageModifyingSignerConfig = BaseSignerConfig;
  * of the provided {@link SignableMessage | SignableMessages} before signing them.
  *
  * For instance, this enables wallets to prefix or suffix nonces to the messages they sign.
- * For each message, instead of returning a {@link SignatureDirectory}, the
+ * For each message, instead of returning a {@link SignatureDictionary}, the
  * {@link MessageModifyingSigner#modifyAndSignMessages | modifyAndSignMessages} function
  * returns an updated {@link SignableMessage} with a potentially modified content and signature dictionary.
  *

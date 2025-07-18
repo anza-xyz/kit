@@ -37,7 +37,7 @@ export type TransactionPartialSignerConfig = BaseTransactionSignerConfig;
  * @remarks
  * Here are the main characteristics of this signer interface:
  *
- * - **Parallel**. It returns a signature directory for each provided
+ * - **Parallel**. It returns a signature dictionary for each provided
  *   transaction without modifying them, making it possible for multiple
  *   partial signers to sign the same transaction in parallel.
  * - **Flexible order**. The order in which we use these signers for

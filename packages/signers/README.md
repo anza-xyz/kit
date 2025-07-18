@@ -101,7 +101,7 @@ const myMessagePartialSigner: MessagePartialSigner<'1234..5678'> = {
 
 #### `MessageModifyingSigner<TAddress>`
 
-An interface that potentially modifies the content of the provided `SignableMessages` before signing them. E.g. this enables wallets to prefix or suffix nonces to the messages they sign. For each message, instead of returning a `SignatureDirectory`, its `modifyAndSignMessages` function returns its updated `SignableMessage` with a potentially modified content and signature dictionary.
+An interface that potentially modifies the content of the provided `SignableMessages` before signing them. E.g. this enables wallets to prefix or suffix nonces to the messages they sign. For each message, instead of returning a `SignatureDictionary`, its `modifyAndSignMessages` function returns its updated `SignableMessage` with a potentially modified content and signature dictionary.
 
 ```ts
 const myMessageModifyingSigner: MessageModifyingSigner<'1234..5678'> = {
@@ -184,12 +184,12 @@ const myTransactionPartialSigner: TransactionPartialSigner<'1234..5678'> = {
 
 **Characteristics**:
 
-- **Parallel**. It returns a signature directory for each provided transaction without modifying them, making it possible for multiple partial signers to sign the same transaction in parallel.
+- **Parallel**. It returns a signature dictionary for each provided transaction without modifying them, making it possible for multiple partial signers to sign the same transaction in parallel.
 - **Flexible order**. The order in which we use these signers for a given transaction doesn’t matter.
 
 #### `TransactionModifyingSigner<TAddress>`
 
-An interface that potentially modifies the provided `Transactions` before signing them. E.g. this enables wallets to inject additional instructions into the transaction before signing them. For each transaction, instead of returning a `SignatureDirectory`, its `modifyAndSignTransactions` function returns an updated `Transaction` with a potentially modified set of instructions and signature dictionary.
+An interface that potentially modifies the provided `Transactions` before signing them. E.g. this enables wallets to inject additional instructions into the transaction before signing them. For each transaction, instead of returning a `SignatureDictionary`, its `modifyAndSignTransactions` function returns an updated `Transaction` with a potentially modified set of instructions and signature dictionary.
 
 ```ts
 const myTransactionModifyingSigner: TransactionModifyingSigner<'1234..5678'> = {
