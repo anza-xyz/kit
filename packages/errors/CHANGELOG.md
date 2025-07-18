@@ -1,5 +1,18 @@
 # @solana/errors
 
+## 3.0.0
+
+### Minor Changes
+
+- [#648](https://github.com/anza-xyz/kit/pull/648) [`01f159a`](https://github.com/anza-xyz/kit/commit/01f159a436d7a29479aa1a1877c9b4c77da1170f) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add `createTransactionPlanner` implementation for the `TransactionPlanner` type.
+
+### Patch Changes
+
+- [#658](https://github.com/anza-xyz/kit/pull/658) [`23d2fa1`](https://github.com/anza-xyz/kit/commit/23d2fa14cbd5197473eca94a1ac6c5abf221b052) Thanks [@steveluscher](https://github.com/steveluscher)! - Added three missing error messages/contexts
+    - `JSON_RPC_SERVER_ERROR_EPOCH_REWARDS_PERIOD_ACTIVE`: -32017
+    - `JSON_RPC_SERVER_ERROR_SLOT_NOT_EPOCH_BOUNDARY`: -32018
+    - `JSON_RPC_SERVER_ERROR_LONG_TERM_STORAGE_UNREACHABLE`: -32019
+
 ## 2.3.0
 
 ### Minor Changes

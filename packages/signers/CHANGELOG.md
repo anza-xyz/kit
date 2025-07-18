@@ -1,5 +1,31 @@
 # @solana/signers
 
+## 3.0.0
+
+### Major Changes
+
+- [#574](https://github.com/anza-xyz/kit/pull/574) [`0bd053b`](https://github.com/anza-xyz/kit/commit/0bd053bfa40b095d37bea7b7cd695259ba5a9cdc) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add the `TransactionWithLifetime` requirement when signing transactions. This is because, whilst a lifetime may not always be required before compile a transaction message, it is always required when signing a transaction. Otherwise, the transaction signatures will be invalid when one is added later.
+
+### Minor Changes
+
+- [#582](https://github.com/anza-xyz/kit/pull/582) [`93ae6f9`](https://github.com/anza-xyz/kit/commit/93ae6f96859019b6c7ea9a596ffb9b1be7a35e64) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Allow transaction messages with no lifetime constraints to be signed using the Signer API helpers such as `signTransactionMessageWithSigners` and `partiallySignTransactionMessageWithSigners`. This is because some `TransactionSigners` such as `TransactionModifyingSigners` have the ability to update the transaction before signing it, meaning that the lifetime constraint may not be known until the transaction is signed.
+
+- [#581](https://github.com/anza-xyz/kit/pull/581) [`55d6b04`](https://github.com/anza-xyz/kit/commit/55d6b040764f5e32de9c94d1844529855233d845) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Allow transaction messages with no lifetime constraints to be compiled. Renames `TransactionFromCompilableTransactionMessage` and `SetTransactionLifetimeFromCompilableTransactionMessage` type helpers to `TransactionFromTransactionMessage` and `SetTransactionLifetimeFromTransactionMessage` respectively, to reflect that they can now be used with transaction messages that do not have a lifetime constraint.
+
+### Patch Changes
+
+- [#584](https://github.com/anza-xyz/kit/pull/584) [`760fb83`](https://github.com/anza-xyz/kit/commit/760fb8319f6b53fa1baf05f9aa1246cb6c2caceb) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Deprecate `CompilableTransactionMessage` in favour of `TransactionMessage & TransactionMessageWithFeePayer`
+
+- Updated dependencies [[`760fb83`](https://github.com/anza-xyz/kit/commit/760fb8319f6b53fa1baf05f9aa1246cb6c2caceb), [`23d2fa1`](https://github.com/anza-xyz/kit/commit/23d2fa14cbd5197473eca94a1ac6c5abf221b052), [`a894d53`](https://github.com/anza-xyz/kit/commit/a894d53192d50b5d2217ada2cb715d71ef4f8f02), [`733605d`](https://github.com/anza-xyz/kit/commit/733605df84ce5f5ffea1e83eea8df74e08789642), [`01f159a`](https://github.com/anza-xyz/kit/commit/01f159a436d7a29479aa1a1877c9b4c77da1170f), [`0bd053b`](https://github.com/anza-xyz/kit/commit/0bd053bfa40b095d37bea7b7cd695259ba5a9cdc), [`55d6b04`](https://github.com/anza-xyz/kit/commit/55d6b040764f5e32de9c94d1844529855233d845)]:
+    - @solana/transaction-messages@3.0.0
+    - @solana/errors@3.0.0
+    - @solana/transactions@3.0.0
+    - @solana/addresses@3.0.0
+    - @solana/codecs-core@3.0.0
+    - @solana/instructions@3.0.0
+    - @solana/keys@3.0.0
+    - @solana/nominal-types@3.0.0
+
 ## 2.3.0
 
 ### Minor Changes
