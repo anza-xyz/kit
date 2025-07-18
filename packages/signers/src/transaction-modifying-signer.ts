@@ -17,10 +17,11 @@ export type TransactionModifyingSignerConfig = BaseTransactionSignerConfig;
  * before signing them.
  *
  * For instance, this enables wallets to inject additional instructions into the
- * transaction before signing them. For each transaction, instead of returning a {@link SignatureDirectory},
- * its {@link TransactionModifyingSigner#modifyAndSignTransactions | modifyAndSignTransactions}
- * function returns an updated {@link Transaction} with a potentially
- * modified set of instructions and signature dictionary.
+ * transaction before signing them. For each transaction, instead of returning a
+ * {@link SignatureDictionary}, its
+ * {@link TransactionModifyingSigner#modifyAndSignTransactions | modifyAndSignTransactions} function
+ * returns an updated {@link Transaction} with a potentially modified set of instructions and
+ * signature dictionary.
  *
  * @typeParam TAddress - Supply a string literal to define a signer having a particular address.
  *

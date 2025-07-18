@@ -28,7 +28,7 @@ describe('createNoopSigner', () => {
         expect(mySigner).toBeFrozenObject();
     });
 
-    it('returns an empty signature directory when signing messages', async () => {
+    it('returns an empty signature dictionary when signing messages', async () => {
         expect.assertions(4);
 
         // Given a NoopSigner.
@@ -45,7 +45,7 @@ describe('createNoopSigner', () => {
         expect(signatureDictionaries[1]).toBeFrozenObject();
     });
 
-    it('returns an empty signature directory when signing new transactions', async () => {
+    it('returns an empty signature dictionary when signing new transactions', async () => {
         expect.assertions(4);
 
         // Given a NoopSigner.
@@ -67,7 +67,7 @@ describe('createNoopSigner', () => {
         expect(signatureDictionaries[1]).toBeFrozenObject();
     });
 
-    it('returns an empty signature directory when signing transactions', async () => {
+    it('returns an empty signature dictionary when signing transactions', async () => {
         expect.assertions(4);
 
         // Given a NoopSigner.

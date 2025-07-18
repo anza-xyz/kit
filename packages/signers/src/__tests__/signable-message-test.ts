@@ -49,23 +49,23 @@ describe('createSignableMessage', () => {
         expect(message).toBeFrozenObject();
     });
 
-    it('freezes the empty signature directory when none is provided', () => {
+    it('freezes the empty signature dictionary when none is provided', () => {
         const message = createSignableMessage('Hello world!');
         expect(message.signatures).toStrictEqual({});
         expect(message.signatures).toBeFrozenObject();
     });
 
-    it('shallow copies and freezes the provided signature directory', () => {
-        // Given an existing signature directory.
+    it('shallow copies and freezes the provided signature dictionary', () => {
+        // Given an existing signature dictionary.
         const signatures = {
             '1111': new Uint8Array([1, 1, 1, 1]),
             '2222': new Uint8Array([2, 2, 2, 2]),
         };
 
-        // When we create a new SignableMessage using this signature directory.
+        // When we create a new SignableMessage using this signature dictionary.
         const message = createSignableMessage('Hello world!', signatures);
 
-        // Then the signature directory is copied and frozen.
+        // Then the signature dictionary is copied and frozen.
         expect(message.signatures).not.toBe(signatures);
         expect(message.signatures).toStrictEqual(signatures);
         expect(message.signatures).toBeFrozenObject();
