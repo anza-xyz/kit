@@ -1,11 +1,6 @@
 import '@solana/test-matchers/toBeFrozenObject';
 
-import { Address } from '@solana/addresses';
 import { SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE, SolanaError } from '@solana/errors';
-import { pipe } from '@solana/functional';
-import { BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
-import { createTransactionMessage, setTransactionMessageFeePayer } from '@solana/transaction-messages';
-import { Transaction } from '@solana/transactions';
 
 import {
     canceledSingleTransactionPlanResult,
@@ -15,20 +10,7 @@ import {
     sequentialTransactionPlanResult,
     successfulSingleTransactionPlanResult,
 } from '../transaction-plan-result';
-
-function createMessage<TId extends string>(
-    id: TId,
-): BaseTransactionMessage & TransactionMessageWithFeePayer & { id: TId } {
-    return pipe(
-        createTransactionMessage({ version: 0 }),
-        m => setTransactionMessageFeePayer('E9Nykp3rSdza2moQutaJ3K3RSC8E5iFERX2SqLTsQfjJ' as Address, m),
-        m => Object.freeze({ ...m, id }),
-    );
-}
-
-function createTransaction<TId extends string>(id: TId): Transaction & { id: TId } {
-    return Object.freeze({ id }) as unknown as Transaction & { id: TId };
-}
+import { createMessage, createTransaction } from './__setup__';
 
 describe('successfulSingleTransactionPlanResult', () => {
     it('creates SingleTransactionPlanResult objects with successful status', () => {
