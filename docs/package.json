@@ -11,12 +11,12 @@
         "predev": "./build-api-docs.sh"
     },
     "dependencies": {
-        "@solana-program/compute-budget": "^0.7.0",
+        "@solana-program/compute-budget": "^0.8.0",
         "@solana-program/system": "^0.7.0",
         "@solana-program/token": "^0.5.1",
-        "@solana/compat": "^2.1.0",
-        "@solana/kit": "^2.1.0",
-        "@solana/react": "^2.1.0",
+        "@solana/compat": "2.4.0-canary-20250711222928",
+        "@solana/kit": "2.4.0-canary-20250711222928",
+        "@solana/react": "2.4.0-canary-20250711222928",
         "@solana/web3.js": "^1.98.2",
         "fumadocs-core": "15.2.10",
         "fumadocs-docgen": "^2.0.0",
@@ -30,9 +30,9 @@
         "twoslash": "^0.3.1"
     },
     "devDependencies": {
-        "@solana/keys": "^2.1.0",
-        "@solana/kit": "^2.1.0",
-        "@solana/webcrypto-ed25519-polyfill": "^2.1.0",
+        "@solana/keys": "2.4.0-canary-20250711222928",
+        "@solana/kit": "2.4.0-canary-20250711222928",
+        "@solana/webcrypto-ed25519-polyfill": "2.4.0-canary-20250711222928",
         "@tailwindcss/postcss": "^4.1.4",
         "@types/mdx": "^2.0.13",
         "@types/node": "22.13.8",

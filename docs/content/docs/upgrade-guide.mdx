@@ -363,8 +363,13 @@ transaction.sign([payer, authority]);
 ```ts twoslash title="Kit"
 import { compileTransaction, generateKeyPair, signTransaction } from '@solana/kit';
 // ---cut-start---
-import { CompilableTransactionMessage, TransactionMessageWithBlockhashLifetime } from '@solana/kit';
-const transactionMessage = null as unknown as CompilableTransactionMessage &
+import {
+    BaseTransactionMessage,
+    TransactionMessageWithFeePayer,
+    TransactionMessageWithBlockhashLifetime,
+} from '@solana/kit';
+const transactionMessage = null as unknown as BaseTransactionMessage &
+    TransactionMessageWithFeePayer &
     TransactionMessageWithBlockhashLifetime;
 // ---cut-end---
 

@@ -19,7 +19,7 @@ export type TransactionSendingSignerConfig = BaseTransactionSignerConfig;
  *
  * It defines a {@link TransactionSendingSignerConfig#signAndSendTransactions | signAndSendTransactions}
  * function that returns the transaction signature (i.e. its identifier) for each provided
- * {@link CompilableTransaction}.
+ * {@link Transaction}.
  *
  * This interface is required for PDA wallets and other types of wallets that don't provide an
  * interface for signing transactions without sending them.
