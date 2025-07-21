@@ -58,12 +58,14 @@ export const mergeBytes = (byteArrays: Uint8Array[]): Uint8Array => {
  * // bytes === paddedBytes
  * ```
  */
-export const padBytes = (bytes: ReadonlyUint8Array | Uint8Array, length: number): ReadonlyUint8Array | Uint8Array => {
+export function padBytes(bytes: Uint8Array, length: number): Uint8Array;
+export function padBytes(bytes: ReadonlyUint8Array, length: number): ReadonlyUint8Array;
+export function padBytes(bytes: ReadonlyUint8Array, length: number): ReadonlyUint8Array {
     if (bytes.length >= length) return bytes;
     const paddedBytes = new Uint8Array(length).fill(0);
     paddedBytes.set(bytes);
     return paddedBytes;
-};
+}
 
 /**
  * Fixes a `Uint8Array` to the specified length.
