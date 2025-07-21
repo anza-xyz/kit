@@ -11,8 +11,6 @@ import { createLogger } from '@solana/example-utils/createLogger.js';
 import {
     Address,
     appendTransactionMessageInstructions,
-    assertAccountDecoded,
-    assertAccountExists,
     assertIsInstructionWithAccounts,
     assertIsInstructionWithData,
     compressTransactionMessageUsingAddressLookupTables,
@@ -20,7 +18,6 @@ import {
     createSolanaRpc,
     createTransactionMessage,
     decompileTransactionMessageFetchingLookupTables,
-    fetchJsonParsedAccount,
     getAddressEncoder,
     getBase64EncodedWireTransaction,
     getBase64Encoder,
@@ -33,6 +30,7 @@ import {
     setTransactionMessageLifetimeUsingBlockhash,
     verifySignature,
 } from '@solana/kit';
+import { fetchAddressLookupTable } from '@solana-program/address-lookup-table';
 import { getAddMemoInstruction, MEMO_PROGRAM_ADDRESS, parseAddMemoInstruction } from '@solana-program/memo';
 import {
     getTransferSolInstruction,
@@ -131,15 +129,8 @@ log.info('[setup] Created the transaction message');
  * transaction smaller when it is compiled, particularly if many addresses can use a lookup table.
  */
 
-// The only data from the lookup table we need is its addresses
-type LookupTableData = {
-    addresses: Address[];
-};
-
 // We fetch the JSON parsed representation of the lookup table from the RPC
-const lookupTableAccount = await fetchJsonParsedAccount<LookupTableData>(rpc, LOOKUP_TABLE_ADDRESS);
-assertAccountDecoded(lookupTableAccount);
-assertAccountExists(lookupTableAccount);
+const lookupTableAccount = await fetchAddressLookupTable(rpc, LOOKUP_TABLE_ADDRESS);
 
 const transactionMessageWithLookupTables = compressTransactionMessageUsingAddressLookupTables(transactionMessage, {
     [LOOKUP_TABLE_ADDRESS]: lookupTableAccount.data.addresses,

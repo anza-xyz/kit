@@ -12,6 +12,7 @@
         "test:typecheck": "tsc"
     },
     "dependencies": {
+        "@solana-program/address-lookup-table": "^0.7.0",
         "@solana-program/memo": "^0.7.0",
         "@solana-program/system": "^0.7.0",
         "@solana/example-utils": "workspace:*",
