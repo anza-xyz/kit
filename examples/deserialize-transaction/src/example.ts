@@ -18,10 +18,10 @@ import {
     createSolanaRpc,
     createTransactionMessage,
     decompileTransactionMessageFetchingLookupTables,
-    getAddressEncoder,
     getBase64EncodedWireTransaction,
     getBase64Encoder,
     getCompiledTransactionMessageDecoder,
+    getPublicKeyFromAddress,
     getTransactionDecoder,
     lamports,
     partiallySignTransactionMessageWithSigners,
@@ -205,13 +205,8 @@ for (const [address, maybeSignature] of Object.entries(decodedTransaction.signat
 // Let's verify that it's correct
 const signedByAddress = 'ED1WqT2hWJLSZtj4TtTdoovmpMrr7zpkUdbfxmcJR1Fq' as Address;
 const signedBySignature = decodedTransaction.signatures[signedByAddress]!;
-// We encode the source address to bytes
-const sourceAddressBytes = getAddressEncoder().encode(signedByAddress);
-// Then we create a public Ed25519 key with those bytes
-// This is a SubtleCrypto CryptoKey object that we create with role `verify`
-const signedByPublicKey = await crypto.subtle.importKey('raw', sourceAddressBytes, { name: 'Ed25519' }, true, [
-    'verify',
-]);
+// We create a public Ed25519 key with that address (a `CryptoKey` object with the role `verify`)
+const signedByPublicKey = await getPublicKeyFromAddress(signedByAddress);
 // Now we can verify the signature using that key
 const verifiedSignature = await verifySignature(signedByPublicKey, signedBySignature, decodedTransaction.messageBytes);
 log.info(
