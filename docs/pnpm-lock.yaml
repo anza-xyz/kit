@@ -60,7 +60,13 @@ importers:
         specifier: ^0.3.1
         version: 0.3.1(typescript@5.8.3)
     devDependencies:
+      '@solana/codecs-strings':
+        specifier: ^2.1.0
+        version: 2.1.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)
       '@solana/keys':
+        specifier: ^2.1.0
+        version: 2.1.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)
+      '@solana/signers':
         specifier: ^2.1.0
         version: 2.1.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)
       '@solana/webcrypto-ed25519-polyfill':
