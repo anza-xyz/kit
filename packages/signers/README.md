@@ -319,7 +319,7 @@ A convenience function that creates a new KeyPair from a 64-bytes `Uint8Array` s
 
 ```ts
 import fs from 'fs';
-import { createKeyPairFromBytes } from '@solana/keys';
+import { createKeyPairSignerFromBytes } from '@solana/signers';
 
 // Get bytes from local keypair file.
 const keypairFile = fs.readFileSync('~/.config/solana/id.json');
@@ -335,7 +335,7 @@ A convenience function that creates a new KeyPair from a 32-bytes `Uint8Array` p
 
 ```ts
 import { getUtf8Encoder } from '@solana/codecs-strings';
-import { createKeyPairFromPrivateKeyBytes } from '@solana/keys';
+import { createKeyPairSignerFromPrivateKeyBytes } from '@solana/signers';
 
 const message = getUtf8Encoder().encode('Hello, World!');
 const seed = new Uint8Array(await crypto.subtle.digest('SHA-256', message));
