@@ -19,7 +19,6 @@ describe('Address table lookup codec', () => {
             });
             it('serializes an `AddressTableLookup` according to the spec', () => {
                 expect(
-                    // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                     addressTableLookup.encode({
                         lookupTableAddress: 'k7FaK87WHGVXzkaoHb7CdVPgkKDQhZ29VLDeBVbDfYn' as Address, // decodes to [11{32}]
                         readonlyIndexes: [33, 22],

@@ -643,7 +643,6 @@ describe('decompileTransactionMessage', () => {
 
                 const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                     addressTableLookups: [
-                        // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
                             lookupTableAddress,
                             readonlyIndexes: [0],
@@ -698,7 +697,6 @@ describe('decompileTransactionMessage', () => {
 
                 const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                     addressTableLookups: [
-                        // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
                             lookupTableAddress,
                             readonlyIndexes: [0, 2],
@@ -756,7 +754,6 @@ describe('decompileTransactionMessage', () => {
 
                 const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                     addressTableLookups: [
-                        // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
                             lookupTableAddress,
                             readonlyIndexes: [],
@@ -811,7 +808,6 @@ describe('decompileTransactionMessage', () => {
 
                 const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                     addressTableLookups: [
-                        // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
                             lookupTableAddress,
                             readonlyIndexes: [],
@@ -874,7 +870,6 @@ describe('decompileTransactionMessage', () => {
 
                 const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                     addressTableLookups: [
-                        // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
                             lookupTableAddress,
                             readonlyIndexes: [0],
@@ -935,7 +930,6 @@ describe('decompileTransactionMessage', () => {
 
                 const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                     addressTableLookups: [
-                        // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
                             lookupTableAddress,
                             readonlyIndexes: [0],
@@ -995,7 +989,6 @@ describe('decompileTransactionMessage', () => {
 
                 const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                     addressTableLookups: [
-                        // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
                             lookupTableAddress,
                             readonlyIndexes: [0],
@@ -1057,7 +1050,6 @@ describe('decompileTransactionMessage', () => {
             it('throws if the lookup table is not passed in', () => {
                 const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                     addressTableLookups: [
-                        // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
                             lookupTableAddress,
                             readonlyIndexes: [0],
@@ -1099,7 +1091,6 @@ describe('decompileTransactionMessage', () => {
 
                 const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                     addressTableLookups: [
-                        // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
                             lookupTableAddress,
                             readonlyIndexes: [1],
@@ -1144,7 +1135,6 @@ describe('decompileTransactionMessage', () => {
 
                 const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                     addressTableLookups: [
-                        // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
                             lookupTableAddress,
                             readonlyIndexes: [],
@@ -1197,13 +1187,11 @@ describe('decompileTransactionMessage', () => {
 
                 const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                     addressTableLookups: [
-                        // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
                             lookupTableAddress: lookupTableAddress1,
                             readonlyIndexes: [0],
                             writableIndexes: [],
                         },
-                        // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
                             lookupTableAddress: lookupTableAddress2,
                             readonlyIndexes: [0],
@@ -1263,13 +1251,11 @@ describe('decompileTransactionMessage', () => {
 
                 const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                     addressTableLookups: [
-                        // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
                             lookupTableAddress: lookupTableAddress1,
                             readonlyIndexes: [],
                             writableIndexes: [0],
                         },
-                        // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
                             lookupTableAddress: lookupTableAddress2,
                             readonlyIndexes: [],
@@ -1332,13 +1318,11 @@ describe('decompileTransactionMessage', () => {
 
                 const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                     addressTableLookups: [
-                        // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
                             lookupTableAddress: lookupTableAddress1,
                             readonlyIndexes: [0],
                             writableIndexes: [1],
                         },
-                        // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
                             lookupTableAddress: lookupTableAddress2,
                             readonlyIndexes: [0],
@@ -1422,13 +1406,11 @@ describe('decompileTransactionMessage', () => {
 
                 const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                     addressTableLookups: [
-                        // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
                             lookupTableAddress: lookupTableAddress1,
                             readonlyIndexes: [0],
                             writableIndexes: [1],
                         },
-                        // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
                             lookupTableAddress: lookupTableAddress2,
                             readonlyIndexes: [0],
@@ -1517,13 +1499,11 @@ describe('decompileTransactionMessage', () => {
             it('throws if multiple lookup tables are not passed in', () => {
                 const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
                     addressTableLookups: [
-                        // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
                             lookupTableAddress: lookupTableAddress1,
                             readonlyIndexes: [0],
                             writableIndexes: [],
                         },
-                        // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                         {
                             lookupTableAddress: lookupTableAddress2,
                             readonlyIndexes: [0],

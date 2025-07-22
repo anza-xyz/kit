@@ -30,7 +30,6 @@
 export * from './addresses-by-lookup-table-address';
 export * from './blockhash';
 export * from './codecs';
-export * from './compilable-transaction-message';
 export * from './compile';
 export * from './compress-transaction-message';
 export * from './create-transaction-message';
@@ -42,6 +41,3 @@ export * from './instructions';
 export * from './lifetime';
 export * from './transaction-message-size';
 export * from './transaction-message';
-
-// Remove in the next major version.
-export * from './deprecated';

@@ -17,6 +17,3 @@ export * from './sendable-transaction';
 export * from './transaction-message-size';
 export * from './transaction-size';
 export * from './transaction';
-
-// Remove in the next major version.
-export * from './deprecated';

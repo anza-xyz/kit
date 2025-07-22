@@ -307,12 +307,3 @@ export function getEnumCodec<TEnum extends EnumLookupObject>(
 ): Codec<GetEnumFrom<TEnum>, GetEnumTo<TEnum>> {
     return combineCodec(getEnumEncoder(constructor, config), getEnumDecoder(constructor, config));
 }
-
-/** @deprecated Use `getEnumEncoder` instead. */
-export const getScalarEnumEncoder = getEnumEncoder;
-
-/** @deprecated Use `getEnumDecoder` instead. */
-export const getScalarEnumDecoder = getEnumDecoder;
-
-/** @deprecated Use `getEnumCodec` instead. */
-export const getScalarEnumCodec = getEnumCodec;

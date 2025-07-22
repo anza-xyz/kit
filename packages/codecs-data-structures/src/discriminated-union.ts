@@ -351,12 +351,3 @@ function getVariantDiscriminator<const TVariants extends Variants<Decoder<any> |
     }
     return discriminator;
 }
-
-/** @deprecated Use `getDiscriminatedUnionEncoder` instead. */
-export const getDataEnumEncoder = getDiscriminatedUnionEncoder;
-
-/** @deprecated Use `getDiscriminatedUnionDecoder` instead. */
-export const getDataEnumDecoder = getDiscriminatedUnionDecoder;
-
-/** @deprecated Use `getDiscriminatedUnionCodec` instead. */
-export const getDataEnumCodec = getDiscriminatedUnionCodec;

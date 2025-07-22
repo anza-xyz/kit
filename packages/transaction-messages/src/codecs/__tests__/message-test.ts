@@ -20,7 +20,6 @@ describe.each([getCompiledTransactionMessageCodec, getCompiledTransactionMessage
         it('serializes a transaction according to the spec', () => {
             const byteArray = compiledMessage.encode({
                 addressTableLookups: [
-                    // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                     {
                         lookupTableAddress: '3yS1JFVT284y8z1LC9MRoWxZjzFrdoD5axKsZiyMsfC7' as Address, // decodes to [44{32}]
                         readonlyIndexes: [77],

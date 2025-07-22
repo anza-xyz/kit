@@ -233,13 +233,11 @@ describe('decompileTransactionMessageFetchingLookupTables', () => {
 
         const compiledTransactionMessage: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
             addressTableLookups: [
-                // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                 {
                     lookupTableAddress: lookupTableAddress1,
                     readonlyIndexes: [0],
                     writableIndexes: [],
                 },
-                // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
                 {
                     lookupTableAddress: lookupTableAddress2,
                     readonlyIndexes: [0],

@@ -5,6 +5,3 @@
 export * from './accounts';
 export * from './instruction';
 export * from './roles';
-
-// Remove in the next major version.
-export * from './deprecated';

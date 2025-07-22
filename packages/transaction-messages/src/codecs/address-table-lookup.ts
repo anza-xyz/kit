@@ -2,7 +2,6 @@ import { getAddressDecoder, getAddressEncoder } from '@solana/addresses';
 import {
     combineCodec,
     type Encoder,
-    transformDecoder,
     type VariableSizeCodec,
     type VariableSizeDecoder,
     type VariableSizeEncoder,
@@ -34,26 +33,13 @@ let memoizedAddressTableLookupDecoder: VariableSizeDecoder<AddressTableLookup> |
 export function getAddressTableLookupDecoder(): VariableSizeDecoder<AddressTableLookup> {
     if (!memoizedAddressTableLookupDecoder) {
         const indexEncoder = getArrayDecoder(getU8Decoder(), { size: getShortU16Decoder() });
-        // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
-        memoizedAddressTableLookupDecoder = transformDecoder(
-            getStructDecoder([
-                ['lookupTableAddress', getAddressDecoder()],
-                ['writableIndexes', indexEncoder],
-                ['readonlyIndexes', indexEncoder],
-            ]),
-            lookupTable =>
-                'readableIndices' in lookupTable
-                    ? ({
-                          ...lookupTable,
-                          readonlyIndexes: lookupTable.readableIndices,
-                          // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
-                          writableIndexes: lookupTable.writableIndices,
-                      } as AddressTableLookup)
-                    : lookupTable,
-        );
+        memoizedAddressTableLookupDecoder = getStructDecoder([
+            ['lookupTableAddress', getAddressDecoder()],
+            ['writableIndexes', indexEncoder],
+            ['readonlyIndexes', indexEncoder],
+        ]);
     }
 
-    // @ts-expect-error Remove when `readableIndices` and `writableIndices` are removed.
     return memoizedAddressTableLookupDecoder;
 }
 

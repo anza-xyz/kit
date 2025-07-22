@@ -85,14 +85,8 @@ function getAddressLookupMetas(
     // we know that for each lookup, knownLookups[lookup.lookupTableAddress] is defined
     for (const lookup of compiledAddressTableLookups) {
         const addresses = addressesByLookupTableAddress[lookup.lookupTableAddress];
-        const readonlyIndexes =
-            lookup.readonlyIndexes ??
-            /** @deprecated Remove in a future major version */
-            lookup.readableIndices;
-        const writableIndexes =
-            lookup.writableIndexes ??
-            /** @deprecated Remove in a future major version */
-            lookup.writableIndices;
+        const readonlyIndexes = lookup.readonlyIndexes;
+        const writableIndexes = lookup.writableIndexes;
 
         const highestIndex = Math.max(...readonlyIndexes, ...writableIndexes);
         if (highestIndex >= addresses.length) {
