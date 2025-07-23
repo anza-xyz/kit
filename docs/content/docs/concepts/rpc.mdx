@@ -1,6 +1,57 @@
 ---
 title: RPC requests
-description: Configure RPC clients to send RPC requests
+description: Read and write data to the blockchain
 ---
 
-TODO
+## Introduction
+
+Kit offers a TypeScript interface that you can use to communicate with a Solana JSON RPC server. Calling methods on a <abbr title="Remote procedure call">RPC</abbr> server lets you read data from the blockchain, simulate transactions, and send transactions to be processed.
+
+Kit aims to implement all of the RPC methods documented in the [Solana RPC HTTP methods](https://solana.com/docs/rpc/http) docs. You can either browse the available methods in the docs, or you can follow Kit's TypeScript types and inline documentation in your editor.
+
+## Installation
+
+Functions for creating RPC clients are **included within the `@solana/kit` library** but you may also install them using their standalone package.
+
+```package-install
+@solana/rpc
+```
+
+Note that the `@solana/rpc` package itself is composed of several smaller packages, each with a distinct responsibility. Here's the list of all packages that come together to implement the default RPC client should you wish to create your own custom one:
+
+| Package                                                                              | Description                                                                                                                    |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| [`@solana/kit`](https://npmjs.org/package/@solana/kit)                               | Includes `@solana/rpc`, `@solana/rpc-parsed-types`, `@solana/rpc-spec-types`, and `@solana/rpc-types`                          |
+| [`@solana/rpc`](https://npmjs.org/package/@solana/rpc)                               | Includes `@solana/rpc-api`, `@solana/rpc-spec`, and utilities for creating default RPC instances                               |
+| [`@solana/rpc-api`](https://npmjs.org/package/@solana/rpc-api)                       | Types that describe every method in the Solana JSON RPC API                                                                    |
+| [`@solana/rpc-spec`](https://npmjs.org/package/@solana/rpc-spec)                     | Types and methods that can be used to create an RPC implementation                                                             |
+| [`@solana/rpc-spec-types`](https://npmjs.org/package/@solana/rpc-spec-types)         | Utility types common to both RPC and RPC Subscriptions implementations                                                         |
+| [`@solana/rpc-transformers`](https://npmjs.org/package/@solana/rpc-transformers)     | Helpers for transforming RPC requests and responses in various ways appropriate for use in a JavaScript application            |
+| [`@solana/rpc-transport-http`](https://npmjs.org/package/@solana/rpc-transport-http) | Utilities for creating custom RPC transports                                                                                   |
+| [`@solana/rpc-types`](https://npmjs.org/package/@solana/rpc-types)                   | Types for values used in the [Solana JSON-RPC](https://docs.solana.com/api/http) and a series of helpers for working with them |
+
+## What is a RPC?
+
+A RPC is a server with an up-to-date view of the Solana blockchain. You can make HTTP requests to it for things like account data, token balances, and transaction details. You can also ask it to simulate a transaction of your own creation, or to forward it to the network to be processed.
+
+Here's a quick example that fetches the native token balance of an account at a given address, in Lamports.
+
+```ts twoslash
+import { address, createSolanaRpc, mainnet } from '@solana/kit';
+const rpc = createSolanaRpc(mainnet('https://api.mainnet-beta.solana.com'));
+const { value: balanceInLamports } = await rpc
+    .getBalance(address('anza1Vgz2kcN9Qo6ECvf43v8RxBzQ7UpvxFoxJtLmGz'))
+    .send();
+```
+
+Most RPC servers implement most of the Solana JSON-RPC API covered by Kit, but some offer extra methods above and beyond that. Those that do should offer an SDK that you can use to wrap Kit's RPC API implementation, merging the method implementations and TypeScript types of both APIs into a single object.
+
+## Where to find an RPC
+
+For light development or personal use, you can use a public RPC server for the cluster you want to access.
+
+- `https://api.mainnet-beta.solana.com`
+- `https://api.testnet.solana.com`
+- `https://api.devnet.solana.com`
+
+When deploying your application to production, you will want to lease an RPC server or [set up your own](https://docs.anza.xyz/operations/setup-an-rpc-node).

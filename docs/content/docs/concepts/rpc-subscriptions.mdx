@@ -1,6 +1,60 @@
 ---
 title: RPC subscriptions
-description: Configure RPC subscription clients to receive RPC notifications
+description: Get notified of changes to the blockchain
 ---
 
-TODO
+## Introduction
+
+Kit offers a TypeScript interface that you can use to subscribe for notifications from a Solana JSON RPC server. Registering subscriptions with a <abbr title="Remote procedure call">RPC</abbr> server will yield notifications over that channel when data matching your subscription is updated.
+
+Kit aims to implement all of the RPC Subscription methods documented in the [Solana RPC WebSocket methods](https://solana.com/docs/rpc/websocket) docs. You can either browse the available methods in the docs, or you can follow Kit's TypeScript types and inline documentation in your editor.
+
+## Installation
+
+Functions for creating RPC Subscriptions clients are **included within the `@solana/kit` library** but you may also install them using their standalone package.
+
+```package-install
+@solana/rpc-subscriptions
+```
+
+Note that the `@solana/rpc-subscriptions` package itself is composed of several smaller packages, each with a distinct responsibility. Here's the list of all packages that come together to implement the default RPC Subscriptions client should you wish to create your own custom one:
+
+| Package                                                                                                                | Description                                                                                                                                |
+| ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| [`@solana/kit`](https://npmjs.org/package/@solana/kit)                                                                 | Includes `@solana/rpc-subscriptions`, `@solana/rpc-parsed-types`, `@solana/rpc-spec-types`, and `@solana/rpc-types`                        |
+| [`@solana/rpc-subscriptions`](https://npmjs.org/package/@solana/rpc-subscriptions)                                     | Includes `@solana/rpc-subscriptions-api`, `@solana/rpc-subscriptions-spec`, and utilities for creating default RPC Subscriptions instances |
+| [`@solana/rpc-subscriptions-api`](https://npmjs.org/package/@solana/rpc-subscriptions-api)                             | Types that describe every method in the Solana RPC WebSocket API                                                                           |
+| [`@solana/rpc-subscriptions-spec`](https://npmjs.org/package/@solana/rpc-subscriptions-spec)                           | Types and methods that can be used to create an RPC Subscriptions implementation                                                           |
+| [`@solana/rpc-spec-types`](https://npmjs.org/package/@solana/rpc-spec-types)                                           | Utility types common to both RPC and RPC Subscriptions implementations                                                                     |
+| [`@solana/rpc-transformers`](https://npmjs.org/package/@solana/rpc-transformers)                                       | Helpers for transforming RPC subscriptions and notifications in various ways appropriate for use in a JavaScript application               |
+| [`@solana/rpc-subscriptions-channel-websocket`](https://npmjs.org/package/@solana/rpc-subscriptions-channel-websocket) | Utilities for creating custom RPC Subscriptions channels                                                                                   |
+| [`@solana/rpc-types`](https://npmjs.org/package/@solana/rpc-types)                                                     | Types for values used in the [Solana Websocket API](https://docs.solana.com/api/websocket) and a series of helpers for working with them   |
+
+## What is a RPC?
+
+A RPC is a server with an up-to-date view of the Solana blockchain. You can send it subscriptions to request notifications for changes to things like account data, signature statuses, and slot progression.
+
+Here's a quick example that subscribes for a notification every time the network's slot count advances, then unsubscribes after 10 seconds.
+
+```ts twoslash
+import { createSolanaRpcSubscriptions, mainnet } from '@solana/kit';
+const rpcSubscriptions = createSolanaRpcSubscriptions(mainnet('wss://api.mainnet-beta.solana.com'));
+const slotNotifications = await rpcSubscriptions
+    .slotNotifications()
+    .subscribe({ abortSignal: AbortSignal.timeout(10_000) });
+for await (const slotNotification of slotNotifications) {
+    console.log('The network has advanced to slot', slotNotification.slot);
+}
+```
+
+Most RPC servers implement most of the Solana WebSocket API covered by Kit, but some offer extra methods above and beyond that. Those that do should offer an SDK that you can use to wrap Kit's RPC WebSocket API implementation, merging the method implementations and TypeScript types of both APIs into a single object.
+
+## Where to find an RPC
+
+For light development or personal use, you can use a public RPC server for the cluster you want to access.
+
+- `wss://api.mainnet-beta.solana.com`
+- `wss://api.testnet.solana.com`
+- `wss://api.devnet.solana.com`
+
+When deploying your application to production, you will want to lease an RPC server or [set up your own](https://docs.anza.xyz/operations/setup-an-rpc-node).
