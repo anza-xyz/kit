@@ -6,6 +6,9 @@ import {
     createEncoder,
     Decoder,
     Encoder,
+    FixedSizeCodec,
+    FixedSizeDecoder,
+    FixedSizeEncoder,
     getEncodedSize,
     isFixedSize,
     Offset,
@@ -36,6 +39,24 @@ type GetEncoderTypeFromVariants<TVariants extends readonly Encoder<any>[]> = Dra
 type GetDecoderTypeFromVariants<TVariants extends readonly Decoder<any>[]> = DrainOuterGeneric<{
     [I in keyof TVariants]: TVariants[I] extends Decoder<infer TFrom> ? TFrom : never;
 }>[number];
+
+type UnionEncoder<TVariants extends readonly Encoder<unknown>[]> = TVariants extends readonly FixedSizeEncoder<any>[]
+    ? FixedSizeEncoder<GetEncoderTypeFromVariants<TVariants>>
+    : Encoder<GetEncoderTypeFromVariants<TVariants>>;
+
+type UnionDecoder<TVariants extends readonly Decoder<unknown>[]> = TVariants extends readonly FixedSizeDecoder<any>[]
+    ? FixedSizeDecoder<GetDecoderTypeFromVariants<TVariants>>
+    : Decoder<GetDecoderTypeFromVariants<TVariants>>;
+
+type UnionCodec<TVariants extends readonly Codec<unknown>[]> = TVariants extends readonly FixedSizeCodec<any>[]
+    ? FixedSizeCodec<
+          GetEncoderTypeFromVariants<TVariants>,
+          GetDecoderTypeFromVariants<TVariants> & GetEncoderTypeFromVariants<TVariants>
+      >
+    : Codec<
+          GetEncoderTypeFromVariants<TVariants>,
+          GetDecoderTypeFromVariants<TVariants> & GetEncoderTypeFromVariants<TVariants>
+      >;
 
 /**
  * Returns an encoder for union types.
@@ -76,7 +97,7 @@ type GetDecoderTypeFromVariants<TVariants extends readonly Decoder<any>[]> = Dra
 export function getUnionEncoder<const TVariants extends readonly Encoder<any>[]>(
     variants: TVariants,
     getIndexFromValue: (value: GetEncoderTypeFromVariants<TVariants>) => number,
-): Encoder<GetEncoderTypeFromVariants<TVariants>> {
+): UnionEncoder<TVariants> {
     type TFrom = GetEncoderTypeFromVariants<TVariants>;
     const fixedSize = getUnionFixedSize(variants);
     const write: Encoder<TFrom>['write'] = (variant, bytes, offset) => {
@@ -86,7 +107,7 @@ export function getUnionEncoder<const TVariants extends readonly Encoder<any>[]>
     };
 
     if (fixedSize !== null) {
-        return createEncoder({ fixedSize, write });
+        return createEncoder({ fixedSize, write }) as UnionEncoder<TVariants>;
     }
 
     const maxSize = getUnionMaxSize(variants);
@@ -98,7 +119,7 @@ export function getUnionEncoder<const TVariants extends readonly Encoder<any>[]>
             return getEncodedSize(variant, variants[index]);
         },
         write,
-    });
+    }) as UnionEncoder<TVariants>;
 }
 
 /**
@@ -136,7 +157,7 @@ export function getUnionEncoder<const TVariants extends readonly Encoder<any>[]>
 export function getUnionDecoder<const TVariants extends readonly Decoder<any>[]>(
     variants: TVariants,
     getIndexFromBytes: (bytes: ReadonlyUint8Array, offset: Offset) => number,
-): Decoder<GetDecoderTypeFromVariants<TVariants>> {
+): UnionDecoder<TVariants> {
     type TTo = GetDecoderTypeFromVariants<TVariants>;
     const fixedSize = getUnionFixedSize(variants);
     const read: Decoder<TTo>['read'] = (bytes, offset) => {
@@ -146,11 +167,11 @@ export function getUnionDecoder<const TVariants extends readonly Decoder<any>[]>
     };
 
     if (fixedSize !== null) {
-        return createDecoder({ fixedSize, read });
+        return createDecoder({ fixedSize, read }) as UnionDecoder<TVariants>;
     }
 
     const maxSize = getUnionMaxSize(variants);
-    return createDecoder({ ...(maxSize !== null ? { maxSize } : {}), read });
+    return createDecoder({ ...(maxSize !== null ? { maxSize } : {}), read }) as UnionDecoder<TVariants>;
 }
 
 /**
@@ -204,16 +225,13 @@ export function getUnionCodec<const TVariants extends readonly Codec<any>[]>(
     variants: TVariants,
     getIndexFromValue: (value: GetEncoderTypeFromVariants<TVariants>) => number,
     getIndexFromBytes: (bytes: ReadonlyUint8Array, offset: Offset) => number,
-): Codec<
-    GetEncoderTypeFromVariants<TVariants>,
-    GetDecoderTypeFromVariants<TVariants> & GetEncoderTypeFromVariants<TVariants>
-> {
+): UnionCodec<TVariants> {
     return combineCodec(
         getUnionEncoder(variants, getIndexFromValue),
-        getUnionDecoder(variants, getIndexFromBytes) as Decoder<
+        getUnionDecoder(variants as readonly Decoder<any>[], getIndexFromBytes) as Decoder<
             GetDecoderTypeFromVariants<TVariants> & GetEncoderTypeFromVariants<TVariants>
         >,
-    );
+    ) as UnionCodec<TVariants>;
 }
 
 function assertValidVariantIndex(variants: readonly unknown[], index: number) {
