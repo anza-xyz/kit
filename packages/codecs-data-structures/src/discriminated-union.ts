@@ -1,5 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Codec, combineCodec, Decoder, Encoder, transformDecoder, transformEncoder } from '@solana/codecs-core';
+import {
+    Codec,
+    combineCodec,
+    Decoder,
+    Encoder,
+    FixedSizeCodec,
+    FixedSizeDecoder,
+    FixedSizeEncoder,
+    transformDecoder,
+    transformEncoder,
+} from '@solana/codecs-core';
 import { getU8Decoder, getU8Encoder, NumberCodec, NumberDecoder, NumberEncoder } from '@solana/codecs-numbers';
 import { SOLANA_ERROR__CODECS__INVALID_DISCRIMINATED_UNION_VARIANT, SolanaError } from '@solana/errors';
 
@@ -129,6 +139,29 @@ type GetDecoderTypeFromVariants<
         : never) & { [P in TDiscriminatorProperty]: TVariants[I][0] };
 }>[ArrayIndices<TVariants>];
 
+type UnionEncoder<TVariants extends Variants<Encoder<unknown>>, TDiscriminatorProperty extends string> =
+    TVariants extends Variants<FixedSizeEncoder<any>>
+        ? FixedSizeEncoder<GetEncoderTypeFromVariants<TVariants, TDiscriminatorProperty>>
+        : Encoder<GetEncoderTypeFromVariants<TVariants, TDiscriminatorProperty>>;
+
+type UnionDecoder<TVariants extends Variants<Decoder<unknown>>, TDiscriminatorProperty extends string> =
+    TVariants extends Variants<FixedSizeDecoder<any>>
+        ? FixedSizeDecoder<GetDecoderTypeFromVariants<TVariants, TDiscriminatorProperty>>
+        : Decoder<GetDecoderTypeFromVariants<TVariants, TDiscriminatorProperty>>;
+
+type UnionCodec<TVariants extends Variants<Codec<unknown, unknown>>, TDiscriminatorProperty extends string> =
+    TVariants extends Variants<FixedSizeCodec<any, any>>
+        ? FixedSizeCodec<
+              GetEncoderTypeFromVariants<TVariants, TDiscriminatorProperty>,
+              GetDecoderTypeFromVariants<TVariants, TDiscriminatorProperty> &
+                  GetEncoderTypeFromVariants<TVariants, TDiscriminatorProperty>
+          >
+        : Codec<
+              GetEncoderTypeFromVariants<TVariants, TDiscriminatorProperty>,
+              GetDecoderTypeFromVariants<TVariants, TDiscriminatorProperty> &
+                  GetEncoderTypeFromVariants<TVariants, TDiscriminatorProperty>
+          >;
+
 /**
  * Returns an encoder for discriminated unions.
  *
@@ -176,7 +209,7 @@ export function getDiscriminatedUnionEncoder<
 >(
     variants: TVariants,
     config: DiscriminatedUnionCodecConfig<TDiscriminatorProperty, NumberEncoder> = {},
-): Encoder<GetEncoderTypeFromVariants<TVariants, TDiscriminatorProperty>> {
+): UnionEncoder<TVariants, TDiscriminatorProperty> {
     type TFrom = GetEncoderTypeFromVariants<TVariants, TDiscriminatorProperty>;
     const discriminatorProperty = (config.discriminator ?? '__kind') as TDiscriminatorProperty;
     const prefix = config.size ?? getU8Encoder();
@@ -185,7 +218,7 @@ export function getDiscriminatedUnionEncoder<
             transformEncoder(getTupleEncoder([prefix, variant]), (value: TFrom): [number, TFrom] => [index, value]),
         ),
         value => getVariantDiscriminator(variants, value[discriminatorProperty]),
-    );
+    ) as UnionEncoder<TVariants, TDiscriminatorProperty>;
 }
 
 /**
@@ -232,7 +265,7 @@ export function getDiscriminatedUnionDecoder<
 >(
     variants: TVariants,
     config: DiscriminatedUnionCodecConfig<TDiscriminatorProperty, NumberDecoder> = {},
-): Decoder<GetDecoderTypeFromVariants<TVariants, TDiscriminatorProperty>> {
+): UnionDecoder<TVariants, TDiscriminatorProperty> {
     const discriminatorProperty = config.discriminator ?? '__kind';
     const prefix = config.size ?? getU8Decoder();
     return getUnionDecoder(
@@ -243,7 +276,7 @@ export function getDiscriminatedUnionDecoder<
             })),
         ),
         (bytes, offset) => Number(prefix.read(bytes, offset)[0]),
-    );
+    ) as UnionDecoder<TVariants, TDiscriminatorProperty>;
 }
 
 /**
@@ -324,18 +357,16 @@ export function getDiscriminatedUnionCodec<
 >(
     variants: TVariants,
     config: DiscriminatedUnionCodecConfig<TDiscriminatorProperty, NumberCodec> = {},
-): Codec<
-    GetEncoderTypeFromVariants<TVariants, TDiscriminatorProperty>,
-    GetDecoderTypeFromVariants<TVariants, TDiscriminatorProperty> &
-        GetEncoderTypeFromVariants<TVariants, TDiscriminatorProperty>
-> {
+): UnionCodec<TVariants, TDiscriminatorProperty> {
     return combineCodec(
-        getDiscriminatedUnionEncoder(variants, config),
+        getDiscriminatedUnionEncoder(variants, config) as Encoder<
+            GetEncoderTypeFromVariants<TVariants, TDiscriminatorProperty>
+        >,
         getDiscriminatedUnionDecoder(variants, config) as Decoder<
             GetDecoderTypeFromVariants<TVariants, TDiscriminatorProperty> &
                 GetEncoderTypeFromVariants<TVariants, TDiscriminatorProperty>
         >,
-    );
+    ) as UnionCodec<TVariants, TDiscriminatorProperty>;
 }
 
 function getVariantDiscriminator<const TVariants extends Variants<Decoder<any> | Encoder<any>>>(

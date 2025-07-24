@@ -1,4 +1,4 @@
-import { Codec, Decoder, Encoder } from '@solana/codecs-core';
+import { Codec, Decoder, Encoder, FixedSizeCodec, FixedSizeDecoder, FixedSizeEncoder } from '@solana/codecs-core';
 import { getU64Codec } from '@solana/codecs-numbers';
 
 import {
@@ -49,6 +49,25 @@ import { getUnitCodec } from '../unit';
             [Event.KeyPress, {} as Encoder<{ key: string }>],
         ]) satisfies Encoder<{ __kind: Event.Click; x: number; y: number } | { __kind: Event.KeyPress; key: string }>;
     }
+
+    // It returns a fixed size encoder if all variants are fixed size.
+    {
+        getDiscriminatedUnionEncoder([
+            ['A', {} as FixedSizeEncoder<{ value: string }>],
+            ['B', {} as FixedSizeEncoder<{ x: number; y: number }>],
+        ]) satisfies FixedSizeEncoder<{ __kind: 'A'; value: string } | { __kind: 'B'; x: number; y: number }>;
+    }
+
+    // It does not return a fixed size encoder if any variant is variable size.
+    {
+        const encoder = getDiscriminatedUnionEncoder([
+            ['A', {} as Encoder<{ value: string }>],
+            ['B', {} as FixedSizeEncoder<{ x: number; y: number }>],
+        ]);
+        encoder satisfies Encoder<{ __kind: 'A'; value: string } | { __kind: 'B'; x: number; y: number }>;
+        // @ts-expect-error Encoder is not fixed size.
+        encoder satisfies FixedSizeEncoder<{ __kind: 'A'; value: string } | { __kind: 'B'; x: number; y: number }>;
+    }
 }
 
 // [DESCRIBE] getDiscriminatedUnionDecoder.
@@ -90,6 +109,25 @@ import { getUnitCodec } from '../unit';
             [Event.Click, {} as Decoder<{ x: number; y: number }>],
             [Event.KeyPress, {} as Decoder<{ key: string }>],
         ]) satisfies Decoder<{ __kind: Event.Click; x: number; y: number } | { __kind: Event.KeyPress; key: string }>;
+    }
+
+    // It returns a fixed size decoder if all variants are fixed size.
+    {
+        getDiscriminatedUnionDecoder([
+            ['A', {} as FixedSizeDecoder<{ value: string }>],
+            ['B', {} as FixedSizeDecoder<{ x: number; y: number }>],
+        ]) satisfies FixedSizeDecoder<{ __kind: 'A'; value: string } | { __kind: 'B'; x: number; y: number }>;
+    }
+
+    // It does not return a fixed size decoder if any variant is variable size.
+    {
+        const decoder = getDiscriminatedUnionDecoder([
+            ['A', {} as Decoder<{ value: string }>],
+            ['B', {} as FixedSizeDecoder<{ x: number; y: number }>],
+        ]);
+        decoder satisfies Decoder<{ __kind: 'A'; value: string } | { __kind: 'B'; x: number; y: number }>;
+        // @ts-expect-error Decoder is not fixed size.
+        decoder satisfies FixedSizeDecoder<{ __kind: 'A'; value: string } | { __kind: 'B'; x: number; y: number }>;
     }
 }
 
@@ -167,5 +205,24 @@ import { getUnitCodec } from '../unit';
             { __kind: 'A' } | { __kind: 'B'; value: bigint | number },
             { __kind: 'A' } | { __kind: 'B'; value: bigint }
         >;
+    }
+
+    // It returns a fixed size codec if all variants are fixed size.
+    {
+        getDiscriminatedUnionCodec([
+            ['A', {} as FixedSizeCodec<{ value: string }>],
+            ['B', {} as FixedSizeCodec<{ x: number; y: number }>],
+        ]) satisfies FixedSizeCodec<{ __kind: 'A'; value: string } | { __kind: 'B'; x: number; y: number }>;
+    }
+
+    // It does not return a fixed size codec if any variant is variable size.
+    {
+        const codec = getDiscriminatedUnionCodec([
+            ['A', {} as Codec<{ value: string }>],
+            ['B', {} as FixedSizeCodec<{ x: number; y: number }>],
+        ]);
+        codec satisfies Codec<{ __kind: 'A'; value: string } | { __kind: 'B'; x: number; y: number }>;
+        // @ts-expect-error Codec is not fixed size.
+        codec satisfies FixedSizeCodec<{ __kind: 'A'; value: string } | { __kind: 'B'; x: number; y: number }>;
     }
 }
