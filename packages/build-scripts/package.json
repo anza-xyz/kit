@@ -9,7 +9,7 @@
         "tsup.config.package.ts"
     ],
     "devDependencies": {
-        "@manypkg/get-packages": "^3.0.0",
+        "@manypkg/get-packages": "^3.1.0",
         "@octokit/rest": "^22.0.0",
         "@types/jscodeshift": "^17.3.0",
         "@types/minimist": "^1.2.5",
