@@ -1,5 +1,22 @@
 # @solana/errors
 
+## 3.0.0
+
+### Minor Changes
+
+- [#664](https://github.com/anza-xyz/kit/pull/664) [`9feba85`](https://github.com/anza-xyz/kit/commit/9feba8557b64dd3199cd88af2c17b7ccd5d18fec) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add `createTransactionPlanExecutor` implementation for the `TransactionPlanExecutor` type.
+
+- [#648](https://github.com/anza-xyz/kit/pull/648) [`01f159a`](https://github.com/anza-xyz/kit/commit/01f159a436d7a29479aa1a1877c9b4c77da1170f) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add `createTransactionPlanner` implementation for the `TransactionPlanner` type.
+
+### Patch Changes
+
+- [#674](https://github.com/anza-xyz/kit/pull/674) [`6a183bf`](https://github.com/anza-xyz/kit/commit/6a183bf9e9d672e2d42f3aecc589a9e54d01cb1a) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Allow `SolanaError` context objects to use non-enumerable properties. This is useful when it's appropriate for an object to appear in the error context at runtime, but when that object can't be serialized for use by the production mode error decoder. Prior to this, non-enumerable properties would be deleted from context objects when creating new `SolanaErrors`.
+
+- [#658](https://github.com/anza-xyz/kit/pull/658) [`23d2fa1`](https://github.com/anza-xyz/kit/commit/23d2fa14cbd5197473eca94a1ac6c5abf221b052) Thanks [@steveluscher](https://github.com/steveluscher)! - Added three missing error messages/contexts
+    - `JSON_RPC_SERVER_ERROR_EPOCH_REWARDS_PERIOD_ACTIVE`: -32017
+    - `JSON_RPC_SERVER_ERROR_SLOT_NOT_EPOCH_BOUNDARY`: -32018
+    - `JSON_RPC_SERVER_ERROR_LONG_TERM_STORAGE_UNREACHABLE`: -32019
+
 ## 2.3.0
 
 ### Minor Changes

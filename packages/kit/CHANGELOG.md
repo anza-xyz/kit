@@ -1,5 +1,41 @@
 # @solana/web3.js
 
+## 3.0.0
+
+### Major Changes
+
+- [#482](https://github.com/anza-xyz/kit/pull/482) [`00d66fb`](https://github.com/anza-xyz/kit/commit/00d66fbec15288bb531f7459b6baa48aead1cdc6) Thanks [@lorisleiva](https://github.com/lorisleiva)! - BREAKING CHANGE: Transactions must now satisfy the `SendableTransaction` type before being provided to helper functions that send transactions to the network. On top of ensuring the transaction is fully signed, this type also ensures the transaction is within size limit.
+
+- [#594](https://github.com/anza-xyz/kit/pull/594) [`733605d`](https://github.com/anza-xyz/kit/commit/733605df84ce5f5ffea1e83eea8df74e08789642) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Extract lifetime token from `CompiledTransactionMessage`. `CompiledTransactionMessage & CompiledTransactionMessageWithLifetime` may now be used to refer to a compiled transaction message with a lifetime token. This enables `CompiledTransactionMessages` to be encoded without the need to specify a mock lifetime token.
+
+- [#462](https://github.com/anza-xyz/kit/pull/462) [`a74ea02`](https://github.com/anza-xyz/kit/commit/a74ea0267bf589fba50bb2ebe72dc4f73da9adcf) Thanks [@lorisleiva](https://github.com/lorisleiva)! - BREAKING CHANGE: The `FullySignedTransaction` no longer extends the `Transaction` type so it can be composed with other flags that also narrow transaction types. This means, whenever `FullySignedTransaction` is used on its own, it will need to be replaced with `FullySignedTransaction & Transaction`.
+
+- [#691](https://github.com/anza-xyz/kit/pull/691) [`771f8ae`](https://github.com/anza-xyz/kit/commit/771f8aef1f8c096450c6e4ac05b8611150201485) Thanks [@lorisleiva](https://github.com/lorisleiva)! - BREAKING CHANGE: Removes the `getComputeUnitEstimateForTransactionMessageFactory` deprecated function.
+
+### Patch Changes
+
+- [#584](https://github.com/anza-xyz/kit/pull/584) [`760fb83`](https://github.com/anza-xyz/kit/commit/760fb8319f6b53fa1baf05f9aa1246cb6c2caceb) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Deprecate `CompilableTransactionMessage` in favour of `TransactionMessage & TransactionMessageWithFeePayer`
+
+- Updated dependencies [[`771f8ae`](https://github.com/anza-xyz/kit/commit/771f8aef1f8c096450c6e4ac05b8611150201485), [`93ae6f9`](https://github.com/anza-xyz/kit/commit/93ae6f96859019b6c7ea9a596ffb9b1be7a35e64), [`771f8ae`](https://github.com/anza-xyz/kit/commit/771f8aef1f8c096450c6e4ac05b8611150201485), [`6a183bf`](https://github.com/anza-xyz/kit/commit/6a183bf9e9d672e2d42f3aecc589a9e54d01cb1a), [`760fb83`](https://github.com/anza-xyz/kit/commit/760fb8319f6b53fa1baf05f9aa1246cb6c2caceb), [`23d2fa1`](https://github.com/anza-xyz/kit/commit/23d2fa14cbd5197473eca94a1ac6c5abf221b052), [`771f8ae`](https://github.com/anza-xyz/kit/commit/771f8aef1f8c096450c6e4ac05b8611150201485), [`a894d53`](https://github.com/anza-xyz/kit/commit/a894d53192d50b5d2217ada2cb715d71ef4f8f02), [`9feba85`](https://github.com/anza-xyz/kit/commit/9feba8557b64dd3199cd88af2c17b7ccd5d18fec), [`00d66fb`](https://github.com/anza-xyz/kit/commit/00d66fbec15288bb531f7459b6baa48aead1cdc6), [`733605d`](https://github.com/anza-xyz/kit/commit/733605df84ce5f5ffea1e83eea8df74e08789642), [`01f159a`](https://github.com/anza-xyz/kit/commit/01f159a436d7a29479aa1a1877c9b4c77da1170f), [`0bd053b`](https://github.com/anza-xyz/kit/commit/0bd053bfa40b095d37bea7b7cd695259ba5a9cdc), [`55d6b04`](https://github.com/anza-xyz/kit/commit/55d6b040764f5e32de9c94d1844529855233d845), [`a74ea02`](https://github.com/anza-xyz/kit/commit/a74ea0267bf589fba50bb2ebe72dc4f73da9adcf), [`771f8ae`](https://github.com/anza-xyz/kit/commit/771f8aef1f8c096450c6e4ac05b8611150201485)]:
+    - @solana/transaction-messages@3.0.0
+    - @solana/signers@3.0.0
+    - @solana/instructions@3.0.0
+    - @solana/errors@3.0.0
+    - @solana/transactions@3.0.0
+    - @solana/programs@3.0.0
+    - @solana/transaction-confirmation@3.0.0
+    - @solana/accounts@3.0.0
+    - @solana/addresses@3.0.0
+    - @solana/keys@3.0.0
+    - @solana/rpc@3.0.0
+    - @solana/rpc-subscriptions@3.0.0
+    - @solana/rpc-types@3.0.0
+    - @solana/sysvars@3.0.0
+    - @solana/codecs@3.0.0
+    - @solana/rpc-parsed-types@3.0.0
+    - @solana/functional@3.0.0
+    - @solana/rpc-spec-types@3.0.0
+
 ## 2.3.0
 
 ### Minor Changes
