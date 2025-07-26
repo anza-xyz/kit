@@ -1,5 +1,32 @@
 # @solana/transaction-messages
 
+## 3.0.0
+
+### Major Changes
+
+- [#691](https://github.com/anza-xyz/kit/pull/691) [`771f8ae`](https://github.com/anza-xyz/kit/commit/771f8aef1f8c096450c6e4ac05b8611150201485) Thanks [@lorisleiva](https://github.com/lorisleiva)! - BREAKING CHANGE: Removes the following deprecated types and functions: `CompilableTransactionMessage`, `ITransactionMessageWithFeePayer`, `assertIsDurableNonceTransactionMessage` and `isDurableNonceTransaction`. Removes the deprecated `readableIndices` and `writableIndices` properties from the `AddressTableLookup` type — use `readonlyIndexes` and `writableIndexes` respectively instead.
+
+- [#594](https://github.com/anza-xyz/kit/pull/594) [`733605d`](https://github.com/anza-xyz/kit/commit/733605df84ce5f5ffea1e83eea8df74e08789642) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Extract lifetime token from `CompiledTransactionMessage`. `CompiledTransactionMessage & CompiledTransactionMessageWithLifetime` may now be used to refer to a compiled transaction message with a lifetime token. This enables `CompiledTransactionMessages` to be encoded without the need to specify a mock lifetime token.
+
+### Minor Changes
+
+- [#581](https://github.com/anza-xyz/kit/pull/581) [`55d6b04`](https://github.com/anza-xyz/kit/commit/55d6b040764f5e32de9c94d1844529855233d845) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Allow transaction messages with no lifetime constraints to be compiled. Renames `TransactionFromCompilableTransactionMessage` and `SetTransactionLifetimeFromCompilableTransactionMessage` type helpers to `TransactionFromTransactionMessage` and `SetTransactionLifetimeFromTransactionMessage` respectively, to reflect that they can now be used with transaction messages that do not have a lifetime constraint.
+
+### Patch Changes
+
+- [#584](https://github.com/anza-xyz/kit/pull/584) [`760fb83`](https://github.com/anza-xyz/kit/commit/760fb8319f6b53fa1baf05f9aa1246cb6c2caceb) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Deprecate `CompilableTransactionMessage` in favour of `TransactionMessage & TransactionMessageWithFeePayer`
+
+- Updated dependencies [[`771f8ae`](https://github.com/anza-xyz/kit/commit/771f8aef1f8c096450c6e4ac05b8611150201485), [`6a183bf`](https://github.com/anza-xyz/kit/commit/6a183bf9e9d672e2d42f3aecc589a9e54d01cb1a), [`23d2fa1`](https://github.com/anza-xyz/kit/commit/23d2fa14cbd5197473eca94a1ac6c5abf221b052), [`771f8ae`](https://github.com/anza-xyz/kit/commit/771f8aef1f8c096450c6e4ac05b8611150201485), [`9feba85`](https://github.com/anza-xyz/kit/commit/9feba8557b64dd3199cd88af2c17b7ccd5d18fec), [`9205484`](https://github.com/anza-xyz/kit/commit/9205484d33af9426fc9de9594bab204b8f954faf), [`01f159a`](https://github.com/anza-xyz/kit/commit/01f159a436d7a29479aa1a1877c9b4c77da1170f), [`98eabac`](https://github.com/anza-xyz/kit/commit/98eabac905759fc6809eaabb412a5846e3a773f0)]:
+    - @solana/instructions@3.0.0
+    - @solana/errors@3.0.0
+    - @solana/codecs-data-structures@3.0.0
+    - @solana/codecs-core@3.0.0
+    - @solana/addresses@3.0.0
+    - @solana/codecs-numbers@3.0.0
+    - @solana/rpc-types@3.0.0
+    - @solana/functional@3.0.0
+    - @solana/nominal-types@3.0.0
+
 ## 2.3.0
 
 ### Minor Changes
