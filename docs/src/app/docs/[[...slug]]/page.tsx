@@ -1,13 +1,12 @@
 import { docsSource } from '@/lib/source';
 import { Spread } from '@/lib/Spread';
+import { overridenMdxComponents } from '@/lib/Overrides';
 import { getPageTreePeers } from 'fumadocs-core/server';
-import { Cards, Card } from 'fumadocs-ui/components/card';
 import { DocsPage, DocsBody, DocsDescription, DocsTitle } from 'fumadocs-ui/page';
 import { notFound } from 'next/navigation';
 import defaultMdxComponents from 'fumadocs-ui/mdx';
 import { ImageZoom } from 'fumadocs-ui/components/image-zoom';
 import { Step, Steps } from 'fumadocs-ui/components/steps';
-import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 import { Popup, PopupContent, PopupTrigger } from 'fumadocs-twoslash/ui';
 
 export default async function Page(props: { params: Promise<{ slug?: string[] }> }) {
@@ -26,6 +25,7 @@ export default async function Page(props: { params: Promise<{ slug?: string[] }>
                 <MDX
                     components={{
                         ...defaultMdxComponents,
+                        ...overridenMdxComponents,
                         img: props => <ImageZoom {...props} />,
                         Popup,
                         PopupContent,
@@ -33,19 +33,17 @@ export default async function Page(props: { params: Promise<{ slug?: string[] }>
                         Spread,
                         Step,
                         Steps,
-                        Tab,
-                        Tabs,
                     }}
                 />
             </DocsBody>
             {hasCategory && (
-                <Cards>
+                <overridenMdxComponents.Cards>
                     {getPageTreePeers(docsSource.pageTree, page.url).map(peer => (
-                        <Card key={peer.url} title={peer.name} href={peer.url}>
+                        <overridenMdxComponents.Card key={peer.url} title={peer.name} href={peer.url}>
                             {peer.description}
-                        </Card>
+                        </overridenMdxComponents.Card>
                     ))}
-                </Cards>
+                </overridenMdxComponents.Cards>
             )}
         </DocsPage>
     );
