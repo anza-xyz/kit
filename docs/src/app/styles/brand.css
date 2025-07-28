@@ -1,8 +1,55 @@
 @theme {
-    /* Colors */
-    --color-primary-50: #fff7f1;
+    /* ---------*/
+    /* Colours. */
+    /* ---------*/
 
-    /* Containers */
+    /* Linen scale. */
+    --color-linen-50: #f9f6f1;
+    --color-linen-100: #f4eee5; /* Brand color. */
+    --color-linen-200: #eae1da; /* Brand color. */
+    --color-linen-300: #d6beac; /* Brand color. */
+    --color-linen-400: #b2927c; /* Brand color. */
+    --color-linen-500: #8a6b5b;
+    --color-linen-600: #715346;
+    --color-linen-700: #513a30;
+    --color-linen-800: #2f2420;
+    --color-linen-900: #14131d; /* Brand color. */
+
+    /* Coral scale. */
+    --color-coral-50: #fff4ef;
+    --color-coral-100: #ffe3d6;
+    --color-coral-200: #ffc1ac;
+    --color-coral-300: #ffa184;
+    --color-coral-400: #f5814e; /* Brand color. */
+    --color-coral-500: #d8582b; /* Brand color. */
+    --color-coral-600: #b94727;
+    --color-coral-700: #933923;
+    --color-coral-800: #6b2a1f;
+    --color-coral-900: #421b1a;
+
+    /* Mauve scale. */
+    --color-mauve-50: #fbf9fb;
+    --color-mauve-100: #f5edf3;
+    --color-mauve-200: #e2d8e0;
+    --color-mauve-300: #c6b4c4;
+    --color-mauve-400: #9b8196; /* Brand color. */
+    --color-mauve-500: #83617d; /* Brand color. */
+    --color-mauve-600: #6b4e66;
+    --color-mauve-700: #533b4f;
+    --color-mauve-800: #392938;
+    --color-mauve-900: #1f1721;
+
+    /* -------*/
+    /* Fonts. */
+    /* -------*/
+
+    --font-sans: 'corbel', 'sans-serif';
+    --font-title: 'neulis-neue', 'sans-serif';
+
+    /* -------*/
+    /* Sizes. */
+    /* -------*/
+
     --container-5xs: 12rem;
     --container-4xs: 14rem;
 }

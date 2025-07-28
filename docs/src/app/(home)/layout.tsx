@@ -1,7 +1,11 @@
 import type { ReactNode } from 'react';
-import { HomeLayout } from 'fumadocs-ui/layouts/home';
+import { HomeLayout, HomeLayoutProps } from 'fumadocs-ui/layouts/home';
 import { baseOptions } from '@/app/layout.config';
 
 export default function Layout({ children }: { children: ReactNode }) {
-    return <HomeLayout {...baseOptions}>{children}</HomeLayout>;
+    const homeProps: HomeLayoutProps = {
+        ...baseOptions,
+    };
+
+    return <HomeLayout {...homeProps}>{children}</HomeLayout>;
 }
