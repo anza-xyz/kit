@@ -3,14 +3,14 @@ title: Upgrade guide
 description: Upgrade your Web3.js project to Kit
 ---
 
+import TreeShaking from './tree-shaking';
+
 ## Why upgrade?
 
 Kit (formerly Web3.js v2) is a complete rewrite of [the Web3.js library](https://github.com/solana-labs/solana-web3.js/). It is designed to be more composable, customizable, and efficient than its predecessor. Its functional design enables the entire library to be tree-shaken, drastically reducing your bundle size. It also takes advantage of modern JavaScript features — such as native Ed25519 key support and `bigint` for large values — resulting in an even smaller bundle, better performance and most importantly, a reduced attack surface for your application.
 
 <Spread>
-    ![Tree-shaking illustration. The left side shows a bunch of imports from Web3.js all being
-    bundled despite only a couple being used. The right side shows an equivalent set of imports for
-    Kit but only the used functions are bundled.](./tree-shaking.svg)
+    <TreeShaking />
 </Spread>
 
 Unlike Web3.js, Kit doesn't rely on JavaScript classes or other non-tree-shakeable features. This brings us to our first key difference.
