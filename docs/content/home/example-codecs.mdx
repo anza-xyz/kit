@@ -1,0 +1,23 @@
+---
+title: Codecs Example
+---
+
+{/* Please keep visible code between 4 to 8 lines of code. */}
+
+```ts twoslash
+import {
+    getStructCodec,
+    addCodecSizePrefix,
+    getU8Codec,
+    getU16Codec,
+    getUtf8Codec,
+} from '@solana/kit';
+// ---cut-before---
+const personCodec = getStructCodec([
+    ['age', getU8Codec()],
+    ['name', addCodecSizePrefix(getUtf8Codec(), getU16Codec())],
+]);
+
+const bytes = personCodec.encode({ age: 30, name: 'Alice' });
+const person = personCodec.decode(bytes);
+```

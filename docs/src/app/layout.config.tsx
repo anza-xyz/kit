@@ -1,6 +1,13 @@
+import { overridenMdxComponents } from '@/lib/Overrides';
+import { Spread } from '@/lib/Spread';
+import { Popup, PopupContent, PopupTrigger } from 'fumadocs-twoslash/ui';
+import { ImageZoom } from 'fumadocs-ui/components/image-zoom';
+import { Step, Steps } from 'fumadocs-ui/components/steps';
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
+import defaultMdxComponents from 'fumadocs-ui/mdx';
 import { BookTextIcon, LibraryBigIcon } from 'lucide-react';
 import { Logo, LogoWithSolana } from './logo';
+import { MDXComponents } from 'mdx/types';
 
 /**
  * Shared layout configurations
@@ -32,4 +39,16 @@ export const baseOptions: BaseLayoutProps = {
             icon: <LibraryBigIcon />,
         },
     ],
+};
+
+export const mdxComponents: MDXComponents = {
+    ...defaultMdxComponents,
+    ...overridenMdxComponents,
+    img: props => <ImageZoom {...props} />,
+    Popup,
+    PopupContent,
+    PopupTrigger,
+    Spread,
+    Step,
+    Steps,
 };

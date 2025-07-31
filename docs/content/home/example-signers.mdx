@@ -1,0 +1,18 @@
+---
+title: Signers Example
+---
+
+{/* Please keep visible code between 4 to 8 lines of code. */}
+
+```ts twoslash
+import { address, generateKeyPairSigner, createNoopSigner } from '@solana/kit';
+import { useWalletAccountTransactionSigner } from '@solana/react';
+const wallet = {} as Parameters<typeof useWalletAccountTransactionSigner>[0];
+const myAddress = address('52Xv7LMtgFagZfVwDhHjTA6yY7C26gk7hpT1yWB2NqS9');
+// ---cut-before---
+const keypairSigner = await generateKeyPairSigner();
+
+const walletSigner = useWalletAccountTransactionSigner(wallet, 'solana:mainnet-beta');
+
+const noopSigner = createNoopSigner(myAddress);
+```
