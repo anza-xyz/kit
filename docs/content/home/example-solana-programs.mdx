@@ -1,0 +1,20 @@
+---
+title: Solana Programs Example
+---
+
+{/* Please keep visible code between 4 to 8 lines of code. */}
+
+```ts twoslash
+import { address, TransactionSigner, createSolanaRpc } from '@solana/kit';
+const source = {} as TransactionSigner;
+const destination = address('HjZE9hMaReTCXbbJUBfF8dpJs8Dx1L41MuAUtMTXg17W');
+const amount = 1_000_000_000;
+const mintAddress = address('GXnSPD4Hb2xTCKR6UXwPjus2JrgvaXvz8ebBxYGVsrL');
+const rpc = createSolanaRpc('https://api.mainnet-beta.solana.com');
+// ---cut-before---
+import { getTransferSolInstruction } from '@solana-program/system';
+const transferSol = getTransferSolInstruction({ source, destination, amount });
+
+import { fetchMint } from '@solana-program/token';
+const mintAccount = await fetchMint(rpc, mintAddress);
+```

@@ -43,6 +43,7 @@
 /* ------- */
 
 #nd-nav {
+    --spacing-fd-container: var(--spacing-home-container);
     --color-fd-secondary: var(--color-fd-background);
     left: 0; /* overrides: left-1/2 */
     max-width: 100%; /* overrides: max-w-fd-container */
@@ -64,7 +65,7 @@
 }
 
 #nd-nav > div:first-child {
-    @apply max-w-fd-container mx-auto px-4;
+    @apply max-w-fd-container mx-auto;
 }
 
 /* -------- */
@@ -131,6 +132,14 @@
     --color-fd-muted-foreground: var(--color-linen-200);
     --color-fd-secondary: var(--color-mauve-800);
     --color-fd-border: var(--color-mauve-700);
+}
+
+#hero-code .fd-codeblock pre {
+    @apply p-4 md:p-6 lg:p-6;
+}
+
+#hero-code .fd-codeblock pre > code {
+    @apply text-sm md:text-base lg:text-base;
 }
 
 /* ------ */

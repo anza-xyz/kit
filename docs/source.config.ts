@@ -11,6 +11,10 @@ export const docs = defineDocs({
     dir: 'content/docs',
 });
 
+export const home = defineDocs({
+    dir: 'content/home',
+});
+
 export default defineConfig({
     mdxOptions: {
         rehypeCodeOptions: {
