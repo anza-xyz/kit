@@ -252,7 +252,7 @@ import { signTransaction } from '@solana/kit';
 const signedTransaction = await signTransaction([bobsKeyPair], transaction);
 ```
 
-In practice, it's rare to sign transactions like this. Typically, you create a transaction message in your application, specify which accounts are required to sign it using the [Signers API](/concepts/signers), and then call [`signTransactionMessageWithSigners`](/api/functions/signTransactionMessageWithSigners) to turn it into a signed `Transaction`.
+In practice, it's rare to sign transactions like this. Typically, you create a transaction message in your application, specify which accounts are required to sign it using the [Signers API](/docs/concepts/signers), and then call [`signTransactionMessageWithSigners`](/api/functions/signTransactionMessageWithSigners) to turn it into a signed `Transaction`.
 
 ## Using public keys
 
