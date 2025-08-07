@@ -12,6 +12,7 @@ export * from '@solana/codecs';
 export * from '@solana/errors';
 export * from '@solana/functional';
 export * from '@solana/instructions';
+export * from '@solana/instruction-plans';
 export * from '@solana/keys';
 export * from '@solana/programs';
 export * from '@solana/rpc';

@@ -81,6 +81,7 @@
         "@solana/errors": "workspace:*",
         "@solana/functional": "workspace:*",
         "@solana/instructions": "workspace:*",
+        "@solana/instruction-plans": "workspace:*",
         "@solana/keys": "workspace:*",
         "@solana/programs": "workspace:*",
         "@solana/rpc": "workspace:*",
