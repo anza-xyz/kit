@@ -1,5 +1,39 @@
 # @solana/transactions
 
+## 3.0.0
+
+### Major Changes
+
+- [#691](https://github.com/anza-xyz/kit/pull/691) [`771f8ae`](https://github.com/anza-xyz/kit/commit/771f8aef1f8c096450c6e4ac05b8611150201485) Thanks [@lorisleiva](https://github.com/lorisleiva)! - BREAKING CHANGE: Removes the `assertTransactionIsFullySigned` deprecated function.
+
+- [#482](https://github.com/anza-xyz/kit/pull/482) [`00d66fb`](https://github.com/anza-xyz/kit/commit/00d66fbec15288bb531f7459b6baa48aead1cdc6) Thanks [@lorisleiva](https://github.com/lorisleiva)! - BREAKING CHANGE: Transactions must now satisfy the `SendableTransaction` type before being provided to helper functions that send transactions to the network. On top of ensuring the transaction is fully signed, this type also ensures the transaction is within size limit.
+
+- [#574](https://github.com/anza-xyz/kit/pull/574) [`0bd053b`](https://github.com/anza-xyz/kit/commit/0bd053bfa40b095d37bea7b7cd695259ba5a9cdc) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add the `TransactionWithLifetime` requirement when signing transactions. This is because, whilst a lifetime may not always be required before compile a transaction message, it is always required when signing a transaction. Otherwise, the transaction signatures will be invalid when one is added later.
+
+- [#581](https://github.com/anza-xyz/kit/pull/581) [`55d6b04`](https://github.com/anza-xyz/kit/commit/55d6b040764f5e32de9c94d1844529855233d845) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Allow transaction messages with no lifetime constraints to be compiled. Renames `TransactionFromCompilableTransactionMessage` and `SetTransactionLifetimeFromCompilableTransactionMessage` type helpers to `TransactionFromTransactionMessage` and `SetTransactionLifetimeFromTransactionMessage` respectively, to reflect that they can now be used with transaction messages that do not have a lifetime constraint.
+
+- [#462](https://github.com/anza-xyz/kit/pull/462) [`a74ea02`](https://github.com/anza-xyz/kit/commit/a74ea0267bf589fba50bb2ebe72dc4f73da9adcf) Thanks [@lorisleiva](https://github.com/lorisleiva)! - BREAKING CHANGE: The `FullySignedTransaction` no longer extends the `Transaction` type so it can be composed with other flags that also narrow transaction types. This means, whenever `FullySignedTransaction` is used on its own, it will need to be replaced with `FullySignedTransaction & Transaction`.
+
+### Minor Changes
+
+- [#583](https://github.com/anza-xyz/kit/pull/583) [`a894d53`](https://github.com/anza-xyz/kit/commit/a894d53192d50b5d2217ada2cb715d71ef4f8f02) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Allow transaction messages with no lifetime constraints in transaction size helpers — i.e. `getTransactionMessageSize`, `isTransactionMessageWithinSizeLimit` and `assertIsTransactionMessageWithinSizeLimit`.
+
+### Patch Changes
+
+- Updated dependencies [[`771f8ae`](https://github.com/anza-xyz/kit/commit/771f8aef1f8c096450c6e4ac05b8611150201485), [`771f8ae`](https://github.com/anza-xyz/kit/commit/771f8aef1f8c096450c6e4ac05b8611150201485), [`6a183bf`](https://github.com/anza-xyz/kit/commit/6a183bf9e9d672e2d42f3aecc589a9e54d01cb1a), [`760fb83`](https://github.com/anza-xyz/kit/commit/760fb8319f6b53fa1baf05f9aa1246cb6c2caceb), [`23d2fa1`](https://github.com/anza-xyz/kit/commit/23d2fa14cbd5197473eca94a1ac6c5abf221b052), [`771f8ae`](https://github.com/anza-xyz/kit/commit/771f8aef1f8c096450c6e4ac05b8611150201485), [`9feba85`](https://github.com/anza-xyz/kit/commit/9feba8557b64dd3199cd88af2c17b7ccd5d18fec), [`9205484`](https://github.com/anza-xyz/kit/commit/9205484d33af9426fc9de9594bab204b8f954faf), [`733605d`](https://github.com/anza-xyz/kit/commit/733605df84ce5f5ffea1e83eea8df74e08789642), [`01f159a`](https://github.com/anza-xyz/kit/commit/01f159a436d7a29479aa1a1877c9b4c77da1170f), [`98eabac`](https://github.com/anza-xyz/kit/commit/98eabac905759fc6809eaabb412a5846e3a773f0), [`55d6b04`](https://github.com/anza-xyz/kit/commit/55d6b040764f5e32de9c94d1844529855233d845)]:
+    - @solana/transaction-messages@3.0.0
+    - @solana/instructions@3.0.0
+    - @solana/errors@3.0.0
+    - @solana/codecs-data-structures@3.0.0
+    - @solana/codecs-core@3.0.0
+    - @solana/addresses@3.0.0
+    - @solana/codecs-numbers@3.0.0
+    - @solana/codecs-strings@3.0.0
+    - @solana/keys@3.0.0
+    - @solana/rpc-types@3.0.0
+    - @solana/functional@3.0.0
+    - @solana/nominal-types@3.0.0
+
 ## 2.3.0
 
 ### Minor Changes
