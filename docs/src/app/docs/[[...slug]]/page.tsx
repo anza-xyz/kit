@@ -1,13 +1,9 @@
-import { docsSource } from '@/lib/source';
-import { Spread } from '@/lib/Spread';
+import { mdxComponents } from '@/app/layout.config';
 import { overridenMdxComponents } from '@/lib/Overrides';
+import { docsSource } from '@/lib/source';
 import { getPageTreePeers } from 'fumadocs-core/server';
-import { DocsPage, DocsBody, DocsDescription, DocsTitle } from 'fumadocs-ui/page';
+import { DocsBody, DocsDescription, DocsPage, DocsTitle } from 'fumadocs-ui/page';
 import { notFound } from 'next/navigation';
-import defaultMdxComponents from 'fumadocs-ui/mdx';
-import { ImageZoom } from 'fumadocs-ui/components/image-zoom';
-import { Step, Steps } from 'fumadocs-ui/components/steps';
-import { Popup, PopupContent, PopupTrigger } from 'fumadocs-twoslash/ui';
 
 export default async function Page(props: { params: Promise<{ slug?: string[] }> }) {
     const params = await props.params;
@@ -22,19 +18,7 @@ export default async function Page(props: { params: Promise<{ slug?: string[] }>
             <DocsTitle>{page.data.title}</DocsTitle>
             <DocsDescription className="mb-16">{page.data.description}</DocsDescription>
             <DocsBody>
-                <MDX
-                    components={{
-                        ...defaultMdxComponents,
-                        ...overridenMdxComponents,
-                        img: props => <ImageZoom {...props} />,
-                        Popup,
-                        PopupContent,
-                        PopupTrigger,
-                        Spread,
-                        Step,
-                        Steps,
-                    }}
-                />
+                <MDX components={mdxComponents} />
             </DocsBody>
             {hasCategory && (
                 <overridenMdxComponents.Cards>

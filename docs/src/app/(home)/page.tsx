@@ -1,16 +1,20 @@
-import Link from 'next/link';
+import HeroSection from './page/hero';
+import CodeSection from './page/code';
+import FeaturesSection from './page/features';
+import CtaSection from './page/cta';
+import FooterSection from './page/footer';
+import { ExampleProvider } from './page/example-context';
 
 export default function HomePage() {
     return (
-        <main className="flex flex-1 flex-col justify-center text-center">
-            <h1 className="mb-4 text-2xl font-bold">Hello Kit</h1>
-            <p className="text-fd-muted-foreground">
-                You can open{' '}
-                <Link href="/docs" className="text-fd-foreground font-semibold underline">
-                    /docs
-                </Link>{' '}
-                and see the documentation.
-            </p>
+        <main className="flex flex-1 flex-col">
+            <HeroSection />
+            <ExampleProvider>
+                <CodeSection />
+                <FeaturesSection />
+            </ExampleProvider>
+            <CtaSection />
+            <FooterSection />
         </main>
     );
 }

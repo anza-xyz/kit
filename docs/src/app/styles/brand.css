@@ -33,6 +33,7 @@
     --color-mauve-200: #e2d8e0;
     --color-mauve-300: #c6b4c4;
     --color-mauve-400: #9b8196; /* Brand color. */
+    --color-mauve-450: #8b79ad; /* Brand color. */
     --color-mauve-500: #83617d; /* Brand color. */
     --color-mauve-600: #6b4e66;
     --color-mauve-700: #533b4f;
@@ -50,6 +51,5 @@
     /* Sizes. */
     /* -------*/
 
-    --container-5xs: 12rem;
-    --container-4xs: 14rem;
+    --spacing-home-container: 1000px;
 }
