@@ -105,7 +105,8 @@ export function compressTransactionMessageUsingAddressLookupTables<
             if (
                 'lookupTableAddress' in account ||
                 !lookupTableAddresses.has(account.address) ||
-                isSignerRole(account.role)
+                isSignerRole(account.role)||
+                account.static === true
             ) {
                 newAccounts.push(account);
                 continue;

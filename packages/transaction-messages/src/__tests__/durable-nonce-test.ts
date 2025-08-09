@@ -1,7 +1,7 @@
 import '@solana/test-matchers/toBeFrozenObject';
 
 import { Address } from '@solana/addresses';
-import { AccountRole, Instruction, ReadonlySignerAccount, WritableAccount } from '@solana/instructions';
+import { AccountRole, Instruction, ReadonlySignerAccount, StaticAccount, WritableAccount } from '@solana/instructions';
 import type { Blockhash } from '@solana/rpc-types';
 
 import { TransactionMessageWithBlockhashLifetime } from '../blockhash';
@@ -25,7 +25,7 @@ function createMockAdvanceNonceAccountInstruction<
 }): TransactionMessageWithDurableNonceLifetime['instructions'][0] {
     return {
         accounts: [
-            { address: nonceAccountAddress, role: AccountRole.WRITABLE } as WritableAccount<TNonceAccountAddress>,
+            { address: nonceAccountAddress, role: AccountRole.WRITABLE, static: true } as StaticAccount<WritableAccount<TNonceAccountAddress>>,
             {
                 address:
                     'SysvarRecentB1ockHashes11111111111111111111' as Address<'SysvarRecentB1ockHashes11111111111111111111'>,

@@ -142,6 +142,9 @@ function isAdvanceNonceAccountInstructionForNonce<
     nonceAccountAddress: TNonceAccountAddress,
     nonceAuthorityAddress: TNonceAuthorityAddress,
 ): instruction is AdvanceNonceAccountInstruction<TNonceAccountAddress, TNonceAuthorityAddress> {
+    if (!instruction.accounts[0]?.static) {
+        throw new Error('Nonce account must be marked as static');
+    }
     return (
         instruction.accounts[0].address === nonceAccountAddress &&
         instruction.accounts[2].address === nonceAuthorityAddress
