@@ -96,6 +96,8 @@ type WithInnerInstructionsConfig = Readonly<{
 type SimulateTransactionApiResponseBase = Readonly<{
     /** If the transaction failed, this property will contain the error */
     err: TransactionError | null;
+    /** The number of bytes of all accounts loaded by this transaction */
+    loadedAccountsDataSize?: number;
     /**
      * Array of log messages the transaction instructions output during execution, `null` if
      * simulation failed before the transaction was able to execute (for example due to an invalid
