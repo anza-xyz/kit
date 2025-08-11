@@ -1,0 +1,695 @@
+---
+title: Instruction Plans
+description: Compose instructions into multi-step operations
+---
+
+## Introduction
+
+Instruction plans describe operations that go beyond a single instruction and may even span multiple transactions.
+
+They define a set of instructions that must be executed following a specific order. For instance, imagine we wanted to create an instruction plan for a simple escrow transfer between Alice and Bob. First, both would need to deposit their assets into a vault. This could happen in any order. Then and only then, the vault can be activated to switch the assets. Alice and Bob can now both withdraw each other's assets (again, in any order). Here's how we could describe an instruction plan for such an operation.
+
+```ts twoslash
+import { Instruction, sequentialInstructionPlan, parallelInstructionPlan } from '@solana/kit';
+const depositFromAlice = {} as unknown as Instruction;
+const depositFromBob = {} as unknown as Instruction;
+const activateVault = {} as unknown as Instruction;
+const withdrawToAlice = {} as unknown as Instruction;
+const withdrawToBob = {} as unknown as Instruction;
+// ---cut-before---
+const instructionPlan = sequentialInstructionPlan([
+    parallelInstructionPlan([depositFromAlice, depositFromBob]),
+    activateVault,
+    parallelInstructionPlan([withdrawToAlice, withdrawToBob]),
+]);
+```
+
+As you can see, instruction plans don't concern themselves with:
+
+- Adding structural instructions — e.g. compute budget limits and prices.
+- Building transaction messages from these instructions. That is, planning how many can fit into a single instruction, adding a fee payer, a lifetime, etc.
+- Compiling, signing and sending transactions to the network.
+
+Instead, they solely focus on describing operations and delegate all that to two components introduced in this package:
+
+- **Transaction planner**: builds transaction messages from an instruction plan and returns an appropriate transaction plan.
+- **Transaction plan executor**: compiles, signs and sends transaction plans and returns a detailed result of this operation.
+
+```ts twoslash
+import { TransactionPlanner, TransactionPlanExecutor, InstructionPlan } from '@solana/kit';
+const instructionPlan = {} as unknown as InstructionPlan;
+const transactionPlanner = {} as unknown as TransactionPlanner;
+const transactionPlanExecutor = {} as unknown as TransactionPlanExecutor;
+// ---cut-before---
+// Plan instructions into transactions.
+const transactionPlan = await transactionPlanner(instructionPlan);
+
+// Execute transactions.
+const transactionPlanResult = await transactionPlanExecutor(transactionPlan);
+```
+
+This separation of concerns not only improves the developer experience but also allows program maintainers to offer helper functions that go beyond a single instruction, while leaving their consumers to decide how they want these operations to materialise.
+
+## Installation
+
+Instruction plans are **included within the `@solana/kit` library** but you may also install them using their standalone package.
+
+```package-install
+@solana/instruction-plans
+```
+
+## Creating instruction plans
+
+This package offers several helpers to help you compose your own instruction plans. Let's have a look at them.
+
+### Single instructions
+
+The most trivial way to create an instruction plan is to use the `singleInstructionPlan` helper to create a plan with only one instruction.
+
+```ts twoslash
+import { singleInstructionPlan, Instruction } from '@solana/kit';
+const transferSol = {} as unknown as Instruction;
+// ---cut-before---
+const instructionPlan = singleInstructionPlan(transferSol);
+```
+
+### Sequential plans
+
+The `sequentialInstructionPlan` helper allows you to create plans from other plans that must be executed sequentially. Therefore, in the example below, we guarantee that Bob will receive assets from Alice before sending them to Carla.
+
+```ts twoslash
+import { singleInstructionPlan, sequentialInstructionPlan, Instruction } from '@solana/kit';
+const transferFromAliceToBob = {} as unknown as Instruction;
+const transferFromBobToCarla = {} as unknown as Instruction;
+// ---cut-before---
+const instructionPlan = sequentialInstructionPlan([
+    singleInstructionPlan(transferFromAliceToBob),
+    singleInstructionPlan(transferFromBobToCarla),
+]);
+```
+
+Note that the `sequentialInstructionPlan` helper also accept `Instruction` objects directly and automatically wraps them in `singleInstructionPlans`. Therefore the following is equivalent to the previous example.
+
+```ts twoslash
+import { sequentialInstructionPlan, Instruction } from '@solana/kit';
+const transferFromAliceToBob = {} as unknown as Instruction;
+const transferFromBobToCarla = {} as unknown as Instruction;
+// ---cut-before---
+const instructionPlan = sequentialInstructionPlan([transferFromAliceToBob, transferFromBobToCarla]);
+```
+
+A `nonDivisibleSequentialInstructionPlan` helper is also available to define sequential plans whose inner instructions should all be executed atomically. That is, either in a single transaction or in a transaction bundle when not possible.
+
+```ts twoslash
+import { nonDivisibleSequentialInstructionPlan, Instruction } from '@solana/kit';
+const createAccount = {} as unknown as Instruction;
+const initializeMint = {} as unknown as Instruction;
+// ---cut-before---
+const instructionPlan = nonDivisibleSequentialInstructionPlan([createAccount, initializeMint]);
+```
+
+In this example, we know that both instruction will either succeed or fail together.
+
+### Parallel plans
+
+The `parallelInstructionPlan` function can be used to create plans from other plans that can be executed in parallel. This means direct children of this plan can be executed in separate parallel transactions without consequence. For instance, in the example below, Alice can transfer assets to both Bob and Carla in any order without affecting the final outcome.
+
+```ts twoslash
+import { singleInstructionPlan, parallelInstructionPlan, Instruction } from '@solana/kit';
+const transferFromAliceToBob = {} as unknown as Instruction;
+const transferFromAliceToCarla = {} as unknown as Instruction;
+// ---cut-before---
+const instructionPlan = parallelInstructionPlan([
+    singleInstructionPlan(transferFromAliceToBob),
+    singleInstructionPlan(transferFromAliceToCarla),
+]);
+```
+
+The `parallelInstructionPlan` also accepts `Instruction` object directly and therefore the previous example can be simplified as:
+
+```ts twoslash
+import { parallelInstructionPlan, Instruction } from '@solana/kit';
+const transferFromAliceToBob = {} as unknown as Instruction;
+const transferFromAliceToCarla = {} as unknown as Instruction;
+// ---cut-before---
+const instructionPlan = parallelInstructionPlan([transferFromAliceToBob, transferFromAliceToCarla]);
+```
+
+### Message packer plans
+
+Message packer plans are a bit special. They can dynamically pack instructions into transaction messages. This is particularly useful when packing instructions whose size will vary based on the available space left on the transaction message being packed.
+
+For instance, imagine a `write` instruction on a program that gradually write data from instructions into a buffer account. The instruction data used in this case will ideally be as long as the transaction message can fit. Using the `getLinearMessagePackerInstructionPlan` helper, we can create an instruction plan that does just that.
+
+```ts twoslash
+import { getLinearMessagePackerInstructionPlan, Instruction } from '@solana/kit';
+const dataToWrite = {} as unknown as Uint8Array;
+const getWriteInstruction = {} as unknown as (params: {
+    offset: number;
+    data: Uint8Array;
+}) => Instruction;
+// ---cut-before---
+const instructionPlan = getLinearMessagePackerInstructionPlan({
+    totalLength: dataToWrite.length,
+    getInstruction: (offset, length) =>
+        getWriteInstruction({
+            offset,
+            data: dataToWrite.slice(offset, offset + length),
+        }),
+});
+```
+
+As you can see, the `getLinearMessagePackerInstructionPlan` helper accepts a `totalLength` attribute representing the total amount of bytes we eventually want to write to the buffer. The purpose of the `getInstruction` function is then to generate these `write` instructions at the provided positions.
+
+There also exists a `getReallocMessagePackerInstructionPlan` helper that works similarly but whose purpose is to pack multiple realloc instructions to help resize an account.
+
+```ts twoslash
+import { getReallocMessagePackerInstructionPlan, Instruction } from '@solana/kit';
+const additionalDataSize = {} as unknown as number;
+const getExtendInstruction = {} as unknown as (params: { length: number }) => Instruction;
+// ---cut-before---
+const instructionPlan = getReallocMessagePackerInstructionPlan({
+    totalSize: additionalDataSize,
+    getInstruction: (size) => getExtendInstruction({ length: size }),
+});
+```
+
+Whilst these helpers are fairly situational, you can create any custom message packer as long as you implement the following interfaces.
+
+```ts twoslash
+import { BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/kit';
+// ---cut-before---
+type MessagePackerInstructionPlan = {
+    getMessagePacker: () => MessagePacker;
+    kind: 'messagePacker';
+};
+
+type MessagePacker = {
+    done: () => boolean;
+    packMessageToCapacity: (
+        transactionMessage: BaseTransactionMessage & TransactionMessageWithFeePayer,
+    ) => BaseTransactionMessage & TransactionMessageWithFeePayer;
+};
+```
+
+Most of your custom logic will live in the `packMessageToCapacity` function whose purpose is to pack the provided message with as many instruction datas as possible or throw when it isn't achievable. The `done` function lets us know if there is any instruction data left to pack. See [`MessagePacker`](/api/type-aliases/MessagePacker) for more information.
+
+### Combining plans
+
+It is worth noting that more complex operations can be created by combining plans together. For instance, the following plan will:
+
+- Create two accounts in parallel, one Buffer account and one Metadata account.
+    - The Buffer account will be written to via multiple parallel `write` instructions.
+    - The Metadata account will be created and initialized atomically.
+- Once both of these accounts are created, the data in the Buffer account will be used to set the data in the Metadata account before being closed.
+
+```ts twoslash
+import {
+    sequentialInstructionPlan,
+    nonDivisibleSequentialInstructionPlan,
+    parallelInstructionPlan,
+    Instruction,
+    MessagePackerInstructionPlan,
+} from '@solana/kit';
+const createAccount1 = {} as unknown as Instruction;
+const createAccount2 = {} as unknown as Instruction;
+const initializeBuffer = {} as unknown as Instruction;
+const initializeMetadata = {} as unknown as Instruction;
+const setMetadataFromBuffer = {} as unknown as Instruction;
+const closeBuffer = {} as unknown as Instruction;
+const writeMessagePacker = {} as unknown as MessagePackerInstructionPlan;
+// ---cut-before---
+const instructionPlan = sequentialInstructionPlan([
+    parallelInstructionPlan([
+        sequentialInstructionPlan([
+            createAccount1,
+            initializeBuffer,
+            parallelInstructionPlan([writeMessagePacker]),
+        ]),
+        nonDivisibleSequentialInstructionPlan([createAccount2, initializeMetadata]),
+    ]),
+    setMetadataFromBuffer,
+    closeBuffer,
+]);
+```
+
+## Planning instructions
+
+Once we have an instruction plan, the first step is to build transaction messages from it in the most optimal way whilst satisfying all the constraints defined in the instruction plan. This is the role of **transaction planners**.
+
+### Transaction planners
+
+Transaction planners are defined as simple abortable functions that transform a given instruction plan into a set of built transaction messages called a **transaction plan**.
+
+```ts twoslash
+import { TransactionPlanner, InstructionPlan } from '@solana/kit';
+const transactionPlanner = {} as unknown as TransactionPlanner;
+const instructionPlan = {} as unknown as InstructionPlan;
+const abortSignal = {} as unknown as AbortSignal;
+// ---cut-before---
+const transactionPlan = await transactionPlanner(instructionPlan, { abortSignal });
+```
+
+### Creating a transaction planner
+
+To spin up a transaction planner, you may use the `createTransactionPlanner` helper. This helper requires a `createTransactionMessage` function that tells us how each new transaction message should be created before being packed with instructions.
+
+For instance, in the example below we create a new planner such that each planned transaction message will be using version 0 and using the `payer` signer as a fee payer.
+
+```ts twoslash
+import {
+    createTransactionPlanner,
+    pipe,
+    createTransactionMessage,
+    setTransactionMessageFeePayerSigner,
+    TransactionSigner,
+} from '@solana/kit';
+const payer = {} as unknown as TransactionSigner;
+// ---cut-before---
+const transactionPlanner = createTransactionPlanner({
+    createTransactionMessage: () =>
+        pipe(
+            createTransactionMessage({ version: 0 }),
+            (message) => setTransactionMessageFeePayerSigner(payer, message),
+            // ...
+        ),
+});
+```
+
+Additionally, the `onTransactionMessageUpdated` function may be provided to update transaction messages during the planning process. This function will be called whenever a transaction message is updated — e.g. when new instructions are added. It accepts the updated transaction message and must return a transaction message back, even if no changes were made.
+
+In the example below, we check if the packed transaction contains an instruction that transfers SOL and, if so, add a guard instruction that ensures no more than 1 SOL is transfered.
+
+```ts twoslash
+import {
+    appendTransactionMessageInstruction,
+    createTransactionPlanner,
+    TransactionMessage,
+    Instruction,
+} from '@solana/kit';
+const createTransactionMessage = {} as unknown as Parameters<
+    typeof createTransactionPlanner
+>[0]['createTransactionMessage'];
+const containsTransferSolInstruction = {} as unknown as (message: TransactionMessage) => boolean;
+const transferSolGuardInstruction = {} as unknown as Instruction;
+// ---cut-before---
+const transactionPlanner = createTransactionPlanner({
+    createTransactionMessage,
+    onTransactionMessageUpdated: (message) => {
+        if (containsTransferSolInstruction(message)) {
+            return appendTransactionMessageInstruction(
+                transferSolGuardInstruction,
+                message,
+            ) as unknown as typeof message;
+        }
+
+        return message;
+    },
+});
+```
+
+Check out the [Recipes section](#recipes) at this end of this guide for ideas of what can be achieved with this API.
+
+### Transaction plans
+
+Since transaction planners output transaction plans, it may be useful to see what these look like.
+
+They work similarly to instruction plans but they wrap transaction messages instead of instructions and do not contain message packers.
+
+- [`singleTransactionPlan`](/api/functions/singleTransactionPlan). Wraps a built transaction message.
+- [`sequentialTransactionPlan`](/api/functions/sequentialTransactionPlan): Wraps other transaction plans that must be executed sequentially.
+- [`nonDivisibleSequentialTransactionPlan `](/api/functions/nonDivisibleSequentialTransactionPlan): Wraps other transaction plans that must be executed sequentially and atomically. Since atomicity is at the transaction level, this suggests transaction bundles should be used if possible. Otherwise, the plan should fail to execute.
+- [`parallelTransactionPlan`](/api/functions/parallelTransactionPlan): Wraps other transaction plans that may be executed in parallel.
+
+```ts twoslash
+import {
+    singleTransactionPlan,
+    sequentialTransactionPlan,
+    parallelTransactionPlan,
+    BaseTransactionMessage,
+    TransactionMessageWithFeePayer,
+} from '@solana/kit';
+const messageA = {} as unknown as BaseTransactionMessage & TransactionMessageWithFeePayer;
+const messageB = {} as unknown as BaseTransactionMessage & TransactionMessageWithFeePayer;
+const messageC = {} as unknown as BaseTransactionMessage & TransactionMessageWithFeePayer;
+// ---cut-before---
+const transactionPlan = parallelTransactionPlan([
+    sequentialTransactionPlan([singleTransactionPlan(messageA), singleTransactionPlan(messageB)]),
+    singleTransactionPlan(messageC),
+]);
+```
+
+### Advanced transaction planners
+
+Whilst the `createTransactionPlanner` helper is designed to suit most projects, it may not suit yours. If so, you may create your own by offering a function that satisfy the following signature.
+
+```ts twoslash
+import { InstructionPlan, TransactionPlan } from '@solana/kit';
+// ---cut-before---
+type TransactionPlanner = (
+    instructionPlan: InstructionPlan,
+    config?: { abortSignal?: AbortSignal },
+) => Promise<TransactionPlan>;
+```
+
+## Executing transactions
+
+Now that we have obtained a transaction plan from our instruction plan, the next and final step is to send these transactions using a **transaction plan executor**.
+
+### Transaction plan executors
+
+Transaction plan executors are defined as abortable functions that transform a given transaction plan into a mirrored data structure that contains the execution status of each transaction. That data structure is called a **transaction plan result**.
+
+```ts twoslash
+import { TransactionPlanExecutor, TransactionPlan } from '@solana/kit';
+const transactionPlanExecutor = {} as unknown as TransactionPlanExecutor;
+const transactionPlan = {} as unknown as TransactionPlan;
+const abortSignal = {} as unknown as AbortSignal;
+// ---cut-before---
+const transactionPlanResult = await transactionPlanExecutor(transactionPlan, { abortSignal });
+```
+
+### Creating a transaction plan executor
+
+To spin up a transaction plan executor, you may use the `createTransactionPlanExecutor` helper. This helper requires an `executeTransactionMessage` function that tells us how each transaction message should be executed when encountered during the execution process.
+
+This function accepts a transaction message and must return an object containing the successfully executed transaction, along with an optional context object that can be used to pass additional information about the execution.
+
+For instance, in the example below we create a new executor such that each transaction message will be assigned the latest blockhash lifetime before being signed and sent to the network using the provided RPC client.
+
+```ts twoslash
+import {
+    sendAndConfirmTransactionFactory,
+    createTransactionPlanExecutor,
+    Rpc,
+    SolanaRpcApi,
+    RpcSubscriptions,
+    SolanaRpcSubscriptionsApi,
+    setTransactionMessageLifetimeUsingBlockhash,
+    signTransactionMessageWithSigners,
+    assertIsSendableTransaction,
+    BaseTransactionMessage,
+    TransactionMessageWithFeePayer,
+} from '@solana/kit';
+const rpc = {} as unknown as Rpc<SolanaRpcApi>;
+const rpcSubscriptions = {} as unknown as RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+// ---cut-before---
+const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
+
+const transactionPlanExecutor = createTransactionPlanExecutor({
+    executeTransactionMessage: async (
+        message: BaseTransactionMessage & TransactionMessageWithFeePayer,
+    ) => {
+        const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
+        const messageWithBlockhash = setTransactionMessageLifetimeUsingBlockhash(
+            latestBlockhash,
+            message,
+        );
+        const transaction = await signTransactionMessageWithSigners(messageWithBlockhash);
+        assertIsSendableTransaction(transaction);
+        await sendAndConfirmTransaction(transaction, { commitment: 'confirmed' });
+        return { transaction };
+    },
+});
+```
+
+Check out the [Recipes section](#recipes) at this end of this guide for ideas of what can be achieved with this API.
+
+### Transaction plan results
+
+When you execute a transaction plan, you get back a `TransactionPlanResult` that tells you what happened during execution. This result object has the same tree structure as your original transaction plan, but includes execution information for each transaction message.
+
+Each transaction message in your plan can have one of three execution outcomes:
+
+- **Successful** - The transaction was sent and confirmed. You get the original transaction message, the executed `Transaction` object and any context data.
+- **Failed** - The transaction encountered an error. You get the original transaction message and the error that caused the failure.
+- **Canceled** - The transaction was skipped because an earlier transaction failed or the operation was aborted. You only get the original transaction message.
+
+The result structure mirrors your transaction plan structure:
+
+- Single transaction messages become `SingleTransactionPlanResult` with the original message plus execution status
+- Sequential plans become `SequentialTransactionPlanResult` containing child results
+- Parallel plans become `ParallelTransactionPlanResult` containing child results
+
+```ts twoslash
+import {
+    parallelTransactionPlan,
+    singleTransactionPlan,
+    parallelTransactionPlanResult,
+    successfulSingleTransactionPlanResult,
+    failedSingleTransactionPlanResult,
+    SolanaError,
+    BaseTransactionMessage,
+    TransactionMessageWithFeePayer,
+    Transaction,
+} from '@solana/kit';
+const messageA = {} as unknown as BaseTransactionMessage & TransactionMessageWithFeePayer;
+const messageB = {} as unknown as BaseTransactionMessage & TransactionMessageWithFeePayer;
+const transactionA = {} as unknown as Transaction;
+const error = {} as unknown as SolanaError;
+// ---cut-before---
+// If your transaction plan looked like this:
+const plan = parallelTransactionPlan([
+    singleTransactionPlan(messageA),
+    singleTransactionPlan(messageB),
+]);
+
+// Your result may look like this:
+const result = parallelTransactionPlanResult([
+    successfulSingleTransactionPlanResult(messageA, transactionA),
+    failedSingleTransactionPlanResult(messageB, error),
+]);
+```
+
+### Failed transaction executions
+
+When a transaction plan executor — created via the `createTransactionPlanExecutor` helper — encounters a failed transaction, it will cancel all remaining transactions in the plan. The executor will then throw a `SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN` error code.
+
+This error contains a `transactionPlanResult` property (accessible as a non-enumerable property) that provides detailed information about which transactions succeeded, failed, or were canceled.
+
+```ts twoslash
+import {
+    TransactionPlan,
+    TransactionPlanExecutor,
+    SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN,
+    isSolanaError,
+    TransactionPlanResult,
+} from '@solana/kit';
+const transactionPlan = {} as unknown as TransactionPlan;
+const transactionPlanExecutor = {} as unknown as TransactionPlanExecutor;
+// ---cut-before---
+try {
+    const result = await transactionPlanExecutor(transactionPlan);
+} catch (error) {
+    if (isSolanaError(error, SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN)) {
+        // Access the failed `TransactionPlanResult` to understand what happened.
+        const result = error.context.transactionPlanResult as TransactionPlanResult;
+    }
+}
+```
+
+### Advanced transaction plan executors
+
+Whilst the `createTransactionPlanExecutor` helper is designed to suit most projects, it may not suit yours. If so, you may create your own by offering a function that satisfies the following signature.
+
+```ts twoslash
+import { TransactionPlan, TransactionPlanResult } from '@solana/kit';
+// ---cut-before---
+type TransactionPlanExecutor = (
+    transactionPlan: TransactionPlan,
+    config?: { abortSignal?: AbortSignal },
+) => Promise<TransactionPlanResult>;
+```
+
+This allows you to implement custom execution strategies, such as using transaction bundles for atomic execution or adding custom transaction prioritization.
+
+## Recipes
+
+Here are some common patterns and recipes for using instruction plans effectively.
+
+### Setting priority fees
+
+You can set priority fees by using the `setTransactionMessageComputeUnitPrice` helper from `@solana-program/compute-budget` in your `createTransactionMessage` function.
+
+```ts twoslash
+import {
+    createTransactionPlanner,
+    pipe,
+    createTransactionMessage,
+    setTransactionMessageFeePayerSigner,
+    TransactionSigner,
+} from '@solana/kit';
+const payer = {} as unknown as TransactionSigner;
+// ---cut-before---
+import { setTransactionMessageComputeUnitPrice } from '@solana-program/compute-budget'; // [!code ++]
+
+const transactionPlanner = createTransactionPlanner({
+    createTransactionMessage: () =>
+        pipe(
+            createTransactionMessage({ version: 0 }),
+            (message) => setTransactionMessageFeePayerSigner(payer, message),
+            // [!code ++:2]
+            // Set priority fees to 0.01 lamports per compute unit.
+            (message) => setTransactionMessageComputeUnitPrice(10_000n, message),
+        ),
+});
+```
+
+### Estimating compute units
+
+You can estimate and set compute unit limits dynamically by using a two-step process:
+
+- First, add a provisional compute unit limit instruction (if missing) in your transaction planner.
+- Then, estimate and update it right before sending the transaction.
+
+You may use the `fillProvisorySetComputeUnitLimitInstruction` helper in your transaction planner so the instruction is accounted for when planning transaction messages.
+
+```ts twoslash
+import {
+    createTransactionPlanner,
+    pipe,
+    createTransactionMessage,
+    setTransactionMessageFeePayerSigner,
+    TransactionSigner,
+} from '@solana/kit';
+const payer = {} as unknown as TransactionSigner;
+// ---cut-before---
+import { fillProvisorySetComputeUnitLimitInstruction } from '@solana-program/compute-budget'; // [!code ++]
+
+const transactionPlanner = createTransactionPlanner({
+    createTransactionMessage: () =>
+        pipe(
+            createTransactionMessage({ version: 0 }),
+            (message) => setTransactionMessageFeePayerSigner(payer, message),
+            (message) => fillProvisorySetComputeUnitLimitInstruction(message), // [!code ++]
+        ),
+});
+```
+
+Then, use the `estimateAndUpdateProvisoryComputeUnitLimitFactory` helper in your transaction plan executor to estimate the compute units right before sending the transaction.
+
+```ts twoslash
+import {
+    sendAndConfirmTransactionFactory,
+    createTransactionPlanExecutor,
+    Rpc,
+    SolanaRpcApi,
+    RpcSubscriptions,
+    SolanaRpcSubscriptionsApi,
+    setTransactionMessageLifetimeUsingBlockhash,
+    signTransactionMessageWithSigners,
+    assertIsSendableTransaction,
+    BaseTransactionMessage,
+    TransactionMessageWithFeePayer,
+} from '@solana/kit';
+const rpc = {} as unknown as Rpc<SolanaRpcApi>;
+const rpcSubscriptions = {} as unknown as RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+// ---cut-before---
+// [!code ++:4]
+import {
+    estimateComputeUnitLimitFactory,
+    estimateAndUpdateProvisoryComputeUnitLimitFactory,
+} from '@solana-program/compute-budget';
+
+const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
+// [!code ++:2]
+const estimateCULimit = estimateComputeUnitLimitFactory({ rpc });
+const estimateAndSetCULimit = estimateAndUpdateProvisoryComputeUnitLimitFactory(estimateCULimit);
+
+const transactionPlanExecutor = createTransactionPlanExecutor({
+    executeTransactionMessage: async (
+        message: BaseTransactionMessage & TransactionMessageWithFeePayer,
+    ) => {
+        const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
+        const messageWithBlockhash = setTransactionMessageLifetimeUsingBlockhash(
+            latestBlockhash,
+            message,
+        );
+        const estimatedMessage = await estimateAndSetCULimit(messageWithBlockhash); // [!code ++]
+        const transaction = await signTransactionMessageWithSigners(estimatedMessage);
+        assertIsSendableTransaction(transaction);
+        await sendAndConfirmTransaction(transaction, { commitment: 'confirmed' });
+        return { transaction };
+    },
+});
+```
+
+### Durable nonce executor
+
+You may create transaction plans that use durable nonces for offline transaction signing by using the `setTransactionMessageLifetimeUsingDurableNonce` helper in your transaction planner.
+
+```ts twoslash
+import {
+    createTransactionPlanner,
+    pipe,
+    createTransactionMessage,
+    setTransactionMessageFeePayerSigner,
+    TransactionSigner,
+} from '@solana/kit';
+const payer = {} as unknown as TransactionSigner;
+const config = {} as unknown as Parameters<
+    typeof setTransactionMessageLifetimeUsingDurableNonce
+>['0'];
+const nonce = config.nonce;
+const nonceAccountAddress = config.nonceAccountAddress;
+const nonceAuthorityAddress = config.nonceAuthorityAddress;
+// ---cut-before---
+import { setTransactionMessageLifetimeUsingDurableNonce } from '@solana/kit'; // [!code ++]
+
+const transactionPlanner = createTransactionPlanner({
+    createTransactionMessage: () => {
+        return pipe(
+            createTransactionMessage({ version: 0 }),
+            (message) => setTransactionMessageFeePayerSigner(payer, message),
+            // [!code ++:5]
+            (message) =>
+                setTransactionMessageLifetimeUsingDurableNonce(
+                    { nonce, nonceAccountAddress, nonceAuthorityAddress },
+                    message,
+                ),
+        );
+    },
+});
+```
+
+Then, make sure to use the `sendAndConfirmDurableNonceTransactionFactory` helper in your transaction plan executor in order to use the appropriate confirmation strategy for your transactions.
+
+```ts twoslash
+import {
+    createTransactionPlanExecutor,
+    Rpc,
+    SolanaRpcApi,
+    RpcSubscriptions,
+    SolanaRpcSubscriptionsApi,
+    signTransactionMessageWithSigners,
+    assertIsSendableTransaction,
+    BaseTransactionMessage,
+    TransactionMessageWithFeePayer,
+} from '@solana/kit';
+const rpc = {} as unknown as Rpc<SolanaRpcApi>;
+const rpcSubscriptions = {} as unknown as RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+// ---cut-before---
+// [!code ++:4]
+import {
+    assertIsTransactionMessageWithDurableNonceLifetime,
+    sendAndConfirmDurableNonceTransactionFactory,
+} from '@solana/kit';
+
+// [!code ++:4]
+const sendAndConfirmDurableNonceTransaction = sendAndConfirmDurableNonceTransactionFactory({
+    rpc,
+    rpcSubscriptions,
+});
+
+const transactionPlanExecutor = createTransactionPlanExecutor({
+    executeTransactionMessage: async (
+        message: BaseTransactionMessage & TransactionMessageWithFeePayer,
+    ) => {
+        assertIsTransactionMessageWithDurableNonceLifetime(message); // [!code ++]
+        const transaction = await signTransactionMessageWithSigners(message);
+        assertIsSendableTransaction(transaction);
+        await sendAndConfirmDurableNonceTransaction(transaction, { commitment: 'confirmed' }); // [!code ++]
+        return { transaction };
+    },
+});
+```
