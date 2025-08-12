@@ -382,7 +382,7 @@ if (isSignature(signature)) {
 The [`signature()`](/api/functions/signature) helper combines _asserting_ that a string is an Ed25519 signature with _coercing_ it to the `Signature` type. It's best used with untrusted input.
 
 ```ts
-import { signature } from '@solana/keys';
+import { signature } from '@solana/kit';
 
 const signature = signature(userSuppliedSignature);
 const {

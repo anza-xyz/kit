@@ -228,7 +228,7 @@ import { address, SignableMessage, Transaction } from '@solana/kit';
 const myMessage = null as unknown as SignableMessage;
 const myTransaction = null as unknown as Transaction;
 // ---cut-before---
-import { createNoopSigner } from '@solana/signers';
+import { createNoopSigner } from '@solana/kit';
 
 const myNoopSigner = createNoopSigner(address('1234..5678'));
 const [myMessageSignatures] = await myNoopSigner.signMessages([myMessage]); // <- Empty signature dictionary.
@@ -253,8 +253,7 @@ A key pair signer uses a `CryptoKeyPair` to sign messages and transactions. It i
 Creates a `KeyPairSigner` from a provided Crypto KeyPair. The `signMessages` and `signTransactions` functions of the returned signer will use the private key of the provided key pair to sign messages and transactions. Note that both the `signMessages` and `signTransactions` implementations are parallelized, meaning that they will sign all provided messages and transactions in parallel.
 
 ```ts twoslash
-import { generateKeyPair } from '@solana/keys';
-import { createSignerFromKeyPair, KeyPairSigner } from '@solana/signers';
+import { createSignerFromKeyPair, generateKeyPair, KeyPairSigner } from '@solana/kit';
 
 const myKeyPair: CryptoKeyPair = await generateKeyPair();
 const myKeyPairSigner: KeyPairSigner = await createSignerFromKeyPair(myKeyPair);
@@ -265,7 +264,7 @@ const myKeyPairSigner: KeyPairSigner = await createSignerFromKeyPair(myKeyPair);
 A convenience function that generates a new Crypto KeyPair and immediately creates a `KeyPairSigner` from it.
 
 ```ts twoslash
-import { generateKeyPairSigner } from '@solana/signers';
+import { generateKeyPairSigner } from '@solana/kit';
 
 const myKeyPairSigner = await generateKeyPairSigner();
 ```
@@ -276,7 +275,7 @@ A convenience function that creates a new KeyPair from a 64-bytes `Uint8Array` s
 
 ```ts twoslash
 import fs from 'fs';
-import { createKeyPairSignerFromBytes } from '@solana/signers';
+import { createKeyPairSignerFromBytes } from '@solana/kit';
 
 // Get bytes from local keypair file.
 const keypairFile = fs.readFileSync('~/.config/solana/id.json');
@@ -291,8 +290,7 @@ const signer = await createKeyPairSignerFromBytes(keypairBytes);
 A convenience function that creates a new KeyPair from a 32-bytes `Uint8Array` private key and immediately creates a `KeyPairSigner` from it.
 
 ```ts twoslash
-import { getUtf8Encoder } from '@solana/codecs-strings';
-import { createKeyPairSignerFromPrivateKeyBytes } from '@solana/signers';
+import { createKeyPairSignerFromPrivateKeyBytes, getUtf8Encoder } from '@solana/kit';
 
 const message = getUtf8Encoder().encode('Hello, World!');
 const seed = new Uint8Array(await crypto.subtle.digest('SHA-256', message));
