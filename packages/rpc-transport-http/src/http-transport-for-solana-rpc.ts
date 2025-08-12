@@ -1,5 +1,5 @@
 import { RpcTransport } from '@solana/rpc-spec';
-import { parseJsonWithBigInts, stringifyJsonWithBigints } from '@solana/rpc-spec-types';
+import { parseJsonWithBigInts, stringifyJsonWithBigInts } from '@solana/rpc-spec-types';
 
 import { createHttpTransport } from './http-transport';
 import { HttpTransportConfig } from './http-transport-config';
@@ -27,6 +27,6 @@ export function createHttpTransportForSolanaRpc(config: Config): RpcTransport {
         fromJson: (rawResponse: string, payload: unknown) =>
             isSolanaRequest(payload) ? parseJsonWithBigInts(rawResponse) : JSON.parse(rawResponse),
         toJson: (payload: unknown) =>
-            isSolanaRequest(payload) ? stringifyJsonWithBigints(payload) : JSON.stringify(payload),
+            isSolanaRequest(payload) ? stringifyJsonWithBigInts(payload) : JSON.stringify(payload),
     });
 }

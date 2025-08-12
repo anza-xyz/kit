@@ -1,5 +1,5 @@
 import { pipe } from '@solana/functional';
-import { parseJsonWithBigInts, stringifyJsonWithBigints } from '@solana/rpc-spec-types';
+import { parseJsonWithBigInts, stringifyJsonWithBigInts } from '@solana/rpc-spec-types';
 import {
     RpcSubscriptionsChannel,
     transformChannelInboundMessages,
@@ -19,6 +19,6 @@ export function getRpcSubscriptionsChannelWithBigIntJSONSerialization(
     return pipe(
         channel,
         c => transformChannelInboundMessages(c, parseJsonWithBigInts),
-        c => transformChannelOutboundMessages(c, stringifyJsonWithBigints),
+        c => transformChannelOutboundMessages(c, stringifyJsonWithBigInts),
     );
 }

@@ -1,7 +1,7 @@
 /**
  * Transforms a value into a JSON string, whilst rendering bigints as large unsafe integers.
  */
-export function stringifyJsonWithBigints(value: unknown, space?: number | string): string {
+export function stringifyJsonWithBigInts(value: unknown, space?: number | string): string {
     return unwrapBigIntValueObject(
         JSON.stringify(value, (_, v) => (typeof v === 'bigint' ? wrapBigIntValueObject(v) : v), space),
     );
