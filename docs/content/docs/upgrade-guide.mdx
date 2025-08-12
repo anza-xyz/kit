@@ -363,8 +363,13 @@ transaction.sign([payer, authority]);
 ```ts twoslash title="Kit"
 import { compileTransaction, generateKeyPair, signTransaction } from '@solana/kit';
 // ---cut-start---
-import { CompilableTransactionMessage, TransactionMessageWithBlockhashLifetime } from '@solana/kit';
-const transactionMessage = null as unknown as CompilableTransactionMessage &
+import {
+    BaseTransactionMessage,
+    TransactionMessageWithBlockhashLifetime,
+    TransactionMessageWithFeePayer,
+} from '@solana/kit';
+const transactionMessage = null as unknown as BaseTransactionMessage &
+    TransactionMessageWithFeePayer &
     TransactionMessageWithBlockhashLifetime;
 // ---cut-end---
 
@@ -379,7 +384,7 @@ const signedTransaction = await signTransaction([payer, authority], transaction)
 
 Additionally, as mentioned in the ["Creating instructions"](#creating-instructions) section, Kit introduces **signer objects**. These objects handle transaction and message signing while abstracting away the underlying signing mechanism. This could be using a Crypto KeyPair, a wallet adapter in the browser, a Noop signer, or anything we want. Here are some examples of how signers can be created:
 
-```ts twoslash title="Kit"
+```tsx twoslash title="Kit"
 import { address, createNoopSigner, generateKeyPairSigner } from '@solana/kit';
 import { useWalletAccountTransactionSendingSigner } from '@solana/react';
 // ---cut-start---
@@ -482,14 +487,14 @@ import { sendAndConfirmTransactionFactory, getSignatureFromTransaction } from '@
 import {
     createSolanaRpc,
     createSolanaRpcSubscriptions,
-    FullySignedTransaction,
+    SendableTransaction,
     TransactionWithBlockhashLifetime,
     Transaction,
 } from '@solana/kit';
 const rpc = createSolanaRpc('https://api.devnet.solana.com');
 const rpcSubscriptions = createSolanaRpcSubscriptions('wss://api.devnet.solana.com');
 const signedTransaction = null as unknown as Transaction &
-    FullySignedTransaction &
+    SendableTransaction &
     TransactionWithBlockhashLifetime;
 // ---cut-end---
 

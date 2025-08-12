@@ -84,7 +84,7 @@ import { address, SignatureDictionary, Transaction, TransactionPartialSigner } f
 // ---cut-before---
 const myTransactionPartialSigner: TransactionPartialSigner<'1234..5678'> = {
     address: address('1234..5678'),
-    signTransactions: async (transactions: Transaction[]): Promise<SignatureDictionary[]> => {
+    signTransactions: async (transactions): Promise<SignatureDictionary[]> => {
         // My custom signing logic.
     },
 };
@@ -224,9 +224,9 @@ This signer may be useful:
 - For indicating that a given account is a signer and taking the responsibility to provide the signature for that account ourselves. For instance, if we need to send the transaction to a server that will sign it and send it for us.
 
 ```ts twoslash
-import { address, SignableMessage, Transaction } from '@solana/kit';
+import { address, SignableMessage, Transaction, TransactionWithLifetime } from '@solana/kit';
 const myMessage = null as unknown as SignableMessage;
-const myTransaction = null as unknown as Transaction;
+const myTransaction = null as unknown as Transaction & TransactionWithLifetime;
 // ---cut-before---
 import { createNoopSigner } from '@solana/kit';
 

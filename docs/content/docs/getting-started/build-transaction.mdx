@@ -220,7 +220,7 @@ const transactionMessage = pipe(
 
 As mentioned in the previous article, setting a compute limit on a transaction as close as possible to the actual cost of running it will have many benefits, such as: increasing the likelihood of the transaction being scheduled, increasing the number of transactions that can be produced in a block and reducing the price of your priority fees, if any.
 
-A good way to estimate how much compute unit a transaction will need is to simulate it and measure its cost. This can be done using the `getComputeUnitEstimateForTransactionMessageFactory` function from `@solana/kit` to get the estimated compute limit before setting it on the transaction message using the `getSetComputeUnitLimitInstruction` function from `@solana-program/compute-budget`. Note that this must be done _after_ the transaction message is fully configured to ensure the estimate is as accurate as possible.
+A good way to estimate how much compute unit a transaction will need is to simulate it and measure its cost. This can be done using the `estimateComputeUnitLimitFactory` function from `@solana-program/compute-budget` to get the estimated compute limit before setting it on the transaction message using the `getSetComputeUnitLimitInstruction` function from the same package. Note that this must be done _after_ the transaction message is fully configured to ensure the estimate is as accurate as possible.
 
 ```ts twoslash
 import {
@@ -230,7 +230,8 @@ import {
     SolanaRpcSubscriptionsApi,
     TransactionSigner,
     MessageSigner,
-    CompilableTransactionMessage,
+    BaseTransactionMessage,
+    TransactionMessageWithFeePayer,
 } from '@solana/kit';
 import { getCreateAccountInstruction } from '@solana-program/system';
 import { getInitializeMintInstruction } from '@solana-program/token';
@@ -240,24 +241,23 @@ type Client = {
     wallet: TransactionSigner & MessageSigner;
 };
 const client = {} as Client;
-const transactionMessage = null as unknown as CompilableTransactionMessage;
+const transactionMessage = null as unknown as BaseTransactionMessage &
+    TransactionMessageWithFeePayer;
 // ---cut-before---
+import { appendTransactionMessageInstruction } from '@solana/kit';
 import {
-    getComputeUnitEstimateForTransactionMessageFactory,
-    prependTransactionMessageInstruction,
-} from '@solana/kit';
-import { getSetComputeUnitLimitInstruction } from '@solana-program/compute-budget';
+    estimateComputeUnitLimitFactory,
+    getSetComputeUnitLimitInstruction,
+} from '@solana-program/compute-budget';
 
 // Build the function to estimate compute units.
-const estimateComputeUnitLimit = getComputeUnitEstimateForTransactionMessageFactory({
-    rpc: client.rpc,
-});
+const estimateComputeUnitLimit = estimateComputeUnitLimitFactory({ rpc: client.rpc });
 
 // Estimate compute units.
 const computeUnitsEstimate = await estimateComputeUnitLimit(transactionMessage);
 
-// Prepend the compute unit limit instruction to the transaction message.
-const transactionMessageWithComputeUnitLimit = prependTransactionMessageInstruction(
+// Add the compute unit limit instruction to the transaction message.
+const transactionMessageWithComputeUnitLimit = appendTransactionMessageInstruction(
     getSetComputeUnitLimitInstruction({ units: computeUnitsEstimate }),
     transactionMessage,
 );
@@ -276,14 +276,17 @@ import {
 } from '@solana/kit';
 // ---cut-before---
 import {
-    CompilableTransactionMessage, // [!code ++]
+    BaseTransactionMessage,
+    TransactionMessageWithFeePayer,
     // ...
 } from '@solana/kit';
 
 export type Client = {
-    estimateAndSetComputeUnitLimit: <T extends CompilableTransactionMessage>(
+    estimateAndSetComputeUnitLimit: <
+        T extends BaseTransactionMessage & TransactionMessageWithFeePayer,
+    >(
         transactionMessage: T,
-    ) => Promise<T>; // [!code ++]
+    ) => Promise<T>;
     rpc: Rpc<SolanaRpcApi>;
     rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
     wallet: TransactionSigner & MessageSigner;
@@ -300,12 +303,15 @@ import {
     SolanaRpcSubscriptionsApi,
     TransactionSigner,
     MessageSigner,
-    CompilableTransactionMessage,
+    BaseTransactionMessage,
+    TransactionMessageWithFeePayer,
 } from '@solana/kit';
 export type Client = {
-    estimateAndSetComputeUnitLimit: <T extends CompilableTransactionMessage>(
+    estimateAndSetComputeUnitLimit: <
+        T extends BaseTransactionMessage & TransactionMessageWithFeePayer,
+    >(
         transactionMessage: T,
-    ) => Promise<T>; // [!code ++]
+    ) => Promise<T>;
     rpc: Rpc<SolanaRpcApi>;
     rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
     wallet: TransactionSigner & MessageSigner;
@@ -315,11 +321,13 @@ const rpcSubscriptions = {} as RpcSubscriptions<SolanaRpcSubscriptionsApi>;
 const wallet = {} as TransactionSigner & MessageSigner;
 // ---cut-before---
 import {
-    getComputeUnitEstimateForTransactionMessageFactory, // [!code ++]
-    prependTransactionMessageInstruction, // [!code ++]
+    appendTransactionMessageInstruction, // [!code ++]
     // ...
 } from '@solana/kit';
-import { getSetComputeUnitLimitInstruction } from '@solana-program/compute-budget'; // [!code ++]
+import {
+    estimateComputeUnitLimitFactory, // [!code ++]
+    getSetComputeUnitLimitInstruction, // [!code ++]
+} from '@solana-program/compute-budget';
 
 let client: Client | undefined;
 export async function createClient(): Promise<Client> {
@@ -327,20 +335,18 @@ export async function createClient(): Promise<Client> {
         // ...
 
         // Create a function to estimate and set the compute unit limit. // [!code ++]
-        const estimateComputeUnitLimit = getComputeUnitEstimateForTransactionMessageFactory({
-            rpc,
-        }); // [!code ++]
-        const estimateAndSetComputeUnitLimit = async <T extends CompilableTransactionMessage>(
+        const estimateComputeUnitLimit = estimateComputeUnitLimitFactory({ rpc });
+        const estimateAndSetComputeUnitLimit = async <
+            T extends BaseTransactionMessage & TransactionMessageWithFeePayer,
+        >(
             transactionMessage: T,
         ) => {
-            // [!code ++]
-            const computeUnitsEstimate = await estimateComputeUnitLimit(transactionMessage); // [!code ++]
-            return prependTransactionMessageInstruction(
-                // [!code ++]
-                getSetComputeUnitLimitInstruction({ units: computeUnitsEstimate }), // [!code ++]
-                transactionMessage, // [!code ++]
-            ); // [!code ++]
-        }; // [!code ++]
+            const computeUnitsEstimate = await estimateComputeUnitLimit(transactionMessage);
+            return appendTransactionMessageInstruction(
+                getSetComputeUnitLimitInstruction({ units: computeUnitsEstimate }),
+                transactionMessage,
+            ) as unknown as T;
+        };
 
         // Store the client.
         client = { estimateAndSetComputeUnitLimit, rpc, rpcSubscriptions, wallet };
@@ -359,12 +365,15 @@ import {
     SolanaRpcSubscriptionsApi,
     TransactionSigner,
     MessageSigner,
-    CompilableTransactionMessage,
+    BaseTransactionMessage,
+    TransactionMessageWithFeePayer,
 } from '@solana/kit';
 import { getCreateAccountInstruction } from '@solana-program/system';
 import { getInitializeMintInstruction } from '@solana-program/token';
 type Client = {
-    estimateAndSetComputeUnitLimit: <T extends CompilableTransactionMessage>(
+    estimateAndSetComputeUnitLimit: <
+        T extends BaseTransactionMessage & TransactionMessageWithFeePayer,
+    >(
         transactionMessage: T,
     ) => Promise<T>;
     rpc: Rpc<SolanaRpcApi>;
@@ -400,8 +409,9 @@ const transactionMessage = await pipe(
 Our transaction message is now fully configured and ready to be signed. Since we have been providing signer objects every step of the way, our transaction message already knows how to sign itself. All that is left to do is call `signTransactionMessageWithSigners`. This helper function will extract and deduplicate all the signers from the transaction message and use them to sign the message. As the message is signed, it is compiled into a new `Transaction` type that contains the compiled message and all of its signatures.
 
 ```ts twoslash
-import { CompilableTransactionMessage } from '@solana/kit';
-const transactionMessage = null as unknown as CompilableTransactionMessage;
+import { BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/kit';
+const transactionMessage = null as unknown as BaseTransactionMessage &
+    TransactionMessageWithFeePayer;
 // ---cut-before---
 import { signTransactionMessageWithSigners } from '@solana/kit';
 
@@ -421,10 +431,13 @@ import {
     SolanaRpcSubscriptionsApi,
     TransactionSigner,
     MessageSigner,
-    CompilableTransactionMessage,
+    BaseTransactionMessage,
+    TransactionMessageWithFeePayer,
 } from '@solana/kit';
 export type Client = {
-    estimateAndSetComputeUnitLimit: <T extends CompilableTransactionMessage>(
+    estimateAndSetComputeUnitLimit: <
+        T extends BaseTransactionMessage & TransactionMessageWithFeePayer,
+    >(
         transactionMessage: T,
     ) => Promise<T>;
     rpc: Rpc<SolanaRpcApi>;

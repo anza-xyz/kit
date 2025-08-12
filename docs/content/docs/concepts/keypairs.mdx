@@ -244,8 +244,8 @@ console.log(bobsSignature);
 In Kit, private keys are used to digitally sign transactions on behalf of account owners, to approve spending, transfers, and modifications to account data on the blockchain.
 
 ```ts twoslash
-import { Transaction } from '@solana/kit';
-const transaction = null as unknown as Transaction;
+import { Transaction, TransactionWithLifetime } from '@solana/kit';
+const transaction = null as unknown as Transaction & TransactionWithLifetime;
 const bobsKeyPair = null as unknown as CryptoKeyPair;
 // ---cut-before---
 import { signTransaction } from '@solana/kit';

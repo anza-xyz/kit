@@ -39,7 +39,7 @@ As you can see, this is very similar to generating a `CryptoKeyPair`, but now we
 
 For instance, here's how we could replace our `KeyPairSigner` with a signer that uses an in-browser wallet instead.
 
-```ts twoslash
+```tsx twoslash
 import { generateKeyPairSigner, KeyPairSigner, TransactionSigner } from '@solana/kit';
 import { useWalletAccountTransactionSendingSigner } from '@solana/react';
 // ---cut-start---
