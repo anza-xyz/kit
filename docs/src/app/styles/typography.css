@@ -9,6 +9,14 @@ h3 {
     font-weight: 700;
 }
 
+.prose :where(strong):not(:where([class~='not-prose'], [class~='not-prose'] *)) {
+    font-weight: 700;
+}
+
+.prose :where(code):not(:where([class~='not-prose'], [class~='not-prose'] *)) {
+    font-weight: inherit;
+}
+
 /* -------- */
 /* Spacing. */
 /* -------- */
