@@ -218,12 +218,13 @@ import {
     TransactionSigner,
     sendAndConfirmTransactionFactory,
 } from '@solana/kit';
+const estimateAndSetComputeUnitLimitFactory = {} as unknown as () => <
+    T extends BaseTransactionMessage & TransactionMessageWithFeePayer,
+>(
+    transactionMessage: T,
+) => Promise<T>;
 export type Client = {
-    estimateAndSetComputeUnitLimit: <
-        T extends BaseTransactionMessage & TransactionMessageWithFeePayer,
-    >(
-        transactionMessage: T,
-    ) => Promise<T>;
+    estimateAndSetComputeUnitLimit: ReturnType<typeof estimateAndSetComputeUnitLimitFactory>;
     rpc: Rpc<SolanaRpcApi>;
     rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
     sendAndConfirmTransaction: ReturnType<typeof sendAndConfirmTransactionFactory>;

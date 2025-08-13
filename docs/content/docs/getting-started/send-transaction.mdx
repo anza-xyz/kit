@@ -142,11 +142,14 @@ import {
 const rpc = null as unknown as Rpc<SolanaRpcApi>;
 const rpcSubscriptions = null as unknown as RpcSubscriptions<SolanaRpcSubscriptionsApi>;
 const wallet = null as unknown as TransactionSigner & MessageSigner;
-const estimateAndSetComputeUnitLimit = null as unknown as <
+const estimateAndSetComputeUnitLimitFactory = {} as unknown as () => <
     T extends BaseTransactionMessage & TransactionMessageWithFeePayer,
 >(
     transactionMessage: T,
 ) => Promise<T>;
+const estimateAndSetComputeUnitLimit = null as unknown as ReturnType<
+    typeof estimateAndSetComputeUnitLimitFactory
+>;
 // ---cut-before---
 import {
     sendAndConfirmTransactionFactory, // [!code ++]
@@ -154,11 +157,7 @@ import {
 } from '@solana/kit';
 
 export type Client = {
-    estimateAndSetComputeUnitLimit: <
-        T extends BaseTransactionMessage & TransactionMessageWithFeePayer,
-    >(
-        transactionMessage: T,
-    ) => Promise<T>;
+    estimateAndSetComputeUnitLimit: ReturnType<typeof estimateAndSetComputeUnitLimitFactory>;
     rpc: Rpc<SolanaRpcApi>;
     rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
     sendAndConfirmTransaction: ReturnType<typeof sendAndConfirmTransactionFactory>; // [!code ++]
@@ -211,12 +210,13 @@ import {
     TransactionSigner,
     sendAndConfirmTransactionFactory,
 } from '@solana/kit';
+const estimateAndSetComputeUnitLimitFactory = {} as unknown as () => <
+    T extends BaseTransactionMessage & TransactionMessageWithFeePayer,
+>(
+    transactionMessage: T,
+) => Promise<T>;
 export type Client = {
-    estimateAndSetComputeUnitLimit: <
-        T extends BaseTransactionMessage & TransactionMessageWithFeePayer,
-    >(
-        transactionMessage: T,
-    ) => Promise<T>;
+    estimateAndSetComputeUnitLimit: ReturnType<typeof estimateAndSetComputeUnitLimitFactory>;
     rpc: Rpc<SolanaRpcApi>;
     rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
     sendAndConfirmTransaction: ReturnType<typeof sendAndConfirmTransactionFactory>;
@@ -306,12 +306,13 @@ import {
     TransactionSigner,
     sendAndConfirmTransactionFactory,
 } from '@solana/kit';
+const estimateAndSetComputeUnitLimitFactory = {} as unknown as () => <
+    T extends BaseTransactionMessage & TransactionMessageWithFeePayer,
+>(
+    transactionMessage: T,
+) => Promise<T>;
 export type Client = {
-    estimateAndSetComputeUnitLimit: <
-        T extends BaseTransactionMessage & TransactionMessageWithFeePayer,
-    >(
-        transactionMessage: T,
-    ) => Promise<T>;
+    estimateAndSetComputeUnitLimit: ReturnType<typeof estimateAndSetComputeUnitLimitFactory>;
     rpc: Rpc<SolanaRpcApi>;
     rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
     sendAndConfirmTransaction: ReturnType<typeof sendAndConfirmTransactionFactory>;

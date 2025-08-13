@@ -263,96 +263,84 @@ const transactionMessageWithComputeUnitLimit = appendTransactionMessageInstructi
 );
 ```
 
-Since this is a common operation, let's add a helper function to our `Client` type so we can reuse it any time we need to set a compute unit limit. First, let's update the `Client` type so it offers an `estimateAndSetComputeUnitLimit` function like so.
+Since this is a common operation, let's add a helper function to our `Client` type so we can reuse it any time we need to set a compute unit limit.
+
+First, let's create a new `estimateAndSetComputeUnitLimitFactory` function that wraps the `estimateComputeUnitLimitFactory` to return a function that does everything in the code snippet above.
 
 ```ts twoslash title="src/client.ts"
 import {
-    Rpc,
-    RpcSubscriptions,
-    SolanaRpcApi,
-    SolanaRpcSubscriptionsApi,
-    TransactionSigner,
-    MessageSigner,
-} from '@solana/kit';
-// ---cut-before---
-import {
-    BaseTransactionMessage,
-    TransactionMessageWithFeePayer,
     // ...
-} from '@solana/kit';
-
-export type Client = {
-    // [!code ++:5]
-    estimateAndSetComputeUnitLimit: <
-        T extends BaseTransactionMessage & TransactionMessageWithFeePayer,
-    >(
-        transactionMessage: T,
-    ) => Promise<T>;
-    rpc: Rpc<SolanaRpcApi>;
-    rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
-    wallet: TransactionSigner & MessageSigner;
-};
-```
-
-Next, we'll implement this function in the `createClient` method by adding the following code:
-
-```ts twoslash title="src/client.ts"
-import {
-    Rpc,
-    RpcSubscriptions,
-    SolanaRpcApi,
-    SolanaRpcSubscriptionsApi,
-    TransactionSigner,
-    MessageSigner,
+    appendTransactionMessageInstruction,
     BaseTransactionMessage,
     TransactionMessageWithFeePayer,
 } from '@solana/kit';
-export type Client = {
-    estimateAndSetComputeUnitLimit: <
-        T extends BaseTransactionMessage & TransactionMessageWithFeePayer,
-    >(
-        transactionMessage: T,
-    ) => Promise<T>;
-    rpc: Rpc<SolanaRpcApi>;
-    rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
-    wallet: TransactionSigner & MessageSigner;
-};
-const rpc = {} as Rpc<SolanaRpcApi>;
-const rpcSubscriptions = {} as RpcSubscriptions<SolanaRpcSubscriptionsApi>;
-const wallet = {} as TransactionSigner & MessageSigner;
-// ---cut-before---
-import {
-    appendTransactionMessageInstruction, // [!code ++]
-    // ...
-} from '@solana/kit';
-// [!code ++:4]
 import {
     estimateComputeUnitLimitFactory,
     getSetComputeUnitLimitInstruction,
 } from '@solana-program/compute-budget';
+
+function estimateAndSetComputeUnitLimitFactory(
+    ...params: Parameters<typeof estimateComputeUnitLimitFactory>
+) {
+    const estimateComputeUnitLimit = estimateComputeUnitLimitFactory(...params);
+    return async <T extends BaseTransactionMessage & TransactionMessageWithFeePayer>(
+        transactionMessage: T,
+    ) => {
+        const computeUnitsEstimate = await estimateComputeUnitLimit(transactionMessage);
+        return appendTransactionMessageInstruction(
+            getSetComputeUnitLimitInstruction({ units: computeUnitsEstimate }),
+            transactionMessage,
+        );
+    };
+}
+```
+
+Next, let's use the return type of that function to provide a new `estimateAndSetComputeUnitLimit` function in our `Client` type and export it in our `createClient` helper.
+
+```ts twoslash title="src/client.ts"
+import {
+    BaseTransactionMessage,
+    TransactionMessageWithFeePayer,
+    Rpc,
+    SolanaRpcApi,
+    RpcSubscriptions,
+    SolanaRpcSubscriptionsApi,
+    TransactionSigner,
+    MessageSigner,
+} from '@solana/kit';
+import { estimateComputeUnitLimitFactory } from '@solana-program/compute-budget';
+const estimateAndSetComputeUnitLimitFactory = {} as unknown as (
+    ...params: Parameters<typeof estimateComputeUnitLimitFactory>
+) => <T extends BaseTransactionMessage & TransactionMessageWithFeePayer>(
+    transactionMessage: T,
+) => Promise<T>;
+const rpc = {} as Rpc<SolanaRpcApi>;
+const rpcSubscriptions = {} as RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+const wallet = {} as TransactionSigner & MessageSigner;
+// ---cut-before---
+export type Client = {
+    estimateAndSetComputeUnitLimit: ReturnType<typeof estimateAndSetComputeUnitLimitFactory>; // [!code ++]
+    rpc: Rpc<SolanaRpcApi>;
+    rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+    wallet: TransactionSigner & MessageSigner;
+};
 
 let client: Client | undefined;
 export async function createClient(): Promise<Client> {
     if (!client) {
         // ...
 
-        // [!code ++:13]
+        // [!code ++:2]
         // Create a function to estimate and set the compute unit limit.
-        const estimateComputeUnitLimit = estimateComputeUnitLimitFactory({ rpc });
-        const estimateAndSetComputeUnitLimit = async <
-            T extends BaseTransactionMessage & TransactionMessageWithFeePayer,
-        >(
-            transactionMessage: T,
-        ) => {
-            const computeUnitsEstimate = await estimateComputeUnitLimit(transactionMessage);
-            return appendTransactionMessageInstruction(
-                getSetComputeUnitLimitInstruction({ units: computeUnitsEstimate }),
-                transactionMessage,
-            ) as unknown as T;
-        };
+        const estimateAndSetComputeUnitLimit = estimateAndSetComputeUnitLimitFactory({ rpc });
 
         // Store the client.
-        client = { estimateAndSetComputeUnitLimit, rpc, rpcSubscriptions, wallet };
+        client = {
+            estimateAndSetComputeUnitLimit, // [!code ++]
+            rpc,
+            rpcSubscriptions,
+            wallet,
+        };
     }
     return client;
 }
@@ -373,12 +361,13 @@ import {
 } from '@solana/kit';
 import { getCreateAccountInstruction } from '@solana-program/system';
 import { getInitializeMintInstruction } from '@solana-program/token';
+const estimateAndSetComputeUnitLimitFactory = {} as unknown as () => <
+    T extends BaseTransactionMessage & TransactionMessageWithFeePayer,
+>(
+    transactionMessage: T,
+) => Promise<T>;
 type Client = {
-    estimateAndSetComputeUnitLimit: <
-        T extends BaseTransactionMessage & TransactionMessageWithFeePayer,
-    >(
-        transactionMessage: T,
-    ) => Promise<T>;
+    estimateAndSetComputeUnitLimit: ReturnType<typeof estimateAndSetComputeUnitLimitFactory>;
     rpc: Rpc<SolanaRpcApi>;
     rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
     wallet: TransactionSigner & MessageSigner;
@@ -460,12 +449,13 @@ import {
     BaseTransactionMessage,
     TransactionMessageWithFeePayer,
 } from '@solana/kit';
+const estimateAndSetComputeUnitLimitFactory = {} as unknown as () => <
+    T extends BaseTransactionMessage & TransactionMessageWithFeePayer,
+>(
+    transactionMessage: T,
+) => Promise<T>;
 export type Client = {
-    estimateAndSetComputeUnitLimit: <
-        T extends BaseTransactionMessage & TransactionMessageWithFeePayer,
-    >(
-        transactionMessage: T,
-    ) => Promise<T>;
+    estimateAndSetComputeUnitLimit: ReturnType<typeof estimateAndSetComputeUnitLimitFactory>;
     rpc: Rpc<SolanaRpcApi>;
     rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
     wallet: TransactionSigner & MessageSigner;
