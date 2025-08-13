@@ -29,11 +29,8 @@ export type TransactionPlanExecutor<TContext extends TransactionPlanResultContex
     config?: { abortSignal?: AbortSignal },
 ) => Promise<TransactionPlanResult<TContext>>;
 
-type ExecuteTransactionMessage = <
-    TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer,
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
->(
-    transactionMessage: TTransactionMessage,
+type ExecuteTransactionMessage = <TContext extends TransactionPlanResultContext = TransactionPlanResultContext>(
+    transactionMessage: BaseTransactionMessage & TransactionMessageWithFeePayer,
     config?: { abortSignal?: AbortSignal },
 ) => Promise<{ context?: TContext; transaction: Transaction }>;
 
