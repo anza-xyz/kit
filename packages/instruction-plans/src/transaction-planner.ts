@@ -53,12 +53,12 @@ type CreateTransactionMessage = (config?: {
     | Promise<BaseTransactionMessage & TransactionMessageWithFeePayer>
     | (BaseTransactionMessage & TransactionMessageWithFeePayer);
 
-type OnTransactionMessageUpdated = <
-    TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer,
->(
-    transactionMessage: TTransactionMessage,
+type OnTransactionMessageUpdated = (
+    transactionMessage: BaseTransactionMessage & TransactionMessageWithFeePayer,
     config?: { abortSignal?: AbortSignal },
-) => Promise<TTransactionMessage> | TTransactionMessage;
+) =>
+    | Promise<BaseTransactionMessage & TransactionMessageWithFeePayer>
+    | (BaseTransactionMessage & TransactionMessageWithFeePayer);
 
 /**
  * Configuration object for creating a new transaction planner.
