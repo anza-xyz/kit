@@ -14,19 +14,19 @@ One way to tackle this would be to encode the transaction ourselves using `getBa
 ```ts twoslash
 import {
     Transaction,
-    FullySignedTransaction,
+    SendableTransaction,
     TransactionWithBlockhashLifetime,
     Rpc,
     SolanaRpcApi,
 } from '@solana/kit';
-const signedTransaction = null as unknown as Transaction &
-    FullySignedTransaction &
+const transaction = null as unknown as Transaction &
+    SendableTransaction &
     TransactionWithBlockhashLifetime;
 const rpc = null as unknown as Rpc<SolanaRpcApi>;
 // ---cut-before---
 import { getBase64EncodedWireTransaction } from '@solana/kit';
 
-const encodedTransaction = getBase64EncodedWireTransaction(signedTransaction);
+const encodedTransaction = getBase64EncodedWireTransaction(transaction);
 await rpc
     .sendTransaction(encodedTransaction, { preflightCommitment: 'confirmed', encoding: 'base64' })
     .send();
@@ -34,26 +34,23 @@ await rpc
 
 However, Kit offers a helper function that does that for us whilst providing some sensible default values. This function is called `sendTransactionWithoutConfirmingFactory` and, given an RPC object, it returns a function that sends transactions without waiting for confirmation.
 
-Note that it the `assertIsSendableTransaction` function may be used prior to calling this function to ensure the transaction matches all the requirements to be sent to the network. This includes being fully signed but also ensuring the transaction is not exceeding its size limit.
-
 ```ts twoslash
 import {
     Transaction,
-    FullySignedTransaction,
+    SendableTransaction,
     TransactionWithBlockhashLifetime,
     Rpc,
     SolanaRpcApi,
 } from '@solana/kit';
-const signedTransaction = null as unknown as Transaction &
-    FullySignedTransaction &
+const transaction = null as unknown as Transaction &
+    SendableTransaction &
     TransactionWithBlockhashLifetime;
 const rpc = null as unknown as Rpc<SolanaRpcApi>;
 // ---cut-before---
-import { assertIsSendableTransaction, sendTransactionWithoutConfirmingFactory } from '@solana/kit';
+import { sendTransactionWithoutConfirmingFactory } from '@solana/kit';
 
 const sendTransaction = sendTransactionWithoutConfirmingFactory({ rpc });
-assertIsSendableTransaction(signedTransaction);
-await sendTransaction(signedTransaction, { commitment: 'confirmed' });
+await sendTransaction(transaction, { commitment: 'confirmed' });
 ```
 
 ## Confirmation strategies
@@ -71,17 +68,16 @@ Both accept RPC and RPC Subscriptions objects and return a function that sends a
 
 ```ts twoslash
 import {
-    assertIsSendableTransaction,
     Transaction,
-    FullySignedTransaction,
+    SendableTransaction,
     TransactionWithBlockhashLifetime,
     Rpc,
     SolanaRpcApi,
     RpcSubscriptions,
     SolanaRpcSubscriptionsApi,
 } from '@solana/kit';
-const signedTransaction = null as unknown as Transaction &
-    FullySignedTransaction &
+const transaction = null as unknown as Transaction &
+    SendableTransaction &
     TransactionWithBlockhashLifetime;
 const rpc = null as unknown as Rpc<SolanaRpcApi>;
 const rpcSubscriptions = null as unknown as RpcSubscriptions<SolanaRpcSubscriptionsApi>;
@@ -89,8 +85,7 @@ const rpcSubscriptions = null as unknown as RpcSubscriptions<SolanaRpcSubscripti
 import { sendAndConfirmTransactionFactory } from '@solana/kit';
 
 const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
-assertIsSendableTransaction(signedTransaction);
-await sendAndConfirmTransaction(signedTransaction, { commitment: 'confirmed' });
+await sendAndConfirmTransaction(transaction, { commitment: 'confirmed' });
 ```
 
 ## Transaction signatures
@@ -105,15 +100,15 @@ As such, Kit decouples these two distinct concepts by offering a `getSignatureFr
 import {
     assertIsSendableTransaction,
     Transaction,
-    FullySignedTransaction,
+    SendableTransaction,
     TransactionWithBlockhashLifetime,
     Rpc,
     SolanaRpcApi,
     RpcSubscriptions,
     SolanaRpcSubscriptionsApi,
 } from '@solana/kit';
-const signedTransaction = null as unknown as Transaction &
-    FullySignedTransaction &
+const transaction = null as unknown as Transaction &
+    SendableTransaction &
     TransactionWithBlockhashLifetime;
 const rpc = null as unknown as Rpc<SolanaRpcApi>;
 const rpcSubscriptions = null as unknown as RpcSubscriptions<SolanaRpcSubscriptionsApi>;
@@ -122,12 +117,11 @@ import { getSignatureFromTransaction, sendAndConfirmTransactionFactory } from '@
 
 // [!code ++:2]
 // Access the transaction signature.
-const signature = getSignatureFromTransaction(signedTransaction);
+const signature = getSignatureFromTransaction(transaction);
 
 // Send and confirm the transaction.
 const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
-assertIsSendableTransaction(signedTransaction);
-await sendAndConfirmTransaction(signedTransaction, { commitment: 'confirmed' });
+await sendAndConfirmTransaction(transaction, { commitment: 'confirmed' });
 ```
 
 ## Update `client.ts`
@@ -283,12 +277,11 @@ export async function createMint(client: Client, options: { decimals?: number } 
     );
 
     // Compile the transaction message and sign it.
-    const signedTransaction = await signTransactionMessageWithSigners(transactionMessage);
+    const transaction = await signTransactionMessageWithSigners(transactionMessage);
+    assertIsSendableTransaction(transaction);
 
     // Send the transaction and wait for confirmation.
-    // [!code ++:2]
-    assertIsSendableTransaction(signedTransaction);
-    await client.sendAndConfirmTransaction(signedTransaction, { commitment: 'confirmed' });
+    await client.sendAndConfirmTransaction(transaction, { commitment: 'confirmed' }); // [!code ++]
 
     // [!code ++:2]
     // Return the address of the created mint account.

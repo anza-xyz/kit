@@ -418,12 +418,35 @@ const transactionMessage = null as unknown as BaseTransactionMessage &
 // ---cut-before---
 import { signTransactionMessageWithSigners } from '@solana/kit';
 
-const signedTransaction = await signTransactionMessageWithSigners(transactionMessage);
+const transaction = await signTransactionMessageWithSigners(transactionMessage);
+```
+
+## Ensure the transaction is sendable
+
+One last step before we can send our transaction is to ensure it is in a valid state. We already know that the transaction is fully signed since the `signTransactionMessageWithSigners` ensures that for us. However, another requirement we need to consider is whether or not the size of the transaction exceeds the maximum size allowed by the Solana network.
+
+Fortunately for us, there is a helper function called `assertIsSendableTransaction` that will check all these requirements for us and throw an error if the transaction is not valid. After a successful call to this function, the provided transaction will be upgraded to a `SendableTransaction` type which is a requirement for helper functions that send transactions to the network.
+
+```ts twoslash
+import {
+    BaseTransactionMessage,
+    TransactionMessageWithFeePayer,
+    signTransactionMessageWithSigners,
+} from '@solana/kit';
+const transactionMessage = null as unknown as BaseTransactionMessage &
+    TransactionMessageWithFeePayer;
+// ---cut-before---
+import { assertIsSendableTransaction, SendableTransaction } from '@solana/kit';
+
+const transaction = await signTransactionMessageWithSigners(transactionMessage);
+assertIsSendableTransaction(transaction);
+
+transaction satisfies SendableTransaction;
 ```
 
 ## The `createMint` helper
 
-And we finally have our fully signed transaction! In the next article, we'll learn how to send it and wait for its confirmation but before we do, here's our updated `createMint` function including everything we've learned so far.
+And we finally have our fully signed and sendable transaction! In the next article, we'll learn how to send it and wait for its confirmation but before we do, here's our updated `createMint` function including everything we've learned so far.
 
 ```ts twoslash title="src/create-mint.ts"
 // @filename: client.ts
@@ -451,6 +474,7 @@ export type Client = {
 // ---cut-before---
 import {
     appendTransactionMessageInstructions,
+    assertIsSendableTransaction,
     createTransactionMessage,
     generateKeyPairSigner,
     pipe,
@@ -501,7 +525,8 @@ export async function createMint(client: Client, options: { decimals?: number } 
     );
 
     // Compile the transaction message and sign it.
-    const signedTransaction = await signTransactionMessageWithSigners(transactionMessage);
+    const transaction = await signTransactionMessageWithSigners(transactionMessage);
+    assertIsSendableTransaction(transaction);
 
     // Send the transaction and wait for confirmation.
     // TODO: Next article!
