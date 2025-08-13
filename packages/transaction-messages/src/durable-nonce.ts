@@ -111,12 +111,12 @@ export function isTransactionMessageWithDurableNonceLifetime(
  *
  * @example
  * ```ts
- * import { assertIsDurableNonceTransactionMessage } from '@solana/transaction-messages';
+ * import { assertIsTransactionMessageWithDurableNonceLifetime } from '@solana/transaction-messages';
  *
  * try {
  *     // If this type assertion function doesn't throw, then
  *     // Typescript will upcast `message` to `TransactionMessageWithDurableNonceLifetime`.
- *     assertIsDurableNonceTransactionMessage(message);
+ *     assertIsTransactionMessageWithDurableNonceLifetime(message);
  *     // At this point, `message` is a `TransactionMessageWithDurableNonceLifetime` that can be used
  *     // with the RPC.
  *     const { nonce, nonceAccountAddress } = message.lifetimeConstraint;
