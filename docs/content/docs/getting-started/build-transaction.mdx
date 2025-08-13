@@ -282,6 +282,7 @@ import {
 } from '@solana/kit';
 
 export type Client = {
+    // [!code ++:5]
     estimateAndSetComputeUnitLimit: <
         T extends BaseTransactionMessage & TransactionMessageWithFeePayer,
     >(
@@ -324,9 +325,10 @@ import {
     appendTransactionMessageInstruction, // [!code ++]
     // ...
 } from '@solana/kit';
+// [!code ++:4]
 import {
-    estimateComputeUnitLimitFactory, // [!code ++]
-    getSetComputeUnitLimitInstruction, // [!code ++]
+    estimateComputeUnitLimitFactory,
+    getSetComputeUnitLimitInstruction,
 } from '@solana-program/compute-budget';
 
 let client: Client | undefined;
@@ -334,7 +336,8 @@ export async function createClient(): Promise<Client> {
     if (!client) {
         // ...
 
-        // Create a function to estimate and set the compute unit limit. // [!code ++]
+        // [!code ++:13]
+        // Create a function to estimate and set the compute unit limit.
         const estimateComputeUnitLimit = estimateComputeUnitLimitFactory({ rpc });
         const estimateAndSetComputeUnitLimit = async <
             T extends BaseTransactionMessage & TransactionMessageWithFeePayer,

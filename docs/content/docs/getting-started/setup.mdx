@@ -40,7 +40,7 @@ The first two things we need are the RPC and RPC Subscriptions objects which all
 
 Let's create a new `src/client.ts` file and add the following `Client` type:
 
-```ts twoslash
+```ts twoslash title="src/client.ts"
 import { Rpc, RpcSubscriptions, SolanaRpcApi, SolanaRpcSubscriptionsApi } from '@solana/kit';
 
 export type Client = {
@@ -82,7 +82,7 @@ For now, let's just use our `Client` object to fetch the balance of a specific a
 
 We can do this by creating an `Address` type via the `address` helper and fetching the balance via the `getBalance` method of the `rpc` object.
 
-```ts twoslash
+```ts twoslash title="src/index.ts"
 // @filename: client.ts
 import { Rpc, RpcSubscriptions, SolanaRpcApi, SolanaRpcSubscriptionsApi } from '@solana/kit';
 export type Client = {

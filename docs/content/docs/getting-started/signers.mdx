@@ -108,7 +108,7 @@ import {
 export type Client = {
     rpc: Rpc<SolanaRpcApi>;
     rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
-    wallet: TransactionSigner & MessageSigner;
+    wallet: TransactionSigner & MessageSigner; // [!code ++]
 };
 
 let client: Client | undefined;
@@ -117,8 +117,9 @@ export async function createClient(): Promise<Client> {
         // Create RPC objects and airdrop function.
         const rpc = createSolanaRpc('http://127.0.0.1:8899');
         const rpcSubscriptions = createSolanaRpcSubscriptions('ws://127.0.0.1:8900');
-        const airdrop = airdropFactory({ rpc, rpcSubscriptions });
+        const airdrop = airdropFactory({ rpc, rpcSubscriptions }); // [!code ++]
 
+        // [!code ++:7]
         // Create a wallet with lamports.
         const wallet = await generateKeyPairSigner();
         await airdrop({

@@ -251,10 +251,11 @@ async function tutorial() {
     const mintAddress = await createMint(client, { decimals: 2 });
     const mintAccount = await fetchMint(client.rpc, mintAddress); // [!code ++]
     console.log(`Mint created: ${mintAddress}.`);
-    console.log(`Mint lamports: ${mintAccount.lamports}.`); // [!code ++]
-    console.log(`Mint authority: ${unwrapOption(mintAccount.data.mintAuthority)}.`); // [!code ++]
-    console.log(`Mint decimals: ${mintAccount.data.decimals}.`); // [!code ++]
-    console.log(`Mint supply: ${mintAccount.data.supply}.`); // [!code ++]
+    // [!code ++:4]
+    console.log(`Mint lamports: ${mintAccount.lamports}.`);
+    console.log(`Mint authority: ${unwrapOption(mintAccount.data.mintAuthority)}.`);
+    console.log(`Mint decimals: ${mintAccount.data.decimals}.`);
+    console.log(`Mint supply: ${mintAccount.data.supply}.`);
 }
 ```
 

@@ -120,6 +120,7 @@ const rpcSubscriptions = null as unknown as RpcSubscriptions<SolanaRpcSubscripti
 // ---cut-before---
 import { getSignatureFromTransaction, sendAndConfirmTransactionFactory } from '@solana/kit';
 
+// [!code ++:2]
 // Access the transaction signature.
 const signature = getSignatureFromTransaction(signedTransaction);
 
@@ -175,11 +176,12 @@ export async function createClient(): Promise<Client> {
     if (!client) {
         // ...
 
-        // Create a function to send and confirm transactions. // [!code ++]
+        // [!code ++:5]
+        // Create a function to send and confirm transactions.
         const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({
             rpc,
             rpcSubscriptions,
-        }); // [!code ++]
+        });
 
         // Store the client.
         client = {
@@ -284,11 +286,13 @@ export async function createMint(client: Client, options: { decimals?: number } 
     const signedTransaction = await signTransactionMessageWithSigners(transactionMessage);
 
     // Send the transaction and wait for confirmation.
-    assertIsSendableTransaction(signedTransaction); // [!code ++]
-    await client.sendAndConfirmTransaction(signedTransaction, { commitment: 'confirmed' }); // [!code ++]
+    // [!code ++:2]
+    assertIsSendableTransaction(signedTransaction);
+    await client.sendAndConfirmTransaction(signedTransaction, { commitment: 'confirmed' });
 
-    // Return the address of the created mint account. // [!code ++]
-    return mint.address; // [!code ++]
+    // [!code ++:2]
+    // Return the address of the created mint account.
+    return mint.address;
 }
 ```
 
