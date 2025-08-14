@@ -1,4 +1,4 @@
 {
-  "root": true,
-  "pages": ["...", "!index"]
+    "root": true,
+    "pages": ["!index"]
 }
