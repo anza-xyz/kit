@@ -1,5 +1,14 @@
 # @solana/codecs-core
 
+## 3.0.0
+
+### Patch Changes
+
+- [#685](https://github.com/anza-xyz/kit/pull/685) [`98eabac`](https://github.com/anza-xyz/kit/commit/98eabac905759fc6809eaabb412a5846e3a773f0) Thanks [@steveluscher](https://github.com/steveluscher)! - `padBytes` now strips extra types from the input array, but otherwise returns the same flavour of `Uint8Array` you gave it, in terms of writability
+
+- Updated dependencies [[`6a183bf`](https://github.com/anza-xyz/kit/commit/6a183bf9e9d672e2d42f3aecc589a9e54d01cb1a), [`23d2fa1`](https://github.com/anza-xyz/kit/commit/23d2fa14cbd5197473eca94a1ac6c5abf221b052), [`9feba85`](https://github.com/anza-xyz/kit/commit/9feba8557b64dd3199cd88af2c17b7ccd5d18fec), [`01f159a`](https://github.com/anza-xyz/kit/commit/01f159a436d7a29479aa1a1877c9b4c77da1170f)]:
+    - @solana/errors@3.0.0
+
 ## 2.3.0
 
 ### Patch Changes

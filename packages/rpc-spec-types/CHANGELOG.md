@@ -1,5 +1,11 @@
 # @solana/rpc-spec-types
 
+## 3.0.0
+
+### Major Changes
+
+- [#732](https://github.com/anza-xyz/kit/pull/732) [`81c83b1`](https://github.com/anza-xyz/kit/commit/81c83b12dd0e145bf7d08182e01824f2f14e5ee5) Thanks [@nonergodic](https://github.com/nonergodic)! - BREAKING CHANGE: Rename `stringifyJsonWithBigints` to `stringifyJsonWithBigInts` for consistency with the rest of the API.
+
 ## 2.3.0
 
 ## 2.2.1
