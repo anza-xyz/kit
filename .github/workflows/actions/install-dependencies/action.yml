@@ -12,7 +12,7 @@ runs:
     - name: Install package manager
       uses: pnpm/action-setup@v3
       with:
-        version: 10.13.1
+        version: 10.14.0
 
     - name: Setup Node
       uses: actions/setup-node@v4
