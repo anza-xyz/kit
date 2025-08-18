@@ -9,7 +9,24 @@ export default function Layout({ children }: { children: ReactNode }) {
                 <link rel="stylesheet" href="https://use.typekit.net/chp6nhs.css" />
             </head>
             <body className="flex flex-col min-h-screen">
-                <RootProvider>{children}</RootProvider>
+                <RootProvider
+                    search={{
+                        options: {
+                            tags: [
+                                {
+                                    name: 'Documentation',
+                                    value: 'docs',
+                                },
+                                {
+                                    name: 'API',
+                                    value: 'api',
+                                },
+                            ],
+                        },
+                    }}
+                >
+                    {children}
+                </RootProvider>
             </body>
         </html>
     );
