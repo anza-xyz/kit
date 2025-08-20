@@ -21,5 +21,7 @@
     "propertyMembersFormat": "table",
     "interfacePropertiesFormat": "table",
     "fileExtension": ".mdx",
-    "entryFileName": "index"
+    "entryFileName": "index",
+    "theme": "kit-docs-theme",
+    "useCodeBlocks": true
 }
