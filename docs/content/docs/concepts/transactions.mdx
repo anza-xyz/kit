@@ -3,4 +3,477 @@ title: Transactions
 description: Build and compile transaction messages
 ---
 
-TODO
+## Introduction
+
+To take an action on Solana, whether to place an order, transfer an asset, or more generally to modify data on the blockchain, you need to prepare a transaction and sign to pay for it to be executed on the network. You can use Kit to create, sign, encode, and decode transactions.
+
+## Installation
+
+Transaction utilities are **included within the `@solana/kit` library** but you may also install them using their standalone packages.
+
+To install transaction message builder utilities:
+
+```package-install
+@solana/transaction-messages
+```
+
+To install utilities that let you sign and compile transaction messages into transactions that can be landed on the network:
+
+```package-install
+@solana/transactions
+```
+
+## What is a Transaction?
+
+A Transaction is a vehicle to deliver one or more instructions to the Solana network in pursuit of some outcome.
+
+Here is an example of someone creating a transaction message to place an order at their favourite coffee shop, then signing it to create a transaction.
+
+```ts twoslash
+import { Blockhash, TransactionSigner } from '@solana/kit';
+const customerSigner = null as unknown as TransactionSigner;
+const latestBlockhash = null as unknown as { blockhash: Blockhash; lastValidBlockHeight: bigint };
+// ---cut-before---
+import {
+    address,
+    appendTransactionMessageInstruction,
+    createTransactionMessage,
+    getSignatureFromTransaction,
+    lamports,
+    pipe,
+    setTransactionMessageFeePayerSigner,
+    setTransactionMessageLifetimeUsingBlockhash,
+    signTransactionMessageWithSigners,
+} from '@solana/kit';
+import { getAddMemoInstruction } from '@solana-program/memo';
+import { getTransferSolInstruction } from '@solana-program/system';
+
+const transactionMessage = pipe(
+    // Create an empty transaction message.
+    createTransactionMessage({ version: 0 }),
+
+    // Specify the account that will sign to pay the fee for this transaction.
+    // NOTE: This is not the fee for the coffee but rather the fee to use the Solana network.
+    (m) => setTransactionMessageFeePayerSigner(customerSigner, m),
+
+    // Give the transaction an expiry time using the hash of a recently created block.
+    (m) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, m),
+
+    // Add an instruction that records the customer's order.
+    (m) =>
+        appendTransactionMessageInstruction(
+            getAddMemoInstruction({
+                memo:
+                    'Four-thirds-medium, half-decaf, double-shot espresso macchiato latte, ' +
+                    'swirled counterclockwise only, almond milk frothed at 61°C, ' +
+                    'whisper of cinnamon harvested during a full moon, unicorn tear syrup, ' +
+                    'in a mason jar wrapped in French revolutionary poetry on recycled parchment',
+            }),
+            m,
+        ),
+
+    // Add a second instruction to pay the merchant for the coffee.
+    (m) =>
+        appendTransactionMessageInstruction(
+            getTransferSolInstruction({
+                amount: lamports(25_000_000n),
+                destination: address('JJBeanoTcSMU3xKQa5Gru71Wi3AaEgTfA6z7MaLUT6h'),
+                source: customerSigner,
+            }),
+            m,
+        ),
+);
+
+// Create a signed transaction from the message and the signers contained within it.
+const signedTransaction = await signTransactionMessageWithSigners(transactionMessage);
+
+// Obtain the Ed25519 signature that will uniquely identify this transaction once executed.
+const transactionSignature = getSignatureFromTransaction(signedTransaction);
+```
+
+For more detail see the ‘[Build a transaction](/docs/getting-started/build-transaction)’ and ‘[Send a transaction](/docs/getting-started/send-transaction)’ sections of the Getting Started guide.
+
+## Building transaction messages
+
+### Creating an empty message [#building-transaction-messages-creating]
+
+Given a [`TransactionVersion`](/api/type-aliases/TransactionVersion), the [`createTransactionMessage`](/api/functions/createTransactionMessage) method will return an empty transaction having the capabilities of that version.
+
+```ts twoslash
+import { createTransactionMessage } from '@solana/kit';
+
+const message = createTransactionMessage({ version: 0 });
+```
+
+### Setting the fee payer [#building-transaction-messages-fee-payer]
+
+The [`TransactionMessageWithFeePayer`](/api/interfaces/TransactionMessageWithFeePayer) type represents a transaction message for which a fee payer has been declared. A transaction must conform to this type to be compiled and landed on the network.
+
+#### Using a signer [!toc] [#building-transaction-messages-fee-payer-using-a-signer]
+
+Given a [`TransactionSigner`](/api/type-aliases/TransactionSigner), this method will return a new transaction message having the same type as the one supplied plus the [`TransactionMessageWithFeePayer`](/api/interfaces/TransactionMessageWithFeePayer) type. Additionally, the resulting message will have the capability to self-sign using the [`signTransactionMessageWithSigners`](/api/interfaces/signTransactionMessageWithSigners) function.
+
+```ts twoslash
+import { TransactionMessage } from '@solana/kit';
+const keyPair = null as unknown as CryptoKeyPair;
+const transactionMessage = null as unknown as TransactionMessage;
+// ---cut-before---
+import { createSignerFromKeyPair, setTransactionMessageFeePayerSigner } from '@solana/kit';
+
+const mySigner = await createSignerFromKeyPair(keyPair);
+const transactionMessagePaidByMe = setTransactionMessageFeePayerSigner(
+    mySigner,
+    transactionMessage,
+);
+```
+
+#### Using an address [!toc] [#building-transaction-messages-fee-payer-using-an-address]
+
+Given a base58-encoded address of a system account, this method will return a new transaction message having the same type as the one supplied plus the [`TransactionMessageWithFeePayer`](/api/interfaces/TransactionMessageWithFeePayer) type.
+
+```ts twoslash
+import { TransactionMessage } from '@solana/kit';
+const transactionMessage = null as unknown as TransactionMessage;
+// ---cut-before---
+import { address, setTransactionMessageFeePayer } from '@solana/kit';
+
+const myAddress = address('mpngsFd4tmbUfzDYJayjKZwZcaR7aWb2793J6grLsGu');
+const transactionMessagePaidByMe = setTransactionMessageFeePayer(myAddress, transactionMessage);
+```
+
+### Defining the lifetime [#building-transaction-messages-lifetime]
+
+A signed transaction can be only be landed on the network if certain conditions are met:
+
+- It includes the hash of a recent block
+- Or it includes the value of an unused nonce known to the network
+
+These conditions define a transaction's lifetime, after which it can no longer be landed, even if signed. The lifetime must be added to the transaction message before it is compiled to be sent.
+
+#### Using a recent blockhash [!toc] [#building-transaction-messages-lifetime-using-a-recent-blockhash]
+
+The [`TransactionMessageWithBlockhashLifetime`](/api/interfaces/TransactionMessageWithBlockhashLifetime) type represents a transaction message whose expiry is tied to the age of a block. Such a transaction can only be landed on the network if the current block height of the network is less than or equal to the value of `TransactionMessageWithBlockhashLifetime.lifetimeConstraint.lastValidBlockHeight`.
+
+Given a blockhash and the last block height at which that blockhash is considered usable to land transactions, the [`setTransactionMessageLifetimeUsingBlockhash`](/api/functions/setTransactionMessageLifetimeUsingBlockhash) method will return a new transaction message having the same type as the one supplied plus the [`TransactionMessageWithBlockhashLifetime`](/api/interfaces/TransactionMessageWithBlockhashLifetime) type.
+
+```ts twoslash
+import { Rpc, GetLatestBlockhashApi, TransactionMessage } from '@solana/kit';
+const rpc = null as unknown as Rpc<GetLatestBlockhashApi>;
+const transactionMessage = null as unknown as TransactionMessage;
+// ---cut-before---
+import { setTransactionMessageLifetimeUsingBlockhash } from '@solana/kit';
+
+const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
+const txMessageWithBlockhashLifetime = setTransactionMessageLifetimeUsingBlockhash(
+    latestBlockhash,
+    transactionMessage,
+);
+```
+
+#### Using a durable nonce [!toc] [#building-transaction-messages-lifetime-using-a-durable-nonce]
+
+The [`TransactionMessageWithDurableNonceLifetime`](/api/interfaces/TransactionMessageWithDurableNonceLifetime) type represents a transaction message whose lifetime is defined by the value of a nonce account on-chain. Such a transaction can only be landed on the network if the nonce value in the transaction message matches the one in the nonce account at the time the transaction executes.
+
+Given a nonce, the account where the value of the nonce is stored, and the address of the account authorized to consume that nonce, this method will return a new transaction having the same type as the one supplied plus the [`TransactionMessageWithDurableNonceLifetime`](/api/interfaces/TransactionMessageWithDurableNonceLifetime) type.
+
+```ts twoslash
+import { TransactionMessage, address, Rpc, GetAccountInfoApi } from '@solana/kit';
+const rpc = null as unknown as Rpc<GetAccountInfoApi>;
+const transactionMessage = null as unknown as TransactionMessage;
+// ---cut-before---
+import { Nonce, setTransactionMessageLifetimeUsingDurableNonce } from '@solana/kit';
+import { fetchNonce } from '@solana-program/system';
+
+const nonceAccountAddress = address('EGtMh4yvXswwHhwVhyPxGrVV2TkLTgUqGodbATEPvojZ');
+const nonceAuthorityAddress = address('4KD1Rdrd89NG7XbzW3xsX9Aqnx2EExJvExiNme6g9iAT');
+
+const {
+    data: { blockhash },
+} = await fetchNonce(rpc, nonceAccountAddress);
+const nonce = blockhash as string as Nonce;
+
+const durableNonceTransactionMessage = setTransactionMessageLifetimeUsingDurableNonce(
+    { nonce, nonceAccountAddress, nonceAuthorityAddress },
+    transactionMessage,
+);
+```
+
+In particular, this method _prepends_ an instruction to the transaction message designed to consume (or &lsquo;advance&rsquo;) the nonce in the same transaction whose lifetime is defined by it.
+
+```ts twoslash
+import { TransactionMessageWithDurableNonceLifetime } from '@solana/kit';
+const durableNonceTransactionMessage =
+    null as unknown as TransactionMessageWithDurableNonceLifetime<
+        'EGtMh4yvXswwHhwVhyPxGrVV2TkLTgUqGodbATEPvojZ',
+        '4KD1Rdrd89NG7XbzW3xsX9Aqnx2EExJvExiNme6g9iAT'
+    >;
+// ---cut-before---
+const [
+    // An 'advance nonce' instruction gets prepended to the instruction list
+    advanceNonceInstruction,
+    ...otherInstructions
+] = durableNonceTransactionMessage.instructions;
+```
+
+### Adding instructions [#building-transaction-messages-instructions]
+
+There are three types that correspond to the different parts of an instruction. Any given instruction may conform to one or more of these types, but must conform in every case to the `Instruction` type.
+
+- [`Instruction`](/api/interfaces/Instruction): An instruction having a `programAddress` property that is the base58-encoded address of the program to invoke.
+- [`InstructionWithAccounts`](/api/interfaces/InstructionWithAccounts): An instruction that specifies a list of accounts that a program may read from, write to, or require be signers of the transaction itself. Objects that conform to this type have an `accounts` property that is an array of `AccountMeta | AccountLookupMeta` in the order the instruction requires.
+- [`InstructionWithData`](/api/interfaces/InstructionWithData): An instruction that supplies some data as input to the program. Objects that conform to this type have a `data` property that can be any type of `Uint8Array`.
+
+Given an instruction, the [`appendTransactionMessageInstruction`](/api/functions/appendTransactionMessageInstruction) method will return a new transaction message with that instruction having been added to the end of the list of existing instructions.
+
+```ts twoslash
+import { TransactionMessage } from '@solana/kit';
+const transactionMessage = null as unknown as TransactionMessage;
+// ---cut-before---
+import { address, appendTransactionMessageInstruction, getUtf8Encoder } from '@solana/kit';
+import { getAddMemoInstruction } from '@solana-program/memo';
+
+const memoTransactionMessage = appendTransactionMessageInstruction(
+    getAddMemoInstruction({ memo: 'Hello world!' }),
+    transactionMessage,
+);
+```
+
+To add an instruction to the beginning of the list instead, see [`prependTransactionMessageInstruction`](/api/functions/prependTransactionMessageInstruction)
+
+To add an array of instructions to a transaction message, see [`appendTransactionMessageInstructions`](/api/functions/appendTransactionMessageInstructions) and [`prependTransactionMessageInstructions`](/api/functions/prependTransactionMessageInstructions).
+
+## Compressing transaction messages
+
+Every transaction message must include a reference to the account addresses it will read from and write to. One alternative to storing these addresses in the message itself is to store them in an on-chain account called an **address lookup table**. This lets you save space in the message by replacing many 32-byte account addresses with one or more 32-byte address lookup table account addresses then a 1-byte index into those tables for each address.
+
+<Callout type="warn">
+    Addresses that are required signers of a transaction message can not be looked up in an address
+    lookup table; they must be encoded in the message in the conventional way.
+</Callout>
+
+Given a transaction message and a mapping of lookup tables to the ordered addresses stored in them, the [`compressTransactionMessageUsingAddressLookupTables`](/api/functions/compressTransactionMessageUsingAddressLookupTables) function will return a new transaction message with the same instructions but with all non-signer accounts that are found in the given lookup tables represented by an [`AccountLookupMeta`](/api/interfaces/AccountLookupMeta) instead of an [`AccountMeta`](/api/interfaces/AccountMeta).
+
+```ts twoslash
+import {
+    AddressesByLookupTableAddress,
+    Rpc,
+    GetAccountInfoApi,
+    TransactionMessage,
+} from '@solana/kit';
+const rpc = null as unknown as Rpc<GetAccountInfoApi>;
+const transactionMessage = null as unknown as Extract<TransactionMessage, { version: 0 }>;
+// ---cut-before---
+import { address, compressTransactionMessageUsingAddressLookupTables } from '@solana/kit';
+import { fetchAddressLookupTable } from '@solana-program/address-lookup-table';
+
+const lookupTableAddress = address('4QwSwNriKPrz8DLW4ju5uxC2TN5cksJx6tPUPj7DGLAW');
+const {
+    data: { addresses },
+} = await fetchAddressLookupTable(rpc, lookupTableAddress);
+const addressesByAddressLookupTable: AddressesByLookupTableAddress = {
+    [lookupTableAddress]: addresses,
+};
+
+const compressedTransactionMessage = compressTransactionMessageUsingAddressLookupTables(
+    transactionMessage,
+    addressesByAddressLookupTable,
+);
+```
+
+Consider how compressing transaction messages creates more space for instructions. This might enable you to prepare more complex transactions, or to execute the same number of instructions over fewer transactions thereby saving on network fees.
+
+<Callout type="warn">
+    This technique can not be applied to transaction messages having the version `'legacy'`.
+</Callout>
+
+## Signing transaction messages
+
+In order to be executed a transaction message must be signed by all of the private keys belonging to accounts that are required signers of the transaction, and must not exceed the size allowable by the network. You may encounter these types when using functions that send transactions.
+
+- [`FullySignedTransaction`](/api/type-aliases/FullySignedTransaction): A transaction that is signed by all of its required signers.
+- [`TransactionWithinSizeLimit`](/api/type-aliases/TransactionWithinSizeLimit): A transaction that is under or equal to the maximum size limit for transactions on the Solana network.
+- [`SendableTransaction`](/api/type-aliases/SendableTransaction): A union of `FullySignedTransaction` and `TransactionWithinSizeLimit`
+
+Transaction messages whose signers are specified using `TransactionSigner` objects have the ability to self-sign. This is because signers encapsulate both the address of the signing account as well as an implementation of the signing algorithm for the private key associated with that account.
+
+The [`signTransactionMessageWithSigners`](/api/functions/signTransactionMessageWithSigners) method will return a new signed transaction of type `FullySignedTransaction`.
+
+```ts twoslash
+import {
+    TransactionMessage,
+    TransactionMessageWithFeePayer,
+    TransactionMessageWithSigners,
+} from '@solana/kit';
+const transactionMessage = null as unknown as TransactionMessage &
+    TransactionMessageWithFeePayer &
+    TransactionMessageWithSigners;
+// ---cut-before---
+import {
+    SOLANA_ERROR__TRANSACTION__SIGNATURES_MISSING,
+    isSolanaError,
+    signTransactionMessageWithSigners,
+} from '@solana/kit';
+
+try {
+    const fullySignedTransaction = await signTransactionMessageWithSigners(transactionMessage);
+} catch (e) {
+    if (isSolanaError(e, SOLANA_ERROR__TRANSACTION__SIGNATURES_MISSING)) {
+        console.error('Missing signers for the following addresses:', e.context.addresses);
+    } else {
+        throw e;
+    }
+}
+```
+
+<Callout type="warn">
+    This function will throw if the transaction message does not carry a `TransactionSigner`
+    implementation for every required signer. To partially sign a message that you know to carry a
+    strict subset of the required `TransactionSigners`, use the
+    [`partiallySignTransactionMessageWithSigners`](/api/functions/partiallySignTransactionMessageWithSigners)
+    method.
+</Callout>
+
+<Callout type="info">
+    If exactly one of the `TransactionSigners` in the message is a
+    [`TransactionSendingSigner`](/api/type-aliases/TransactionSendingSigner) then you can use the
+    [`signAndSendTransactionMessageWithSigners`](/api/functions/signAndSendTransactionMessageWithSigners)
+    method to sign and send the transaction in a single step.
+</Callout>
+
+Building transaction messages using `TransactionSigners` is the recommended way to create self-signable transaction messages. To sign with a `CryptoKey` directly, you first have to compile the transaction message.
+
+```ts twoslash
+import {
+    TransactionMessage,
+    TransactionMessageWithFeePayer,
+    TransactionMessageWithSigners,
+} from '@solana/kit';
+const transactionMessage = null as unknown as TransactionMessage &
+    TransactionMessageWithFeePayer &
+    TransactionMessageWithSigners;
+// ---cut-before---
+import { compileTransaction } from '@solana/kit';
+
+const transaction = compileTransaction(transactionMessage);
+```
+
+This produces an unsigned transaction. Follow the [instructions for signing transactions with `CryptoKeyPairs`](#signing-transactions) to sign it.
+
+## Signing transactions
+
+Wherever you have a `Transaction` instead of a `TransactionMessage` you can add or replace a signature using the [`signTransaction`](/api/functions/signTransaction) method and one or more `CryptoKeyPairs`.
+
+```ts twoslash
+import { Transaction, TransactionWithLifetime } from '@solana/kit';
+const keyPair = null as unknown as CryptoKeyPair;
+const transaction = null as unknown as Transaction & TransactionWithLifetime;
+// ---cut-before---
+import {
+    SOLANA_ERROR__TRANSACTION__SIGNATURES_MISSING,
+    isSolanaError,
+    signTransaction,
+} from '@solana/kit';
+
+try {
+    const fullySignedTransaction = await signTransaction([keyPair], transaction);
+} catch (e) {
+    if (isSolanaError(e, SOLANA_ERROR__TRANSACTION__SIGNATURES_MISSING)) {
+        console.error('Missing signers for the following addresses:', e.context.addresses);
+    } else {
+        throw e;
+    }
+}
+```
+
+<Callout type="warn">
+    This function will throw if the resultant transaction is missing a signature for one of the
+    transaction's required signers. To partially sign a transaction, use the
+    [`partiallySignTransaction`](/api/functions/partiallySignTransaction) method.
+</Callout>
+
+## Serializing transactions
+
+If you would like to send a transaction to the network manually, you must first serialize it in a particular way. The [`Base64EncodedWireTransaction`](/api/type-aliases/Base64EncodedWireTransaction) represents the wire format of a transaction as a base64-encoded string.
+
+Given a transaction, the [`getBase64EncodedWireTransaction`](/api/functions/getBase64EncodedWireTransaction) method returns the transaction as a string that conforms to the `Base64EncodedWireTransaction` type.
+
+```ts twoslash
+import { Transaction, Rpc, SendTransactionApi } from '@solana/kit';
+const rpc = null as unknown as Rpc<SendTransactionApi>;
+const signedTransaction = null as unknown as Transaction;
+// ---cut-before---
+import { getBase64EncodedWireTransaction, signTransaction } from '@solana/kit';
+
+const serializedTransaction = getBase64EncodedWireTransaction(signedTransaction);
+const signature = await rpc.sendTransaction(serializedTransaction, { encoding: 'base64' }).send();
+```
+
+<Callout type="info">
+    Typically you would not serialize and send transactions to the network manually. See how to use
+    [send-and-confirm helpers](/docs/getting-started/send-transaction) to make sending transactions
+    easier and more reliable.
+</Callout>
+
+## Deserializing transactions
+
+You can fetch the raw bytes of a transaction from the network using an RPC server.
+
+```ts twoslash
+import { createSolanaRpc, getBase64Encoder, Signature } from '@solana/kit';
+const rpc = createSolanaRpc('...');
+// ---cut-before---
+const response = await rpc
+    .getTransaction(
+        '3atZVDiLEjXmddxLbH2AWHtFdXmHRocnA4vNyvkPRcd7WnzCtoVshFCvGtxfGYWs9C6ptucY6Jd84BerDnzQpJEH' as Signature,
+        { encoding: 'base64' },
+    )
+    .send();
+if (!response) {
+    throw new Error('Could not find transaction');
+}
+const {
+    transaction: [base64EncodedTransaction],
+} = response;
+const transactionBytes = getBase64Encoder().encode(base64EncodedTransaction);
+```
+
+Decoding the wire transaction bytes yields a `Transaction` object. This takes the form of a transaction message encoded as a byte array, and a list of signatures of those bytes created by those who must authorize the message and pay for it to be executed on Solana.
+
+```ts twoslash
+import { ReadonlyUint8Array } from '@solana/kit';
+const transactionBytes = new Uint8Array() as ReadonlyUint8Array;
+// ---cut-before---
+import { getTransactionDecoder } from '@solana/kit';
+const transaction = getTransactionDecoder().decode(transactionBytes);
+```
+
+Decoding the network wire format bytes of the message will yield a transaction message in its **compiled** form – a message in a form suitable for execution on the network. Encountering a compiled message in your application is rare, but it's important to know that they exist.
+
+```ts twoslash
+import { Transaction } from '@solana/kit';
+const transaction = null as unknown as Transaction;
+// ---cut-before---
+import { getCompiledTransactionMessageDecoder } from '@solana/kit';
+const compiledTransactionMessage = getCompiledTransactionMessageDecoder().decode(
+    transaction.messageBytes,
+);
+```
+
+Finally, decompiling a compiled message will yield a `TransactionMessage` object. This is the most common form of transaction message that you will encounter when using Kit to build an application.
+
+```ts twoslash
+import { CompiledTransactionMessage, CompiledTransactionMessageWithLifetime } from '@solana/kit';
+const compiledTransactionMessage = null as unknown as CompiledTransactionMessage &
+    CompiledTransactionMessageWithLifetime;
+// ---cut-before---
+import { decompileTransactionMessage } from '@solana/kit';
+const transactionMessage = decompileTransactionMessage(compiledTransactionMessage);
+```
+
+<Callout type="warn">
+    You can not fully reconstruct a source message from a compiled message without extra
+    information. In particular, supporting details about the lifetime constraint and the concrete
+    addresses of accounts sourced from account lookup tables are lost to compilation, but can be
+    supplied in the `config` argument of the `decompileTransactionMessage` or
+    `decompileTransactionMessageFetchingLookupTables` methods.
+</Callout>
