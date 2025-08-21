@@ -1,4 +1,6 @@
 import './global.css';
+
+import InKeepSearchDialog from '@/lib/InKeepSearchDialog';
 import { RootProvider } from 'fumadocs-ui/provider';
 import type { ReactNode } from 'react';
 
@@ -11,18 +13,8 @@ export default function Layout({ children }: { children: ReactNode }) {
             <body className="flex flex-col min-h-screen">
                 <RootProvider
                     search={{
-                        options: {
-                            tags: [
-                                {
-                                    name: 'Documentation',
-                                    value: 'docs',
-                                },
-                                {
-                                    name: 'API',
-                                    value: 'api',
-                                },
-                            ],
-                        },
+                        preload: false,
+                        SearchDialog: InKeepSearchDialog,
                     }}
                 >
                     {children}

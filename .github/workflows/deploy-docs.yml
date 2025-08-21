@@ -55,3 +55,11 @@ jobs:
           vercel pull --token="$VERCEL_TOKEN" --yes --environment=production
           vercel build --token="$VERCEL_TOKEN" --prod
           vercel deploy --token="$VERCEL_TOKEN" --archive=tgz --prebuilt --prod
+
+      - name: Synchronize InKeep Search Index
+        uses: inkeep/pr-commenter-action@84ccc7c74b72f628ec7e2b572e0cb7afd5898594 # v10
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        with:
+          apiKey: ${{secrets.INKEEP_SEARCH_MANAGEMENT_API_KEY}}
+          sourceId: '${{vars.INKEEP_SEARCH_SOURCE_ID}}'

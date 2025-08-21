@@ -10,6 +10,13 @@ Install using the `--ignore-workspace` flag to ensure the dependencies of the do
 pnpm install --ignore-workspace
 ```
 
+## Download necessary environment variables (employees only)
+
+```bash
+pnpm vercel link -p kit-docs -S anza-tech --yes
+pnpm vercel env pull --environment=development
+```
+
 ## Run development server
 
 ```bash
