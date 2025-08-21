@@ -9,6 +9,6 @@
         "pino-pretty": "^13.0.0"
     },
     "devDependencies": {
-        "yoctocolors": "^2.1.1"
+        "yoctocolors": "^2.1.2"
     }
 }
