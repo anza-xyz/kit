@@ -25,6 +25,7 @@
     },
     "devDependencies": {
         "@solana-program/compute-budget": "^0.8.0",
+        "@solana-program/memo": "^0.7.0",
         "@solana-program/system": "^0.7.0",
         "@solana-program/token": "^0.5.1",
         "@solana/compat": "3.0.0-canary-20250811123225",

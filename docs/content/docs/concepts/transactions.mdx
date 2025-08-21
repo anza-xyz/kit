@@ -3,4 +3,280 @@ title: Transactions
 description: Build and compile transaction messages
 ---
 
+## Introduction
+
+To take an action on Solana, whether to place an order, transfer an asset, or more generally to modify data on the blockchain, you need to prepare a transaction and sign to pay for it to be executed on the network. You can use Kit to create, sign, encode, and decode transactions.
+
+## Installation
+
+Transaction utilities are **included within the `@solana/kit` library** but you may also install them using their standalone packages.
+
+To install transaction message builder utilities:
+
+```package-install
+@solana/transaction-messages
+```
+
+To install utilities that let you sign and compile transaction messages into transactions that can be landed on the network:
+
+```package-install
+@solana/transactions
+```
+
+## What is a Transaction?
+
+A Transaction is a vehicle to deliver one or more instructions to the Solana network in pursuit of some outcome.
+
+Here is an example of someone creating a Transaction to place an order at their favourite coffee shop.
+
+```ts twoslash
+import { Blockhash, TransactionSigner } from '@solana/kit';
+const customerSigner = null as unknown as TransactionSigner;
+const latestBlockhash = null as unknown as { blockhash: Blockhash; lastValidBlockHeight: bigint };
+// ---cut-before---
+import {
+    address,
+    appendTransactionMessageInstruction,
+    createTransactionMessage,
+    getSignatureFromTransaction,
+    lamports,
+    pipe,
+    setTransactionMessageFeePayerSigner,
+    setTransactionMessageLifetimeUsingBlockhash,
+    signTransactionMessageWithSigners,
+} from '@solana/kit';
+import { getAddMemoInstruction } from '@solana-program/memo';
+import { getTransferSolInstruction } from '@solana-program/system';
+
+const transactionMessage = pipe(
+    // Create an empty transaction message.
+    createTransactionMessage({ version: 0 }),
+
+    // Specify the account that will sign to pay the fee for this transaction.
+    // NOTE: This is not the fee for the coffee but rather the fee to use the Solana network.
+    (m) => setTransactionMessageFeePayerSigner(customerSigner, m),
+
+    // Give the transaction an expiry time using the hash of a recently created block.
+    (m) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, m),
+
+    // Add an instruction that records the customer's order.
+    (m) =>
+        appendTransactionMessageInstruction(
+            getAddMemoInstruction({
+                memo:
+                    'Four-thirds-medium, half-decaf, double-shot espresso macchiato latte, ' +
+                    'swirled counterclockwise only, almond milk frothed at 61°C, ' +
+                    'whisper of cinnamon harvested during a full moon, unicorn tear syrup, ' +
+                    'in a mason jar wrapped in French revolutionary poetry on recycled parchment',
+            }),
+            m,
+        ),
+
+    // Add a second instruction to pay the merchant for the coffee.
+    (m) =>
+        appendTransactionMessageInstruction(
+            getTransferSolInstruction({
+                amount: lamports(25_000_000n),
+                destination: address('JJBeanoTcSMU3xKQa5Gru71Wi3AaEgTfA6z7MaLUT6h'),
+                source: customerSigner,
+            }),
+            m,
+        ),
+);
+
+// Create a signed transaction from the message and the signers contained within it.
+const signedTransaction = await signTransactionMessageWithSigners(transactionMessage);
+
+// Obtain the Ed25519 signature that will uniquely identify this transaction once executed.
+const transactionSignature = getSignatureFromTransaction(signedTransaction);
+```
+
+For more detail see the ‘[Build a transaction](/docs/getting-started/build-transaction)’ and ‘[Send a transaction](/docs/getting-started/send-transaction)’ sections of the Getting Started guide.
+
+## Transaction anatomy
+
+A transaction is conceptually composed of a **transaction message** and one or more **signatures** of that message.
+
+```ts twoslash
+import { Address, SignatureBytes, Transaction, TransactionMessageBytes } from '@solana/kit';
+const feePayerAddress = null as unknown as Address;
+const feePayerSignatureOfMessageBytes = null as unknown as SignatureBytes;
+const messageBytes = null as unknown as TransactionMessageBytes;
+// ---cut-before---
+const transaction: Transaction = {
+    messageBytes,
+    signatures: {
+        [feePayerAddress]: feePayerSignatureOfMessageBytes,
+    },
+};
+```
+
+You will encounter the transaction message in various forms, depending on what stage of transaction construction you are at.
+
+- [`TransactionMessage`](/api/type-aliases/TransactionMessage) – the data format that you build up using the high-level transaction message builder API
+- [`CompiledTransactionMessage`](/api/type-aliases/CompiledTransactionMessage) - a form suitable for encoding for execution on the network
+- [`TransactionMessageBytes`](/api/type-aliases/TransactionMessageBytes) – a compiled transaction message encoded as a byte array in the format expected by the network
+
+### Transaction messages
+
+As you build up a transaction message, it will acquire new types.
+
+#### `BaseTransactionMessage` [!toc]
+
+Describes a transaction message having a version and zero or more instructions.
+
+```ts twoslash
+import { BaseTransactionMessage } from '@solana/kit';
+// ---cut-before---
+const message: BaseTransactionMessage<0> = {
+    //         ^^^^^^^^^^^^^^^^^^^^^^^^^
+    instructions: [],
+    version: 0,
+};
+```
+
+Use the [`createTransactionMessage`](/api/functions/createTransactionMessage) function to create an empty message like this one.
+
+#### `TransactionMessageWithFeePayer` [!toc]
+
+Describes a transaction message on which it is specified from which address the fee for executing the transaction on the network should be deducted.
+
+{/* prettier-ignore */}
+```ts twoslash
+import { address, BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/kit';
+// ---cut-before---
+const feePayerAddress = address('5H7jJ6zFzY7g3G3Jv8k3h2g4g4k5H7jJ6zFzY7g3G3J');
+const paidMessage: BaseTransactionMessage<0> & TransactionMessageWithFeePayer = {
+    //                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    feePayer: { address: feePayerAddress },
+  //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    instructions: [],
+    version: 0,
+};
+```
+
+Use the [`setTransactionMessageFeePayer`](/api/functions/setTransactionMessageFeePayer) function to create a fee-paid message, given an existing message.
+
+<Callout type="warn">
+    A message may have either this type or
+    [`TransactionMessageWithFeePayerSigner`](/api/type-aliases/TransactionMessageWithFeePayerSigner)
+    but never both.
+</Callout>
+
+#### `TransactionMessageWithFeePayerSigner` [!toc]
+
+Describes a transaction message on which it is specified which [`TransactionSigner`](/api/type-aliases/TransactionSigner) should sign to pay the fee for executing the transaction on the network.
+
+{/* prettier-ignore */}
+```ts twoslash
+import {
+    BaseTransactionMessage,
+    createSignerFromKeyPair,
+    KeyPairSigner,
+    TransactionMessageWithFeePayerSigner,
+} from '@solana/kit';
+const keyPair = null as unknown as CryptoKeyPair;
+// ---cut-before---
+const feePayerSigner = (await createSignerFromKeyPair(keyPair)) as KeyPairSigner;
+const paidMessage: BaseTransactionMessage<0> & TransactionMessageWithFeePayerSigner = {
+    //                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    feePayer: feePayerSigner,
+  //^^^^^^^^^^^^^^^^^^^^^^^^
+    instructions: [],
+    version: 0,
+};
+```
+
+Use the [`setTransactionMessageFeePayerSigner`](/api/functions/setTransactionMessageFeePayerSigner) function to create a fee-paid message, given an existing message.
+
+<Callout type="warn">
+    A message may have either this type or
+    [`TransactionMessageWithFeePayer`](/api/type-aliases/TransactionMessageWithFeePayer) but never
+    both.
+</Callout>
+
+#### `TransactionMessageWithBlockhashLifetime`
+
+Describes a transaction message whose lifetime is determined by the age of a blockhash observed on the network. Transactions are generally considered valid until the blockhash that specifies their lifetime reaches a certain age.
+
+{/* prettier-ignore */}
+```ts twoslash
+import {
+    blockhash,
+    BaseTransactionMessage,
+    TransactionMessageWithBlockhashLifetime,
+} from '@solana/kit';
+// ---cut-before---
+const messageWithLifetime: BaseTransactionMessage<0> & TransactionMessageWithBlockhashLifetime = {
+    //                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    instructions: [],
+    lifetimeConstraint: {
+  //^^^^^^^^^^^^^^^^^^^^^
+        blockhash: blockhash('5H7jJ6zFzY7g3G3Jv8k3h2g4g4k5H7jJ6zFzY7g3G3J'),
+  //    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        lastValidBlockHeight: 361583999n,
+  //    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    },
+  //^^
+    version: 0,
+};
+```
+
+Use the [`setTransactionMessageLifetimeUsingBlockhash`](/api/functions/setTransactionMessageLifetimeUsingBlockhash) function to create a message whose lifetime is specified by the age of a blockhash, given an existing message.
+
+<Callout type="warn">
+    A message may only have one type of lifetime. See the members of the
+    [`TransactionMessageWithLifetime`](/api/type-aliases/TransactionMessageWithLifetime) union.
+</Callout>
+
+#### `TransactionMessageWithDurableNonceLifetime`
+
+Describes a transaction message whose lifetime is determined by a value recorded in a nonce account on the network. Tying the validity of a transaction to such a value is useful in cases where signing the transaction can take a long time (eg. when there are multiple parties who must be coordinated to sign the transaction). Transactions of this type are considered valid until the value in the nonce account is changed.
+
+```ts twoslash
+import {
+    BaseTransactionMessage,
+    createTransactionMessage,
+    Nonce,
+    address,
+    setTransactionMessageLifetimeUsingDurableNonce,
+    TransactionMessageWithDurableNonceLifetime,
+} from '@solana/kit';
+const {
+    instructions: [advanceNonceAccountInstruction],
+} = setTransactionMessageLifetimeUsingDurableNonce(
+    {
+        nonce: '4HnZ1pWvTvGVQ62ZDdQfnGBMm2ycyzdNhhHkJcJZURNF' as Nonce,
+        nonceAccountAddress: address('nonceAyxUx6JUabAxYdKdJ5QHbNNmKw8dCGuGCyRrFN'),
+        nonceAuthorityAddress: address('authQpbFrybkUAsqAKhJZ3NPgj5QG1i1FMhog6bDjx4'),
+    },
+    createTransactionMessage({ version: 0 }),
+);
+// ---cut-before---
+const messageWithLifetime: BaseTransactionMessage<0> & TransactionMessageWithDurableNonceLifetime =
+    //                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    {
+        instructions: [
+            // The first instruction in a message with a nonce lifetime
+            // must be an instruction that updates the value in the nonce account
+            advanceNonceAccountInstruction,
+            // ^^^^
+        ],
+        lifetimeConstraint: {
+            nonce: '4HnZ1pWvTvGVQ62ZDdQfnGBMm2ycyzdNhhHkJcJZURNF' as Nonce,
+        },
+        //^^
+        version: 0,
+    };
+```
+
+Use the [`setTransactionMessageLifetimeUsingDurableNonce`](/api/functions/setTransactionMessageLifetimeUsingDurableNonce) function to create a message whose lifetime is specified by a durable nonce, given an existing message.
+
+<Callout type="warn">
+    A message may only have one type of lifetime. See the members of the
+    [`TransactionMessageWithLifetime`](/api/type-aliases/TransactionMessageWithLifetime) union.
+</Callout>
+
+## Sending Transactions
+
 TODO
