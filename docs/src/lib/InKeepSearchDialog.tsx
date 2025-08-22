@@ -46,14 +46,11 @@ export default function InKeepSearchDialog(props: SharedProps) {
             },
             transformSource(source) {
                 const detectedTabs: string[] = [];
-                if (source.contentType === 'site') {
-                    if (source.url.startsWith('https://solana.stackexchange.com/')) {
-                        detectedTabs.push('Q & A');
-                    } else if (source.url.startsWith('https://github.com/')) {
-                        detectedTabs.push('GitHub');
-                    }
-                }
-                if (source.contentType === 'documentation') {
+                if (source.url.startsWith('https://solana.stackexchange.com/')) {
+                    detectedTabs.push('Q & A');
+                } else if (source.url.startsWith('https://github.com/')) {
+                    detectedTabs.push('GitHub');
+                } else if (source.contentType === 'documentation') {
                     detectedTabs.push(source.breadcrumbs[0] === 'API' ? 'API' : 'Docs');
                 }
                 return {
