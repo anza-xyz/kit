@@ -59,10 +59,10 @@ export default function InKeepSearchDialog(props: SharedProps) {
                 return {
                     ...source,
                     tabs: [...(source.tabs ?? []), ...detectedTabs],
-                    // Strip absolute URLs from the docs themselves from the search results in
                     url:
-                        // dev mode (because InKeep will not consider docs articles as being
-                        // first-party from the perspective of `localhost`)
+                        // Strip absolute URLs from the search results because InKeep will not
+                        // consider doc site articles as being first-party from the perspective of
+                        // the main domain in all environments (eg. development, staging).
                         [/^https:\/\/[\w-]+\.vercel\.app\//, /^https:\/\/solanakit.com\//].reduce(
                             (url, regex) => url.replace(regex, '/'),
                             source.url,
