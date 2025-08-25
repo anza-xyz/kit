@@ -67,20 +67,25 @@ type WidenTransactionMessageInstructions<TTransactionMessage extends Transaction
  * @example
  * ```ts
  * import { address } from '@solana/addresses';
- * import { compressTransactionMessageUsingAddressLookupTables } from '@solana/transaction-messages';
+ * import {
+ *     AddressesByLookupTableAddress,
+ *     compressTransactionMessageUsingAddressLookupTables,
+ * } from '@solana/transaction-messages';
+ * import { fetchAddressLookupTable } from '@solana-program/address-lookup-table';
  *
  * const lookupTableAddress = address('4QwSwNriKPrz8DLW4ju5uxC2TN5cksJx6tPUPj7DGLAW');
- * const accountAddress = address('5n2ADjHPsqB4EVUNEX48xRqtnmuLu5XSHDwkJRR98qpM');
- * const lookupTableAddresses: AddressesByLookupTableAddress = {
- *     [lookupTableAddress]: [accountAddress],
+ * const {
+ *     data: { addresses },
+ * } = await fetchAddressLookupTable(rpc, lookupTableAddress);
+ * const addressesByAddressLookupTable: AddressesByLookupTableAddress = {
+ *     [lookupTableAddress]: addresses,
  * };
  *
  * const compressedTransactionMessage = compressTransactionMessageUsingAddressLookupTables(
  *     transactionMessage,
- *     lookupTableAddresses,
+ *     addressesByAddressLookupTable,
  * );
  * ```
- *
  */
 export function compressTransactionMessageUsingAddressLookupTables<
     TTransactionMessage extends TransactionMessageNotLegacy = TransactionMessageNotLegacy,

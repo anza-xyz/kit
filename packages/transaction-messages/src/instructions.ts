@@ -39,14 +39,15 @@ type PrependTransactionMessageInstructions<
  * @example
  * ```ts
  * import { address } from '@solana/addresses';
+ * import { getUtf8Encoder } from '@solana/codecs-strings';
  * import { appendTransactionMessageInstruction } from '@solana/transaction-messages';
  *
- * const memoTransaction = appendTransactionMessageInstruction(
+ * const memoTransactionMessage = appendTransactionMessageInstruction(
  *     {
- *         data: new TextEncoder().encode('Hello world!'),
+ *         data: getUtf8Encoder().encode('Hello world!'),
  *         programAddress: address('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr'),
  *     },
- *     tx,
+ *     transactionMessage,
  * );
  * ```
  */

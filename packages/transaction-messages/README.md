@@ -119,30 +119,20 @@ const txMessageWithBlockhashLifetime = setTransactionMessageLifetimeUsingBlockha
 Given a nonce, the account where the value of the nonce is stored, and the address of the account authorized to consume that nonce, this method will return a new transaction having the same type as the one supplied plus the `TransactionMessageWithDurableNonceLifetime` type. In particular, this method _prepends_ an instruction to the transaction message designed to consume (or &lsquo;advance&rsquo;) the nonce in the same transaction whose lifetime is defined by it.
 
 ```ts
-import { setTransactionMessageLifetimeUsingDurableNonce } from '@solana/transactions';
-
-const NONCE_VALUE_OFFSET =
-    4 + // version(u32)
-    4 + // state(u32)
-    32; // nonce authority(pubkey)
-// Then comes the nonce value.
+import { Nonce, setTransactionMessageLifetimeUsingDurableNonce } from '@solana/transaction-messages';
+import { fetchNonce } from '@solana-program/system';
 
 const nonceAccountAddress = address('EGtMh4yvXswwHhwVhyPxGrVV2TkLTgUqGodbATEPvojZ');
 const nonceAuthorityAddress = address('4KD1Rdrd89NG7XbzW3xsX9Aqnx2EExJvExiNme6g9iAT');
-const { value: nonceAccount } = await rpc
-    .getAccountInfo(nonceAccountAddress, {
-        dataSlice: { length: 32, offset: NONCE_VALUE_OFFSET },
-        encoding: 'base58',
-    })
-    .send();
-const nonce =
-    // This works because we asked for the exact slice of data representing the nonce
-    // value, and furthermore asked for it in `base58` encoding.
-    nonceAccount!.data[0] as unknown as Nonce;
+
+const {
+    data: { blockhash },
+} = await fetchNonce(rpc, nonceAccountAddress);
+const nonce = blockhash as string as Nonce;
 
 const durableNonceTransactionMessage = setTransactionMessageLifetimeUsingDurableNonce(
     { nonce, nonceAccountAddress, nonceAuthorityAddress },
-    tx,
+    transactionMessage,
 );
 ```
 
@@ -201,14 +191,15 @@ Given an instruction, this method will return a new transaction message with tha
 
 ```ts
 import { address } from '@solana/addresses';
+import { getUtf8Encoder } from '@solana/codecs-strings';
 import { appendTransactionMessageInstruction } from '@solana/transaction-messages';
 
-const memoTransaction = appendTransactionMessageInstruction(
+const memoTransactionMessage = appendTransactionMessageInstruction(
     {
-        data: new TextEncoder().encode('Hello world!'),
+        data: getUtf8Encoder().encode('Hello world!'),
         programAddress: address('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr'),
     },
-    tx,
+    transactionMessage,
 );
 ```
 
@@ -240,16 +231,22 @@ This means that these accounts will take up less space in the compiled transacti
 
 ```ts
 import { address } from '@solana/addresses';
-import { compressTransactionMessageUsingAddressLookupTables } from '@solana/transaction-messages';
+import {
+    AddressesByLookupTableAddressm,
+    compressTransactionMessageUsingAddressLookupTables,
+} from '@solana/transaction-messages';
+import { fetchAddressLookupTable } from '@solana-program/address-lookup-table';
 
 const lookupTableAddress = address('4QwSwNriKPrz8DLW4ju5uxC2TN5cksJx6tPUPj7DGLAW');
-const accountAddress = address('5n2ADjHPsqB4EVUNEX48xRqtnmuLu5XSHDwkJRR98qpM');
-const lookupTableAddresses: AddressesByLookupTableAddress = {
-    [lookupTableAddress]: [accountAddress],
+const {
+    data: { addresses },
+} = await fetchAddressLookupTable(rpc, lookupTableAddress);
+const addressesByAddressLookupTable: AddressesByLookupTableAddress = {
+    [lookupTableAddress]: addresses,
 };
 
 const compressedTransactionMessage = compressTransactionMessageUsingAddressLookupTables(
     transactionMessage,
-    lookupTableAddresses,
+    addressesByAddressLookupTable,
 );
 ```

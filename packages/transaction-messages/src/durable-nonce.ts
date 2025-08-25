@@ -160,26 +160,16 @@ function isAdvanceNonceAccountInstructionForNonce<
  *
  * @example
  * ```ts
- * import { setTransactionMessageLifetimeUsingDurableNonce } from '@solana/transactions';
- *
- * const NONCE_VALUE_OFFSET =
- *     4 + // version(u32)
- *     4 + // state(u32)
- *     32; // nonce authority(pubkey)
- * // Then comes the nonce value.
+ * import { Nonce, setTransactionMessageLifetimeUsingDurableNonce } from '@solana/transaction-messages';
+ * import { fetchNonce } from '@solana-program/system';
  *
  * const nonceAccountAddress = address('EGtMh4yvXswwHhwVhyPxGrVV2TkLTgUqGodbATEPvojZ');
  * const nonceAuthorityAddress = address('4KD1Rdrd89NG7XbzW3xsX9Aqnx2EExJvExiNme6g9iAT');
- * const { value: nonceAccount } = await rpc
- *     .getAccountInfo(nonceAccountAddress, {
- *         dataSlice: { length: 32, offset: NONCE_VALUE_OFFSET },
- *         encoding: 'base58',
- *     })
- *     .send();
- * const nonce =
- *     // This works because we asked for the exact slice of data representing the nonce
- *     // value, and furthermore asked for it in `base58` encoding.
- *     nonceAccount!.data[0] as unknown as Nonce;
+ *
+ * const {
+ *     data: { blockhash },
+ * } = await fetchNonce(rpc, nonceAccountAddress);
+ * const nonce = blockhash as string as Nonce;
  *
  * const durableNonceTransactionMessage = setTransactionMessageLifetimeUsingDurableNonce(
  *     { nonce, nonceAccountAddress, nonceAuthorityAddress },
