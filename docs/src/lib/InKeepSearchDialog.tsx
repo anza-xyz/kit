@@ -48,14 +48,12 @@ export default function InKeepSearchDialog(props: SharedProps) {
                 const detectedTabs: string[] = [];
                 if (source.url.startsWith('https://solana.stackexchange.com/')) {
                     detectedTabs.push('Q & A');
-                } else if (source.url.startsWith('https://github.com/')) {
-                    detectedTabs.push('GitHub');
                 } else if (source.contentType === 'documentation') {
                     detectedTabs.push(source.breadcrumbs[0] === 'API' ? 'API' : 'Docs');
                 }
                 return {
                     ...source,
-                    tabs: [...(source.tabs ?? []), ...detectedTabs],
+                    tabs: Array.from(new Set([...(source.tabs ?? []), ...detectedTabs])),
                     url:
                         // Strip absolute URLs from the search results because InKeep will not
                         // consider doc site articles as being first-party from the perspective of
