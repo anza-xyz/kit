@@ -50,6 +50,19 @@ export default function InKeepSearchDialog(props: SharedProps) {
                     detectedTabs.push('Q & A');
                 } else if (source.contentType === 'documentation') {
                     detectedTabs.push(source.breadcrumbs[0] === 'API' ? 'API' : 'Docs');
+                } else if (source.breadcrumbs.length === 0 && source.tabs?.includes('GitHub')) {
+                    // InKeep does not yet produce breadcrumbs for GitHub results, so we synthesize
+                    // them here.
+                    const match = source.url.match(/\/(issues|pull)\/(\d+)/);
+                    if (match) {
+                        const [
+                            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                            _,
+                            model,
+                            number,
+                        ] = match;
+                        source.breadcrumbs = [model === 'pull' ? 'Pull Request' : 'Issue', number];
+                    }
                 }
                 return {
                     ...source,
