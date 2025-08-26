@@ -522,8 +522,8 @@ importers:
   packages/errors:
     dependencies:
       chalk:
-        specifier: ^5.4.1
-        version: 5.4.1
+        specifier: ^5.6.0
+        version: 5.6.0
       commander:
         specifier: ^14.0.0
         version: 14.0.0
@@ -11701,7 +11701,7 @@ snapshots:
 
   '@wallet-standard/errors@0.1.1':
     dependencies:
-      chalk: 5.4.1
+      chalk: 5.6.0
       commander: 13.1.0
 
   '@wallet-standard/experimental-features@0.2.0':

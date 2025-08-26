@@ -73,7 +73,7 @@
         "maintained node versions"
     ],
     "dependencies": {
-        "chalk": "^5.4.1",
+        "chalk": "^5.6.0",
         "commander": "^14.0.0"
     },
     "peerDependencies": {
