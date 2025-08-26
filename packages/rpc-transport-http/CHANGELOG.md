@@ -1,5 +1,14 @@
 # @solana/rpc-transport-http
 
+## 3.0.0
+
+### Patch Changes
+
+- Updated dependencies [[`6a183bf`](https://github.com/anza-xyz/kit/commit/6a183bf9e9d672e2d42f3aecc589a9e54d01cb1a), [`23d2fa1`](https://github.com/anza-xyz/kit/commit/23d2fa14cbd5197473eca94a1ac6c5abf221b052), [`9feba85`](https://github.com/anza-xyz/kit/commit/9feba8557b64dd3199cd88af2c17b7ccd5d18fec), [`01f159a`](https://github.com/anza-xyz/kit/commit/01f159a436d7a29479aa1a1877c9b4c77da1170f), [`81c83b1`](https://github.com/anza-xyz/kit/commit/81c83b12dd0e145bf7d08182e01824f2f14e5ee5)]:
+    - @solana/errors@3.0.0
+    - @solana/rpc-spec-types@3.0.0
+    - @solana/rpc-spec@3.0.0
+
 ## 2.3.0
 
 ### Patch Changes
