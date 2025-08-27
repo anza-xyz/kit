@@ -111,7 +111,7 @@ The [`TransactionMessageWithFeePayer`](/api/interfaces/TransactionMessageWithFee
 
 #### Using a signer [!toc] [#building-transaction-messages-fee-payer-using-a-signer]
 
-Given a [`TransactionSigner`](/api/type-aliases/TransactionSigner), this method will return a new transaction message having the same type as the one supplied plus the [`TransactionMessageWithFeePayer`](/api/interfaces/TransactionMessageWithFeePayer) type. Additionally, the resulting message will have the capability to self-sign using the [`signTransactionMessageWithSigners`](/api/interfaces/signTransactionMessageWithSigners) function.
+Given a [`TransactionSigner`](/api/type-aliases/TransactionSigner), this method will return a new transaction message having the same type as the one supplied plus the [`TransactionMessageWithFeePayer`](/api/interfaces/TransactionMessageWithFeePayer) type. Additionally, the resulting message will have the capability to self-sign using the [`signTransactionMessageWithSigners`](/api/functions/signTransactionMessageWithSigners) function.
 
 ```ts twoslash
 import { TransactionMessage } from '@solana/kit';
