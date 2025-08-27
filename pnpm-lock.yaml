@@ -29,8 +29,8 @@ importers:
         specifier: ^2.29.6
         version: 2.29.6(@types/node@24.1.0)
       '@eslint/js':
-        specifier: ^9.31.0
-        version: 9.31.0
+        specifier: ^9.34.0
+        version: 9.34.0
       '@eslint/json':
         specifier: ^0.13.1
         version: 0.13.1
@@ -42,7 +42,7 @@ importers:
         version: link:packages/build-scripts
       '@solana/eslint-config-solana':
         specifier: ^4.0.0
-        version: 4.0.0(1b98674da48ef67799e1712696b51e41)
+        version: 4.0.0(05ae62809dac85534195ea27b2970a31)
       '@solana/prettier-config-solana':
         specifier: 0.0.5
         version: 0.0.5(prettier@3.6.2)
@@ -2728,12 +2728,12 @@ packages:
     resolution: {integrity: sha512-gtF186CXhIl1p4pJNGZw8Yc6RlshoePRvE0X91oPGb3vZ8pM3qOS9W9NGPat9LziaBV7XrJWGylNQXkGcnM3IQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@eslint/js@9.31.0':
-    resolution: {integrity: sha512-LOm5OVt7D4qiKCqoiPbA7LWmI+tbw1VbTUowBcUMgQSuM6poJufkFkYDcQpo5KfgD39TnNySV26QjOh7VFpSyw==}
-    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
-
   '@eslint/js@9.33.0':
     resolution: {integrity: sha512-5K1/mKhWaMfreBGJTwval43JJmkip0RmM+3+IuqupeSKNC/Th2Kc7ucaq5ovTSra/OOKB9c58CGSz3QMVbWt0A==}
+    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+
+  '@eslint/js@9.34.0':
+    resolution: {integrity: sha512-EoyvqQnBNsV1CWaEJ559rxXL4c8V92gxirbawSmVUOWXlsRxxQXl6LmCpdUblgxgSkDIqKnhzba2SjRTI/A5Rw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
   '@eslint/json@0.13.1':
@@ -9482,9 +9482,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@eslint/js@9.31.0': {}
-
   '@eslint/js@9.33.0': {}
+
+  '@eslint/js@9.34.0': {}
 
   '@eslint/json@0.13.1':
     dependencies:
@@ -11083,9 +11083,9 @@ snapshots:
       commander: 14.0.0
       typescript: 5.8.3
 
-  '@solana/eslint-config-solana@4.0.0(1b98674da48ef67799e1712696b51e41)':
+  '@solana/eslint-config-solana@4.0.0(05ae62809dac85534195ea27b2970a31)':
     dependencies:
-      '@eslint/js': 9.31.0
+      '@eslint/js': 9.34.0
       '@types/eslint__js': 8.42.3
       eslint: 9.33.0(jiti@1.21.7)
       eslint-plugin-jest: 28.11.0(@typescript-eslint/eslint-plugin@8.37.0(@typescript-eslint/parser@8.40.0(eslint@9.33.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.33.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.33.0(jiti@1.21.7))(jest@30.0.0-alpha.6(@types/node@24.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.1.0)(typescript@5.8.3)))(typescript@5.8.3)
