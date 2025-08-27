@@ -74,9 +74,9 @@ export function load(app) {
     // - strip the .mdx extension
     app.renderer.on(td.MarkdownPageEvent.END, page => {
         if (!page.contents) return;
-        page.contents = page.contents.replace(/\(((?:[^\/\)]+\/)*[^\/\)]+)\.mdx\)/gm, (_, path) => {
+        page.contents = page.contents.replace(/\(((?:[^\/\)]+\/)*[^\/\)]+)\.mdx([^)]*)?\)/gm, (_, path, suffix) => {
             const rootRelativeUrl = resolve('/api', dirname(page.url), path);
-            return `(${rootRelativeUrl})`;
+            return `(${rootRelativeUrl}${suffix ?? ''})`;
         });
     });
 }
