@@ -3,7 +3,7 @@
     "private": true,
     "scripts": {
         "build": "turbo run --concurrency=${TURBO_CONCURRENCY:-95.84%} build",
-        "changeset:publish": "turbo publish-packages --concurrency=${TURBO_CONCURRENCY:-95.84%} && echo 'published=true' >> $GITHUB_OUTPUT",
+        "changeset:publish": "turbo publish-packages --concurrency=${TURBO_CONCURRENCY:-95.84%}",
         "compile": "turbo run --concurrency=${TURBO_CONCURRENCY:-95.84%} compile:js compile:typedefs",
         "lint": "turbo run --concurrency=${TURBO_CONCURRENCY:-95.84%} test:lint",
         "style:fix": "turbo  run --concurrency=${TURBO_CONCURRENCY:-95.84%} style:fix && pnpm prettier --log-level warn --ignore-unknown --write '{.,!packages}/*'",
