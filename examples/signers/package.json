@@ -17,7 +17,7 @@
         "@solana/kit": "workspace:*"
     },
     "devDependencies": {
-        "start-server-and-test": "^2.0.12",
+        "start-server-and-test": "^2.0.13",
         "tsx": "^4.20.3"
     }
 }
