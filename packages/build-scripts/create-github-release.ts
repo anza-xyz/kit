@@ -1,4 +1,6 @@
 #!/usr/bin/env -S pnpm dlx tsx --
+
+// @ts-check
 import { execSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -247,5 +249,5 @@ const createReleaseParams: RestEndpointMethodTypes['repos']['createRelease']['pa
 if (config['dry-run']) {
     console.log(createReleaseParams);
 } else {
-    await api.rest.repos.createRelease();
+    await api.rest.repos.createRelease(createReleaseParams);
 }
