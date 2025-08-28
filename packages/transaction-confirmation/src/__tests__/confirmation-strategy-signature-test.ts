@@ -111,6 +111,20 @@ describe('createSignatureConfirmationPromiseFactory', () => {
         });
         await expect(signatureConfirmationPromise).resolves.toBeUndefined();
     });
+    it('fatals when the signature status returned by the one-shot query is an error', async () => {
+        expect.assertions(1);
+        getSignatureStatusesMock.mockResolvedValue({
+            value: [{ err: 'o no' }],
+        });
+        const signatureConfirmationPromise = getSignatureConfirmationPromise({
+            abortSignal: new AbortController().signal,
+            commitment: 'finalized',
+            signature: 'abc' as Signature,
+        });
+        await expect(signatureConfirmationPromise).rejects.toThrow(
+            new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__UNKNOWN, { errorName: 'o no' }),
+        );
+    });
     it('resolves when a signature status notification is returned by the signature subscription', async () => {
         expect.assertions(1);
         signatureNotificationGenerator.mockImplementation(async function* () {
