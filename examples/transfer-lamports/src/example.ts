@@ -133,9 +133,8 @@ const transactionMessage = pipe(
              * to create a transfer instruction for the system program.
              */
             (log.info(
-                '[step 1] Creating an instruction to transfer Lamports from',
+                '[step 1] Creating an instruction to transfer Lamports from %s to %s',
                 SOURCE_ACCOUNT_SIGNER.address,
-                'to',
                 DESTINATION_ACCOUNT_ADDRESS,
             ),
             getTransferSolInstruction({
@@ -195,7 +194,11 @@ try {
         const errorDetailMessage = isSystemError(e.cause, transactionMessage)
             ? getSystemErrorMessage(e.cause.context.code)
             : e.cause?.message;
-        log.error(preflightErrorContext, '%s: %s', preflightErrorMessage, errorDetailMessage);
+        if (errorDetailMessage !== undefined) {
+            log.error('%O %s: %s', preflightErrorContext, preflightErrorMessage, errorDetailMessage);
+        } else {
+            log.error('%O %s', preflightErrorContext, preflightErrorMessage);
+        }
     } else {
         throw e;
     }
