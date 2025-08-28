@@ -141,7 +141,6 @@ interface Account {
     lamports: BigInt
     ownerProgram: Account
     space: BigInt
-    rentEpoch: BigInt
 }
 ```
 
@@ -154,7 +153,6 @@ const source = `
         account(address: $address) {
             executable
             lamports
-            rentEpoch
         }
     }
 `;
@@ -171,7 +169,6 @@ data: {
     account: {
         executable: false,
         lamports: 10290815n,
-        rentEpoch: 0n,
     },
 }
 ```
@@ -317,7 +314,6 @@ const source = `
         programAccounts(programAddress: $address) {
             executable
             lamports
-            rentEpoch
         }
     }
 `;
@@ -335,12 +331,10 @@ data: {
         {
             executable: false,
             lamports: 10290815n,
-            rentEpoch: 0n,
         },
         {
             executable: false,
             lamports: 10290815n,
-            rentEpoch: 0n,
         },
         /* .. */
     ]

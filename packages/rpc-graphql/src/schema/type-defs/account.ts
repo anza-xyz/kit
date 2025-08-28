@@ -251,7 +251,6 @@ export const accountTypeDefs = /* GraphQL */ `
         lamports: Lamports
         ownerProgram: Account
         space: BigInt
-        rentEpoch: Epoch
     }
 
     """
@@ -264,7 +263,6 @@ export const accountTypeDefs = /* GraphQL */ `
         lamports: Lamports
         ownerProgram: Account
         space: BigInt
-        rentEpoch: Epoch
     }
 
     type NonceAccountFeeCalculator {
@@ -280,7 +278,6 @@ export const accountTypeDefs = /* GraphQL */ `
         lamports: Lamports
         ownerProgram: Account
         space: BigInt
-        rentEpoch: Epoch
         authority: Account
         blockhash: Hash
         feeCalculator: NonceAccountFeeCalculator
@@ -296,7 +293,6 @@ export const accountTypeDefs = /* GraphQL */ `
         lamports: Lamports
         ownerProgram: Account
         space: BigInt
-        rentEpoch: Epoch
         addresses: [Address]
         authority: Account
         deactivationSlot: Slot
@@ -314,7 +310,6 @@ export const accountTypeDefs = /* GraphQL */ `
         lamports: Lamports
         ownerProgram: Account
         space: BigInt
-        rentEpoch: Epoch
         decimals: Int
         extensions: [SplTokenExtension]
         freezeAuthority: Account
@@ -333,7 +328,6 @@ export const accountTypeDefs = /* GraphQL */ `
         lamports: Lamports
         ownerProgram: Account
         space: BigInt
-        rentEpoch: Epoch
         extensions: [SplTokenExtension]
         isNative: Boolean
         mint: Account
@@ -377,7 +371,6 @@ export const accountTypeDefs = /* GraphQL */ `
         lamports: Lamports
         ownerProgram: Account
         space: BigInt
-        rentEpoch: Epoch
         meta: StakeAccountDataMeta
         stake: StakeAccountDataStake
     }
@@ -409,7 +402,6 @@ export const accountTypeDefs = /* GraphQL */ `
         lamports: Lamports
         ownerProgram: Account
         space: BigInt
-        rentEpoch: Epoch
         authorizedVoters: [VoteAccountDataAuthorizedVoter]
         authorizedWithdrawer: Account
         commission: Int
@@ -431,7 +423,6 @@ export const accountTypeDefs = /* GraphQL */ `
         lamports: Lamports
         ownerProgram: Account
         space: BigInt
-        rentEpoch: Epoch
         epoch: Epoch
         epochStartTimestamp: BigInt
         leaderScheduleEpoch: Epoch
@@ -449,7 +440,6 @@ export const accountTypeDefs = /* GraphQL */ `
         lamports: Lamports
         ownerProgram: Account
         space: BigInt
-        rentEpoch: Epoch
         distributedRewards: Lamports
         distributionCompleteBlockHeight: BigInt
         totalRewards: Lamports
@@ -465,7 +455,6 @@ export const accountTypeDefs = /* GraphQL */ `
         lamports: Lamports
         ownerProgram: Account
         space: BigInt
-        rentEpoch: Epoch
         firstNormalEpoch: Epoch
         firstNormalSlot: Slot
         leaderScheduleSlotOffset: BigInt
@@ -487,7 +476,6 @@ export const accountTypeDefs = /* GraphQL */ `
         lamports: Lamports
         ownerProgram: Account
         space: BigInt
-        rentEpoch: Epoch
         lastRestartSlot: Slot
     }
 
@@ -505,7 +493,6 @@ export const accountTypeDefs = /* GraphQL */ `
         lamports: Lamports
         ownerProgram: Account
         space: BigInt
-        rentEpoch: Epoch
         entries: [SysvarRecentBlockhashesEntry]
     }
 
@@ -519,7 +506,6 @@ export const accountTypeDefs = /* GraphQL */ `
         lamports: Lamports
         ownerProgram: Account
         space: BigInt
-        rentEpoch: Epoch
         burnPercent: Int
         exemptionThreshold: Int
         lamportsPerByteYear: Lamports
@@ -540,7 +526,6 @@ export const accountTypeDefs = /* GraphQL */ `
         lamports: Lamports
         ownerProgram: Account
         space: BigInt
-        rentEpoch: Epoch
         entries: [SlotHashEntry]
     }
 
@@ -554,7 +539,6 @@ export const accountTypeDefs = /* GraphQL */ `
         lamports: Lamports
         ownerProgram: Account
         space: BigInt
-        rentEpoch: Epoch
         bits: String
         nextSlot: Slot
     }
@@ -575,7 +559,6 @@ export const accountTypeDefs = /* GraphQL */ `
         lamports: Lamports
         ownerProgram: Account
         space: BigInt
-        rentEpoch: Epoch
         entries: [StakeHistoryEntry]
     }
 `;

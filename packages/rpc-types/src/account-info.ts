@@ -15,8 +15,6 @@ export type AccountInfoBase = Readonly<{
     lamports: Lamports;
     /** Address of the program this account has been assigned to */
     owner: Address;
-    /** The epoch at which this account will next owe rent */
-    rentEpoch: bigint;
     /** The size of the account data in bytes (excluding the 128 bytes of header) */
     space: bigint;
 }>;

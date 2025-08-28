@@ -88,7 +88,6 @@ describe('account', () => {
                     account(address: $address, commitment: $commitment) {
                         executable
                         lamports
-                        rentEpoch
                         space
                     }
                 }
@@ -99,7 +98,6 @@ describe('account', () => {
                     account: {
                         executable: false,
                         lamports: 10290815n,
-                        rentEpoch: 0n,
                         space: 165n,
                     },
                 },
@@ -121,7 +119,6 @@ describe('account', () => {
                             address
                             executable
                             lamports
-                            rentEpoch
                             space
                         }
                     }
@@ -135,7 +132,6 @@ describe('account', () => {
                             address: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
                             executable: true,
                             lamports: expect.any(BigInt),
-                            rentEpoch: expect.any(BigInt),
                             space: 133352n,
                         },
                     },
@@ -160,7 +156,6 @@ describe('account', () => {
                                 address
                                 executable
                                 lamports
-                                rentEpoch
                                 space
                             }
                         }
@@ -177,7 +172,6 @@ describe('account', () => {
                                 address: 'BPFLoader2111111111111111111111111111111111',
                                 executable: true,
                                 lamports: expect.any(BigInt),
-                                rentEpoch: expect.any(BigInt),
                                 space: 25n,
                             },
                         },
@@ -510,7 +504,6 @@ describe('account', () => {
                         ownerProgram {
                             address
                         }
-                        rentEpoch
                         space
                         ... on NonceAccount {
                             authority {
@@ -540,7 +533,6 @@ describe('account', () => {
                         ownerProgram: {
                             address: '11111111111111111111111111111111',
                         },
-                        rentEpoch: expect.any(BigInt),
                         space: 80n,
                     },
                 },
@@ -560,7 +552,6 @@ describe('account', () => {
                         ownerProgram {
                             address
                         }
-                        rentEpoch
                         space
                         ... on LookupTableAccount {
                             addresses
@@ -590,7 +581,6 @@ describe('account', () => {
                         ownerProgram: {
                             address: 'AddressLookupTab1e1111111111111111111111111',
                         },
-                        rentEpoch: expect.any(BigInt),
                         space: 1304n,
                     },
                 },
@@ -610,7 +600,6 @@ describe('account', () => {
                         ownerProgram {
                             address
                         }
-                        rentEpoch
                         space
                         ... on MintAccount {
                             decimals
@@ -639,7 +628,6 @@ describe('account', () => {
                         ownerProgram: {
                             address: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
                         },
-                        rentEpoch: expect.any(BigInt),
                         space: 82n,
                         supply: expect.any(BigInt),
                     },
@@ -660,7 +648,6 @@ describe('account', () => {
                         ownerProgram {
                             address
                         }
-                        rentEpoch
                         space
                         ... on TokenAccount {
                             isNative
@@ -697,7 +684,6 @@ describe('account', () => {
                         ownerProgram: {
                             address: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
                         },
-                        rentEpoch: expect.any(BigInt),
                         space: 165n,
                         state: expect.any(String),
                         tokenAmount: {
@@ -723,7 +709,6 @@ describe('account', () => {
                         ownerProgram {
                             address
                         }
-                        rentEpoch
                         space
                         ... on StakeAccount {
                             meta {
@@ -786,7 +771,6 @@ describe('account', () => {
                         ownerProgram: {
                             address: 'Stake11111111111111111111111111111111111111',
                         },
-                        rentEpoch: expect.any(BigInt),
                         space: 200n,
                         stake: {
                             creditsObserved: expect.any(BigInt),
@@ -817,7 +801,6 @@ describe('account', () => {
                         ownerProgram {
                             address
                         }
-                        rentEpoch
                         space
                         ... on VoteAccount {
                             authorizedVoters {
@@ -888,7 +871,6 @@ describe('account', () => {
                             address: 'Vote111111111111111111111111111111111111111',
                         },
                         priorVoters: expect.any(Array),
-                        rentEpoch: expect.any(BigInt),
                         rootSlot: expect.any(BigInt),
                         space: 3762n,
                         votes: expect.arrayContaining([
@@ -915,7 +897,6 @@ describe('account', () => {
                             ownerProgram {
                                 address
                             }
-                            rentEpoch
                             space
                             ... on SysvarClockAccount {
                                 epoch
@@ -939,7 +920,6 @@ describe('account', () => {
                             ownerProgram: {
                                 address: 'Sysvar1111111111111111111111111111111111111',
                             },
-                            rentEpoch: expect.any(BigInt),
                             slot: expect.any(BigInt),
                             space: expect.any(BigInt),
                             unixTimestamp: expect.any(BigInt),
@@ -962,7 +942,6 @@ describe('account', () => {
                             ownerProgram {
                                 address
                             }
-                            rentEpoch
                             space
                             ... on SysvarEpochScheduleAccount {
                                 firstNormalEpoch
@@ -986,7 +965,6 @@ describe('account', () => {
                             ownerProgram: {
                                 address: 'Sysvar1111111111111111111111111111111111111',
                             },
-                            rentEpoch: expect.any(BigInt),
                             slotsPerEpoch: expect.any(BigInt),
                             space: expect.any(BigInt),
                             warmup: expect.any(Boolean),
@@ -1007,7 +985,6 @@ describe('account', () => {
                             ownerProgram {
                                 address
                             }
-                            rentEpoch
                             space
                             ... on SysvarLastRestartSlotAccount {
                                 lastRestartSlot
@@ -1025,7 +1002,6 @@ describe('account', () => {
                             ownerProgram: {
                                 address: 'Sysvar1111111111111111111111111111111111111',
                             },
-                            rentEpoch: expect.any(BigInt),
                             space: expect.any(BigInt),
                         },
                     },
@@ -1044,7 +1020,6 @@ describe('account', () => {
                             ownerProgram {
                                 address
                             }
-                            rentEpoch
                             space
                             ... on SysvarRecentBlockhashesAccount {
                                 entries {
@@ -1074,7 +1049,6 @@ describe('account', () => {
                             ownerProgram: {
                                 address: 'Sysvar1111111111111111111111111111111111111',
                             },
-                            rentEpoch: expect.any(BigInt),
                             space: expect.any(BigInt),
                         },
                     },
@@ -1093,7 +1067,6 @@ describe('account', () => {
                             ownerProgram {
                                 address
                             }
-                            rentEpoch
                             space
                             ... on SysvarRentAccount {
                                 burnPercent
@@ -1115,7 +1088,6 @@ describe('account', () => {
                             ownerProgram: {
                                 address: 'Sysvar1111111111111111111111111111111111111',
                             },
-                            rentEpoch: expect.any(BigInt),
                             space: expect.any(BigInt),
                         },
                     },
@@ -1134,7 +1106,6 @@ describe('account', () => {
                             ownerProgram {
                                 address
                             }
-                            rentEpoch
                             space
                             ... on SysvarSlotHashesAccount {
                                 entries {
@@ -1160,7 +1131,6 @@ describe('account', () => {
                             ownerProgram: {
                                 address: 'Sysvar1111111111111111111111111111111111111',
                             },
-                            rentEpoch: expect.any(BigInt),
                             space: expect.any(BigInt),
                         },
                     },
@@ -1179,7 +1149,6 @@ describe('account', () => {
                             ownerProgram {
                                 address
                             }
-                            rentEpoch
                             space
                             ... on SysvarSlotHistoryAccount {
                                 bits
@@ -1199,7 +1168,6 @@ describe('account', () => {
                             ownerProgram: {
                                 address: 'Sysvar1111111111111111111111111111111111111',
                             },
-                            rentEpoch: expect.any(BigInt),
                             space: expect.any(BigInt),
                         },
                     },
@@ -1218,7 +1186,6 @@ describe('account', () => {
                             ownerProgram {
                                 address
                             }
-                            rentEpoch
                             space
                             ... on SysvarStakeHistoryAccount {
                                 entries {
@@ -1240,7 +1207,6 @@ describe('account', () => {
                             ownerProgram: {
                                 address: 'Sysvar1111111111111111111111111111111111111',
                             },
-                            rentEpoch: expect.any(BigInt),
                             space: expect.any(BigInt),
                         },
                     },
