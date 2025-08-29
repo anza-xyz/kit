@@ -1,5 +1,32 @@
 # @solana/web3.js
 
+## 4.0.0
+
+### Patch Changes
+
+- [#521](https://github.com/anza-xyz/kit/pull/521) [`98bde94`](https://github.com/anza-xyz/kit/commit/98bde94bc4cd5f5f7e646c774bc50fef21112dd1) Thanks [@tao-stones](https://github.com/tao-stones)! - Add loadedAccountsDataSize to simulateTransaction response
+
+- Updated dependencies [[`ce7f91c`](https://github.com/anza-xyz/kit/commit/ce7f91c522118bd929f69f581d2d48e90d18c99a), [`cfc1d92`](https://github.com/anza-xyz/kit/commit/cfc1d9249e55c79d27ac840806f198a5c5895e56)]:
+    - @solana/rpc-types@4.0.0
+    - @solana/transaction-confirmation@4.0.0
+    - @solana/rpc-subscriptions@4.0.0
+    - @solana/accounts@4.0.0
+    - @solana/rpc@4.0.0
+    - @solana/rpc-parsed-types@4.0.0
+    - @solana/signers@4.0.0
+    - @solana/sysvars@4.0.0
+    - @solana/transaction-messages@4.0.0
+    - @solana/transactions@4.0.0
+    - @solana/instruction-plans@4.0.0
+    - @solana/programs@4.0.0
+    - @solana/addresses@4.0.0
+    - @solana/codecs@4.0.0
+    - @solana/errors@4.0.0
+    - @solana/functional@4.0.0
+    - @solana/instructions@4.0.0
+    - @solana/keys@4.0.0
+    - @solana/rpc-spec-types@4.0.0
+
 ## 3.0.0
 
 ### Major Changes

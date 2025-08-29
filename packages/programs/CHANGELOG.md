@@ -1,5 +1,13 @@
 # @solana/programs
 
+## 4.0.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/addresses@4.0.0
+    - @solana/errors@4.0.0
+
 ## 3.0.0
 
 ### Patch Changes
