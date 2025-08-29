@@ -1,4 +1,6 @@
 import { ThemedImage } from '@/lib/ThemedImage';
+import DarkFooter from '@/public/footer/dark-footer.svg';
+import LightFooter from '@/public/footer/light-footer.svg';
 import { Link } from 'fumadocs-core/framework';
 
 export default function FooterSection() {
@@ -19,11 +21,13 @@ export default function FooterSection() {
                 </div>
             </div>
             <ThemedImage
-                width={2560}
-                height={1440}
-                src={theme => `/footer/${theme}-footer.svg`}
+                alt="Dune illustrations"
                 className="w-full h-full max-h-200 object-cover object-top"
-                alt="Dune illustrations."
+                sizes="100vw"
+                src={{
+                    dark: DarkFooter,
+                    light: LightFooter,
+                }}
             />
         </section>
     );

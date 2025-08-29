@@ -1,4 +1,6 @@
 import { ThemedImage } from '@/lib/ThemedImage';
+import DarkMascotInquisitiveImage from '@/public/mascots/dark-mascot-inquisitive.svg';
+import LightMascotInquisitiveImage from '@/public/mascots/light-mascot-inquisitive.svg';
 import { Link } from 'fumadocs-core/framework';
 
 export default function CtaSection() {
@@ -7,10 +9,12 @@ export default function CtaSection() {
             <div className="relative z-10 flex flex-col md:flex-row items-center gap-12 md:gap-8 w-full max-w-home-container mx-auto px-4 pt-20 pb-12 md:pb-0">
                 <div className="flex-1 flex items-center justify-center">
                     <ThemedImage
-                        width={200}
-                        height={200}
-                        src={theme => `/mascots/${theme}-mascot-inquisitive.svg`}
                         alt="Fox standing inquisitively looking back."
+                        className="aspect-square w-48"
+                        src={{
+                            dark: DarkMascotInquisitiveImage,
+                            light: LightMascotInquisitiveImage,
+                        }}
                     />
                 </div>
                 <div className="flex-1 max-w-lg">
