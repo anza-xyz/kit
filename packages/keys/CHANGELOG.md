@@ -1,5 +1,16 @@
 # @solana/keys
 
+## 3.0.1
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/assertions@3.0.1
+    - @solana/codecs-core@3.0.1
+    - @solana/codecs-strings@3.0.1
+    - @solana/errors@3.0.1
+    - @solana/nominal-types@3.0.1
+
 ## 3.0.0
 
 ### Patch Changes

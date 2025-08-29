@@ -1,5 +1,23 @@
 # @solana/transactions
 
+## 3.0.1
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/addresses@3.0.1
+    - @solana/codecs-core@3.0.1
+    - @solana/codecs-data-structures@3.0.1
+    - @solana/codecs-numbers@3.0.1
+    - @solana/codecs-strings@3.0.1
+    - @solana/errors@3.0.1
+    - @solana/functional@3.0.1
+    - @solana/instructions@3.0.1
+    - @solana/keys@3.0.1
+    - @solana/nominal-types@3.0.1
+    - @solana/rpc-types@3.0.1
+    - @solana/transaction-messages@3.0.1
+
 ## 3.0.0
 
 ### Major Changes

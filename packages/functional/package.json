@@ -1,6 +1,6 @@
 {
     "name": "@solana/functional",
-    "version": "3.0.0",
+    "version": "3.0.1",
     "description": "Functional JavaScript helpers",
     "exports": {
         "edge-light": {

@@ -1,5 +1,17 @@
 # @solana/react
 
+## 3.0.1
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/addresses@3.0.1
+    - @solana/errors@3.0.1
+    - @solana/keys@3.0.1
+    - @solana/promises@3.0.1
+    - @solana/signers@3.0.1
+    - @solana/transactions@3.0.1
+
 ## 3.0.0
 
 ### Patch Changes
