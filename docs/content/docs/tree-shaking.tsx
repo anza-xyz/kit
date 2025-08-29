@@ -3,7 +3,7 @@ import { ImageZoom } from 'fumadocs-ui/components/image-zoom';
 export default function TreeShaking() {
     return (
         <figure>
-            <ImageZoom>
+            <ImageZoom alt="Tree-shaking illustration; The left side shows a bunch of imports from Web3.js all being bundled despite only a couple being used. The right side shows an equivalent set of imports for Kit but only the used functions are bundled">
                 <svg
                     className="w-full h-auto cursor-zoom-in"
                     width="1203"

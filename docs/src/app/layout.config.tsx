@@ -44,7 +44,7 @@ export const baseOptions: BaseLayoutProps = {
 export const mdxComponents: MDXComponents = {
     ...defaultMdxComponents,
     ...overridenMdxComponents,
-    img: props => <ImageZoom {...props} />,
+    img: props => <ImageZoom {...props} alt={props.alt ?? ''} />,
     Popup,
     PopupContent,
     PopupTrigger,
