@@ -1,4 +1,5 @@
 import '@solana/test-matchers/toBeFrozenObject';
+import '@solana/test-matchers/toEqualArrayBuffer';
 
 import {
     exportKeyPolyfill,
@@ -90,7 +91,7 @@ describe('exportKeyPolyfill', () => {
             expect.assertions(1);
             jest.spyOn(globalThis.crypto, 'getRandomValues').mockReturnValue(MOCK_SECRET_KEY_BYTES);
             const { publicKey } = generateKeyPolyfill(/* extractable */ false, ['sign', 'verify']);
-            await expect(exportKeyPolyfill('raw', publicKey)).resolves.toEqual(MOCK_PUBLIC_KEY_BYTES);
+            await expect(exportKeyPolyfill('raw', publicKey)).resolves.toEqualArrayBuffer(MOCK_PUBLIC_KEY_BYTES.buffer);
         });
     });
     describe('when format is `pkcs8`', () => {
@@ -154,7 +155,7 @@ describe('exportKeyPolyfill', () => {
                         172, 53, 120, 108, 127, 191, 103, 8,
                         160, 170, 183, 186, 246, 1, 227, 158,
             ]);
-            await expect(exportKeyPolyfill('pkcs8', privateKey)).resolves.toEqual(expectedBytes);
+            await expect(exportKeyPolyfill('pkcs8', privateKey)).resolves.toEqualArrayBuffer(expectedBytes.buffer);
         });
     });
     describe('when format is `jwk`', () => {
@@ -276,7 +277,7 @@ describe('importKeyPolyfill', () => {
         it('imported key can be exported to return the same bytes', async () => {
             expect.assertions(1);
             const key = importKeyPolyfill('raw', MOCK_PUBLIC_KEY_BYTES, /*extractable */ true, ['verify']);
-            await expect(exportKeyPolyfill('raw', key)).resolves.toStrictEqual(MOCK_PUBLIC_KEY_BYTES);
+            await expect(exportKeyPolyfill('raw', key)).resolves.toEqualArrayBuffer(MOCK_PUBLIC_KEY_BYTES.buffer);
         });
         it('can import a public key that was exported from a native generated key', async () => {
             expect.assertions(1);
@@ -348,13 +349,13 @@ describe('importKeyPolyfill', () => {
         it('imported key can be used to sign data', async () => {
             expect.assertions(1);
             const key = importKeyPolyfill('pkcs8', mockSecretKeyWithHeader, false, ['sign']);
-            await expect(signPolyfill(key, MOCK_DATA)).resolves.toStrictEqual(MOCK_DATA_SIGNATURE);
+            await expect(signPolyfill(key, MOCK_DATA)).resolves.toEqualArrayBuffer(MOCK_DATA_SIGNATURE.buffer);
         });
         // we don't have export pkcs8 keys yet
         it('imported key can be exported to return the same bytes', async () => {
             expect.assertions(1);
             const key = importKeyPolyfill('pkcs8', mockSecretKeyWithHeader, /*extractable */ true, ['sign']);
-            await expect(exportKeyPolyfill('pkcs8', key)).resolves.toStrictEqual(mockSecretKeyWithHeader);
+            await expect(exportKeyPolyfill('pkcs8', key)).resolves.toEqualArrayBuffer(mockSecretKeyWithHeader.buffer);
         });
         it('can import a private key that was exported from a native generated key', async () => {
             expect.assertions(1);
@@ -496,7 +497,7 @@ describe('importKeyPolyfill', () => {
                 false,
                 ['sign'],
             );
-            await expect(signPolyfill(key, MOCK_DATA)).resolves.toStrictEqual(MOCK_DATA_SIGNATURE);
+            await expect(signPolyfill(key, MOCK_DATA)).resolves.toEqualArrayBuffer(MOCK_DATA_SIGNATURE.buffer);
         });
         it('can import and re-export the same public key', async () => {
             expect.assertions(1);
@@ -845,11 +846,11 @@ describe('signPolyfill', () => {
     });
     it('produces the expected signature given a private key', async () => {
         expect.assertions(1);
-        await expect(signPolyfill(privateKey, MOCK_DATA)).resolves.toEqual(MOCK_DATA_SIGNATURE);
+        await expect(signPolyfill(privateKey, MOCK_DATA)).resolves.toEqualArrayBuffer(MOCK_DATA_SIGNATURE.buffer);
     });
     it('produces signatures 64 bytes in length', async () => {
         expect.assertions(1);
-        await expect(signPolyfill(privateKey, MOCK_DATA)).resolves.toHaveLength(64);
+        await expect(signPolyfill(privateKey, MOCK_DATA)).resolves.toHaveProperty('byteLength', 64);
     });
 });
 
