@@ -161,14 +161,17 @@ export async function exportKeyPolyfill(format: KeyFormat, key: CryptoKey): Prom
                 throw new DOMException(`Unable to export a raw Ed25519 ${key.type} key`, 'InvalidAccessError');
             }
             const publicKeyBytes = await getPublicKeyBytes(key);
-            return publicKeyBytes;
+            return publicKeyBytes.buffer as ArrayBuffer;
         }
         case 'pkcs8': {
             if (key.type !== 'private') {
                 throw new DOMException(`Unable to export a pkcs8 Ed25519 ${key.type} key`, 'InvalidAccessError');
             }
             const secretKeyBytes = getSecretKeyBytes_INTERNAL_ONLY_DO_NOT_EXPORT(key);
-            return new Uint8Array([...ED25519_PKCS8_HEADER, ...secretKeyBytes]);
+            const result = new Uint8Array(ED25519_PKCS8_HEADER.length + secretKeyBytes.length);
+            result.set(ED25519_PKCS8_HEADER, 0);
+            result.set(secretKeyBytes, ED25519_PKCS8_HEADER.length);
+            return result.buffer;
         }
         case 'jwk': {
             const publicKeyBytes = await getPublicKeyBytes(key);
@@ -216,7 +219,7 @@ export async function signPolyfill(key: CryptoKey, data: BufferSource): Promise<
     const privateKeyBytes = getSecretKeyBytes_INTERNAL_ONLY_DO_NOT_EXPORT(key);
     const payload = bufferSourceToUint8Array(data);
     const signature = await signAsync(payload, privateKeyBytes);
-    return signature;
+    return signature.buffer as ArrayBuffer;
 }
 
 export async function verifyPolyfill(key: CryptoKey, signature: BufferSource, data: BufferSource): Promise<boolean> {
