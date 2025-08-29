@@ -430,8 +430,8 @@ importers:
         version: 5.8.2
     devDependencies:
       tinybench:
-        specifier: ^4.0.1
-        version: 4.0.1
+        specifier: ^5.0.1
+        version: 5.0.1
 
   packages/codecs-data-structures:
     dependencies:
@@ -486,8 +486,8 @@ importers:
         specifier: workspace:*
         version: link:../text-encoding-impl
       tinybench:
-        specifier: ^4.0.1
-        version: 4.0.1
+        specifier: ^5.0.1
+        version: 5.0.1
 
   packages/compat:
     dependencies:
@@ -549,8 +549,8 @@ importers:
   packages/fetch-impl:
     devDependencies:
       tinybench:
-        specifier: ^4.0.1
-        version: 4.0.1
+        specifier: ^5.0.1
+        version: 5.0.1
       undici:
         specifier: ^7.15.0
         version: 7.15.0
@@ -630,8 +630,8 @@ importers:
         version: 5.8.2
     devDependencies:
       tinybench:
-        specifier: ^4.0.1
-        version: 4.0.1
+        specifier: ^5.0.1
+        version: 5.0.1
 
   packages/kit:
     dependencies:
@@ -1124,8 +1124,8 @@ importers:
         version: 7.15.0
     devDependencies:
       tinybench:
-        specifier: ^4.0.1
-        version: 4.0.1
+        specifier: ^5.0.1
+        version: 5.0.1
       undici:
         specifier: ^7.15.0
         version: 7.15.0
@@ -4847,8 +4847,8 @@ packages:
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
     hasBin: true
 
-  browserslist@4.25.3:
-    resolution: {integrity: sha512-cDGv1kkDI4/0e5yON9yM5G/0A5u8sf5TnmdX5C9qHzI9PPu++sQ9zjm1k9NiOrf3riY4OkK0zSGqfvJyJsgCBQ==}
+  browserslist@4.25.4:
+    resolution: {integrity: sha512-4jYpcjabC606xJ3kw2QwGEZKX0Aw7sgQdZCvIK9dhVSPh76BKo+C+btT1RRofH7B+8iNpEbgGNVWiLki5q93yg==}
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
     hasBin: true
 
@@ -7289,9 +7289,9 @@ packages:
   tiny-invariant@1.3.3:
     resolution: {integrity: sha512-+FbBPE1o9QAYvviau/qC5SE3caw21q3xkvWKBtja5vgqOWIHHJ3ioaq1VPfn/Szqctz2bU/oYeKd9/z5BL+PVg==}
 
-  tinybench@4.0.1:
-    resolution: {integrity: sha512-Nb1srn7dvzkVx0J5h1vq8f48e3TIcbrS7e/UfAI/cDSef/n8yLh4zsAEsFkfpw6auTY+ZaspEvam/xs8nMnotQ==}
-    engines: {node: '>=18.0.0'}
+  tinybench@5.0.1:
+    resolution: {integrity: sha512-aNVgWQZY4veCZLQJRftDA1X9OoLUIjDWNfC90nledkX7Lx205IpSEFYnsu4slyofoPGpJ+NIQj+BNSt4U5edMg==}
+    engines: {node: '>=20.0.0'}
 
   tinyexec@0.3.2:
     resolution: {integrity: sha512-KQQR9yN7R5+OSwaK0XQoj22pwHoTlgYqmUscPYoknOoWCWfj/5/ABTMRi69FrKU5ffPVh5QcFikpWJI/P1ocHA==}
@@ -7929,7 +7929,7 @@ snapshots:
     dependencies:
       '@babel/compat-data': 7.28.0
       '@babel/helper-validator-option': 7.27.1
-      browserslist: 4.25.3
+      browserslist: 4.25.4
       lru-cache: 5.1.1
       semver: 6.3.1
     optional: true
@@ -11808,12 +11808,12 @@ snapshots:
       node-releases: 2.0.19
       update-browserslist-db: 1.1.3(browserslist@4.24.4)
 
-  browserslist@4.25.3:
+  browserslist@4.25.4:
     dependencies:
       caniuse-lite: 1.0.30001737
       electron-to-chromium: 1.5.211
       node-releases: 2.0.19
-      update-browserslist-db: 1.1.3(browserslist@4.25.3)
+      update-browserslist-db: 1.1.3(browserslist@4.25.4)
     optional: true
 
   bs58@4.0.1:
@@ -11998,7 +11998,7 @@ snapshots:
 
   core-js-compat@3.45.1:
     dependencies:
-      browserslist: 4.25.3
+      browserslist: 4.25.4
     optional: true
 
   cosmiconfig@7.1.0:
@@ -14807,7 +14807,7 @@ snapshots:
 
   tiny-invariant@1.3.3: {}
 
-  tinybench@4.0.1: {}
+  tinybench@5.0.1: {}
 
   tinyexec@0.3.2: {}
 
@@ -15066,9 +15066,9 @@ snapshots:
       escalade: 3.2.0
       picocolors: 1.1.1
 
-  update-browserslist-db@1.1.3(browserslist@4.25.3):
+  update-browserslist-db@1.1.3(browserslist@4.25.4):
     dependencies:
-      browserslist: 4.25.3
+      browserslist: 4.25.4
       escalade: 3.2.0
       picocolors: 1.1.1
     optional: true
