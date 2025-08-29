@@ -203,7 +203,7 @@ export async function exportKeyPolyfill(format: KeyFormat, key: CryptoKey): Prom
  * associated with the secret.
  */
 export function generateKeyPolyfill(extractable: boolean, keyUsages: readonly KeyUsage[]): CryptoKeyPair {
-    const privateKeyBytes = utils.randomPrivateKey();
+    const privateKeyBytes = utils.randomSecretKey();
     const keyPair = createKeyPairFromBytes(privateKeyBytes, extractable, keyUsages);
     return keyPair;
 }
