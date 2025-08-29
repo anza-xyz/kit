@@ -1,5 +1,22 @@
 # @solana/rpc-api
 
+## 4.0.0
+
+### Patch Changes
+
+- Updated dependencies [[`ce7f91c`](https://github.com/anza-xyz/kit/commit/ce7f91c522118bd929f69f581d2d48e90d18c99a)]:
+    - @solana/rpc-types@4.0.0
+    - @solana/rpc-parsed-types@4.0.0
+    - @solana/rpc-transformers@4.0.0
+    - @solana/transaction-messages@4.0.0
+    - @solana/transactions@4.0.0
+    - @solana/addresses@4.0.0
+    - @solana/codecs-core@4.0.0
+    - @solana/codecs-strings@4.0.0
+    - @solana/errors@4.0.0
+    - @solana/keys@4.0.0
+    - @solana/rpc-spec@4.0.0
+
 ## 3.0.0
 
 ### Patch Changes
