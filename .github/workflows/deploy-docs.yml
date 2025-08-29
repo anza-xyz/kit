@@ -46,6 +46,17 @@ jobs:
       - name: Install Vercel CLI
         run: pnpm install -g vercel
 
+      - name: Cache Next.js build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ./docs/.next/cache
+          # Generate a new cache whenever packages or source files change.
+          key: ${{ runner.os }}-docs-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ hashFiles('**/*.mjs', '**/*.[jt]s', '**/*.[jt]sx', '**/*.mdx') }}
+          # If source files changed but packages didn't, rebuild from a prior cache.
+          restore-keys: |
+            ${{ runner.os }}-docs-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-
+
       - name: Deploy to Vercel
         shell: bash
         env:
