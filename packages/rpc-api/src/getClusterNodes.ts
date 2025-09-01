@@ -35,6 +35,8 @@ type ClusterNode = Readonly<{
     tvu: string | null;
     /** The software version of the node, or `null` if the version information is not available */
     version: string | null;
+    /** The Client Id of the node, or `null` if the Client Id is not available */
+    clientId: number | null;
 }>;
 
 type GetClusterNodesApiResponse = readonly ClusterNode[];
