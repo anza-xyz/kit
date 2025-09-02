@@ -58,7 +58,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          PUBLISH_TAG: canary-3.x
+          PUBLISH_TAG: canary-3x
 
       - name: Stop Test Validator
         if: always() && steps.start-test-validator.outcome == 'success'
