@@ -18,6 +18,18 @@ type ReleaseNotesTextContent = string;
 
 const ORG_NAME = 'anza-xyz';
 const REPO_NAME = 'kit';
+const SEMVER_REGEX = /^0*(\d+)\.0*(\d+)\.0*(\d+)$/;
+
+function cmpVersions(a: string, b: string): number {
+    const stripZeroesRegex = /(\\.0+)+$/;
+    const semverPartsA = a.replace(stripZeroesRegex, '').split('.');
+    const semverPartsB = b.replace(stripZeroesRegex, '').split('.');
+    for (let ii = 0; ii < Math.min(semverPartsA.length, semverPartsB.length); ii++) {
+        const diff = parseInt(semverPartsA[ii], 10) - parseInt(semverPartsB[ii], 10);
+        if (diff) return diff;
+    }
+    return semverPartsA.length - semverPartsB.length;
+}
 
 function isDefined<T>(value: T | null | undefined): value is NonNullable<T> {
     return value !== null && value !== undefined;
@@ -39,24 +51,11 @@ const api = new Octokit({
     auth: GITHUB_TOKEN,
 });
 
-const [
-    packages,
-    {
-        data: { tag_name: priorReleaseVersion },
-    },
-] = await Promise.all([
-    /**
-     * Get a list of all the packages, their paths, and their `package.json` files.
-     */
-    (async () => {
-        const { packages } = await getPackages(import.meta.dirname);
-        return packages.filter(p => p.relativeDir.startsWith('packages/'));
-    })(),
-    /**
-     * Get the version of the prior release
-     */
-    api.repos.getLatestRelease({ owner: ORG_NAME, repo: REPO_NAME }),
-]);
+/**
+ * Get a list of all the packages, their paths, and their `package.json` files.
+ */
+const { packages: allPackages } = await getPackages(import.meta.dirname);
+const packages = allPackages.filter(p => p.relativeDir.startsWith('packages/'));
 
 /**
  * Compute the version that they all share. Fail unless they all share the same version.
@@ -78,9 +77,36 @@ if (!version) {
     throw new Error('Found no packages');
 }
 const tag = `v${version}`;
-if (!config['dry-run'] && tag === priorReleaseVersion) {
+const [_, major] = version.match(SEMVER_REGEX)!;
+
+/**
+ * Find the release just before the current one, if any.
+ */
+const releases = await api.paginate<RestEndpointMethodTypes['repos']['listReleases']['response']['data'][number]>(
+    api.repos.listReleases.endpoint.merge({
+        owner: ORG_NAME,
+        repo: REPO_NAME,
+    }),
+);
+if (!config['dry-run'] && releases.some(({ tag_name: releaseTagName }) => releaseTagName === tag)) {
     throw new Error(`There is already a latest release on GitHub for ${tag}`);
 }
+let priorRelease: RestEndpointMethodTypes['repos']['listReleases']['response']['data'][number] | undefined;
+releases.forEach(release => {
+    const candidateVersion = release.tag_name.replace(/^v/, '');
+    const [_, candidateMajor] = candidateVersion.match(SEMVER_REGEX)!;
+    if (parseInt(candidateMajor, 10) > parseInt(major, 10)) {
+        return;
+    }
+    if (cmpVersions(candidateVersion, version) > 0) {
+        throw new Error(
+            `Current version (${version}) is older than version of published release of the same major (${candidateVersion})`,
+        );
+    }
+    if (!priorRelease || cmpVersions(priorRelease.tag_name.replace(/^v/, ''), candidateVersion) <= 0) {
+        priorRelease = release;
+    }
+});
 
 /**
  * Read in all of their changelogs and grab the entries related to that version.
@@ -216,7 +242,7 @@ const releaseDateString =
     String(releaseDate.getDate()).padStart(2, '0');
 const aggregateReleaseNotes =
     `# @solana/${REPO_NAME}\n\n` +
-    `## [${tag}](https://github.com/${ORG_NAME}/${REPO_NAME}/compare/${priorReleaseVersion}...${tag}) (${releaseDateString})\n\n` +
+    `## [${tag}](https://github.com/${ORG_NAME}/${REPO_NAME}/compare/${priorRelease?.tag_name}...${tag}) (${releaseDateString})\n\n` +
     Object.keys(releaseNotesByLevel)
         .toSorted((a, b) =>
             a === b ? 0 : a === 'Major' ? -1 : b === 'Major' ? 1 : a === 'Minor' ? -1 : b === 'Minor' ? 1 : 0,
@@ -238,7 +264,11 @@ const aggregateReleaseNotes =
  */
 const createReleaseParams: RestEndpointMethodTypes['repos']['createRelease']['parameters'] = {
     body: aggregateReleaseNotes,
-    make_latest: 'true',
+    make_latest: releases.every(
+        release => cmpVersions(release.tag_name.replace(/^v/, ''), version.replace(/^v/, '')) <= 0,
+    )
+        ? 'true'
+        : 'false',
     name: tag,
     owner: ORG_NAME,
     repo: REPO_NAME,
