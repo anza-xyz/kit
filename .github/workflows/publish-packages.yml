@@ -52,22 +52,19 @@ jobs:
         id: changesets
         uses: changesets/action@06245a4e0a36c064a573d4150030f5ec548e4fcc # v1.4.10
         with:
-          # Some tasks slow down considerably on GitHub Actions runners when concurrency is high
-          publish: |
-            pnpm turbo publish-packages --concurrency=1 && \
-            # Changesets will only create the tags/release if it sees "New tag:" in the publish command's output
-            # See https://github.com/changesets/action/blob/06245a4e0a36c064a573d4150030f5ec548e4fcc/src/run.ts#L176
-            echo 'New tag:'
+          publish: pnpm changeset:publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          PUBLISH_TAG: latest
+          PUBLISH_TAG: 2.x
+          # Some tasks slow down considerably on GitHub Actions runners when concurrency is high
+          TURBO_CONCURRENCY: 1
 
-      - name: Push Git Tag
+      - name: Create GitHub Release
         if: steps.changesets.outputs.published == 'true'
         run: |
-          VERSION_TAG=v$(cd packages/kit/ && pnpm pkg get version | grep -o '"\([^"]\)\+"$' | tr -d \")
-          if ! git ls-remote --tags | grep -q "$VERSION_TAG"; then git tag $VERSION_TAG && git push --tags; fi
+          cd ./packages/build-scripts/
+          ./create-github-release.ts
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
