@@ -1,5 +1,19 @@
 # @solana/signers
 
+## 3.0.2
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/addresses@3.0.2
+    - @solana/codecs-core@3.0.2
+    - @solana/errors@3.0.2
+    - @solana/instructions@3.0.2
+    - @solana/keys@3.0.2
+    - @solana/nominal-types@3.0.2
+    - @solana/transaction-messages@3.0.2
+    - @solana/transactions@3.0.2
+
 ## 3.0.1
 
 ### Patch Changes

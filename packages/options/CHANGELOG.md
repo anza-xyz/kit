@@ -1,5 +1,16 @@
 # @solana/options
 
+## 3.0.2
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/codecs-core@3.0.2
+    - @solana/codecs-data-structures@3.0.2
+    - @solana/codecs-numbers@3.0.2
+    - @solana/codecs-strings@3.0.2
+    - @solana/errors@3.0.2
+
 ## 3.0.1
 
 ### Patch Changes

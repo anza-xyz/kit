@@ -1,5 +1,32 @@
 # @solana/web3.js
 
+## 3.0.2
+
+### Patch Changes
+
+- [#821](https://github.com/anza-xyz/kit/pull/821) [`6e095fb`](https://github.com/anza-xyz/kit/commit/6e095fbbfe66e18d5ae891ffa3f30be21fcf3401) Thanks [@github-actions](https://github.com/apps/github-actions)! - Add loadedAccountsDataSize to simulateTransaction response
+
+- Updated dependencies []:
+    - @solana/accounts@3.0.2
+    - @solana/addresses@3.0.2
+    - @solana/codecs@3.0.2
+    - @solana/errors@3.0.2
+    - @solana/functional@3.0.2
+    - @solana/instruction-plans@3.0.2
+    - @solana/instructions@3.0.2
+    - @solana/keys@3.0.2
+    - @solana/programs@3.0.2
+    - @solana/rpc@3.0.2
+    - @solana/rpc-parsed-types@3.0.2
+    - @solana/rpc-spec-types@3.0.2
+    - @solana/rpc-subscriptions@3.0.2
+    - @solana/rpc-types@3.0.2
+    - @solana/signers@3.0.2
+    - @solana/sysvars@3.0.2
+    - @solana/transaction-confirmation@3.0.2
+    - @solana/transaction-messages@3.0.2
+    - @solana/transactions@3.0.2
+
 ## 3.0.1
 
 ### Patch Changes

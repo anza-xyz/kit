@@ -1,6 +1,6 @@
 {
     "name": "@solana/options",
-    "version": "3.0.1",
+    "version": "3.0.2",
     "description": "Managing and serializing Rust-like Option types in JavaScript",
     "exports": {
         "edge-light": {

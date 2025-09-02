@@ -1,5 +1,21 @@
 # @solana/transaction-confirmation
 
+## 3.0.2
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/addresses@3.0.2
+    - @solana/codecs-strings@3.0.2
+    - @solana/errors@3.0.2
+    - @solana/keys@3.0.2
+    - @solana/promises@3.0.2
+    - @solana/rpc@3.0.2
+    - @solana/rpc-subscriptions@3.0.2
+    - @solana/rpc-types@3.0.2
+    - @solana/transaction-messages@3.0.2
+    - @solana/transactions@3.0.2
+
 ## 3.0.1
 
 ### Patch Changes
