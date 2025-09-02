@@ -1,5 +1,17 @@
 # @solana/accounts
 
+## 3.0.2
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/addresses@3.0.2
+    - @solana/codecs-core@3.0.2
+    - @solana/codecs-strings@3.0.2
+    - @solana/errors@3.0.2
+    - @solana/rpc-spec@3.0.2
+    - @solana/rpc-types@3.0.2
+
 ## 3.0.1
 
 ### Patch Changes

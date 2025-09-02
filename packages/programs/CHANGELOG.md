@@ -1,5 +1,13 @@
 # @solana/programs
 
+## 3.0.2
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/addresses@3.0.2
+    - @solana/errors@3.0.2
+
 ## 3.0.1
 
 ### Patch Changes
