@@ -264,7 +264,11 @@ const aggregateReleaseNotes =
  */
 const createReleaseParams: RestEndpointMethodTypes['repos']['createRelease']['parameters'] = {
     body: aggregateReleaseNotes,
-    make_latest: 'false',
+    make_latest: releases.every(
+        release => cmpVersions(release.tag_name.replace(/^v/, ''), version.replace(/^v/, '')) <= 0,
+    )
+        ? 'true'
+        : 'false',
     name: tag,
     owner: ORG_NAME,
     repo: REPO_NAME,
