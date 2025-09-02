@@ -84,6 +84,7 @@ export interface RpcSimulateTransactionResult {
               )[];
           }[]
         | null;
+    loadedAccountsDataSize: number | null;
     logs: string[] | null;
     replacementBlockhash: string | null;
     returnData: {
