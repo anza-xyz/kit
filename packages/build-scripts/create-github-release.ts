@@ -4,7 +4,6 @@
 import { execSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { config } from 'node:process';
 
 import { RestEndpointMethodTypes } from '@octokit/rest';
 import minimist from 'minimist';
