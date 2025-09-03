@@ -4,32 +4,22 @@
 import { execSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { config } from 'node:process';
 
-import { getPackages } from '@manypkg/get-packages';
-import { Octokit, RestEndpointMethodTypes } from '@octokit/rest';
+import { RestEndpointMethodTypes } from '@octokit/rest';
 import minimist from 'minimist';
 import remarkParse from 'remark-parse';
 import remarkStringify from 'remark-stringify';
 import { unified } from 'unified';
 
+import { ORG_NAME, REPO_NAME } from './constants.js';
+import { getCurrentLinkedVersion } from './current-linked-version.js';
+import { getGitHubApi } from './github-api.js';
+import { getPriorRelease } from './prior-release.js';
+
 type Level = string;
 type PackageName = string;
 type ReleaseNotesTextContent = string;
-
-const ORG_NAME = 'anza-xyz';
-const REPO_NAME = 'kit';
-const SEMVER_REGEX = /^0*(\d+)\.0*(\d+)\.0*(\d+)$/;
-
-function cmpVersions(a: string, b: string): number {
-    const stripZeroesRegex = /(\\.0+)+$/;
-    const semverPartsA = a.replace(stripZeroesRegex, '').split('.');
-    const semverPartsB = b.replace(stripZeroesRegex, '').split('.');
-    for (let ii = 0; ii < Math.min(semverPartsA.length, semverPartsB.length); ii++) {
-        const diff = parseInt(semverPartsA[ii], 10) - parseInt(semverPartsB[ii], 10);
-        if (diff) return diff;
-    }
-    return semverPartsA.length - semverPartsB.length;
-}
 
 function isDefined<T>(value: T | null | undefined): value is NonNullable<T> {
     return value !== null && value !== undefined;
@@ -37,76 +27,11 @@ function isDefined<T>(value: T | null | undefined): value is NonNullable<T> {
 
 const config = minimist(process.argv.slice(2), {
     boolean: 'dry-run',
-    string: 'token',
-});
-const GITHUB_TOKEN = config.token ?? process.env.GH_TOKEN;
-if (typeof GITHUB_TOKEN !== 'string') {
-    console.error(
-        'The required --token argument was not provided. Please use it to supply a GitHub token with write permissions',
-    );
-    process.exit(1);
-}
-
-const api = new Octokit({
-    auth: GITHUB_TOKEN,
 });
 
-/**
- * Get a list of all the packages, their paths, and their `package.json` files.
- */
-const { packages: allPackages } = await getPackages(import.meta.dirname);
-const packages = allPackages.filter(p => p.relativeDir.startsWith('packages/'));
+const { packages, tag, version } = await getCurrentLinkedVersion();
 
-/**
- * Compute the version that they all share. Fail unless they all share the same version.
- */
-let version: string | undefined;
-for (const {
-    packageJson: { private: isPrivate, version: packageVersion },
-} of packages) {
-    if (isPrivate) {
-        continue;
-    }
-    if (!version) {
-        version = packageVersion;
-    } else if (version !== packageVersion) {
-        throw new Error('Expected all versions to be identical');
-    }
-}
-if (!version) {
-    throw new Error('Found no packages');
-}
-const tag = `v${version}`;
-const [_, major] = version.match(SEMVER_REGEX)!;
-
-/**
- * Find the release just before the current one, if any.
- */
-const releases = await api.paginate<RestEndpointMethodTypes['repos']['listReleases']['response']['data'][number]>(
-    api.repos.listReleases.endpoint.merge({
-        owner: ORG_NAME,
-        repo: REPO_NAME,
-    }),
-);
-if (!config['dry-run'] && releases.some(({ tag_name: releaseTagName }) => releaseTagName === tag)) {
-    throw new Error(`There is already a latest release on GitHub for ${tag}`);
-}
-let priorRelease: RestEndpointMethodTypes['repos']['listReleases']['response']['data'][number] | undefined;
-releases.forEach(release => {
-    const candidateVersion = release.tag_name.replace(/^v/, '');
-    const [_, candidateMajor] = candidateVersion.match(SEMVER_REGEX)!;
-    if (parseInt(candidateMajor, 10) > parseInt(major, 10)) {
-        return;
-    }
-    if (cmpVersions(candidateVersion, version) > 0) {
-        throw new Error(
-            `Current version (${version}) is older than version of published release of the same major (${candidateVersion})`,
-        );
-    }
-    if (!priorRelease || cmpVersions(priorRelease.tag_name.replace(/^v/, ''), candidateVersion) <= 0) {
-        priorRelease = release;
-    }
-});
+const { makeLatest, priorRelease } = await getPriorRelease(version);
 
 /**
  * Read in all of their changelogs and grab the entries related to that version.
@@ -264,11 +189,7 @@ const aggregateReleaseNotes =
  */
 const createReleaseParams: RestEndpointMethodTypes['repos']['createRelease']['parameters'] = {
     body: aggregateReleaseNotes,
-    make_latest: releases.every(
-        release => cmpVersions(release.tag_name.replace(/^v/, ''), version.replace(/^v/, '')) <= 0,
-    )
-        ? 'true'
-        : 'false',
+    make_latest: makeLatest ? 'true' : 'false',
     name: tag,
     owner: ORG_NAME,
     repo: REPO_NAME,
@@ -279,5 +200,6 @@ const createReleaseParams: RestEndpointMethodTypes['repos']['createRelease']['pa
 if (config['dry-run']) {
     console.log(createReleaseParams);
 } else {
+    const api = getGitHubApi();
     await api.rest.repos.createRelease(createReleaseParams);
 }
