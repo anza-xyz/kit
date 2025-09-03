@@ -17,6 +17,8 @@ on:
 
 jobs:
   validate-version-exists:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
