@@ -1,0 +1,47 @@
+# .github/workflows/manual-release.yml
+name: Tag Release Manually
+
+on:
+  workflow_dispatch:
+    branches:
+      - main
+      - backport/**
+    inputs:
+      version:
+        description: 'Version'
+        required: true
+        type: string
+      tag:
+        description: 'Tag name'
+        required: true
+        type: string
+
+jobs:
+  validate-version-exists:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate that a package at the given version has already been published
+        run: |
+          echo '${{ github.event.inputs.version }}' | grep -E "^([0-9]+\.){0,2}[0-9]+$" > /dev/null || echo 'Version must be of the form X.Y.Z'
+          pnpm view '@solana/kit@${{ github.event.inputs.version }}'
+
+  tag-release-manually:
+    permissions:
+      contents: write
+    needs: validate-version-exists
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        uses: ./.github/workflows/actions/install-dependencies
+
+      - name: Configure NPM token
+        run: |
+          pnpm config set '//registry.npmjs.org/:_authToken' "${NPM_TOKEN}"
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Tag Release Manually
+        run: ./packages/build-scripts/tag-release-manually.ts --version '${{ github.event.inputs.version }}' --tag '${{ github.event.inputs.tag }}'
