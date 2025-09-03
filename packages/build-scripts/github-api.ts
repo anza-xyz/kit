@@ -5,7 +5,7 @@ const config = minimist(process.argv.slice(2), {
     string: 'token',
 });
 
-const GITHUB_TOKEN = config.token ?? process.env.GH_TOKEN;
+const GITHUB_TOKEN = config.token ?? (process.env.GH_TOKEN || process.env.GITHUB_TOKEN);
 if (typeof GITHUB_TOKEN !== 'string') {
     console.error(
         'The required --token argument was not provided. Please use it to supply a GitHub token with write permissions',
