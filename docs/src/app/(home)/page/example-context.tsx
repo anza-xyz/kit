@@ -36,35 +36,31 @@ export function ExampleProvider({
     const startTimeRef = useRef(performance.now());
     const rafRef = useRef<number | null>(null);
 
-    const tick = () => {
-        const now = performance.now();
-        const elapsed = now - startTimeRef.current;
-        const newProgress = Math.min(elapsed / TIMER_INTERVAL, 1);
-        setProgress(newProgress);
-
-        if (newProgress >= 1) {
-            const nextIndex = (exampleIndex + 1) % EXAMPLES.length;
-            setExample(EXAMPLES[nextIndex]);
-            startTimeRef.current = now;
-            setProgress(0);
-        }
-
-        rafRef.current = requestAnimationFrame(tick);
-    };
-
-    const stopTick = () => {
-        if (rafRef.current !== null) {
-            cancelAnimationFrame(rafRef.current);
-            rafRef.current = null;
-        }
-    };
-
     useEffect(() => {
-        stopTick();
         if (!paused) {
+            function tick() {
+                const now = performance.now();
+                const elapsed = now - startTimeRef.current;
+                const newProgress = Math.min(elapsed / TIMER_INTERVAL, 1);
+                setProgress(newProgress);
+
+                if (newProgress >= 1) {
+                    const nextIndex = (exampleIndex + 1) % EXAMPLES.length;
+                    setExample(EXAMPLES[nextIndex]);
+                    startTimeRef.current = now;
+                    setProgress(0);
+                }
+
+                rafRef.current = requestAnimationFrame(tick);
+            }
             rafRef.current = requestAnimationFrame(tick);
         }
-        return stopTick;
+        return () => {
+            if (rafRef.current !== null) {
+                cancelAnimationFrame(rafRef.current);
+                rafRef.current = null;
+            }
+        };
     }, [exampleIndex, paused]);
 
     const setExampleAndPause = (newExample: ExampleKey) => {
