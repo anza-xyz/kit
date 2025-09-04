@@ -278,7 +278,7 @@ const transactionPlanner = createTransactionPlanner({
 
 Additionally, the `onTransactionMessageUpdated` function may be provided to update transaction messages during the planning process. This function will be called whenever a transaction message is updated — e.g. when new instructions are added. It accepts the updated transaction message and must return a transaction message back, even if no changes were made.
 
-In the example below, we check if the packed transaction contains an instruction that transfers SOL and, if so, add a guard instruction that ensures no more than 1 SOL is transfered.
+In the example below, we check if the packed transaction contains an instruction that transfers SOL and, if so, add a guard instruction that ensures no more than 1 SOL is transferred.
 
 ```ts twoslash
 import {

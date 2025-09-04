@@ -56,7 +56,7 @@ export type InstructionPlan =
  * It also defines whether nested plans are divisible — meaning that
  * the instructions inside them can be split into separate transactions.
  * When `divisible` is `false`, the instructions inside the plan should
- * all be executed atomicly — either in a single transaction or in a
+ * all be executed atomically — either in a single transaction or in a
  * transaction bundle.
  *
  * You may use the {@link sequentialInstructionPlan} and {@link nonDivisibleSequentialInstructionPlan}
