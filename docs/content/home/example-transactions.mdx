@@ -4,23 +4,7 @@ title: Transactions Example
 
 {/* Please keep visible code between 4 to 8 lines of code. */}
 
-```ts twoslash
-import {
-    GetLatestBlockhashApi,
-    TransactionSigner,
-    appendTransactionMessageInstructions,
-    createTransactionMessage,
-    pipe,
-    setTransactionMessageFeePayerSigner,
-    setTransactionMessageLifetimeUsingBlockhash,
-} from '@solana/kit';
-import { getCreateAccountInstruction } from '@solana-program/system';
-import { getInitializeMintInstruction } from '@solana-program/token';
-const payer = {} as TransactionSigner;
-const latestBlockhash = {} as ReturnType<GetLatestBlockhashApi['getLatestBlockhash']>['value'];
-const createAccountIx = null as unknown as ReturnType<typeof getCreateAccountInstruction>;
-const initializeMintIx = null as unknown as ReturnType<typeof getInitializeMintInstruction>;
-// ---cut-before---
+```ts
 const transactionMessage = pipe(
     createTransactionMessage({ version: 0 }),
     (tx) => setTransactionMessageFeePayerSigner(payer, tx),

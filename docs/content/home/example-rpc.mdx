@@ -4,11 +4,7 @@ title: RPC Example
 
 {/* Please keep visible code between 4 to 8 lines of code. */}
 
-```ts twoslash
-import { address, createSolanaRpc } from '@solana/kit';
-const myWallet = address('6sXDDdsHDDodYmrsFWKGriKXvjw25sqsk6PBgnQcE88A');
-const myAccount = address('64dTb3y5ExuKWHdi3ZHkyCfpdyqwRSiNVWMkdj3TbQ2N');
-// ---cut-before---
+```ts
 const rpc = createSolanaRpc('https://api.mainnet-beta.solana.com');
 
 const { value: balance } = await rpc.getBalance(myWallet).send();

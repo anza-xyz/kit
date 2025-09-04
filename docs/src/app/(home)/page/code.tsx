@@ -1,20 +1,15 @@
 'use client';
 
-import { home } from '@/.source';
-import { mdxComponents } from '@/app/layout.config';
-import { useContext, useMemo } from 'react';
+import React, { useContext } from 'react';
 import { ExampleContext } from './example-context';
 import { Play } from 'lucide-react';
-import { MDXContent } from 'mdx/types';
 
-function getExampleMDX(example: string) {
-    const doc = home.docs.find(doc => doc._file.path === `example-${example}.mdx`)!;
-    return (doc as { body: MDXContent }).body;
-}
+type Props = Readonly<{
+    examples: Record<string, React.ReactElement>;
+}>;
 
-export default function CodeSection() {
+export default function CodeSection({ examples }: Props) {
     const { example, progress, paused, resume } = useContext(ExampleContext);
-    const MDX = useMemo(() => getExampleMDX(example), [example]);
 
     return (
         <section className="relative">
@@ -35,7 +30,7 @@ export default function CodeSection() {
                             <Play size={14} fill="currentColor" strokeWidth={0} />
                         </button>
                     )}
-                    <MDX components={mdxComponents} />
+                    {examples[example]}
                 </div>
             </div>
         </section>
