@@ -5,9 +5,21 @@
  * This script uses TypeDoc's JSON output to get detailed reflection data
  */
 
-const fs = require('node:fs');
+const fs = require('node:fs/promises');
 const path = require('node:path');
-const { execFileSync } = require('node:child_process');
+const { execFile } = require('node:child_process');
+const { promisify } = require('node:util');
+
+const execFileAsync = promisify(execFile);
+
+async function exists(path) {
+    try {
+        await fs.access(path);
+        return true;
+    } catch {
+        return false;
+    }
+}
 
 const ROOT_DIR = path.join(__dirname, '..');
 const PACKAGES_DIR = path.join(ROOT_DIR, 'packages');
@@ -52,9 +64,9 @@ const REFLECTION_KIND_DATA = {
     [ReflectionKind.Variable]: { group: 'Variables', path: 'variables' },
 };
 
-function findPackageInfos() {
+async function findPackageInfos() {
     const packages = [];
-    const packageDirs = fs.readdirSync(PACKAGES_DIR);
+    const packageDirs = await fs.readdir(PACKAGES_DIR);
 
     for (const packageName of packageDirs) {
         const packagePath = path.join(PACKAGES_DIR, packageName);
@@ -64,30 +76,31 @@ function findPackageInfos() {
         const typedocConfigPath = path.join(packagePath, 'typedoc.json');
 
         // Skip packages without source, package.json, or typedoc config.
-        if (
-            !fs.existsSync(packageJsonPath) ||
-            !fs.existsSync(srcPath) ||
-            !fs.existsSync(indexPath) ||
-            !fs.existsSync(typedocConfigPath)
-        ) {
+        const artifactsExistence = await Promise.all([
+            exists(packageJsonPath),
+            exists(srcPath),
+            exists(indexPath),
+            exists(typedocConfigPath),
+        ]);
+        if (artifactsExistence.includes(false)) {
             continue;
         }
 
-        const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+        const pkg = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
         packages.push({ name: pkg.name, path: packagePath });
     }
 
     return packages.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-function generateTypeDocJSON(packageInfo) {
+async function generateTypeDocJSON(packageInfo) {
     const { path: packagePath, name } = packageInfo;
     const jsonOutputPath = path.join(packagePath, 'typedoc-output.json');
 
     try {
         // Generate JSON output only (suppress regular output).
-        execFileSync(
-            'typedoc',
+        await execFileAsync(
+            './node_modules/typedoc/bin/typedoc',
             [
                 '--json',
                 jsonOutputPath,
@@ -100,18 +113,18 @@ function generateTypeDocJSON(packageInfo) {
                 '--excludeInternal',
                 path.join(packagePath, 'src', 'index.ts'),
             ],
-            { cwd: ROOT_DIR, stdio: ['ignore', 'ignore', 'pipe'] },
+            { cwd: ROOT_DIR },
         );
 
-        if (!fs.existsSync(jsonOutputPath)) {
+        if (!(await exists(jsonOutputPath))) {
             console.warn(`⚠️  No JSON output generated for ${name}`);
             return null;
         }
 
-        const typeDocJSON = JSON.parse(fs.readFileSync(jsonOutputPath, 'utf8'));
+        const typeDocJSON = JSON.parse(await fs.readFile(jsonOutputPath, 'utf8'));
 
         // Clean up the temp JSON file
-        fs.unlinkSync(jsonOutputPath);
+        await fs.unlink(jsonOutputPath);
 
         return typeDocJSON;
     } catch (error) {
@@ -247,17 +260,19 @@ function wrapLinks(links, names) {
 
 // Main execution
 async function main() {
-    const packageInfos = findPackageInfos();
-    const packages = [];
+    const packageInfos = await findPackageInfos();
 
-    for (const packageInfo of packageInfos) {
-        const typeDocJSON = generateTypeDocJSON(packageInfo);
-        const package = processTypeDocJSON(packageInfo, typeDocJSON);
-        packages.push(package);
-    }
+    const packages = [];
+    await Promise.all(
+        packageInfos.map(async packageInfo => {
+            const typeDocJSON = await generateTypeDocJSON(packageInfo);
+            const package = await processTypeDocJSON(packageInfo, typeDocJSON);
+            packages.push(package);
+        }),
+    );
 
     const content = generateIndexContent(packages);
-    fs.writeFileSync(OUTPUT_FILE, content, 'utf8');
+    await fs.writeFile(OUTPUT_FILE, content, 'utf8');
 
     console.log('✅ API index generated successfully!');
     console.log(`├─ Packages: ${packages.length}`);
