@@ -2,6 +2,7 @@
     "name": "@solana/functional",
     "version": "3.0.0",
     "description": "Functional JavaScript helpers",
+    "homepage": "https://www.solanakit.com/api#solanafunctional",
     "exports": {
         "edge-light": {
             "import": "./dist/index.node.mjs",

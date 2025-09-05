@@ -2,6 +2,7 @@
     "name": "@solana/rpc-transport-http",
     "version": "3.0.0",
     "description": "An RPC transport that uses HTTP requests",
+    "homepage": "https://www.solanakit.com/api#solanarpc-transport-http",
     "exports": {
         "edge-light": {
             "import": "./dist/index.node.mjs",

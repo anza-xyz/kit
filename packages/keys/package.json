@@ -2,6 +2,7 @@
     "name": "@solana/keys",
     "version": "3.0.0",
     "description": "Helpers for generating and transforming key material",
+    "homepage": "https://www.solanakit.com/api#solanakeys",
     "exports": {
         "edge-light": {
             "import": "./dist/index.node.mjs",

@@ -2,6 +2,7 @@
     "name": "@solana/nominal-types",
     "version": "3.0.0",
     "description": "Type utilties for creating nominal/branded types in TypeScript",
+    "homepage": "https://www.solanakit.com/api#solananominal-types",
     "types": "./dist/types/index.d.ts",
     "type": "commonjs",
     "files": [

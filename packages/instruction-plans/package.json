@@ -2,6 +2,7 @@
     "name": "@solana/instruction-plans",
     "version": "3.0.0",
     "description": "Construct, plan and execute transactions from multiple instructions.",
+    "homepage": "https://www.solanakit.com/api#solanainstruction-plans",
     "exports": {
         "edge-light": {
             "import": "./dist/index.node.mjs",

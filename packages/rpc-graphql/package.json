@@ -2,6 +2,7 @@
     "name": "@solana/rpc-graphql",
     "version": "3.0.0",
     "description": "A library for resolving GraphQl query calls to the Solana JSON RPC API",
+    "homepage": "https://www.solanakit.com/api#solanarpc-graphql",
     "exports": {
         "edge-light": {
             "import": "./dist/index.node.mjs",

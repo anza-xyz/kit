@@ -2,6 +2,7 @@
     "name": "@solana/kit",
     "version": "3.0.0",
     "description": "Solana Javascript API",
+    "homepage": "https://www.solanakit.com",
     "exports": {
         "edge-light": {
             "import": "./dist/index.node.mjs",

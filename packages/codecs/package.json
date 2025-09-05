@@ -2,6 +2,7 @@
     "name": "@solana/codecs",
     "version": "3.0.0",
     "description": "A library for encoding and decoding any data structure",
+    "homepage": "https://www.solanakit.com/api#solanacodecs",
     "exports": {
         "edge-light": {
             "import": "./dist/index.node.mjs",

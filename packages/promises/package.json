@@ -2,6 +2,7 @@
     "name": "@solana/promises",
     "version": "3.0.0",
     "description": "Helpers for using JavaScript promises",
+    "homepage": "https://www.solanakit.com/api#solanapromises",
     "exports": {
         "edge-light": {
             "import": "./dist/index.node.mjs",

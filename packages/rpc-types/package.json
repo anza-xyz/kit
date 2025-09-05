@@ -2,6 +2,7 @@
     "name": "@solana/rpc-types",
     "version": "3.0.0",
     "description": "Type definitions for values used in the Solana RPC, and helper functions for working with them",
+    "homepage": "https://www.solanakit.com/api#solanarpc-types",
     "exports": {
         "edge-light": {
             "import": "./dist/index.node.mjs",

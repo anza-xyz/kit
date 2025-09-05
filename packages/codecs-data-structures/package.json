@@ -2,6 +2,7 @@
     "name": "@solana/codecs-data-structures",
     "version": "3.0.0",
     "description": "Codecs for various data structures",
+    "homepage": "https://www.solanakit.com/api#solanacodecs-data-structures",
     "exports": {
         "edge-light": {
             "import": "./dist/index.node.mjs",

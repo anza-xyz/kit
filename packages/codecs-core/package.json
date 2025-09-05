@@ -2,6 +2,7 @@
     "name": "@solana/codecs-core",
     "version": "3.0.0",
     "description": "Core types and helpers for encoding and decoding byte arrays on Solana",
+    "homepage": "https://www.solanakit.com/api#solanacodecs-core",
     "exports": {
         "edge-light": {
             "import": "./dist/index.node.mjs",

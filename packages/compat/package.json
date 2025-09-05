@@ -2,6 +2,7 @@
     "name": "@solana/compat",
     "version": "3.0.0",
     "description": "Helpers for converting from legacy web3js classes",
+    "homepage": "https://www.solanakit.com/api#solanacompat",
     "exports": {
         "edge-light": {
             "import": "./dist/index.node.mjs",
