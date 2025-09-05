@@ -1,5 +1,19 @@
 # @solana/signers
 
+## 4.0.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/transaction-messages@4.0.0
+    - @solana/transactions@4.0.0
+    - @solana/addresses@4.0.0
+    - @solana/codecs-core@4.0.0
+    - @solana/errors@4.0.0
+    - @solana/instructions@4.0.0
+    - @solana/keys@4.0.0
+    - @solana/nominal-types@4.0.0
+
 ## 3.0.0
 
 ### Major Changes

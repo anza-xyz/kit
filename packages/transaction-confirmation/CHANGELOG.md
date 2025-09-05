@@ -1,5 +1,23 @@
 # @solana/transaction-confirmation
 
+## 4.0.0
+
+### Patch Changes
+
+- [#793](https://github.com/anza-xyz/kit/pull/793) [`cfc1d92`](https://github.com/anza-xyz/kit/commit/cfc1d9249e55c79d27ac840806f198a5c5895e56) Thanks [@steveluscher](https://github.com/steveluscher)! - Fixed a bug where transaction errors discovered during recent transaction confirmation might not be thrown
+
+- Updated dependencies [[`ce7f91c`](https://github.com/anza-xyz/kit/commit/ce7f91c522118bd929f69f581d2d48e90d18c99a)]:
+    - @solana/rpc-types@4.0.0
+    - @solana/rpc-subscriptions@4.0.0
+    - @solana/rpc@4.0.0
+    - @solana/transaction-messages@4.0.0
+    - @solana/transactions@4.0.0
+    - @solana/addresses@4.0.0
+    - @solana/codecs-strings@4.0.0
+    - @solana/errors@4.0.0
+    - @solana/keys@4.0.0
+    - @solana/promises@4.0.0
+
 ## 3.0.0
 
 ### Patch Changes
