@@ -68,7 +68,8 @@
             "dset@<3.1.4": "^3.1.4",
             "jsdom": "^22",
             "mock-socket": "^9.3.1",
-            "shelljs": ">=0.8.5"
+            "shelljs": ">=0.8.5",
+            "tmp": ">=0.2.4"
         },
         "patchedDependencies": {
             "jest-runner-prettier@1.0.0": "patches/jest-runner-prettier@1.0.0.patch"
