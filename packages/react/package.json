@@ -2,6 +2,7 @@
     "name": "@solana/react",
     "version": "3.0.0",
     "description": "React hooks for building Solana apps",
+    "homepage": "https://www.solanakit.com/api#solanareact",
     "exports": {
         "edge-light": {
             "import": "./dist/index.node.mjs",

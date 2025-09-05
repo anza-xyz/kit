@@ -2,6 +2,7 @@
     "name": "@solana/transaction-messages",
     "version": "3.0.0",
     "description": "Helpers for creating transaction messages",
+    "homepage": "https://www.solanakit.com/api#solanatransaction-messages",
     "exports": {
         "edge-light": {
             "import": "./dist/index.node.mjs",

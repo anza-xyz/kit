@@ -2,6 +2,7 @@
     "name": "@solana/errors",
     "version": "3.0.0",
     "description": "Throw, identify, and decode Solana JavaScript errors",
+    "homepage": "https://www.solanakit.com/api#solanaerrors",
     "exports": {
         "edge-light": {
             "import": "./dist/index.node.mjs",

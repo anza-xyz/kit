@@ -2,6 +2,7 @@
     "name": "@solana/rpc-transformers",
     "version": "3.0.0",
     "description": "Reusable transformers for patching RPC inputs and outputs",
+    "homepage": "https://www.solanakit.com/api#solanarpc-transformers",
     "exports": {
         "edge-light": {
             "import": "./dist/index.node.mjs",

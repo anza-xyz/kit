@@ -2,6 +2,7 @@
     "name": "@solana/rpc-spec",
     "version": "3.0.0",
     "description": "A generic implementation of JSON RPCs using proxies",
+    "homepage": "https://www.solanakit.com/api#solanarpc-spec",
     "exports": {
         "edge-light": {
             "import": "./dist/index.node.mjs",

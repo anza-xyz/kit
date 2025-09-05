@@ -2,6 +2,7 @@
     "name": "@solana/rpc-spec-types",
     "version": "3.0.0",
     "description": "Shared generic JSON RPC specifications",
+    "homepage": "https://www.solanakit.com/api#solanarpc-spec-types",
     "exports": {
         "edge-light": {
             "import": "./dist/index.node.mjs",

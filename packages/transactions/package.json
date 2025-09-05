@@ -2,6 +2,7 @@
     "name": "@solana/transactions",
     "version": "3.0.0",
     "description": "Helpers for creating and serializing transactions",
+    "homepage": "https://www.solanakit.com/api#solanatransactions",
     "exports": {
         "edge-light": {
             "import": "./dist/index.node.mjs",

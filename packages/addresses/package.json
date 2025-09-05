@@ -2,6 +2,7 @@
     "name": "@solana/addresses",
     "version": "3.0.0",
     "description": "Helpers for generating account addresses",
+    "homepage": "https://www.solanakit.com/api#solanaaddresses",
     "exports": {
         "edge-light": {
             "import": "./dist/index.node.mjs",

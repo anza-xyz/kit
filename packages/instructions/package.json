@@ -2,6 +2,7 @@
     "name": "@solana/instructions",
     "version": "3.0.0",
     "description": "Helpers for creating transaction instructions",
+    "homepage": "https://www.solanakit.com/api#solanainstructions",
     "exports": {
         "edge-light": {
             "import": "./dist/index.node.mjs",

@@ -2,6 +2,7 @@
     "name": "@solana/programs",
     "version": "3.0.0",
     "description": "Helpers for defining programs and resolving program errors",
+    "homepage": "https://www.solanakit.com/api#solanaprograms",
     "exports": {
         "edge-light": {
             "import": "./dist/index.node.mjs",
