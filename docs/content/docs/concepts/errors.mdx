@@ -1,0 +1,197 @@
+---
+title: Errors
+description: Recover from errors in development and production
+---
+
+## Introduction
+
+The ecosystem of packages based on Kit's error system benefit from strongly typed error data, and descriptive error messages. Its error messages get scrubbed from your production bundles, which means that the library of error messages can grow indefinitely without adding a single byte to your app.
+
+## Installation
+
+Errors are **included within the `@solana/kit` library** but you may also install them using their standalone package.
+
+```package-install
+@solana/errors
+```
+
+## What is a `SolanaError`?
+
+A `SolanaError` is a class made of three components:
+
+- An error **code**; found in the union named [`SolanaErrorCode`](/api/type-aliases/SolanaErrorCode)
+- An error **message**
+- Optional error **context**
+
+Here's an example of some code that responds to various errors, taking advantage of the error context offered by each one:
+
+```ts twoslash
+import {
+    Transaction,
+    TransactionWithBlockhashLifetime,
+    sendAndConfirmTransactionFactory,
+} from '@solana/kit';
+const sendAndConfirmTransaction = null as unknown as ReturnType<
+    typeof sendAndConfirmTransactionFactory
+>;
+const transaction = null as unknown as Transaction & TransactionWithBlockhashLifetime;
+// ---cut-before---
+import {
+    assertIsSendableTransaction,
+    isSolanaError,
+    SOLANA_ERROR__TRANSACTION__SIGNATURES_MISSING,
+    SOLANA_ERROR__TRANSACTION__EXCEEDS_SIZE_LIMIT,
+} from '@solana/kit';
+
+try {
+    assertIsSendableTransaction(transaction);
+    await sendAndConfirmTransaction(transaction, { commitment: 'confirmed' });
+} catch (e) {
+    if (isSolanaError(e, SOLANA_ERROR__TRANSACTION__SIGNATURES_MISSING)) {
+        console.error(`Missing signatures for ${e.context.addresses.join(', ')}`);
+    } else if (isSolanaError(e, SOLANA_ERROR__TRANSACTION__EXCEEDS_SIZE_LIMIT)) {
+        console.error(
+            `Transaction exceeds size limit of ${e.context.transactionSizeLimit} bytes. ` +
+                `Actual size: ${e.context.transactionSize}`,
+        );
+    }
+    throw e;
+}
+```
+
+## Catching errors
+
+When you encounter an error, you can determine whether it is a `SolanaError` or not using the `isSolanaError()` function:
+
+```ts twoslash
+import { isSolanaError } from '@solana/kit';
+
+try {
+    // ...
+} catch (e) {
+    if (isSolanaError(e)) {
+        // A Solana error was thrown
+    } else {
+        // Something else went wrong
+    }
+}
+```
+
+When you have a strategy for handling a _particular_ error, you can supply that error's code as the second argument. This will both identify that error by code and refine the type of the `SolanaError` such that the shape of its `context` property becomes known to TypeScript.
+
+```ts twoslash
+import { SolanaError } from '@solana/kit';
+const e = null as unknown as SolanaError;
+// ---cut-before---
+import {
+    isSolanaError,
+    SolanaErrorCode,
+    SOLANA_ERROR__TRANSACTION__SIGNATURES_MISSING,
+} from '@solana/kit';
+
+try {
+    // ...
+} catch (e) {
+    if (isSolanaError(e, SOLANA_ERROR__TRANSACTION__SIGNATURES_MISSING)) {
+        //               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        console.error(
+            // Now TypeScript knows the shape of this error's context
+            `Missing signatures for these addresses: [${e.context.addresses.join(', ')}]`,
+            //                                          ^^^^^^^^^
+        );
+    } else {
+        // Something else went wrong
+    }
+}
+```
+
+Some Solana errors have, as their root cause, another Solana error. One such example is during transaction simulation (preflight):
+
+```ts twoslash
+import { Base64EncodedWireTransaction, Rpc, SendTransactionApi } from '@solana/kit';
+const rpc = null as unknown as Rpc<SendTransactionApi>;
+const wireTransaction = null as unknown as Base64EncodedWireTransaction;
+// ---cut-before---
+import {
+    isSolanaError,
+    SOLANA_ERROR__INSTRUCTION_ERROR__COMPUTATIONAL_BUDGET_EXCEEDED,
+    SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE,
+} from '@solana/kit';
+
+try {
+    const result = await rpc.sendTransaction(wireTransaction, {
+        encoding: 'base64',
+        skipPreflight: false,
+    });
+} catch (e) {
+    if (isSolanaError(e, SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE)) {
+        // Simulation failed, but why?
+        const underlyingError = e.cause;
+        if (
+            isSolanaError(
+                underlyingError,
+                SOLANA_ERROR__INSTRUCTION_ERROR__COMPUTATIONAL_BUDGET_EXCEEDED,
+            )
+        ) {
+            // Now we know the root cause of the simulation failure, and can advise the user
+        }
+    }
+}
+```
+
+## Error messages
+
+### In development mode
+
+When your bundler sets the constant `__DEV__` to `true`, every error message will be included in the bundle. As such, you will be able to read them in plain language wherever they appear.
+
+<Callout type="warn">
+    The size of your JavaScript bundle will increase significantly with the inclusion of every error
+    message in development mode. Be sure to build your bundle with `__DEV__` set to `false` when you
+    go to production.
+</Callout>
+
+### In production mode
+
+When your bundler sets the constant `__DEV__` to `false`, error messages will be stripped from the bundle to save space. Only the error code will appear in the message when an error is encountered. Follow the instructions in the error message to convert the error code back to the human-readable error message.
+
+For instance, to recover the error text for the error with code `7050005`:
+
+<Tabs items={["pnpm", "npm", "yarn", "bun"]}>
+  <Tab value="pnpm">
+      ```shell
+      $ pnpm dlx @solana/errors decode -- 7050005
+
+      [Decoded] Solana error code #7050005
+          - Insufficient funds for fee
+      ```
+
+  </Tab>
+  <Tab value="npm">
+      ```shell
+      $ npx @solana/errors decode -- 7050005
+
+      [Decoded] Solana error code #7050005
+          - Insufficient funds for fee
+      ```
+
+  </Tab>
+  <Tab value="yarn">
+      ```shell
+      $ yarn dlx @solana/errors decode -- 7050005
+
+      [Decoded] Solana error code #7050005
+          - Insufficient funds for fee
+      ```
+
+  </Tab>
+  <Tab value="bun">
+      ```shell
+      $ bunx @solana/errors decode -- 7050005
+
+      [Decoded] Solana error code #7050005
+          - Insufficient funds for fee
+      ```
+
+  </Tab>
+</Tabs>
