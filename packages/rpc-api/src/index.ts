@@ -292,6 +292,7 @@ function getAllowedNumericKeypaths(): AllowedNumericKeypaths<RpcApi<SolanaRpcApi
                 ['rewards', KEYPATH_WILDCARD, 'commission'],
             ],
             getClusterNodes: [
+                [KEYPATH_WILDCARD, 'clientId'],
                 [KEYPATH_WILDCARD, 'featureSet'],
                 [KEYPATH_WILDCARD, 'shredVersion'],
             ],
