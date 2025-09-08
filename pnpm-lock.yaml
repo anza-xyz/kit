@@ -522,9 +522,6 @@ importers:
 
   packages/errors:
     dependencies:
-      chalk:
-        specifier: ^5.6.0
-        version: 5.6.0
       commander:
         specifier: ^14.0.0
         version: 14.0.0
