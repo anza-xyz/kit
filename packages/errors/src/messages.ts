@@ -156,6 +156,23 @@ import {
     SOLANA_ERROR__MALFORMED_JSON_RPC_ERROR,
     SOLANA_ERROR__MALFORMED_NUMBER_STRING,
     SOLANA_ERROR__NONCE_ACCOUNT_NOT_FOUND,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__ADDRESSES_CANNOT_SIGN_OFFCHAIN_MESSAGE,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__APPLICATION_DOMAIN_STRING_LENGTH_OUT_OF_RANGE,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__ENVELOPE_SIGNERS_MISMATCH,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__INVALID_APPLICATION_DOMAIN_BYTE_LENGTH,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__MAXIMUM_LENGTH_EXCEEDED,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__MESSAGE_FORMAT_MISMATCH,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__MESSAGE_LENGTH_MISMATCH,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__MESSAGE_MUST_BE_NON_EMPTY,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__NUM_ENVELOPE_SIGNATURES_CANNOT_BE_ZERO,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__NUM_REQUIRED_SIGNERS_CANNOT_BE_ZERO,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__NUM_SIGNATURES_MISMATCH,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__RESTRICTED_ASCII_BODY_CHARACTER_OUT_OF_RANGE,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATORIES_MUST_BE_SORTED,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATORIES_MUST_BE_UNIQUE,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURES_MISSING,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__UNEXPECTED_VERSION,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__VERSION_NUMBER_NOT_SUPPORTED,
     SOLANA_ERROR__RPC__API_PLAN_MISSING_FOR_RPC_METHOD,
     SOLANA_ERROR__RPC__INTEGER_OVERFLOW,
     SOLANA_ERROR__RPC__TRANSPORT_HTTP_ERROR,
@@ -487,6 +504,46 @@ export const SolanaErrorMessages: Readonly<{
     [SOLANA_ERROR__MALFORMED_JSON_RPC_ERROR]: '$message',
     [SOLANA_ERROR__MALFORMED_NUMBER_STRING]: '`$value` cannot be parsed as a `Number`',
     [SOLANA_ERROR__NONCE_ACCOUNT_NOT_FOUND]: 'No nonce account could be found at address `$nonceAccountAddress`',
+    [SOLANA_ERROR__OFFCHAIN_MESSAGE__INVALID_APPLICATION_DOMAIN_BYTE_LENGTH]:
+        'Expected base58 encoded application domain to decode to a byte array of length 32. Actual length: $actualLength.',
+    [SOLANA_ERROR__OFFCHAIN_MESSAGE__ADDRESSES_CANNOT_SIGN_OFFCHAIN_MESSAGE]:
+        'Attempted to sign an offchain message with an address that is not a signer for it',
+    [SOLANA_ERROR__OFFCHAIN_MESSAGE__APPLICATION_DOMAIN_STRING_LENGTH_OUT_OF_RANGE]:
+        'Expected base58-encoded application domain string of length in the range [32, 44]. Actual length: $actualLength.',
+    [SOLANA_ERROR__OFFCHAIN_MESSAGE__ENVELOPE_SIGNERS_MISMATCH]:
+        'The signer addresses in this offchain message envelope do not match the list of ' +
+        'required signers in the message preamble. These unexpected signers were present in the ' +
+        'envelope: `[$unexpectedSigners]`. These required signers were missing from the envelope ' +
+        '`[$missingSigners]`.',
+    [SOLANA_ERROR__OFFCHAIN_MESSAGE__MAXIMUM_LENGTH_EXCEEDED]:
+        'The message body provided has a byte-length of $actualBytes. The maximum allowable ' +
+        'byte-length is $maxBytes',
+    [SOLANA_ERROR__OFFCHAIN_MESSAGE__MESSAGE_FORMAT_MISMATCH]:
+        'Expected message format $expectedMessageFormat, got $actualMessageFormat',
+    [SOLANA_ERROR__OFFCHAIN_MESSAGE__MESSAGE_LENGTH_MISMATCH]:
+        'The message length specified in the message preamble is $specifiedLength bytes. The actual length of the message is $actualLength bytes.',
+    [SOLANA_ERROR__OFFCHAIN_MESSAGE__MESSAGE_MUST_BE_NON_EMPTY]: 'Offchain message content must be non-empty',
+    [SOLANA_ERROR__OFFCHAIN_MESSAGE__NUM_REQUIRED_SIGNERS_CANNOT_BE_ZERO]:
+        'Offchain message must specify the address of at least one required signer',
+    [SOLANA_ERROR__OFFCHAIN_MESSAGE__NUM_ENVELOPE_SIGNATURES_CANNOT_BE_ZERO]:
+        'Offchain message envelope must reserve space for at least one signature',
+    [SOLANA_ERROR__OFFCHAIN_MESSAGE__NUM_SIGNATURES_MISMATCH]:
+        'The offchain message preamble specifies $numRequiredSignatures required signature(s), got $signaturesLength.',
+    [SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATORIES_MUST_BE_SORTED]:
+        'The signatories of this offchain message must be listed in lexicographical order',
+    [SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATORIES_MUST_BE_UNIQUE]:
+        'An address must be listed no more than once among the signatories of an offchain message',
+    [SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURES_MISSING]:
+        'Offchain message is missing signatures for addresses: $addresses.',
+    [SOLANA_ERROR__OFFCHAIN_MESSAGE__RESTRICTED_ASCII_BODY_CHARACTER_OUT_OF_RANGE]:
+        'The message body provided contains characters whose codes fall outside the allowed ' +
+        'range. In order to ensure clear-signing compatiblity with hardware wallets, the message ' +
+        'may only contain line feeds and characters in the range [\\x20-\\x7e].',
+    [SOLANA_ERROR__OFFCHAIN_MESSAGE__UNEXPECTED_VERSION]:
+        'Expected offchain message version $expectedVersion. Got $actualVersion.',
+    [SOLANA_ERROR__OFFCHAIN_MESSAGE__VERSION_NUMBER_NOT_SUPPORTED]:
+        'This version of Kit does not support decoding offchain messages with version ' +
+        '$unsupportedVersion. The current max supported version is 0.',
     [SOLANA_ERROR__RPC_SUBSCRIPTIONS__CANNOT_CREATE_SUBSCRIPTION_PLAN]:
         "The notification name must end in 'Notifications' and the API must supply a " +
         "subscription plan creator function for the notification '$notificationName'.",
