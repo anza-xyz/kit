@@ -1,6 +1,6 @@
 {
     "name": "@solana/keys",
-    "version": "3.0.2",
+    "version": "3.0.3",
     "description": "Helpers for generating and transforming key material",
     "exports": {
         "edge-light": {

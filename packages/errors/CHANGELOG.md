@@ -1,5 +1,11 @@
 # @solana/errors
 
+## 3.0.3
+
+### Patch Changes
+
+- [#874](https://github.com/anza-xyz/kit/pull/874) [`a085209`](https://github.com/anza-xyz/kit/commit/a085209a4ad36c4be7e905f3521e70abff6231ac) Thanks [@github-actions](https://github.com/apps/github-actions)! - When you use the `@solana/errors` CLI you will now _always_ get version 5.6.2 of `chalk` and version 14.0.0 of `commander`, which themselves are zero-dependency.
+
 ## 3.0.2
 
 ## 3.0.1

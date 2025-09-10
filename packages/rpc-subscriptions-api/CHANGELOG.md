@@ -1,5 +1,18 @@
 # @solana/rpc-subscriptions-api
 
+## 3.0.3
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/addresses@3.0.3
+    - @solana/keys@3.0.3
+    - @solana/rpc-subscriptions-spec@3.0.3
+    - @solana/rpc-transformers@3.0.3
+    - @solana/rpc-types@3.0.3
+    - @solana/transaction-messages@3.0.3
+    - @solana/transactions@3.0.3
+
 ## 3.0.2
 
 ### Patch Changes

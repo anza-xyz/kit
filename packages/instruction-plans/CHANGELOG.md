@@ -1,5 +1,16 @@
 # @solana/instruction-plans
 
+## 3.0.3
+
+### Patch Changes
+
+- Updated dependencies [[`a085209`](https://github.com/anza-xyz/kit/commit/a085209a4ad36c4be7e905f3521e70abff6231ac)]:
+    - @solana/errors@3.0.3
+    - @solana/instructions@3.0.3
+    - @solana/transaction-messages@3.0.3
+    - @solana/transactions@3.0.3
+    - @solana/promises@3.0.3
+
 ## 3.0.2
 
 ### Patch Changes

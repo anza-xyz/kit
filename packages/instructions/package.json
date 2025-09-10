@@ -1,6 +1,6 @@
 {
     "name": "@solana/instructions",
-    "version": "3.0.2",
+    "version": "3.0.3",
     "description": "Helpers for creating transaction instructions",
     "exports": {
         "edge-light": {
