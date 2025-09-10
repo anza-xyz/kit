@@ -1,6 +1,6 @@
 {
     "name": "@solana/subscribable",
-    "version": "3.0.2",
+    "version": "3.0.3",
     "description": "Helpers for creating subscription-based event emitters",
     "exports": {
         "edge-light": {

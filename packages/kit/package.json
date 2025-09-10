@@ -1,6 +1,6 @@
 {
     "name": "@solana/kit",
-    "version": "3.0.2",
+    "version": "3.0.3",
     "description": "Solana Javascript API",
     "exports": {
         "edge-light": {

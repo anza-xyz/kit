@@ -1,6 +1,6 @@
 {
     "name": "@solana/codecs-numbers",
-    "version": "3.0.2",
+    "version": "3.0.3",
     "description": "Codecs for numbers of different sizes and endianness",
     "exports": {
         "edge-light": {

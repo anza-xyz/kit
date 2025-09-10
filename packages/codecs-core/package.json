@@ -1,6 +1,6 @@
 {
     "name": "@solana/codecs-core",
-    "version": "3.0.2",
+    "version": "3.0.3",
     "description": "Core types and helpers for encoding and decoding byte arrays on Solana",
     "exports": {
         "edge-light": {
