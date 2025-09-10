@@ -4,6 +4,7 @@ import {
     SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_ADDRESS_LOOKUP_TABLE_INDEX_OUT_OF_RANGE,
     SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_FEE_PAYER_MISSING,
     SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_PROGRAM_ADDRESS_NOT_FOUND,
+    SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED,
     SolanaError,
 } from '@solana/errors';
 import { pipe } from '@solana/functional';
@@ -20,7 +21,7 @@ import { isAdvanceNonceAccountInstruction } from './durable-nonce-instruction';
 import { setTransactionMessageFeePayer, TransactionMessageWithFeePayer } from './fee-payer';
 import { appendTransactionMessageInstruction } from './instructions';
 import { TransactionMessageWithLifetime } from './lifetime';
-import { BaseTransactionMessage, TransactionVersion } from './transaction-message';
+import { BaseTransactionMessage, MAX_SUPPORTED_TRANSACTION_VERSION, TransactionVersion } from './transaction-message';
 
 function getAccountMetas(message: CompiledTransactionMessage): AccountMeta[] {
     const { header } = message;
@@ -238,6 +239,15 @@ export function decompileTransactionMessage(
         firstInstruction,
         config?.lastValidBlockHeight,
     );
+
+    if (
+        compiledTransactionMessage.version !== 'legacy' &&
+        compiledTransactionMessage.version > MAX_SUPPORTED_TRANSACTION_VERSION
+    ) {
+        throw new SolanaError(SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED, {
+            actualVersion: compiledTransactionMessage.version,
+        });
+    }
 
     return pipe(
         createTransactionMessage({ version: compiledTransactionMessage.version as TransactionVersion }),
