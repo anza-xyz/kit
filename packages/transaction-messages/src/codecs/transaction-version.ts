@@ -6,9 +6,13 @@ import {
     VariableSizeDecoder,
     VariableSizeEncoder,
 } from '@solana/codecs-core';
-import { SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_OUT_OF_RANGE, SolanaError } from '@solana/errors';
+import {
+    SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED,
+    SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_OUT_OF_RANGE,
+    SolanaError,
+} from '@solana/errors';
 
-import { TransactionVersion } from '../transaction-message';
+import { MAX_SUPPORTED_TRANSACTION_VERSION, TransactionVersion } from '../transaction-message';
 
 const VERSION_FLAG_MASK = 0x80;
 
@@ -29,6 +33,12 @@ export function getTransactionVersionEncoder(): VariableSizeEncoder<TransactionV
             if (value < 0 || value > 127) {
                 throw new SolanaError(SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_OUT_OF_RANGE, {
                     actualVersion: value,
+                });
+            }
+
+            if (value > MAX_SUPPORTED_TRANSACTION_VERSION) {
+                throw new SolanaError(SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED, {
+                    unsupportedVersion: value,
                 });
             }
             bytes.set([value | VERSION_FLAG_MASK], offset);
@@ -53,8 +63,13 @@ export function getTransactionVersionDecoder(): VariableSizeDecoder<TransactionV
                 // No version flag set; it's a legacy (unversioned) transaction.
                 return ['legacy', offset];
             } else {
-                const version = (firstByte ^ VERSION_FLAG_MASK) as TransactionVersion;
-                return [version, offset + 1];
+                const version = firstByte ^ VERSION_FLAG_MASK;
+                if (version > MAX_SUPPORTED_TRANSACTION_VERSION) {
+                    throw new SolanaError(SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED, {
+                        unsupportedVersion: version,
+                    });
+                }
+                return [version as TransactionVersion, offset + 1];
             }
         },
     });

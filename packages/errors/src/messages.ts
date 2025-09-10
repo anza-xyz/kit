@@ -205,6 +205,7 @@ import {
     SOLANA_ERROR__TRANSACTION__INVOKED_PROGRAMS_MUST_NOT_BE_WRITABLE,
     SOLANA_ERROR__TRANSACTION__MESSAGE_SIGNATURES_MISMATCH,
     SOLANA_ERROR__TRANSACTION__SIGNATURES_MISSING,
+    SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED,
     SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_OUT_OF_RANGE,
     SOLANA_ERROR__TRANSACTION_ERROR__ACCOUNT_BORROW_OUTSTANDING,
     SOLANA_ERROR__TRANSACTION_ERROR__ACCOUNT_IN_USE,
@@ -648,4 +649,6 @@ export const SolanaErrorMessages: Readonly<{
     [SOLANA_ERROR__TRANSACTION__SIGNATURES_MISSING]: 'Transaction is missing signatures for addresses: $addresses.',
     [SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_OUT_OF_RANGE]:
         'Transaction version must be in the range [0, 127]. `$actualVersion` given',
+    [SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED]:
+        'This version of Kit does not support decoding transactions with version $unsupportedVersion. The current max supported version is 0.',
 };

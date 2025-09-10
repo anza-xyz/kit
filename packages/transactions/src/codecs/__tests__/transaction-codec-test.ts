@@ -2,7 +2,11 @@ import '@solana/test-matchers/toBeFrozenObject';
 
 import { Address } from '@solana/addresses';
 import { ReadonlyUint8Array, VariableSizeDecoder, VariableSizeEncoder } from '@solana/codecs-core';
-import { SOLANA_ERROR__TRANSACTION__MESSAGE_SIGNATURES_MISMATCH, SolanaError } from '@solana/errors';
+import {
+    SOLANA_ERROR__TRANSACTION__MESSAGE_SIGNATURES_MISMATCH,
+    SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED,
+    SolanaError,
+} from '@solana/errors';
 import { SignatureBytes } from '@solana/keys';
 
 import { Transaction, TransactionMessageBytes } from '../../transaction';
@@ -166,6 +170,40 @@ describe.each([getTransactionDecoder, getTransactionCodec])('Transaction decoder
 
             const decoded = decoder.decode(encodedTransaction);
             expect(decoded.signatures).toBeFrozenObject();
+        });
+
+        it('should fatal for unsupported transaction version 1', () => {
+            const signature = new Uint8Array(64).fill(0) as ReadonlyUint8Array as SignatureBytes;
+            const messageBytes = new Uint8Array([
+                /** VERSION HEADER */
+                129, // 1 + version mask
+
+                /** MESSAGE HEADER */
+                1, // numSignerAccounts
+                0, // numReadonlySignerAccount
+                1, // numReadonlyNonSignerAccounts
+
+                /** STATIC ADDRESSES */
+                2, // Number of static accounts
+                ...addressBytes,
+                ...new Uint8Array(64).fill(12),
+
+                /** REST OF TRANSACTION MESSAGE (arbitrary) */
+                ...new Uint8Array(100).fill(1),
+            ]) as ReadonlyUint8Array as TransactionMessageBytes;
+
+            const encodedTransaction = new Uint8Array([
+                /** SIGNATURES */
+                1, // num signatures
+                ...signature,
+
+                /** MESSAGE */
+                ...messageBytes,
+            ]);
+
+            expect(() => decoder.decode(encodedTransaction)).toThrow(
+                new SolanaError(SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED, { unsupportedVersion: 1 }),
+            );
         });
     });
 
