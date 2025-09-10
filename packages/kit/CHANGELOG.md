@@ -1,4 +1,4 @@
-# @solana/web3.js
+# @solana/kit
 
 ## 3.0.0
 
