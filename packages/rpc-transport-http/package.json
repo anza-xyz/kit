@@ -77,7 +77,7 @@
         "@solana/errors": "workspace:*",
         "@solana/rpc-spec": "workspace:*",
         "@solana/rpc-spec-types": "workspace:*",
-        "undici-types": "^7.15.0"
+        "undici-types": "^7.16.0"
     },
     "devDependencies": {
         "tinybench": "^5.0.1",
