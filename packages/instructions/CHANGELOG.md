@@ -1,5 +1,13 @@
 # @solana/instructions
 
+## 4.0.0
+
+### Patch Changes
+
+- Updated dependencies [[`9fa8465`](https://github.com/anza-xyz/kit/commit/9fa8465bf0f264f5a9181c805a0d85cb1ecc2768)]:
+    - @solana/errors@4.0.0
+    - @solana/codecs-core@4.0.0
+
 ## 3.0.0
 
 ### Major Changes
