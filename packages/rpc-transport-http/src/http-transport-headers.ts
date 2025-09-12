@@ -33,7 +33,6 @@ type ForbiddenHeaders =
     | 'Expect'
     | 'Host'
     | 'Keep-Alive'
-    | 'Origin'
     | 'Permissions-Policy'
     | 'Referer'
     | 'TE'
@@ -64,7 +63,6 @@ const FORBIDDEN_HEADERS: Record<string, boolean> = /* @__PURE__ */ Object.assign
         expect: true,
         host: true,
         'keep-alive': true,
-        origin: true,
         'permissions-policy': true,
         // Prefix matching is implemented in code, below.
         // 'proxy-': true,
