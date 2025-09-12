@@ -48,7 +48,7 @@ type VersionedCompiledTransactionMessage = BaseCompiledTransactionMessage &
     Readonly<{
         /** A list of address tables and the accounts that this transaction loads from them */
         addressTableLookups?: ReturnType<typeof getCompiledAddressTableLookups>;
-        version: number;
+        version: 0;
     }>;
 
 /**

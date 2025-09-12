@@ -4,11 +4,9 @@ import { Address } from '@solana/addresses';
 import {
     SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_ADDRESS_LOOKUP_TABLE_CONTENTS_MISSING,
     SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_ADDRESS_LOOKUP_TABLE_INDEX_OUT_OF_RANGE,
-    SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED,
     SolanaError,
 } from '@solana/errors';
 import { AccountLookupMeta, AccountMeta, AccountRole, Instruction } from '@solana/instructions';
-import { Blockhash } from '@solana/rpc-types';
 
 import { CompiledTransactionMessage, CompiledTransactionMessageWithLifetime } from '../compile';
 import { decompileTransactionMessage } from '../decompile-message';
@@ -1541,28 +1539,6 @@ describe('decompileTransactionMessage', () => {
                     ),
                 );
             });
-        });
-    });
-
-    describe('for a transaction with unsupported transaction version 1', () => {
-        it('throws', () => {
-            const compiledTransaction: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
-                header: {
-                    numReadonlyNonSignerAccounts: 0,
-                    numReadonlySignerAccounts: 0,
-                    numSignerAccounts: 1,
-                },
-                instructions: [],
-                lifetimeToken: 'abc' as Blockhash,
-                staticAccounts: [feePayer],
-                version: 1,
-            };
-
-            const fn = () => decompileTransactionMessage(compiledTransaction);
-
-            expect(fn).toThrow(
-                new SolanaError(SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED, { version: 1 }),
-            );
         });
     });
 });
