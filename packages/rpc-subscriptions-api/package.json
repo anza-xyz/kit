@@ -1,6 +1,6 @@
 {
     "name": "@solana/rpc-subscriptions-api",
-    "version": "3.0.0",
+    "version": "4.0.0",
     "description": "Defines all default Solana RPC subscriptions as types",
     "homepage": "https://www.solanakit.com/api#solanarpc-subscriptions-api",
     "exports": {
