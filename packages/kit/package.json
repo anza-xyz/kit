@@ -84,6 +84,7 @@
         "@solana/instructions": "workspace:*",
         "@solana/instruction-plans": "workspace:*",
         "@solana/keys": "workspace:*",
+        "@solana/offchain-messages": "workspace:*",
         "@solana/programs": "workspace:*",
         "@solana/rpc": "workspace:*",
         "@solana/rpc-parsed-types": "workspace:*",
