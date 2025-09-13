@@ -644,7 +644,7 @@ export const SolanaErrorMessages: Readonly<{
         'This transaction includes an address (`$programAddress`) which is both invoked and ' +
         'marked writable. Program addresses may not be writable',
     [SOLANA_ERROR__TRANSACTION__MESSAGE_SIGNATURES_MISMATCH]:
-        'The transaction message expected the transaction to have $signerAddressesLength signatures, got $signaturesLength.',
+        'The transaction message expected the transaction to have $numRequiredSignatures signatures, got $signaturesLength.',
     [SOLANA_ERROR__TRANSACTION__SIGNATURES_MISSING]: 'Transaction is missing signatures for addresses: $addresses.',
     [SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_OUT_OF_RANGE]:
         'Transaction version must be in the range [0, 127]. `$actualVersion` given',
