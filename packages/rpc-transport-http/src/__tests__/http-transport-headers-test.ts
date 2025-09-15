@@ -27,7 +27,6 @@ describe('assertIsAllowedHttpRequestHeader', () => {
         'Expect',
         'Host',
         'Keep-Alive',
-        'Origin',
         'Permissions-Policy',
         'Proxy-Anything',
         'Proxy-Authenticate',
@@ -60,6 +59,17 @@ describe('assertIsAllowedHttpRequestHeader', () => {
             }).toThrow(
                 new SolanaError(SOLANA_ERROR__RPC__TRANSPORT_HTTP_HEADER_FORBIDDEN, {
                     headers: ['Accept-Encoding'],
+                }),
+            );
+        });
+    }
+    if (__BROWSER__) {
+        it('throws when called with the `Origin` header', () => {
+            expect(() => {
+                assertIsAllowedHttpRequestHeaders({ Origin: 'https://spoofed.site' });
+            }).toThrow(
+                new SolanaError(SOLANA_ERROR__RPC__TRANSPORT_HTTP_HEADER_FORBIDDEN, {
+                    headers: ['Origin'],
                 }),
             );
         });
