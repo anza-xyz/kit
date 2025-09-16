@@ -1,6 +1,6 @@
 {
     "name": "@solana/subscribable",
-    "version": "3.0.0",
+    "version": "4.0.0",
     "description": "Helpers for creating subscription-based event emitters",
     "homepage": "https://www.solanakit.com/api#solanasubscribable",
     "exports": {
