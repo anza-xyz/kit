@@ -134,6 +134,14 @@ import {
     SOLANA_ERROR__MALFORMED_JSON_RPC_ERROR,
     SOLANA_ERROR__MALFORMED_NUMBER_STRING,
     SOLANA_ERROR__NONCE_ACCOUNT_NOT_FOUND,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__APPLICATION_DOMAIN_STRING_LENGTH_OUT_OF_RANGE,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__INVALID_APPLICATION_DOMAIN_BYTE_LENGTH,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__MAXIMUM_LENGTH_EXCEEDED,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__MESSAGE_FORMAT_MISMATCH,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__MESSAGE_LENGTH_MISMATCH,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__NUM_SIGNATURES_MISMATCH,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURES_MISSING,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__VERSION_NUMBER_NOT_SUPPORTED,
     SOLANA_ERROR__RPC__API_PLAN_MISSING_FOR_RPC_METHOD,
     SOLANA_ERROR__RPC__INTEGER_OVERFLOW,
     SOLANA_ERROR__RPC__TRANSPORT_HTTP_ERROR,
@@ -526,6 +534,35 @@ export type SolanaErrorContext = DefaultUnspecifiedErrorContextToUndefined<
         };
         [SOLANA_ERROR__NONCE_ACCOUNT_NOT_FOUND]: {
             nonceAccountAddress: string;
+        };
+        [SOLANA_ERROR__OFFCHAIN_MESSAGE__APPLICATION_DOMAIN_STRING_LENGTH_OUT_OF_RANGE]: {
+            actualLength: number;
+        };
+        [SOLANA_ERROR__OFFCHAIN_MESSAGE__INVALID_APPLICATION_DOMAIN_BYTE_LENGTH]: {
+            actualLength: number;
+        };
+        [SOLANA_ERROR__OFFCHAIN_MESSAGE__MAXIMUM_LENGTH_EXCEEDED]: {
+            actualBytes: number;
+            maxBytes: number;
+        };
+        [SOLANA_ERROR__OFFCHAIN_MESSAGE__MESSAGE_FORMAT_MISMATCH]: {
+            actualMessageFormat: number;
+            expectedMessageFormat: number;
+        };
+        [SOLANA_ERROR__OFFCHAIN_MESSAGE__MESSAGE_LENGTH_MISMATCH]: {
+            actualLength: number;
+            specifiedLength: number;
+        };
+        [SOLANA_ERROR__OFFCHAIN_MESSAGE__NUM_SIGNATURES_MISMATCH]: {
+            numRequiredSignatures: number;
+            signaturesLength: number;
+            signerAddresses: string[];
+        };
+        [SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURES_MISSING]: {
+            addresses: string[];
+        };
+        [SOLANA_ERROR__OFFCHAIN_MESSAGE__VERSION_NUMBER_NOT_SUPPORTED]: {
+            unsupportedVersion: number;
         };
         [SOLANA_ERROR__RPC_SUBSCRIPTIONS__CANNOT_CREATE_SUBSCRIPTION_PLAN]: {
             notificationName: string;
