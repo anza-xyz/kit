@@ -68,7 +68,11 @@ export function assertIsSignature(putativeSignature: string): asserts putativeSi
     }
     // Slow-path; actually attempt to decode the input string.
     const bytes = base58Encoder.encode(putativeSignature);
-    const numBytes = bytes.byteLength;
+    assertIsSignatureBytes(bytes);
+}
+
+export function assertIsSignatureBytes(putativeSignatureBytes: ReadonlyUint8Array): asserts putativeSignatureBytes is SignatureBytes {
+    const numBytes = putativeSignatureBytes.byteLength;
     if (numBytes !== 64) {
         throw new SolanaError(SOLANA_ERROR__KEYS__INVALID_SIGNATURE_BYTE_LENGTH, {
             actualLength: numBytes,
@@ -110,11 +114,12 @@ export function isSignature(putativeSignature: string): putativeSignature is Sig
     }
     // Slow-path; actually attempt to decode the input string.
     const bytes = base58Encoder.encode(putativeSignature);
-    const numBytes = bytes.byteLength;
-    if (numBytes !== 64) {
-        return false;
-    }
-    return true;
+    return isSignatureBytes(bytes);
+}
+
+export function isSignatureBytes(putativeSignatureBytes: ReadonlyUint8Array): putativeSignatureBytes is SignatureBytes {
+    return putativeSignatureBytes.byteLength === 64;
+    
 }
 
 /**
