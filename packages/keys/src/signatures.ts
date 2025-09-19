@@ -160,6 +160,11 @@ export function signature(putativeSignature: string): Signature {
     return putativeSignature;
 }
 
+export function signatureBytes(putativeSignatureBytes: ReadonlyUint8Array): SignatureBytes {
+    assertIsSignatureBytes(putativeSignatureBytes);
+    return putativeSignatureBytes;
+}
+
 /**
  * Given a public [`CryptoKey`](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey), some
  * {@link SignatureBytes}, and a `Uint8Array` of data, this method will return `true` if the
