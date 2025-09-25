@@ -10,17 +10,13 @@ describe('fromVersionedTransaction', () => {
         const messageBytes = new Uint8Array([1, 2, 3, 4]);
         const transaction = {
             message: {
-                getAccountKeys() {
-                    return {
-                        staticAccountKeys: [],
-                    };
-                },
                 header: {
                     numRequiredSignatures: 0,
                 },
                 serialize() {
                     return messageBytes;
                 },
+                staticAccountKeys: [],
             },
             signatures: [],
         } as unknown as VersionedTransaction;
@@ -32,17 +28,13 @@ describe('fromVersionedTransaction', () => {
     it('freezes the signature map', () => {
         const transaction = {
             message: {
-                getAccountKeys() {
-                    return {
-                        staticAccountKeys: [],
-                    };
-                },
                 header: {
                     numRequiredSignatures: 0,
                 },
                 serialize() {
                     return new Uint8Array();
                 },
+                staticAccountKeys: [],
             },
             signatures: [],
         } as unknown as VersionedTransaction;
@@ -55,17 +47,13 @@ describe('fromVersionedTransaction', () => {
         const signature = new Uint8Array([1, 2, 3, 4]);
         const transaction = {
             message: {
-                getAccountKeys() {
-                    return {
-                        staticAccountKeys: [new PublicKey('7EqQdEULxWcraVx3mXKFjc84LhCkMGZCkRuDpvcMwJeK')],
-                    };
-                },
                 header: {
                     numRequiredSignatures: 1,
                 },
                 serialize() {
                     return new Uint8Array();
                 },
+                staticAccountKeys: [new PublicKey('7EqQdEULxWcraVx3mXKFjc84LhCkMGZCkRuDpvcMwJeK')],
             },
             signatures: [signature],
         } as unknown as VersionedTransaction;
@@ -80,17 +68,13 @@ describe('fromVersionedTransaction', () => {
         const nullSignature = new Uint8Array(64).fill(0);
         const transaction = {
             message: {
-                getAccountKeys() {
-                    return {
-                        staticAccountKeys: [new PublicKey('7EqQdEULxWcraVx3mXKFjc84LhCkMGZCkRuDpvcMwJeK')],
-                    };
-                },
                 header: {
                     numRequiredSignatures: 1,
                 },
                 serialize() {
                     return new Uint8Array();
                 },
+                staticAccountKeys: [new PublicKey('7EqQdEULxWcraVx3mXKFjc84LhCkMGZCkRuDpvcMwJeK')],
             },
             signatures: [nullSignature],
         } as unknown as VersionedTransaction;
@@ -107,21 +91,17 @@ describe('fromVersionedTransaction', () => {
         const signature3 = new Uint8Array(64).fill(3);
         const transaction = {
             message: {
-                getAccountKeys() {
-                    return {
-                        staticAccountKeys: [
-                            new PublicKey('7EqQdEULxWcraVx3mXKFjc84LhCkMGZCkRuDpvcMwJeK'),
-                            new PublicKey('9A87Qt8sxxLMe7hcrjC4cPnho1CwWKRpk84ZTRPyvWNw'),
-                            new PublicKey('F7Kzv7G6p1PvHXL1xXLPTm4myKWpLjnVphCV8ABZJfgT'),
-                        ],
-                    };
-                },
                 header: {
                     numRequiredSignatures: 3,
                 },
                 serialize() {
                     return new Uint8Array();
                 },
+                staticAccountKeys: [
+                    new PublicKey('7EqQdEULxWcraVx3mXKFjc84LhCkMGZCkRuDpvcMwJeK'),
+                    new PublicKey('9A87Qt8sxxLMe7hcrjC4cPnho1CwWKRpk84ZTRPyvWNw'),
+                    new PublicKey('F7Kzv7G6p1PvHXL1xXLPTm4myKWpLjnVphCV8ABZJfgT'),
+                ],
             },
             signatures: [signature1, signature2, signature3],
         } as unknown as VersionedTransaction;
@@ -138,21 +118,17 @@ describe('fromVersionedTransaction', () => {
         const nullSignature = new Uint8Array(64).fill(0);
         const transaction = {
             message: {
-                getAccountKeys() {
-                    return {
-                        staticAccountKeys: [
-                            new PublicKey('7EqQdEULxWcraVx3mXKFjc84LhCkMGZCkRuDpvcMwJeK'),
-                            new PublicKey('9A87Qt8sxxLMe7hcrjC4cPnho1CwWKRpk84ZTRPyvWNw'),
-                            new PublicKey('F7Kzv7G6p1PvHXL1xXLPTm4myKWpLjnVphCV8ABZJfgT'),
-                        ],
-                    };
-                },
                 header: {
                     numRequiredSignatures: 3,
                 },
                 serialize() {
                     return new Uint8Array();
                 },
+                staticAccountKeys: [
+                    new PublicKey('7EqQdEULxWcraVx3mXKFjc84LhCkMGZCkRuDpvcMwJeK'),
+                    new PublicKey('9A87Qt8sxxLMe7hcrjC4cPnho1CwWKRpk84ZTRPyvWNw'),
+                    new PublicKey('F7Kzv7G6p1PvHXL1xXLPTm4myKWpLjnVphCV8ABZJfgT'),
+                ],
             },
             signatures: [nullSignature, nullSignature, nullSignature],
         } as unknown as VersionedTransaction;
@@ -171,21 +147,17 @@ describe('fromVersionedTransaction', () => {
         const signature3 = new Uint8Array(64).fill(3);
         const transaction = {
             message: {
-                getAccountKeys() {
-                    return {
-                        staticAccountKeys: [
-                            new PublicKey('7EqQdEULxWcraVx3mXKFjc84LhCkMGZCkRuDpvcMwJeK'),
-                            new PublicKey('9A87Qt8sxxLMe7hcrjC4cPnho1CwWKRpk84ZTRPyvWNw'),
-                            new PublicKey('F7Kzv7G6p1PvHXL1xXLPTm4myKWpLjnVphCV8ABZJfgT'),
-                        ],
-                    };
-                },
                 header: {
                     numRequiredSignatures: 3,
                 },
                 serialize() {
                     return new Uint8Array();
                 },
+                staticAccountKeys: [
+                    new PublicKey('7EqQdEULxWcraVx3mXKFjc84LhCkMGZCkRuDpvcMwJeK'),
+                    new PublicKey('9A87Qt8sxxLMe7hcrjC4cPnho1CwWKRpk84ZTRPyvWNw'),
+                    new PublicKey('F7Kzv7G6p1PvHXL1xXLPTm4myKWpLjnVphCV8ABZJfgT'),
+                ],
             },
             signatures: [signature1, nullSignature, signature3],
         } as unknown as VersionedTransaction;
@@ -202,20 +174,16 @@ describe('fromVersionedTransaction', () => {
         const messageBytes = new Uint8Array([1, 2, 3, 4]);
         const transaction = {
             message: {
-                getAccountKeys() {
-                    return {
-                        staticAccountKeys: [
-                            new PublicKey('7EqQdEULxWcraVx3mXKFjc84LhCkMGZCkRuDpvcMwJeK'),
-                            new PublicKey('9A87Qt8sxxLMe7hcrjC4cPnho1CwWKRpk84ZTRPyvWNw'),
-                        ],
-                    };
-                },
                 header: {
                     numRequiredSignatures: 2,
                 },
                 serialize() {
                     return messageBytes;
                 },
+                staticAccountKeys: [
+                    new PublicKey('7EqQdEULxWcraVx3mXKFjc84LhCkMGZCkRuDpvcMwJeK'),
+                    new PublicKey('9A87Qt8sxxLMe7hcrjC4cPnho1CwWKRpk84ZTRPyvWNw'),
+                ],
             },
             signatures: [new Uint8Array(64).fill(1)],
         } as unknown as VersionedTransaction;
