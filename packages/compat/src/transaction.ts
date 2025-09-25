@@ -33,7 +33,7 @@ function convertSignatures(transaction: VersionedTransaction, staticAccountKeys:
  */
 export function fromVersionedTransaction(transaction: VersionedTransaction): Transaction {
     const { message } = transaction;
-    const { staticAccountKeys } = message.getAccountKeys();
+    const staticAccountKeys = message.staticAccountKeys;
 
     const { numRequiredSignatures } = message.header;
     if (numRequiredSignatures !== transaction.signatures.length) {
