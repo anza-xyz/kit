@@ -43,7 +43,7 @@ describe('signatureBytes', () => {
         const coerced = signatureBytes(raw);
         expect(coerced).toBe(raw);
     });
-    it.each([63,65])('throws on a `SignatureBytes` whose byte length is %s', actualLength => {
+    it.each([63, 65])('throws on a `SignatureBytes` whose byte length is %s', actualLength => {
         const thisThrows = () => signatureBytes(new Uint8Array(actualLength));
         expect(thisThrows).toThrow(
             new SolanaError(SOLANA_ERROR__KEYS__INVALID_SIGNATURE_BYTE_LENGTH, {

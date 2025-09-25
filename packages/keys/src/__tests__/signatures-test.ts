@@ -2,7 +2,7 @@ import { createEncoder, VariableSizeEncoder } from '@solana/codecs-core';
 import { getBase58Encoder } from '@solana/codecs-strings';
 
 import { createPrivateKeyFromBytes } from '../private-key';
-import { assertIsSignatureBytes, signatureBytes, SignatureBytes, signBytes, verifySignature } from '../signatures';
+import { assertIsSignatureBytes, SignatureBytes, signatureBytes, signBytes, verifySignature } from '../signatures';
 
 jest.mock('@solana/codecs-strings', () => ({
     ...jest.requireActual('@solana/codecs-strings'),
@@ -144,35 +144,35 @@ describe('assertIsSignature()', () => {
 });
 
 describe('assertIsSignatureBytes()', () => {
-        it('throws when supplied an empty byte array', () => {
-            expect(() => {
-                assertIsSignatureBytes(new Uint8Array(0));
-            }).toThrow();
-        });
-        it('throws when the byte array has a length other than 64 bytes', () => {
-            expect(() => {
-                assertIsSignatureBytes(
-                    new Uint8Array(63),
-                );
-            }).toThrow();
-        });
-        it('does not throw when supplied a base-58 encoded signature', () => {
-            expect(() => {
-                // 64 bytes [0, ..., 0]
-                assertIsSignatureBytes(new Uint8Array(64));
-
-                // example signatures
-                assertIsSignatureBytes(
-                    MOCK_DATA_SIGNATURE
-                );
-                jest.mocked(getBase58Encoder).mockReturnValue(originalGetBase58Encoder);
-                assertIsSignatureBytes(getBase58Encoder().encode("5HkW5GttYoahVHaujuxEyfyq7RwvoKpc94ko5Fq9GuYdyhejg9cHcqm1MjEvHsjaADRe6hVBqB2E4RQgGgxeA2su")) 
-            }).not.toThrow();
-        });
-        it('returns undefined when supplied a 64-byte byte array', () => {
+    it('throws when supplied an empty byte array', () => {
+        expect(() => {
+            assertIsSignatureBytes(new Uint8Array(0));
+        }).toThrow();
+    });
+    it('throws when the byte array has a length other than 64 bytes', () => {
+        expect(() => {
+            assertIsSignatureBytes(new Uint8Array(63));
+        }).toThrow();
+    });
+    it('does not throw when supplied a base-58 encoded signature', () => {
+        expect(() => {
             // 64 bytes [0, ..., 0]
-            expect(assertIsSignatureBytes(new Uint8Array(64))).toBeUndefined();
-        });
+            assertIsSignatureBytes(new Uint8Array(64));
+
+            // example signatures
+            assertIsSignatureBytes(MOCK_DATA_SIGNATURE);
+            jest.mocked(getBase58Encoder).mockReturnValue(originalGetBase58Encoder);
+            assertIsSignatureBytes(
+                getBase58Encoder().encode(
+                    '5HkW5GttYoahVHaujuxEyfyq7RwvoKpc94ko5Fq9GuYdyhejg9cHcqm1MjEvHsjaADRe6hVBqB2E4RQgGgxeA2su',
+                ),
+            );
+        }).not.toThrow();
+    });
+    it('returns undefined when supplied a 64-byte byte array', () => {
+        // 64 bytes [0, ..., 0]
+        expect(assertIsSignatureBytes(new Uint8Array(64))).toBeUndefined();
+    });
 });
 
 describe('sign', () => {
