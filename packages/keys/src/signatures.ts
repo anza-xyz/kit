@@ -147,6 +147,25 @@ export function isSignature(putativeSignature: string): putativeSignature is Sig
     return isSignatureBytes(bytes);
 }
 
+/**
+ * A type guard that accepts a `ReadonlyUint8Array` as input. It will both return `true` if the `ReadonlyUint8Array` conforms to
+ * the {@link SignatureBytes} type and will refine the type for use in your program.
+ *
+ * @example
+ * ```ts
+ * import { isSignatureBytes } from '@solana/keys';
+ *
+ * if (isSignatureBytes(signatureBytes)) {
+ *     // At this point, `signatureBytes` has been refined to a
+ *     // `SignatureBytes` that can be used with `verifySignature`.
+ *     if (!(await verifySignature(publicKey, signatureBytes, data))) {
+ *         throw new Error('The data were *not* signed by the private key associated with `publicKey`');
+ *     }
+ * } else {
+ *     setError(`${signatureBytes} is not a 64-byte Ed25519 signature`);
+ * }
+ * ```
+ */
 export function isSignatureBytes(putativeSignatureBytes: ReadonlyUint8Array): putativeSignatureBytes is SignatureBytes {
     return putativeSignatureBytes.byteLength === 64;
 }
