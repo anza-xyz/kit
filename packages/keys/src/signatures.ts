@@ -71,7 +71,37 @@ export function assertIsSignature(putativeSignature: string): asserts putativeSi
     assertIsSignatureBytes(bytes);
 }
 
-export function assertIsSignatureBytes(putativeSignatureBytes: ReadonlyUint8Array): asserts putativeSignatureBytes is SignatureBytes {
+/**
+ * Asserts that an arbitrary `ReadonlyUint8Array` is an Ed25519 signature.
+ *
+ * Useful when you receive a `ReadonlyUint8Array` from an external interface (like the browser wallets' `signMessage` API) that you expect to
+ * represent an Ed25519 signature.
+ *
+ * @example
+ * ```ts
+ * import { assertIsSignatureBytes } from '@solana/keys';
+ *
+ * // Imagine a function that verifies a signature.
+ * function verifySignature() {
+ *     // We know only that the input conforms to the `ReadonlyUint8Array` type.
+ *     const signatureBytes: ReadonlyUint8Array = signatureBytesInput;
+ *     try {
+ *         // If this type assertion function doesn't throw, then
+ *         // Typescript will upcast `signatureBytes` to `SignatureBytes`.
+ *         assertIsSignatureBytes(signatureBytes);
+ *         // At this point, `signatureBytes` is a `SignatureBytes` that can be used with `verifySignature`.
+ *         if (!(await verifySignature(publicKey, signatureBytes, data))) {
+ *             throw new Error('The data were *not* signed by the private key associated with `publicKey`');
+ *         }
+ *     } catch (e) {
+ *         // `signatureBytes` turned out not to be a 64-byte Ed25519 signature
+ *     }
+ * }
+ * ```
+ */
+export function assertIsSignatureBytes(
+    putativeSignatureBytes: ReadonlyUint8Array,
+): asserts putativeSignatureBytes is SignatureBytes {
     const numBytes = putativeSignatureBytes.byteLength;
     if (numBytes !== 64) {
         throw new SolanaError(SOLANA_ERROR__KEYS__INVALID_SIGNATURE_BYTE_LENGTH, {
@@ -119,7 +149,6 @@ export function isSignature(putativeSignature: string): putativeSignature is Sig
 
 export function isSignatureBytes(putativeSignatureBytes: ReadonlyUint8Array): putativeSignatureBytes is SignatureBytes {
     return putativeSignatureBytes.byteLength === 64;
-    
 }
 
 /**
@@ -160,6 +189,20 @@ export function signature(putativeSignature: string): Signature {
     return putativeSignature;
 }
 
+/**
+ * This helper combines _asserting_ that a `ReadonlyUint8Array` is an Ed25519 signature with _coercing_ it to the
+ * {@link SignatureBytes} type. It's best used with untrusted input.
+ *
+ * @example
+ * ```ts
+ * import { signatureBytes } from '@solana/keys';
+ *
+ * const signature = signatureBytes(userSuppliedSignatureBytes);
+ * if (!(await verifySignature(publicKey, signature, data))) {
+ *     throw new Error('The data were *not* signed by the private key associated with `publicKey`');
+ * }
+ * ```
+ */
 export function signatureBytes(putativeSignatureBytes: ReadonlyUint8Array): SignatureBytes {
     assertIsSignatureBytes(putativeSignatureBytes);
     return putativeSignatureBytes;
