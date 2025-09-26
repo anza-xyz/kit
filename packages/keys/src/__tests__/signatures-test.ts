@@ -154,7 +154,7 @@ describe('assertIsSignatureBytes()', () => {
             assertIsSignatureBytes(new Uint8Array(63));
         }).toThrow();
     });
-    it('does not throw when supplied a base-58 encoded signature', () => {
+    it('does not throw when supplied a 64-byte signature as a bytearray', () => {
         expect(() => {
             // 64 bytes [0, ..., 0]
             assertIsSignatureBytes(new Uint8Array(64));
