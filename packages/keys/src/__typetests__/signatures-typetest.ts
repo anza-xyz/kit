@@ -29,9 +29,9 @@ import { Signature, signature, SignatureBytes, signatureBytes } from '../signatu
 
 // [DESCRIBE] SignatureBytes
 {
-    // It satisfies the `Uint8Array` brand
+    // It satisfies the `ReadonlyUint8Array` type
     {
         const signatureBytes = null as unknown as SignatureBytes;
-        signatureBytes satisfies Uint8Array;
+        signatureBytes satisfies ReadonlyUint8Array;
     }
 }
