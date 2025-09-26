@@ -164,7 +164,6 @@ describe('assertIsSignatureBytes()', () => {
             assertIsSignatureBytes(MOCK_DATA_SIGNATURE);
         }).not.toThrow();
     });
-
     it('returns undefined when supplied a 64-byte byte array', () => {
         // 64 bytes [0, ..., 0]
         expect(assertIsSignatureBytes(new Uint8Array(64))).toBeUndefined();
