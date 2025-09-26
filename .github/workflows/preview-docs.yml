@@ -21,7 +21,7 @@ env:
 
 jobs:
   preview-docs:
-    if: github.actor != 'dependabot[bot]'
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'
     permissions:
       pull-requests: write
     runs-on: ubuntu-latest
