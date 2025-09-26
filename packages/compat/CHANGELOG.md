@@ -1,5 +1,19 @@
 # @solana/compat
 
+## 4.0.0
+
+### Patch Changes
+
+- [#906](https://github.com/anza-xyz/kit/pull/906) [`eabeb3a`](https://github.com/anza-xyz/kit/commit/eabeb3ac3e0a4550f22e2a1906d19b4c3146cc8a) Thanks [@guibescos](https://github.com/guibescos)! - Fixed a bug where calling `fromVersionedTransaction()` with a `VersionedTransaction` that uses address table lookups would result in a runtime fatal
+
+- Updated dependencies [[`9fa8465`](https://github.com/anza-xyz/kit/commit/9fa8465bf0f264f5a9181c805a0d85cb1ecc2768)]:
+    - @solana/errors@4.0.0
+    - @solana/addresses@4.0.0
+    - @solana/codecs-core@4.0.0
+    - @solana/instructions@4.0.0
+    - @solana/keys@4.0.0
+    - @solana/transactions@4.0.0
+
 ## 3.0.0
 
 ### Patch Changes

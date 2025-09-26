@@ -1,5 +1,18 @@
 # @solana/rpc-transport-http
 
+## 4.0.0
+
+### Minor Changes
+
+- [#888](https://github.com/anza-xyz/kit/pull/888) [`05970df`](https://github.com/anza-xyz/kit/commit/05970dfc5706d739083d420b669ccac1266c570f) Thanks [@prashanFOMO](https://github.com/prashanFOMO)! - The React Native and Node builds now permit you to set the `Origin` header. This header continues to be forbidden in the browser build, as it features on the list of forbidden request headers: https://developer.mozilla.org/en-US/docs/Glossary/Forbidden_request_header
+
+### Patch Changes
+
+- Updated dependencies [[`9fa8465`](https://github.com/anza-xyz/kit/commit/9fa8465bf0f264f5a9181c805a0d85cb1ecc2768)]:
+    - @solana/errors@4.0.0
+    - @solana/rpc-spec@4.0.0
+    - @solana/rpc-spec-types@4.0.0
+
 ## 3.0.0
 
 ### Patch Changes

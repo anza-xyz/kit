@@ -1,5 +1,17 @@
 # @solana/rpc-graphql
 
+## 4.0.0
+
+### Major Changes
+
+- [#550](https://github.com/anza-xyz/kit/pull/550) [`ce7f91c`](https://github.com/anza-xyz/kit/commit/ce7f91c522118bd929f69f581d2d48e90d18c99a) Thanks [@steveluscher](https://github.com/steveluscher)! - Removed `rentEpoch` from the `AccountInfoBase` type. This property is no longer relevant post SIMD-215. Developers whose applications rely on this property being numeric should either eliminate it or hardcode it to `18_446_744_073_709_551_615n`.
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/codecs-strings@4.0.0
+    - @solana/fast-stable-stringify@4.0.0
+
 ## 3.0.0
 
 ### Patch Changes
