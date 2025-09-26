@@ -203,7 +203,7 @@ describe('verify', () => {
     });
     it('returns `true` when the correct signature is supplied for a given payload', async () => {
         expect.assertions(1);
-        const result = await verifySignature(mockPublicKey, signatureBytes(MOCK_DATA_SIGNATURE), MOCK_DATA);
+        const result = await verifySignature(mockPublicKey, MOCK_DATA_SIGNATURE as SignatureBytes, MOCK_DATA);
         expect(result).toBe(true);
     });
     it('returns `false` when a bad signature is supplied for a given payload', async () => {
