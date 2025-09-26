@@ -2,7 +2,7 @@ import { createEncoder, VariableSizeEncoder } from '@solana/codecs-core';
 import { getBase58Encoder } from '@solana/codecs-strings';
 
 import { createPrivateKeyFromBytes } from '../private-key';
-import { SignatureBytes, signBytes, verifySignature } from '../signatures';
+import { assertIsSignatureBytes, SignatureBytes, signBytes, verifySignature } from '../signatures';
 
 jest.mock('@solana/codecs-strings', () => ({
     ...jest.requireActual('@solana/codecs-strings'),
@@ -14,7 +14,7 @@ const MOCK_DATA_SIGNATURE = new Uint8Array([
     66, 111, 184, 228, 239, 189, 127, 46, 23, 168, 117, 69, 58, 143, 132, 164, 112, 189, 203, 228, 183, 151, 0, 23, 179,
     181, 52, 75, 112, 225, 150, 128, 184, 164, 36, 21, 101, 205, 115, 28, 127, 221, 24, 135, 229, 8, 69, 232, 16, 225,
     44, 229, 17, 236, 206, 174, 102, 207, 79, 253, 96, 7, 174, 10,
-]) as SignatureBytes;
+]);
 const MOCK_PRIVATE_KEY_BYTES = new Uint8Array([
     0xeb, 0xfa, 0x65, 0xeb, 0x93, 0xdc, 0x79, 0x15, 0x7a, 0xba, 0xde, 0xa2, 0xf7, 0x94, 0x37, 0x9d, 0xfc, 0x07, 0x1d,
     0x68, 0x86, 0x87, 0x37, 0x6d, 0xc5, 0xd5, 0xa0, 0x54, 0x12, 0x1d, 0x34, 0x4a,
@@ -143,6 +143,33 @@ describe('assertIsSignature()', () => {
     });
 });
 
+describe('assertIsSignatureBytes()', () => {
+    it('throws when supplied an empty byte array', () => {
+        expect(() => {
+            assertIsSignatureBytes(new Uint8Array(0));
+        }).toThrow();
+    });
+    it.each([63, 65])('throws when the byte array has a length of %s', length => {
+        expect(() => {
+            assertIsSignatureBytes(new Uint8Array(length));
+        }).toThrow();
+    });
+    it('does not throw when supplied a zeroed 64-byte bytearray', () => {
+        expect(() => {
+            assertIsSignatureBytes(new Uint8Array(64));
+        }).not.toThrow();
+    });
+    it('does not throw when supplied a 64-byte signature as a bytearray', () => {
+        expect(() => {
+            assertIsSignatureBytes(MOCK_DATA_SIGNATURE);
+        }).not.toThrow();
+    });
+    it('returns undefined when supplied a 64-byte byte array', () => {
+        // 64 bytes [0, ..., 0]
+        expect(assertIsSignatureBytes(new Uint8Array(64))).toBeUndefined();
+    });
+});
+
 describe('sign', () => {
     it('produces the expected signature given a private key', async () => {
         expect.assertions(1);
@@ -171,7 +198,7 @@ describe('verify', () => {
     });
     it('returns `true` when the correct signature is supplied for a given payload', async () => {
         expect.assertions(1);
-        const result = await verifySignature(mockPublicKey, MOCK_DATA_SIGNATURE, MOCK_DATA);
+        const result = await verifySignature(mockPublicKey, MOCK_DATA_SIGNATURE as SignatureBytes, MOCK_DATA);
         expect(result).toBe(true);
     });
     it('returns `false` when a bad signature is supplied for a given payload', async () => {

@@ -1,6 +1,6 @@
 import { EncodedString } from '@solana/nominal-types';
 
-import { Signature, signature } from '../signatures';
+import { Signature, signature, SignatureBytes, signatureBytes } from '../signatures';
 
 // [DESCRIBE] signature()
 {
@@ -16,5 +16,22 @@ import { Signature, signature } from '../signatures';
     {
         const signature = null as unknown as Signature;
         signature satisfies EncodedString<string, 'base58'>;
+    }
+}
+
+// [DESCRIBE] signatureBytes()
+{
+    // It returns a `SignatureBytes`
+    {
+        signatureBytes(new Uint8Array(0)) satisfies SignatureBytes;
+    }
+}
+
+// [DESCRIBE] SignatureBytes
+{
+    // It satisfies the `Uint8Array` type
+    {
+        const signatureBytes = null as unknown as SignatureBytes;
+        signatureBytes satisfies Uint8Array;
     }
 }

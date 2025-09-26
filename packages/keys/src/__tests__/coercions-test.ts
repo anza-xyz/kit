@@ -4,7 +4,7 @@ import {
     SolanaError,
 } from '@solana/errors';
 
-import { Signature, signature } from '../signatures';
+import { Signature, signature, signatureBytes } from '../signatures';
 
 describe('signature', () => {
     it('can coerce to `Signature`', () => {
@@ -29,6 +29,22 @@ describe('signature', () => {
         [65, 'ZbwsNoq6EP89sShUAKBeB26aCC3KLGNajRm5wqwr6zRPP3gErZH7erSg3332SVY7Ru6cME43qT35Z7JKPZqCoPZZ'],
     ])('throws on a `Signature` whose decoded byte length is %s', (actualLength, encodedSignature) => {
         const thisThrows = () => signature(encodedSignature);
+        expect(thisThrows).toThrow(
+            new SolanaError(SOLANA_ERROR__KEYS__INVALID_SIGNATURE_BYTE_LENGTH, {
+                actualLength,
+            }),
+        );
+    });
+});
+
+describe('signatureBytes', () => {
+    it('can coerce to `SignatureBytes`', () => {
+        const raw = new Uint8Array(64);
+        const coerced = signatureBytes(raw);
+        expect(coerced).toBe(raw);
+    });
+    it.each([63, 65])('throws on a `SignatureBytes` whose byte length is %s', actualLength => {
+        const thisThrows = () => signatureBytes(new Uint8Array(actualLength));
         expect(thisThrows).toThrow(
             new SolanaError(SOLANA_ERROR__KEYS__INVALID_SIGNATURE_BYTE_LENGTH, {
                 actualLength,
