@@ -8,6 +8,7 @@ import { FeatureNotSupportedCallout } from '../components/FeatureNotSupportedCal
 import { FeaturePanel } from '../components/FeaturePanel';
 import { SolanaSignAndSendTransactionFeaturePanel } from '../components/SolanaSignAndSendTransactionFeaturePanel';
 import { SolanaSignMessageFeaturePanel } from '../components/SolanaSignMessageFeaturePanel';
+import { SolanaSignTransactionFeaturePanel } from '../components/SolanaSignTransactionFeaturePanel';
 import { WalletAccountIcon } from '../components/WalletAccountIcon';
 import { ChainContext } from '../context/ChainContext';
 import { SelectedWalletAccountContext } from '../context/SelectedWalletAccountContext';
@@ -64,6 +65,14 @@ function Root() {
                                 resetKeys={errorBoundaryResetKeys}
                             >
                                 <SolanaSignAndSendTransactionFeaturePanel account={selectedWalletAccount} />
+                            </ErrorBoundary>
+                        </FeaturePanel>
+                        <FeaturePanel label="Sign Transaction">
+                            <ErrorBoundary
+                                FallbackComponent={FeatureNotSupportedCallout}
+                                resetKeys={errorBoundaryResetKeys}
+                            >
+                                <SolanaSignTransactionFeaturePanel account={selectedWalletAccount} />
                             </ErrorBoundary>
                         </FeaturePanel>
                     </DataList.Root>
