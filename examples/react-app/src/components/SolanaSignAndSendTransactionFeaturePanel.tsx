@@ -96,7 +96,7 @@ export function SolanaSignAndSendTransactionFeaturePanel({ account }: Props) {
                         void mutate({ address: recipientAccount.address, chain: currentChain });
                         setLastSignature(signature);
                         setSolQuantityString('');
-                    } catch (e) {
+                    } catch (e: any) {
                         setLastSignature(undefined);
                         setError(e);
                     } finally {
