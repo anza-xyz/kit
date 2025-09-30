@@ -766,6 +766,9 @@ importers:
       '@solana/signers':
         specifier: workspace:*
         version: link:../signers
+      '@solana/transaction-messages':
+        specifier: workspace:*
+        version: link:../transaction-messages
       '@solana/transactions':
         specifier: workspace:*
         version: link:../transactions
@@ -788,6 +791,9 @@ importers:
       '@solana/codecs-core':
         specifier: workspace:*
         version: link:../codecs-core
+      '@solana/rpc-types':
+        specifier: workspace:*
+        version: link:../rpc-types
       '@types/react':
         specifier: ^19
         version: 19.2.0
