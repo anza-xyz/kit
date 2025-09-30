@@ -161,6 +161,7 @@ import {
     SOLANA_ERROR__TRANSACTION__INVOKED_PROGRAMS_CANNOT_PAY_FEES,
     SOLANA_ERROR__TRANSACTION__INVOKED_PROGRAMS_MUST_NOT_BE_WRITABLE,
     SOLANA_ERROR__TRANSACTION__MESSAGE_SIGNATURES_MISMATCH,
+    SOLANA_ERROR__TRANSACTION__NONCE_ACCOUNT_CANNOT_BE_IN_LOOKUP_TABLE,
     SOLANA_ERROR__TRANSACTION__SIGNATURES_MISSING,
     SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED,
     SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_OUT_OF_RANGE,
@@ -635,6 +636,9 @@ export type SolanaErrorContext = DefaultUnspecifiedErrorContextToUndefined<
             numRequiredSignatures: number;
             signaturesLength: number;
             signerAddresses: string[];
+        };
+        [SOLANA_ERROR__TRANSACTION__NONCE_ACCOUNT_CANNOT_BE_IN_LOOKUP_TABLE]: {
+            nonce: string;
         };
         [SOLANA_ERROR__TRANSACTION__SIGNATURES_MISSING]: {
             addresses: string[];
