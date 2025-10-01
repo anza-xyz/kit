@@ -13,6 +13,7 @@ import {
     address,
     appendTransactionMessageInstruction,
     assertIsSendableTransaction,
+    assertIsTransactionWithBlockhashLifetime,
     createKeyPairSignerFromBytes,
     createSolanaRpc,
     createSolanaRpcSubscriptions,
@@ -184,6 +185,7 @@ log.warn(
 );
 try {
     assertIsSendableTransaction(signedTransaction);
+    assertIsTransactionWithBlockhashLifetime(signedTransaction);
     await sendAndConfirmTransaction(signedTransaction, { commitment: 'confirmed' });
     log.info('[success] Transfer confirmed');
     await pressAnyKeyPrompt('Press any key to quit');

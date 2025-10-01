@@ -11,8 +11,6 @@ import {
 import {
     FullySignedTransaction,
     Transaction,
-    TransactionWithBlockhashLifetime,
-    TransactionWithDurableNonceLifetime,
     TransactionWithinSizeLimit,
     TransactionWithLifetime,
 } from '@solana/transactions';
@@ -26,29 +24,29 @@ import {
 import { TransactionMessageWithSingleSendingSigner } from '../transaction-with-single-sending-signer';
 
 {
-    // [partiallySignTransactionMessageWithSigners]: returns a transaction with a blockhash lifetime
+    // [partiallySignTransactionMessageWithSigners]: returns a transaction with a lifetime when the input message has a blockhash lifetime
     const transactionMessage = null as unknown as BaseTransactionMessage &
         TransactionMessageWithBlockhashLifetime &
         TransactionMessageWithFeePayer &
         TransactionMessageWithSigners;
     partiallySignTransactionMessageWithSigners(transactionMessage) satisfies Promise<
-        Readonly<Transaction & TransactionWithBlockhashLifetime>
+        Readonly<Transaction & TransactionWithLifetime>
     >;
 }
 
 {
-    // [partiallySignTransactionMessageWithSigners]: returns a transaction with a durable nonce lifetime
+    // [partiallySignTransactionMessageWithSigners]: returns a transaction with a lifetime when the input message has a durable nonce lifetime
     const transactionMessage = null as unknown as BaseTransactionMessage &
         TransactionMessageWithDurableNonceLifetime &
         TransactionMessageWithFeePayer &
         TransactionMessageWithSigners;
     partiallySignTransactionMessageWithSigners(transactionMessage) satisfies Promise<
-        Readonly<Transaction & TransactionWithDurableNonceLifetime>
+        Readonly<Transaction & TransactionWithLifetime>
     >;
 }
 
 {
-    // [partiallySignTransactionMessageWithSigners]: returns a transaction with an unknown lifetime
+    // [partiallySignTransactionMessageWithSigners]: returns a transaction with an unknown lifetime when the input message has an unknown lifetime
     const transactionMessage = null as unknown as BaseTransactionMessage &
         TransactionMessageWithFeePayer &
         TransactionMessageWithLifetime &
@@ -59,12 +57,11 @@ import { TransactionMessageWithSingleSendingSigner } from '../transaction-with-s
 }
 
 {
-    // [partiallySignTransactionMessageWithSigners]: returns a transaction with no lifetime constraint
+    // [partiallySignTransactionMessageWithSigners]: returns a transaction with a lifetime when the input message has no lifetime
     const transactionMessage = null as unknown as BaseTransactionMessage &
         TransactionMessageWithFeePayer &
         TransactionMessageWithSigners;
     partiallySignTransactionMessageWithSigners(transactionMessage) satisfies Promise<Readonly<Transaction>>;
-    // @ts-expect-error Expects no lifetime constraint
     partiallySignTransactionMessageWithSigners(transactionMessage) satisfies Promise<
         Readonly<Transaction & TransactionWithLifetime>
     >;
@@ -83,29 +80,29 @@ import { TransactionMessageWithSingleSendingSigner } from '../transaction-with-s
 }
 
 {
-    // [signTransactionMessageWithSigners]: returns a fully signed transaction with a blockhash lifetime
+    // [signTransactionMessageWithSigners]: returns a fully signed transaction with a lifetime when the input message has a blockhash lifetime
     const transactionMessage = null as unknown as BaseTransactionMessage &
         TransactionMessageWithBlockhashLifetime &
         TransactionMessageWithFeePayer &
         TransactionMessageWithSigners;
     signTransactionMessageWithSigners(transactionMessage) satisfies Promise<
-        Readonly<FullySignedTransaction & Transaction & TransactionWithBlockhashLifetime>
+        Readonly<FullySignedTransaction & Transaction & TransactionWithLifetime>
     >;
 }
 
 {
-    // [signTransactionMessageWithSigners]: returns a fully signed transaction with a durable nonce lifetime
+    // [signTransactionMessageWithSigners]: returns a fully signed transaction with a lifetime when the input message has a durable nonce lifetime
     const transactionMessage = null as unknown as BaseTransactionMessage &
         TransactionMessageWithDurableNonceLifetime &
         TransactionMessageWithFeePayer &
         TransactionMessageWithSigners;
     signTransactionMessageWithSigners(transactionMessage) satisfies Promise<
-        Readonly<FullySignedTransaction & Transaction & TransactionWithDurableNonceLifetime>
+        Readonly<FullySignedTransaction & Transaction & TransactionWithLifetime>
     >;
 }
 
 {
-    // [signTransactionMessageWithSigners]: returns a fully signed transaction with an unknown lifetime
+    // [signTransactionMessageWithSigners]: returns a fully signed transaction with an unknown lifetime when the input message has an unknown lifetime
     const transactionMessage = null as unknown as BaseTransactionMessage &
         TransactionMessageWithFeePayer &
         TransactionMessageWithLifetime &
@@ -116,12 +113,11 @@ import { TransactionMessageWithSingleSendingSigner } from '../transaction-with-s
 }
 
 {
-    // [signTransactionMessageWithSigners]: returns a transaction with no lifetime constraint
+    // [signTransactionMessageWithSigners]: returns a transaction with a lifetime when the input message has no lifetime
     const transactionMessage = null as unknown as BaseTransactionMessage &
         TransactionMessageWithFeePayer &
         TransactionMessageWithSigners;
     signTransactionMessageWithSigners(transactionMessage) satisfies Promise<Readonly<Transaction>>;
-    // @ts-expect-error Expects no lifetime constraint
     signTransactionMessageWithSigners(transactionMessage) satisfies Promise<
         Readonly<Transaction & TransactionWithLifetime>
     >;

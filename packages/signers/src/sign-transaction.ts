@@ -4,9 +4,9 @@ import { BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/
 import {
     assertIsFullySignedTransaction,
     compileTransaction,
-    FullySignedTransaction,
+    SendableTransaction,
     Transaction,
-    TransactionFromTransactionMessage,
+    TransactionWithinSizeLimit,
     TransactionWithLifetime,
 } from '@solana/transactions';
 
@@ -41,8 +41,6 @@ import { assertIsTransactionMessageWithSingleSendingSigner } from './transaction
  * {@link TransactionModifyingSigner} if no other signer implements that interface.
  * Otherwise, it will be used as a {@link TransactionPartialSigner}.
  *
- * @typeParam TTransactionMessage - The inferred type of the transaction message provided.
- *
  * @example
  * ```ts
  * const signedTransaction = await partiallySignTransactionMessageWithSigners(transactionMessage);
@@ -64,12 +62,10 @@ import { assertIsTransactionMessageWithSingleSendingSigner } from './transaction
  * @see {@link signTransactionMessageWithSigners}
  * @see {@link signAndSendTransactionMessageWithSigners}
  */
-export async function partiallySignTransactionMessageWithSigners<
-    TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithSigners,
->(
-    transactionMessage: TTransactionMessage,
+export async function partiallySignTransactionMessageWithSigners(
+    transactionMessage: BaseTransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithSigners,
     config?: TransactionPartialSignerConfig,
-): Promise<TransactionFromTransactionMessage<TTransactionMessage>> {
+): Promise<Transaction & TransactionWithinSizeLimit & TransactionWithLifetime> {
     const { partialSigners, modifyingSigners } = categorizeTransactionSigners(
         deduplicateSigners(getSignersFromTransactionMessage(transactionMessage).filter(isTransactionSigner)),
         { identifySendingSigner: false },
@@ -91,8 +87,6 @@ export async function partiallySignTransactionMessageWithSigners<
  * This function delegates to the {@link partiallySignTransactionMessageWithSigners} function
  * in order to extract signers from the transaction message and sign the transaction.
  *
- * @typeParam TTransactionMessage - The inferred type of the transaction message provided.
- *
  * @example
  * ```ts
  * const mySignedTransaction = await signTransactionMessageWithSigners(myTransactionMessage);
@@ -109,12 +103,10 @@ export async function partiallySignTransactionMessageWithSigners<
  * @see {@link partiallySignTransactionMessageWithSigners}
  * @see {@link signAndSendTransactionMessageWithSigners}
  */
-export async function signTransactionMessageWithSigners<
-    TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithSigners,
->(
-    transactionMessage: TTransactionMessage,
+export async function signTransactionMessageWithSigners(
+    transactionMessage: BaseTransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithSigners,
     config?: TransactionPartialSignerConfig,
-): Promise<FullySignedTransaction & TransactionFromTransactionMessage<TTransactionMessage>> {
+): Promise<SendableTransaction & Transaction & TransactionWithLifetime> {
     const signedTransaction = await partiallySignTransactionMessageWithSigners(transactionMessage, config);
     assertIsFullySignedTransaction(signedTransaction);
     return signedTransaction;
@@ -125,8 +117,6 @@ export async function signTransactionMessageWithSigners<
  * transaction message and uses them to sign it before sending it immediately to the blockchain.
  *
  * It returns the signature of the sent transaction (i.e. its identifier) as bytes.
- *
- * @typeParam TTransactionMessage - The inferred type of the transaction message provided.
  *
  * @example
  * ```ts
@@ -170,9 +160,10 @@ export async function signTransactionMessageWithSigners<
  * @see {@link signTransactionMessageWithSigners}
  *
  */
-export async function signAndSendTransactionMessageWithSigners<
-    TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithSigners,
->(transaction: TTransactionMessage, config?: TransactionSendingSignerConfig): Promise<SignatureBytes> {
+export async function signAndSendTransactionMessageWithSigners(
+    transaction: BaseTransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithSigners,
+    config?: TransactionSendingSignerConfig,
+): Promise<SignatureBytes> {
     assertIsTransactionMessageWithSingleSendingSigner(transaction);
 
     const abortSignal = config?.abortSignal;
@@ -276,28 +267,24 @@ function identifyTransactionModifyingSigners(
  * Signs a transaction using the provided TransactionModifyingSigners
  * sequentially followed by the TransactionPartialSigners in parallel.
  */
-async function signModifyingAndPartialTransactionSigners<
-    TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithSigners,
->(
-    transactionMessage: TTransactionMessage,
+async function signModifyingAndPartialTransactionSigners(
+    transactionMessage: BaseTransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithSigners,
     modifyingSigners: readonly TransactionModifyingSigner[] = [],
     partialSigners: readonly TransactionPartialSigner[] = [],
     config?: TransactionModifyingSignerConfig,
-): Promise<TransactionFromTransactionMessage<TTransactionMessage>> {
-    type ReturnType = TransactionFromTransactionMessage<TTransactionMessage>;
-
+): Promise<Transaction & TransactionWithinSizeLimit & TransactionWithLifetime> {
     // serialize the transaction
     const transaction = compileTransaction(transactionMessage);
 
     // Handle modifying signers sequentially.
-    const modifiedTransaction = await modifyingSigners.reduce(
+    const modifiedTransaction = (await modifyingSigners.reduce(
         async (transaction, modifyingSigner) => {
             config?.abortSignal?.throwIfAborted();
             const [tx] = await modifyingSigner.modifyAndSignTransactions([await transaction], config);
             return Object.freeze(tx);
         },
         Promise.resolve(transaction) as Promise<Readonly<Transaction & TransactionWithLifetime>>,
-    );
+    )) as Transaction & TransactionWithinSizeLimit & TransactionWithLifetime;
 
     // Handle partial signers in parallel.
     config?.abortSignal?.throwIfAborted();
@@ -315,5 +302,5 @@ async function signModifyingAndPartialTransactionSigners<
                 return { ...signatures, ...signatureDictionary };
             }, modifiedTransaction.signatures ?? {}),
         ),
-    }) as ReturnType;
+    });
 }

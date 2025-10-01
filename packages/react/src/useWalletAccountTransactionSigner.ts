@@ -5,8 +5,11 @@ import { getAbortablePromise } from '@solana/promises';
 import { TransactionModifyingSigner } from '@solana/signers';
 import { getCompiledTransactionMessageDecoder } from '@solana/transaction-messages';
 import {
+    assertIsTransactionWithinSizeLimit,
     getTransactionCodec,
     getTransactionLifetimeConstraintFromCompiledTransactionMessage,
+    Transaction,
+    TransactionWithinSizeLimit,
     TransactionWithLifetime,
 } from '@solana/transactions';
 import { UiWalletAccount } from '@wallet-standard/ui';
@@ -74,7 +77,9 @@ export function useWalletAccountTransactionSigner<TWalletAccount extends UiWalle
                     throw new SolanaError(SOLANA_ERROR__SIGNER__WALLET_MULTISIGN_UNIMPLEMENTED);
                 }
                 if (transactions.length === 0) {
-                    return transactions;
+                    return transactions as readonly (Transaction &
+                        TransactionWithinSizeLimit &
+                        TransactionWithLifetime)[];
                 }
                 const [transaction] = transactions;
                 const wireTransactionBytes = transactionCodec.encode(transaction);
@@ -86,6 +91,8 @@ export function useWalletAccountTransactionSigner<TWalletAccount extends UiWalle
                 const decodedSignedTransaction = transactionCodec.decode(
                     signedTransaction,
                 ) as (typeof transactions)[number];
+
+                assertIsTransactionWithinSizeLimit(decodedSignedTransaction);
 
                 const existingLifetime =
                     'lifetimeConstraint' in transaction

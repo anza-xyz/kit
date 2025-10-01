@@ -1,6 +1,6 @@
 import { Address } from '@solana/addresses';
 import { SOLANA_ERROR__SIGNER__EXPECTED_TRANSACTION_MODIFYING_SIGNER, SolanaError } from '@solana/errors';
-import { Transaction } from '@solana/transactions';
+import { Transaction, TransactionWithinSizeLimit, TransactionWithLifetime } from '@solana/transactions';
 
 import { BaseTransactionSignerConfig } from './types';
 
@@ -21,7 +21,8 @@ export type TransactionModifyingSignerConfig = BaseTransactionSignerConfig;
  * {@link SignatureDictionary}, its
  * {@link TransactionModifyingSigner#modifyAndSignTransactions | modifyAndSignTransactions} function
  * returns an updated {@link Transaction} with a potentially modified set of instructions and
- * signature dictionary.
+ * signature dictionary. The returned transaction must be within the transaction size limit,
+ * and include a `lifetimeConstraint`.
  *
  * @typeParam TAddress - Supply a string literal to define a signer having a particular address.
  *
@@ -29,9 +30,9 @@ export type TransactionModifyingSignerConfig = BaseTransactionSignerConfig;
  * ```ts
  * const signer: TransactionModifyingSigner<'1234..5678'> = {
  *     address: address('1234..5678'),
- *     modifyAndSignTransactions: async <T extends Transaction>(
- *         transactions: T[]
- *     ): Promise<T[]> => {
+ *     modifyAndSignTransactions: async (
+ *         transactions: Transaction[]
+ *     ): Promise<(Transaction & TransactionWithinSizeLimit & TransactionWithLifetime)[]> => {
  *         // My custom signing logic.
  *     },
  * };
@@ -55,10 +56,10 @@ export type TransactionModifyingSignerConfig = BaseTransactionSignerConfig;
  */
 export type TransactionModifyingSigner<TAddress extends string = string> = Readonly<{
     address: Address<TAddress>;
-    modifyAndSignTransactions<T extends Transaction>(
-        transactions: readonly T[],
+    modifyAndSignTransactions(
+        transactions: readonly (Transaction | (Transaction & TransactionWithLifetime))[],
         config?: TransactionModifyingSignerConfig,
-    ): Promise<readonly T[]>;
+    ): Promise<readonly (Transaction & TransactionWithinSizeLimit & TransactionWithLifetime)[]>;
 }>;
 
 /**

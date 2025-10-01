@@ -1,7 +1,7 @@
 import '@solana/test-matchers/toBeFrozenObject';
 
 import { address } from '@solana/addresses';
-import { Transaction, TransactionWithLifetime } from '@solana/transactions';
+import { Transaction, TransactionWithinSizeLimit, TransactionWithLifetime } from '@solana/transactions';
 
 import { createNoopSigner, NoopSigner } from '../noop-signer';
 import { createSignableMessage } from '../signable-message';
@@ -53,8 +53,8 @@ describe('createNoopSigner', () => {
 
         // And given we have a couple of mock transactions to sign.
         const mockTransactions = [
-            {} as Transaction & TransactionWithLifetime,
-            {} as Transaction & TransactionWithLifetime,
+            {} as Transaction & TransactionWithinSizeLimit & TransactionWithLifetime,
+            {} as Transaction & TransactionWithinSizeLimit & TransactionWithLifetime,
         ];
 
         // When we sign both transactions using that signer.
@@ -75,8 +75,8 @@ describe('createNoopSigner', () => {
 
         // And given we have a couple of mock transactions to sign.
         const mockTransactions = [
-            {} as Transaction & TransactionWithLifetime,
-            {} as Transaction & TransactionWithLifetime,
+            {} as Transaction & TransactionWithinSizeLimit & TransactionWithLifetime,
+            {} as Transaction & TransactionWithinSizeLimit & TransactionWithLifetime,
         ];
 
         // When we sign both transactions using that signer.

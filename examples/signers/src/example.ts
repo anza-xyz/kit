@@ -11,6 +11,7 @@ import { createLogger } from '@solana/example-utils/createLogger.js';
 import {
     address,
     appendTransactionMessageInstruction,
+    assertIsTransactionWithinSizeLimit,
     Blockhash,
     compileTransaction,
     createKeyPairSignerFromBytes,
@@ -92,6 +93,7 @@ async function signTransaction(
     transactionMessage: TransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithLifetime,
 ) {
     const transaction = compileTransaction(transactionMessage);
+    assertIsTransactionWithinSizeLimit(transaction);
     const [signatureDictionary] = await signer.signTransactions([transaction]);
     const signature = signatureDictionary[signer.address];
     log.info(
