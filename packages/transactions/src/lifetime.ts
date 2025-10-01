@@ -1,7 +1,12 @@
-import type { Address } from '@solana/addresses';
+import { type Address, isAddress } from '@solana/addresses';
 import { ReadonlyUint8Array } from '@solana/codecs-core';
-import { SOLANA_ERROR__TRANSACTION__NONCE_ACCOUNT_CANNOT_BE_IN_LOOKUP_TABLE, SolanaError } from '@solana/errors';
-import type { Blockhash, Slot } from '@solana/rpc-types';
+import {
+    SOLANA_ERROR__TRANSACTION__EXPECTED_BLOCKHASH_LIFETIME,
+    SOLANA_ERROR__TRANSACTION__EXPECTED_NONCE_LIFETIME,
+    SOLANA_ERROR__TRANSACTION__NONCE_ACCOUNT_CANNOT_BE_IN_LOOKUP_TABLE,
+    SolanaError,
+} from '@solana/errors';
+import { type Blockhash, isBlockhash, type Slot } from '@solana/rpc-types';
 import type {
     CompiledTransactionMessage,
     CompiledTransactionMessageWithLifetime,
@@ -91,7 +96,7 @@ export type TransactionWithDurableNonceLifetime = {
 };
 
 /**
- * Helper type that sets the lifetime constraint of a transaction message to be the same as the
+ * Helper type that sets the lifetime constraint of a transaction to be the same as the
  * lifetime constraint of the provided transaction message.
  *
  * If the transaction message has no explicit lifetime constraint, neither will the transaction.
@@ -164,5 +169,133 @@ export async function getTransactionLifetimeConstraintFromCompiledTransactionMes
             // This is not known from the compiled message, so we set it to the maximum possible value
             lastValidBlockHeight: 0xffffffffffffffffn,
         };
+    }
+}
+
+/**
+ * A type guard that returns `true` if the transaction conforms to the
+ * {@link TransactionWithBlockhashLifetime} type, and refines its type for use in your
+ * program.
+ *
+ * @example
+ * ```ts
+ * import { isTransactionWithBlockhashLifetime } from '@solana/transactions';
+ *
+ * if (isTransactionWithBlockhashLifetime(transaction)) {
+ *     // At this point, `transaction` has been refined to a `TransactionWithBlockhashLifetime`.
+ *     const { blockhash } = transaction.lifetimeConstraint;
+ *     const { value: blockhashIsValid } = await rpc.isBlockhashValid(blockhash).send();
+ *     setBlockhashIsValid(blockhashIsValid);
+ * } else {
+ *     setError(
+ *         `${getSignatureFromTransaction(transaction)} does not have a blockhash-based lifetime`,
+ *     );
+ * }
+ * ```
+ */
+export function isTransactionWithBlockhashLifetime(
+    transaction: Transaction | (Transaction & TransactionWithLifetime),
+): transaction is Transaction & TransactionWithBlockhashLifetime {
+    return (
+        'lifetimeConstraint' in transaction &&
+        'blockhash' in transaction.lifetimeConstraint &&
+        typeof transaction.lifetimeConstraint.blockhash === 'string' &&
+        typeof transaction.lifetimeConstraint.lastValidBlockHeight === 'bigint' &&
+        isBlockhash(transaction.lifetimeConstraint.blockhash)
+    );
+}
+
+/**
+ * From time to time you might acquire a transaction, that you expect to have a
+ * blockhash-based lifetime, from for example a wallet. Use this function to
+ * assert that such a transaction actually has a blockhash-based lifetime.
+ *
+ * @example
+ * ```ts
+ * import { assertIsTransactionWithBlockhashLifetime } from '@solana/transactions';
+ *
+ * try {
+ *     // If this type assertion function doesn't throw, then
+ *     // Typescript will upcast `transaction` to `TransactionWithBlockhashLifetime`.
+ *     assertIsTransactionWithBlockhashLifetime(transaction);
+ *     // At this point, `transaction` is a `TransactionWithBlockhashLifetime` that can be used
+ *     // with the RPC.
+ *     const { blockhash } = transaction.lifetimeConstraint;
+ *     const { value: blockhashIsValid } = await rpc.isBlockhashValid(blockhash).send();
+ * } catch (e) {
+ *     // `transaction` turned out not to have a blockhash-based lifetime
+ * }
+ * ```
+ */
+export function assertIsTransactionWithBlockhashLifetime(
+    transaction: Transaction | (Transaction & TransactionWithLifetime),
+): asserts transaction is Transaction & TransactionWithBlockhashLifetime {
+    if (!isTransactionWithBlockhashLifetime(transaction)) {
+        throw new SolanaError(SOLANA_ERROR__TRANSACTION__EXPECTED_BLOCKHASH_LIFETIME);
+    }
+}
+
+/**
+ * A type guard that returns `true` if the transaction conforms to the
+ * {@link TransactionWithDurableNonceLifetime} type, and refines its type for use in your
+ * program.
+ *
+ * @example
+ * ```ts
+ * import { isTransactionWithDurableNonceLifetime } from '@solana/transactions';
+ * import { fetchNonce } from "@solana-program/system";
+ *
+ * if (isTransactionWithDurableNonceLifetime(transaction)) {
+ *     // At this point, `transaction` has been refined to a
+ *     // `TransactionWithDurableNonceLifetime`.
+ *     const { nonce, nonceAccountAddress } = transaction.lifetimeConstraint;
+ *     const { data: { blockhash: actualNonce } } = await fetchNonce(nonceAccountAddress);
+ *     setNonceIsValid(nonce === actualNonce);
+ * } else {
+ *     setError(
+ *         `${getSignatureFromTransaction(transaction)} does not have a nonce-based lifetime`,
+ *     );
+ * }
+ * ```
+ */
+export function isTransactionWithDurableNonceLifetime(
+    transaction: Transaction | (Transaction & TransactionWithLifetime),
+): transaction is Transaction & TransactionWithDurableNonceLifetime {
+    return (
+        'lifetimeConstraint' in transaction &&
+        'nonce' in transaction.lifetimeConstraint &&
+        typeof transaction.lifetimeConstraint.nonce === 'string' &&
+        typeof transaction.lifetimeConstraint.nonceAccountAddress === 'string' &&
+        isAddress(transaction.lifetimeConstraint.nonceAccountAddress)
+    );
+}
+
+/**
+ * From time to time you might acquire a transaction, that you expect to have a
+ * nonce-based lifetime, from for example a wallet. Use this function to assert
+ * that such a transaction actually has a nonce-based lifetime.
+ *
+ * @example
+ * ```ts
+ * import { assertIsTransactionWithDurableNonceLifetime } from '@solana/transactions';
+ *
+ * try {
+ *     // If this type assertion function doesn't throw, then
+ *     // Typescript will upcast `transaction` to `TransactionWithDurableNonceLifetime`.
+ *     assertIsTransactionWithDurableNonceLifetime(transaction);
+ *     // At this point, `transaction` is a `TransactionWithDurableNonceLifetime` that can be used
+ *     // with the RPC.
+ *     const { nonce, nonceAccountAddress } = transaction.lifetimeConstraint;
+ *     const { data: { blockhash: actualNonce } } = await fetchNonce(nonceAccountAddress);
+ * } catch (e) {
+ *     // `transaction` turned out not to have a nonce-based lifetime
+ * }
+ * ```
+ */
+export function assertIsTransactionWithDurableNonceLifetime(
+    transaction: Transaction | (Transaction & TransactionWithLifetime),
+): asserts transaction is Transaction & TransactionWithDurableNonceLifetime {
+    if (!isTransactionWithDurableNonceLifetime(transaction)) {
+        throw new SolanaError(SOLANA_ERROR__TRANSACTION__EXPECTED_NONCE_LIFETIME);
     }
 }
