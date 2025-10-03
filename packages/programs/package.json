@@ -1,6 +1,6 @@
 {
     "name": "@solana/programs",
-    "version": "3.0.0",
+    "version": "4.0.0",
     "description": "Helpers for defining programs and resolving program errors",
     "homepage": "https://www.solanakit.com/api#solanaprograms",
     "exports": {
