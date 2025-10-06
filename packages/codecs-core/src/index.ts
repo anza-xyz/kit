@@ -657,6 +657,7 @@ export * from './assertions';
 export * from './bytes';
 export * from './codec';
 export * from './combine-codec';
+export * from './decoder-entire-byte-array';
 export * from './fix-codec-size';
 export * from './offset-codec';
 export * from './pad-codec';
