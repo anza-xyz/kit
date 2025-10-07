@@ -94,6 +94,7 @@ export function compressTransactionMessageUsingAddressLookupTables<
     addressesByLookupTableAddress: AddressesByLookupTableAddress,
 ): TTransactionMessage | WidenTransactionMessageInstructions<TTransactionMessage> {
     const lookupTableAddresses = new Set(Object.values(addressesByLookupTableAddress).flatMap(a => a));
+    const programAddresses = new Set(transactionMessage.instructions.map(ix => ix.programAddress));
 
     const newInstructions: Instruction[] = [];
     let updatedAnyInstructions = false;
@@ -106,6 +107,10 @@ export function compressTransactionMessageUsingAddressLookupTables<
         const newAccounts: Mutable<NonNullable<Instruction['accounts']>> = [];
         let updatedAnyAccounts = false;
         for (const account of instruction.accounts) {
+            if (programAddresses.has(account.address)) {
+                newAccounts.push(account);
+                continue;
+            }
             // If the address is already a lookup, is not in any lookup tables, or is a signer role, return as-is
             if (
                 'lookupTableAddress' in account ||
