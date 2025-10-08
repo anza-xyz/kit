@@ -14,7 +14,7 @@
     "dependencies": {
         "@solana-program/address-lookup-table": "^0.8.0",
         "@solana-program/memo": "^0.8.0",
-        "@solana-program/system": "^0.8.0",
+        "@solana-program/system": "^0.8.1",
         "@solana/example-utils": "workspace:*",
         "@solana/kit": "workspace:*"
     },
