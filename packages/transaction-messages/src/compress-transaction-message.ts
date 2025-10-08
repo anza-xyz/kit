@@ -97,9 +97,8 @@ export function compressTransactionMessageUsingAddressLookupTables<
     const eligibleLookupAddresses = new Set(
         Object.values(addressesByLookupTableAddress)
             .flatMap(a => a)
-            .filter(address => !programAddresses.has(address))
+            .filter(address => !programAddresses.has(address)),
     );
-
     const newInstructions: Instruction[] = [];
     let updatedAnyInstructions = false;
     for (const instruction of transactionMessage.instructions) {
@@ -111,7 +110,7 @@ export function compressTransactionMessageUsingAddressLookupTables<
         const newAccounts: Mutable<NonNullable<Instruction['accounts']>> = [];
         let updatedAnyAccounts = false;
         for (const account of instruction.accounts) {
-            // If the address is already a lookup, is not in any lookup tables, or is a signer role, return as-is 
+            // If the address is already a lookup, is not in any lookup tables, or is a signer role, return as-is
             if (
                 'lookupTableAddress' in account ||
                 !eligibleLookupAddresses.has(account.address) ||

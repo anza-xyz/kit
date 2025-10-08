@@ -578,4 +578,43 @@ describe('compressTransactionMessageUsingAddressLookupTables', () => {
 
         expect(result.instructions[0].accounts![0]).toBeFrozenObject();
     });
+
+    it('should not replace a program address that appears as an account in another instruction', () => {
+        const programAddressA = 'programA' as Address;
+        const programAddressB = 'programB' as Address;
+        const lookupTableAddress = 'lookupTableAddress' as Address;
+
+        // Create a transaction and append two instructions sequentially
+        const transactionMessage = appendTransactionMessageInstructions(
+            [
+                {
+                    accounts: [] as AccountMeta[],
+                    programAddress: programAddressA,
+                },
+                {
+                    accounts: [
+                        {
+                            address: programAddressA,
+                            role: AccountRole.READONLY,
+                        },
+                    ] as AccountMeta[],
+                    programAddress: programAddressB,
+                },
+            ],
+            createTransactionMessage({ version: 0 }),
+        );
+
+        const lookupTables: AddressesByLookupTableAddress = {
+            [lookupTableAddress]: [programAddressA],
+        };
+
+        const result = compressTransactionMessageUsingAddressLookupTables(transactionMessage, lookupTables);
+
+        // The first instruction’s programAddressA should be excluded from compression,
+        // even though it exists in the lookup table.
+        expect(result.instructions[1].accounts![0]).toStrictEqual({
+            address: programAddressA,
+            role: AccountRole.READONLY,
+        });
+    });
 });
