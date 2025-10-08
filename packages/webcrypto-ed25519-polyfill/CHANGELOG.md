@@ -1,5 +1,11 @@
 # @solana/webcrypto-ed25519-polyfill
 
+## 4.0.0
+
+### Patch Changes
+
+- [#806](https://github.com/anza-xyz/kit/pull/806) [`f254415`](https://github.com/anza-xyz/kit/commit/f2544155f410019b63eb2cb7d02b2a3d22580516) Thanks [@steveluscher](https://github.com/steveluscher)! - The Ed25519 polyfill now correctly returns `ArrayBuffer` from `exportKey()` and `sign()` rather than `Uint8Array`
+
 ## 3.0.0
 
 ## 2.3.0

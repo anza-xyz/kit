@@ -1,5 +1,20 @@
 # @solana/rpc
 
+## 4.0.0
+
+### Patch Changes
+
+- Updated dependencies [[`5408f52`](https://github.com/anza-xyz/kit/commit/5408f524ae22293cb7b497310440019be5a98c55), [`05970df`](https://github.com/anza-xyz/kit/commit/05970dfc5706d739083d420b669ccac1266c570f), [`cb11699`](https://github.com/anza-xyz/kit/commit/cb11699d77536e5901c62d32e43c671b044e4aa1), [`9fa8465`](https://github.com/anza-xyz/kit/commit/9fa8465bf0f264f5a9181c805a0d85cb1ecc2768), [`ce7f91c`](https://github.com/anza-xyz/kit/commit/ce7f91c522118bd929f69f581d2d48e90d18c99a), [`22f18d0`](https://github.com/anza-xyz/kit/commit/22f18d0ce8950b26eaa897b146bfe8c1a025b3bb), [`c87cada`](https://github.com/anza-xyz/kit/commit/c87cada3ddf0a8c5fa27ed7122b901b17392c2df)]:
+    - @solana/errors@4.0.0
+    - @solana/rpc-transport-http@4.0.0
+    - @solana/rpc-types@4.0.0
+    - @solana/rpc-api@4.0.0
+    - @solana/rpc-spec@4.0.0
+    - @solana/rpc-transformers@4.0.0
+    - @solana/fast-stable-stringify@4.0.0
+    - @solana/functional@4.0.0
+    - @solana/rpc-spec-types@4.0.0
+
 ## 3.0.0
 
 ### Patch Changes

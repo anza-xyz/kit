@@ -1,5 +1,21 @@
 # @solana/rpc-types
 
+## 4.0.0
+
+### Major Changes
+
+- [#550](https://github.com/anza-xyz/kit/pull/550) [`ce7f91c`](https://github.com/anza-xyz/kit/commit/ce7f91c522118bd929f69f581d2d48e90d18c99a) Thanks [@steveluscher](https://github.com/steveluscher)! - Removed `rentEpoch` from the `AccountInfoBase` type. This property is no longer relevant post SIMD-215. Developers whose applications rely on this property being numeric should either eliminate it or hardcode it to `18_446_744_073_709_551_615n`.
+
+### Patch Changes
+
+- Updated dependencies [[`5408f52`](https://github.com/anza-xyz/kit/commit/5408f524ae22293cb7b497310440019be5a98c55), [`cb11699`](https://github.com/anza-xyz/kit/commit/cb11699d77536e5901c62d32e43c671b044e4aa1), [`9fa8465`](https://github.com/anza-xyz/kit/commit/9fa8465bf0f264f5a9181c805a0d85cb1ecc2768), [`22f18d0`](https://github.com/anza-xyz/kit/commit/22f18d0ce8950b26eaa897b146bfe8c1a025b3bb), [`c87cada`](https://github.com/anza-xyz/kit/commit/c87cada3ddf0a8c5fa27ed7122b901b17392c2df)]:
+    - @solana/errors@4.0.0
+    - @solana/codecs-core@4.0.0
+    - @solana/addresses@4.0.0
+    - @solana/codecs-numbers@4.0.0
+    - @solana/codecs-strings@4.0.0
+    - @solana/nominal-types@4.0.0
+
 ## 3.0.0
 
 ### Patch Changes

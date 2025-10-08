@@ -1,5 +1,19 @@
 # @solana/errors
 
+## 4.0.0
+
+### Patch Changes
+
+- [#918](https://github.com/anza-xyz/kit/pull/918) [`5408f52`](https://github.com/anza-xyz/kit/commit/5408f524ae22293cb7b497310440019be5a98c55) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add a function to extract the lifetime from a CompiledTransactionMessage
+
+- [#871](https://github.com/anza-xyz/kit/pull/871) [`cb11699`](https://github.com/anza-xyz/kit/commit/cb11699d77536e5901c62d32e43c671b044e4aa1) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Do not allow decoding transactions with an unsupported version
+
+- [#873](https://github.com/anza-xyz/kit/pull/873) [`9fa8465`](https://github.com/anza-xyz/kit/commit/9fa8465bf0f264f5a9181c805a0d85cb1ecc2768) Thanks [@steveluscher](https://github.com/steveluscher)! - When you use the `@solana/errors` CLI you will now _always_ get version 5.6.2 of `chalk` and version 14.0.0 of `commander`, which themselves are zero-dependency.
+
+- [#944](https://github.com/anza-xyz/kit/pull/944) [`22f18d0`](https://github.com/anza-xyz/kit/commit/22f18d0ce8950b26eaa897b146bfe8c1a025b3bb) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add a function to create a decoder that checks the size of the input bytes
+
+- [#919](https://github.com/anza-xyz/kit/pull/919) [`c87cada`](https://github.com/anza-xyz/kit/commit/c87cada3ddf0a8c5fa27ed7122b901b17392c2df) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Update useWalletAccountTransactionSigner to return a LifetimeConstraint for the updated transaction
+
 ## 3.0.0
 
 ### Minor Changes

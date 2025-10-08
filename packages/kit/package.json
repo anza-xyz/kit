@@ -1,6 +1,6 @@
 {
     "name": "@solana/kit",
-    "version": "3.0.0",
+    "version": "4.0.0",
     "description": "Solana Javascript API",
     "homepage": "https://www.solanakit.com",
     "exports": {

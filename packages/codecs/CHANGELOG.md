@@ -1,5 +1,16 @@
 # @solana/codecs
 
+## 4.0.0
+
+### Patch Changes
+
+- Updated dependencies [[`22f18d0`](https://github.com/anza-xyz/kit/commit/22f18d0ce8950b26eaa897b146bfe8c1a025b3bb)]:
+    - @solana/codecs-core@4.0.0
+    - @solana/codecs-data-structures@4.0.0
+    - @solana/codecs-numbers@4.0.0
+    - @solana/codecs-strings@4.0.0
+    - @solana/options@4.0.0
+
 ## 3.0.0
 
 ### Patch Changes

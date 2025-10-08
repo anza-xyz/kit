@@ -1,5 +1,32 @@
 # @solana/kit
 
+## 4.0.0
+
+### Patch Changes
+
+- [#521](https://github.com/anza-xyz/kit/pull/521) [`98bde94`](https://github.com/anza-xyz/kit/commit/98bde94bc4cd5f5f7e646c774bc50fef21112dd1) Thanks [@tao-stones](https://github.com/tao-stones)! - Add loadedAccountsDataSize to simulateTransaction response
+
+- Updated dependencies [[`5408f52`](https://github.com/anza-xyz/kit/commit/5408f524ae22293cb7b497310440019be5a98c55), [`f591dea`](https://github.com/anza-xyz/kit/commit/f591dead4a3d5871fd02460f6301bb4bdf6b508e), [`cb11699`](https://github.com/anza-xyz/kit/commit/cb11699d77536e5901c62d32e43c671b044e4aa1), [`9fa8465`](https://github.com/anza-xyz/kit/commit/9fa8465bf0f264f5a9181c805a0d85cb1ecc2768), [`ce7f91c`](https://github.com/anza-xyz/kit/commit/ce7f91c522118bd929f69f581d2d48e90d18c99a), [`af01f27`](https://github.com/anza-xyz/kit/commit/af01f2770e4b3a94f3ef3360677b27aa08175c1b), [`c035ab8`](https://github.com/anza-xyz/kit/commit/c035ab8a488486d160ca0361408493115cd09383), [`22f18d0`](https://github.com/anza-xyz/kit/commit/22f18d0ce8950b26eaa897b146bfe8c1a025b3bb), [`cfc1d92`](https://github.com/anza-xyz/kit/commit/cfc1d9249e55c79d27ac840806f198a5c5895e56), [`c87cada`](https://github.com/anza-xyz/kit/commit/c87cada3ddf0a8c5fa27ed7122b901b17392c2df), [`9e8bfe4`](https://github.com/anza-xyz/kit/commit/9e8bfe460886124d1d12e444e7452db631c0ac6f), [`54d8445`](https://github.com/anza-xyz/kit/commit/54d8445bbef207b6d84da0ea91a1c091251ee013)]:
+    - @solana/transactions@4.0.0
+    - @solana/errors@4.0.0
+    - @solana/keys@4.0.0
+    - @solana/transaction-messages@4.0.0
+    - @solana/rpc-types@4.0.0
+    - @solana/signers@4.0.0
+    - @solana/transaction-confirmation@4.0.0
+    - @solana/rpc-subscriptions@4.0.0
+    - @solana/instruction-plans@4.0.0
+    - @solana/accounts@4.0.0
+    - @solana/addresses@4.0.0
+    - @solana/instructions@4.0.0
+    - @solana/programs@4.0.0
+    - @solana/rpc@4.0.0
+    - @solana/sysvars@4.0.0
+    - @solana/rpc-parsed-types@4.0.0
+    - @solana/codecs@4.0.0
+    - @solana/functional@4.0.0
+    - @solana/rpc-spec-types@4.0.0
+
 ## 3.0.0
 
 ### Major Changes

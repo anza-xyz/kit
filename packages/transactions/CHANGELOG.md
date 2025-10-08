@@ -1,5 +1,29 @@
 # @solana/transactions
 
+## 4.0.0
+
+### Patch Changes
+
+- [#918](https://github.com/anza-xyz/kit/pull/918) [`5408f52`](https://github.com/anza-xyz/kit/commit/5408f524ae22293cb7b497310440019be5a98c55) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add a function to extract the lifetime from a CompiledTransactionMessage
+
+- [#871](https://github.com/anza-xyz/kit/pull/871) [`cb11699`](https://github.com/anza-xyz/kit/commit/cb11699d77536e5901c62d32e43c671b044e4aa1) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Do not allow decoding transactions with an unsupported version
+
+- [#925](https://github.com/anza-xyz/kit/pull/925) [`af01f27`](https://github.com/anza-xyz/kit/commit/af01f2770e4b3a94f3ef3360677b27aa08175c1b) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add functions to narrow a TransactionWithLifetime to a specific lifetime
+
+- Updated dependencies [[`5408f52`](https://github.com/anza-xyz/kit/commit/5408f524ae22293cb7b497310440019be5a98c55), [`f591dea`](https://github.com/anza-xyz/kit/commit/f591dead4a3d5871fd02460f6301bb4bdf6b508e), [`cb11699`](https://github.com/anza-xyz/kit/commit/cb11699d77536e5901c62d32e43c671b044e4aa1), [`9fa8465`](https://github.com/anza-xyz/kit/commit/9fa8465bf0f264f5a9181c805a0d85cb1ecc2768), [`ce7f91c`](https://github.com/anza-xyz/kit/commit/ce7f91c522118bd929f69f581d2d48e90d18c99a), [`22f18d0`](https://github.com/anza-xyz/kit/commit/22f18d0ce8950b26eaa897b146bfe8c1a025b3bb), [`c87cada`](https://github.com/anza-xyz/kit/commit/c87cada3ddf0a8c5fa27ed7122b901b17392c2df), [`54d8445`](https://github.com/anza-xyz/kit/commit/54d8445bbef207b6d84da0ea91a1c091251ee013)]:
+    - @solana/errors@4.0.0
+    - @solana/keys@4.0.0
+    - @solana/transaction-messages@4.0.0
+    - @solana/rpc-types@4.0.0
+    - @solana/codecs-core@4.0.0
+    - @solana/addresses@4.0.0
+    - @solana/codecs-data-structures@4.0.0
+    - @solana/codecs-numbers@4.0.0
+    - @solana/codecs-strings@4.0.0
+    - @solana/instructions@4.0.0
+    - @solana/functional@4.0.0
+    - @solana/nominal-types@4.0.0
+
 ## 3.0.0
 
 ### Major Changes

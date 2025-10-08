@@ -1,5 +1,29 @@
 # @solana/signers
 
+## 4.0.0
+
+### Major Changes
+
+- [#927](https://github.com/anza-xyz/kit/pull/927) [`c035ab8`](https://github.com/anza-xyz/kit/commit/c035ab8a488486d160ca0361408493115cd09383) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Update the signer API to return Transaction & TransactionWithLifetime
+
+    The `modifyAndSignTransactions` function for a `TransactionModifyingSigner` must now return a `Transaction & TransactionWithLifetime & TransactionWithinSizeLimit`. Previously it technically needed to return a type derived from the input `TransactionMessage`, but this wasn't checked.
+
+    If you have written a `TransactionModifyingSigner` then you should review the changes to `useWalletAccountTransactionSigner` in the React package for guidance. You may need to use the new `getTransactionLifetimeConstraintFromCompiledTransactionMessage` function to obtain a lifetime for the transaction being returned.
+
+    If you are using a `TransactionModifyingSigner` such as `useWalletAccountTransactionSigner`, then you will now receive a transaction with `TransactionWithLifetime` when you would previously have received a type with a lifetime matching the input transaction message. This was never guaranteed to match at runtime, but we incorrectly returned a stronger type than can be guaranteed. You may need to use the new `isTransactionWithBlockhashLifetime` or `isTransactionWithDurableNonceLifetime` functions to check the lifetime type of the returned transaction. For example, if you want to pass it to a function returned by `sendAndConfirmTransactionFactory` then you must use `isTransactionWithBlockhashLifetime` or `assertIsTransactionWithBlockhashLifetime` to check its lifetime first.
+
+### Patch Changes
+
+- Updated dependencies [[`5408f52`](https://github.com/anza-xyz/kit/commit/5408f524ae22293cb7b497310440019be5a98c55), [`f591dea`](https://github.com/anza-xyz/kit/commit/f591dead4a3d5871fd02460f6301bb4bdf6b508e), [`cb11699`](https://github.com/anza-xyz/kit/commit/cb11699d77536e5901c62d32e43c671b044e4aa1), [`9fa8465`](https://github.com/anza-xyz/kit/commit/9fa8465bf0f264f5a9181c805a0d85cb1ecc2768), [`af01f27`](https://github.com/anza-xyz/kit/commit/af01f2770e4b3a94f3ef3360677b27aa08175c1b), [`22f18d0`](https://github.com/anza-xyz/kit/commit/22f18d0ce8950b26eaa897b146bfe8c1a025b3bb), [`c87cada`](https://github.com/anza-xyz/kit/commit/c87cada3ddf0a8c5fa27ed7122b901b17392c2df), [`54d8445`](https://github.com/anza-xyz/kit/commit/54d8445bbef207b6d84da0ea91a1c091251ee013)]:
+    - @solana/transactions@4.0.0
+    - @solana/errors@4.0.0
+    - @solana/keys@4.0.0
+    - @solana/transaction-messages@4.0.0
+    - @solana/codecs-core@4.0.0
+    - @solana/addresses@4.0.0
+    - @solana/instructions@4.0.0
+    - @solana/nominal-types@4.0.0
+
 ## 3.0.0
 
 ### Major Changes

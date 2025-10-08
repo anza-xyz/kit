@@ -1,5 +1,22 @@
 # @solana/rpc-subscriptions-api
 
+## 4.0.0
+
+### Major Changes
+
+- [#550](https://github.com/anza-xyz/kit/pull/550) [`ce7f91c`](https://github.com/anza-xyz/kit/commit/ce7f91c522118bd929f69f581d2d48e90d18c99a) Thanks [@steveluscher](https://github.com/steveluscher)! - Removed `rentEpoch` from the `AccountInfoBase` type. This property is no longer relevant post SIMD-215. Developers whose applications rely on this property being numeric should either eliminate it or hardcode it to `18_446_744_073_709_551_615n`.
+
+### Patch Changes
+
+- Updated dependencies [[`5408f52`](https://github.com/anza-xyz/kit/commit/5408f524ae22293cb7b497310440019be5a98c55), [`f591dea`](https://github.com/anza-xyz/kit/commit/f591dead4a3d5871fd02460f6301bb4bdf6b508e), [`cb11699`](https://github.com/anza-xyz/kit/commit/cb11699d77536e5901c62d32e43c671b044e4aa1), [`ce7f91c`](https://github.com/anza-xyz/kit/commit/ce7f91c522118bd929f69f581d2d48e90d18c99a), [`af01f27`](https://github.com/anza-xyz/kit/commit/af01f2770e4b3a94f3ef3360677b27aa08175c1b), [`54d8445`](https://github.com/anza-xyz/kit/commit/54d8445bbef207b6d84da0ea91a1c091251ee013)]:
+    - @solana/transactions@4.0.0
+    - @solana/keys@4.0.0
+    - @solana/transaction-messages@4.0.0
+    - @solana/rpc-types@4.0.0
+    - @solana/addresses@4.0.0
+    - @solana/rpc-subscriptions-spec@4.0.0
+    - @solana/rpc-transformers@4.0.0
+
 ## 3.0.0
 
 ### Patch Changes
