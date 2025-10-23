@@ -1,5 +1,21 @@
 # @solana/rpc-types
 
+## 5.0.0
+
+### Major Changes
+
+- [#974](https://github.com/anza-xyz/kit/pull/974) [`0fed638`](https://github.com/anza-xyz/kit/commit/0fed6389886639a48b44a09e129ac1b264c44389) Thanks [@joncinque](https://github.com/joncinque)! - `BorshIoErrors` from the RPC no longer contain an `encodedData` property. This property used to hold the underlying error from the serialization library used on the server. This message was always subject to changes in the version of that library, or changes in the choice of library itself. New versions of the server no longer throw the underlying error, so for consistency it has been removed everywhere in Kit.
+
+### Patch Changes
+
+- Updated dependencies [[`0fed638`](https://github.com/anza-xyz/kit/commit/0fed6389886639a48b44a09e129ac1b264c44389)]:
+    - @solana/errors@5.0.0
+    - @solana/addresses@5.0.0
+    - @solana/codecs-core@5.0.0
+    - @solana/codecs-numbers@5.0.0
+    - @solana/codecs-strings@5.0.0
+    - @solana/nominal-types@5.0.0
+
 ## 4.0.0
 
 ### Major Changes

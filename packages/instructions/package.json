@@ -1,6 +1,6 @@
 {
     "name": "@solana/instructions",
-    "version": "4.0.0",
+    "version": "5.0.0",
     "description": "Helpers for creating transaction instructions",
     "homepage": "https://www.solanakit.com/api#solanainstructions",
     "exports": {

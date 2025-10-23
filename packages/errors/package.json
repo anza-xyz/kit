@@ -1,6 +1,6 @@
 {
     "name": "@solana/errors",
-    "version": "4.0.0",
+    "version": "5.0.0",
     "description": "Throw, identify, and decode Solana JavaScript errors",
     "homepage": "https://www.solanakit.com/api#solanaerrors",
     "exports": {

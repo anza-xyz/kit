@@ -1,6 +1,6 @@
 {
     "name": "@solana/rpc-api",
-    "version": "4.0.0",
+    "version": "5.0.0",
     "description": "Defines all default Solana RPC methods as types",
     "homepage": "https://www.solanakit.com/api#solanarpc-api",
     "exports": {

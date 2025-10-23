@@ -1,6 +1,6 @@
 {
     "name": "@solana/nominal-types",
-    "version": "4.0.0",
+    "version": "5.0.0",
     "description": "Type utilties for creating nominal/branded types in TypeScript",
     "homepage": "https://www.solanakit.com/api#solananominal-types",
     "types": "./dist/types/index.d.ts",

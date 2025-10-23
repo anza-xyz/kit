@@ -1,6 +1,6 @@
 {
     "name": "@solana/codecs-data-structures",
-    "version": "4.0.0",
+    "version": "5.0.0",
     "description": "Codecs for various data structures",
     "homepage": "https://www.solanakit.com/api#solanacodecs-data-structures",
     "exports": {
