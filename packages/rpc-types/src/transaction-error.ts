@@ -1,6 +1,6 @@
 type CustomProgramError = number;
 
-// Keep synced with RPC source: https://github.com/anza-xyz/agave/blob/master/sdk/program/src/instruction.rs
+// Keep synced with RPC source: https://github.com/anza-xyz/solana-sdk/blob/master/instruction-error/src/lib.rs
 type InstructionError =
     | 'AccountAlreadyInitialized'
     | 'AccountBorrowFailed'

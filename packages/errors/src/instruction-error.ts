@@ -7,7 +7,7 @@ import { SolanaError } from './error';
 import { getSolanaErrorFromRpcError } from './rpc-enum-errors';
 
 const ORDERED_ERROR_NAMES = [
-    // Keep synced with RPC source: https://github.com/anza-xyz/agave/blob/master/sdk/program/src/instruction.rs
+    // Keep synced with RPC source: https://github.com/anza-xyz/solana-sdk/blob/master/instruction-error/src/lib.rs
     // If this list ever gets too large, consider implementing a compression strategy like this:
     // https://gist.github.com/steveluscher/aaa7cbbb5433b1197983908a40860c47
     'GenericError',
