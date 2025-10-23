@@ -10,6 +10,7 @@ type InstructionError =
     | 'AccountNotExecutable'
     | 'AccountNotRentExempt'
     | 'ArithmeticOverflow'
+    | 'BorshIoError' // SDKv3 has a fieldless `BorshIoError`
     | 'BuiltinProgramsMustConsumeComputeUnits'
     | 'CallDepth'
     | 'ComputationalBudgetExceeded'
@@ -54,8 +55,6 @@ type InstructionError =
     | 'UninitializedAccount'
     | 'UnsupportedProgramId'
     | 'UnsupportedSysvar'
-    | 'BorshIoError' // SDKv3 has a fieldless `BorshIoError`
-    | { BorshIoError: string } // SDK pre-v3 has a newtype for `BorshIoError`
     | { Custom: CustomProgramError };
 
 type InstructionIndex = number;
