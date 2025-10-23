@@ -395,7 +395,6 @@ export type SolanaErrorContext = DefaultUnspecifiedErrorContextToUndefined<
             variant: number;
         };
         [SOLANA_ERROR__INSTRUCTION_ERROR__BORSH_IO_ERROR]: {
-            encodedData: string;
             index: number;
         };
         [SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM]: {

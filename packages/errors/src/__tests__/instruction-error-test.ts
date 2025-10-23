@@ -96,8 +96,16 @@ describe('getSolanaErrorFromInstructionError', () => {
             }),
         );
     });
-    it('produces the correct `SolanaError` for a `BorshIoError` error from a string', () => {
+    it('produces the correct `SolanaError` for a `BorshIoError` error (pre SDK 3.0 newtype style)', () => {
         const error = getSolanaErrorFromInstructionError(123, { BorshIoError: 'abc' });
+        expect(error).toEqual(
+            new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__BORSH_IO_ERROR, {
+                index: 123,
+            }),
+        );
+    });
+    it('produces the correct `SolanaError` for a `BorshIoError` error (SDK 3.0+ unit style)', () => {
+        const error = getSolanaErrorFromInstructionError(123, 'BorshIoError');
         expect(error).toEqual(
             new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__BORSH_IO_ERROR, {
                 index: 123,
