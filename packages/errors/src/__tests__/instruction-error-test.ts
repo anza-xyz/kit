@@ -51,6 +51,7 @@ const EXPECTED_ERROR_CODES = [
     ['ProgramFailedToCompile', 4615042],
     ['Immutable', 4615043],
     ['IncorrectAuthority', 4615044],
+    ['BorshIoError', 4615045],
     ['AccountNotRentExempt', 4615046],
     ['InvalidAccountOwner', 4615047],
     ['ArithmeticOverflow', 4615048],
@@ -95,11 +96,10 @@ describe('getSolanaErrorFromInstructionError', () => {
             }),
         );
     });
-    it('produces the correct `SolanaError` for a `BorshIoError` error', () => {
+    it('produces the correct `SolanaError` for a `BorshIoError` error from a string', () => {
         const error = getSolanaErrorFromInstructionError(123, { BorshIoError: 'abc' });
         expect(error).toEqual(
             new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__BORSH_IO_ERROR, {
-                encodedData: 'abc',
                 index: 123,
             }),
         );

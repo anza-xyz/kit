@@ -54,7 +54,8 @@ type InstructionError =
     | 'UninitializedAccount'
     | 'UnsupportedProgramId'
     | 'UnsupportedSysvar'
-    | { BorshIoError: string }
+    | 'BorshIoError' // SDKv3 has a fieldless `BorshIoError`
+    | { BorshIoError: string } // SDK pre-v3 has a newtype for `BorshIoError`
     | { Custom: CustomProgramError };
 
 type InstructionIndex = number;
