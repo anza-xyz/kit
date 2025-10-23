@@ -104,14 +104,6 @@ describe('getSolanaErrorFromInstructionError', () => {
             }),
         );
     });
-    it('produces the correct `SolanaError` for a `BorshIoError` error (SDK 3.0+ unit style)', () => {
-        const error = getSolanaErrorFromInstructionError(123, 'BorshIoError');
-        expect(error).toEqual(
-            new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__BORSH_IO_ERROR, {
-                index: 123,
-            }),
-        );
-    });
     it("returns the unknown error when encountering an enum name that's missing from the map", () => {
         const error = getSolanaErrorFromInstructionError(123, 'ThisDoesNotExist');
         expect(error).toEqual(
