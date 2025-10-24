@@ -64,7 +64,7 @@ type SigVerifyAndReplaceRecentBlockhashConfig<TReplaceBlockhash extends boolean 
 type AccountsConfigWithBase64EncodingZstdCompression = Readonly<{
     accounts: {
         /** An `array` of accounts to return */
-        addresses: Address[];
+        addresses: readonly Address[];
         /** Encoding for returned Account data */
         encoding: 'base64+zstd';
     };
@@ -73,7 +73,7 @@ type AccountsConfigWithBase64EncodingZstdCompression = Readonly<{
 type AccountsConfigWithJsonParsedEncoding = Readonly<{
     accounts: {
         /** An `array` of accounts to return */
-        addresses: Address[];
+        addresses: readonly Address[];
         /** Encoding for returned Account data */
         encoding: 'jsonParsed';
     };
@@ -82,7 +82,7 @@ type AccountsConfigWithJsonParsedEncoding = Readonly<{
 type AccountsConfigWithBase64Encoding = Readonly<{
     accounts: {
         /** An `array` of accounts to return */
-        addresses: Address[];
+        addresses: readonly Address[];
         // Optional because this is the default encoding
         /** Encoding for returned Account data */
         encoding?: 'base64';

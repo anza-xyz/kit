@@ -69,7 +69,7 @@ export type GetMultipleAccountsApi = {
      * @see https://solana.com/docs/rpc/http/getmultipleaccounts
      */
     getMultipleAccounts(
-        addresses: Address[],
+        addresses: readonly Address[],
         config: GetMultipleAccountsApiCommonConfig &
             GetMultipleAccountsApiSliceableCommonConfig &
             Readonly<{
@@ -89,7 +89,7 @@ export type GetMultipleAccountsApi = {
      * @see https://solana.com/docs/rpc/http/getmultipleaccounts
      */
     getMultipleAccounts(
-        addresses: Address[],
+        addresses: readonly Address[],
         config: GetMultipleAccountsApiCommonConfig &
             GetMultipleAccountsApiSliceableCommonConfig &
             Readonly<{
@@ -112,7 +112,7 @@ export type GetMultipleAccountsApi = {
      * @see https://solana.com/docs/rpc/http/getmultipleaccounts
      */
     getMultipleAccounts(
-        addresses: Address[],
+        addresses: readonly Address[],
         config: GetMultipleAccountsApiCommonConfig &
             Readonly<{
                 encoding: 'jsonParsed';
@@ -131,7 +131,7 @@ export type GetMultipleAccountsApi = {
      * @see https://solana.com/docs/rpc/http/getmultipleaccounts
      */
     getMultipleAccounts(
-        addresses: Address[],
+        addresses: readonly Address[],
         config: GetMultipleAccountsApiCommonConfig &
             GetMultipleAccountsApiSliceableCommonConfig &
             Readonly<{
@@ -150,7 +150,7 @@ export type GetMultipleAccountsApi = {
      * @see https://solana.com/docs/rpc/http/getmultipleaccounts
      */
     getMultipleAccounts(
-        addresses: Address[],
+        addresses: readonly Address[],
         config?: GetMultipleAccountsApiCommonConfig,
     ): SolanaRpcResponse<(GetMultipleAccountsApiResponseBase & (AccountInfoWithBase64EncodedData | null))[]>;
 };

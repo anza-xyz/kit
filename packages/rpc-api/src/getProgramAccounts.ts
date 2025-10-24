@@ -51,7 +51,7 @@ type GetProgramAccountsApiCommonConfig = Readonly<{
      *
      * @defaultValue When omitted, no filters are applied.
      */
-    filters?: (GetProgramAccountsDatasizeFilter | GetProgramAccountsMemcmpFilter)[];
+    filters?: readonly (GetProgramAccountsDatasizeFilter | GetProgramAccountsMemcmpFilter)[];
     /**
      * Prevents accessing stale data by enforcing that the RPC node has processed transactions up to
      * this slot

@@ -24,5 +24,5 @@ export type GetRecentPrioritizationFeesApi = {
      *
      * @see https://solana.com/docs/rpc/http/getrecentprioritizationfees
      */
-    getRecentPrioritizationFees(addresses?: Address[]): GetRecentPrioritizationFeesApiResponse;
+    getRecentPrioritizationFees(addresses?: readonly Address[]): GetRecentPrioritizationFeesApiResponse;
 };

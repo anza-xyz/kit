@@ -46,5 +46,5 @@ export type GetInflationRewardApi = {
      *
      * @see https://solana.com/docs/rpc/http/getinflationreward
      */
-    getInflationReward(addresses: Address[], config?: GetInflationRewardApiConfig): GetInflationRewardApiResponse;
+    getInflationReward(addresses: readonly Address[], config?: GetInflationRewardApiConfig): GetInflationRewardApiResponse;
 };
