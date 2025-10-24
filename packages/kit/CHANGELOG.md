@@ -1,5 +1,30 @@
 # @solana/kit
 
+## 5.0.1
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/rpc@5.0.1
+    - @solana/sysvars@5.0.1
+    - @solana/transaction-confirmation@5.0.1
+    - @solana/accounts@5.0.1
+    - @solana/addresses@5.0.1
+    - @solana/codecs@5.0.1
+    - @solana/errors@5.0.1
+    - @solana/functional@5.0.1
+    - @solana/instruction-plans@5.0.1
+    - @solana/instructions@5.0.1
+    - @solana/keys@5.0.1
+    - @solana/programs@5.0.1
+    - @solana/rpc-parsed-types@5.0.1
+    - @solana/rpc-spec-types@5.0.1
+    - @solana/rpc-subscriptions@5.0.1
+    - @solana/rpc-types@5.0.1
+    - @solana/signers@5.0.1
+    - @solana/transaction-messages@5.0.1
+    - @solana/transactions@5.0.1
+
 ## 5.0.0
 
 ### Patch Changes
