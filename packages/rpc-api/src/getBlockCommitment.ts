@@ -5,7 +5,7 @@ type GetBlockCommitmentApiResponse = Readonly<{
      * An array that represents the amount of cluster stake, denominated in {@link Lamports}, that
      * has voted on the block at each depth from `0` to `MAX_LOCKOUT_HISTORY`.
      */
-    commitment: Lamports[] | null;
+    commitment: readonly Lamports[] | null;
     /** The total active stake, in {@link Lamports}, of the current epoch. */
     totalStake: Lamports;
 }>;

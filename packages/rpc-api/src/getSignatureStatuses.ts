@@ -46,7 +46,7 @@ export type GetSignatureStatusesApi = {
          * An array of transaction signatures to confirm, as base-58 encoded strings (up to a
          * maximum of 256)
          */
-        signatures: Signature[],
+        signatures: readonly Signature[],
         config?: Readonly<{
             /**
              * Determines whether the search for a transaction with a given signature will consider
