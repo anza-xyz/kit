@@ -30,8 +30,8 @@ importers:
         specifier: ^2.29.7
         version: 2.29.7(@types/node@24.9.1)
       '@eslint/js':
-        specifier: ^9.37.0
-        version: 9.37.0
+        specifier: ^9.38.0
+        version: 9.38.0
       '@eslint/json':
         specifier: ^0.13.2
         version: 0.13.2
@@ -43,7 +43,7 @@ importers:
         version: link:packages/build-scripts
       '@solana/eslint-config-solana':
         specifier: ^4.0.0
-        version: 4.0.0(16fcc9b0f37352fdb6880becbcadd020)
+        version: 4.0.0(ac3fb336635c95d50a726c6284da151e)
       '@solana/prettier-config-solana':
         specifier: 0.0.5
         version: 0.0.5(prettier@3.6.2)
@@ -2749,6 +2749,10 @@ packages:
 
   '@eslint/js@9.37.0':
     resolution: {integrity: sha512-jaS+NJ+hximswBG6pjNX0uEJZkrT0zwpVi3BA3vX22aFGjJjmgSTSmPpZCRKmoBL5VY/M6p0xsSJx7rk7sy5gg==}
+    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+
+  '@eslint/js@9.38.0':
+    resolution: {integrity: sha512-UZ1VpFvXf9J06YG9xQBdnzU+kthors6KjhMAl6f4gH4usHyh31rUf2DLGInT8RFYIReYXNSydgPY0V2LuWgl7A==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
   '@eslint/json@0.13.2':
@@ -9581,6 +9585,8 @@ snapshots:
 
   '@eslint/js@9.37.0': {}
 
+  '@eslint/js@9.38.0': {}
+
   '@eslint/json@0.13.2':
     dependencies:
       '@eslint/core': 0.15.2
@@ -11202,9 +11208,9 @@ snapshots:
       commander: 14.0.1
       typescript: 5.8.3
 
-  '@solana/eslint-config-solana@4.0.0(16fcc9b0f37352fdb6880becbcadd020)':
+  '@solana/eslint-config-solana@4.0.0(ac3fb336635c95d50a726c6284da151e)':
     dependencies:
-      '@eslint/js': 9.37.0
+      '@eslint/js': 9.38.0
       '@types/eslint__js': 8.42.3
       eslint: 9.37.0(jiti@1.21.7)
       eslint-plugin-jest: 28.11.0(@typescript-eslint/eslint-plugin@8.46.0(@typescript-eslint/parser@8.46.2(eslint@9.37.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.37.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.37.0(jiti@1.21.7))(jest@30.0.0-alpha.6(@types/node@24.9.1)(ts-node@10.9.2(@swc/core@1.13.19(@swc/helpers@0.5.17))(@types/node@24.9.1)(typescript@5.8.3)))(typescript@5.8.3)
