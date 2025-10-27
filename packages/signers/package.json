@@ -79,6 +79,7 @@
         "@solana/instructions": "workspace:*",
         "@solana/keys": "workspace:*",
         "@solana/nominal-types": "workspace:*",
+        "@solana/offchain-messages": "workspace:*",
         "@solana/transaction-messages": "workspace:*",
         "@solana/transactions": "workspace:*"
     },
