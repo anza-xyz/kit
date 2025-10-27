@@ -80,7 +80,7 @@
     },
     "devDependencies": {
         "@solana/text-encoding-impl": "workspace:*",
-        "tinybench": "^5.0.1"
+        "tinybench": "^5.1.0"
     },
     "peerDependencies": {
         "fastestsmallesttextencoderdecoder": "^1.0.22",

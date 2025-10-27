@@ -80,7 +80,7 @@
         "undici-types": "^7.16.0"
     },
     "devDependencies": {
-        "tinybench": "^5.0.1",
+        "tinybench": "^5.1.0",
         "undici": "^7.16.0",
         "zx": "^8.8.4"
     },

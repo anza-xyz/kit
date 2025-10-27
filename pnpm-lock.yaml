@@ -431,8 +431,8 @@ importers:
         version: 5.8.2
     devDependencies:
       tinybench:
-        specifier: ^5.0.1
-        version: 5.0.1
+        specifier: ^5.1.0
+        version: 5.1.0
 
   packages/codecs-data-structures:
     dependencies:
@@ -487,8 +487,8 @@ importers:
         specifier: workspace:*
         version: link:../text-encoding-impl
       tinybench:
-        specifier: ^5.0.1
-        version: 5.0.1
+        specifier: ^5.1.0
+        version: 5.1.0
 
   packages/compat:
     dependencies:
@@ -550,8 +550,8 @@ importers:
   packages/fetch-impl:
     devDependencies:
       tinybench:
-        specifier: ^5.0.1
-        version: 5.0.1
+        specifier: ^5.1.0
+        version: 5.1.0
       undici:
         specifier: ^7.16.0
         version: 7.16.0
@@ -631,8 +631,8 @@ importers:
         version: 5.8.2
     devDependencies:
       tinybench:
-        specifier: ^5.0.1
-        version: 5.0.1
+        specifier: ^5.1.0
+        version: 5.1.0
 
   packages/kit:
     dependencies:
@@ -1131,8 +1131,8 @@ importers:
         version: 7.16.0
     devDependencies:
       tinybench:
-        specifier: ^5.0.1
-        version: 5.0.1
+        specifier: ^5.1.0
+        version: 5.1.0
       undici:
         specifier: ^7.16.0
         version: 7.16.0
@@ -7519,8 +7519,8 @@ packages:
   tiny-invariant@1.3.3:
     resolution: {integrity: sha512-+FbBPE1o9QAYvviau/qC5SE3caw21q3xkvWKBtja5vgqOWIHHJ3ioaq1VPfn/Szqctz2bU/oYeKd9/z5BL+PVg==}
 
-  tinybench@5.0.1:
-    resolution: {integrity: sha512-aNVgWQZY4veCZLQJRftDA1X9OoLUIjDWNfC90nledkX7Lx205IpSEFYnsu4slyofoPGpJ+NIQj+BNSt4U5edMg==}
+  tinybench@5.1.0:
+    resolution: {integrity: sha512-LXKNtFualiKOm6gADe1UXPtf8+Nfn1CtPMEHAT33Fd2YjQatrujkDcK0+4wRC1X6t7fxUDXUs6BsvuIgfkDgDg==}
     engines: {node: '>=20.0.0'}
 
   tinyexec@0.3.2:
@@ -15203,7 +15203,7 @@ snapshots:
 
   tiny-invariant@1.3.3: {}
 
-  tinybench@5.0.1: {}
+  tinybench@5.1.0: {}
 
   tinyexec@0.3.2: {}
 
