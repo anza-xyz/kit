@@ -147,8 +147,8 @@ importers:
   examples/deserialize-transaction:
     dependencies:
       '@solana-program/address-lookup-table':
-        specifier: ^0.8.0
-        version: 0.8.0(@solana/kit@packages+kit)
+        specifier: ^0.9.0
+        version: 0.9.0(@solana/kit@packages+kit)
       '@solana-program/memo':
         specifier: ^0.8.0
         version: 0.8.0(@solana/kit@packages+kit)
@@ -4224,10 +4224,10 @@ packages:
   '@sinonjs/fake-timers@8.1.0':
     resolution: {integrity: sha512-OAPJUAtgeINhh/TAlUID4QTs53Njm7xzddaVlEs/SXwgtiD1tW22zAB/W1wdqfrpmikgaWQ9Fw6Ws+hsiRm5Vg==}
 
-  '@solana-program/address-lookup-table@0.8.0':
-    resolution: {integrity: sha512-ZTSlGj+4hPM6ssBquc8eOeqHR12/DkTDFoqvZqpikLKNHRPgBMFdat56CDBb5G1MCmviPWJ7ij4BUE3fzBz4MA==}
+  '@solana-program/address-lookup-table@0.9.0':
+    resolution: {integrity: sha512-kZu7SJWrTsZ+JcoBJ/521ZDdQykKV7DYsrpggg1mulAgC7RnKm3GrGuDF4D30rY+KKbnwhyZHyCtEHvwyZ205Q==}
     peerDependencies:
-      '@solana/kit': ^3.0
+      '@solana/kit': ^4.0
 
   '@solana-program/memo@0.8.0':
     resolution: {integrity: sha512-sf70ts2ZY10qQUxu5cLPnNYiBcqxJ07p6g4zk2ALq/Ueg3Y4hNm9XbxzA7GmNquDeDGWmEJJaT2ElOWWS+sa8Q==}
@@ -11169,7 +11169,7 @@ snapshots:
     dependencies:
       '@sinonjs/commons': 1.8.6
 
-  '@solana-program/address-lookup-table@0.8.0(@solana/kit@packages+kit)':
+  '@solana-program/address-lookup-table@0.9.0(@solana/kit@packages+kit)':
     dependencies:
       '@solana/kit': link:packages/kit
 
