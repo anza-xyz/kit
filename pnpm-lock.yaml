@@ -663,6 +663,9 @@ importers:
       '@solana/keys':
         specifier: workspace:*
         version: link:../keys
+      '@solana/offchain-messages':
+        specifier: workspace:*
+        version: link:../offchain-messages
       '@solana/programs':
         specifier: workspace:*
         version: link:../programs
@@ -702,6 +705,36 @@ importers:
 
   packages/nominal-types:
     dependencies:
+      typescript:
+        specifier: '>=5.3.3'
+        version: 5.8.3
+
+  packages/offchain-messages:
+    dependencies:
+      '@solana/addresses':
+        specifier: workspace:*
+        version: link:../addresses
+      '@solana/codecs-core':
+        specifier: workspace:*
+        version: link:../codecs-core
+      '@solana/codecs-data-structures':
+        specifier: workspace:*
+        version: link:../codecs-data-structures
+      '@solana/codecs-numbers':
+        specifier: workspace:*
+        version: link:../codecs-numbers
+      '@solana/codecs-strings':
+        specifier: workspace:*
+        version: link:../codecs-strings
+      '@solana/errors':
+        specifier: workspace:*
+        version: link:../errors
+      '@solana/keys':
+        specifier: workspace:*
+        version: link:../keys
+      '@solana/nominal-types':
+        specifier: workspace:*
+        version: link:../nominal-types
       typescript:
         specifier: '>=5.3.3'
         version: 5.8.3

@@ -1,8 +1,8 @@
 {
-    "name": "@solana/kit",
+    "name": "@solana/offchain-messages",
     "version": "5.0.0",
-    "description": "Solana Javascript API",
-    "homepage": "https://www.solanakit.com",
+    "description": "Helpers for encoding and decoding messages according to the offchain message specification",
+    "homepage": "https://www.solanakit.com/api#solanaoffchain-messages",
     "exports": {
         "edge-light": {
             "import": "./dist/index.node.mjs",
@@ -27,9 +27,6 @@
         "./dist/index.node.cjs": "./dist/index.browser.cjs",
         "./dist/index.node.mjs": "./dist/index.browser.mjs"
     },
-    "jsdelivr": "./dist/index.production.min.js",
-    "umd": "./dist/index.production.min.js",
-    "unpkg": "./dist/index.production.min.js",
     "main": "./dist/index.node.cjs",
     "module": "./dist/index.node.mjs",
     "react-native": "./dist/index.native.mjs",
@@ -46,11 +43,11 @@
     ],
     "scripts": {
         "compile:docs": "typedoc",
-        "compile:js": "tsup --config build-scripts/tsup.config.library.ts",
+        "compile:js": "tsup --config build-scripts/tsup.config.package.ts",
         "compile:typedefs": "tsc -p ./tsconfig.declarations.json",
-        "dev": "NODE_OPTIONS=\"--localstorage-file=$(mktemp)\" jest -c ../../node_modules/@solana/test-config/jest-dev.config.ts --rootDir . --watch",
+        "dev": "NODE_OPTIONS=\"--localstorage-file=/tmp/node-localstorage-$(head /dev/urandom | tr -dc a-zA-Z0-9 | head -c 8)\" jest -c ../../node_modules/@solana/test-config/jest-dev.config.ts --rootDir . --watch",
         "prepublishOnly": "pnpm pkg delete devDependencies",
-        "publish-impl": "npm view $npm_package_name@$npm_package_version > /dev/null 2>&1 || (pnpm publish --tag ${PUBLISH_TAG:-canary} --access public --no-git-checks && (([ -n \"${GITHUB_OUTPUT:-}\" ] && echo 'published=true' >> \"$GITHUB_OUTPUT\") || true) && (([ \"$PUBLISH_TAG\" != \"canary\" ] && ../build-scripts/maybe-tag-latest.ts --token \"$GITHUB_TOKEN\" $npm_package_name@$npm_package_version) || true))",
+        "publish-impl": "npm view $npm_package_name@$npm_package_version > /dev/null 2>&1 || (pnpm publish --tag ${PUBLISH_TAG:-canary} --access public --no-git-checks && (([ -n \"${GITHUB_OUTPUT:-}\" ] && echo 'published=true' >> \"$GITHUB_OUTPUT\") || true) && (([ \"$PUBLISH_TAG\" != \"canary\" ] && ../build-scripts/maybe-tag-latest.ts $npm_package_name@$npm_package_version) || true))",
         "publish-packages": "pnpm prepublishOnly && pnpm publish-impl",
         "style:fix": "pnpm eslint --fix src && pnpm prettier --log-level warn --ignore-unknown --write ./*",
         "test:lint": "TERM_OVERRIDE=\"${TURBO_HASH:+dumb}\" TERM=${TERM_OVERRIDE:-$TERM} jest -c ../../node_modules/@solana/test-config/jest-lint.config.ts --rootDir . --silent",
@@ -59,8 +56,8 @@
         "test:treeshakability:native": "agadoo dist/index.native.mjs",
         "test:treeshakability:node": "agadoo dist/index.node.mjs",
         "test:typecheck": "tsc --noEmit",
-        "test:unit:browser": "NODE_OPTIONS=\"--localstorage-file=$(mktemp)\" TERM_OVERRIDE=\"${TURBO_HASH:+dumb}\" TERM=${TERM_OVERRIDE:-$TERM} jest -c ../../node_modules/@solana/test-config/jest-unit.config.browser.ts --rootDir . --silent",
-        "test:unit:node": "NODE_OPTIONS=\"--localstorage-file=$(mktemp)\" TERM_OVERRIDE=\"${TURBO_HASH:+dumb}\" TERM=${TERM_OVERRIDE:-$TERM} jest -c ../../node_modules/@solana/test-config/jest-unit.config.node.ts --rootDir . --silent"
+        "test:unit:browser": "NODE_OPTIONS=\"--localstorage-file=/tmp/node-localstorage-$(head /dev/urandom | tr -dc a-zA-Z0-9 | head -c 8)\" TERM_OVERRIDE=\"${TURBO_HASH:+dumb}\" TERM=${TERM_OVERRIDE:-$TERM} jest -c ../../node_modules/@solana/test-config/jest-unit.config.browser.ts --rootDir . --silent",
+        "test:unit:node": "NODE_OPTIONS=\"--localstorage-file=/tmp/node-localstorage-$(head /dev/urandom | tr -dc a-zA-Z0-9 | head -c 8)\" TERM_OVERRIDE=\"${TURBO_HASH:+dumb}\" TERM=${TERM_OVERRIDE:-$TERM} jest -c ../../node_modules/@solana/test-config/jest-unit.config.node.ts --rootDir . --silent"
     },
     "author": "Solana Labs Maintainers <maintainers@solanalabs.com>",
     "license": "MIT",
@@ -76,26 +73,14 @@
         "maintained node versions"
     ],
     "dependencies": {
-        "@solana/accounts": "workspace:*",
         "@solana/addresses": "workspace:*",
-        "@solana/codecs": "workspace:*",
+        "@solana/codecs-core": "workspace:*",
+        "@solana/codecs-data-structures": "workspace:*",
+        "@solana/codecs-numbers": "workspace:*",
+        "@solana/codecs-strings": "workspace:*",
         "@solana/errors": "workspace:*",
-        "@solana/functional": "workspace:*",
-        "@solana/instructions": "workspace:*",
-        "@solana/instruction-plans": "workspace:*",
         "@solana/keys": "workspace:*",
-        "@solana/offchain-messages": "workspace:*",
-        "@solana/programs": "workspace:*",
-        "@solana/rpc": "workspace:*",
-        "@solana/rpc-parsed-types": "workspace:*",
-        "@solana/rpc-subscriptions": "workspace:*",
-        "@solana/rpc-types": "workspace:*",
-        "@solana/rpc-spec-types": "workspace:*",
-        "@solana/signers": "workspace:*",
-        "@solana/sysvars": "workspace:*",
-        "@solana/transaction-confirmation": "workspace:*",
-        "@solana/transaction-messages": "workspace:*",
-        "@solana/transactions": "workspace:*"
+        "@solana/nominal-types": "workspace:*"
     },
     "peerDependencies": {
         "typescript": ">=5.3.3"
