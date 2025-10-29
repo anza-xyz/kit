@@ -62,11 +62,12 @@ export function isSolanaError<TErrorCode extends SolanaErrorCode>(
     return false;
 }
 
-type SolanaErrorCodedContext = Readonly<{
-    [P in SolanaErrorCode]: (SolanaErrorContext[P] extends undefined ? object : SolanaErrorContext[P]) & {
+type SolanaErrorCodedContext = {
+    [P in SolanaErrorCode]: Readonly<{
         __code: P;
-    };
-}>;
+    }> &
+        (SolanaErrorContext[P] extends undefined ? object : SolanaErrorContext[P]);
+};
 
 /**
  * Encapsulates an error's stacktrace, a Solana-specific numeric code that indicates what went
@@ -98,7 +99,9 @@ export class SolanaError<TErrorCode extends SolanaErrorCode = SolanaErrorCode> e
                     errorOptions = { cause: descriptor.value };
                 } else {
                     if (context === undefined) {
-                        context = {} as SolanaErrorContext[TErrorCode];
+                        context = {
+                            __code: code,
+                        } as unknown as SolanaErrorContext[TErrorCode];
                     }
                     Object.defineProperty(context, name, descriptor);
                 }
@@ -106,8 +109,13 @@ export class SolanaError<TErrorCode extends SolanaErrorCode = SolanaErrorCode> e
         }
         const message = getErrorMessage(code, context);
         super(message, errorOptions);
-        this.context = (context === undefined ? {} : context) as SolanaErrorCodedContext[TErrorCode];
-        this.context.__code = code;
+        this.context = Object.freeze(
+            context === undefined
+                ? {
+                      __code: code,
+                  }
+                : context,
+        ) as SolanaErrorCodedContext[TErrorCode];
         // This is necessary so that `isSolanaError()` can identify a `SolanaError` without having
         // to import the class for use in an `instanceof` check.
         this.name = 'SolanaError';

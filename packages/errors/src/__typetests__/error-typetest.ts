@@ -39,11 +39,17 @@ if (unknownError.context.__code === SOLANA_ERROR__TRANSACTION__SIGNATURES_MISSIN
 const e = null as unknown;
 if (isSolanaError(e)) {
     e.context satisfies Readonly<{ __code: SolanaErrorCode }>;
+    // @ts-expect-error Code is read-only
+    e.context.__code = SOLANA_ERROR__TRANSACTION__FEE_PAYER_SIGNATURE_MISSING;
 }
 if (isSolanaError(e, SOLANA_ERROR__TRANSACTION__SIGNATURES_MISSING)) {
     e.context satisfies SolanaErrorContext[typeof SOLANA_ERROR__TRANSACTION__SIGNATURES_MISSING];
     // @ts-expect-error Context belongs to another error code
     e.context satisfies SolanaErrorContext[typeof SOLANA_ERROR__TRANSACTION__FEE_PAYER_SIGNATURE_MISSING];
+    // @ts-expect-error Context is read-only
+    e.context.addresses = [] as unknown as typeof e.context.addresses;
+    // @ts-expect-error Objects in context are read-only
+    e.context.addresses.push('abc' as unknown as (typeof e.context.addresses)[number]);
 }
 
 // `SolanaErrorContext` must not contain any keys reserved by `ErrorOptions` (eg. `cause`)
