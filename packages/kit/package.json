@@ -94,7 +94,8 @@
         "@solana/sysvars": "workspace:*",
         "@solana/transaction-confirmation": "workspace:*",
         "@solana/transaction-messages": "workspace:*",
-        "@solana/transactions": "workspace:*"
+        "@solana/transactions": "workspace:*",
+        "fastestsmallesttextencoderdecoder": "^1.0.22"
     },
     "peerDependencies": {
         "typescript": ">=5.3.3"
