@@ -693,9 +693,6 @@ importers:
       '@solana/transactions':
         specifier: workspace:*
         version: link:../transactions
-      fastestsmallesttextencoderdecoder:
-        specifier: ^1.0.22
-        version: 1.0.22
       typescript:
         specifier: '>=5.3.3'
         version: 5.8.2
