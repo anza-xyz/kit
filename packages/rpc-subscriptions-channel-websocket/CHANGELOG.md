@@ -1,5 +1,15 @@
 # @solana/rpc-subscriptions-channel-websocket
 
+## 5.0.1
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/errors@5.0.1
+    - @solana/functional@5.0.1
+    - @solana/rpc-subscriptions-spec@5.0.1
+    - @solana/subscribable@5.0.1
+
 ## 5.0.0
 
 ### Patch Changes
