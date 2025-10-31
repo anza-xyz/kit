@@ -40,6 +40,9 @@ export default function InKeepSearchDialog(props: SharedProps) {
                 const rootStyles = getComputedStyle(document.documentElement);
                 return rootStyles.getPropertyValue('--color-coral-400').trim();
             })(),
+            privacyPreferences: {
+                optOutAnalyticalCookies: true,
+            },
             transformSource(source) {
                 const detectedTabs: string[] = [];
                 if (source.url.startsWith('https://solana.stackexchange.com/')) {
