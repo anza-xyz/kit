@@ -150,8 +150,8 @@ importers:
         specifier: ^0.9.0
         version: 0.9.0(@solana/kit@packages+kit)
       '@solana-program/memo':
-        specifier: ^0.8.0
-        version: 0.8.0(@solana/kit@packages+kit)
+        specifier: ^0.9.0
+        version: 0.9.0(@solana/kit@packages+kit)
       '@solana-program/system':
         specifier: ^0.9.0
         version: 0.9.0(@solana/kit@packages+kit)
@@ -4225,10 +4225,10 @@ packages:
     peerDependencies:
       '@solana/kit': ^4.0
 
-  '@solana-program/memo@0.8.0':
-    resolution: {integrity: sha512-sf70ts2ZY10qQUxu5cLPnNYiBcqxJ07p6g4zk2ALq/Ueg3Y4hNm9XbxzA7GmNquDeDGWmEJJaT2ElOWWS+sa8Q==}
+  '@solana-program/memo@0.9.0':
+    resolution: {integrity: sha512-I544p9gFeaguGbM+U09tjc9Prbs71vh7votxRahEoiOlxVID9NtZTah4KQnL0jK7JboxFxXo4+VOBaIE3HYPOw==}
     peerDependencies:
-      '@solana/kit': ^3.0
+      '@solana/kit': ^4.0
 
   '@solana-program/system@0.9.0':
     resolution: {integrity: sha512-yu+i0SZ+c+0E9Cy+btoMiCbxRnP/FLQuv/Ba8l2klZApAiOX1Ja/2IGkctFV36fglsI7PwD9czkSkHm8og+QeA==}
@@ -5045,8 +5045,8 @@ packages:
   base64-js@1.5.1:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
 
-  baseline-browser-mapping@2.8.21:
-    resolution: {integrity: sha512-JU0h5APyQNsHOlAM7HnQnPToSDQoEBZqzu/YBlqDnEeymPnZDREeXJA3KBMQee+dKteAxZ2AtvQEvVYdZf241Q==}
+  baseline-browser-mapping@2.8.22:
+    resolution: {integrity: sha512-/tk9kky/d8T8CTXIQYASLyhAxR5VwL3zct1oAoVTaOUHwrmsGnfbRwNdEq+vOl2BN8i3PcDdP0o4Q+jjKQoFbQ==}
     hasBin: true
 
   before-after-hook@4.0.0:
@@ -11206,7 +11206,7 @@ snapshots:
     dependencies:
       '@solana/kit': link:packages/kit
 
-  '@solana-program/memo@0.8.0(@solana/kit@packages+kit)':
+  '@solana-program/memo@0.9.0(@solana/kit@packages+kit)':
     dependencies:
       '@solana/kit': link:packages/kit
 
@@ -12136,7 +12136,7 @@ snapshots:
 
   base64-js@1.5.1: {}
 
-  baseline-browser-mapping@2.8.21:
+  baseline-browser-mapping@2.8.22:
     optional: true
 
   before-after-hook@4.0.0: {}
@@ -12186,7 +12186,7 @@ snapshots:
 
   browserslist@4.27.0:
     dependencies:
-      baseline-browser-mapping: 2.8.21
+      baseline-browser-mapping: 2.8.22
       caniuse-lite: 1.0.30001752
       electron-to-chromium: 1.5.244
       node-releases: 2.0.27
