@@ -72,6 +72,7 @@ describe('getClusterNodes', () => {
             const [featureSet, gossip, pubkey, rpc, shredVersion, version] = await getNodeInfoFromLogFile();
             const res = await mockRpc.getClusterNodes().send();
             expect(res[0]).toStrictEqual({
+                clientId: expect.any(Number),
                 featureSet,
                 gossip,
                 pubkey,
