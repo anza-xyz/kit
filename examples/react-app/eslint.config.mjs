@@ -36,4 +36,19 @@ export default [
             ],
         },
     },
-];
+].map(
+    // FIXME: Without this hack, this error results:
+    // ConfigError: Config (unnamed): Key "plugins": Cannot redefine plugin "typescript-sort-keys".
+    (() => {
+        let typescriptSortKeysPluginFound = false;
+        return config => {
+            if (config.plugins?.['typescript-sort-keys']) {
+                if (typescriptSortKeysPluginFound === false) {
+                    delete config.plugins['typescript-sort-keys'];
+                }
+                typescriptSortKeysPluginFound = true;
+            }
+            return config;
+        };
+    })(),
+);
