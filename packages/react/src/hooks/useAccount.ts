@@ -20,6 +20,10 @@ function toAddress(addressLike: AddressLike): Address {
     return typeof addressLike === 'string' ? (addressLike as Address) : addressLike;
 }
 
+function isSolanaClientConfig(value: unknown): value is SolanaClientConfig {
+    return typeof value === 'object' && value !== null && 'endpoint' in value;
+}
+
 /**
  * Subscribe to the cached account state for a specific address and optionally trigger initial fetches
  * or live websocket updates.
@@ -29,14 +33,34 @@ function toAddress(addressLike: AddressLike): Address {
  * @param options - Behaviour flags that control fetching, watching, and commitment overrides.
  * @returns The most recent cached account entry or `undefined` when no data is available.
  */
+export function useAccount(addressLike?: AddressLike, options?: UseAccountOptions): AccountCacheEntry | undefined;
 export function useAccount(
     config: SolanaClientConfig,
     addressLike?: AddressLike,
-    options: UseAccountOptions = {},
+    options?: UseAccountOptions,
+): AccountCacheEntry | undefined;
+export function useAccount(
+    configOrAddress?: SolanaClientConfig | AddressLike,
+    addressLikeOrOptions?: AddressLike | UseAccountOptions,
+    maybeOptions: UseAccountOptions = {},
 ): AccountCacheEntry | undefined {
+    let config: SolanaClientConfig | undefined;
+    let accountAddressLike: AddressLike | undefined;
+    let options: UseAccountOptions | undefined;
+
+    if (isSolanaClientConfig(configOrAddress)) {
+        config = configOrAddress;
+        accountAddressLike = addressLikeOrOptions as AddressLike | undefined;
+        options = maybeOptions;
+    } else {
+        accountAddressLike = configOrAddress as AddressLike | undefined;
+        options = addressLikeOrOptions as UseAccountOptions | undefined;
+    }
+
+    const resolvedOptions = options ?? {};
     const state = useSolanaState();
-    const { dispatch, getState, logger, runtime } = useSolanaActions();
-    const { fetchAccount } = useAccountActions(config);
+    const { config: contextConfig, dispatch, getState, logger, runtime } = useSolanaActions();
+    const { fetchAccount } = useAccountActions(config ?? contextConfig);
     const watchers = useMemo(
         () => createWatchers({ dispatch, getState, logger, runtime }),
         [dispatch, getState, logger, runtime],
@@ -47,13 +71,13 @@ export function useAccount(
         fetchAccountRef.current = fetchAccount;
     }, [fetchAccount]);
 
-    const shouldSkip = options.skip ?? !addressLike;
+    const shouldSkip = resolvedOptions.skip ?? !accountAddressLike;
     const address = useMemo(() => {
-        if (shouldSkip || !addressLike) {
+        if (shouldSkip || !accountAddressLike) {
             return undefined;
         }
-        return toAddress(addressLike);
-    }, [addressLike, shouldSkip]);
+        return toAddress(accountAddressLike);
+    }, [accountAddressLike, shouldSkip]);
 
     const accountKey = useMemo(() => address?.toString(), [address]);
     const account = accountKey ? state.accounts[accountKey] : undefined;
@@ -62,18 +86,18 @@ export function useAccount(
         if (!address) {
             return;
         }
-        const commitment = options.commitment;
-        if (options.fetch !== false) {
+        const commitment = resolvedOptions.commitment;
+        if (resolvedOptions.fetch !== false) {
             void fetchAccountRef.current(address, commitment).catch(() => undefined);
         }
-        if (options.watch) {
+        if (resolvedOptions.watch) {
             const subscription = watchers.watchAccount({ address, commitment }, () => undefined);
             return () => {
                 subscription.abort();
             };
         }
         return undefined;
-    }, [address, watchers, options.commitment, options.fetch, options.watch]);
+    }, [address, watchers, resolvedOptions.commitment, resolvedOptions.fetch, resolvedOptions.watch]);
 
     return account;
 }

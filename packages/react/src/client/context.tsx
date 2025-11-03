@@ -7,6 +7,7 @@ import { clientReducer, createInitialClientState } from './reducer';
 import type { ClientLogger, ClientState, SolanaClientConfig, SolanaClientRuntime } from './types';
 
 type SolanaActionsContextValue = {
+    config: Readonly<SolanaClientConfig>;
     dispatch: Dispatch<ClientAction>;
     getState: () => ClientState;
     logger: ClientLogger;
@@ -44,17 +45,24 @@ const fallbackLogger: ClientLogger = ({ data, level, message }) => {
  */
 export function SolanaProvider({ children, config }: ProviderProps): ReactElement {
     const logger = config.logger ?? fallbackLogger;
+    const resolvedConfig = useMemo<Readonly<SolanaClientConfig>>(
+        () => ({
+            ...config,
+            commitment: config.commitment ?? 'confirmed',
+        }),
+        [config],
+    );
     const initialState = createInitialClientState({
-        commitment: config.commitment ?? 'confirmed',
-        endpoint: config.endpoint,
-        websocketEndpoint: config.websocketEndpoint,
+        commitment: resolvedConfig.commitment ?? 'confirmed',
+        endpoint: resolvedConfig.endpoint,
+        websocketEndpoint: resolvedConfig.websocketEndpoint,
     });
 
     const [state, dispatch] = useReducer(clientReducer, initialState);
 
     const runtimeRef = useRef<SolanaClientRuntime>({
-        rpc: createSolanaRpc(config.endpoint),
-        rpcSubscriptions: createSolanaRpcSubscriptions(config.websocketEndpoint ?? config.endpoint),
+        rpc: createSolanaRpc(resolvedConfig.endpoint),
+        rpcSubscriptions: createSolanaRpcSubscriptions(resolvedConfig.websocketEndpoint ?? resolvedConfig.endpoint),
     });
 
     const stateRef = useRef(state);
@@ -64,12 +72,13 @@ export function SolanaProvider({ children, config }: ProviderProps): ReactElemen
 
     const actionsValue = useMemo<SolanaActionsContextValue>(
         () => ({
+            config: resolvedConfig,
             dispatch,
             getState,
             logger,
             runtime: runtimeRef.current,
         }),
-        [dispatch, getState, logger],
+        [dispatch, getState, logger, resolvedConfig],
     );
 
     return (
@@ -123,4 +132,15 @@ export function useSolanaActions(): SolanaActionsContextValue {
         throw new Error('useSolanaActions must be used within a SolanaProvider.');
     }
     return actions;
+}
+
+/**
+ * Access the Solana client configuration supplied to the provider.
+ *
+ * @returns The resolved configuration including defaulted values.
+ * @throws When invoked outside of a provider boundary.
+ */
+export function useSolanaConfig(): Readonly<SolanaClientConfig> {
+    const { config } = useSolanaActions();
+    return config;
 }

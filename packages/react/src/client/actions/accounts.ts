@@ -17,7 +17,7 @@ export type AccountActions = {
  * @param config - Solana client configuration provided to the surrounding provider.
  * @returns Helpers for fetching account info and lamport balances.
  */
-export function useAccountActions(_config: SolanaClientConfig): AccountActions {
+export function useAccountActions(_config?: SolanaClientConfig): AccountActions {
     const { dispatch, getState, logger, runtime } = useSolanaActions();
 
     const getCommitment = useCallback(

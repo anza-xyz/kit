@@ -1,3 +1,4 @@
+import type { SolanaClientConfig } from '../types';
 import { type AccountActions, useAccountActions } from './accounts';
 import { type ClusterActions, useClusterActions } from './cluster';
 import type { WalletActions } from './wallet';
@@ -7,8 +8,6 @@ export type { AccountActions, ClusterActions, WalletActions };
 
 export type ClientActions = AccountActions & ClusterActions & WalletActions;
 
-type UseActionsConfig = Parameters<typeof useWalletActions>[0];
-
 /**
  * Aggregate account, cluster, and wallet helpers into a single convenience hook.
  *
@@ -16,7 +15,7 @@ type UseActionsConfig = Parameters<typeof useWalletActions>[0];
  * @returns Combined helpers spanning wallet, cluster, and account operations.
  */
 
-export function useActions(config: UseActionsConfig): ClientActions {
+export function useActions(config?: SolanaClientConfig): ClientActions {
     const wallet = useWalletActions(config);
     const cluster = useClusterActions(config);
     const accounts = useAccountActions(config);

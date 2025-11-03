@@ -16,9 +16,11 @@ export type WalletActions = {
  * @param config - Solana client configuration provided to the surrounding provider.
  * @returns Helpers for connecting to and disconnecting from wallets.
  */
-export function useWalletActions(config: SolanaClientConfig): WalletActions {
-    const { dispatch, getState, logger } = useSolanaActions();
-    const connectors = useMemo(() => createWalletRegistry(config.walletConnectors ?? []), [config.walletConnectors]);
+export function useWalletActions(config?: SolanaClientConfig): WalletActions {
+    const { config: contextConfig, dispatch, getState, logger } = useSolanaActions();
+    const resolvedConfig = config ?? contextConfig;
+    const walletConnectors = resolvedConfig.walletConnectors ?? [];
+    const connectors = useMemo(() => createWalletRegistry(walletConnectors), [walletConnectors]);
 
     const connectWallet = useCallback(
         async (connectorId: string): Promise<void> => {

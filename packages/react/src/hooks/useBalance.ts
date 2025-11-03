@@ -20,6 +20,10 @@ function toAddress(addressLike: AddressLike): Address {
     return typeof addressLike === 'string' ? (addressLike as Address) : addressLike;
 }
 
+function isSolanaClientConfig(value: unknown): value is SolanaClientConfig {
+    return typeof value === 'object' && value !== null && 'endpoint' in value;
+}
+
 /**
  * Track the lamport balance for the provided address. The hook performs an eager RPC fetch by default
  * and can attach a websocket watcher to keep the cache in sync.
@@ -29,10 +33,28 @@ function toAddress(addressLike: AddressLike): Address {
  * @param options - Behaviour flags controlling fetching cadence, commitment, and subscription usage.
  * @returns Cached balance metadata including fetch status, lamports, and the backing account entry.
  */
+export function useBalance(addressLike?: AddressLike, options?: UseBalanceOptions): Readonly<{
+    account?: AccountCacheEntry;
+    error?: unknown;
+    fetching: boolean;
+    lamports: Lamports | null;
+    slot: bigint | null | undefined;
+}>;
 export function useBalance(
     config: SolanaClientConfig,
     addressLike?: AddressLike,
-    options: UseBalanceOptions = {},
+    options?: UseBalanceOptions,
+): Readonly<{
+    account?: AccountCacheEntry;
+    error?: unknown;
+    fetching: boolean;
+    lamports: Lamports | null;
+    slot: bigint | null | undefined;
+}>;
+export function useBalance(
+    configOrAddress?: SolanaClientConfig | AddressLike,
+    addressLikeOrOptions?: AddressLike | UseBalanceOptions,
+    maybeOptions: UseBalanceOptions = {},
 ): Readonly<{
     account?: AccountCacheEntry;
     error?: unknown;
@@ -40,9 +62,22 @@ export function useBalance(
     lamports: Lamports | null;
     slot: bigint | null | undefined;
 }> {
+    let config: SolanaClientConfig | undefined;
+    let balanceAddressLike: AddressLike | undefined;
+    let options: UseBalanceOptions | undefined;
+
+    if (isSolanaClientConfig(configOrAddress)) {
+        config = configOrAddress;
+        balanceAddressLike = addressLikeOrOptions as AddressLike | undefined;
+        options = maybeOptions;
+    } else {
+        balanceAddressLike = configOrAddress as AddressLike | undefined;
+        options = addressLikeOrOptions as UseBalanceOptions | undefined;
+    }
+
     const state = useSolanaState();
-    const { dispatch, getState, logger, runtime } = useSolanaActions();
-    const { fetchBalance } = useAccountActions(config);
+    const { config: contextConfig, dispatch, getState, logger, runtime } = useSolanaActions();
+    const { fetchBalance } = useAccountActions(config ?? contextConfig);
     const watchers = useMemo(
         () => createWatchers({ dispatch, getState, logger, runtime }),
         [dispatch, getState, logger, runtime],
@@ -55,21 +90,21 @@ export function useBalance(
 
     const mergedOptions = useMemo(
         () => ({
-            commitment: options.commitment,
-            fetch: options.fetch ?? true,
-            skip: options.skip,
-            watch: options.watch ?? true,
+            commitment: options?.commitment,
+            fetch: options?.fetch ?? true,
+            skip: options?.skip,
+            watch: options?.watch ?? true,
         }),
-        [options.commitment, options.fetch, options.skip, options.watch],
+        [options?.commitment, options?.fetch, options?.skip, options?.watch],
     );
 
-    const shouldSkip = mergedOptions.skip ?? !addressLike;
+    const shouldSkip = mergedOptions.skip ?? !balanceAddressLike;
     const address = useMemo(() => {
-        if (shouldSkip || !addressLike) {
+        if (shouldSkip || !balanceAddressLike) {
             return undefined;
         }
-        return toAddress(addressLike);
-    }, [addressLike, shouldSkip]);
+        return toAddress(balanceAddressLike);
+    }, [balanceAddressLike, shouldSkip]);
 
     const accountKey = useMemo(() => address?.toString(), [address]);
     const account = accountKey ? state.accounts[accountKey] : undefined;

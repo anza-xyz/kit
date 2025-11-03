@@ -16,7 +16,7 @@ export type ClusterActions = {
  * @param config - Solana client configuration provided to the surrounding provider.
  * @returns Functions responsible for updating the cluster target and measuring readiness.
  */
-export function useClusterActions(_config: SolanaClientConfig): ClusterActions {
+export function useClusterActions(_config?: SolanaClientConfig): ClusterActions {
     const state = useSolanaState();
     const { dispatch, logger, runtime } = useSolanaActions();
 

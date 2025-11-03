@@ -9,7 +9,7 @@ import type { SolanaClientConfig } from '../client/types';
  * @param config - Solana client configuration provided to the surrounding provider.
  * @returns Function that resolves once the connector finishes attempting to establish a session.
  */
-export function useConnectWallet(config: SolanaClientConfig): (connectorId: string) => Promise<void> {
+export function useConnectWallet(config?: SolanaClientConfig): (connectorId: string) => Promise<void> {
     const { connectWallet } = useWalletActions(config);
     return useCallback((connectorId: string) => connectWallet(connectorId), [connectWallet]);
 }

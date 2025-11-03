@@ -22,6 +22,10 @@ const config: SolanaClientConfig = {
     endpoint: 'https://example.invalid',
 };
 
+const contextConfig: SolanaClientConfig = {
+    endpoint: 'https://context.invalid',
+};
+
 const accountAddress = '11111111111111111111111111111111' as Address;
 const accountKey = accountAddress.toString();
 
@@ -74,15 +78,19 @@ describe('useAccount', () => {
             watchAccount,
             watchBalance,
         });
-        mockUseSolanaActions.mockImplementation(() => ({
-            dispatch: jest.fn(),
-            getState: () => state,
-            logger: jest.fn(),
-            runtime: {
-                rpc: {},
-                rpcSubscriptions: {},
-            },
-        }));
+        mockUseSolanaActions.mockImplementation(
+            () =>
+                ({
+                    config: contextConfig,
+                    dispatch: jest.fn(),
+                    getState: () => state,
+                    logger: jest.fn(),
+                    runtime: {
+                        rpc: {},
+                        rpcSubscriptions: {},
+                    },
+                }) as unknown as ReturnType<typeof useSolanaActions>,
+        );
     });
 
     afterEach(() => {
@@ -153,6 +161,18 @@ describe('useAccount', () => {
         expect(result.__type).toBe('result');
         expect(result.current).toBeUndefined();
     });
+
+    it('falls back to the provider config when none is supplied', async () => {
+        state = createState({
+            accounts: { [accountKey]: cachedAccount },
+        });
+        mockUseSolanaState.mockImplementation(() => state);
+        const { result } = renderHook(() => useAccount(accountAddress));
+        await Promise.resolve();
+        expect(mockUseAccountActions).toHaveBeenCalledWith(contextConfig);
+        expect(result.__type).toBe('result');
+        expect(result.current).toBe(cachedAccount);
+    });
 });
 
 describe('useBalance', () => {
@@ -175,15 +195,19 @@ describe('useBalance', () => {
             watchAccount,
             watchBalance,
         });
-        mockUseSolanaActions.mockImplementation(() => ({
-            dispatch: jest.fn(),
-            getState: () => state,
-            logger: jest.fn(),
-            runtime: {
-                rpc: {},
-                rpcSubscriptions: {},
-            },
-        }));
+        mockUseSolanaActions.mockImplementation(
+            () =>
+                ({
+                    config: contextConfig,
+                    dispatch: jest.fn(),
+                    getState: () => state,
+                    logger: jest.fn(),
+                    runtime: {
+                        rpc: {},
+                        rpcSubscriptions: {},
+                    },
+                }) as unknown as ReturnType<typeof useSolanaActions>,
+        );
     });
 
     afterEach(() => {
@@ -236,6 +260,16 @@ describe('useBalance', () => {
         await Promise.resolve();
         expect(fetchBalance).not.toHaveBeenCalled();
         expect(watchBalance).not.toHaveBeenCalled();
+        expect(result.__type).toBe('result');
+        expect(result.current?.lamports).toBe(cachedAccount.lamports);
+    });
+
+    it('uses the provider config when invoked without an explicit config', async () => {
+        state = createState();
+        mockUseSolanaState.mockImplementation(() => state);
+        const { result } = renderHook(() => useBalance(accountAddress));
+        await Promise.resolve();
+        expect(mockUseAccountActions).toHaveBeenCalledWith(contextConfig);
         expect(result.__type).toBe('result');
         expect(result.current?.lamports).toBe(cachedAccount.lamports);
     });

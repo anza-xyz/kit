@@ -1,12 +1,7 @@
 import React from 'react';
 import { act, create } from 'react-test-renderer';
 
-import {
-    SolanaProvider,
-    useSolanaActions,
-    useSolanaContext,
-    useSolanaState,
-} from '../client/context';
+import { SolanaProvider, useSolanaActions, useSolanaConfig, useSolanaContext, useSolanaState } from '../client/context';
 import { renderHook } from '../test-renderer';
 
 jest.mock('@solana/kit', () => ({
@@ -40,6 +35,7 @@ describe('Solana context', () => {
     it('exposes state, actions, and runtime when wrapped in the provider', () => {
         const captured: {
             actions?: ReturnType<typeof useSolanaActions>;
+            config?: ReturnType<typeof useSolanaConfig>;
             context?: ReturnType<typeof useSolanaContext>;
             state?: ReturnType<typeof useSolanaState>;
         } = {};
@@ -50,6 +46,7 @@ describe('Solana context', () => {
         function TestComponent() {
             captured.state = useSolanaState();
             captured.actions = useSolanaActions();
+            captured.config = useSolanaConfig();
             captured.context = useSolanaContext();
             return null;
         }
@@ -68,6 +65,10 @@ describe('Solana context', () => {
         expect(captured.state?.wallet.status).toBe('disconnected');
         expect(captured.actions?.dispatch).toEqual(expect.any(Function));
         expect(captured.actions?.logger).toEqual(expect.any(Function));
+        expect(captured.actions?.config).toEqual({
+            commitment: 'confirmed',
+            endpoint: config.endpoint,
+        });
         expect(captured.actions?.runtime).toEqual({
             rpc: { rpc: true },
             rpcSubscriptions: { rpcSubscriptions: true },
@@ -75,6 +76,10 @@ describe('Solana context', () => {
         expect(captured.actions?.getState()).toEqual(captured.state);
         expect(captured.context?.state).toEqual(captured.state);
         expect(captured.context?.runtime).toEqual(captured.actions?.runtime);
+        expect(captured.config).toEqual({
+            commitment: 'confirmed',
+            endpoint: config.endpoint,
+        });
     });
 
     it('passes a websocket override to the subscriptions factory when provided', () => {
@@ -98,5 +103,31 @@ describe('Solana context', () => {
         });
         expect(createSolanaRpc).toHaveBeenLastCalledWith('https://main.invalid');
         expect(createSolanaRpcSubscriptions).toHaveBeenLastCalledWith('wss://override.invalid');
+    });
+
+    it('exposes user-specified commitment and websocket endpoint in the actions config', () => {
+        let configValue: ReturnType<typeof useSolanaConfig> | undefined;
+        function TestComponent() {
+            configValue = useSolanaConfig();
+            return null;
+        }
+        act(() => {
+            create(
+                <SolanaProvider
+                    config={{
+                        commitment: 'finalized',
+                        endpoint: 'https://custom.invalid',
+                        websocketEndpoint: 'wss://custom.invalid',
+                    }}
+                >
+                    <TestComponent />
+                </SolanaProvider>,
+            );
+        });
+        expect(configValue).toEqual({
+            commitment: 'finalized',
+            endpoint: 'https://custom.invalid',
+            websocketEndpoint: 'wss://custom.invalid',
+        });
     });
 });
