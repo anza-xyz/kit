@@ -114,7 +114,7 @@ describe('createSignatureConfirmationPromiseFactory', () => {
     it('fatals when the signature status returned by the one-shot query is an error', async () => {
         expect.assertions(1);
         getSignatureStatusesMock.mockResolvedValue({
-            value: [{ err: 'o no' }],
+            value: [{ err: 'o no', confirmationStatus: 'finalized' }],
         });
         const signatureConfirmationPromise = getSignatureConfirmationPromise({
             abortSignal: new AbortController().signal,

@@ -109,14 +109,16 @@ export function createRecentSignatureConfirmationPromiseFactory<
                 .getSignatureStatuses([signature])
                 .send({ abortSignal: abortController.signal });
             const signatureStatus = signatureStatusResults[0];
-            if (
+            if (signatureStatus?.err) {
+                throw getSolanaErrorFromTransactionError(signatureStatus.err);
+            }
+            else if (
                 signatureStatus?.confirmationStatus &&
                 commitmentComparator(signatureStatus.confirmationStatus, commitment) >= 0
             ) {
                 return;
-            } else if (signatureStatus?.err) {
-                throw getSolanaErrorFromTransactionError(signatureStatus.err);
-            } else {
+            }
+            else {
                 await new Promise(() => {
                     /* never resolve */
                 });
