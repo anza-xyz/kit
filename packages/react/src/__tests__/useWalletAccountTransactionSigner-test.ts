@@ -21,12 +21,12 @@ import { getTransactionCodec } from '@solana/transactions';
 import type { UiWalletAccount } from '@wallet-standard/ui';
 
 import { renderHook } from '../test-renderer';
-import { useSignTransaction } from '../useSignTransaction';
+import { useSignTransaction } from '../hooks/useSignTransaction';
 import { useWalletAccountTransactionSigner } from '../useWalletAccountTransactionSigner';
 
 jest.mock('@solana/transaction-messages');
 jest.mock('@solana/transactions');
-jest.mock('../useSignTransaction');
+jest.mock('../hooks/useSignTransaction');
 
 describe('useWalletAccountTransactionSigner', () => {
     let mockSignTransaction: jest.Mock;

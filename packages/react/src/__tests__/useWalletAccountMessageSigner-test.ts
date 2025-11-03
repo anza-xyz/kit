@@ -3,10 +3,10 @@ import { SignatureBytes } from '@solana/keys';
 import type { UiWalletAccount } from '@wallet-standard/ui';
 
 import { renderHook } from '../test-renderer';
-import { useSignMessage } from '../useSignMessage';
+import { useSignMessage } from '../hooks/useSignMessage';
 import { useWalletAccountMessageSigner } from '../useWalletAccountMessageSigner';
 
-jest.mock('../useSignMessage');
+jest.mock('../hooks/useSignMessage');
 
 describe('useWalletAccountMessageSigner', () => {
     let mockSignMessage: jest.Mock;

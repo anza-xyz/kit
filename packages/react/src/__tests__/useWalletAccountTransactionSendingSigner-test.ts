@@ -7,11 +7,11 @@ import { getTransactionEncoder } from '@solana/transactions';
 import type { UiWalletAccount } from '@wallet-standard/ui';
 
 import { renderHook } from '../test-renderer';
-import { useSignAndSendTransaction } from '../useSignAndSendTransaction';
+import { useSignAndSendTransaction } from '../hooks/useSignAndSendTransaction';
 import { useWalletAccountTransactionSendingSigner } from '../useWalletAccountTransactionSendingSigner';
 
 jest.mock('@solana/transactions');
-jest.mock('../useSignAndSendTransaction');
+jest.mock('../hooks/useSignAndSendTransaction');
 
 describe('useWalletAccountTransactionSendingSigner', () => {
     let mockSignAndSendTransaction: jest.Mock;
