@@ -43,7 +43,7 @@ importers:
         version: link:packages/build-scripts
       '@solana/eslint-config-solana':
         specifier: ^4.0.0
-        version: 4.0.0(b4effe15f992b3d142c6977ca0b561a3)
+        version: 4.0.0(e5bd0781cf67c511e44015c81e928dd4)
       '@solana/prettier-config-solana':
         specifier: 0.0.5
         version: 0.0.5(prettier@3.6.2)
@@ -210,7 +210,7 @@ importers:
     devDependencies:
       '@solana/eslint-config-solana':
         specifier: ^5.0.0
-        version: 5.0.0(6d16f66a1e16fe7818f94afe6d340051)
+        version: 5.0.0(7d2a89f446ed4dbe99d65395cbff1a6d)
       '@solana/wallet-standard-features':
         specifier: ^1.3.0
         version: 1.3.0
@@ -227,8 +227,8 @@ importers:
         specifier: ^0.4.24
         version: 0.4.24(eslint@9.38.0(jiti@1.21.7))
       globals:
-        specifier: ^16.4.0
-        version: 16.4.0
+        specifier: ^16.5.0
+        version: 16.5.0
       vite:
         specifier: ^7.1.12
         version: 7.1.12(@types/node@24.9.2)(jiti@1.21.7)(terser@5.18.0)(tsx@4.20.6)(yaml@2.8.1)
@@ -5064,8 +5064,8 @@ packages:
   base64-js@1.5.1:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
 
-  baseline-browser-mapping@2.8.22:
-    resolution: {integrity: sha512-/tk9kky/d8T8CTXIQYASLyhAxR5VwL3zct1oAoVTaOUHwrmsGnfbRwNdEq+vOl2BN8i3PcDdP0o4Q+jjKQoFbQ==}
+  baseline-browser-mapping@2.8.23:
+    resolution: {integrity: sha512-616V5YX4bepJFzNyOfce5Fa8fDJMfoxzOIzDCZwaGL8MKVpFrXqfNUoIpRn9YMI5pXf/VKgzjB4htFMsFKKdiQ==}
     hasBin: true
 
   before-after-hook@4.0.0:
@@ -5181,8 +5181,8 @@ packages:
   caniuse-lite@1.0.30001707:
     resolution: {integrity: sha512-3qtRjw/HQSMlDWf+X79N206fepf4SOOU6SQLMaq/0KkZLmSjPxAkBOQQ+FxbHKfHmYLZFfdWsO3KA90ceHPSnw==}
 
-  caniuse-lite@1.0.30001752:
-    resolution: {integrity: sha512-vKUk7beoukxE47P5gcVNKkDRzXdVofotshHwfR9vmpeFKxmI5PBpgOMC18LUJUA/DvJ70Y7RveasIBraqsyO/g==}
+  caniuse-lite@1.0.30001753:
+    resolution: {integrity: sha512-Bj5H35MD/ebaOV4iDLqPEtiliTN29qkGtEHCwawWn4cYm+bPJM2NsaP30vtZcnERClMzp52J4+aw2UNbK4o+zw==}
 
   chalk@2.4.2:
     resolution: {integrity: sha512-Mti+f9lpJNcwF4tWV8/OrTTtF1gZi+f8FqlyAdouralcFWFQWF2+NgCHShjkCb+IFBLq9buZwE1xckQU4peSuQ==}
@@ -5947,8 +5947,8 @@ packages:
     resolution: {integrity: sha512-oahGvuMGQlPw/ivIYBjVSrWAfWLBeku5tpPE2fOPLi+WHffIWbuh2tCjhyQhTBPMf5E9jDEH4FOmTYgYwbKwtQ==}
     engines: {node: '>=18'}
 
-  globals@16.4.0:
-    resolution: {integrity: sha512-ob/2LcVVaVGCYN+r14cnwnoDPUufjiYgSqRhiFD0Q1iI4Odora5RE8Iv1D24hAz5oMophRGkGz+yuvQmmUMnMw==}
+  globals@16.5.0:
+    resolution: {integrity: sha512-c/c15i26VrJ4IRt5Z89DnIzCGDn9EcebibhAOjw5ibqEHsE1wLUgkPn9RDmNcUKyU87GeaL633nyJ+pplFR2ZQ==}
     engines: {node: '>=18'}
 
   globby@11.1.0:
@@ -11254,7 +11254,7 @@ snapshots:
       commander: 14.0.2
       typescript: 5.8.3
 
-  '@solana/eslint-config-solana@4.0.0(b4effe15f992b3d142c6977ca0b561a3)':
+  '@solana/eslint-config-solana@4.0.0(e5bd0781cf67c511e44015c81e928dd4)':
     dependencies:
       '@eslint/js': 9.38.0
       '@types/eslint__js': 8.42.3
@@ -11264,12 +11264,12 @@ snapshots:
       eslint-plugin-simple-import-sort: 12.1.1(eslint@9.38.0(jiti@1.21.7))
       eslint-plugin-sort-keys-fix: 1.1.2
       eslint-plugin-typescript-sort-keys: 3.3.0(@typescript-eslint/parser@8.46.2(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3)
-      globals: 16.4.0
+      globals: 16.5.0
       jest: 30.0.0-alpha.6(@types/node@24.9.2)(ts-node@10.9.2(@swc/core@1.13.19(@swc/helpers@0.5.17))(@types/node@24.9.2)(typescript@5.8.3))
       typescript: 5.8.3
       typescript-eslint: 8.17.0(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3)
 
-  '@solana/eslint-config-solana@5.0.0(6d16f66a1e16fe7818f94afe6d340051)':
+  '@solana/eslint-config-solana@5.0.0(7d2a89f446ed4dbe99d65395cbff1a6d)':
     dependencies:
       '@eslint/js': 9.38.0
       '@types/eslint__js': 8.42.3
@@ -11279,7 +11279,7 @@ snapshots:
       eslint-plugin-simple-import-sort: 12.1.1(eslint@9.38.0(jiti@1.21.7))
       eslint-plugin-sort-keys-fix: 1.1.2
       eslint-plugin-typescript-sort-keys: 3.3.0(@typescript-eslint/parser@8.17.0(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3)
-      globals: 16.4.0
+      globals: 16.5.0
       jest: 30.0.0-alpha.6(@types/node@24.9.2)(ts-node@10.9.2(@swc/core@1.13.19(@swc/helpers@0.5.17))(@types/node@24.9.2)(typescript@5.8.3))
       typescript: 5.8.3
       typescript-eslint: 8.17.0(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3)
@@ -12188,7 +12188,7 @@ snapshots:
 
   base64-js@1.5.1: {}
 
-  baseline-browser-mapping@2.8.22:
+  baseline-browser-mapping@2.8.23:
     optional: true
 
   before-after-hook@4.0.0: {}
@@ -12238,8 +12238,8 @@ snapshots:
 
   browserslist@4.27.0:
     dependencies:
-      baseline-browser-mapping: 2.8.22
-      caniuse-lite: 1.0.30001752
+      baseline-browser-mapping: 2.8.23
+      caniuse-lite: 1.0.30001753
       electron-to-chromium: 1.5.244
       node-releases: 2.0.27
       update-browserslist-db: 1.1.4(browserslist@4.27.0)
@@ -12320,7 +12320,7 @@ snapshots:
 
   caniuse-lite@1.0.30001707: {}
 
-  caniuse-lite@1.0.30001752:
+  caniuse-lite@1.0.30001753:
     optional: true
 
   chalk@2.4.2:
@@ -13145,7 +13145,7 @@ snapshots:
 
   globals@14.0.0: {}
 
-  globals@16.4.0: {}
+  globals@16.5.0: {}
 
   globby@11.1.0:
     dependencies:
