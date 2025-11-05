@@ -29,7 +29,7 @@ type Output = Omit<SolanaSignInOutput, 'account' | 'signatureType'> &
  * Use the ['Sign In With Solana'](https://phantom.app/learn/developers/sign-in-with-solana) feature
  * of a {@link UiWallet} or {@link UiWalletAccount}.
  *
- * @returns A function that you can call to sign in with the particular wallet and address specfied
+ * @returns A function that you can call to sign in with the particular wallet and address specified
  * by the supplied {@link UiWalletAccount}
  *
  * @example

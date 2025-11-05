@@ -117,7 +117,7 @@ describe('fromLegacyTransactionInstruction', () => {
         expect(converted).toBeFrozenObject();
     });
 
-    it('applies no acccounts given an instruction with no keys', () => {
+    it('applies no accounts given an instruction with no keys', () => {
         const programId = new Uint8Array([5, 6, 7, 8]);
         const data = new Uint8Array([40, 50, 60]);
 

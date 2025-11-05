@@ -4,7 +4,7 @@ type GetTransactionCountApiResponse = bigint;
 
 export type GetTransactionCountApi = {
     /**
-     * Returns the current number of transactions to have achieved a given level of committment.
+     * Returns the current number of transactions to have achieved a given level of commitment.
      *
      * @see https://solana.com/docs/rpc/http/gettransactioncount
      */

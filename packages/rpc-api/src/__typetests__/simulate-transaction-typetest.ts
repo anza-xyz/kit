@@ -54,7 +54,7 @@ const base64Transaction = 'SomeTx11111111111111111111111111111' as Base64Encoded
 
 // [DESCRIBE] `innerInstructions`.
 {
-    // It materializes inner instructions in the repsonse when `true`
+    // It materializes inner instructions in the response when `true`
     {
         rpc.simulateTransaction(base64Transaction, {
             encoding: 'base64',
@@ -63,7 +63,7 @@ const base64Transaction = 'SomeTx11111111111111111111111111111' as Base64Encoded
             value: TransactionForFullMetaInnerInstructionsParsed | TransactionForFullMetaInnerInstructionsUnparsed;
         }>;
     }
-    // It does not materialize inner instructions in the repsonse when `false` or omitted
+    // It does not materialize inner instructions in the response when `false` or omitted
     {
         rpc.simulateTransaction(base64Transaction, {
             encoding: 'base64',
@@ -79,14 +79,14 @@ const base64Transaction = 'SomeTx11111111111111111111111111111' as Base64Encoded
 
 // [DESCRIBE] `replaceRecentBlockhash`.
 {
-    // It materializes a replacement blockhash in the repsonse when `true`
+    // It materializes a replacement blockhash in the response when `true`
     {
         rpc.simulateTransaction(base64Transaction, {
             encoding: 'base64',
             replaceRecentBlockhash: true,
         }) satisfies PendingRpcRequest<{ value: { replacementBlockhash: TransactionBlockhashLifetime } }>;
     }
-    // It does not materialize a replacement blockhash in the repsonse when `false` or omitted
+    // It does not materialize a replacement blockhash in the response when `false` or omitted
     {
         rpc.simulateTransaction(base64Transaction, {
             encoding: 'base64',
