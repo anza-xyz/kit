@@ -899,8 +899,8 @@ importers:
   packages/rpc-graphql:
     dependencies:
       '@graphql-tools/schema':
-        specifier: ^10.0.26
-        version: 10.0.26(graphql@16.12.0)
+        specifier: ^10.0.27
+        version: 10.0.27(graphql@16.12.0)
       '@solana/codecs-strings':
         specifier: workspace:*
         version: link:../codecs-strings
@@ -2784,20 +2784,20 @@ packages:
   '@gerrit0/mini-shiki@3.13.1':
     resolution: {integrity: sha512-fDWM5QQc70jwBIt/WYMybdyXdyBmoJe7r1hpM+V/bHnyla79sygVDK2/LlVxIPc4n5FA3B5Wzt7AQH2+psNphg==}
 
-  '@graphql-tools/merge@9.1.2':
-    resolution: {integrity: sha512-Ny9YhWKv+KxZFdXYt+wlyEW55GzhFiq4daV4wYgpP0aRbwQaczNJd1L3VjjBsPKjmW8lctZXUoqYTqU5QPcBGw==}
+  '@graphql-tools/merge@9.1.3':
+    resolution: {integrity: sha512-O53kiNwGU/moJxX8m4BKpf9xHxVhmThhrctZ1gqHkdC3fYmafzWdzyNGkBsZcoh9x0wKM1ORPPuaE6Bwp3OFBA==}
     engines: {node: '>=16.0.0'}
     peerDependencies:
       graphql: ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
 
-  '@graphql-tools/schema@10.0.26':
-    resolution: {integrity: sha512-KOmjuiWa9poP/Lza4HV0ZBPYGJI3VE3QzXA/8e0+wjcsRuEmxMLP82re1PUg0QRzp2UzifAB/gd7DoXmVGG9Fg==}
+  '@graphql-tools/schema@10.0.27':
+    resolution: {integrity: sha512-Lb5mJG8eF3TPnW0TXS9qoqR40S5rrnS3DFaY9dGf+8y3petTF2nc1khcOaLlOsvyvfSWSMUgkB/U6LRofRjb6w==}
     engines: {node: '>=16.0.0'}
     peerDependencies:
       graphql: ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
 
-  '@graphql-tools/utils@10.10.0':
-    resolution: {integrity: sha512-OOeab5Y9qeKq0zfoJCSScMcDfGcIxp05+LW2xYVCS2l3su+K3lYcg5+cAAx9n0SFxpJl8zF5denq2QDsfM7NnQ==}
+  '@graphql-tools/utils@10.10.1':
+    resolution: {integrity: sha512-9iOZ7x6tuIpp/dviNmTCSH1cDDNLIcrj6T3WKH9lU4nRWx5Pr0e7Faj7T/HmP2Njrjik63dJWuDVRxfQSTOc4g==}
     engines: {node: '>=16.0.0'}
     peerDependencies:
       graphql: ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
@@ -5490,10 +5490,6 @@ packages:
     resolution: {integrity: sha512-IrPdXQsk2BbzvCBGBOTmmSH5SodmqZNt4ERAZDmW4CT+tL8VtvinqywuANaFu4bOMWki16nqf0e4oC0QIaDr/g==}
     engines: {node: '>=10'}
 
-  dset@3.1.4:
-    resolution: {integrity: sha512-2QF/g9/zTaPDc3BjNcVTGoBbXBgYfMTTceLaYcFJ/W9kggFUkhxD/hMEeuLKbugyef9SqAx8cpgwlIP/jinUTA==}
-    engines: {node: '>=4'}
-
   dunder-proto@1.0.1:
     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
     engines: {node: '>= 0.4'}
@@ -5510,8 +5506,8 @@ packages:
   electron-to-chromium@1.5.123:
     resolution: {integrity: sha512-refir3NlutEZqlKaBLK0tzlVLe5P2wDKS7UQt/3SpibizgsRAPOsqQC3ffw1nlv3ze5gjRQZYHoPymgVZkplFA==}
 
-  electron-to-chromium@1.5.244:
-    resolution: {integrity: sha512-OszpBN7xZX4vWMPJwB9illkN/znA8M36GQqQxi6MNy9axWxhOfJyZZJtSLQCpEFLHP2xK33BiWx9aIuIEXVCcw==}
+  electron-to-chromium@1.5.245:
+    resolution: {integrity: sha512-rdmGfW47ZhL/oWEJAY4qxRtdly2B98ooTJ0pdEI4jhVLZ6tNf8fPtov2wS1IRKwFJT92le3x4Knxiwzl7cPPpQ==}
 
   emittery@0.13.1:
     resolution: {integrity: sha512-DeWwawk6r5yR9jFgnDKYt4sLS0LmHJJi3ZOnb5/JdbYwj3nW+FxQnHIjhBKz8YLC7oRNPVM9NQ47I3CVx34eqQ==}
@@ -9677,25 +9673,24 @@ snapshots:
       '@shikijs/types': 3.13.0
       '@shikijs/vscode-textmate': 10.0.2
 
-  '@graphql-tools/merge@9.1.2(graphql@16.12.0)':
+  '@graphql-tools/merge@9.1.3(graphql@16.12.0)':
     dependencies:
-      '@graphql-tools/utils': 10.10.0(graphql@16.12.0)
+      '@graphql-tools/utils': 10.10.1(graphql@16.12.0)
       graphql: 16.12.0
       tslib: 2.8.1
 
-  '@graphql-tools/schema@10.0.26(graphql@16.12.0)':
+  '@graphql-tools/schema@10.0.27(graphql@16.12.0)':
     dependencies:
-      '@graphql-tools/merge': 9.1.2(graphql@16.12.0)
-      '@graphql-tools/utils': 10.10.0(graphql@16.12.0)
+      '@graphql-tools/merge': 9.1.3(graphql@16.12.0)
+      '@graphql-tools/utils': 10.10.1(graphql@16.12.0)
       graphql: 16.12.0
       tslib: 2.8.1
 
-  '@graphql-tools/utils@10.10.0(graphql@16.12.0)':
+  '@graphql-tools/utils@10.10.1(graphql@16.12.0)':
     dependencies:
       '@graphql-typed-document-node/core': 3.2.0(graphql@16.12.0)
       '@whatwg-node/promise-helpers': 1.3.2
       cross-inspect: 1.0.1
-      dset: 3.1.4
       graphql: 16.12.0
       tslib: 2.8.1
 
@@ -12240,7 +12235,7 @@ snapshots:
     dependencies:
       baseline-browser-mapping: 2.8.24
       caniuse-lite: 1.0.30001753
-      electron-to-chromium: 1.5.244
+      electron-to-chromium: 1.5.245
       node-releases: 2.0.27
       update-browserslist-db: 1.1.4(browserslist@4.27.0)
     optional: true
@@ -12558,8 +12553,6 @@ snapshots:
 
   dotenv@8.6.0: {}
 
-  dset@3.1.4: {}
-
   dunder-proto@1.0.1:
     dependencies:
       call-bind-apply-helpers: 1.0.2
@@ -12574,7 +12567,7 @@ snapshots:
 
   electron-to-chromium@1.5.123: {}
 
-  electron-to-chromium@1.5.244:
+  electron-to-chromium@1.5.245:
     optional: true
 
   emittery@0.13.1: {}
