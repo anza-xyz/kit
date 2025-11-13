@@ -260,7 +260,7 @@ describe('getOffchainMessageEnvelopeDecoder()', () => {
         );
     });
     it.each(
-        Array.from({ length: 255 - 0 /* highest supported version */ })
+        Array.from({ length: 255 - 1 /* highest supported version */ })
             .map((_, ii) => 255 - ii)
             .reverse(),
     )('throws if the preamble is of version `%s`', putativeVersion => {
@@ -451,7 +451,7 @@ describe('getOffchainMessageEnvelopeEncoder()', () => {
         );
     });
     it.each(
-        Array.from({ length: 255 - 0 /* highest supported version */ })
+        Array.from({ length: 255 - 1 /* highest supported version */ })
             .map((_, ii) => 255 - ii)
             .reverse(),
     )('throws if the envelope is of version `%s`', putativeVersion => {

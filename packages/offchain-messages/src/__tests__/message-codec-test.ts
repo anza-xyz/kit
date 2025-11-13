@@ -3,10 +3,13 @@ import { SOLANA_ERROR__OFFCHAIN_MESSAGE__VERSION_NUMBER_NOT_SUPPORTED, SolanaErr
 
 import { getOffchainMessageDecoder, getOffchainMessageEncoder } from '../codecs/message';
 import { getOffchainMessageV0Decoder, getOffchainMessageV0Encoder } from '../codecs/message-v0';
+import { getOffchainMessageV1Decoder, getOffchainMessageV1Encoder } from '../codecs/message-v1';
 import { OffchainMessage } from '../message';
 import { OffchainMessageV0 } from '../message-v0';
+import { OffchainMessageV1 } from '../message-v1';
 
 jest.mock('../codecs/message-v0');
+jest.mock('../codecs/message-v1');
 
 // The string `'\xffsolana offchain'`
 const OFFCHAIN_MESSAGE_SIGNING_DOMAIN_BYTES: ReadonlyUint8Array = new Uint8Array([
@@ -44,8 +47,34 @@ describe('getOffchainMessageDecoder', () => {
         expect(mockReader).toHaveBeenCalledWith(encodedMessage, 1);
         expect(result).toBe(expectedResult);
     });
+    it('delegates to the version 1 message decoder when the preamble is of version 1', () => {
+        const expectedResult = 123;
+        const mockDecoder = jest.fn().mockReturnValue(expectedResult);
+        const mockReader = jest.fn().mockReturnValue([
+            expectedResult,
+            OFFCHAIN_MESSAGE_SIGNING_DOMAIN_BYTES.byteLength +
+                // Version
+                1 +
+                // Padding
+                1,
+        ]);
+        jest.mocked(getOffchainMessageV1Decoder).mockReturnValue({ decode: mockDecoder, read: mockReader });
+        const encodedMessage =
+            // prettier-ignore
+            new Uint8Array([
+                    // Padding
+                    0xff,
+                    // Signing domain
+                    ...OFFCHAIN_MESSAGE_SIGNING_DOMAIN_BYTES,
+                    // Version
+                    0x01,
+                ]);
+        const result = decoder.decode(encodedMessage, 1);
+        expect(mockReader).toHaveBeenCalledWith(encodedMessage, 1);
+        expect(result).toBe(expectedResult);
+    });
     it.each(
-        Array.from({ length: 255 - 0 /* highest supported version */ })
+        Array.from({ length: 255 - 1 /* highest supported version */ })
             .map((_, ii) => 255 - ii)
             .reverse(),
     )('throws if the preamble is of version `%s`', putativeVersion => {
@@ -86,8 +115,22 @@ describe('getOffchainMessageEncoder', () => {
         expect(mockWriter).toHaveBeenCalledWith(mockMessage, expect.any(Uint8Array), 0 /* offset */);
         expect(result).toStrictEqual(new Uint8Array([1, 2, 3]));
     });
+    it('delegates to the version 1 message encoder when the message is of version 1', () => {
+        const mockMessage = { version: 1 };
+        const mockWriter = jest.fn().mockImplementation((_message, bytes, offset) => {
+            bytes.set([1, 2, 3], offset);
+        });
+        jest.mocked(getOffchainMessageV1Encoder).mockReturnValue({
+            encode: jest.fn(),
+            getSizeFromValue: jest.fn().mockReturnValue(3),
+            write: mockWriter,
+        });
+        const result = encoder.encode(mockMessage as OffchainMessageV1);
+        expect(mockWriter).toHaveBeenCalledWith(mockMessage, expect.any(Uint8Array), 0 /* offset */);
+        expect(result).toStrictEqual(new Uint8Array([1, 2, 3]));
+    });
     it.each(
-        Array.from({ length: 255 - 0 /* highest supported version */ })
+        Array.from({ length: 255 - 1 /* highest supported version */ })
             .map((_, ii) => 255 - ii)
             .reverse(),
     )('throws if the preamble is of version `%s`', putativeVersion => {

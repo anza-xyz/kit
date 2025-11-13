@@ -12,6 +12,7 @@ import { SOLANA_ERROR__OFFCHAIN_MESSAGE__VERSION_NUMBER_NOT_SUPPORTED, SolanaErr
 
 import { OffchainMessage } from '../message';
 import { getOffchainMessageV0Decoder, getOffchainMessageV0Encoder } from './message-v0';
+import { getOffchainMessageV1Decoder, getOffchainMessageV1Encoder } from './message-v1';
 import { getOffchainMessageSigningDomainDecoder } from './signing-domain';
 
 /**
@@ -35,7 +36,7 @@ import { getOffchainMessageSigningDomainDecoder } from './signing-domain';
  */
 export function getOffchainMessageDecoder(): VariableSizeDecoder<OffchainMessage> {
     return createDecoder({
-        read(bytes, offset) {
+        read(bytes, offset): [OffchainMessage, number] {
             const version = getHiddenPrefixDecoder(getU8Decoder(), [
                 // Discard the signing domain
                 getOffchainMessageSigningDomainDecoder(),
@@ -43,6 +44,8 @@ export function getOffchainMessageDecoder(): VariableSizeDecoder<OffchainMessage
             switch (version) {
                 case 0:
                     return getOffchainMessageV0Decoder().read(bytes, offset);
+                case 1:
+                    return getOffchainMessageV1Decoder().read(bytes, offset);
                 default:
                     throw new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__VERSION_NUMBER_NOT_SUPPORTED, {
                         unsupportedVersion: version,
@@ -63,22 +66,28 @@ export function getOffchainMessageDecoder(): VariableSizeDecoder<OffchainMessage
 export function getOffchainMessageEncoder(): VariableSizeEncoder<OffchainMessage> {
     return createEncoder({
         getSizeFromValue: offchainMessage => {
-            switch (offchainMessage.version) {
+            const { version } = offchainMessage;
+            switch (version) {
                 case 0:
                     return getOffchainMessageV0Encoder().getSizeFromValue(offchainMessage);
+                case 1:
+                    return getOffchainMessageV1Encoder().getSizeFromValue(offchainMessage);
                 default:
                     throw new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__VERSION_NUMBER_NOT_SUPPORTED, {
-                        unsupportedVersion: offchainMessage.version satisfies never,
+                        unsupportedVersion: version satisfies never,
                     });
             }
         },
         write: (offchainMessage, bytes, offset) => {
-            switch (offchainMessage.version) {
+            const { version } = offchainMessage;
+            switch (version) {
                 case 0:
                     return getOffchainMessageV0Encoder().write(offchainMessage, bytes, offset);
+                case 1:
+                    return getOffchainMessageV1Encoder().write(offchainMessage, bytes, offset);
                 default:
                     throw new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__VERSION_NUMBER_NOT_SUPPORTED, {
-                        unsupportedVersion: offchainMessage.version satisfies never,
+                        unsupportedVersion: version satisfies never,
                     });
             }
         },

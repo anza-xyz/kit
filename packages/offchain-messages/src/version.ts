@@ -1,1 +1,1 @@
-export type OffchainMessageVersion = 0;
+export type OffchainMessageVersion = 0 | 1;

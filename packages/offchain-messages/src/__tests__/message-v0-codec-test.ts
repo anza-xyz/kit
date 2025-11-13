@@ -13,6 +13,7 @@ import {
     SOLANA_ERROR__OFFCHAIN_MESSAGE__MESSAGE_MUST_BE_NON_EMPTY,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__NUM_REQUIRED_SIGNERS_CANNOT_BE_ZERO,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__RESTRICTED_ASCII_BODY_CHARACTER_OUT_OF_RANGE,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__UNEXPECTED_VERSION,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__VERSION_NUMBER_NOT_SUPPORTED,
     SolanaError,
 } from '@solana/errors';
@@ -26,7 +27,6 @@ import {
     OffchainMessageContentUtf8Of65535BytesMax,
 } from '../content';
 import { OffchainMessageV0 } from '../message-v0';
-import { OffchainMessageVersion } from '../version';
 
 // The string `'\xffsolana offchain'`
 const OFFCHAIN_MESSAGE_SIGNING_DOMAIN_BYTES: ReadonlyUint8Array = new Uint8Array([
@@ -199,8 +199,9 @@ describe('getOffchainMessageV0Decoder()', () => {
                     0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x77, 0x6f, 0x72, 0x6c, 0x64,
             ]);
         expect(() => decoder.decode(encodedMessage)).toThrow(
-            new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__VERSION_NUMBER_NOT_SUPPORTED, {
-                unsupportedVersion: 1,
+            new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__UNEXPECTED_VERSION, {
+                actualVersion: 1,
+                expectedVersion: 0,
             }),
         );
     });
@@ -636,32 +637,33 @@ describe('getOffchainMessageEncoder()', () => {
         },
     );
     it('throws when encoding an ASCII encoded message with a non-zero version', () => {
-        const offchainMessage: OffchainMessageV0 = {
+        const offchainMessage = {
             applicationDomain: APPLICATION_DOMAIN,
             content: {
                 format: OffchainMessageContentFormat.RESTRICTED_ASCII_1232_BYTES_MAX,
                 text: 'Hello world',
             } as OffchainMessageContentRestrictedAsciiOf1232BytesMax,
             requiredSignatories: [{ address: SIGNER_A }, { address: SIGNER_B }],
-            version: 1 as OffchainMessageVersion,
+            version: 1,
         };
-        expect(() => encoder.encode(offchainMessage)).toThrow(
-            new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__VERSION_NUMBER_NOT_SUPPORTED, {
-                unsupportedVersion: 1,
+        expect(() => encoder.encode(offchainMessage as unknown as OffchainMessageV0)).toThrow(
+            new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__UNEXPECTED_VERSION, {
+                actualVersion: 1,
+                expectedVersion: 0,
             }),
         );
     });
     it('throws when encoding an ASCII encoded message with an unsupported version', () => {
-        const offchainMessage: OffchainMessageV0 = {
+        const offchainMessage = {
             applicationDomain: APPLICATION_DOMAIN,
             content: {
                 format: OffchainMessageContentFormat.RESTRICTED_ASCII_1232_BYTES_MAX,
                 text: 'Hello world',
             } as OffchainMessageContentRestrictedAsciiOf1232BytesMax,
             requiredSignatories: [{ address: SIGNER_A }, { address: SIGNER_B }],
-            version: 255 as OffchainMessageVersion,
+            version: 255,
         };
-        expect(() => encoder.encode(offchainMessage)).toThrow(
+        expect(() => encoder.encode(offchainMessage as unknown as OffchainMessageV0)).toThrow(
             new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__VERSION_NUMBER_NOT_SUPPORTED, {
                 unsupportedVersion: 255,
             }),
