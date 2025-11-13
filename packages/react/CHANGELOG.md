@@ -1,5 +1,18 @@
 # @solana/react
 
+## 5.0.1
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/addresses@5.0.1
+    - @solana/keys@5.0.1
+    - @solana/transaction-messages@5.0.1
+    - @solana/transactions@5.0.1
+    - @solana/signers@5.0.1
+    - @solana/errors@5.0.1
+    - @solana/promises@5.0.1
+
 ## 5.0.0
 
 ### Patch Changes
