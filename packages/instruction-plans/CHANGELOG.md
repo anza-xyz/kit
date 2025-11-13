@@ -1,5 +1,16 @@
 # @solana/instruction-plans
 
+## 5.0.1
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/transaction-messages@5.0.1
+    - @solana/transactions@5.0.1
+    - @solana/instructions@5.0.1
+    - @solana/errors@5.0.1
+    - @solana/promises@5.0.1
+
 ## 5.0.0
 
 ### Patch Changes

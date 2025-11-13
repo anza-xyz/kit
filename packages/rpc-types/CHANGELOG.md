@@ -1,5 +1,17 @@
 # @solana/rpc-types
 
+## 5.0.1
+
+### Patch Changes
+
+- Updated dependencies [[`d7f5a0c`](https://github.com/anza-xyz/kit/commit/d7f5a0c046f0a2f2836554fa671364de0b512e97)]:
+    - @solana/codecs-strings@5.0.1
+    - @solana/addresses@5.0.1
+    - @solana/codecs-core@5.0.1
+    - @solana/codecs-numbers@5.0.1
+    - @solana/errors@5.0.1
+    - @solana/nominal-types@5.0.1
+
 ## 5.0.0
 
 ### Major Changes

@@ -1,5 +1,20 @@
 # @solana/rpc
 
+## 5.0.1
+
+### Patch Changes
+
+- Updated dependencies [[`c97df88`](https://github.com/anza-xyz/kit/commit/c97df8886948b281fff7d6b66429a59a9f7bdfa2)]:
+    - @solana/rpc-api@5.0.1
+    - @solana/rpc-types@5.0.1
+    - @solana/rpc-transformers@5.0.1
+    - @solana/errors@5.0.1
+    - @solana/fast-stable-stringify@5.0.1
+    - @solana/functional@5.0.1
+    - @solana/rpc-spec@5.0.1
+    - @solana/rpc-spec-types@5.0.1
+    - @solana/rpc-transport-http@5.0.1
+
 ## 5.0.0
 
 ### Patch Changes

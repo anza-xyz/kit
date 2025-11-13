@@ -1,5 +1,32 @@
 # @solana/kit
 
+## 5.0.1
+
+### Patch Changes
+
+- [#999](https://github.com/anza-xyz/kit/pull/999) [`d7f5a0c`](https://github.com/anza-xyz/kit/commit/d7f5a0c046f0a2f2836554fa671364de0b512e97) Thanks [@tmm](https://github.com/tmm)! - Some npm packages are needed for specific runtimes only (eg. React Native, Node). To prevent package managers from unconditionally installing these packages when they have `auto-install-peers` enabled, we are marking them as optional in `peerDependenciesMeta`. When running in React Native, be sure to explicitly install `fastestsmallesttextencoderdecoder`. When running in Node, be sure to explicitly install `ws`. When using `@solana/react`, we will presume that you have already installed `react`.
+
+- Updated dependencies [[`18e7e2c`](https://github.com/anza-xyz/kit/commit/18e7e2c9d9013be6223932398f40cbc276c4a0e9)]:
+    - @solana/transaction-confirmation@5.0.1
+    - @solana/rpc@5.0.1
+    - @solana/sysvars@5.0.1
+    - @solana/accounts@5.0.1
+    - @solana/addresses@5.0.1
+    - @solana/codecs@5.0.1
+    - @solana/keys@5.0.1
+    - @solana/rpc-types@5.0.1
+    - @solana/transaction-messages@5.0.1
+    - @solana/transactions@5.0.1
+    - @solana/instruction-plans@5.0.1
+    - @solana/instructions@5.0.1
+    - @solana/programs@5.0.1
+    - @solana/rpc-parsed-types@5.0.1
+    - @solana/rpc-subscriptions@5.0.1
+    - @solana/signers@5.0.1
+    - @solana/errors@5.0.1
+    - @solana/functional@5.0.1
+    - @solana/rpc-spec-types@5.0.1
+
 ## 5.0.0
 
 ### Patch Changes
