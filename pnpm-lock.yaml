@@ -1220,6 +1220,9 @@ importers:
       '@solana/nominal-types':
         specifier: workspace:*
         version: link:../nominal-types
+      '@solana/offchain-messages':
+        specifier: workspace:*
+        version: link:../offchain-messages
       '@solana/transaction-messages':
         specifier: workspace:*
         version: link:../transaction-messages
