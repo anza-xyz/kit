@@ -9,8 +9,7 @@ import { OffchainMessageV0 } from '../message-v0';
     // It is incompatible with messages where the version is unknown
     {
         const message = null as unknown as OffchainMessage;
-        // TODO: This will start to properly fail when v1 is introduced.
-        // @ENABLETHISTHENts-expect-error
+        // @ts-expect-error It's unclear until refined what version message you decoded.
         getOffchainMessageV0Encoder().encode(message);
     }
 
