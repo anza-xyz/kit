@@ -3,6 +3,7 @@ import { SOLANA_ERROR__INVARIANT_VIOLATION__SWITCH_MUST_BE_EXHAUSTIVE, SolanaErr
 import { SignatureBytes } from '@solana/keys';
 
 import { compileOffchainMessageV0Envelope } from './envelope-v0';
+import { compileOffchainMessageV1Envelope } from './envelope-v1';
 import { OffchainMessage, OffchainMessageBytes } from './message';
 
 type OrderedMap<K extends string, V> = Record<K, V>;
@@ -35,6 +36,8 @@ export function compileOffchainMessageEnvelope(offchainMessage: OffchainMessage)
     switch (version) {
         case 0:
             return compileOffchainMessageV0Envelope(offchainMessage);
+        case 1:
+            return compileOffchainMessageV1Envelope(offchainMessage);
         default:
             throw new SolanaError(SOLANA_ERROR__INVARIANT_VIOLATION__SWITCH_MUST_BE_EXHAUSTIVE, {
                 unexpectedValue: version satisfies never,

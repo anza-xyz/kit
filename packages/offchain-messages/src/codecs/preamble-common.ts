@@ -39,7 +39,7 @@ function getSigningDomainPrefixedEncoder<const T extends TEncoderFields>(...fiel
 
 function getVersionTransformer(fixedVersion?: OffchainMessageVersion) {
     return (version: number) => {
-        if (version !== 0) {
+        if (version > 1) {
             throw new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__VERSION_NUMBER_NOT_SUPPORTED, {
                 unsupportedVersion: version,
             });
@@ -54,28 +54,22 @@ function getVersionTransformer(fixedVersion?: OffchainMessageVersion) {
     };
 }
 
-export function createOffchainMessagePreambleDecoder<const T extends TDecoderFields>(
-    version: OffchainMessageVersion,
-    ...fields: T
-) {
+export function createOffchainMessagePreambleDecoder<
+    const TVersion extends OffchainMessageVersion,
+    const TFields extends TDecoderFields,
+>(version: TVersion, ...fields: TFields) {
     return getSigningDomainPrefixedDecoder(
-        [
-            'version',
-            transformDecoder(getU8Decoder(), getVersionTransformer(version)) as FixedSizeDecoder<typeof version, 1>,
-        ],
+        ['version', transformDecoder(getU8Decoder(), getVersionTransformer(version)) as FixedSizeDecoder<TVersion, 1>],
         ...fields,
     );
 }
 
-export function createOffchainMessagePreambleEncoder<const T extends TEncoderFields>(
-    version: OffchainMessageVersion,
-    ...fields: T
-) {
+export function createOffchainMessagePreambleEncoder<
+    const TVersion extends OffchainMessageVersion,
+    const TFields extends TEncoderFields,
+>(version: TVersion, ...fields: TFields) {
     return getSigningDomainPrefixedEncoder(
-        [
-            'version',
-            transformEncoder(getU8Encoder(), getVersionTransformer(version)) as FixedSizeEncoder<typeof version, 1>,
-        ],
+        ['version', transformEncoder(getU8Encoder(), getVersionTransformer(version)) as FixedSizeEncoder<TVersion, 1>],
         ...fields,
     );
 }
@@ -100,4 +94,20 @@ export function decodeRequiredSignatoryAddresses(bytes: ReadonlyUint8Array): rea
                     : 0),
         },
     ).decode(bytesAfterVersion);
+}
+
+export function getSignatoriesComparator(): (a: ReadonlyUint8Array, b: ReadonlyUint8Array) => -1 | 0 | 1 {
+    return (x, y) => {
+        if (x.length !== y.length) {
+            return x.length < y.length ? -1 : 1;
+        }
+        for (let ii = 0; ii < x.length; ii++) {
+            if (x[ii] === y[ii]) {
+                continue;
+            } else {
+                return x[ii] < y[ii] ? -1 : 1;
+            }
+        }
+        return 0;
+    };
 }

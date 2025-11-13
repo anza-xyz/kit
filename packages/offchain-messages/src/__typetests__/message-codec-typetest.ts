@@ -3,6 +3,7 @@ import { ReadonlyUint8Array } from '@solana/codecs-core';
 import { getOffchainMessageDecoder, getOffchainMessageEncoder } from '../codecs/message';
 import { OffchainMessage } from '../message';
 import { OffchainMessageV0 } from '../message-v0';
+import { OffchainMessageV1 } from '../message-v1';
 
 // [DESCRIBE] getOffchainMessageEncoder.
 {
@@ -15,6 +16,12 @@ import { OffchainMessageV0 } from '../message-v0';
     // It is compatible with version 0 messages
     {
         const message = null as unknown as OffchainMessageV0;
+        getOffchainMessageEncoder().encode(message);
+    }
+
+    // It is compatible with version 1 messages
+    {
+        const message = null as unknown as OffchainMessageV1;
         getOffchainMessageEncoder().encode(message);
     }
 
@@ -38,8 +45,9 @@ import { OffchainMessageV0 } from '../message-v0';
     {
         const message = getOffchainMessageDecoder().decode(new Uint8Array([]));
         message satisfies OffchainMessage;
-        // TODO: This will start to properly fail when v1 is introduced.
-        // @ENABLETHISTHENts-expect-error
+        // @ts-expect-error It's unclear until refined what version message you decoded.
         message satisfies OffchainMessageV0;
+        // @ts-expect-error It's unclear until refined what version message you decoded.
+        message satisfies OffchainMessageV1;
     }
 }
