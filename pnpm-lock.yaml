@@ -210,7 +210,7 @@ importers:
     devDependencies:
       '@solana/eslint-config-solana':
         specifier: ^5.0.0
-        version: 5.0.0(d4f5295cd6f5bd5082ee321bf58aabcc)
+        version: 5.0.0(2c0d69e12ac078b56fdc4a4d37491c61)
       '@solana/wallet-standard-features':
         specifier: ^1.3.0
         version: 1.3.0
@@ -267,6 +267,31 @@ importers:
       '@solana-program/system':
         specifier: ^0.9.0
         version: 0.9.0(@solana/kit@packages+kit)
+      '@solana/example-utils':
+        specifier: workspace:*
+        version: link:../utils
+      '@solana/kit':
+        specifier: workspace:*
+        version: link:../../packages/kit
+    devDependencies:
+      start-server-and-test:
+        specifier: ^2.1.2
+        version: 2.1.2
+      tsx:
+        specifier: ^4.20.6
+        version: 4.20.6
+
+  examples/token-airdrop:
+    dependencies:
+      '@solana-program/compute-budget':
+        specifier: ^0.11.0
+        version: 0.11.0(@solana/kit@packages+kit)
+      '@solana-program/system':
+        specifier: ^0.9.0
+        version: 0.9.0(@solana/kit@packages+kit)
+      '@solana-program/token':
+        specifier: ^0.8.0
+        version: 0.8.0(@solana/kit@packages+kit)
       '@solana/example-utils':
         specifier: workspace:*
         version: link:../utils
@@ -4228,6 +4253,11 @@ packages:
     peerDependencies:
       '@solana/kit': ^4.0
 
+  '@solana-program/compute-budget@0.11.0':
+    resolution: {integrity: sha512-7f1ePqB/eURkTwTOO9TNIdUXZcyrZoX3Uy2hNo7cXMfNhPFWp9AVgIyRNBc2jf15sdUa9gNpW+PfP2iV8AYAaw==}
+    peerDependencies:
+      '@solana/kit': ^5.0
+
   '@solana-program/memo@0.9.0':
     resolution: {integrity: sha512-I544p9gFeaguGbM+U09tjc9Prbs71vh7votxRahEoiOlxVID9NtZTah4KQnL0jK7JboxFxXo4+VOBaIE3HYPOw==}
     peerDependencies:
@@ -4237,6 +4267,11 @@ packages:
     resolution: {integrity: sha512-yu+i0SZ+c+0E9Cy+btoMiCbxRnP/FLQuv/Ba8l2klZApAiOX1Ja/2IGkctFV36fglsI7PwD9czkSkHm8og+QeA==}
     peerDependencies:
       '@solana/kit': ^4.0
+
+  '@solana-program/token@0.8.0':
+    resolution: {integrity: sha512-nXUCImHhNv2i052v1WRcJSSOXPBmCv0gg0MbuwThQN/aNKRf8PNQQjAS+UY7ukvIpdtZOnpq9w9pqepegxONzQ==}
+    peerDependencies:
+      '@solana/kit': ^5.0
 
   '@solana/buffer-layout@4.0.1':
     resolution: {integrity: sha512-E1ImOIAD1tBZFRdjeM4/pzTiTApC0AOBGwyAMS4fwIodCWArzJ3DWdoh8cKxeFM2fElkxBh2Aqts1BPC373rHA==}
@@ -11250,11 +11285,19 @@ snapshots:
     dependencies:
       '@solana/kit': link:packages/kit
 
+  '@solana-program/compute-budget@0.11.0(@solana/kit@packages+kit)':
+    dependencies:
+      '@solana/kit': link:packages/kit
+
   '@solana-program/memo@0.9.0(@solana/kit@packages+kit)':
     dependencies:
       '@solana/kit': link:packages/kit
 
   '@solana-program/system@0.9.0(@solana/kit@packages+kit)':
+    dependencies:
+      '@solana/kit': link:packages/kit
+
+  '@solana-program/token@0.8.0(@solana/kit@packages+kit)':
     dependencies:
       '@solana/kit': link:packages/kit
 
@@ -11294,16 +11337,16 @@ snapshots:
       typescript: 5.8.3
       typescript-eslint: 8.17.0(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3)
 
-  '@solana/eslint-config-solana@5.0.0(d4f5295cd6f5bd5082ee321bf58aabcc)':
+  '@solana/eslint-config-solana@5.0.0(2c0d69e12ac078b56fdc4a4d37491c61)':
     dependencies:
       '@eslint/js': 9.38.0
       '@types/eslint__js': 8.42.3
       eslint: 9.38.0(jiti@1.21.7)
-      eslint-plugin-jest: 28.11.0(@typescript-eslint/eslint-plugin@8.46.2(@typescript-eslint/parser@8.17.0(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.38.0(jiti@1.21.7))(jest@30.0.0-alpha.6(@types/node@24.10.0)(ts-node@10.9.2(@swc/core@1.13.19(@swc/helpers@0.5.17))(@types/node@24.10.0)(typescript@5.8.3)))(typescript@5.8.3)
+      eslint-plugin-jest: 28.11.0(@typescript-eslint/eslint-plugin@8.46.2(@typescript-eslint/parser@8.46.3(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.38.0(jiti@1.21.7))(jest@30.0.0-alpha.6(@types/node@24.10.0)(ts-node@10.9.2(@swc/core@1.13.19(@swc/helpers@0.5.17))(@types/node@24.10.0)(typescript@5.8.3)))(typescript@5.8.3)
       eslint-plugin-react-hooks: 5.2.0(eslint@9.38.0(jiti@1.21.7))
       eslint-plugin-simple-import-sort: 12.1.1(eslint@9.38.0(jiti@1.21.7))
       eslint-plugin-sort-keys-fix: 1.1.2
-      eslint-plugin-typescript-sort-keys: 3.3.0(@typescript-eslint/parser@8.17.0(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3)
+      eslint-plugin-typescript-sort-keys: 3.3.0(@typescript-eslint/parser@8.46.3(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3)
       globals: 16.5.0
       jest: 30.0.0-alpha.6(@types/node@24.10.0)(ts-node@10.9.2(@swc/core@1.13.19(@swc/helpers@0.5.17))(@types/node@24.10.0)(typescript@5.8.3))
       typescript: 5.8.3
@@ -11647,24 +11690,6 @@ snapshots:
       typescript: 5.8.3
     transitivePeerDependencies:
       - supports-color
-
-  '@typescript-eslint/eslint-plugin@8.46.2(@typescript-eslint/parser@8.17.0(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3)':
-    dependencies:
-      '@eslint-community/regexpp': 4.12.2
-      '@typescript-eslint/parser': 8.17.0(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3)
-      '@typescript-eslint/scope-manager': 8.46.2
-      '@typescript-eslint/type-utils': 8.46.2(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3)
-      '@typescript-eslint/utils': 8.46.2(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3)
-      '@typescript-eslint/visitor-keys': 8.46.2
-      eslint: 9.38.0(jiti@1.21.7)
-      graphemer: 1.4.0
-      ignore: 7.0.5
-      natural-compare: 1.4.0
-      ts-api-utils: 2.1.0(typescript@5.8.3)
-      typescript: 5.8.3
-    transitivePeerDependencies:
-      - supports-color
-    optional: true
 
   '@typescript-eslint/eslint-plugin@8.46.2(@typescript-eslint/parser@8.46.3(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3)':
     dependencies:
@@ -12785,17 +12810,6 @@ snapshots:
 
   escape-string-regexp@4.0.0: {}
 
-  eslint-plugin-jest@28.11.0(@typescript-eslint/eslint-plugin@8.46.2(@typescript-eslint/parser@8.17.0(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.38.0(jiti@1.21.7))(jest@30.0.0-alpha.6(@types/node@24.10.0)(ts-node@10.9.2(@swc/core@1.13.19(@swc/helpers@0.5.17))(@types/node@24.10.0)(typescript@5.8.3)))(typescript@5.8.3):
-    dependencies:
-      '@typescript-eslint/utils': 8.26.1(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3)
-      eslint: 9.38.0(jiti@1.21.7)
-    optionalDependencies:
-      '@typescript-eslint/eslint-plugin': 8.46.2(@typescript-eslint/parser@8.17.0(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3)
-      jest: 30.0.0-alpha.6(@types/node@24.10.0)(ts-node@10.9.2(@swc/core@1.13.19(@swc/helpers@0.5.17))(@types/node@24.10.0)(typescript@5.8.3))
-    transitivePeerDependencies:
-      - supports-color
-      - typescript
-
   eslint-plugin-jest@28.11.0(@typescript-eslint/eslint-plugin@8.46.2(@typescript-eslint/parser@8.46.3(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.38.0(jiti@1.21.7))(jest@30.0.0-alpha.6(@types/node@24.10.0)(ts-node@10.9.2(@swc/core@1.13.19(@swc/helpers@0.5.17))(@types/node@24.10.0)(typescript@5.8.3)))(typescript@5.8.3):
     dependencies:
       '@typescript-eslint/utils': 8.26.1(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3)
@@ -12825,17 +12839,6 @@ snapshots:
       esutils: 2.0.3
       natural-compare: 1.4.0
       requireindex: 1.2.0
-
-  eslint-plugin-typescript-sort-keys@3.3.0(@typescript-eslint/parser@8.17.0(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3):
-    dependencies:
-      '@typescript-eslint/experimental-utils': 5.62.0(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3)
-      '@typescript-eslint/parser': 8.17.0(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3)
-      eslint: 9.38.0(jiti@1.21.7)
-      json-schema: 0.4.0
-      natural-compare-lite: 1.4.0
-      typescript: 5.8.3
-    transitivePeerDependencies:
-      - supports-color
 
   eslint-plugin-typescript-sort-keys@3.3.0(@typescript-eslint/parser@8.46.3(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3):
     dependencies:
