@@ -13,6 +13,7 @@ import {
     Address,
     airdropFactory,
     appendTransactionMessageInstruction,
+    appendTransactionMessageInstructions,
     assertIsTransactionWithBlockhashLifetime,
     Blockhash,
     createSolanaRpc,
@@ -26,6 +27,7 @@ import {
     InstructionPlan,
     lamports,
     Lamports,
+    parallelInstructionPlan,
     pipe,
     sendAndConfirmTransactionFactory,
     sequentialInstructionPlan,
@@ -34,22 +36,21 @@ import {
     Signature,
     signTransactionMessageWithSigners,
     singleInstructionPlan,
+    singleTransactionPlan,
     SolanaRpcApi,
     SolanaRpcSubscriptionsApi,
+    TransactionMessage,
+    TransactionMessageWithBlockhashLifetime,
+    TransactionMessageWithFeePayer,
     TransactionPartialSigner,
     TransactionPlan,
     TransactionPlanResult,
 } from '@solana/kit';
-import { getTransferSolInstruction } from '@solana-program/system';
+import { getCreateAccountInstruction, getTransferSolInstruction } from '@solana-program/system';
 import { estimateAndUpdateProvisoryComputeUnitLimitFactory, estimateComputeUnitLimitFactory, fillProvisorySetComputeUnitLimitInstruction, getSetComputeUnitPriceInstruction } from '@solana-program/compute-budget';
+import { findAssociatedTokenPda, getCreateAssociatedTokenInstruction, getInitializeMint2Instruction, getMintSize, getMintToCheckedInstruction, TOKEN_PROGRAM_ADDRESS } from '@solana-program/token';
 
 const log = createLogger('Helper Lib');
-
-type TransactionBuilder = {
-    instruction(instruction: Instruction): Promise<TransactionPlan>;
-    instructions(instructions: Instruction[]): Promise<TransactionPlan>;
-    instructionPlan(plan: InstructionPlan): Promise<TransactionPlan>;
-}
 
 type TransactionConfig = {
     feePayer: TransactionPartialSigner;
@@ -57,12 +58,24 @@ type TransactionConfig = {
     cuPrice?: number | bigint;
 }
 
+type SendableTransactionMessage = TransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithBlockhashLifetime;
+
+type TransactionBuilder = {
+    instruction(instruction: Instruction): Promise<SendableTransactionMessage>;
+    instructions(instructions: Instruction[]): Promise<SendableTransactionMessage>;
+}
+
+type TransactionPlanBuilder = {
+    instructionPlan(plan: InstructionPlan): Promise<TransactionPlan>;
+}
+
 type Client<TRpcApi = SolanaRpcApi, TRpcSubscriptionsApi = SolanaRpcSubscriptionsApi> = {
     rpc: TRpcApi;
     rpcSubscriptions: TRpcSubscriptionsApi;
     airdrop(recipientAddress: Address, lamports: Lamports): Promise<Signature>;
     transaction(config: TransactionConfig): TransactionBuilder;
-    sendAndConfirm(transactionPlan: TransactionPlan, abortSignal?: AbortSignal): Promise<TransactionPlanResult>;
+    transactionPlan(config: TransactionConfig): TransactionPlanBuilder;
+    sendAndConfirm(transaction: SendableTransactionMessage | TransactionPlan, abortSignal?: AbortSignal): Promise<TransactionPlanResult>;
 }
 
 // could export this from Kit?
@@ -78,39 +91,56 @@ function createSolanaClient(endpoint: string): Client<ReturnType<typeof createSo
 
     const airdrop = airdropFactory({ rpc, rpcSubscriptions });
 
+    async function createBaseTransactionMessage(config: TransactionConfig, abortSignal?: AbortSignal): Promise<SendableTransactionMessage> {
+        return pipe(
+            createTransactionMessage({ version: 0 }),
+            tx => setTransactionMessageFeePayer(config.feePayer.address, tx),
+            tx => config.cuPrice ? appendTransactionMessageInstruction(
+                getSetComputeUnitPriceInstruction({
+                    microLamports: config.cuPrice,
+                }),
+                tx
+            ) : tx,
+            tx => fillProvisorySetComputeUnitLimitInstruction(tx),
+            async tx => {
+                if (config.blockhash) {
+                    return setTransactionMessageLifetimeUsingBlockhash(config.blockhash, tx);
+                } else {
+                    const { value: latestBlockhash } = await rpc.getLatestBlockhash({ commitment: 'confirmed' }).send({ abortSignal });
+                    return setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx);
+                }
+            }
+        )
+    }
+
     function transactionBuilder(config: TransactionConfig): TransactionBuilder {
+        return {
+            async instruction(instruction: Instruction, abortSignal?: AbortSignal): Promise<SendableTransactionMessage> {
+                const baseMessage = await createBaseTransactionMessage(config, abortSignal);
+                return pipe(
+                    baseMessage,
+                    tx => appendTransactionMessageInstruction(instruction, tx)
+                )
+            },
+            async instructions(instructions: Instruction[], abortSignal?: AbortSignal): Promise<SendableTransactionMessage> {
+                const baseMessage = await createBaseTransactionMessage(config, abortSignal);
+                return pipe(
+                    baseMessage,
+                    tx => appendTransactionMessageInstructions(instructions, tx)
+                )
+            }
+        }
+    }
+
+    function transactionPlanBuilder(config: TransactionConfig): TransactionPlanBuilder {
         const transactionPlanner = createTransactionPlanner({
             async createTransactionMessage(innerConfig) {
                 const abortSignal = innerConfig ? innerConfig.abortSignal : undefined;
-                return pipe(
-                    createTransactionMessage({ version: 0 }),
-                    tx => setTransactionMessageFeePayer(config.feePayer.address, tx),
-                    tx => config.cuPrice ? appendTransactionMessageInstruction(
-                        getSetComputeUnitPriceInstruction({
-                            microLamports: config.cuPrice,
-                        }),
-                        tx
-                    ) : tx,
-                    tx => fillProvisorySetComputeUnitLimitInstruction(tx),
-                    async tx => {
-                        if (config.blockhash) {
-                            return setTransactionMessageLifetimeUsingBlockhash(config.blockhash, tx);
-                        } else {
-                            const { value: latestBlockhash } = await rpc.getLatestBlockhash({ commitment: 'confirmed' }).send({ abortSignal });
-                            return setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx);
-                        }
-                    }
-                )
+                return await createBaseTransactionMessage(config, abortSignal);
             }
         })
 
         return {
-            async instruction(instruction: Instruction, abortSignal?: AbortSignal): Promise<TransactionPlan> {
-                return await transactionPlanner(singleInstructionPlan(instruction), { abortSignal });
-            },
-            async instructions(instructions: Instruction[], abortSignal?: AbortSignal): Promise<TransactionPlan> {
-                return await transactionPlanner(sequentialInstructionPlan(instructions), { abortSignal });
-            },
             async instructionPlan(plan: InstructionPlan, abortSignal?: AbortSignal): Promise<TransactionPlan> {
                 return await transactionPlanner(plan, { abortSignal });
             }
@@ -119,7 +149,6 @@ function createSolanaClient(endpoint: string): Client<ReturnType<typeof createSo
 
     const sendAndConfirm = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
     const estimateCULimit = estimateComputeUnitLimitFactory({ rpc });
-    // TODO: should we add a number => number function param to estimateAndUpdateProvisoryComputeUnitLimitFactory?
     async function estimateWithMultiplier(...args: Parameters<typeof estimateCULimit>): Promise<number> {
         const estimate = await estimateCULimit(...args);
         return Math.ceil(estimate * 1.1);
@@ -150,34 +179,162 @@ function createSolanaClient(endpoint: string): Client<ReturnType<typeof createSo
         transaction(config: TransactionConfig): TransactionBuilder {
             return transactionBuilder(config);
         },
-        async sendAndConfirm(transactionPlan: TransactionPlan, abortSignal?: AbortSignal): Promise<TransactionPlanResult> {
+        transactionPlan(config: TransactionConfig): TransactionPlanBuilder {
+            return transactionPlanBuilder(config);
+        },
+        async sendAndConfirm(transaction: TransactionMessage & TransactionMessageWithFeePayer | TransactionPlan, abortSignal?: AbortSignal): Promise<TransactionPlanResult> {
+            let transactionPlan: TransactionPlan;
+            if ('kind' in transaction) {
+                transactionPlan = transaction;
+            } else {
+                transactionPlan = singleTransactionPlan(transaction);
+            }
             return await transactionExecutor(transactionPlan, { abortSignal });
         }
     }
 }
 
-// Example: Generate a new signer, airdrop it 1 SOL, then transfer lamports to a new destination account
 const client = createSolanaClient('http://127.0.0.1:8899');
 
+// Example: Airdrop SOL to a new signer
 const signer = await generateKeyPairSigner();
 await client.airdrop(signer.address, lamports(1_000_000_000n));
 log.info('Airdropped 1 SOL to the new signer address');
 
 const { value: balance } = await client.rpc.getBalance(signer.address).send();
 log.info({ address: signer.address, balance }, 'New balance for signer account');
+await pressAnyKeyPrompt('Press any key to continue');
 
-const destination = await generateKeyPairSigner();
-const transaction = await client.transaction({ feePayer: signer }).instruction(
-    getTransferSolInstruction({
-        source: signer,
-        destination: destination.address,
-        amount: lamports(1_000_000n),
-    })
-)
-const result = await client.sendAndConfirm(transaction);
-// TODO: helpers for parsing tx plan results
-if (result.kind === 'single' && result.status.kind === 'successful') {
-    const signature = getSignatureFromTransaction(result.status.transaction);
-    log.info({ signature }, 'Transfer transaction confirmed');
+// Example: Transfer lamports to a new account
+async function transferExample() {
+    const destination = await generateKeyPairSigner();
+    const transaction = await client.transaction({ feePayer: signer }).instruction(
+        getTransferSolInstruction({
+            source: signer,
+            destination: destination.address,
+            amount: lamports(1_000_000n),
+        })
+    )
+    const result = await client.sendAndConfirm(transaction);
+    // TODO: helpers for parsing tx plan results
+    if (result.kind === 'single' && result.status.kind === 'successful') {
+        const signature = getSignatureFromTransaction(result.status.transaction);
+        log.info({ signature }, 'Transfer transaction confirmed');
+    }
+    await pressAnyKeyPrompt('Press any key to continue');
 }
-await pressAnyKeyPrompt('Press any key to quit');
+await transferExample();
+
+// Example: Create a new mint
+async function createMintExample() {
+    const tokenMint = await generateKeyPairSigner();
+
+    const mintSize = getMintSize();
+    const lamportsForMintAccount = await client.rpc.getMinimumBalanceForRentExemption(BigInt(mintSize)).send();
+
+    const transaction = await client.transaction({ feePayer: signer }).instructions([
+        getCreateAccountInstruction({
+            payer: signer,
+            newAccount: tokenMint,
+            lamports: lamportsForMintAccount,
+            space: mintSize,
+            programAddress: TOKEN_PROGRAM_ADDRESS,
+        }),
+        getInitializeMint2Instruction({
+            mint: tokenMint.address,
+            decimals: 6,
+            mintAuthority: signer.address,
+        })
+    ])
+    const result = await client.sendAndConfirm(transaction);
+    const signature = getSignatures(result)[0];
+    log.info({ signature, mintAddress: tokenMint.address }, 'Mint creation transaction confirmed');
+    await pressAnyKeyPrompt('Press any key to continue');
+}
+await createMintExample();
+
+async function tokenAirdropExample() {
+    const tokenMint = await generateKeyPairSigner();
+
+    const mintSize = getMintSize();
+    const lamportsForMintAccount = await client.rpc.getMinimumBalanceForRentExemption(BigInt(mintSize)).send();
+
+    const destinationAddresses = await Promise.all(
+        Array.from({ length: 100 }, async () => {
+            const signer = await generateKeyPairSigner();
+            return signer.address;
+        }),
+    );
+
+    const destinationTokenAccountAddresses = await Promise.all(destinationAddresses.map(async ownerAddress => {
+        const [address] = await findAssociatedTokenPda({
+            owner: ownerAddress,
+            mint: tokenMint.address,
+            tokenProgram: TOKEN_PROGRAM_ADDRESS
+        });
+        return address;
+    }));
+
+    const instructionPlan = sequentialInstructionPlan([
+        getCreateAccountInstruction({
+            payer: signer,
+            newAccount: tokenMint,
+            lamports: lamportsForMintAccount,
+            space: mintSize,
+            programAddress: TOKEN_PROGRAM_ADDRESS,
+        }),
+        getInitializeMint2Instruction({
+            mint: tokenMint.address,
+            decimals: 6,
+            mintAuthority: signer.address,
+        }),
+        parallelInstructionPlan(destinationAddresses.map((address, index) =>
+            sequentialInstructionPlan([
+                // create the associated token account
+                getCreateAssociatedTokenInstruction({
+                    payer: signer,
+                    ata: destinationTokenAccountAddresses[index],
+                    owner: address,
+                    mint: tokenMint.address,
+                }),
+                // mint to this token account
+                getMintToCheckedInstruction({
+                    mint: tokenMint.address,
+                    token: destinationTokenAccountAddresses[index],
+                    mintAuthority: signer,
+                    amount: 1_000_000_000n, // 1,000 tokens, considering 6 decimals
+                    decimals: 6,
+                })
+            ])
+        ))
+    ])
+
+    const { value: blockhash } = await client.rpc.getLatestBlockhash({ commitment: 'confirmed' }).send();
+    const transactionPlan = await client.transactionPlan({ feePayer: signer, blockhash }).instructionPlan(instructionPlan);
+    const result = await client.sendAndConfirm(transactionPlan);
+    const signatures = getSignatures(result);
+    log.info({ signatures, mintAddress: tokenMint.address }, 'Token airdrop transactions confirmed for multiple recipients');
+    await pressAnyKeyPrompt('Press any key to quit');
+}
+await tokenAirdropExample();
+
+// TODO: helper for something like this in Kit
+function getSignatures(result: TransactionPlanResult): Signature[] {
+    const signatures: Signature[] = [];
+
+    function traverse(result: TransactionPlanResult) {
+        if (result.kind === 'single') {
+            if (result.status.kind === 'successful') {
+                const signature = getSignatureFromTransaction(result.status.transaction);
+                signatures.push(signature);
+            }
+        } else if (result.kind === 'parallel' || result.kind === 'sequential') {
+            for (const subResult of result.plans) {
+                traverse(subResult);
+            }
+        }
+    }
+
+    traverse(result);
+    return signatures;
+}
