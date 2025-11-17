@@ -169,6 +169,31 @@ importers:
         specifier: ^4.20.6
         version: 4.20.6
 
+  examples/helper-lib:
+    dependencies:
+      '@solana-program/compute-budget':
+        specifier: ^0.11.0
+        version: 0.11.0(@solana/kit@packages+kit)
+      '@solana-program/system':
+        specifier: ^0.9.0
+        version: 0.9.0(@solana/kit@packages+kit)
+      '@solana-program/token':
+        specifier: ^0.8.0
+        version: 0.8.0(@solana/kit@packages+kit)
+      '@solana/example-utils':
+        specifier: workspace:*
+        version: link:../utils
+      '@solana/kit':
+        specifier: workspace:*
+        version: link:../../packages/kit
+    devDependencies:
+      start-server-and-test:
+        specifier: ^2.1.2
+        version: 2.1.2
+      tsx:
+        specifier: ^4.20.6
+        version: 4.20.6
+
   examples/react-app:
     dependencies:
       '@radix-ui/react-dropdown-menu':
