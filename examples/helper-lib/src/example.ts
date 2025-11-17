@@ -35,7 +35,6 @@ import {
     setTransactionMessageLifetimeUsingBlockhash,
     Signature,
     signTransactionMessageWithSigners,
-    singleInstructionPlan,
     singleTransactionPlan,
     SolanaRpcApi,
     SolanaRpcSubscriptionsApi,
@@ -72,7 +71,7 @@ type TransactionPlanBuilder = {
 type Client<TRpcApi = SolanaRpcApi, TRpcSubscriptionsApi = SolanaRpcSubscriptionsApi> = {
     rpc: TRpcApi;
     rpcSubscriptions: TRpcSubscriptionsApi;
-    airdrop(recipientAddress: Address, lamports: Lamports): Promise<Signature>;
+    airdrop(recipientAddress: Address, amount: number | bigint | Lamports): Promise<Signature>;
     transaction(config: TransactionConfig): TransactionBuilder;
     transactionPlan(config: TransactionConfig): TransactionPlanBuilder;
     sendAndConfirm(transaction: SendableTransactionMessage | TransactionPlan, abortSignal?: AbortSignal): Promise<TransactionPlanResult>;
@@ -169,11 +168,12 @@ function createSolanaClient(endpoint: string): Client<ReturnType<typeof createSo
     return {
         rpc,
         rpcSubscriptions,
-        async airdrop(recipientAddress: Address, lamports: Lamports): Promise<Signature> {
+        async airdrop(recipientAddress: Address, amount: number | bigint | Lamports): Promise<Signature> {
+            const lamportsAmount = typeof amount === 'number' ? lamports(BigInt(amount)) : typeof amount === 'bigint' ? lamports(amount) : amount;
             return await airdrop({
                 commitment: 'confirmed',
                 recipientAddress,
-                lamports,
+                lamports: lamportsAmount,
             });
         },
         transaction(config: TransactionConfig): TransactionBuilder {
@@ -194,15 +194,28 @@ function createSolanaClient(endpoint: string): Client<ReturnType<typeof createSo
     }
 }
 
+function sol(amount: number): Lamports {
+    return lamports(BigInt(Math.ceil(amount * 1_000_000_000)));
+}
+
+function displayAmount(amount: bigint, decimals: number): string {
+    return new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: decimals,
+        // @ts-expect-error TS doesn't know you can do this yet
+    }).format(`${amount}E-${decimals}`);
+}
+
 const client = createSolanaClient('http://127.0.0.1:8899');
 
 // Example: Airdrop SOL to a new signer
+
 const signer = await generateKeyPairSigner();
-await client.airdrop(signer.address, lamports(1_000_000_000n));
+await client.airdrop(signer.address, sol(1));
 log.info('Airdropped 1 SOL to the new signer address');
 
 const { value: balance } = await client.rpc.getBalance(signer.address).send();
-log.info({ address: signer.address, balance }, 'New balance for signer account');
+log.info({ address: signer.address, balance: `${displayAmount(balance, 9)} SOL` }, 'New balance for signer account');
 await pressAnyKeyPrompt('Press any key to continue');
 
 // Example: Transfer lamports to a new account
@@ -302,7 +315,7 @@ async function tokenAirdropExample() {
                     mint: tokenMint.address,
                     token: destinationTokenAccountAddresses[index],
                     mintAuthority: signer,
-                    amount: 1_000_000_000n, // 1,000 tokens, considering 6 decimals
+                    amount: 1_000 * (10 ** 6), // 1,000 tokens each, considering 6 decimals
                     decimals: 6,
                 })
             ])
