@@ -179,7 +179,7 @@ importers:
         version: 0.9.0(@solana/kit@packages+kit)
       '@solana-program/token':
         specifier: ^0.8.0
-        version: 0.8.0(@solana/kit@packages+kit)
+        version: 0.8.1(@solana/kit@packages+kit)
       '@solana/example-utils':
         specifier: workspace:*
         version: link:../utils
@@ -4334,6 +4334,11 @@ packages:
 
   '@solana-program/system@0.9.1':
     resolution: {integrity: sha512-2N30CgYJw0qX8jKU8vW808yLmx5oRoDSM+FC6tqhsLQiph7agK9eRXJlnrq6OUfTAZd5yCYQHQvGtx0S8I9SAA==}
+    peerDependencies:
+      '@solana/kit': ^5.0
+
+  '@solana-program/token@0.8.1':
+    resolution: {integrity: sha512-Pj34SchWTbDKMODVzzphYvBQ5JpyRw1ObwOsw170L8Rz0jPsj3z7UGf5fcUAL+K1/t3G+UaBrlvAyWeegYzTFQ==}
     peerDependencies:
       '@solana/kit': ^5.0
 
@@ -11344,6 +11349,10 @@ snapshots:
       '@solana/kit': link:packages/kit
 
   '@solana-program/system@0.9.1(@solana/kit@packages+kit)':
+    dependencies:
+      '@solana/kit': link:packages/kit
+
+  '@solana-program/token@0.8.1(@solana/kit@packages+kit)':
     dependencies:
       '@solana/kit': link:packages/kit
 
