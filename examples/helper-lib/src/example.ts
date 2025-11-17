@@ -15,7 +15,7 @@ import {
     appendTransactionMessageInstruction,
     appendTransactionMessageInstructions,
     assertIsTransactionWithBlockhashLifetime,
-    Blockhash,
+    BlockhashLifetimeConstraint,
     createSolanaRpc,
     createSolanaRpcSubscriptions,
     createTransactionMessage,
@@ -36,6 +36,7 @@ import {
     Signature,
     signTransactionMessageWithSigners,
     singleTransactionPlan,
+    SolanaError,
     SolanaRpcApi,
     SolanaRpcSubscriptionsApi,
     TransactionMessage,
@@ -44,6 +45,7 @@ import {
     TransactionPartialSigner,
     TransactionPlan,
     TransactionPlanResult,
+    TransactionPlanResultContext,
 } from '@solana/kit';
 import { getCreateAccountInstruction, getTransferSolInstruction } from '@solana-program/system';
 import { estimateAndUpdateProvisoryComputeUnitLimitFactory, estimateComputeUnitLimitFactory, fillProvisorySetComputeUnitLimitInstruction, getSetComputeUnitPriceInstruction } from '@solana-program/compute-budget';
@@ -68,21 +70,62 @@ type TransactionPlanBuilder = {
     instructionPlan(plan: InstructionPlan): Promise<TransactionPlan>;
 }
 
+/**
+ * A compact summary of a {@link SingleTransactionPlanResult}.
+ */
+export type CompactSingleTransactionSummary<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+> =
+    | Readonly<{
+        context?: TContext;
+        signature: Signature;
+        status: 'successful';
+    }>
+    | Readonly<{
+        error: SolanaError;
+        status: 'failed';
+    }>
+    | Readonly<{
+        status: 'canceled';
+    }>;
+
+/**
+ * Summarizes a {@link TransactionPlanResult} into a flat array of compact single transaction summaries.
+ * @param result The transaction plan result to summarize
+ * @returns An array of compact single transaction summaries
+ */
+function summarizeTransactionPlanResult(result: TransactionPlanResult): CompactSingleTransactionSummary[] {
+    const transactionResults: CompactSingleTransactionSummary[] = [];
+
+    function traverse(result: TransactionPlanResult) {
+        if (result.kind === 'single') {
+            if (result.status.kind === 'successful') {
+                const signature = getSignatureFromTransaction(result.status.transaction);
+                transactionResults.push({ context: result.status.context, signature, status: 'successful' });
+            } else if (result.status.kind === 'failed') {
+                transactionResults.push({ error: result.status.error, status: 'failed' });
+            } else if (result.status.kind === 'canceled') {
+                transactionResults.push({ status: 'canceled' });
+            }
+        } else {
+            for (const subResult of result.plans) {
+                traverse(subResult);
+            }
+        }
+    }
+
+    traverse(result);
+    return transactionResults;
+}
+
 type Client<TRpcApi = SolanaRpcApi, TRpcSubscriptionsApi = SolanaRpcSubscriptionsApi> = {
     rpc: TRpcApi;
     rpcSubscriptions: TRpcSubscriptionsApi;
     airdrop(recipientAddress: Address, amount: number | bigint | Lamports): Promise<Signature>;
     transaction(config: TransactionConfig): TransactionBuilder;
     transactionPlan(config: TransactionConfig): TransactionPlanBuilder;
-    sendAndConfirm(transaction: SendableTransactionMessage | TransactionPlan, abortSignal?: AbortSignal): Promise<TransactionPlanResult>;
+    sendAndConfirm(transaction: SendableTransactionMessage | TransactionPlan, abortSignal?: AbortSignal): Promise<CompactSingleTransactionSummary[]>;
 }
-
-// could export this from Kit?
-type BlockhashLifetimeConstraint = Readonly<{
-    blockhash: Blockhash;
-    lastValidBlockHeight: bigint;
-}>;
-
 
 function createSolanaClient(endpoint: string): Client<ReturnType<typeof createSolanaRpc>, ReturnType<typeof createSolanaRpcSubscriptions>> {
     const rpc = createSolanaRpc(endpoint);
@@ -182,14 +225,15 @@ function createSolanaClient(endpoint: string): Client<ReturnType<typeof createSo
         transactionPlan(config: TransactionConfig): TransactionPlanBuilder {
             return transactionPlanBuilder(config);
         },
-        async sendAndConfirm(transaction: TransactionMessage & TransactionMessageWithFeePayer | TransactionPlan, abortSignal?: AbortSignal): Promise<TransactionPlanResult> {
+        async sendAndConfirm(transaction: TransactionMessage & TransactionMessageWithFeePayer | TransactionPlan, abortSignal?: AbortSignal): Promise<CompactSingleTransactionSummary[]> {
             let transactionPlan: TransactionPlan;
             if ('kind' in transaction) {
                 transactionPlan = transaction;
             } else {
                 transactionPlan = singleTransactionPlan(transaction);
             }
-            return await transactionExecutor(transactionPlan, { abortSignal });
+            const planResult = await transactionExecutor(transactionPlan, { abortSignal });
+            return summarizeTransactionPlanResult(planResult);
         }
     }
 }
@@ -211,8 +255,8 @@ const client = createSolanaClient('http://127.0.0.1:8899');
 // Example: Airdrop SOL to a new signer
 
 const signer = await generateKeyPairSigner();
-await client.airdrop(signer.address, sol(1));
-log.info('Airdropped 1 SOL to the new signer address');
+await client.airdrop(signer.address, sol(1.5));
+log.info('Airdropped 1.5 SOL to the new signer address');
 
 const { value: balance } = await client.rpc.getBalance(signer.address).send();
 log.info({ address: signer.address, balance: `${displayAmount(balance, 9)} SOL` }, 'New balance for signer account');
@@ -225,14 +269,15 @@ async function transferExample() {
         getTransferSolInstruction({
             source: signer,
             destination: destination.address,
-            amount: lamports(1_000_000n),
+            amount: sol(0.001),
         })
     )
-    const result = await client.sendAndConfirm(transaction);
-    // TODO: helpers for parsing tx plan results
-    if (result.kind === 'single' && result.status.kind === 'successful') {
-        const signature = getSignatureFromTransaction(result.status.transaction);
+    const [result] = await client.sendAndConfirm(transaction);
+    if (result.status === 'successful') {
+        const signature = result.signature;
         log.info({ signature }, 'Transfer transaction confirmed');
+    } else {
+        log.error({ result }, 'Transfer transaction failed');
     }
     await pressAnyKeyPrompt('Press any key to continue');
 }
@@ -259,9 +304,13 @@ async function createMintExample() {
             mintAuthority: signer.address,
         })
     ])
-    const result = await client.sendAndConfirm(transaction);
-    const signature = getSignatures(result)[0];
-    log.info({ signature, mintAddress: tokenMint.address }, 'Mint creation transaction confirmed');
+    const [result] = await client.sendAndConfirm(transaction);
+    if (result.status === 'successful') {
+        const signature = result.signature;
+        log.info({ signature, mintAddress: tokenMint.address }, 'Mint creation transaction confirmed');
+    } else {
+        log.error({ result }, 'Transfer transaction failed');
+    }
     await pressAnyKeyPrompt('Press any key to continue');
 }
 await createMintExample();
@@ -325,29 +374,12 @@ async function tokenAirdropExample() {
     const { value: blockhash } = await client.rpc.getLatestBlockhash({ commitment: 'confirmed' }).send();
     const transactionPlan = await client.transactionPlan({ feePayer: signer, blockhash }).instructionPlan(instructionPlan);
     const result = await client.sendAndConfirm(transactionPlan);
-    const signatures = getSignatures(result);
-    log.info({ signatures, mintAddress: tokenMint.address }, 'Token airdrop transactions confirmed for multiple recipients');
+    if (result.every(r => r.status === 'successful')) {
+        const signatures = result.map(r => r.signature);
+        log.info({ signatures, mintAddress: tokenMint.address }, 'Token airdrop transactions confirmed for multiple recipients');
+    } else {
+        log.error({ result }, 'Token airdrop failed');
+    }
     await pressAnyKeyPrompt('Press any key to quit');
 }
 await tokenAirdropExample();
-
-// TODO: helper for something like this in Kit
-function getSignatures(result: TransactionPlanResult): Signature[] {
-    const signatures: Signature[] = [];
-
-    function traverse(result: TransactionPlanResult) {
-        if (result.kind === 'single') {
-            if (result.status.kind === 'successful') {
-                const signature = getSignatureFromTransaction(result.status.transaction);
-                signatures.push(signature);
-            }
-        } else if (result.kind === 'parallel' || result.kind === 'sequential') {
-            for (const subResult of result.plans) {
-                traverse(subResult);
-            }
-        }
-    }
-
-    traverse(result);
-    return signatures;
-}
