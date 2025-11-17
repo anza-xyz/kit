@@ -362,3 +362,25 @@ export function canceledSingleTransactionPlanResult<
         status: Object.freeze({ kind: 'canceled' }),
     });
 }
+
+/**
+ * Flattens a {@link TransactionPlanResult} into an array of {@link SingleTransactionPlanResult}.
+ * @param result The transaction plan result to flatten
+ * @returns An array of single transaction plan results
+ */
+export function flattenTransactionPlanResult(result: TransactionPlanResult): SingleTransactionPlanResult[] {
+    const transactionPlanResults: SingleTransactionPlanResult[] = [];
+
+    function traverse(result: TransactionPlanResult) {
+        if (result.kind === 'single') {
+            transactionPlanResults.push(result);
+        } else {
+            for (const subResult of result.plans) {
+                traverse(subResult);
+            }
+        }
+    }
+
+    traverse(result);
+    return transactionPlanResults;
+}

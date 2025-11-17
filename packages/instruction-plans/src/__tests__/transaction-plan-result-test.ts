@@ -5,6 +5,7 @@ import { SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE, SolanaErro
 import {
     canceledSingleTransactionPlanResult,
     failedSingleTransactionPlanResult,
+    flattenTransactionPlanResult,
     nonDivisibleSequentialTransactionPlanResult,
     parallelTransactionPlanResult,
     sequentialTransactionPlanResult,
@@ -183,5 +184,38 @@ describe('nonDivisibleSequentialTransactionPlanResult', () => {
         const planB = canceledSingleTransactionPlanResult(createMessage('B'));
         const result = nonDivisibleSequentialTransactionPlanResult([planA, planB]);
         expect(result).toBeFrozenObject();
+    });
+});
+
+describe('flattenTransactionPlanResult', () => {
+    const plan1 = successfulSingleTransactionPlanResult(createMessage('A'), createTransaction('A'));
+    const plan2 = successfulSingleTransactionPlanResult(createMessage('B'), createTransaction('B'));
+    const plan3 = successfulSingleTransactionPlanResult(createMessage('C'), createTransaction('C'));
+
+    it('flattens a parallel transaction plan result', () => {
+        const result = parallelTransactionPlanResult([plan1, plan2, plan3]);
+
+        const flattened = flattenTransactionPlanResult(result);
+        expect(flattened).toEqual([plan1, plan2, plan3]);
+    });
+
+    it('flattens a sequential transaction plan result', () => {
+        const result = sequentialTransactionPlanResult([plan1, plan2, plan3]);
+
+        const flattened = flattenTransactionPlanResult(result);
+        expect(flattened).toEqual([plan1, plan2, plan3]);
+    });
+
+    it('flattens a nested transaction plan result', () => {
+        const nestedResult = sequentialTransactionPlanResult([parallelTransactionPlanResult([plan1, plan2]), plan3]);
+
+        const flattened = flattenTransactionPlanResult(nestedResult);
+        expect(flattened).toEqual([plan1, plan2, plan3]);
+    });
+
+    it('returns a single plan as-is', () => {
+        const result = plan1;
+        const flattened = flattenTransactionPlanResult(result);
+        expect(flattened).toEqual([result]);
     });
 });
