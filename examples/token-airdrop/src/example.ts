@@ -30,7 +30,7 @@ import {
     signTransactionMessageWithSigners,
 } from '@solana/kit';
 import { getCreateAccountInstruction } from '@solana-program/system';
-import { estimateAndUpdateProvisoryComputeUnitLimitFactory, estimateComputeUnitLimitFactory, getSetComputeUnitPriceInstruction, MAX_COMPUTE_UNIT_LIMIT, updateOrAppendSetComputeUnitLimitInstruction } from '@solana-program/compute-budget';
+import { estimateAndUpdateProvisoryComputeUnitLimitFactory, estimateComputeUnitLimitFactory, fillProvisorySetComputeUnitLimitInstruction, getSetComputeUnitPriceInstruction, MAX_COMPUTE_UNIT_LIMIT, updateOrAppendSetComputeUnitLimitInstruction } from '@solana-program/compute-budget';
 import { getMintSize, findAssociatedTokenPda, getCreateAssociatedTokenInstruction, getInitializeMint2Instruction, getMintToCheckedInstruction, TOKEN_PROGRAM_ADDRESS } from '@solana-program/token';
 
 const log = createLogger('Token Airdrop');
@@ -80,22 +80,15 @@ const transactionPlanner = createTransactionPlanner({
     createTransactionMessage() {
         return pipe(
             createTransactionMessage({ version: 0 }),
-            tx => (
-                setTransactionMessageFeePayer(SOURCE_ACCOUNT_SIGNER.address, tx)
+            tx => setTransactionMessageFeePayer(SOURCE_ACCOUNT_SIGNER.address, tx),
+            tx => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx),
+            tx => appendTransactionMessageInstruction(
+                getSetComputeUnitPriceInstruction({
+                    microLamports: 100n,
+                }),
+                tx
             ),
-            tx => (
-                setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx)
-            ),
-            tx => (
-                appendTransactionMessageInstruction(
-                    getSetComputeUnitPriceInstruction({
-                        microLamports: 100n,
-                    }),
-                    tx
-                )
-            ),
-            // TODO: should be fillProvisorySetComputeUnitLimitInstruction but that sets limit to 0
-            tx => updateOrAppendSetComputeUnitLimitInstruction(MAX_COMPUTE_UNIT_LIMIT, tx)
+            tx => fillProvisorySetComputeUnitLimitInstruction(tx)
         )
     },
 })
@@ -119,9 +112,13 @@ const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({
 });
 
 // SETUP: CU estimator
-// TODO: how to add a multiplier here?
 const estimateCULimit = estimateComputeUnitLimitFactory({ rpc });
-const estimateAndSetCULimit = estimateAndUpdateProvisoryComputeUnitLimitFactory(estimateCULimit);
+// TODO: should we add a number => number function param to estimateAndUpdateProvisoryComputeUnitLimitFactory?
+async function estimateWithMultiplier(...args: Parameters<typeof estimateCULimit>): Promise<number> {
+    const estimate = await estimateCULimit(...args);
+    return Math.ceil(estimate * 1.1);
+}
+const estimateAndSetCULimit = estimateAndUpdateProvisoryComputeUnitLimitFactory(estimateWithMultiplier);
 
 // SETUP: transaction executor
 const transactionExecutor = createTransactionPlanExecutor({
