@@ -12,7 +12,7 @@ import { BaseTransactionMessage } from './transaction-message';
  * This can happen when the network proceeds past the `lastValidBlockHeight` for which the blockhash
  * is considered valid, or when the network switches to a fork where that blockhash is not present.
  */
-type BlockhashLifetimeConstraint = Readonly<{
+export type BlockhashLifetimeConstraint = Readonly<{
     /**
      * A recent blockhash observed by the transaction proposer.
      *

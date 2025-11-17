@@ -33,7 +33,7 @@ export type Nonce<TNonceValue extends string = string> = Brand<TNonceValue, 'Non
  * `nonce` to have advanced. This can happen when the nonce account in which this nonce is found is
  * destroyed, or the nonce value within changes.
  */
-type NonceLifetimeConstraint<TNonceValue extends string = string> = Readonly<{
+export type NonceLifetimeConstraint<TNonceValue extends string = string> = Readonly<{
     /**
      * A value contained in the related nonce account at the time the transaction was prepared.
      *
