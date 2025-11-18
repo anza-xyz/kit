@@ -1,6 +1,6 @@
 import type { SolanaRpcApi, SolanaRpcApiDevnet, SolanaRpcApiMainnet, SolanaRpcApiTestnet } from '@solana/rpc-api';
 import type { Rpc, RpcTransport } from '@solana/rpc-spec';
-import type { ClusterUrl, DevnetUrl, MainnetUrl, TestnetUrl } from '@solana/rpc-types';
+import { type ClusterUrl, type DevnetUrl, type MainnetUrl, type TestnetUrl } from '@solana/rpc-types';
 
 /**
  * A {@link RpcTransport} that communicates with the devnet cluster.
@@ -184,3 +184,22 @@ export type SolanaRpcApiFromTransport<TTransport extends RpcTransport> = TTransp
       : TTransport extends RpcTransportMainnet
         ? SolanaRpcApiMainnet
         : SolanaRpcApi;
+
+/**
+ * Given a {@link ClusterUrl} this utility type will resolve to a union of all the methods of the
+ * Solana RPC API supported by the URL's cluster.
+ *
+ * @example
+ * ```ts
+ * function createSolanaRpcFromClusterUrl<TClusterUrl extends ClusterUrl>(
+ *     clusterUrl: TClusterUrl,
+ * ): Rpc<SolanaRpcApiFromClusterUrl<TClusterUrl>, RpcTransportFromClusterUrl<TClusterUrl>> {
+ *     /* ... *\/
+ * }
+ * const rpc = createSolanaRpcFromClusterUrl(mainnet('http://rpc.company'));
+ * rpc satisfies Rpc<SolanaRpcApiMainnet>; // OK
+ * ```
+ */
+export type SolanaRpcApiFromClusterUrl<TClusterUrl extends ClusterUrl> = SolanaRpcApiFromTransport<
+    RpcTransportFromClusterUrl<TClusterUrl>
+>;

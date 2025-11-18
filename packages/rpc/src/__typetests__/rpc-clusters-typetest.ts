@@ -1,6 +1,6 @@
 import type { SolanaRpcApi, SolanaRpcApiDevnet, SolanaRpcApiMainnet, SolanaRpcApiTestnet } from '@solana/rpc-api';
 import type { Rpc, RpcTransport } from '@solana/rpc-spec';
-import { devnet, mainnet, testnet } from '@solana/rpc-types';
+import { ClusterUrl, devnet, DevnetUrl, mainnet, MainnetUrl, testnet, TestnetUrl } from '@solana/rpc-types';
 
 import { createSolanaRpc, createSolanaRpcFromTransport } from '../rpc';
 import type {
@@ -10,6 +10,7 @@ import type {
     RpcTransportDevnet,
     RpcTransportMainnet,
     RpcTransportTestnet,
+    SolanaRpcApiFromClusterUrl,
 } from '../rpc-clusters';
 import { createDefaultRpcTransport } from '../rpc-transport';
 
@@ -173,5 +174,47 @@ const mainnetTransport = createDefaultRpcTransport({ url: mainnetUrl });
         mainnetRpc satisfies RpcDevnet<SolanaRpcApi>;
         //@ts-expect-error Should not be a testnet RPC
         mainnetRpc satisfies RpcTestnet<SolanaRpcApi>;
+    }
+}
+
+// [DESCRIBE] SolanaRpcApiFromClusterUrl
+{
+    const genericRpcApi = null as unknown as SolanaRpcApiFromClusterUrl<ClusterUrl>;
+    const devnetRpcApi = null as unknown as SolanaRpcApiFromClusterUrl<DevnetUrl>;
+    const testnetRpcApi = null as unknown as SolanaRpcApiFromClusterUrl<TestnetUrl>;
+    const mainnetRpcApi = null as unknown as SolanaRpcApiFromClusterUrl<MainnetUrl>;
+
+    // No cluster specified should be the most restricted `SolanaRpcApi`, ie Mainnet.
+    {
+        genericRpcApi satisfies SolanaRpcApiMainnet;
+        //@ts-expect-error Should not be `SolanaRpcApiDevnet`
+        genericRpcApi satisfies SolanaRpcApiDevnet;
+        //@ts-expect-error Should not be `SolanaRpcApiTestnet`
+        genericRpcApi satisfies SolanaRpcApiTestnet;
+        //@ts-expect-error Should not be `SolanaRpcApi`
+        genericRpcApi satisfies SolanaRpcApi;
+    }
+
+    // Devnet cluster should be `SolanaRpcApiDevnet`.
+    {
+        devnetRpcApi satisfies SolanaRpcApiDevnet;
+        devnetRpcApi satisfies SolanaRpcApi;
+    }
+
+    // Testnet cluster should be `SolanaRpcApiTestnet`.
+    {
+        testnetRpcApi satisfies SolanaRpcApiTestnet;
+        testnetRpcApi satisfies SolanaRpcApi;
+    }
+
+    // Mainnet cluster should be `SolanaRpcApiMainnet`.
+    {
+        mainnetRpcApi satisfies SolanaRpcApiMainnet;
+        //@ts-expect-error Should not be `SolanaRpcApiDevnet`
+        mainnetRpcApi satisfies SolanaRpcApiDevnet;
+        //@ts-expect-error Should not be `SolanaRpcApiTestnet`
+        mainnetRpcApi satisfies SolanaRpcApiTestnet;
+        //@ts-expect-error Should not be `SolanaRpcApi`
+        mainnetRpcApi satisfies SolanaRpcApi;
     }
 }
