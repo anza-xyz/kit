@@ -1,14 +1,15 @@
 import '@solana/test-matchers/toBeFrozenObject';
 
-import { Address, getAddressFromPublicKey } from '@solana/addresses';
+import { Address, getAddressFromPublicKey, getPublicKeyFromAddress } from '@solana/addresses';
 import { ReadonlyUint8Array } from '@solana/codecs-core';
 import {
     SOLANA_ERROR__CODECS__INVALID_CONSTANT,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__ADDRESSES_CANNOT_SIGN_OFFCHAIN_MESSAGE,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURE_VERIFICATION_FAILURE,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURES_MISSING,
     SolanaError,
 } from '@solana/errors';
-import { SignatureBytes, signBytes } from '@solana/keys';
+import { SignatureBytes, signBytes, verifySignature } from '@solana/keys';
 
 import { OffchainMessageEnvelope } from '../envelope';
 import { OffchainMessageBytes } from '../message';
@@ -17,12 +18,14 @@ import {
     isFullySignedOffchainMessageEnvelope,
     partiallySignOffchainMessageEnvelope,
     signOffchainMessageEnvelope,
+    verifyOffchainMessageEnvelope,
 } from '../signatures';
 
 jest.mock('@solana/addresses', () => ({
     ...jest.requireActual('@solana/addresses'),
     __esModule: true,
     getAddressFromPublicKey: jest.fn(),
+    getPublicKeyFromAddress: jest.fn(),
 }));
 jest.mock('@solana/keys');
 
@@ -620,5 +623,121 @@ describe('assertIsFullySignedOffchainMessageEnvelope', () => {
             signatures,
         };
         expect(() => assertIsFullySignedOffchainMessageEnvelope(offchainMessageEnvelope)).not.toThrow();
+    });
+});
+
+describe('verifyOffchainMessageEnvelope', () => {
+    const mockPublicKeyAddressA =
+        'signerAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' as Address<'signerAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'>;
+    const mockPublicKeyAddressB =
+        'signerBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB' as Address<'signerBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'>;
+    const mockPublicKeyAddressC =
+        'signerCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC' as Address<'signerCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC'>;
+    const mockKeyPairA = { privateKey: {} as CryptoKey, publicKey: {} as CryptoKey } as CryptoKeyPair;
+    const mockKeyPairB = { privateKey: {} as CryptoKey, publicKey: {} as CryptoKey } as CryptoKeyPair;
+    const mockKeyPairC = { privateKey: {} as CryptoKey, publicKey: {} as CryptoKey } as CryptoKeyPair;
+    const mockValidSignatureA = new Uint8Array(64) as SignatureBytes;
+    const mockValidSignatureB = new Uint8Array(64) as SignatureBytes;
+    const mockValidSignatureC = new Uint8Array(64) as SignatureBytes;
+    const mockInvalidSignature = new Uint8Array(64) as SignatureBytes;
+    beforeEach(() => {
+        (getPublicKeyFromAddress as jest.Mock).mockImplementation(address => {
+            switch (address) {
+                case mockPublicKeyAddressA:
+                    return mockKeyPairA.publicKey;
+                case mockPublicKeyAddressB:
+                    return mockKeyPairB.publicKey;
+                case mockPublicKeyAddressC:
+                    return mockKeyPairC.publicKey;
+                default:
+                    return { privateKey: {} as CryptoKey, publicKey: {} as CryptoKey } as CryptoKeyPair;
+            }
+        });
+        (verifySignature as jest.Mock).mockImplementation((publicKey, signature) => {
+            switch (signature) {
+                case mockValidSignatureA:
+                    return publicKey === mockKeyPairA.publicKey;
+                case mockValidSignatureB:
+                    return publicKey === mockKeyPairB.publicKey;
+                case mockValidSignatureC:
+                    return publicKey === mockKeyPairC.publicKey;
+                default:
+                    return false;
+            }
+        });
+    });
+    describe.each([
+        [
+            'v0',
+            // prettier-ignore
+            new Uint8Array([
+                // Signing domain
+                ...OFFCHAIN_MESSAGE_SIGNING_DOMAIN_BYTES,
+                // Version
+                0x00,
+                // Application domain
+                ...APPLICATION_DOMAIN_BYTES,
+                // Message format (Restricted ASCII, 1232-byte-max)
+                0x00,
+                // Signer count
+                0x03,
+                    // Signer addresses
+                    ...SIGNER_A_BYTES,
+                    ...SIGNER_B_BYTES,
+                    ...SIGNER_C_BYTES,
+                // Message length (11 characters)
+                0x0b, 0x00,
+                    // Message (Hello world)
+                    0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x77, 0x6f, 0x72, 0x6c, 0x64,
+            ]) as ReadonlyUint8Array as OffchainMessageBytes,
+        ],
+        [
+            'v1',
+            // prettier-ignore
+            new Uint8Array([
+                // Signing domain
+                ...OFFCHAIN_MESSAGE_SIGNING_DOMAIN_BYTES,
+                // Version
+                0x01,
+                // Signer count
+                0x03,
+                    // Signer addresses
+                    ...SIGNER_A_BYTES,
+                    ...SIGNER_B_BYTES,
+                    ...SIGNER_C_BYTES,
+                // Message (Hello world)
+                0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x77, 0x6f, 0x72, 0x6c, 0x64,
+            ]) as ReadonlyUint8Array as OffchainMessageBytes,
+        ],
+    ])('given a %s message', (_, content) => {
+        it('returns when a valid signature is supplied for every required signatory', async () => {
+            expect.assertions(1);
+            const valid = verifyOffchainMessageEnvelope({
+                content,
+                signatures: {
+                    [mockPublicKeyAddressA]: mockValidSignatureA,
+                    [mockPublicKeyAddressB]: mockValidSignatureB,
+                    [mockPublicKeyAddressC]: mockValidSignatureC,
+                },
+            });
+            await expect(valid).resolves.toBeUndefined();
+        });
+        it('throws when when a signature is invalid or missing', async () => {
+            expect.assertions(1);
+            const valid = verifyOffchainMessageEnvelope({
+                content,
+                signatures: {
+                    [mockPublicKeyAddressA]: mockInvalidSignature,
+                    // `mockPublicKeyAddressB` missing from the signatures map altogether.
+                    [mockPublicKeyAddressC]: null,
+                },
+            });
+            await expect(valid).rejects.toThrow(
+                new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURE_VERIFICATION_FAILURE, {
+                    signatoriesWithInvalidSignatures: [mockPublicKeyAddressA],
+                    signatoriesWithMissingSignatures: [mockPublicKeyAddressB, mockPublicKeyAddressC],
+                }),
+            );
+        });
     });
 });

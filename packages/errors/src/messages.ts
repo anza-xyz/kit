@@ -170,6 +170,7 @@ import {
     SOLANA_ERROR__OFFCHAIN_MESSAGE__RESTRICTED_ASCII_BODY_CHARACTER_OUT_OF_RANGE,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATORIES_MUST_BE_SORTED,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATORIES_MUST_BE_UNIQUE,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURE_VERIFICATION_FAILURE,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURES_MISSING,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__UNEXPECTED_VERSION,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__VERSION_NUMBER_NOT_SUPPORTED,
@@ -535,6 +536,10 @@ export const SolanaErrorMessages: Readonly<{
         'An address must be listed no more than once among the signatories of an offchain message',
     [SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURES_MISSING]:
         'Offchain message is missing signatures for addresses: $addresses.',
+    [SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURE_VERIFICATION_FAILURE]:
+        'Offchain message signature verification failed. Signature mismatch for required ' +
+        'signatories [$signatoriesWithInvalidSignatures]. Missing signatures for signatories ' +
+        '[$signatoriesWithMissingSignatures]',
     [SOLANA_ERROR__OFFCHAIN_MESSAGE__RESTRICTED_ASCII_BODY_CHARACTER_OUT_OF_RANGE]:
         'The message body provided contains characters whose codes fall outside the allowed ' +
         'range. In order to ensure clear-signing compatiblity with hardware wallets, the message ' +

@@ -1,11 +1,12 @@
-import { Address, getAddressFromPublicKey } from '@solana/addresses';
+import { Address, getAddressFromPublicKey, getPublicKeyFromAddress } from '@solana/addresses';
 import { ReadonlyUint8Array } from '@solana/codecs-core';
 import {
     SOLANA_ERROR__OFFCHAIN_MESSAGE__ADDRESSES_CANNOT_SIGN_OFFCHAIN_MESSAGE,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURE_VERIFICATION_FAILURE,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURES_MISSING,
     SolanaError,
 } from '@solana/errors';
-import { SignatureBytes, signBytes } from '@solana/keys';
+import { SignatureBytes, signBytes, verifySignature } from '@solana/keys';
 import { NominalType } from '@solana/nominal-types';
 
 import { decodeRequiredSignatoryAddresses } from './codecs/preamble-common';
@@ -204,6 +205,63 @@ export function assertIsFullySignedOffchainMessageEnvelope<TEnvelope extends Off
         throw new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURES_MISSING, {
             addresses: missingSigs,
         });
+    }
+}
+
+/**
+ * Asserts that there are signatures present for all of an offchain message's required signatories,
+ * and that those signatures are valid given the message.
+ *
+ * @example
+ * ```ts
+ * import { isSolanaError, SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURE_VERIFICATION_FAILURE } from '@solana/errors';
+ * import { verifyOffchainMessageEnvelope } from '@solana/offchain-messages';
+ *
+ * try {
+ *     await verifyOffchainMessageEnvelope(offchainMessageEnvelope);
+ *     // At this point the message is valid and signed by all of the required signatories.
+ * } catch (e) {
+ *     if (isSolanaError(e, SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURE_VERIFICATION_FAILURE)) {
+ *         if (e.context.signatoriesWithMissingSignatures.length) {
+ *             console.error(
+ *                 'Missing signatures for the following addresses',
+ *                 e.context.signatoriesWithMissingSignatures,
+ *             );
+ *         }
+ *         if (e.context.signatoriesWithInvalidSignatures.length) {
+ *             console.error(
+ *                 'Signatures for the following addresses are invalid',
+ *                 e.context.signatoriesWithInvalidSignatures,
+ *             );
+ *         }
+ *     }
+ *     throw e;
+ * }
+ */
+export async function verifyOffchainMessageEnvelope(offchainMessageEnvelope: OffchainMessageEnvelope): Promise<void> {
+    let errorContext;
+    const requiredSignatories = decodeRequiredSignatoryAddresses(offchainMessageEnvelope.content);
+    await Promise.all(
+        requiredSignatories.map(async address => {
+            const signature = offchainMessageEnvelope.signatures[address];
+            if (signature == null) {
+                errorContext ||= {};
+                errorContext.signatoriesWithMissingSignatures ||= [];
+                errorContext.signatoriesWithMissingSignatures.push(address);
+            } else {
+                const publicKey = await getPublicKeyFromAddress(address);
+                if (await verifySignature(publicKey, signature, offchainMessageEnvelope.content)) {
+                    return true;
+                } else {
+                    errorContext ||= {};
+                    errorContext.signatoriesWithInvalidSignatures ||= [];
+                    errorContext.signatoriesWithInvalidSignatures.push(address);
+                }
+            }
+        }),
+    );
+    if (errorContext) {
+        throw new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURE_VERIFICATION_FAILURE, errorContext);
     }
 }
 

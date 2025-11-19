@@ -143,6 +143,7 @@ import {
     SOLANA_ERROR__OFFCHAIN_MESSAGE__MESSAGE_FORMAT_MISMATCH,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__MESSAGE_LENGTH_MISMATCH,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__NUM_SIGNATURES_MISMATCH,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURE_VERIFICATION_FAILURE,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURES_MISSING,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__UNEXPECTED_VERSION,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__VERSION_NUMBER_NOT_SUPPORTED,
@@ -582,6 +583,10 @@ export type SolanaErrorContext = ReadonlyContextValue<
             };
             [SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURES_MISSING]: {
                 addresses: readonly string[];
+            };
+            [SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURE_VERIFICATION_FAILURE]: {
+                signatoriesWithInvalidSignatures: readonly string[];
+                signatoriesWithMissingSignatures: readonly string[];
             };
             [SOLANA_ERROR__OFFCHAIN_MESSAGE__UNEXPECTED_VERSION]: {
                 actualVersion: number;
