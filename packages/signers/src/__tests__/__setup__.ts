@@ -5,6 +5,8 @@ import {
     OffchainMessageApplicationDomain,
     OffchainMessageContentFormat,
     OffchainMessageContentRestrictedAsciiOf1232BytesMax,
+    OffchainMessageSignatory,
+    OffchainMessageWithRequiredSignatories,
 } from '@solana/offchain-messages';
 import type { Blockhash } from '@solana/rpc-types';
 import {
@@ -22,7 +24,7 @@ import {
 import { AccountSignerMeta, InstructionWithSigners, TransactionMessageWithSigners } from '../account-signer-meta';
 import { MessageModifyingSigner } from '../message-modifying-signer';
 import { MessagePartialSigner } from '../message-partial-signer';
-import { OffchainMessageSignatorySigner, OffchainMessageWithSigners } from '../offchain-message-signer';
+import { OffchainMessageSignatorySigner } from '../offchain-message-signer';
 import { TransactionModifyingSigner } from '../transaction-modifying-signer';
 import { TransactionPartialSigner } from '../transaction-partial-signer';
 import { TransactionSendingSigner } from '../transaction-sending-signer';
@@ -45,7 +47,8 @@ export function createMockInstructionWithSigners(signers: TransactionSigner[]): 
 
 export function createMockOffchainMessageWithSigners(
     signers: OffchainMessageSignatorySigner[],
-): OffchainMessage & OffchainMessageWithSigners {
+): OffchainMessageWithRequiredSignatories<OffchainMessageSignatory | OffchainMessageSignatorySigner> &
+    Omit<OffchainMessage, 'requiredSignatories'> {
     return Object.freeze({
         applicationDomain: APPLICATION_DOMAIN_BYTES as unknown as OffchainMessageApplicationDomain,
         content: {

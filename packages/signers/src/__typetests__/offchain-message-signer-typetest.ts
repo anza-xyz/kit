@@ -59,4 +59,16 @@ import { TransactionSigner } from '../transaction-signer';
             requiredSignatories: [{ address: 'non-signer' as Address }],
         });
     }
+
+    // It accepts a mix of signers and non signers among the `requiredSignatories`
+    {
+        getSignersFromOffchainMessage({
+            requiredSignatories: [
+                { address: 'non-signer' as Address },
+                null as unknown as MessageModifyingSigner,
+                null as unknown as MessagePartialSigner,
+                null as unknown as MessageSigner,
+            ],
+        });
+    }
 }

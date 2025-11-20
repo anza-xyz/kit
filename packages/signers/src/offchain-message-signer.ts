@@ -6,38 +6,7 @@ import { isMessageSigner, MessageSigner } from './message-signer';
 /**
  * Represents a {@link Signer} that is required to sign an offchain message for it to be valid.
  */
-export type OffchainMessageSignatorySigner<
-    TAddress extends string = string,
-    TSigner extends MessageSigner<TAddress> = MessageSigner<TAddress>,
-> = TSigner;
-
-/**
- * An {@link OffchainMessage} type extension that allows {@link MessageSigner | MessageSigners} to
- * be used as required signatories.
- * *
- * @typeParam TAddress - Supply a string literal to define a signatory having a particular address.
- * @typeParam TSigner - Optionally provide a narrower type for {@link MessageSigner | MessageSigners}.
- *
- * @example
- * ```ts
- * import { OffchainMessage } from '@solana/offchain-messages';
- * import { generateKeyPairSigner, InstructionWithSigners, OffchainMessageWithSigners } from '@solana/signers';
- *
- * const signer = await generateKeyPairSigner();
- * const firstSignatory: OffchainMessageSignatory = { ... };
- * const secondSignatory: OffchainMessageSignatorySigner = { ... };
- * const offchainMessage: OffchainMessage & OffchainMessageWithSigners = {
- *     /* ... *\/
- *     requiredSignatories: [firstSignatory, secondSignatory],
- * }
- * ```
- */
-export interface OffchainMessageWithSigners<
-    TAddress extends string = string,
-    TSigner extends MessageSigner<TAddress> = MessageSigner<TAddress>,
-> {
-    requiredSignatories: readonly OffchainMessageSignatorySigner<TAddress, TSigner>[];
-}
+export type OffchainMessageSignatorySigner<TAddress extends string = string> = MessageSigner<TAddress>;
 
 /**
  * Extracts and deduplicates all {@link MessageSigner | MessageSigners} stored inside a given

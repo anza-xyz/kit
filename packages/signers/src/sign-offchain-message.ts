@@ -4,6 +4,8 @@ import {
     FullySignedOffchainMessageEnvelope,
     OffchainMessage,
     OffchainMessageEnvelope,
+    OffchainMessageSignatory,
+    OffchainMessageWithRequiredSignatories,
 } from '@solana/offchain-messages';
 
 import {
@@ -13,7 +15,7 @@ import {
 } from './message-modifying-signer';
 import { isMessagePartialSigner, MessagePartialSigner, MessagePartialSignerConfig } from './message-partial-signer';
 import { MessageSigner } from './message-signer';
-import { getSignersFromOffchainMessage, OffchainMessageWithSigners } from './offchain-message-signer';
+import { getSignersFromOffchainMessage, OffchainMessageSignatorySigner } from './offchain-message-signer';
 import { SignableMessage } from './signable-message';
 
 /**
@@ -43,7 +45,8 @@ import { SignableMessage } from './signable-message';
  * @see {@link signOffchainMessageWithSigners}
  */
 export async function partiallySignOffchainMessageWithSigners(
-    offchainMessage: OffchainMessage & OffchainMessageWithSigners,
+    offchainMessage: OffchainMessageWithRequiredSignatories<OffchainMessageSignatory | OffchainMessageSignatorySigner> &
+        Omit<OffchainMessage, 'requiredSignatories'>,
     config?: MessagePartialSignerConfig,
 ): Promise<OffchainMessageEnvelope> {
     const { partialSigners, modifyingSigners } = categorizeMessageSigners(
@@ -76,7 +79,8 @@ export async function partiallySignOffchainMessageWithSigners(
  * @see {@link partiallySignOffchainMessageWithSigners}
  */
 export async function signOffchainMessageWithSigners(
-    offchainMessage: OffchainMessage & OffchainMessageWithSigners,
+    offchainMessage: OffchainMessageWithRequiredSignatories<OffchainMessageSignatory | OffchainMessageSignatorySigner> &
+        Omit<OffchainMessage, 'requiredSignatories'>,
     config?: MessagePartialSignerConfig,
 ): Promise<FullySignedOffchainMessageEnvelope & OffchainMessageEnvelope> {
     const signedOffchainMessageEnvelope = await partiallySignOffchainMessageWithSigners(offchainMessage, config);
@@ -129,7 +133,8 @@ function identifyMessageModifyingSigners(
  * {@link MessagePartialSigner | MessagePartialSigners} in parallel.
  */
 async function signModifyingAndPartialMessageSigners(
-    offchainMessage: OffchainMessage,
+    offchainMessage: OffchainMessageWithRequiredSignatories<OffchainMessageSignatory | OffchainMessageSignatorySigner> &
+        Omit<OffchainMessage, 'requiredSignatories'>,
     modifyingSigners: readonly MessageModifyingSigner[] = [],
     partialSigners: readonly MessagePartialSigner[] = [],
     config?: MessageModifyingSignerConfig,
