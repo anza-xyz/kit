@@ -15,3 +15,9 @@ updates:
       - 'automerge'
     ignore:
       - dependency-name: '@radix-ui/react-dropdown-menu'
+    groups:
+      eslint:
+        patterns:
+          - '@eslint/*'
+          - '@typescript-eslint/*'
+          - 'typescript'
