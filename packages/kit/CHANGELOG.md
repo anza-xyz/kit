@@ -1,5 +1,39 @@
 # @solana/kit
 
+## 5.1.0
+
+### Minor Changes
+
+- [#880](https://github.com/anza-xyz/kit/pull/880) [`becf5f6`](https://github.com/anza-xyz/kit/commit/becf5f63f1b97d43109b2488c7cd0806ce6329f4) Thanks [@steveluscher](https://github.com/steveluscher)! - Added codecs for encoding and decoding Solana Offchain Messages (see https://github.com/solana-foundation/SRFCs/discussions/3)
+
+- [#984](https://github.com/anza-xyz/kit/pull/984) [`32214f5`](https://github.com/anza-xyz/kit/commit/32214f57cfb79fb2566e773acec71635bac641df) Thanks [@steveluscher](https://github.com/steveluscher)! - Added the capability to sign Solana Offchain Messages using a `CryptoKey`
+
+### Patch Changes
+
+- [#999](https://github.com/anza-xyz/kit/pull/999) [`d7f5a0c`](https://github.com/anza-xyz/kit/commit/d7f5a0c046f0a2f2836554fa671364de0b512e97) Thanks [@tmm](https://github.com/tmm)! - Some npm packages are needed for specific runtimes only (eg. React Native, Node). To prevent package managers from unconditionally installing these packages when they have `auto-install-peers` enabled, we are marking them as optional in `peerDependenciesMeta`. When running in React Native, be sure to explicitly install `fastestsmallesttextencoderdecoder`. When running in Node, be sure to explicitly install `ws`. When using `@solana/react`, we will presume that you have already installed `react`.
+
+- Updated dependencies [[`becf5f6`](https://github.com/anza-xyz/kit/commit/becf5f63f1b97d43109b2488c7cd0806ce6329f4), [`18e7e2c`](https://github.com/anza-xyz/kit/commit/18e7e2c9d9013be6223932398f40cbc276c4a0e9), [`32214f5`](https://github.com/anza-xyz/kit/commit/32214f57cfb79fb2566e773acec71635bac641df), [`eb49ed7`](https://github.com/anza-xyz/kit/commit/eb49ed7dd45f2a5a0098b3de5ef482a813f8ad47), [`81a0eec`](https://github.com/anza-xyz/kit/commit/81a0eec57d196d4ce6b86897640dcab85c5deafd)]:
+    - @solana/offchain-messages@5.1.0
+    - @solana/errors@5.1.0
+    - @solana/transaction-confirmation@5.1.0
+    - @solana/rpc@5.1.0
+    - @solana/transaction-messages@5.1.0
+    - @solana/signers@5.1.0
+    - @solana/accounts@5.1.0
+    - @solana/addresses@5.1.0
+    - @solana/instruction-plans@5.1.0
+    - @solana/instructions@5.1.0
+    - @solana/keys@5.1.0
+    - @solana/programs@5.1.0
+    - @solana/rpc-subscriptions@5.1.0
+    - @solana/rpc-types@5.1.0
+    - @solana/sysvars@5.1.0
+    - @solana/transactions@5.1.0
+    - @solana/codecs@5.1.0
+    - @solana/rpc-parsed-types@5.1.0
+    - @solana/functional@5.1.0
+    - @solana/rpc-spec-types@5.1.0
+
 ## 5.0.0
 
 ### Patch Changes

@@ -1,5 +1,18 @@
 # @solana/rpc-subscriptions-api
 
+## 5.1.0
+
+### Patch Changes
+
+- Updated dependencies [[`81a0eec`](https://github.com/anza-xyz/kit/commit/81a0eec57d196d4ce6b86897640dcab85c5deafd)]:
+    - @solana/transaction-messages@5.1.0
+    - @solana/addresses@5.1.0
+    - @solana/keys@5.1.0
+    - @solana/rpc-subscriptions-spec@5.1.0
+    - @solana/rpc-transformers@5.1.0
+    - @solana/rpc-types@5.1.0
+    - @solana/transactions@5.1.0
+
 ## 5.0.0
 
 ### Patch Changes
