@@ -1,5 +1,15 @@
 # @solana/rpc-subscriptions-spec
 
+## 5.1.0
+
+### Patch Changes
+
+- Updated dependencies [[`becf5f6`](https://github.com/anza-xyz/kit/commit/becf5f63f1b97d43109b2488c7cd0806ce6329f4), [`32214f5`](https://github.com/anza-xyz/kit/commit/32214f57cfb79fb2566e773acec71635bac641df)]:
+    - @solana/errors@5.1.0
+    - @solana/subscribable@5.1.0
+    - @solana/promises@5.1.0
+    - @solana/rpc-spec-types@5.1.0
+
 ## 5.0.0
 
 ### Patch Changes

@@ -1,5 +1,18 @@
 # @solana/react
 
+## 5.1.0
+
+### Patch Changes
+
+- Updated dependencies [[`becf5f6`](https://github.com/anza-xyz/kit/commit/becf5f63f1b97d43109b2488c7cd0806ce6329f4), [`32214f5`](https://github.com/anza-xyz/kit/commit/32214f57cfb79fb2566e773acec71635bac641df), [`81a0eec`](https://github.com/anza-xyz/kit/commit/81a0eec57d196d4ce6b86897640dcab85c5deafd)]:
+    - @solana/errors@5.1.0
+    - @solana/transaction-messages@5.1.0
+    - @solana/signers@5.1.0
+    - @solana/addresses@5.1.0
+    - @solana/keys@5.1.0
+    - @solana/transactions@5.1.0
+    - @solana/promises@5.1.0
+
 ## 5.0.0
 
 ### Patch Changes
