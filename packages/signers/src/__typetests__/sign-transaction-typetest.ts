@@ -2,6 +2,7 @@
 import { SignatureBytes } from '@solana/keys';
 import {
     BaseTransactionMessage,
+    TransactionMessage,
     TransactionMessageWithBlockhashLifetime,
     TransactionMessageWithDurableNonceLifetime,
     TransactionMessageWithFeePayer,
@@ -11,6 +12,7 @@ import {
 import {
     FullySignedTransaction,
     Transaction,
+    TransactionWithBlockhashLifetime,
     TransactionWithinSizeLimit,
     TransactionWithLifetime,
 } from '@solana/transactions';
@@ -22,6 +24,13 @@ import {
     signTransactionMessageWithSigners,
 } from '../sign-transaction';
 import { TransactionMessageWithSingleSendingSigner } from '../transaction-with-single-sending-signer';
+
+{
+    function convert(t: TransactionMessage & TransactionMessageWithBlockhashLifetime): Transaction & TransactionWithBlockhashLifetime;
+    function convert(t: TransactionMessage): Transaction {
+        return t as unknown as Transaction;
+    }
+}
 
 {
     // [partiallySignTransactionMessageWithSigners]: returns a transaction with a lifetime when the input message has a blockhash lifetime

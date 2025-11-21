@@ -1,8 +1,10 @@
-import { address } from '@solana/addresses';
+import { Address, address } from '@solana/addresses';
 import { AccountRole } from '@solana/instructions';
 
-import { AccountSignerMeta } from '../account-signer-meta';
+import { AccountSignerMeta, TransactionMessageWithSigners } from '../account-signer-meta';
 import { TransactionSigner } from '../transaction-signer';
+import { TransactionModifyingSigner } from '../transaction-modifying-signer';
+import { TransactionPartialSigner } from '../transaction-partial-signer';
 
 {
     // [AccountSignerMeta]: It adds a transaction signer to a valid account meta.
@@ -31,4 +33,12 @@ import { TransactionSigner } from '../transaction-signer';
         role: AccountRole.READONLY,
         signer: {} as TransactionSigner,
     }) satisfies AccountSignerMeta;
+}
+
+{
+    const m = {
+        feePayer: null as unknown as TransactionModifyingSigner
+    }
+
+    m satisfies TransactionMessageWithSigners<Address, TransactionPartialSigner>;
 }
