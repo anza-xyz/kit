@@ -1,6 +1,8 @@
 import { SolanaError } from '@solana/errors';
 import { BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
-import { Transaction } from '@solana/transactions';
+import { getSignatureFromTransaction, Transaction } from '@solana/transactions';
+
+import { Signature } from '../../keys/dist/types';
 
 /**
  * The result of executing a transaction plan.
@@ -361,4 +363,52 @@ export function canceledSingleTransactionPlanResult<
         message: transactionMessage,
         status: Object.freeze({ kind: 'canceled' }),
     });
+}
+
+/**
+ * A compact summary of a {@link SingleTransactionPlanResult}.
+ */
+export type CompactSingleTransactionSummary<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+> =
+    | Readonly<{
+          context?: TContext;
+          signature: Signature;
+          status: 'successful';
+      }>
+    | Readonly<{
+          error: SolanaError;
+          status: 'failed';
+      }>
+    | Readonly<{
+          status: 'canceled';
+      }>;
+
+/**
+ * Summarizes a {@link TransactionPlanResult} into a flat array of compact single transaction summaries.
+ * @param result The transaction plan result to summarize
+ * @returns An array of compact single transaction summaries
+ */
+export function summarizeTransactionPlanResult(result: TransactionPlanResult): CompactSingleTransactionSummary[] {
+    const transactionResults: CompactSingleTransactionSummary[] = [];
+
+    function traverse(result: TransactionPlanResult) {
+        if (result.kind === 'single') {
+            if (result.status.kind === 'successful') {
+                const signature = getSignatureFromTransaction(result.status.transaction);
+                transactionResults.push({ context: result.status.context, signature, status: 'successful' });
+            } else if (result.status.kind === 'failed') {
+                transactionResults.push({ error: result.status.error, status: 'failed' });
+            } else if (result.status.kind === 'canceled') {
+                transactionResults.push({ status: 'canceled' });
+            }
+        } else {
+            for (const subResult of result.plans) {
+                traverse(subResult);
+            }
+        }
+    }
+
+    traverse(result);
+    return transactionResults;
 }

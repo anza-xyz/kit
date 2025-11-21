@@ -1,6 +1,7 @@
 import '@solana/test-matchers/toBeFrozenObject';
 
 import { SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE, SolanaError } from '@solana/errors';
+import { Signature } from '@solana/keys';
 
 import {
     canceledSingleTransactionPlanResult,
@@ -9,8 +10,9 @@ import {
     parallelTransactionPlanResult,
     sequentialTransactionPlanResult,
     successfulSingleTransactionPlanResult,
+    summarizeTransactionPlanResult,
 } from '../transaction-plan-result';
-import { createMessage, createTransaction } from './__setup__';
+import { createMessage, createTransaction, createTransactionWithSignature } from './__setup__';
 
 describe('successfulSingleTransactionPlanResult', () => {
     it('creates SingleTransactionPlanResult objects with successful status', () => {
@@ -183,5 +185,198 @@ describe('nonDivisibleSequentialTransactionPlanResult', () => {
         const planB = canceledSingleTransactionPlanResult(createMessage('B'));
         const result = nonDivisibleSequentialTransactionPlanResult([planA, planB]);
         expect(result).toBeFrozenObject();
+    });
+});
+
+describe('summarizeTransactionPlanResult', () => {
+    it('produces a summary for a successful single transaction', () => {
+        const signature = 'abc' as Signature;
+        const context = { foo: 'bar' };
+        const result = successfulSingleTransactionPlanResult(
+            createMessage('A'),
+            createTransactionWithSignature(signature),
+            context,
+        );
+        const summary = summarizeTransactionPlanResult(result);
+        expect(summary).toEqual([
+            {
+                context,
+                signature,
+                status: 'successful',
+            },
+        ]);
+    });
+
+    it('produces a summary for a failed single transaction', () => {
+        const error = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
+        const result = failedSingleTransactionPlanResult(createMessage('A'), error);
+        const summary = summarizeTransactionPlanResult(result);
+        expect(summary).toEqual([
+            {
+                error,
+                status: 'failed',
+            },
+        ]);
+    });
+
+    it('produces a summary for a canceled single transaction', () => {
+        const result = canceledSingleTransactionPlanResult(createMessage('A'));
+        const summary = summarizeTransactionPlanResult(result);
+        expect(summary).toEqual([
+            {
+                status: 'canceled',
+            },
+        ]);
+    });
+
+    it('produces a summary for a parallel transaction plan with multiple successful transactions', () => {
+        const signatureA = 'sigA' as Signature;
+        const signatureB = 'sigB' as Signature;
+        const signatureC = 'sigC' as Signature;
+
+        const result = parallelTransactionPlanResult([
+            successfulSingleTransactionPlanResult(createMessage('A'), createTransactionWithSignature(signatureA)),
+            successfulSingleTransactionPlanResult(createMessage('B'), createTransactionWithSignature(signatureB)),
+            successfulSingleTransactionPlanResult(createMessage('C'), createTransactionWithSignature(signatureC)),
+        ]);
+        const summary = summarizeTransactionPlanResult(result);
+        expect(summary).toEqual([
+            {
+                context: {},
+                signature: signatureA,
+                status: 'successful',
+            },
+            {
+                context: {},
+                signature: signatureB,
+                status: 'successful',
+            },
+            {
+                context: {},
+                signature: signatureC,
+                status: 'successful',
+            },
+        ]);
+    });
+
+    it('produces a summary for a parallel transaction plan with mixed results', () => {
+        const signatureA = 'sigA' as Signature;
+        const errorB = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
+
+        const result = parallelTransactionPlanResult([
+            successfulSingleTransactionPlanResult(createMessage('A'), createTransactionWithSignature(signatureA)),
+            failedSingleTransactionPlanResult(createMessage('B'), errorB),
+            canceledSingleTransactionPlanResult(createMessage('C')),
+        ]);
+        const summary = summarizeTransactionPlanResult(result);
+        expect(summary).toEqual([
+            {
+                context: {},
+                signature: signatureA,
+                status: 'successful',
+            },
+            {
+                error: errorB,
+                status: 'failed',
+            },
+            {
+                status: 'canceled',
+            },
+        ]);
+    });
+
+    it('produces a summary for a sequential transaction plan with multiple successful transactions', () => {
+        const signatureA = 'sigA' as Signature;
+        const signatureB = 'sigB' as Signature;
+        const signatureC = 'sigC' as Signature;
+
+        const result = sequentialTransactionPlanResult([
+            successfulSingleTransactionPlanResult(createMessage('A'), createTransactionWithSignature(signatureA)),
+            successfulSingleTransactionPlanResult(createMessage('B'), createTransactionWithSignature(signatureB)),
+            successfulSingleTransactionPlanResult(createMessage('C'), createTransactionWithSignature(signatureC)),
+        ]);
+        const summary = summarizeTransactionPlanResult(result);
+        expect(summary).toEqual([
+            {
+                context: {},
+                signature: signatureA,
+                status: 'successful',
+            },
+            {
+                context: {},
+                signature: signatureB,
+                status: 'successful',
+            },
+            {
+                context: {},
+                signature: signatureC,
+                status: 'successful',
+            },
+        ]);
+    });
+
+    it('produces a summary for a sequential transaction plan with mixed results', () => {
+        const signatureA = 'sigA' as Signature;
+        const errorB = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
+
+        const result = sequentialTransactionPlanResult([
+            successfulSingleTransactionPlanResult(createMessage('A'), createTransactionWithSignature(signatureA)),
+            failedSingleTransactionPlanResult(createMessage('B'), errorB),
+            canceledSingleTransactionPlanResult(createMessage('C')),
+        ]);
+        const summary = summarizeTransactionPlanResult(result);
+        expect(summary).toEqual([
+            {
+                context: {},
+                signature: signatureA,
+                status: 'successful',
+            },
+            {
+                error: errorB,
+                status: 'failed',
+            },
+            {
+                status: 'canceled',
+            },
+        ]);
+    });
+
+    it('produces a flat summary for a nested transaction plan', () => {
+        const signatureA = 'sigA' as Signature;
+        const signatureB = 'sigB' as Signature;
+        const signatureC = 'sigC' as Signature;
+        const signatureD = 'sigD' as Signature;
+
+        const result = sequentialTransactionPlanResult([
+            successfulSingleTransactionPlanResult(createMessage('A'), createTransactionWithSignature(signatureA)),
+            parallelTransactionPlanResult([
+                successfulSingleTransactionPlanResult(createMessage('B'), createTransactionWithSignature(signatureB)),
+                successfulSingleTransactionPlanResult(createMessage('C'), createTransactionWithSignature(signatureC)),
+            ]),
+            successfulSingleTransactionPlanResult(createMessage('D'), createTransactionWithSignature(signatureD)),
+        ]);
+        const summary = summarizeTransactionPlanResult(result);
+        expect(summary).toEqual([
+            {
+                context: {},
+                signature: signatureA,
+                status: 'successful',
+            },
+            {
+                context: {},
+                signature: signatureB,
+                status: 'successful',
+            },
+            {
+                context: {},
+                signature: signatureC,
+                status: 'successful',
+            },
+            {
+                context: {},
+                signature: signatureD,
+                status: 'successful',
+            },
+        ]);
     });
 });
