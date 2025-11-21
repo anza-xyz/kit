@@ -1,11 +1,13 @@
 import { SOLANA_ERROR__SIGNER__TRANSACTION_SENDING_SIGNER_MISSING, SolanaError } from '@solana/errors';
 import { SignatureBytes } from '@solana/keys';
-import { BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
+import { BaseTransactionMessage, TransactionMessageWithBlockhashLifetime, TransactionMessageWithDurableNonceLifetime, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
 import {
     assertIsFullySignedTransaction,
     compileTransaction,
     SendableTransaction,
     Transaction,
+    TransactionWithBlockhashLifetime,
+    TransactionWithDurableNonceLifetime,
     TransactionWithinSizeLimit,
     TransactionWithLifetime,
 } from '@solana/transactions';
@@ -79,6 +81,11 @@ export async function partiallySignTransactionMessageWithSigners(
     );
 }
 
+type NonModifyingSigner<TAddress extends string = string> = Exclude<
+    TransactionSigner<TAddress>,
+    TransactionModifyingSigner<TAddress>
+>;
+
 /**
  * Extracts all {@link TransactionSigner | TransactionSigners} inside the provided
  * transaction message and uses them to return a signed transaction before asserting
@@ -103,6 +110,14 @@ export async function partiallySignTransactionMessageWithSigners(
  * @see {@link partiallySignTransactionMessageWithSigners}
  * @see {@link signAndSendTransactionMessageWithSigners}
  */
+export async function signTransactionMessageWithSigners<TAddress extends string = string, TSigner extends NonModifyingSigner<TAddress> = NonModifyingSigner<TAddress>>(
+    transactionMessage: BaseTransactionMessage & TransactionMessageWithBlockhashLifetime & TransactionMessageWithFeePayer & TransactionMessageWithSigners<TAddress, TSigner>,
+    config?: TransactionPartialSignerConfig,
+): Promise<SendableTransaction & Transaction & TransactionWithBlockhashLifetime>;
+export async function signTransactionMessageWithSigners<TAddress extends string = string, TSigner extends NonModifyingSigner<TAddress> = NonModifyingSigner<TAddress>>(
+    transactionMessage: BaseTransactionMessage & TransactionMessageWithDurableNonceLifetime & TransactionMessageWithFeePayer & TransactionMessageWithSigners<TAddress, TSigner>,
+    config?: TransactionPartialSignerConfig,
+): Promise<SendableTransaction & Transaction & TransactionWithDurableNonceLifetime>;
 export async function signTransactionMessageWithSigners(
     transactionMessage: BaseTransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithSigners,
     config?: TransactionPartialSignerConfig,

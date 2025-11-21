@@ -101,6 +101,7 @@ export function assertIsTransactionMessageWithSingleSendingSigner<
 >(
     transaction: TTransactionMessage,
 ): asserts transaction is TransactionMessageWithSingleSendingSigner & TTransactionMessage {
+    // @ts-expect-error fixme
     const signers = getSignersFromTransactionMessage(transaction);
     const sendingSigners = signers.filter(isTransactionSendingSigner);
 

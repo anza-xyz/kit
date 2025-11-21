@@ -1,13 +1,13 @@
 import { AccountLookupMeta, AccountMeta, AccountRole, Instruction } from '@solana/instructions';
 import {
     BaseTransactionMessage,
-    TransactionMessageWithFeePayer,
     TransactionVersion,
 } from '@solana/transaction-messages';
 
 import { deduplicateSigners } from './deduplicate-signers';
 import { TransactionMessageWithFeePayerSigner } from './fee-payer-signer';
 import { isTransactionSigner, TransactionSigner } from './transaction-signer';
+import { Address } from '@solana/addresses';
 
 /**
  * An extension of the {@link AccountMeta} type that allows us to store {@link TransactionSigner | TransactionSigners} inside it.
@@ -87,6 +87,16 @@ export type InstructionWithSigners<
     TAccounts extends readonly AccountMetaWithSigner<TSigner>[] = readonly AccountMetaWithSigner<TSigner>[],
 > = Pick<Instruction<string, TAccounts>, 'accounts'>;
 
+type NonSignerFeePayer<TAddress extends string = string> = {
+    readonly address: Address<TAddress>;
+} & {
+    [K in keyof TransactionSigner]?: never;
+};
+
+type TransactionMessageWithNonSignerFeePayer<TAddress extends string = string> = {
+    readonly feePayer: Readonly<NonSignerFeePayer<TAddress>>;
+}
+
 /**
  * A {@link BaseTransactionMessage} type extension that accept {@link TransactionSigner | TransactionSigners}.
  *
@@ -118,7 +128,7 @@ export type TransactionMessageWithSigners<
     TAddress extends string = string,
     TSigner extends TransactionSigner<TAddress> = TransactionSigner<TAddress>,
     TAccounts extends readonly AccountMetaWithSigner<TSigner>[] = readonly AccountMetaWithSigner<TSigner>[],
-> = Partial<TransactionMessageWithFeePayer<TAddress> | TransactionMessageWithFeePayerSigner<TAddress, TSigner>> &
+> = Partial<TransactionMessageWithNonSignerFeePayer<TAddress> | TransactionMessageWithFeePayerSigner<TAddress, TSigner>> &
     Pick<
         BaseTransactionMessage<TransactionVersion, Instruction & InstructionWithSigners<TSigner, TAccounts>>,
         'instructions'
