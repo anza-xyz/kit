@@ -127,3 +127,20 @@ export function containsBytes(
     if (slice.length !== bytes.length) return false;
     return bytes.every((b, i) => b === slice[i]);
 }
+
+/**
+ * Returns true if and only if the provided `bytes1` and `bytes2` byte arrays are equal.
+ *
+ * @param bytes1 - The first byte array to compare.
+ * @param bytes2 - The second byte array to compare.
+ *
+ * @example
+ * ```ts
+ * const bytes1 = new Uint8Array([0x01, 0x02, 0x03, 0x04]);
+ * const bytes2 = new Uint8Array([0x01, 0x02, 0x03, 0x04]);
+ * areBytesEqual(bytes1, bytes2); // true
+ * ```
+ */
+export function areBytesEqual(bytes1: ReadonlyUint8Array | Uint8Array, bytes2: ReadonlyUint8Array | Uint8Array) {
+    return bytes1.length === bytes2.length && bytes1.every((value, index) => value === bytes2[index]);
+}

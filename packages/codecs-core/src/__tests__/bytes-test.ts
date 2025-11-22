@@ -1,4 +1,4 @@
-import { fixBytes, mergeBytes, padBytes } from '../bytes';
+import { areBytesEqual, fixBytes, mergeBytes, padBytes } from '../bytes';
 
 describe('mergeBytes', () => {
     it('can merge multiple arrays of bytes together', () => {
@@ -52,5 +52,21 @@ describe('fixBytes', () => {
         expect(fixBytes(bytes, 5)).toBe(bytes);
         expect(fixBytes(bytes, 2)).not.toBe(bytes);
         expect(fixBytes(bytes, 10)).not.toBe(bytes);
+    });
+});
+
+describe('areBytesEqual', () => {
+    it('can check if two byte arrays are equal', () => {
+        expect(areBytesEqual(new Uint8Array([1, 2, 3]), new Uint8Array([1, 2, 3]))).toBe(true);
+        expect(areBytesEqual(new Uint8Array([1, 2, 3]), new Uint8Array([1, 2, 4]))).toBe(false);
+    });
+    it('treats empty byte arrays as equal', () => {
+        expect(areBytesEqual(new Uint8Array([]), new Uint8Array([]))).toBe(true);
+        expect(areBytesEqual(new Uint8Array([]), new Uint8Array([0]))).toBe(false);
+        expect(areBytesEqual(new Uint8Array([0]), new Uint8Array([]))).toBe(false);
+    });
+    it('returns false when byte arrays are different lengths', () => {
+        expect(areBytesEqual(new Uint8Array([1, 2, 3]), new Uint8Array([1, 2, 3, 4]))).toBe(false);
+        expect(areBytesEqual(new Uint8Array([1, 2, 3, 4]), new Uint8Array([1, 2, 3]))).toBe(false);
     });
 });
