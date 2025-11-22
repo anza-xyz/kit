@@ -141,6 +141,9 @@ export function containsBytes(
  * areBytesEqual(bytes1, bytes2); // true
  * ```
  */
-export function areBytesEqual(bytes1: ReadonlyUint8Array | Uint8Array, bytes2: ReadonlyUint8Array | Uint8Array) {
+export function areBytesEqual(
+    bytes1: ReadonlyUint8Array | Uint8Array,
+    bytes2: ReadonlyUint8Array | Uint8Array,
+): boolean {
     return bytes1.length === bytes2.length && bytes1.every((value, index) => value === bytes2[index]);
 }
