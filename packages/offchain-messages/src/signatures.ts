@@ -1,5 +1,5 @@
 import { Address, getAddressFromPublicKey, getPublicKeyFromAddress } from '@solana/addresses';
-import { ReadonlyUint8Array } from '@solana/codecs-core';
+import { areBytesEqual } from '@solana/codecs-core';
 import {
     SOLANA_ERROR__OFFCHAIN_MESSAGE__ADDRESSES_CANNOT_SIGN_OFFCHAIN_MESSAGE,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURE_VERIFICATION_FAILURE,
@@ -85,7 +85,7 @@ export async function partiallySignOffchainMessageEnvelope<TOffchainMessageEnvel
             const existingSignature = offchainMessageEnvelope.signatures[address];
             const newSignature = await signBytes(keyPair.privateKey, offchainMessageEnvelope.content);
 
-            if (existingSignature != null && uint8ArraysEqual(newSignature, existingSignature)) {
+            if (existingSignature != null && areBytesEqual(newSignature, existingSignature)) {
                 // already have the same signature set
                 return;
             }
@@ -263,8 +263,4 @@ export async function verifyOffchainMessageEnvelope(offchainMessageEnvelope: Off
     if (errorContext) {
         throw new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURE_VERIFICATION_FAILURE, errorContext);
     }
-}
-
-function uint8ArraysEqual(arr1: ReadonlyUint8Array, arr2: ReadonlyUint8Array) {
-    return arr1.length === arr2.length && arr1.every((value, index) => value === arr2[index]);
 }
