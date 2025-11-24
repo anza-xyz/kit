@@ -15,12 +15,12 @@ import {
     TransactionWithLifetime,
 } from '@solana/transactions';
 
-import { TransactionMessageWithSigners } from '../account-signer-meta';
 import {
     partiallySignTransactionMessageWithSigners,
     signAndSendTransactionMessageWithSigners,
     signTransactionMessageWithSigners,
 } from '../sign-transaction';
+import { TransactionMessageWithSigners } from '../transaction-message-with-signers';
 import { TransactionMessageWithSingleSendingSigner } from '../transaction-with-single-sending-signer';
 
 {

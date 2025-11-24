@@ -84,6 +84,7 @@ export * from './message-signer';
 export * from './noop-signer';
 export * from './sign-transaction';
 export * from './signable-message';
+export * from './transaction-message-with-signers';
 export * from './transaction-modifying-signer';
 export * from './transaction-partial-signer';
 export * from './transaction-sending-signer';

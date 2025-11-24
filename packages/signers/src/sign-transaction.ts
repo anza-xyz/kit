@@ -10,8 +10,8 @@ import {
     TransactionWithLifetime,
 } from '@solana/transactions';
 
-import { getSignersFromTransactionMessage, TransactionMessageWithSigners } from './account-signer-meta';
 import { deduplicateSigners } from './deduplicate-signers';
+import { getSignersFromTransactionMessage, TransactionMessageWithSigners } from './transaction-message-with-signers';
 import {
     isTransactionModifyingSigner,
     TransactionModifyingSigner,

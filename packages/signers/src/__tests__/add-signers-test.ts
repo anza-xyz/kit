@@ -5,9 +5,10 @@ import { SOLANA_ERROR__SIGNER__ADDRESS_CANNOT_HAVE_MULTIPLE_SIGNERS, SolanaError
 import { AccountRole, Instruction } from '@solana/instructions';
 import { BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
 
-import { AccountSignerMeta, InstructionWithSigners } from '../account-signer-meta';
+import { AccountSignerMeta } from '../account-signer-meta';
 import { addSignersToInstruction, addSignersToTransactionMessage } from '../add-signers';
 import { TransactionMessageWithFeePayerSigner } from '../fee-payer-signer';
+import { InstructionWithSigners } from '../transaction-message-with-signers';
 import { createMockTransactionModifyingSigner, createMockTransactionPartialSigner } from './__setup__';
 
 describe('addSignersToInstruction', () => {

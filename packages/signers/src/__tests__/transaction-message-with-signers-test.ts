@@ -1,8 +1,8 @@
 import { Address } from '@solana/addresses';
 import { createTransactionMessage } from '@solana/transaction-messages';
 
-import { getSignersFromInstruction, getSignersFromTransactionMessage } from '../account-signer-meta';
 import { setTransactionMessageFeePayerSigner } from '../fee-payer-signer';
+import { getSignersFromInstruction, getSignersFromTransactionMessage } from '../transaction-message-with-signers';
 import {
     createMockInstructionWithSigners,
     createMockTransactionMessageWithSigners,

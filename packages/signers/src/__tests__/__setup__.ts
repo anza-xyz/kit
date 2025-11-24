@@ -21,10 +21,11 @@ import {
     setTransactionMessageLifetimeUsingBlockhash,
 } from '@solana/transaction-messages';
 
-import { AccountSignerMeta, InstructionWithSigners, TransactionMessageWithSigners } from '../account-signer-meta';
+import { AccountSignerMeta } from '../account-signer-meta';
 import { MessageModifyingSigner } from '../message-modifying-signer';
 import { MessagePartialSigner } from '../message-partial-signer';
 import { OffchainMessageSignatorySigner } from '../offchain-message-signer';
+import { InstructionWithSigners, TransactionMessageWithSigners } from '../transaction-message-with-signers';
 import { TransactionModifyingSigner } from '../transaction-modifying-signer';
 import { TransactionPartialSigner } from '../transaction-partial-signer';
 import { TransactionSendingSigner } from '../transaction-sending-signer';

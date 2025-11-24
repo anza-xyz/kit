@@ -6,7 +6,7 @@ import {
 import { Brand } from '@solana/nominal-types';
 import { BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
 
-import { getSignersFromTransactionMessage, TransactionMessageWithSigners } from './account-signer-meta';
+import { getSignersFromTransactionMessage, TransactionMessageWithSigners } from './transaction-message-with-signers';
 import { isTransactionModifyingSigner } from './transaction-modifying-signer';
 import { isTransactionPartialSigner } from './transaction-partial-signer';
 import { isTransactionSendingSigner } from './transaction-sending-signer';

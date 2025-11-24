@@ -21,10 +21,7 @@ import {
     signAndSendTransactionMessageWithSigners,
     signTransactionMessageWithSigners,
 } from '../sign-transaction';
-import {
-    assertIsTransactionMessageWithSingleSendingSigner,
-    TransactionMessageWithSingleSendingSigner,
-} from '../transaction-with-single-sending-signer';
+import { assertIsTransactionMessageWithSingleSendingSigner } from '../transaction-with-single-sending-signer';
 import {
     createMockTransactionCompositeSigner,
     createMockTransactionMessageWithSigners,
@@ -589,9 +586,7 @@ describe('signAndSendTransactionMessageWithSigners', () => {
         jest.mocked(compileTransaction).mockReturnValue(unsignedTransaction);
 
         // When we try to force sign and send this transaction.
-        const promise = signAndSendTransactionMessageWithSigners(
-            transactionMessage as TransactionMessageWithSingleSendingSigner & typeof transactionMessage,
-        );
+        const promise = signAndSendTransactionMessageWithSigners(transactionMessage);
 
         // Then we expect an error letting us know no sending mechanism was provided.
         await expect(promise).rejects.toThrow(

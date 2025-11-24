@@ -2,8 +2,9 @@ import { Address } from '@solana/addresses';
 import { Instruction, isSignerRole } from '@solana/instructions';
 import { BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
 
-import { AccountSignerMeta, InstructionWithSigners, TransactionMessageWithSigners } from './account-signer-meta';
+import { AccountSignerMeta } from './account-signer-meta';
 import { deduplicateSigners } from './deduplicate-signers';
+import { InstructionWithSigners, TransactionMessageWithSigners } from './transaction-message-with-signers';
 import { isTransactionSigner, TransactionSigner } from './transaction-signer';
 
 /**
@@ -46,7 +47,7 @@ export function addSignersToInstruction<TInstruction extends Instruction>(
     instruction: TInstruction | (InstructionWithSigners & TInstruction),
 ): InstructionWithSigners & TInstruction {
     if (!instruction.accounts || instruction.accounts.length === 0) {
-        return instruction as InstructionWithSigners & TInstruction;
+        return instruction;
     }
 
     const signerByAddress = new Map(deduplicateSigners(signers).map(signer => [signer.address, signer]));
@@ -113,7 +114,7 @@ export function addSignersToTransactionMessage<TTransactionMessage extends BaseT
         : undefined;
 
     if (!feePayerSigner && transactionMessage.instructions.length === 0) {
-        return transactionMessage as TransactionMessageWithSigners & TTransactionMessage;
+        return transactionMessage;
     }
 
     return Object.freeze({
