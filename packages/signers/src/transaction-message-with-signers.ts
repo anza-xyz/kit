@@ -5,7 +5,7 @@ import {
     TransactionVersion,
 } from '@solana/transaction-messages';
 
-import { AccountMetaWithSigner } from './account-signer-meta';
+import { AccountMetaWithSigner, NonSignerAccountMeta } from './account-signer-meta';
 import { deduplicateSigners } from './deduplicate-signers';
 import { TransactionMessageWithFeePayerSigner } from './fee-payer-signer';
 import { isTransactionSigner, TransactionSigner } from './transaction-signer';
@@ -46,6 +46,14 @@ export type InstructionWithSigners<
     TSigner extends TransactionSigner = TransactionSigner,
     TAccounts extends readonly AccountMetaWithSigner<TSigner>[] = readonly AccountMetaWithSigner<TSigner>[],
 > = Pick<Instruction<string, TAccounts>, 'accounts'>;
+
+/**
+ * An {@link Instruction} that is guaranteed to not have any signer account metas.
+ */
+export type NonSignerInstruction<
+    TProgramAddress extends string = string,
+    TAccounts extends readonly NonSignerAccountMeta[] = readonly NonSignerAccountMeta[],
+> = Instruction<TProgramAddress, TAccounts>;
 
 /**
  * A {@link BaseTransactionMessage} type extension that accept {@link TransactionSigner | TransactionSigners}.
