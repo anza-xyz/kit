@@ -2,7 +2,6 @@ import { pipe } from '@solana/functional';
 import { RpcRequest, RpcRequestTransformer } from '@solana/rpc-spec-types';
 import { Commitment } from '@solana/rpc-types';
 
-import { getBigIntDowncastRequestTransformer } from './request-transformer-bigint-downcast';
 import { getDefaultCommitmentRequestTransformer } from './request-transformer-default-commitment';
 import { getIntegerOverflowRequestTransformer, IntegerOverflowHandler } from './request-transformer-integer-overflow';
 import { OPTIONS_OBJECT_POSITION_BY_METHOD } from './request-transformer-options-object-position-config';
@@ -28,8 +27,7 @@ export type RequestTransformerConfig = Readonly<{
  *
  * Under the hood, this function composes multiple
  * {@link RpcRequestTransformer | RpcRequestTransformers} together such as the
- * {@link getDefaultCommitmentTransformer}, the {@link getIntegerOverflowRequestTransformer} and the
- * {@link getBigIntDowncastRequestTransformer}.
+ * {@link getDefaultCommitmentTransformer}, the {@link getIntegerOverflowRequestTransformer}.
  *
  * @example
  * ```ts
@@ -49,7 +47,6 @@ export function getDefaultRequestTransformerForSolanaRpc(config?: RequestTransfo
         return pipe(
             request,
             handleIntegerOverflow ? getIntegerOverflowRequestTransformer(handleIntegerOverflow) : r => r,
-            getBigIntDowncastRequestTransformer(),
             getDefaultCommitmentRequestTransformer({
                 defaultCommitment: config?.defaultCommitment,
                 optionsObjectPositionByMethod: OPTIONS_OBJECT_POSITION_BY_METHOD,
