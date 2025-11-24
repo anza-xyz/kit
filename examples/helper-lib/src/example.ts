@@ -10,25 +10,32 @@
 import { createLogger } from '@solana/example-utils/createLogger.js';
 import pressAnyKeyPrompt from '@solana/example-utils/pressAnyKeyPrompt.js';
 import {
+    address,
     Address,
     airdropFactory,
     appendTransactionMessageInstruction,
     appendTransactionMessageInstructions,
     assertIsTransactionWithBlockhashLifetime,
     BlockhashLifetimeConstraint,
+    ClusterUrl,
     createSolanaRpc,
     createSolanaRpcSubscriptions,
     createTransactionMessage,
     createTransactionPlanExecutor,
     createTransactionPlanner,
+    devnet,
     generateKeyPairSigner,
     getSignatureFromTransaction,
     Instruction,
     InstructionPlan,
     lamports,
     Lamports,
+    mainnet,
+    MainnetUrl,
     parallelInstructionPlan,
     pipe,
+    Rpc,
+    RpcSubscriptions,
     sendAndConfirmTransactionFactory,
     sequentialInstructionPlan,
     setTransactionMessageFeePayer,
@@ -38,6 +45,7 @@ import {
     singleTransactionPlan,
     SolanaError,
     SolanaRpcApi,
+    SolanaRpcApiFromClusterUrl,
     SolanaRpcSubscriptionsApi,
     TransactionMessage,
     TransactionMessageWithBlockhashLifetime,
@@ -118,20 +126,30 @@ function summarizeTransactionPlanResult(result: TransactionPlanResult): CompactS
     return transactionResults;
 }
 
-type Client<TRpcApi = SolanaRpcApi, TRpcSubscriptionsApi = SolanaRpcSubscriptionsApi> = {
-    rpc: TRpcApi;
-    rpcSubscriptions: TRpcSubscriptionsApi;
-    airdrop(recipientAddress: Address, amount: number | bigint | Lamports): Promise<Signature>;
+type HideFromMainnet<TClusterUrl extends ClusterUrl, T> = TClusterUrl extends MainnetUrl ? never : T;
+
+type SolanaClient<
+    TClusterUrl extends ClusterUrl,
+    TRpcApi extends SolanaRpcApiFromClusterUrl<TClusterUrl> = SolanaRpcApiFromClusterUrl<TClusterUrl>,
+    TRpcSubscriptionsApi extends SolanaRpcSubscriptionsApi = SolanaRpcSubscriptionsApi,
+> = {
+    rpc: Rpc<TRpcApi>;
+    rpcSubscriptions: RpcSubscriptions<TRpcSubscriptionsApi>;
+    airdrop: HideFromMainnet<TClusterUrl, (recipientAddress: Address, amount: number | bigint | Lamports) => Promise<Signature>>;
     transaction(config: TransactionConfig): TransactionBuilder;
     transactionPlan(config: TransactionConfig): TransactionPlanBuilder;
     sendAndConfirm(transaction: SendableTransactionMessage | TransactionPlan, abortSignal?: AbortSignal): Promise<CompactSingleTransactionSummary[]>;
 }
 
-function createSolanaClient(endpoint: string): Client<ReturnType<typeof createSolanaRpc>, ReturnType<typeof createSolanaRpcSubscriptions>> {
+function createSolanaClient<TClusterUrl extends ClusterUrl>(endpoint: TClusterUrl): SolanaClient<TClusterUrl> {
     const rpc = createSolanaRpc(endpoint);
+    // Typescript doesn't know the cluster URL, so internally we cast to the base SolanaRpcApi
+    // We return `rpc` which is cluster-aware though
+    const internalRpc = rpc as Rpc<SolanaRpcApi>;
     const rpcSubscriptions = createSolanaRpcSubscriptions(endpoint.replace('http', 'ws').replace('8899', '8900'));
 
-    const airdrop = airdropFactory({ rpc, rpcSubscriptions });
+    // We hide this from mainnet in the `SolanaClient` type
+    const airdrop = airdropFactory({ rpc: internalRpc, rpcSubscriptions });
 
     async function createBaseTransactionMessage(config: TransactionConfig, abortSignal?: AbortSignal): Promise<SendableTransactionMessage> {
         return pipe(
@@ -148,7 +166,7 @@ function createSolanaClient(endpoint: string): Client<ReturnType<typeof createSo
                 if (config.blockhash) {
                     return setTransactionMessageLifetimeUsingBlockhash(config.blockhash, tx);
                 } else {
-                    const { value: latestBlockhash } = await rpc.getLatestBlockhash({ commitment: 'confirmed' }).send({ abortSignal });
+                    const { value: latestBlockhash } = await internalRpc.getLatestBlockhash({ commitment: 'confirmed' }).send({ abortSignal });
                     return setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx);
                 }
             }
@@ -189,8 +207,8 @@ function createSolanaClient(endpoint: string): Client<ReturnType<typeof createSo
         }
     }
 
-    const sendAndConfirm = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
-    const estimateCULimit = estimateComputeUnitLimitFactory({ rpc });
+    const sendAndConfirm = sendAndConfirmTransactionFactory({ rpc: internalRpc, rpcSubscriptions });
+    const estimateCULimit = estimateComputeUnitLimitFactory({ rpc: internalRpc });
     async function estimateWithMultiplier(...args: Parameters<typeof estimateCULimit>): Promise<number> {
         const estimate = await estimateCULimit(...args);
         return Math.ceil(estimate * 1.1);
@@ -208,17 +226,19 @@ function createSolanaClient(endpoint: string): Client<ReturnType<typeof createSo
         }
     })
 
+    async function airdropHelper(recipientAddress: Address, amount: number | bigint | Lamports): Promise<Signature> {
+        const lamportsAmount = typeof amount === 'number' ? lamports(BigInt(amount)) : typeof amount === 'bigint' ? lamports(amount) : amount;
+        return await airdrop({
+            commitment: 'confirmed',
+            recipientAddress,
+            lamports: lamportsAmount,
+        });
+    }
+
     return {
         rpc,
         rpcSubscriptions,
-        async airdrop(recipientAddress: Address, amount: number | bigint | Lamports): Promise<Signature> {
-            const lamportsAmount = typeof amount === 'number' ? lamports(BigInt(amount)) : typeof amount === 'bigint' ? lamports(amount) : amount;
-            return await airdrop({
-                commitment: 'confirmed',
-                recipientAddress,
-                lamports: lamportsAmount,
-            });
-        },
+        airdrop: airdropHelper as HideFromMainnet<TClusterUrl, typeof airdropHelper>,
         transaction(config: TransactionConfig): TransactionBuilder {
             return transactionBuilder(config);
         },
@@ -253,7 +273,6 @@ function displayAmount(amount: bigint, decimals: number): string {
 const client = createSolanaClient('http://127.0.0.1:8899');
 
 // Example: Airdrop SOL to a new signer
-
 const signer = await generateKeyPairSigner();
 await client.airdrop(signer.address, sol(1.5));
 log.info('Airdropped 1.5 SOL to the new signer address');
@@ -315,6 +334,7 @@ async function createMintExample() {
 }
 await createMintExample();
 
+// Example: Airdrop tokens to multiple recipients
 async function tokenAirdropExample() {
     const tokenMint = await generateKeyPairSigner();
 
@@ -383,3 +403,24 @@ async function tokenAirdropExample() {
     await pressAnyKeyPrompt('Press any key to quit');
 }
 await tokenAirdropExample();
+
+// Additional typetests
+async () => {
+    const client = createSolanaClient('');
+    await client.rpc.requestAirdrop(address('a'), lamports(1n)).send();
+    await client.airdrop(address('a'), 1);
+    sendAndConfirmTransactionFactory({ rpc: client.rpc, rpcSubscriptions: client.rpcSubscriptions });
+
+    const devnetClient = createSolanaClient(devnet(''));
+    await devnetClient.rpc.requestAirdrop(address('a'), lamports(1n)).send();
+    await devnetClient.airdrop(address('a'), 1);
+    sendAndConfirmTransactionFactory({ rpc: devnetClient.rpc, rpcSubscriptions: devnetClient.rpcSubscriptions });
+
+    const mainnetClient = createSolanaClient(mainnet(''));
+    await mainnetClient.rpc.getBalance(address('a')).send();
+    // @ts-expect-error requestAirdrop should be unavailable on mainnet rpc
+    await mainnetClient.rpc.requestAirdrop(address('a'), lamports(1n)).send();
+    // @ts-expect-error airdrop should be unavailable on mainnet client
+    await mainnetClient.airdrop(address('a'), 1); // should error
+    sendAndConfirmTransactionFactory({ rpc: mainnetClient.rpc, rpcSubscriptions: mainnetClient.rpcSubscriptions });
+}
