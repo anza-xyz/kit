@@ -5,7 +5,7 @@ import {
     TransactionVersion,
 } from '@solana/transaction-messages';
 
-import { AccountMetaWithSigner, NonSignerAccountMeta } from './account-signer-meta';
+import { AccountMetaWithSigner, AccountSignerMeta, NonSignerAccountMeta } from './account-signer-meta';
 import { deduplicateSigners } from './deduplicate-signers';
 import { TransactionMessageWithFeePayerSigner } from './fee-payer-signer';
 import { isTransactionSigner, TransactionSigner } from './transaction-signer';
@@ -44,7 +44,10 @@ import { isTransactionSigner, TransactionSigner } from './transaction-signer';
  */
 export type InstructionWithSigners<
     TSigner extends TransactionSigner = TransactionSigner,
-    TAccounts extends readonly AccountMetaWithSigner<TSigner>[] = readonly AccountMetaWithSigner<TSigner>[],
+    TAccounts extends readonly (AccountSignerMeta<string, TSigner> | NonSignerAccountMeta)[] = readonly (
+        | AccountSignerMeta<string, TSigner>
+        | NonSignerAccountMeta
+    )[],
 > = Pick<Instruction<string, TAccounts>, 'accounts'>;
 
 /**
@@ -122,7 +125,7 @@ export function getSignersFromInstruction<TSigner extends TransactionSigner = Tr
     instruction: InstructionWithSigners<TSigner>,
 ): readonly TSigner[] {
     return deduplicateSigners(
-        (instruction.accounts ?? []).flatMap(account => ('signer' in account ? account.signer : [])),
+        (instruction.accounts ?? []).flatMap(account => ('signer' in account && account.signer ? account.signer : [])),
     );
 }
 
