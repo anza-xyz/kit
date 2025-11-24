@@ -1,8 +1,13 @@
 import { AccountLookupMeta, AccountMeta, Instruction } from '@solana/instructions';
 
-import { AccountSignerMeta } from '../account-signer-meta';
-import { InstructionWithSigners, NonSignerInstruction } from '../transaction-message-with-signers';
+import { AccountMetaWithSigner, AccountSignerMeta } from '../account-signer-meta';
+import { InstructionWithSigners, NonSignerInstruction, TransactionMessageWithSigners } from '../transaction-message-with-signers';
 import { TransactionSigner } from '../transaction-signer';
+import { BaseTransactionMessage, TransactionMessageWithFeePayer, TransactionVersion } from '@solana/transaction-messages';
+import { NonSignerFeePayer, TransactionMessageWithFeePayerSigner } from '../fee-payer-signer';
+import { Address } from '@solana/addresses';
+import { TransactionModifyingSigner } from '../transaction-modifying-signer';
+import { TransactionPartialSigner } from '../transaction-partial-signer';
 
 // [DESCRIBE] NonSignerInstruction
 {
@@ -22,7 +27,7 @@ import { TransactionSigner } from '../transaction-signer';
     {
         const instruction = null as unknown as Instruction<
             string,
-            (AccountMeta | (AccountMeta & { signer: unknown }))[]
+            (AccountMeta | (AccountMeta & { signer: TransactionSigner }))[]
         >;
         // @ts-expect-error Instruction has a signer account meta.
         instruction satisfies NonSignerInstruction;
@@ -55,5 +60,85 @@ import { TransactionSigner } from '../transaction-signer';
         const instruction = null as unknown as Instruction<string, AccountSignerMeta[]>;
         // @ts-expect-error Signer type does not match account meta signer type.
         instruction satisfies InstructionWithSigners<CustomSigner>;
+    }
+}
+
+// [DESCRIBE] TransactionMessageWithSigners
+{
+    // It allows a transaction with a fee payer that is not a signer.
+    {
+        const transactionMessage = null as unknown as BaseTransactionMessage & TransactionMessageWithFeePayer;
+        transactionMessage satisfies TransactionMessageWithSigners;
+    }
+
+    // It allows a transaction with a fee payer that is a signer.
+    {
+        const transactionMessage = null as unknown as BaseTransactionMessage &
+            TransactionMessageWithFeePayerSigner;
+        transactionMessage satisfies TransactionMessageWithSigners;
+    }
+
+    // It fails for a fee payer signer that does not match the signer type
+    {
+        type CustomSigner = TransactionSigner & { customProperty: true };
+        const transactionMessage = null as unknown as BaseTransactionMessage &
+            TransactionMessageWithFeePayerSigner<Address, TransactionSigner>;
+        // @ts-expect-error Fee payer signer type does not match.
+        transactionMessage satisfies TransactionMessageWithSigners<Address, CustomSigner>;
+    }
+
+    // It allows instructions with non-signer accounts
+    {
+        const transactionMessage = null as unknown as BaseTransactionMessage & {
+            instructions: NonSignerInstruction[];
+        };
+        transactionMessage satisfies TransactionMessageWithSigners;
+    }
+
+    // It allows instructions with signer accounts
+    {
+        const transactionMessage = null as unknown as BaseTransactionMessage & {
+            instructions: Instruction<string, AccountSignerMeta[]>[];
+        };
+        transactionMessage satisfies TransactionMessageWithSigners;
+    }
+
+    // It allows instructions with a mix of signer and non-signer accounts
+    {
+        const transactionMessage = null as unknown as BaseTransactionMessage & {
+            instructions: Instruction<string, (AccountMeta | AccountSignerMeta)[]>[];
+        };
+        transactionMessage satisfies TransactionMessageWithSigners;
+    }
+
+    // It allows multiple instructions with different account meta types
+    {
+        const transactionMessage = null as unknown as BaseTransactionMessage & {
+            instructions: [
+                NonSignerInstruction,
+                Instruction<string, AccountSignerMeta[]>,
+                Instruction<string, (AccountMeta | AccountSignerMeta)[]>,
+            ];
+        };
+        transactionMessage satisfies TransactionMessageWithSigners;
+    }
+
+    // It fails if the instruction signer type does not match the signer type
+    {
+        type CustomSigner = TransactionSigner & { customProperty: true };
+        const transactionMessage = null as unknown as {
+            instructions: Instruction<string, (AccountMeta | AccountSignerMeta)[]>[];
+        };
+
+        // this should error
+        transactionMessage satisfies TransactionMessageWithSigners<Address, CustomSigner>;
+
+
+        const instruction = transactionMessage.instructions[0];
+        // @ts-expect-error Errors as expected
+        instruction satisfies NonSignerInstruction;
+        instruction satisfies Instruction & InstructionWithSigners<TransactionSigner>;
+        // @ts-expect-error Errors as expected
+        instruction satisfies Instruction & InstructionWithSigners<CustomSigner>;
     }
 }

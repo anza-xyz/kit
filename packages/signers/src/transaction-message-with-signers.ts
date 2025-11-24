@@ -1,13 +1,9 @@
 import { Instruction } from '@solana/instructions';
-import {
-    BaseTransactionMessage,
-    TransactionMessageWithFeePayer,
-    TransactionVersion,
-} from '@solana/transaction-messages';
+import { BaseTransactionMessage, TransactionVersion } from '@solana/transaction-messages';
 
 import { AccountMetaWithSigner, AccountSignerMeta, NonSignerAccountMeta } from './account-signer-meta';
 import { deduplicateSigners } from './deduplicate-signers';
-import { TransactionMessageWithFeePayerSigner } from './fee-payer-signer';
+import { NonSignerFeePayer, TransactionMessageWithFeePayerSigner } from './fee-payer-signer';
 import { isTransactionSigner, TransactionSigner } from './transaction-signer';
 
 /**
@@ -48,7 +44,9 @@ export type InstructionWithSigners<
         | AccountSignerMeta<string, TSigner>
         | NonSignerAccountMeta
     )[],
-> = Pick<Instruction<string, TAccounts>, 'accounts'>;
+> = {
+    accounts?: TAccounts;
+};
 
 /**
  * An {@link Instruction} that is guaranteed to not have any signer account metas.
@@ -57,6 +55,13 @@ export type NonSignerInstruction<
     TProgramAddress extends string = string,
     TAccounts extends readonly NonSignerAccountMeta[] = readonly NonSignerAccountMeta[],
 > = Instruction<TProgramAddress, TAccounts>;
+
+/**
+ * a {@link TransactionMessage} with a fee payer that is not a signer.
+ */
+type TransactionMessageWithNonSignerFeePayer<TAddress extends string = string> = {
+    readonly feePayer: Readonly<NonSignerFeePayer<TAddress>>;
+};
 
 /**
  * A {@link BaseTransactionMessage} type extension that accept {@link TransactionSigner | TransactionSigners}.
@@ -89,11 +94,10 @@ export type TransactionMessageWithSigners<
     TAddress extends string = string,
     TSigner extends TransactionSigner<TAddress> = TransactionSigner<TAddress>,
     TAccounts extends readonly AccountMetaWithSigner<TSigner>[] = readonly AccountMetaWithSigner<TSigner>[],
-> = Partial<TransactionMessageWithFeePayer<TAddress> | TransactionMessageWithFeePayerSigner<TAddress, TSigner>> &
-    Pick<
-        BaseTransactionMessage<TransactionVersion, Instruction & InstructionWithSigners<TSigner, TAccounts>>,
-        'instructions'
-    >;
+> = {
+    feePayer?: NonSignerFeePayer<TAddress> | TSigner,
+    instructions: readonly (NonSignerInstruction | (Instruction & InstructionWithSigners<TSigner, TAccounts>))[];
+};
 
 /**
  * Extracts and deduplicates all {@link TransactionSigner | TransactionSigners} stored

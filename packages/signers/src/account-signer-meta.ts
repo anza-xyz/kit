@@ -33,6 +33,7 @@ export interface AccountSignerMeta<
 > extends AccountMeta<TAddress> {
     readonly role: AccountRole.READONLY_SIGNER | AccountRole.WRITABLE_SIGNER;
     readonly signer: TSigner;
+    readonly __signerBrand?: TSigner;
 }
 
 /**
