@@ -141,15 +141,23 @@ type SolanaClient<
     sendAndConfirm(transaction: SendableTransactionMessage | TransactionPlan, abortSignal?: AbortSignal): Promise<CompactSingleTransactionSummary[]>;
 }
 
-function createSolanaClient<TClusterUrl extends ClusterUrl>(endpoint: TClusterUrl): SolanaClient<TClusterUrl> {
-    const rpc = createSolanaRpc(endpoint);
+function createSolanaClient<TClusterUrl extends ClusterUrl>(
+    rpcEndpoint: TClusterUrl,
+    rpcSubscriptionsEndpoint?: TClusterUrl
+): SolanaClient<TClusterUrl> {
+    const rpc = createSolanaRpc(rpcEndpoint);
     // Typescript doesn't know the cluster URL, so internally we cast to the base SolanaRpcApi
     // We return `rpc` which is cluster-aware though
     const internalRpc = rpc as Rpc<SolanaRpcApi>;
-    const rpcSubscriptions = createSolanaRpcSubscriptions(endpoint.replace('http', 'ws').replace('8899', '8900'));
+
+    const rpcSubscriptionsEndpointOrDefault = rpcSubscriptionsEndpoint
+        ? rpcSubscriptionsEndpoint
+        : (rpcEndpoint.replace('http', 'ws').replace('8899', '8900') as TClusterUrl);
+    const rpcSubscriptions = createSolanaRpcSubscriptions(rpcSubscriptionsEndpointOrDefault);
+    const internalRpcSubscriptions = rpcSubscriptions as RpcSubscriptions<SolanaRpcSubscriptionsApi>;
 
     // We hide this from mainnet in the `SolanaClient` type
-    const airdrop = airdropFactory({ rpc: internalRpc, rpcSubscriptions });
+    const airdrop = airdropFactory({ rpc: internalRpc, rpcSubscriptions: internalRpcSubscriptions });
 
     async function createBaseTransactionMessage(config: TransactionConfig, abortSignal?: AbortSignal): Promise<SendableTransactionMessage> {
         return pipe(
@@ -207,7 +215,7 @@ function createSolanaClient<TClusterUrl extends ClusterUrl>(endpoint: TClusterUr
         }
     }
 
-    const sendAndConfirm = sendAndConfirmTransactionFactory({ rpc: internalRpc, rpcSubscriptions });
+    const sendAndConfirm = sendAndConfirmTransactionFactory({ rpc: internalRpc, rpcSubscriptions: internalRpcSubscriptions });
     const estimateCULimit = estimateComputeUnitLimitFactory({ rpc: internalRpc });
     async function estimateWithMultiplier(...args: Parameters<typeof estimateCULimit>): Promise<number> {
         const estimate = await estimateCULimit(...args);
@@ -270,7 +278,7 @@ function displayAmount(amount: bigint, decimals: number): string {
     }).format(`${amount}E-${decimals}`);
 }
 
-const client = createSolanaClient('http://127.0.0.1:8899');
+const client = createSolanaClient('http://127.0.0.1:8899', 'ws://127.0.0.1:8900');
 
 // Example: Airdrop SOL to a new signer
 const signer = await generateKeyPairSigner();
