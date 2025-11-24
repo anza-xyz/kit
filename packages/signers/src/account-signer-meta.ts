@@ -51,6 +51,11 @@ type AccountMetaWithSigner<TSigner extends TransactionSigner = TransactionSigner
     | AccountSignerMeta<string, TSigner>;
 
 /**
+ * An {@link AccountMeta} that is not a signer.
+ */
+export type NonSignerAccountMeta = { signer?: never } & (AccountLookupMeta | AccountMeta);
+
+/**
  * Composable type that allows {@link AccountSignerMeta | AccountSignerMetas} to be used inside the instruction's `accounts` array
  *
  * @typeParam TSigner - Optionally provide a narrower type for {@link TransactionSigner | TransactionSigners}.
