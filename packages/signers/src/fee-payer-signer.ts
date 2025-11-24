@@ -33,6 +33,7 @@ export interface TransactionMessageWithFeePayerSigner<
  *
  * @typeParam TFeePayerAddress - Supply a string literal to define a fee payer having a particular address.
  * @typeParam TTransactionMessage - The inferred type of the transaction message provided.
+ * @typeParam TSigner - The type of the fee payer signer.
  *
  * @example
  * ```ts
@@ -51,10 +52,11 @@ export function setTransactionMessageFeePayerSigner<
     TFeePayerAddress extends string,
     TTransactionMessage extends BaseTransactionMessage &
         Partial<TransactionMessageWithFeePayer | TransactionMessageWithFeePayerSigner>,
+    TSigner extends TransactionSigner<TFeePayerAddress> = TransactionSigner<TFeePayerAddress>,
 >(
-    feePayer: TransactionSigner<TFeePayerAddress>,
+    feePayer: TSigner,
     transactionMessage: TTransactionMessage,
-): Omit<TTransactionMessage, 'feePayer'> & TransactionMessageWithFeePayerSigner<TFeePayerAddress> {
+): Omit<TTransactionMessage, 'feePayer'> & TransactionMessageWithFeePayerSigner<TFeePayerAddress, TSigner> {
     Object.freeze(feePayer);
     const out = { ...transactionMessage, feePayer };
     Object.freeze(out);

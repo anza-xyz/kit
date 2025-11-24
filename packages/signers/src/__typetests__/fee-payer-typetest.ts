@@ -43,6 +43,14 @@ const message = null as unknown as TransactionMessage;
         messageWithBobFeePayerSigner satisfies TransactionMessageWithFeePayer<'mallory'>;
         messageWithBobFeePayerSigner satisfies TransactionMessageWithFeePayerSigner<'bob'>;
     }
+
+    // It maintains the narrowed type of the signer
+    {
+        type CustomSigner = TransactionSigner<'alice'> & { customProperty: true };
+        const aliceSignerWithNarrowedType = null as unknown as CustomSigner;
+        const messageWithFeePayer = setTransactionMessageFeePayerSigner(aliceSignerWithNarrowedType, message);
+        messageWithFeePayer satisfies TransactionMessageWithFeePayerSigner<'alice', CustomSigner>;
+    }
 }
 
 // [DESCRIBE] NonSignerFeePayer
