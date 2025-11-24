@@ -60,3 +60,17 @@ export function setTransactionMessageFeePayerSigner<
     Object.freeze(out);
     return out;
 }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type KeysOfUnion<T> = T extends any ? keyof T : never;
+type SignerKeysToExclude = Exclude<KeysOfUnion<TransactionSigner>, 'address'>;
+type NonSigner<T> = T & {
+    [K in SignerKeysToExclude]?: never;
+};
+
+/**
+ * A transaction message fee payer that is not a signer.
+ */
+export type NonSignerFeePayer<TAddress extends string = string> = NonSigner<
+    TransactionMessageWithFeePayer<TAddress>['feePayer']
+>;

@@ -1,6 +1,11 @@
+import { Address } from '@solana/addresses';
 import { TransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
 
-import { setTransactionMessageFeePayerSigner, TransactionMessageWithFeePayerSigner } from '../fee-payer-signer';
+import {
+    NonSignerFeePayer,
+    setTransactionMessageFeePayerSigner,
+    TransactionMessageWithFeePayerSigner,
+} from '../fee-payer-signer';
 import { TransactionSigner } from '../transaction-signer';
 
 const aliceSigner = null as unknown as TransactionSigner<'alice'>;
@@ -37,5 +42,21 @@ const message = null as unknown as TransactionMessage;
         // @ts-expect-error Mallory should no longer be a payer.
         messageWithBobFeePayerSigner satisfies TransactionMessageWithFeePayer<'mallory'>;
         messageWithBobFeePayerSigner satisfies TransactionMessageWithFeePayerSigner<'bob'>;
+    }
+}
+
+// [DESCRIBE] NonSignerFeePayer
+{
+    // It allows a message with a fee payer that is not a signer
+    {
+        const message = null as unknown as TransactionMessage & TransactionMessageWithFeePayer<Address>;
+        message.feePayer satisfies NonSignerFeePayer;
+    }
+
+    // It does not allow a messafge with a fee payer that is a signer
+    {
+        const message = null as unknown as TransactionMessage & TransactionMessageWithFeePayerSigner<Address>;
+        // @ts-expect-error fee payer is a signer
+        message.feePayer satisfies NonSignerFeePayer;
     }
 }
