@@ -1,5 +1,5 @@
 import { address } from '@solana/addresses';
-import { areBytesEqual } from '@solana/codecs-core';
+import { bytesEqual } from '@solana/codecs-core';
 import { SOLANA_ERROR__SIGNER__WALLET_MULTISIGN_UNIMPLEMENTED, SolanaError } from '@solana/errors';
 import { getAbortablePromise } from '@solana/promises';
 import { TransactionModifyingSigner } from '@solana/signers';
@@ -100,7 +100,7 @@ export function useWalletAccountTransactionSigner<TWalletAccount extends UiWalle
                         : undefined;
 
                 if (existingLifetime) {
-                    if (areBytesEqual(decodedSignedTransaction.messageBytes, transaction.messageBytes)) {
+                    if (bytesEqual(decodedSignedTransaction.messageBytes, transaction.messageBytes)) {
                         // If the transaction has identical bytes, the lifetime won't have changed
                         return Object.freeze([
                             {

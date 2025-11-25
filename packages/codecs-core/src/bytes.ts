@@ -138,12 +138,9 @@ export function containsBytes(
  * ```ts
  * const bytes1 = new Uint8Array([0x01, 0x02, 0x03, 0x04]);
  * const bytes2 = new Uint8Array([0x01, 0x02, 0x03, 0x04]);
- * areBytesEqual(bytes1, bytes2); // true
+ * bytesEqual(bytes1, bytes2); // true
  * ```
  */
-export function areBytesEqual(
-    bytes1: ReadonlyUint8Array | Uint8Array,
-    bytes2: ReadonlyUint8Array | Uint8Array,
-): boolean {
+export function bytesEqual(bytes1: ReadonlyUint8Array | Uint8Array, bytes2: ReadonlyUint8Array | Uint8Array): boolean {
     return bytes1.length === bytes2.length && bytes1.every((value, index) => value === bytes2[index]);
 }
