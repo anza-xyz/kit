@@ -21,3 +21,6 @@ updates:
           - '@eslint/*'
           - '@typescript-eslint/*'
           - 'typescript'
+      solana-program-clients:
+        patterns:
+          - '@solana-program/*'
