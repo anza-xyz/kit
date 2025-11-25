@@ -12,6 +12,7 @@ import {
     sequentialTransactionPlanResult,
     successfulSingleTransactionPlanResult,
     successfulSingleTransactionPlanResultFromSignature,
+    summarizeTransactionPlanResult,
 } from '../transaction-plan-result';
 import { createMessage, createTransaction } from './__setup__';
 
@@ -255,5 +256,113 @@ describe('flattenTransactionPlanResult', () => {
         const result = plan1;
         const flattened = flattenTransactionPlanResult(result);
         expect(flattened).toEqual([result]);
+    });
+});
+
+describe('summarizeTransactionPlanResult', () => {
+    it('summarizes a single successful transaction', () => {
+        const result = successfulSingleTransactionPlanResultFromSignature(createMessage('A'), 'A' as Signature);
+        const summary = summarizeTransactionPlanResult(result);
+        expect(summary).toEqual({
+            canceledTransactions: [],
+            failedTransactions: [],
+            successful: true,
+            successfulTransactions: [result],
+        });
+    });
+
+    it('summarizes a single failed transaction', () => {
+        const error = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
+        const result = failedSingleTransactionPlanResult(createMessage('A'), error);
+        const summary = summarizeTransactionPlanResult(result);
+        expect(summary).toEqual({
+            canceledTransactions: [],
+            failedTransactions: [result],
+            successful: false,
+            successfulTransactions: [],
+        });
+    });
+
+    it('summarizes a single canceled transaction', () => {
+        const result = canceledSingleTransactionPlanResult(createMessage('A'));
+        const summary = summarizeTransactionPlanResult(result);
+        expect(summary).toEqual({
+            canceledTransactions: [result],
+            failedTransactions: [],
+            successful: false,
+            successfulTransactions: [],
+        });
+    });
+
+    it('summarizes nested successful transactions', () => {
+        const planA = successfulSingleTransactionPlanResultFromSignature(createMessage('A'), 'A' as Signature);
+        const planB = successfulSingleTransactionPlanResultFromSignature(createMessage('B'), 'B' as Signature);
+        const planC = successfulSingleTransactionPlanResultFromSignature(createMessage('C'), 'C' as Signature);
+        const nestedResult = sequentialTransactionPlanResult([parallelTransactionPlanResult([planA, planB]), planC]);
+
+        const summary = summarizeTransactionPlanResult(nestedResult);
+        expect(summary).toEqual({
+            canceledTransactions: [],
+            failedTransactions: [],
+            successful: true,
+            successfulTransactions: [planA, planB, planC],
+        });
+    });
+
+    it('summarizes nested failed transactions', () => {
+        const planA = failedSingleTransactionPlanResult(
+            createMessage('A'),
+            new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
+        );
+        const planB = failedSingleTransactionPlanResult(
+            createMessage('B'),
+            new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
+        );
+        const planC = failedSingleTransactionPlanResult(
+            createMessage('C'),
+            new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
+        );
+        const nestedResult = sequentialTransactionPlanResult([parallelTransactionPlanResult([planA, planB]), planC]);
+
+        const summary = summarizeTransactionPlanResult(nestedResult);
+        expect(summary).toEqual({
+            canceledTransactions: [],
+            failedTransactions: [planA, planB, planC],
+            successful: false,
+            successfulTransactions: [],
+        });
+    });
+
+    it('summarizes nested canceled transactions', () => {
+        const planA = canceledSingleTransactionPlanResult(createMessage('A'));
+        const planB = canceledSingleTransactionPlanResult(createMessage('B'));
+        const planC = canceledSingleTransactionPlanResult(createMessage('C'));
+        const nestedResult = sequentialTransactionPlanResult([parallelTransactionPlanResult([planA, planB]), planC]);
+
+        const summary = summarizeTransactionPlanResult(nestedResult);
+        expect(summary).toEqual({
+            canceledTransactions: [planA, planB, planC],
+            failedTransactions: [],
+            successful: false,
+            successfulTransactions: [],
+        });
+    });
+
+    it('summarizes a mix of successful, failed, and canceled transactions', () => {
+        const planA = successfulSingleTransactionPlanResultFromSignature(createMessage('A'), 'A' as Signature);
+        const planB = failedSingleTransactionPlanResult(
+            createMessage('B'),
+            new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
+        );
+        const planC = canceledSingleTransactionPlanResult(createMessage('C'));
+        const mixedResult = sequentialTransactionPlanResult([planA, planB, planC]);
+
+        const summary = summarizeTransactionPlanResult(mixedResult);
+        expect(summary).toEqual({
+            canceledTransactions: [planC],
+            failedTransactions: [planB],
+            successful: false,
+            successfulTransactions: [planA],
+        });
     });
 });

@@ -430,3 +430,69 @@ export function flattenTransactionPlanResult(result: TransactionPlanResult): Sin
     traverse(result);
     return transactionPlanResults;
 }
+
+/**
+ * A {@link SingleTransactionPlanResult} with 'successful' status.
+ */
+export type SuccessfulSingleTransactionPlanResult = SingleTransactionPlanResult & { status: { kind: 'successful' } };
+
+/**
+ * A {@link SingleTransactionPlanResult} with 'failed' status.
+ */
+export type FailedSingleTransactionPlanResult = SingleTransactionPlanResult & { status: { kind: 'failed' } };
+
+/**
+ * A {@link SingleTransactionPlanResult} with 'canceled' status.
+ */
+export type CanceledSingleTransactionPlanResult = SingleTransactionPlanResult & { status: { kind: 'canceled' } };
+
+/**
+ * A summary of a {@link TransactionPlanResult}, categorizing transactions by their execution status.
+ * - `successful`: Indicates whether all transactions were successful (i.e., no failed or canceled transactions).
+ * - `successfulTransactions`: An array of successful transactions, each including its signature.
+ * - `failedTransactions`: An array of failed transactions, each including the error that caused the failure.
+ * - `canceledTransactions`: An array of canceled transactions.
+ */
+export type TransactionPlanResultSummary = Readonly<{
+    canceledTransactions: CanceledSingleTransactionPlanResult[];
+    failedTransactions: FailedSingleTransactionPlanResult[];
+    successful: boolean;
+    successfulTransactions: SuccessfulSingleTransactionPlanResult[];
+}>;
+
+/**
+ * Summarize a {@link TransactionPlanResult} into a {@link TransactionPlanResultSummary}.
+ * @param result The transaction plan result to summarize
+ * @returns A summary of the transaction plan result
+ */
+export function summarizeTransactionPlanResult(result: TransactionPlanResult): TransactionPlanResultSummary {
+    const successfulTransactions: TransactionPlanResultSummary['successfulTransactions'] = [];
+    const failedTransactions: TransactionPlanResultSummary['failedTransactions'] = [];
+    const canceledTransactions: TransactionPlanResultSummary['canceledTransactions'] = [];
+
+    const flattenedResults = flattenTransactionPlanResult(result);
+
+    for (const singleResult of flattenedResults) {
+        switch (singleResult.status.kind) {
+            case 'successful': {
+                successfulTransactions.push(singleResult as SuccessfulSingleTransactionPlanResult);
+                break;
+            }
+            case 'failed': {
+                failedTransactions.push(singleResult as FailedSingleTransactionPlanResult);
+                break;
+            }
+            case 'canceled': {
+                canceledTransactions.push(singleResult as CanceledSingleTransactionPlanResult);
+                break;
+            }
+        }
+    }
+
+    return Object.freeze({
+        canceledTransactions,
+        failedTransactions,
+        successful: failedTransactions.length === 0 && canceledTransactions.length === 0,
+        successfulTransactions,
+    });
+}
