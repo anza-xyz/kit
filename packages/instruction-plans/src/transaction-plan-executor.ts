@@ -3,6 +3,7 @@ import {
     SOLANA_ERROR__INVARIANT_VIOLATION__INVALID_TRANSACTION_PLAN_KIND,
     SolanaError,
 } from '@solana/errors';
+import { Signature } from '@solana/keys';
 import { getAbortablePromise } from '@solana/promises';
 import { BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
 import { Transaction } from '@solana/transactions';
@@ -20,6 +21,7 @@ import {
     parallelTransactionPlanResult,
     sequentialTransactionPlanResult,
     successfulSingleTransactionPlanResult,
+    successfulSingleTransactionPlanResultFromSignature,
     type TransactionPlanResult,
     type TransactionPlanResultContext,
 } from './transaction-plan-result';
@@ -29,10 +31,14 @@ export type TransactionPlanExecutor<TContext extends TransactionPlanResultContex
     config?: { abortSignal?: AbortSignal },
 ) => Promise<TransactionPlanResult<TContext>>;
 
+type ExecuteResult<TContext extends TransactionPlanResultContext> = {
+    context?: TContext;
+} & ({ signature: Signature } | { transaction: Transaction });
+
 type ExecuteTransactionMessage = <TContext extends TransactionPlanResultContext = TransactionPlanResultContext>(
     transactionMessage: BaseTransactionMessage & TransactionMessageWithFeePayer,
     config?: { abortSignal?: AbortSignal },
-) => Promise<{ context?: TContext; transaction: Transaction }>;
+) => Promise<ExecuteResult<TContext>>;
 
 /**
  * Configuration object for creating a new transaction plan executor.
@@ -163,7 +169,15 @@ async function traverseSingle(
             context.executeTransactionMessage(transactionPlan.message, { abortSignal: context.abortSignal }),
             context.abortSignal,
         );
-        return successfulSingleTransactionPlanResult(transactionPlan.message, result.transaction, result.context);
+        if ('transaction' in result) {
+            return successfulSingleTransactionPlanResult(transactionPlan.message, result.transaction, result.context);
+        } else {
+            return successfulSingleTransactionPlanResultFromSignature(
+                transactionPlan.message,
+                result.signature,
+                result.context,
+            );
+        }
     } catch (error) {
         context.canceled = true;
         return failedSingleTransactionPlanResult(transactionPlan.message, error as SolanaError);

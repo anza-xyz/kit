@@ -1,8 +1,9 @@
 import { Address, getAddressDecoder } from '@solana/addresses';
-import { fixEncoderSize, getUtf8Encoder } from '@solana/codecs';
+import { fixEncoderSize, getBase58Encoder, getUtf8Encoder } from '@solana/codecs';
 import { SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN, SolanaError } from '@solana/errors';
 import { pipe } from '@solana/functional';
 import type { Instruction } from '@solana/instructions';
+import { SignatureBytes } from '@solana/keys';
 import {
     appendTransactionMessageInstruction,
     type BaseTransactionMessage,
@@ -10,7 +11,7 @@ import {
     setTransactionMessageFeePayer,
     type TransactionMessageWithFeePayer,
 } from '@solana/transaction-messages';
-import { getTransactionMessageSize, Transaction, TRANSACTION_SIZE_LIMIT } from '@solana/transactions';
+import { getTransactionMessageSize, SignaturesMap, Transaction, TRANSACTION_SIZE_LIMIT } from '@solana/transactions';
 
 import { MessagePackerInstructionPlan } from '../instruction-plan';
 
@@ -31,8 +32,12 @@ export function createMessage<TId extends string>(
 }
 
 export function createTransaction<TId extends string>(id: TId): Transaction & { id: TId } {
-    return Object.freeze({ id }) as unknown as Transaction & { id: TId };
+    // We set the id as the signature of the transaction, by setting its bytes in the signatures map
+    const signatures: SignaturesMap = { ['' as Address]: signatureEncoder.encode(id) as SignatureBytes };
+    return Object.freeze({ id, signatures }) as unknown as Transaction & { id: TId };
 }
+
+const signatureEncoder = getBase58Encoder();
 
 export function instructionFactory(baseSeed?: string) {
     const seedPrefix = baseSeed ? `${baseSeed}-` : '';

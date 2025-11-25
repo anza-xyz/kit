@@ -1,6 +1,7 @@
 import '@solana/test-matchers/toBeFrozenObject';
 
 import { SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE, SolanaError } from '@solana/errors';
+import { Signature } from '@solana/keys';
 
 import {
     canceledSingleTransactionPlanResult,
@@ -10,6 +11,7 @@ import {
     parallelTransactionPlanResult,
     sequentialTransactionPlanResult,
     successfulSingleTransactionPlanResult,
+    successfulSingleTransactionPlanResultFromSignature,
 } from '../transaction-plan-result';
 import { createMessage, createTransaction } from './__setup__';
 
@@ -21,7 +23,7 @@ describe('successfulSingleTransactionPlanResult', () => {
         expect(result).toEqual({
             kind: 'single',
             message: messageA,
-            status: { context: {}, kind: 'successful', transaction: transactionA },
+            status: { context: {}, kind: 'successful', signature: 'A', transaction: transactionA },
         });
     });
     it('accepts an optional context object', () => {
@@ -32,7 +34,7 @@ describe('successfulSingleTransactionPlanResult', () => {
         expect(result).toEqual({
             kind: 'single',
             message: messageA,
-            status: { context, kind: 'successful', transaction: transactionA },
+            status: { context, kind: 'successful', signature: 'A', transaction: transactionA },
         });
     });
     it('freezes created SingleTransactionPlanResult objects', () => {
@@ -45,6 +47,42 @@ describe('successfulSingleTransactionPlanResult', () => {
         const messageA = createMessage('A');
         const transactionA = createTransaction('A');
         const result = successfulSingleTransactionPlanResult(messageA, transactionA);
+        expect(result.status).toBeFrozenObject();
+    });
+});
+
+describe('successfulSingleTransactionPlanResultFromSignature', () => {
+    it('creates SingleTransactionPlanResult objects with successful status', () => {
+        const messageA = createMessage('A');
+        const signature = 'A' as Signature;
+        const result = successfulSingleTransactionPlanResultFromSignature(messageA, signature);
+        expect(result).toEqual({
+            kind: 'single',
+            message: messageA,
+            status: { context: {}, kind: 'successful', signature: 'A' },
+        });
+    });
+    it('accepts an optional context object', () => {
+        const messageA = createMessage('A');
+        const signature = 'A' as Signature;
+        const context = { foo: 'bar' };
+        const result = successfulSingleTransactionPlanResultFromSignature(messageA, signature, context);
+        expect(result).toEqual({
+            kind: 'single',
+            message: messageA,
+            status: { context, kind: 'successful', signature: 'A' },
+        });
+    });
+    it('freezes created SingleTransactionPlanResult objects', () => {
+        const messageA = createMessage('A');
+        const signature = 'A' as Signature;
+        const result = successfulSingleTransactionPlanResultFromSignature(messageA, signature);
+        expect(result).toBeFrozenObject();
+    });
+    it('freezes the status object of created SingleTransactionPlanResult objects', () => {
+        const messageA = createMessage('A');
+        const signature = 'A' as Signature;
+        const result = successfulSingleTransactionPlanResultFromSignature(messageA, signature);
         expect(result.status).toBeFrozenObject();
     });
 });

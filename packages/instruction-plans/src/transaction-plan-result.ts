@@ -1,6 +1,7 @@
 import { SolanaError } from '@solana/errors';
+import { Signature } from '@solana/keys';
 import { BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
-import { Transaction } from '@solana/transactions';
+import { getSignatureFromTransaction, Transaction } from '@solana/transactions';
 
 /**
  * The result of executing a transaction plan.
@@ -168,7 +169,7 @@ export type SingleTransactionPlanResult<
  * @template TContext - The type of the context object that may be passed along with successful results
  */
 export type TransactionPlanResultStatus<TContext extends TransactionPlanResultContext = TransactionPlanResultContext> =
-    | Readonly<{ context: TContext; kind: 'successful'; transaction: Transaction }>
+    | Readonly<{ context: TContext; kind: 'successful'; signature: Signature; transaction?: Transaction }>
     | Readonly<{ error: SolanaError; kind: 'failed' }>
     | Readonly<{ kind: 'canceled' }>;
 
@@ -288,7 +289,52 @@ export function successfulSingleTransactionPlanResult<
     return Object.freeze({
         kind: 'single',
         message: transactionMessage,
-        status: Object.freeze({ context: context ?? ({} as TContext), kind: 'successful', transaction }),
+        status: Object.freeze({
+            context: context ?? ({} as TContext),
+            kind: 'successful',
+            signature: getSignatureFromTransaction(transaction),
+            transaction,
+        }),
+    });
+}
+
+/**
+ * Creates a successful {@link SingleTransactionPlanResult} from a transaction message and signature.
+ *
+ * This function creates a single result with a 'successful' status, indicating that
+ * the transaction was successfully executed. It also includes the original transaction
+ * message, the signature of the executed transaction, and an optional context object.
+ *
+ * @template TContext - The type of the context object
+ * @template TTransactionMessage - The type of the transaction message
+ * @param transactionMessage - The original transaction message
+ * @param signature - The signature of the successfully executed transaction
+ * @param context - Optional context object to be included with the result
+ *
+ * @example
+ * ```ts
+ * const result = successfulSingleTransactionPlanResult(
+ *   transactionMessage,
+ *   signature
+ * );
+ * result satisfies SingleTransactionPlanResult;
+ * ```
+ *
+ * @see {@link SingleTransactionPlanResult}
+ */
+export function successfulSingleTransactionPlanResultFromSignature<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer = BaseTransactionMessage &
+        TransactionMessageWithFeePayer,
+>(
+    transactionMessage: TTransactionMessage,
+    signature: Signature,
+    context?: TContext,
+): SingleTransactionPlanResult<TContext, TTransactionMessage> {
+    return Object.freeze({
+        kind: 'single',
+        message: transactionMessage,
+        status: Object.freeze({ context: context ?? ({} as TContext), kind: 'successful', signature }),
     });
 }
 
