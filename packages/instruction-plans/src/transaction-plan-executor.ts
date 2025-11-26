@@ -180,11 +180,11 @@ async function traverseSingle(
         }
     } catch (error) {
         context.canceled = true;
-        return failedSingleTransactionPlanResult(transactionPlan.message, error as SolanaError);
+        return failedSingleTransactionPlanResult(transactionPlan.message, error as Error);
     }
 }
 
-function findErrorFromTransactionPlanResult(result: TransactionPlanResult): SolanaError | undefined {
+function findErrorFromTransactionPlanResult(result: TransactionPlanResult): Error | undefined {
     if (result.kind === 'single') {
         return result.status.kind === 'failed' ? result.status.error : undefined;
     }

@@ -1,4 +1,3 @@
-import type { SolanaError } from '@solana/errors';
 import type { BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
 import type { Transaction } from '@solana/transactions';
 
@@ -21,7 +20,7 @@ const messageB = null as unknown as BaseTransactionMessage & TransactionMessageW
 const messageC = null as unknown as BaseTransactionMessage & TransactionMessageWithFeePayer & { id: 'C' };
 const transactionA = null as unknown as Transaction;
 const transactionB = null as unknown as Transaction;
-const error = null as unknown as SolanaError;
+const error = null as unknown as Error;
 
 type CustomContext = { customData: string };
 

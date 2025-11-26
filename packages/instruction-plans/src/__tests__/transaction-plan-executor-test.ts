@@ -102,12 +102,29 @@ describe('createTransactionPlanExecutor', () => {
             );
         });
 
+        it('can use any error object as a failure cause', async () => {
+            expect.assertions(2);
+            const messageA = createMessage('A');
+            const cause = new Error('Custom error message');
+            const executeTransactionMessage = jest.fn().mockRejectedValue(cause);
+            const executor = createTransactionPlanExecutor({ executeTransactionMessage });
+
+            const promise = executor(singleTransactionPlan(messageA));
+            await expectFailedToExecute(
+                promise,
+                new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
+                    cause,
+                    transactionPlanResult: failedSingleTransactionPlanResult(messageA, cause),
+                }),
+            );
+        });
+
         it('can abort single transaction plans', async () => {
             expect.assertions(2);
             const messageA = createMessage('A');
             const abortController = new AbortController();
             const abortSignal = abortController.signal;
-            const cause = new Error('Aborted during execution') as SolanaError;
+            const cause = new Error('Aborted during execution');
             const executeTransactionMessage = jest.fn().mockReturnValueOnce(FOREVER_PROMISE);
             const executor = createTransactionPlanExecutor({ executeTransactionMessage });
 
@@ -129,7 +146,7 @@ describe('createTransactionPlanExecutor', () => {
             const messageA = createMessage('A');
             const abortController = new AbortController();
             const abortSignal = abortController.signal;
-            const cause = new Error('Aborted before execution') as SolanaError;
+            const cause = new Error('Aborted before execution');
             const executeTransactionMessage = jest.fn().mockReturnValueOnce(FOREVER_PROMISE);
             const executor = createTransactionPlanExecutor({ executeTransactionMessage });
 
@@ -291,7 +308,7 @@ describe('createTransactionPlanExecutor', () => {
             const messageC = createMessage('C');
             const abortController = new AbortController();
             const abortSignal = abortController.signal;
-            const cause = new Error('Aborted during execution') as SolanaError;
+            const cause = new Error('Aborted during execution');
             const executeTransactionMessage = jest
                 .fn()
                 .mockImplementationOnce(forwardId)
@@ -327,7 +344,7 @@ describe('createTransactionPlanExecutor', () => {
             const messageB = createMessage('B');
             const abortController = new AbortController();
             const abortSignal = abortController.signal;
-            const cause = new Error('Aborted before execution') as SolanaError;
+            const cause = new Error('Aborted before execution');
             const executeTransactionMessage = jest.fn();
             const executor = createTransactionPlanExecutor({ executeTransactionMessage });
 
@@ -449,7 +466,7 @@ describe('createTransactionPlanExecutor', () => {
             const messageC = createMessage('C');
             const abortController = new AbortController();
             const abortSignal = abortController.signal;
-            const cause = new Error('Aborted during execution') as SolanaError;
+            const cause = new Error('Aborted during execution');
             const executeTransactionMessage = jest.fn().mockImplementation((message: { id: string }) => {
                 // eslint-disable-next-line jest/no-conditional-in-test
                 return message.id === 'B' ? FOREVER_PROMISE : forwardId(message);
@@ -480,7 +497,7 @@ describe('createTransactionPlanExecutor', () => {
             const messageC = createMessage('C');
             const abortController = new AbortController();
             const abortSignal = abortController.signal;
-            const cause = new Error('Aborted before execution') as SolanaError;
+            const cause = new Error('Aborted before execution');
             const executeTransactionMessage = jest.fn().mockImplementation(forwardId);
             const executor = createTransactionPlanExecutor({ executeTransactionMessage });
 
@@ -612,7 +629,7 @@ describe('createTransactionPlanExecutor', () => {
             const messageG = createMessage('G');
             const abortController = new AbortController();
             const abortSignal = abortController.signal;
-            const cause = new Error('Aborted during execution') as SolanaError;
+            const cause = new Error('Aborted during execution');
             const executeTransactionMessage = jest.fn().mockImplementation((message: { id: string }) => {
                 // eslint-disable-next-line jest/no-conditional-in-test
                 return message.id === 'C' ? FOREVER_PROMISE : forwardId(message);
@@ -665,7 +682,7 @@ describe('createTransactionPlanExecutor', () => {
             const messageG = createMessage('G');
             const abortController = new AbortController();
             const abortSignal = abortController.signal;
-            const cause = new Error('Aborted during execution') as SolanaError;
+            const cause = new Error('Aborted during execution');
             const executeTransactionMessage = jest.fn().mockImplementation(forwardId);
             const executor = createTransactionPlanExecutor({ executeTransactionMessage });
 

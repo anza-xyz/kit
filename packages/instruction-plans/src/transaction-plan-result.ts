@@ -1,4 +1,3 @@
-import { SolanaError } from '@solana/errors';
 import { Signature } from '@solana/keys';
 import { BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
 import { getSignatureFromTransaction, Transaction } from '@solana/transactions';
@@ -170,7 +169,7 @@ export type SingleTransactionPlanResult<
  */
 export type TransactionPlanResultStatus<TContext extends TransactionPlanResultContext = TransactionPlanResultContext> =
     | Readonly<{ context: TContext; kind: 'successful'; signature: Signature; transaction?: Transaction }>
-    | Readonly<{ error: SolanaError; kind: 'failed' }>
+    | Readonly<{ error: Error; kind: 'failed' }>
     | Readonly<{ kind: 'canceled' }>;
 
 /**
@@ -368,10 +367,7 @@ export function failedSingleTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer = BaseTransactionMessage &
         TransactionMessageWithFeePayer,
->(
-    transactionMessage: TTransactionMessage,
-    error: SolanaError,
-): SingleTransactionPlanResult<TContext, TTransactionMessage> {
+>(transactionMessage: TTransactionMessage, error: Error): SingleTransactionPlanResult<TContext, TTransactionMessage> {
     return Object.freeze({
         kind: 'single',
         message: transactionMessage,
