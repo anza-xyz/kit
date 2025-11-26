@@ -8,7 +8,6 @@ import {
     isFullySignedTransaction,
     partiallySignTransaction,
     signTransaction,
-    TransactionWithLifetime,
 } from '..';
 import { Transaction } from '../transaction';
 
@@ -20,13 +19,13 @@ import { Transaction } from '../transaction';
 
 // partiallySignTransaction
 {
-    const transaction = null as unknown as Transaction & TransactionWithLifetime & { some: 1 };
+    const transaction = null as unknown as Transaction & { some: 1 };
     partiallySignTransaction([], transaction) satisfies Promise<Transaction & { some: 1 }>;
 }
 
 // signTransaction
 {
-    const transaction = null as unknown as Transaction & TransactionWithLifetime & { some: 1 };
+    const transaction = null as unknown as Transaction & { some: 1 };
     signTransaction([], transaction) satisfies Promise<FullySignedTransaction & Transaction & { some: 1 }>;
 }
 

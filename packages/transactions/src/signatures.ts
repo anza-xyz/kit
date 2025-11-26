@@ -10,7 +10,6 @@ import {
 import { Signature, SignatureBytes, signBytes } from '@solana/keys';
 import { NominalType } from '@solana/nominal-types';
 
-import { TransactionWithLifetime } from './lifetime';
 import { Transaction } from './transaction';
 
 /**
@@ -71,7 +70,7 @@ function uint8ArraysEqual(arr1: Uint8Array, arr2: Uint8Array) {
  * @see {@link signTransaction} if you want to assert that the transaction has all of its required
  * signatures after signing.
  */
-export async function partiallySignTransaction<TTransaction extends Transaction & TransactionWithLifetime>(
+export async function partiallySignTransaction<TTransaction extends Transaction>(
     keyPairs: CryptoKeyPair[],
     transaction: TTransaction,
 ): Promise<TTransaction> {
@@ -147,7 +146,7 @@ export async function partiallySignTransaction<TTransaction extends Transaction 
  * @see {@link partiallySignTransaction} if you want to sign the transaction without asserting that
  * the resulting transaction is fully signed.
  */
-export async function signTransaction<TTransaction extends Transaction & TransactionWithLifetime>(
+export async function signTransaction<TTransaction extends Transaction>(
     keyPairs: CryptoKeyPair[],
     transaction: TTransaction,
 ): Promise<FullySignedTransaction & TTransaction> {
