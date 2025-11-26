@@ -226,6 +226,7 @@ export type Client = {
 // ---cut-before---
 import {
     assertIsSendableTransaction,
+    assertIsTransactionWithBlockhashLifetime,
     appendTransactionMessageInstructions,
     createTransactionMessage,
     generateKeyPairSigner,
@@ -279,6 +280,7 @@ export async function createMint(client: Client, options: { decimals?: number } 
     // Compile the transaction message and sign it.
     const transaction = await signTransactionMessageWithSigners(transactionMessage);
     assertIsSendableTransaction(transaction);
+    assertIsTransactionWithBlockhashLifetime(transaction);
 
     // Send the transaction and wait for confirmation.
     await client.sendAndConfirmTransaction(transaction, { commitment: 'confirmed' }); // [!code ++]

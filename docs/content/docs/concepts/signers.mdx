@@ -101,11 +101,19 @@ const myTransactionPartialSigner: TransactionPartialSigner<'1234..5678'> = {
 
 ```ts twoslash
 // @noErrors: 2355
-import { address, Transaction, TransactionModifyingSigner } from '@solana/kit';
+import {
+    address,
+    Transaction,
+    TransactionModifyingSigner,
+    TransactionWithinSizeLimit,
+    TransactionWithLifetime,
+} from '@solana/kit';
 // ---cut-before---
 const myTransactionModifyingSigner: TransactionModifyingSigner<'1234..5678'> = {
     address: address('1234..5678'),
-    modifyAndSignTransactions: async <T extends Transaction>(transactions: T[]): Promise<T[]> => {
+    modifyAndSignTransactions: async (
+        transactions: readonly Transaction[],
+    ): Promise<readonly (Transaction & TransactionWithinSizeLimit & TransactionWithLifetime)[]> => {
         // My custom signing logic.
     },
 };
@@ -224,9 +232,17 @@ This signer may be useful:
 - For indicating that a given account is a signer and taking the responsibility to provide the signature for that account ourselves. For instance, if we need to send the transaction to a server that will sign it and send it for us.
 
 ```ts twoslash
-import { address, SignableMessage, Transaction, TransactionWithLifetime } from '@solana/kit';
+import {
+    address,
+    SignableMessage,
+    Transaction,
+    TransactionWithinSizeLimit,
+    TransactionWithLifetime,
+} from '@solana/kit';
 const myMessage = null as unknown as SignableMessage;
-const myTransaction = null as unknown as Transaction & TransactionWithLifetime;
+const myTransaction = null as unknown as Transaction &
+    TransactionWithinSizeLimit &
+    TransactionWithLifetime;
 // ---cut-before---
 import { createNoopSigner } from '@solana/kit';
 

@@ -388,6 +388,7 @@ import {
     setTransactionMessageLifetimeUsingBlockhash,
     signTransactionMessageWithSigners,
     assertIsSendableTransaction,
+    assertIsTransactionWithBlockhashLifetime,
     BaseTransactionMessage,
     TransactionMessageWithFeePayer,
 } from '@solana/kit';
@@ -407,6 +408,7 @@ const transactionPlanExecutor = createTransactionPlanExecutor({
         );
         const transaction = await signTransactionMessageWithSigners(messageWithBlockhash);
         assertIsSendableTransaction(transaction);
+        assertIsTransactionWithBlockhashLifetime(transaction);
         await sendAndConfirmTransaction(transaction, { commitment: 'confirmed' });
         return { transaction };
     },
@@ -579,6 +581,7 @@ import {
     setTransactionMessageLifetimeUsingBlockhash,
     signTransactionMessageWithSigners,
     assertIsSendableTransaction,
+    assertIsTransactionWithBlockhashLifetime,
     BaseTransactionMessage,
     TransactionMessageWithFeePayer,
 } from '@solana/kit';
@@ -608,6 +611,7 @@ const transactionPlanExecutor = createTransactionPlanExecutor({
         const estimatedMessage = await estimateAndSetCULimit(messageWithBlockhash); // [!code ++]
         const transaction = await signTransactionMessageWithSigners(estimatedMessage);
         assertIsSendableTransaction(transaction);
+        assertIsTransactionWithBlockhashLifetime(transaction);
         await sendAndConfirmTransaction(transaction, { commitment: 'confirmed' });
         return { transaction };
     },
@@ -665,6 +669,7 @@ import {
     assertIsSendableTransaction,
     BaseTransactionMessage,
     TransactionMessageWithFeePayer,
+    assertIsTransactionWithDurableNonceLifetime,
 } from '@solana/kit';
 const rpc = {} as unknown as Rpc<SolanaRpcApi>;
 const rpcSubscriptions = {} as unknown as RpcSubscriptions<SolanaRpcSubscriptionsApi>;
@@ -688,6 +693,7 @@ const transactionPlanExecutor = createTransactionPlanExecutor({
         assertIsTransactionMessageWithDurableNonceLifetime(message); // [!code ++]
         const transaction = await signTransactionMessageWithSigners(message);
         assertIsSendableTransaction(transaction);
+        assertIsTransactionWithDurableNonceLifetime(transaction);
         await sendAndConfirmDurableNonceTransaction(transaction, { commitment: 'confirmed' }); // [!code ++]
         return { transaction };
     },
