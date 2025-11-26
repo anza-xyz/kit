@@ -1,0 +1,418 @@
+---
+title: Offchain messages
+description: Build, compile, sign, and verify messages offchain
+---
+
+## Introduction
+
+Any time you want one or more parties to approve of something that is not governed by an onchain program, you can prepare a message for them to sign offchain. Such messages can contain arbitrary contents, like the text of a plain-language contract, or some data encoded as text. Each offchain message contains a list of one or more signers that must provide a signature over that encoded message. Only when all of the required signers provide an authentic signature over the message are its contents considered to be ratified. You can use Kit to create, sign, verify, encode, and decode offchain messages.
+
+## Installation
+
+Offchain message utilities are **included within the `@solana/kit` library** but you may also install them using their standalone packages.
+
+To install the offchain message utilities:
+
+```package-install
+@solana/offchain-messages
+```
+
+## What is an offchain message?
+
+An offchain message consists of some UTF-8 message text, and a list of one or more required signers. The message is considered ratified when all of the signers provide a signature over the encoded message.
+
+Here is an example of a contract being proposed by one person as an offchain message, and ratified by another.
+
+<Tabs items={["Proposing a message", "Ratifying a message", "Verifying a message"]}>
+  <Tab value="Proposing a message">
+    ```ts twoslash
+    const ursulaKeypair = null as unknown as CryptoKeyPair;
+    // ---cut-before---
+    import {
+        Address,
+        createSignerFromKeyPair,
+        getOffchainMessageEnvelopeEncoder,
+        OffchainMessage,
+        partiallySignOffchainMessageWithSigners,
+    } from '@solana/kit';
+
+    // Ursula creates the contract as an offchain message.
+    const ursulaSigner = await createSignerFromKeyPair(ursulaKeypair);
+    const offchainMessage: OffchainMessage = {
+        content:
+            "Ursula grants Ariel three days as a human, in exchange for Ariel's voice, on the " +
+            'condition that Ariel secures a kiss of true love from Prince Eric before the third ' +
+            'sunset to remain human permanently. If Ariel fails, she reverts to a mermaid and ' +
+            "becomes Ursula's property.",
+        requiredSignatories: [
+            ursulaSigner,
+            { address: 'ARiEL3q7uXvN9yZK8s2a5GfpHmQdR7cBv' as Address },
+        ],
+        version: 1,
+    };
+
+    // Ursula partially signs the message, producing an offchain message envelope.
+    const offchainMessageEnvelope =
+        await partiallySignOffchainMessageWithSigners(offchainMessage);
+
+    // Ursula encodes the offchain message envelope to share with Ariel.
+    const offchainMessageEnvelopeBytes =
+        getOffchainMessageEnvelopeEncoder().encode(offchainMessageEnvelope);
+    ```
+    </Tab>
+    <Tab value="Ratifying a message">
+        ```ts twoslash
+        import { ReadonlyUint8Array } from '@solana/kit';
+        const arielKeypair = null as unknown as CryptoKeyPair;
+        const offchainMessageEnvelopeBytes = null as unknown as ReadonlyUint8Array;
+        // ---cut-before---
+        import { getOffchainMessageEnvelopeCodec, signOffchainMessageEnvelope } from '@solana/kit';
+
+        // Ariel decodes the offchain message envelope received from Ursula.
+        const offchainMessageEnvelope =
+            getOffchainMessageEnvelopeCodec().decode(offchainMessageEnvelopeBytes);
+
+        // To ratify the contract, she signs the message.
+        const fullySignedOffchainMessageEnvelope =
+            await signOffchainMessageEnvelope([arielKeypair], offchainMessageEnvelope);
+
+        // Ariel encodes the fully signed offchain message envelope to share with Ursula.
+        const fullySignedOffchainMessageEnvelopeBytes =
+            getOffchainMessageEnvelopeCodec().encode(fullySignedOffchainMessageEnvelope);
+        ```
+    </Tab>
+
+    <Tab value="Verifying a message">
+        ```ts twoslash
+        import { ReadonlyUint8Array, OffchainMessageEnvelope } from '@solana/kit';
+        const offchainMessageEnvelope = null as unknown as OffchainMessageEnvelope;
+        const receivedOffchainMessageEnvelopeBytes = null as unknown as ReadonlyUint8Array;
+        // ---cut-before---
+        import {
+            bytesEqual,
+            getOffchainMessageEnvelopeDecoder,
+            isSolanaError,
+            verifyOffchainMessageEnvelope,
+            SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURE_VERIFICATION_FAILURE,
+        } from '@solana/kit';
+
+        // Upon receipt of the signed message envelope bytes from Ariel, Ursula decodes them.
+        const receivedOffchainMessageEnvelope =
+            getOffchainMessageEnvelopeDecoder().decode(receivedOffchainMessageEnvelopeBytes);
+
+        // For good measure, Ursula verifies that the message bytes are the exact ones she sent.
+        if (!bytesEqual(receivedOffchainMessageEnvelope.content, offchainMessageEnvelope.content)) {
+            throw new Error('I do not accept this modified contract');
+        }
+
+        // Ursula then verifies the signatures on the envelope.
+        try {
+            await verifyOffchainMessageEnvelope(receivedOffchainMessageEnvelope);
+        } catch(e) {
+            if (isSolanaError(e, SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURE_VERIFICATION_FAILURE)) {
+                console.error('We do not have a deal!');
+            } else {
+                throw e;
+            }
+        }
+        ```
+    </Tab>
+
+</Tabs>
+
+## Building offchain messages
+
+Use the [`OffchainMessage`](/api/type-aliases/OffchainMessage) type to help you create an offchain message.
+
+### Specifying the version
+
+Specify the `version` property to select the schema and capabilities of the message. The latest version is version `1` which corresponds to the specification found in [sRFC 3](https://github.com/solana-foundation/SRFCs/discussions/3).
+
+```ts twoslash
+// @noErrors: 2322
+import { address, OffchainMessage } from '@solana/kit';
+
+const offchainMessage: OffchainMessage = {
+    // [!code ++:1]
+    version: 1,
+    /* ... */
+};
+```
+
+<Callout type="info">
+    The format and construction of v0 messages is beyond the scope of this guide. You can read the
+    v0 specification [here](https://docs.solanalabs.com/proposals/off-chain-message-signing).
+</Callout>
+
+### Required signatories
+
+Each message must specify a list of addresses belonging to accounts that must sign the message in order for it to be considered valid.
+
+#### Using a signer [!toc]
+
+You can declare one or more required signatories using a [`MessageSigner`](/api/interfaces/MessageSigner).
+
+```ts twoslash
+const myKeyPair = null as unknown as CryptoKeyPair;
+// ---cut-before---
+// @noErrors: 2322
+import { createSignerFromKeyPair, OffchainMessage } from '@solana/kit';
+
+const messageSigner = await createSignerFromKeyPair(myKeyPair);
+const offchainMessage: OffchainMessage = {
+    version: 1,
+    // [!code ++:1]
+    requiredSignatories: [messageSigner],
+    /* ... */
+};
+```
+
+When you do so, the message will have the capability to self-sign using the [`signOffchainMessageWithSigners`](/api/functions/signOffchainMessageWithSigners) method. Follow the [instructions for signing offchain message envelopes with `CryptoKeyPairs`](#signing-offchain-message-envelopes) to sign it.
+
+#### Using an address [!toc]
+
+You can declare one or more required signatories for whom you don't control the private key using the addresses of their accounts.
+
+```ts twoslash
+const myKeyPair = null as unknown as CryptoKeyPair;
+// ---cut-before---
+// @noErrors: 2322
+import { address, OffchainMessage } from '@solana/kit';
+
+const offchainMessage: OffchainMessage = {
+    version: 1,
+    // [!code ++:1]
+    requiredSignatories: [{ address: address('EkMpZ4tPqt7LgNCWjbNQ4WhuzFuitdwp8JPxSbCWXy9x') }],
+    /* ... */
+};
+```
+
+### Defining the message content
+
+Each message must contain some non-empty UTF-8 text the signatories must agree upon.
+
+#### Using text [!toc]
+
+The content can be a string of UTF-8 text.
+
+```ts twoslash
+const myKeyPair = null as unknown as CryptoKeyPair;
+// ---cut-before---
+import { address, createSignerFromKeyPair, OffchainMessage } from '@solana/kit';
+
+const messageSigner = await createSignerFromKeyPair(myKeyPair);
+const offchainMessage: OffchainMessage = {
+    version: 1,
+    requiredSignatories: [
+        messageSigner,
+        { address: address('r5FsobNdd53imrHH4rrdAt1MNkkJUjNPBTNqvKe9igR') },
+    ],
+    // [!code ++:1]
+    content: '🥓 Crispy bacon is better than floppy bacon.',
+};
+```
+
+#### Using data [!toc]
+
+You can also encode arbitrary data as text using an encoding such as base-64.
+
+```ts twoslash
+import { ReadonlyUint8Array } from '@solana/kit';
+const bytes = null as unknown as ReadonlyUint8Array;
+const myKeyPair = null as unknown as CryptoKeyPair;
+// ---cut-before---
+import { address, createSignerFromKeyPair, getBase64Decoder, OffchainMessage } from '@solana/kit';
+
+const messageSigner = await createSignerFromKeyPair(myKeyPair);
+const offchainMessage: OffchainMessage = {
+    version: 1,
+    requiredSignatories: [
+        messageSigner,
+        { address: address('r5FsobNdd53imrHH4rrdAt1MNkkJUjNPBTNqvKe9igR') },
+    ],
+    // [!code ++:1]
+    content: getBase64Decoder().decode(bytes),
+};
+```
+
+## Signing offchain messages
+
+In order to be considered ratified an offchain message must be signed by all of the private keys belonging to accounts that are required signatories of the message.
+
+- [`FullySignedOffchainMessageEnvelope`](/api/type-aliases/FullySignedOffchainMessageEnvelope): An offchain message that is signed by all of its required signatories.
+- [`OffchainMessageEnvelope`](/api/interfaces/OffchainMessageEnvelope): A compiled offchain message encoded as bytes, paired with a map between its required signatory addresses and their provided signatures, if any.
+
+Offchain messages whose signers are specified using `MessageSigner` objects have the ability to self-sign. This is because signers encapsulate both the address of the signing account as well as an implementation of the signing algorithm for the private key associated with that account.
+
+The [`signOffchainMessageWithSigners`](/api/functions/signOffchainMessageWithSigners) method will return a new signed offchain message envelope of type `FullySignedOffchainMessageEnvelope`.
+
+```ts twoslash
+import { OffchainMessage } from '@solana/kit';
+const offchainMessage = null as unknown as OffchainMessage;
+// ---cut-before---
+import {
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURES_MISSING,
+    isSolanaError,
+    signOffchainMessageWithSigners,
+} from '@solana/kit';
+
+try {
+    const fullySignedOffchainMessageEnvelope =
+        await signOffchainMessageWithSigners(offchainMessage);
+} catch (e) {
+    if (isSolanaError(e, SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURES_MISSING)) {
+        console.error('Missing signers for the following addresses:', e.context.addresses);
+    } else {
+        throw e;
+    }
+}
+```
+
+<Callout type="warn">
+    This function will throw if the offchain message does not carry a `MessageSigner` implementation
+    for every required signer. To partially sign a message that you know to carry a strict subset of
+    the required `MessageSigners`, use the
+    [`partiallySignOffchainMessageWithSigners`](/api/functions/partiallySignOffchainMessageWithSigners)
+    method.
+</Callout>
+
+Building offchain messages using `MessageSigners` is the recommended way to create self-signable offchain messages. To sign with a `CryptoKey` directly, you first have to compile the offchain message.
+
+```ts twoslash
+import { OffchainMessage } from '@solana/kit';
+const offchainMessage = null as unknown as OffchainMessage;
+// ---cut-before---
+import { compileOffchainMessageEnvelope } from '@solana/kit';
+
+const offchainMessageEnvelope = compileOffchainMessageEnvelope(offchainMessage);
+```
+
+This produces an unsigned offchain message envelope. Follow the [instructions for signing offchain message envelopes with `CryptoKeyPairs`](#signing-offchain-message-envelopes) to sign it.
+
+<Callout type="info">
+    If the version of the offchain message is known, use the compile function specific to that
+    version, such as
+    [`compileOffchainMessageV1Envelope`](/api/functions/compileOffchainMessageV1Envelope). This will
+    prevent you from bundling compilers you don't need, saving space in your JavaScript bundle.
+</Callout>
+
+## Signing offchain message envelopes
+
+Wherever you have a `OffchainMessageEnvelope` instead of an `OffchainMessage` you can add or replace a signature using the `signOffchainMessageEnvelope` method and one or more `CryptoKeyPairs`.
+
+```ts twoslash
+import { OffchainMessageEnvelope } from '@solana/kit';
+const keyPair = null as unknown as CryptoKeyPair;
+const offchainMessageEnvelope = null as unknown as OffchainMessageEnvelope;
+// ---cut-before---
+import {
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURES_MISSING,
+    isSolanaError,
+    signOffchainMessageEnvelope,
+} from '@solana/kit';
+
+try {
+    const fullySignedOffchainMessageEnvelope = await signOffchainMessageEnvelope(
+        [keyPair],
+        offchainMessageEnvelope,
+    );
+} catch (e) {
+    if (isSolanaError(e, SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURES_MISSING)) {
+        console.error('Missing signers for the following addresses:', e.context.addresses);
+    } else {
+        throw e;
+    }
+}
+```
+
+<Callout type="warn">
+    This function will throw if the resultant offchain message envelope is missing a signature for
+    one of the offchain message's required signers. To partially sign an offchain message envelope,
+    use the
+    [`partiallySignOffchainMessageEnvelope`](/api/functions/partiallySignOffchainMessageEnvelope)
+    method.
+</Callout>
+
+## Verifying an offchain message
+
+Given an offchain message envelope, you can verify that it has been signed by all of its required signatories using the [`verifyOffchainMessageEnvelope`](/api/functions/verifyOffchainMessageEnvelope) method.
+
+```ts twoslash
+import { OffchainMessageEnvelope } from '@solana/kit';
+const receivedOffchainMessageEnvelope = null as unknown as OffchainMessageEnvelope;
+// ---cut-before---
+import {
+    isSolanaError,
+    verifyOffchainMessageEnvelope,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURE_VERIFICATION_FAILURE,
+} from '@solana/kit';
+
+try {
+    await verifyOffchainMessageEnvelope(receivedOffchainMessageEnvelope);
+} catch (e) {
+    if (isSolanaError(e, SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURE_VERIFICATION_FAILURE)) {
+        if (e.context.signatoriesWithInvalidSignatures.length) {
+            console.error(
+                'The signatures for the following addresses are invalid',
+                e.context.signatoriesWithInvalidSignatures,
+            );
+        }
+        if (e.context.signatoriesWithMissingSignatures.length) {
+            console.error(
+                'The following required signatories have not signed this message',
+                e.context.signatoriesWithMissingSignatures,
+            );
+        }
+    } else {
+        throw e;
+    }
+}
+```
+
+<Callout type="warn">
+    Verifying an offchain message will tell you if its content has been signed by all required
+    signatories, but it will _not_ ensure that the content of the message nor its list of required
+    signatories is what you expect it to be. Take special care to inspect the content of the message
+    before accepting it. If you have the original bytes of the message, you can compare them to the
+    `content` of the envelope you are verifying. Otherwise, see [deserializing offchain
+    messages](#deserializing-offchain-messages) for instructions on how to decode the envelope's
+    `content` for inspection.
+</Callout>
+
+## Serializing offchain messages
+
+If you would like to share an offchain message envelope with someone, you can serialize it to bytes using an encoder.
+
+```ts twoslash
+import { OffchainMessageEnvelope } from '@solana/kit';
+const offchainMessageEnvelope = null as unknown as OffchainMessageEnvelope;
+// ---cut-before---
+import { getOffchainMessageEnvelopeEncoder } from '@solana/kit';
+
+const offchainMessageEnvelopeBytes =
+    getOffchainMessageEnvelopeEncoder().encode(offchainMessageEnvelope);
+```
+
+## Deserializing offchain messages
+
+Decoding the bytes of an encoded offchain message envelope yields an `OffchainMessageEnvelope` object. This takes the form of a compiled offchain message encoded as [`OffchainMessageBytes`](/api/type-aliases/OffchainMessageBytes), paired with a map between its required signatory addresses and their provided signatures, if any.
+
+```ts twoslash
+import { ReadonlyUint8Array } from '@solana/kit';
+const offchainMessageEnvelopeBytes = null as unknown as ReadonlyUint8Array;
+// ---cut-before---
+import { getOffchainMessageEnvelopeDecoder } from '@solana/kit';
+const offchainMessageEnvelope = getOffchainMessageEnvelopeDecoder().decode(
+    offchainMessageEnvelopeBytes,
+);
+```
+
+Decoding the bytes of the offchain message envelope will yield an object containing an offchain message in its **compiled** form – a message in a form suitable for signing and transmitting over a network. Decompiling a compiled message will yield an `OffchainMessage` object. This is the most common form of offchain message that you will encounter when using Kit to build an application.
+
+```ts twoslash
+import { OffchainMessageEnvelope } from '@solana/kit';
+const offchainMessageEnvelope = null as unknown as OffchainMessageEnvelope;
+// ---cut-before---
+import { getOffchainMessageDecoder } from '@solana/kit';
+const offchainMessage = getOffchainMessageDecoder().decode(offchainMessageEnvelope.content);
+```
