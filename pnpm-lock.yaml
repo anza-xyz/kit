@@ -1303,7 +1303,11 @@ importers:
         specifier: ^3.6.20
         version: 3.6.20
 
-  packages/test-matchers: {}
+  packages/test-matchers:
+    dependencies:
+      '@solana/codecs-core':
+        specifier: workspace:*
+        version: link:../codecs-core
 
   packages/text-encoding-impl:
     dependencies:

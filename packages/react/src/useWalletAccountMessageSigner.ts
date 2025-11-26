@@ -1,4 +1,5 @@
 import { Address, address } from '@solana/addresses';
+import { bytesEqual } from '@solana/codecs-core';
 import { SOLANA_ERROR__SIGNER__WALLET_MULTISIGN_UNIMPLEMENTED, SolanaError } from '@solana/errors';
 import { SignatureBytes } from '@solana/keys';
 import { getAbortablePromise } from '@solana/promises';
@@ -74,7 +75,7 @@ export function useWalletAccountMessageSigner<TWalletAccount extends UiWalletAcc
                 const originalSignature = originalSignatureMap[uiWalletAccount.address as Address<string>] as
                     | SignatureBytes
                     | undefined;
-                const signatureIsNew = !originalSignature?.every((originalByte, ii) => originalByte === signature[ii]);
+                const signatureIsNew = originalSignature === undefined || !bytesEqual(originalSignature, signature);
                 if (!signatureIsNew && !messageWasModified) {
                     // We already had this exact signature, and the message wasn't modified.
                     // Don't replace the existing message object.
