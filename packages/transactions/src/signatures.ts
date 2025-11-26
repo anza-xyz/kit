@@ -1,5 +1,5 @@
 import { Address, getAddressFromPublicKey } from '@solana/addresses';
-import { Decoder } from '@solana/codecs-core';
+import { Decoder, uint8ArraysEqual } from '@solana/codecs-core';
 import { getBase58Decoder } from '@solana/codecs-strings';
 import {
     SOLANA_ERROR__TRANSACTION__ADDRESSES_CANNOT_SIGN_TRANSACTION,
@@ -45,10 +45,6 @@ export function getSignatureFromTransaction(transaction: Transaction): Signature
     }
     const transactionSignature = base58Decoder.decode(signatureBytes);
     return transactionSignature as Signature;
-}
-
-function uint8ArraysEqual(arr1: Uint8Array, arr2: Uint8Array) {
-    return arr1.length === arr2.length && arr1.every((value, index) => value === arr2[index]);
 }
 
 /**
