@@ -54,3 +54,29 @@ describe('fixBytes', () => {
         expect(fixBytes(bytes, 10)).not.toBe(bytes);
     });
 });
+
+describe('equalBytes', () => {
+    it('returns true for equal byte arrays', () => {
+        const bytes1 = new Uint8Array([0x01, 0x02, 0x03]);
+        const bytes2 = new Uint8Array([0x01, 0x02, 0x03]);
+        expect(equalBytes(bytes1, bytes2)).toBe(true);
+    });
+
+    it('returns false for arrays with different lengths', () => {
+        const bytes1 = new Uint8Array([0x01, 0x02]);
+        const bytes2 = new Uint8Array([0x01, 0x02, 0x03]);
+        expect(equalBytes(bytes1, bytes2)).toBe(false);
+    });
+
+    it('returns false for arrays with different contents', () => {
+        const bytes1 = new Uint8Array([0x01, 0x02, 0x03]);
+        const bytes2 = new Uint8Array([0x01, 0x02, 0x04]);
+        expect(equalBytes(bytes1, bytes2)).toBe(false);
+    });
+
+    it('returns true for empty arrays', () => {
+        const bytes1 = new Uint8Array([]);
+        const bytes2 = new Uint8Array([]);
+        expect(equalBytes(bytes1, bytes2)).toBe(true);
+    });
+});

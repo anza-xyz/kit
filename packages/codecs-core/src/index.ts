@@ -627,6 +627,7 @@
  * - `padBytes`: Pads a `Uint8Array` with zeroes (to the right) to the specified length.
  * - `fixBytes`: Pads or truncates a `Uint8Array` so it has the specified length.
  * - `containsBytes`: Checks if a `Uint8Array` contains another `Uint8Array` at a given offset.
+ * - `equalBytes`: Checks if two byte arrays are equal.
  *
  * ```ts
  * // Merge multiple Uint8Array buffers into one.

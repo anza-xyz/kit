@@ -127,3 +127,23 @@ export function containsBytes(
     if (slice.length !== bytes.length) return false;
     return bytes.every((b, i) => b === slice[i]);
 }
+
+/**
+ * Checks if two byte arrays are equal by comparing their lengths and contents.
+ *
+ * @param a - The first byte array.
+ * @param b - The second byte array.
+ * @returns `true` if both arrays have the same length and identical contents, `false` otherwise.
+ *
+ * @example
+ * ```ts
+ * const bytes1 = new Uint8Array([0x01, 0x02, 0x03]);
+ * const bytes2 = new Uint8Array([0x01, 0x02, 0x03]);
+ * const bytes3 = new Uint8Array([0x01, 0x02, 0x04]);
+ * equalBytes(bytes1, bytes2); // true
+ * equalBytes(bytes1, bytes3); // false
+ * ```
+ */
+export function equalBytes(a: ReadonlyUint8Array | Uint8Array, b: ReadonlyUint8Array | Uint8Array): boolean {
+    return a.length === b.length && a.every((value, index) => value === b[index]);
+}
