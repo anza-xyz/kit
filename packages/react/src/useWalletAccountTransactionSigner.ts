@@ -1,5 +1,5 @@
 import { address } from '@solana/addresses';
-import { ReadonlyUint8Array, equalBytes } from '@solana/codecs-core';
+import { equalBytes } from '@solana/codecs-core';
 import { SOLANA_ERROR__SIGNER__WALLET_MULTISIGN_UNIMPLEMENTED, SolanaError } from '@solana/errors';
 import { getAbortablePromise } from '@solana/promises';
 import { TransactionModifyingSigner } from '@solana/signers';

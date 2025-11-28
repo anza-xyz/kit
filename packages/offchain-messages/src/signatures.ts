@@ -1,5 +1,5 @@
 import { Address, getAddressFromPublicKey, getPublicKeyFromAddress } from '@solana/addresses';
-import { ReadonlyUint8Array, equalBytes } from '@solana/codecs-core';
+import { equalBytes } from '@solana/codecs-core';
 import {
     SOLANA_ERROR__OFFCHAIN_MESSAGE__ADDRESSES_CANNOT_SIGN_OFFCHAIN_MESSAGE,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURE_VERIFICATION_FAILURE,
