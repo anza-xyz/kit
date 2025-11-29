@@ -7,6 +7,7 @@ import type { UiWalletAccount } from '@wallet-standard/ui';
 import { useMemo } from 'react';
 
 import { useSignMessage } from './useSignMessage';
+import { equalBytes } from '@solana/codecs-core';
 
 /**
  * Use this to get a {@link MessageSigner} capable of signing messages with the private key of a
@@ -68,13 +69,11 @@ export function useWalletAccountMessageSigner<TWalletAccount extends UiWalletAcc
                     message: originalMessage,
                 };
                 const { signedMessage, signature } = await getAbortablePromise(signMessage(input), config?.abortSignal);
-                const messageWasModified =
-                    originalMessage.length !== signedMessage.length ||
-                    originalMessage.some((originalByte, ii) => originalByte !== signedMessage[ii]);
+                const messageWasModified = !equalBytes(originalMessage, signedMessage);
                 const originalSignature = originalSignatureMap[uiWalletAccount.address as Address<string>] as
                     | SignatureBytes
                     | undefined;
-                const signatureIsNew = !originalSignature?.every((originalByte, ii) => originalByte === signature[ii]);
+                const signatureIsNew = originalSignature ? !equalBytes(originalSignature, signature) : true;
                 if (!signatureIsNew && !messageWasModified) {
                     // We already had this exact signature, and the message wasn't modified.
                     // Don't replace the existing message object.

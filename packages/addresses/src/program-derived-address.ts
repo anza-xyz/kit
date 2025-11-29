@@ -1,5 +1,5 @@
 import { assertDigestCapabilityIsAvailable } from '@solana/assertions';
-import type { ReadonlyUint8Array } from '@solana/codecs-core';
+import { equalBytes, type ReadonlyUint8Array } from '@solana/codecs-core';
 import {
     isSolanaError,
     SOLANA_ERROR__ADDRESSES__FAILED_TO_FIND_VIABLE_PDA_BUMP_SEED,
@@ -208,7 +208,7 @@ export async function createAddressWithSeed({ baseAddress, programAddress, seed 
     const programAddressBytes = encode(programAddress);
     if (
         programAddressBytes.length >= PDA_MARKER_BYTES.length &&
-        programAddressBytes.slice(-PDA_MARKER_BYTES.length).every((byte, index) => byte === PDA_MARKER_BYTES[index])
+        equalBytes(programAddressBytes.slice(-PDA_MARKER_BYTES.length), PDA_MARKER_BYTES as unknown as Uint8Array)
     ) {
         throw new SolanaError(SOLANA_ERROR__ADDRESSES__PDA_ENDS_WITH_PDA_MARKER);
     }
