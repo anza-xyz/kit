@@ -70,18 +70,25 @@ export function useWalletAccountTransactionSigner<TWalletAccount extends UiWalle
         () => ({
             address: address(uiWalletAccount.address),
             async modifyAndSignTransactions(transactions, config = {}) {
+                let transactionArray: (Transaction | (Transaction & TransactionWithLifetime))[] = [];
                 const { abortSignal, ...options } = config;
                 abortSignal?.throwIfAborted();
                 const transactionCodec = (encoderRef.current ||= getTransactionCodec());
-                if (transactions.length > 1) {
+                if (!(transactions instanceof Array)) {
+                    transactionArray.push(transactions);
+                } else {
+                    transactionArray = [...transactions];
+                }
+
+                if (transactionArray.length > 1) {
                     throw new SolanaError(SOLANA_ERROR__SIGNER__WALLET_MULTISIGN_UNIMPLEMENTED);
                 }
-                if (transactions.length === 0) {
+                if (transactionArray.length === 0) {
                     return transactions as readonly (Transaction &
                         TransactionWithinSizeLimit &
                         TransactionWithLifetime)[];
                 }
-                const [transaction] = transactions;
+                const [transaction] = transactionArray;
                 const wireTransactionBytes = transactionCodec.encode(transaction);
                 const inputWithOptions = {
                     ...options,
@@ -90,7 +97,7 @@ export function useWalletAccountTransactionSigner<TWalletAccount extends UiWalle
                 const { signedTransaction } = await getAbortablePromise(signTransaction(inputWithOptions), abortSignal);
                 const decodedSignedTransaction = transactionCodec.decode(
                     signedTransaction,
-                ) as (typeof transactions)[number];
+                ) as (typeof transactionArray)[number];
 
                 assertIsTransactionWithinSizeLimit(decodedSignedTransaction);
 
