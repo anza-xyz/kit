@@ -1,4 +1,5 @@
 import { Code, Flex, Text } from '@radix-ui/themes';
+import { isSolanaError, SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE } from '@solana/kit';
 import {
     isWalletStandardError,
     WALLET_STANDARD_ERROR__FEATURES__WALLET_ACCOUNT_CHAIN_UNSUPPORTED,
@@ -10,6 +11,7 @@ import React from 'react';
 export const NO_ERROR = Symbol();
 
 export function getErrorMessage(err: unknown, fallbackMessage: React.ReactNode): React.ReactNode {
+    console.error({ err });
     if (isWalletStandardError(err, WALLET_STANDARD_ERROR__FEATURES__WALLET_ACCOUNT_FEATURE_UNIMPLEMENTED)) {
         return (
             <>
@@ -56,6 +58,20 @@ export function getErrorMessage(err: unknown, fallbackMessage: React.ReactNode):
                             </li>
                         ))}
                     </ul>
+                </Text>
+            </Flex>
+        );
+    } else if (isSolanaError(err, SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE)) {
+        return (
+            <Flex direction="column" gap="4">
+                <Text as="p">{err.message}</Text>
+                <Text as="p" trim="end">
+                    Transaction logs:
+                    <ol>
+                        {Object.entries(err.context.logs ?? []).map(([key, value]) => (
+                            <li key={key}>{String(value)}</li>
+                        ))}
+                    </ol>
                 </Text>
             </Flex>
         );
