@@ -21,6 +21,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 env:
   # Among other things, opts out of Turborepo telemetry
@@ -35,7 +36,6 @@ jobs:
   build-and-publish-to-npm:
     permissions:
       contents: write
-      id-token: write
       pull-requests: write
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
@@ -78,7 +78,6 @@ jobs:
 
   build-and-publish-snapshots-to-npm:
     permissions:
-      id-token: write
       pull-requests: write
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -132,7 +131,6 @@ jobs:
   tag-release-manually:
     permissions:
       contents: write
-      id-token: write
     needs: validate-version-exists
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch'
