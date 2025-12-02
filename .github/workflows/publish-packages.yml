@@ -112,7 +112,7 @@ jobs:
         if: always() && steps.start-test-validator.outcome == 'success'
         run: kill ${{ steps.start-test-validator.outputs.pid }}
 
-validate-version-exists:
+  validate-version-exists:
     permissions:
       contents: read
     runs-on: ubuntu-latest
