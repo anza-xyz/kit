@@ -1,5 +1,3 @@
-import { bytesEqual } from '@solana/codecs-core';
-
 expect.extend({
     toEqualArrayBuffer(received: ArrayBuffer, expected: ArrayBuffer) {
         if (!(received instanceof ArrayBuffer) || !(expected instanceof ArrayBuffer)) {
@@ -12,7 +10,7 @@ expect.extend({
         if (received.byteLength === expected.byteLength) {
             const receivedView = new Uint8Array(received);
             const expectedView = new Uint8Array(expected);
-            pass = bytesEqual(expectedView, receivedView);
+            pass = expectedView.every((b, ii) => b === receivedView[ii]);
         }
         return {
             message: () =>

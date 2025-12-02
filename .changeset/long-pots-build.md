@@ -4,7 +4,6 @@
 '@solana/transactions': patch
 '@solana/codecs-core': patch
 '@solana/react': patch
-'@solana/test-matchers': patch
 '@solana/transactions': patch
 ---
 
