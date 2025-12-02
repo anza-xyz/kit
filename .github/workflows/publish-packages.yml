@@ -1,10 +1,19 @@
-name: Publish Packages
+name: Publish Packages (or Tag Release Manually upon manual dispatch)
 
 on:
   workflow_dispatch:
     branches:
       - main
       - backport/**
+    inputs:
+      version:
+        description: 'Version'
+        required: true
+        type: string
+      tag:
+        description: 'Tag name'
+        required: true
+        type: string
   push:
     branches:
       - main
@@ -26,8 +35,10 @@ jobs:
   build-and-publish-to-npm:
     permissions:
       contents: write
+      id-token: write
       pull-requests: write
     runs-on: ubuntu-latest
+    if: github.event_name == 'push'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,12 +50,6 @@ jobs:
         id: start-test-validator
         uses: ./.github/workflows/actions/setup-validator
 
-      - name: Configure NPM token
-        run: |
-          pnpm config set '//registry.npmjs.org/:_authToken' "${NPM_TOKEN}"
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       - name: Build And Test (bypass cache)
         run: pnpm build --force
 
@@ -55,7 +60,6 @@ jobs:
           publish: pnpm changeset:publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           PUBLISH_TAG: latest
           # Some tasks slow down considerably on GitHub Actions runners when concurrency is high
           TURBO_CONCURRENCY: 1
@@ -74,9 +78,10 @@ jobs:
 
   build-and-publish-snapshots-to-npm:
     permissions:
+      id-token: write
       pull-requests: write
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -91,12 +96,6 @@ jobs:
       - name: Run Build Step (force)
         run: pnpm turbo build --force=true
 
-      - name: Configure NPM token
-        run: |
-          pnpm config set '//registry.npmjs.org/:_authToken' "${NPM_TOKEN}"
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       - name: Publish Canary Releases
         run: |
           find packages/* -maxdepth 0 -type d -print0 | \
@@ -107,9 +106,42 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           PUBLISH_TAG: canary
 
       - name: Stop Test Validator
         if: always() && steps.start-test-validator.outcome == 'success'
         run: kill ${{ steps.start-test-validator.outputs.pid }}
+
+validate-version-exists:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        uses: ./.github/workflows/actions/install-dependencies
+
+      - name: Validate that a package at the given version has already been published
+        run: |
+          echo '${{ github.event.inputs.version }}' | grep -E "^([0-9]+\.){0,2}[0-9]+$" > /dev/null || echo 'Version must be of the form X.Y.Z'
+          pnpm view '@solana/kit@${{ github.event.inputs.version }}'
+
+  tag-release-manually:
+    permissions:
+      contents: write
+      id-token: write
+    needs: validate-version-exists
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        uses: ./.github/workflows/actions/install-dependencies
+
+      - name: Tag Release Manually
+        run: ./packages/build-scripts/tag-release-manually.ts --version '${{ github.event.inputs.version }}' --tag '${{ github.event.inputs.tag }}'

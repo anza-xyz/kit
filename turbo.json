@@ -76,7 +76,6 @@
                 "GH_TOKEN",
                 "GITHUB_OUTPUT",
                 "GITHUB_TOKEN",
-                "NPM_TOKEN",
                 "PUBLISH_TAG"
             ]
         },
