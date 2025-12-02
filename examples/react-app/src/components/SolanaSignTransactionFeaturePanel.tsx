@@ -233,7 +233,9 @@ export function SolanaSignTransactionFeaturePanel({ account }: Props) {
                 >
                     <Dialog.Trigger>
                         <Button
-                            color={error ? undefined : 'red'}
+                            color={
+                                error ? (signTransactionState.kind === 'ready-to-send' ? 'green' : undefined) : 'red'
+                            }
                             disabled={solQuantityString === '' || !recipientAccount}
                             loading={formLoading}
                             type="submit"
