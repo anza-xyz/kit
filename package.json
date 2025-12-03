@@ -8,8 +8,7 @@
         "lint": "turbo run --concurrency=${TURBO_CONCURRENCY:-95.84%} test:lint",
         "style:fix": "turbo  run --concurrency=${TURBO_CONCURRENCY:-95.84%} style:fix && pnpm prettier --log-level warn --ignore-unknown --write '{.,!packages}/*'",
         "test": "turbo run --concurrency=${TURBO_CONCURRENCY:-95.84%} test:unit:browser test:unit:node",
-        "test:live-with-test-validator": "turbo run --concurrency=${TURBO_CONCURRENCY:-95.84%} test:live-with-test-validator",
-        "test:live-with-test-validator:setup": "./scripts/setup-test-validator.sh"
+        "test:setup": "./scripts/setup-test-validator.sh"
     },
     "devDependencies": {
         "@changesets/changelog-github": "^0.5.1",

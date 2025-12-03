@@ -3,7 +3,7 @@
  * Create a new token mint and airdrop it to 100 recipients.
  *
  * Before running any of the examples in this monorepo, make sure to set up a test validator by
- * running `pnpm test:live-with-test-validator:setup` in the root directory.
+ * running `pnpm test:setup` in the root directory.
  *
  * To run this example, execute `pnpm start` in this directory.
  */

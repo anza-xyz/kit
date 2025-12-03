@@ -101,16 +101,6 @@
             ],
             "outputs": []
         },
-        "test:live-with-test-validator": {
-            "dependsOn": [
-                "^compile:js"
-            ],
-            "inputs": [
-                "$TURBO_DEFAULT$",
-                "src/**"
-            ],
-            "outputs": []
-        },
         "test:prettier": {
             "inputs": [
                 "$TURBO_DEFAULT$",

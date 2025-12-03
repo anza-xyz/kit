@@ -11,7 +11,7 @@ pnpm install
 Most examples use a local test Solana validator. Install one by running the following command in the root of this monorepo.
 
 ```shell
-pnpm test:live-with-test-validator:setup
+pnpm test:setup
 ```
 
 ## Run an example

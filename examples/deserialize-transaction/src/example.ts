@@ -3,7 +3,7 @@
  * Deserialize and inspect a transaction with @solana/kit
  *
  * Before running any of the examples in this monorepo, make sure to set up a test validator by
- * running `pnpm test:live-with-test-validator:setup` in the root directory.
+ * running `pnpm test:setup` in the root directory.
  *
  * To run this example, execute `pnpm start` in this directory.
  */

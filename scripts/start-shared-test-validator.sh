@@ -12,7 +12,7 @@ TEST_VALIDATOR_LEDGER="$( cd "$(dirname "${BASH_SOURCE[0]}")/.." ; pwd -P )/test
 FIXTURE_ACCOUNTS_DIR="$( cd "$(dirname "${BASH_SOURCE[0]}")/fixtures" ; pwd -P)"
 
 if [ ! -x "$TEST_VALIDATOR" ]; then
-    echo "ERROR: No test validator is installed. Install one using the following command: pnpm test:live-with-test-validator:setup" >&2
+    echo "ERROR: No test validator is installed. Install one using the following command: pnpm test:setup" >&2
     exit 1
 fi
 

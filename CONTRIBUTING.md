@@ -3,7 +3,7 @@ Kit is developed in public and we encourage and appreciate contributions.
 ## Getting Started
 
 1. Install dependencies: `pnpm install`
-2. The first time you build Kit, you will need to install the Agave test validator, which is used for some tests. `pnpm test:live-with-test-validator:setup`
+2. The first time you build Kit, you will need to install the Agave test validator, which is used for some tests. `pnpm test:setup`
 3. Start a test validator before running tests. `./scripts/start-shared-test-validator.sh`
 4. Build + test all packages: `pnpm build`
 
