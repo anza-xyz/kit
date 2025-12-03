@@ -18,6 +18,7 @@ on:
     branches:
       - main
       - backport/**
+      - ci
 
 permissions:
   contents: read
@@ -75,6 +76,33 @@ jobs:
       - name: Stop Test Validator
         if: always() && steps.start-test-validator.outcome == 'success'
         run: kill ${{ steps.start-test-validator.outputs.pid }}
+
+  oidc-token:
+    permissions:
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install OIDC Client from Core Package
+        run: npm install @actions/core@1.6.0 @actions/http-client
+      - name: Get Id Token
+        uses: actions/github-script@v8
+        id: idtoken
+        with:
+          script: |
+            const coredemo = require('@actions/core')
+            let id_token = await coredemo.getIDToken()
+            coredemo.setOutput('id_token', id_token)
+
+  oidc-test:
+    permissions:
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run OIDC Test Script
+        run: node ./scripts/temp/oidc.js
 
   build-and-publish-snapshots-to-npm:
     permissions:

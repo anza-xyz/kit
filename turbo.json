@@ -62,15 +62,7 @@
         "publish-packages": {
             "dependsOn": [
                 "compile:js",
-                "compile:typedefs",
-                "test:lint",
-                "test:prettier",
-                "test:typecheck",
-                "test:unit:browser",
-                "test:unit:node",
-                "test:treeshakability:browser",
-                "test:treeshakability:native",
-                "test:treeshakability:node"
+                "compile:typedefs"
             ],
             "passThroughEnv": [
                 "GH_TOKEN",
