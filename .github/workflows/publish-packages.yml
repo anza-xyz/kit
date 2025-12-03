@@ -88,11 +88,31 @@ jobs:
           echo "ACTIONS_ID_TOKEN_REQUEST_URL: ${ACTIONS_ID_TOKEN_REQUEST_URL:+SET}"
           echo "ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${ACTIONS_ID_TOKEN_REQUEST_TOKEN:+SET}"
 
+      - name: Debug npmrc
+        run: |
+          echo "=== Root .npmrc ==="
+          cat ~/.npmrc || echo "No user .npmrc"
+          cat .npmrc || echo "No project .npmrc"
+          echo "=== Package .npmrc ==="
+          cat packages/errors/.npmrc || echo "No package .npmrc"
+          echo "=== NPM Config ==="
+          npm config list
+          echo "=== Env vars ==="
+          echo "NPM_CONFIG_USERCONFIG=${NPM_CONFIG_USERCONFIG:-NOT SET}"
+          echo "ACTIONS_ID_TOKEN_REQUEST_URL=${ACTIONS_ID_TOKEN_REQUEST_URL:+SET}"
+          echo "ACTIONS_ID_TOKEN_REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN:+SET}"
+
+      - name: Debug in turbo context
+        run: |
+          pnpm turbo run debug-npm --concurrency=1
+
       - name: Publish Canary Releases
         run: |
           find packages/* -maxdepth 0 -type d -print0 | \
             xargs -t0 -n 1 -I {} \
-              sh -c 'cd {} && pnpm pkg delete devDependencies && pnpm prepublishOnly && npm publish --tag ${PUBLISH_TAG:-canary} --access public --no-git-checks'
+              sh -c 'cd {} && pnpm pkg delete devDependencies'
+          pnpm changeset version --snapshot canary
+          pnpm turbo publish-packages --concurrency=${TURBO_CONCURRENCY:-1}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

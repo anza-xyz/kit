@@ -58,7 +58,8 @@
         "test:treeshakability:node": "agadoo dist/index.node.mjs",
         "test:typecheck": "tsc --noEmit",
         "test:unit:browser": "NODE_OPTIONS=\"--localstorage-file=$(mktemp)\" TERM_OVERRIDE=\"${TURBO_HASH:+dumb}\" TERM=${TERM_OVERRIDE:-$TERM} jest -c ../../node_modules/@solana/test-config/jest-unit.config.browser.ts --rootDir . --silent",
-        "test:unit:node": "NODE_OPTIONS=\"--localstorage-file=$(mktemp)\" TERM_OVERRIDE=\"${TURBO_HASH:+dumb}\" TERM=${TERM_OVERRIDE:-$TERM} jest -c ../../node_modules/@solana/test-config/jest-unit.config.node.ts --rootDir . --silent"
+        "test:unit:node": "NODE_OPTIONS=\"--localstorage-file=$(mktemp)\" TERM_OVERRIDE=\"${TURBO_HASH:+dumb}\" TERM=${TERM_OVERRIDE:-$TERM} jest -c ../../node_modules/@solana/test-config/jest-unit.config.node.ts --rootDir . --silent",
+        "debug-npm": "npm config list && echo NPM_CONFIG_USERCONFIG=$NPM_CONFIG_USERCONFIG"
     },
     "author": "Solana Labs Maintainers <maintainers@solanalabs.com>",
     "license": "MIT",

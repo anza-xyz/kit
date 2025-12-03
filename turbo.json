@@ -66,7 +66,15 @@
                 "GITHUB_TOKEN",
                 "PUBLISH_TAG",
                 "ACTIONS_ID_TOKEN_REQUEST_TOKEN",
-                "ACTIONS_ID_TOKEN_REQUEST_URL"
+                "ACTIONS_ID_TOKEN_REQUEST_URL",
+                "NPM_CONFIG_USERCONFIG"
+            ]
+        },
+        "debug-npm": {
+            "passThroughEnv": [
+                "ACTIONS_ID_TOKEN_REQUEST_TOKEN",
+                "ACTIONS_ID_TOKEN_REQUEST_URL",
+                "NPM_CONFIG_USERCONFIG"
             ]
         },
         "style:fix": {
