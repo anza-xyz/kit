@@ -7,11 +7,7 @@
         "build": {
             "dependsOn": [
                 "compile:js",
-                "compile:typedefs",
-                "test:treeshakability:browser",
-                "test:treeshakability:native",
-                "test:treeshakability:node",
-                "test:typecheck"
+                "compile:typedefs"
             ],
             "outputs": [
                 "dist/**"
