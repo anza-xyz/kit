@@ -83,6 +83,11 @@ jobs:
       - name: Update npm
         run: npm --version && npm install -g npm@latest && npm --version
 
+      - name: Debug OIDC Environment
+        run: |
+          echo "ACTIONS_ID_TOKEN_REQUEST_URL: ${ACTIONS_ID_TOKEN_REQUEST_URL:+SET}"
+          echo "ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${ACTIONS_ID_TOKEN_REQUEST_TOKEN:+SET}"
+
       - name: Publish Canary Releases
         run: |
           find packages/* -maxdepth 0 -type d -print0 | \
