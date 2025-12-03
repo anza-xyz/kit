@@ -78,7 +78,8 @@
                 "GITHUB_EVENT_NAME",
                 "GITHUB_RUN_ID",
                 "GITHUB_RUN_ATTEMPT",
-                "GITHUB_SERVER_URL"
+                "GITHUB_SERVER_URL",
+                "NODE_AUTH_TOKEN"
             ]
         },
         "debug-npm": {
