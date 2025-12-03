@@ -67,7 +67,8 @@
                 "PUBLISH_TAG",
                 "ACTIONS_ID_TOKEN_REQUEST_TOKEN",
                 "ACTIONS_ID_TOKEN_REQUEST_URL",
-                "NPM_CONFIG_USERCONFIG"
+                "NPM_CONFIG_USERCONFIG",
+                "GITHUB_ACTIONS"
             ]
         },
         "debug-npm": {
