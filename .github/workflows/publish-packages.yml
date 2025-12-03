@@ -33,50 +33,6 @@ env:
   TURBO_TEAM: ${{ vars.TURBO_TEAM }}
 
 jobs:
-  build-and-publish-to-npm:
-    permissions:
-      contents: write
-      id-token: write
-      pull-requests: write
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Dependencies
-        uses: ./.github/workflows/actions/install-dependencies
-
-      - name: Setup Solana Test Validator
-        id: start-test-validator
-        uses: ./.github/workflows/actions/setup-validator
-
-      - name: Build And Test (bypass cache)
-        run: pnpm build --force
-
-      - name: Create Changesets Pull Request or Publish to NPM
-        id: changesets
-        uses: changesets/action@e0145edc7d9d8679003495b11f87bd8ef63c0cba # v1.5.3
-        with:
-          publish: pnpm changeset:publish
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PUBLISH_TAG: latest
-          # Some tasks slow down considerably on GitHub Actions runners when concurrency is high
-          TURBO_CONCURRENCY: 1
-
-      - name: Create GitHub Release
-        if: steps.changesets.outputs.published == 'true'
-        run: |
-          cd ./packages/build-scripts/
-          ./create-github-release.ts
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Stop Test Validator
-        if: always() && steps.start-test-validator.outcome == 'success'
-        run: kill ${{ steps.start-test-validator.outputs.pid }}
-
   oidc-token:
     permissions:
       id-token: write
@@ -109,7 +65,7 @@ jobs:
       id-token: write
       pull-requests: write
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/ci'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -139,37 +95,3 @@ jobs:
       - name: Stop Test Validator
         if: always() && steps.start-test-validator.outcome == 'success'
         run: kill ${{ steps.start-test-validator.outputs.pid }}
-
-  validate-version-exists:
-    permissions:
-      contents: read
-    runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Dependencies
-        uses: ./.github/workflows/actions/install-dependencies
-
-      - name: Validate that a package at the given version has already been published
-        run: |
-          echo '${{ github.event.inputs.version }}' | grep -E "^([0-9]+\.){0,2}[0-9]+$" > /dev/null || echo 'Version must be of the form X.Y.Z'
-          pnpm view '@solana/kit@${{ github.event.inputs.version }}'
-
-  tag-release-manually:
-    permissions:
-      contents: write
-      id-token: write
-    needs: validate-version-exists
-    runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Dependencies
-        uses: ./.github/workflows/actions/install-dependencies
-
-      - name: Tag Release Manually
-        run: ./packages/build-scripts/tag-release-manually.ts --version '${{ github.event.inputs.version }}' --tag '${{ github.event.inputs.tag }}'
