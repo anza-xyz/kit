@@ -80,6 +80,9 @@ jobs:
       - name: Run Build Step (force)
         run: pnpm turbo build --force=true
 
+      - name: Update npm
+        run: npm --version && npm install -g npm@latest && npm --version
+
       - name: Publish Canary Releases
         run: |
           find packages/* -maxdepth 0 -type d -print0 | \
