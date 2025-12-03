@@ -1,5 +1,13 @@
 # @solana/rpc-graphql
 
+## 5.1.0
+
+### Patch Changes
+
+- Updated dependencies [[`d7f5a0c`](https://github.com/anza-xyz/kit/commit/d7f5a0c046f0a2f2836554fa671364de0b512e97)]:
+    - @solana/codecs-strings@5.1.0
+    - @solana/fast-stable-stringify@5.1.0
+
 ## 5.0.0
 
 ### Patch Changes

@@ -1,5 +1,22 @@
 # @solana/rpc
 
+## 5.1.0
+
+### Patch Changes
+
+- [#1028](https://github.com/anza-xyz/kit/pull/1028) [`eb49ed7`](https://github.com/anza-xyz/kit/commit/eb49ed7dd45f2a5a0098b3de5ef482a813f8ad47) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add a type `SolanaRpcApiFromClusterUrl`
+
+- Updated dependencies [[`becf5f6`](https://github.com/anza-xyz/kit/commit/becf5f63f1b97d43109b2488c7cd0806ce6329f4), [`c97df88`](https://github.com/anza-xyz/kit/commit/c97df8886948b281fff7d6b66429a59a9f7bdfa2), [`32214f5`](https://github.com/anza-xyz/kit/commit/32214f57cfb79fb2566e773acec71635bac641df)]:
+    - @solana/errors@5.1.0
+    - @solana/rpc-api@5.1.0
+    - @solana/rpc-spec@5.1.0
+    - @solana/rpc-transformers@5.1.0
+    - @solana/rpc-transport-http@5.1.0
+    - @solana/rpc-types@5.1.0
+    - @solana/fast-stable-stringify@5.1.0
+    - @solana/functional@5.1.0
+    - @solana/rpc-spec-types@5.1.0
+
 ## 5.0.0
 
 ### Patch Changes
