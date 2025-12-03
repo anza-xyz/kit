@@ -59,7 +59,7 @@
         "pnpm": "^10",
         "yarn": "please-use-pnpm"
     },
-    "packageManager": "pnpm@10.14.0",
+    "packageManager": "pnpm@10.24.0",
     "pnpm": {
         "overrides": {
             "axios@<1.8.2": "^1.12.0",
