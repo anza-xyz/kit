@@ -73,12 +73,13 @@
                 "test:treeshakability:node"
             ],
             "passThroughEnv": [
-                "GH_TOKEN",
-                "GITHUB_OUTPUT",
-                "GITHUB_TOKEN",
-                "PUBLISH_TAG",
                 "ACTIONS_ID_TOKEN_REQUEST_TOKEN",
-                "ACTIONS_ID_TOKEN_REQUEST_URL"
+                "ACTIONS_ID_TOKEN_REQUEST_URL",
+                "GH_TOKEN",
+                "GITHUB_*",
+                "NODE_AUTH_TOKEN",
+                "NPM_CONFIG_USERCONFIG",
+                "PUBLISH_TAG"
             ]
         },
         "style:fix": {
