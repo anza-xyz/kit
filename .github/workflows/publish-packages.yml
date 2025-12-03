@@ -106,6 +106,9 @@ jobs:
         run: |
           pnpm turbo run debug-npm --concurrency=1
 
+      - name: Print env
+        run: printenv
+
       - name: Publish Canary Releases
         run: |
           find packages/* -maxdepth 0 -type d -print0 | \
