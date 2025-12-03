@@ -68,7 +68,17 @@
                 "ACTIONS_ID_TOKEN_REQUEST_TOKEN",
                 "ACTIONS_ID_TOKEN_REQUEST_URL",
                 "NPM_CONFIG_USERCONFIG",
-                "GITHUB_ACTIONS"
+                "GITHUB_ACTIONS",
+                "GITHUB_REF",
+                "GITHUB_REPOSITORY",
+                "GITHUB_REPOSITORY_ID",
+                "GITHUB_REPOSITORY_OWNER_ID",
+                "GITHUB_SHA",
+                "GITHUB_WORKFLOW_REF",
+                "GITHUB_EVENT_NAME",
+                "GITHUB_RUN_ID",
+                "GITHUB_RUN_ATTEMPT",
+                "GITHUB_SERVER_URL"
             ]
         },
         "debug-npm": {
