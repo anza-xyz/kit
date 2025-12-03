@@ -10,7 +10,7 @@
     ],
     "devDependencies": {
         "@manypkg/get-packages": "^3.1.0",
-        "@octokit/rest": "^22.0.0",
+        "@octokit/rest": "^22.0.1",
         "@types/jscodeshift": "^17.3.0",
         "@types/minimist": "^1.2.5",
         "browserslist-to-esbuild": "^2.1.1",
