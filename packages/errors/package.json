@@ -1,6 +1,6 @@
 {
     "name": "@callumtest/kit-errors",
-    "version": "5.0.2",
+    "version": "5.0.3",
     "description": "Throw, identify, and decode Solana JavaScript errors",
     "homepage": "https://www.solanakit.com/api#solanaerrors",
     "exports": {
