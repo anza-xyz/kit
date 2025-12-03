@@ -76,8 +76,7 @@
                 "GH_TOKEN",
                 "GITHUB_OUTPUT",
                 "GITHUB_TOKEN",
-                "PUBLISH_TAG",
-                "PNPM_TOKEN"
+                "PUBLISH_TAG"
             ]
         },
         "style:fix": {
