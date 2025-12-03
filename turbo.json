@@ -76,7 +76,9 @@
                 "GH_TOKEN",
                 "GITHUB_OUTPUT",
                 "GITHUB_TOKEN",
-                "PUBLISH_TAG"
+                "PUBLISH_TAG",
+                "ACTIONS_ID_TOKEN_REQUEST_TOKEN",
+                "ACTIONS_ID_TOKEN_REQUEST_URL"
             ]
         },
         "style:fix": {
