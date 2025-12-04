@@ -20,14 +20,12 @@ interface WaitForDurableNonceTransactionConfirmationConfig extends BaseTransacti
     transaction: Readonly<Transaction & TransactionWithDurableNonceLifetime>;
 }
 
-interface WaitForRecentTransactionWithBlockhashLifetimeConfirmationConfig
-    extends BaseTransactionConfirmationStrategyConfig {
+interface WaitForRecentTransactionWithBlockhashLifetimeConfirmationConfig extends BaseTransactionConfirmationStrategyConfig {
     getBlockHeightExceedencePromise: ReturnType<typeof createBlockHeightExceedencePromiseFactory>;
     transaction: Readonly<Transaction & TransactionWithLastValidBlockHeight>;
 }
 
-interface WaitForRecentTransactionWithTimeBasedLifetimeConfirmationConfig
-    extends BaseTransactionConfirmationStrategyConfig {
+interface WaitForRecentTransactionWithTimeBasedLifetimeConfirmationConfig extends BaseTransactionConfirmationStrategyConfig {
     getTimeoutPromise: typeof getTimeoutPromise;
     /**
      * A 64 byte Ed25519 signature, encoded as a base-58 string, that uniquely identifies a
