@@ -43,7 +43,7 @@ describe('getTransactionMessageSize', () => {
     });
 
     it('gets the size of an oversized compilable transaction message', () => {
-        expect(getTransactionMessageSize(OVERSIZED_TRANSACTION_MESSAGE)).toBe(1405);
+        expect(getTransactionMessageSize(OVERSIZED_TRANSACTION_MESSAGE)).toBe(4269);
     });
 });
 
@@ -65,7 +65,7 @@ describe('assertIsTransactionMessageWithinSizeLimit', () => {
     it('throws when the compiled size is above the transaction size limit', () => {
         expect(() => assertIsTransactionMessageWithinSizeLimit(OVERSIZED_TRANSACTION_MESSAGE)).toThrow(
             new SolanaError(SOLANA_ERROR__TRANSACTION__EXCEEDS_SIZE_LIMIT, {
-                transactionSize: 1405,
+                transactionSize: 4269,
                 transactionSizeLimit: TRANSACTION_SIZE_LIMIT,
             }),
         );

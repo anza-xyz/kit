@@ -48,7 +48,7 @@ describe('getTransactionSize', () => {
     });
 
     it('gets the size of an oversized transaction', () => {
-        expect(getTransactionSize(OVERSIZED_TRANSACTION)).toBe(1405);
+        expect(getTransactionSize(OVERSIZED_TRANSACTION)).toBe(4269);
     });
 });
 
@@ -70,7 +70,7 @@ describe('assertIsTransactionWithinSizeLimit', () => {
     it('throws when the transaction size is above the transaction size limit', () => {
         expect(() => assertIsTransactionWithinSizeLimit(OVERSIZED_TRANSACTION)).toThrow(
             new SolanaError(SOLANA_ERROR__TRANSACTION__EXCEEDS_SIZE_LIMIT, {
-                transactionSize: 1405,
+                transactionSize: 4269,
                 transactionSizeLimit: TRANSACTION_SIZE_LIMIT,
             }),
         );
