@@ -57,7 +57,10 @@ export type TransactionModifyingSignerConfig = BaseTransactionSignerConfig;
 export type TransactionModifyingSigner<TAddress extends string = string> = Readonly<{
     address: Address<TAddress>;
     modifyAndSignTransactions(
-        transactions: readonly (Transaction | (Transaction & TransactionWithLifetime))[],
+        transactions:
+            | Transaction
+            | readonly (Transaction | (Transaction & TransactionWithLifetime))[]
+            | (Transaction & TransactionWithLifetime),
         config?: TransactionModifyingSignerConfig,
     ): Promise<readonly (Transaction & TransactionWithinSizeLimit & TransactionWithLifetime)[]>;
 }>;
