@@ -207,7 +207,7 @@ describe('getLinearMessagePackerInstructionPlan', () => {
 
         const plan = getLinearMessagePackerInstructionPlan({
             getInstruction: (offset: number, length: number) => createInstruction(`[${offset},${offset + length})`),
-            totalLength: 2000,
+            totalLength: 7500,
         });
 
         const messagePacker = plan.getMessagePacker();
@@ -217,7 +217,7 @@ describe('getLinearMessagePackerInstructionPlan', () => {
         );
         expect(messagePacker.done()).toBe(false);
         expect(messagePacker.packMessageToCapacity(message).instructions[0]).toStrictEqual(
-            createInstruction(`[${expectedLength},2000)`),
+            createInstruction(`[${expectedLength},7500)`),
         );
         expect(messagePacker.done()).toBe(true);
         expect(() => messagePacker.packMessageToCapacity(message)).toThrow(
