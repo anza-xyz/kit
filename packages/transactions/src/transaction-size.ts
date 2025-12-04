@@ -6,24 +6,9 @@ import { getTransactionEncoder } from './codecs';
 import { Transaction } from './transaction';
 
 /**
- * The maximum size of a transaction packet in bytes.
- */
-export const TRANSACTION_PACKET_SIZE = 1280;
-
-/**
- * The size of the transaction packet header in bytes.
- * This includes the IPv6 header and the fragment header.
- */
-export const TRANSACTION_PACKET_HEADER =
-    40 /* 40 bytes is the size of the IPv6 header. */ + 8; /* 8 bytes is the size of the fragment header. */
-
-/**
  * The maximum size of a transaction in bytes.
- *
- * Note that this excludes the transaction packet header.
- * In other words, this is how much content we can fit in a transaction packet.
  */
-export const TRANSACTION_SIZE_LIMIT = TRANSACTION_PACKET_SIZE - TRANSACTION_PACKET_HEADER;
+export const TRANSACTION_SIZE_LIMIT = 4096;
 
 /**
  * Gets the size of a given transaction in bytes.
