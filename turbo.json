@@ -8,10 +8,14 @@
             "dependsOn": [
                 "compile:js",
                 "compile:typedefs",
+                "test:lint",
+                "test:prettier",
+                "test:typecheck",
+                "test:unit:browser",
+                "test:unit:node",
                 "test:treeshakability:browser",
                 "test:treeshakability:native",
-                "test:treeshakability:node",
-                "test:typecheck"
+                "test:treeshakability:node"
             ],
             "outputs": [
                 "dist/**"
