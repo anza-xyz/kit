@@ -18,7 +18,7 @@
         "@eslint/json": "^0.13.2",
         "@prettier/sync": "^0.6.1",
         "@solana/build-scripts": "workspace:*",
-        "@solana/eslint-config-solana": "^5.0.0",
+        "@solana/eslint-config-solana": "^4.0.0",
         "@solana/prettier-config-solana": "0.0.5",
         "@solana/test-config": "workspace:*",
         "@solana/test-matchers": "workspace:*",

@@ -42,8 +42,8 @@ importers:
         specifier: workspace:*
         version: link:packages/build-scripts
       '@solana/eslint-config-solana':
-        specifier: ^5.0.0
-        version: 5.0.0(a75c074b419cff6286bc2273f9285a13)
+        specifier: ^4.0.0
+        version: 4.0.0(a75c074b419cff6286bc2273f9285a13)
       '@solana/prettier-config-solana':
         specifier: 0.0.5
         version: 0.0.5(prettier@3.6.2)
@@ -4363,6 +4363,22 @@ packages:
     peerDependencies:
       typescript: '>=5.3.3'
 
+  '@solana/eslint-config-solana@4.0.0':
+    resolution: {integrity: sha512-kDhd7uOsby+7Gffenn0EBeE692s2cwPe0/Lv1BsdfeniDM4NxBcfIXLQFB8iCCvdFWrO9b+0SMuGrhRHdgTDQQ==}
+    peerDependencies:
+      '@eslint/js': ^9.13.0
+      '@types/eslint__js': ^8.42.3
+      eslint: ^9.13.0
+      eslint-plugin-jest: ^28.8.3
+      eslint-plugin-react-hooks: ^5.0.0
+      eslint-plugin-simple-import-sort: ^12.1.1
+      eslint-plugin-sort-keys-fix: ^1.1.2
+      eslint-plugin-typescript-sort-keys: ^3.3.0
+      globals: ^15.11.0
+      jest: ^30.0.0-alpha.6
+      typescript: ^5.6
+      typescript-eslint: ^8.11.0
+
   '@solana/eslint-config-solana@5.0.0':
     resolution: {integrity: sha512-DPsoloOpVf/4JD7m3j394BvJX8mCKTSQ1xJrP0tyyeLEZN7x09OL9uj2bo2Ma4UTYZsyV97p2eiuiHmJVA0Kfw==}
     peerDependencies:
@@ -5242,8 +5258,8 @@ packages:
   caniuse-lite@1.0.30001707:
     resolution: {integrity: sha512-3qtRjw/HQSMlDWf+X79N206fepf4SOOU6SQLMaq/0KkZLmSjPxAkBOQQ+FxbHKfHmYLZFfdWsO3KA90ceHPSnw==}
 
-  caniuse-lite@1.0.30001759:
-    resolution: {integrity: sha512-Pzfx9fOKoKvevQf8oCXoyNRQ5QyxJj+3O0Rqx2V5oxT61KGx8+n6hV/IUyJeifUci2clnmmKVpvtiqRzgiWjSw==}
+  caniuse-lite@1.0.30001757:
+    resolution: {integrity: sha512-r0nnL/I28Zi/yjk1el6ilj27tKcdjLsNqAOZr0yVjWPrSQyHgKI2INaEWw21bAQSv2LXRt1XuCS/GomNpWOxsQ==}
 
   chalk@2.4.2:
     resolution: {integrity: sha512-Mti+f9lpJNcwF4tWV8/OrTTtF1gZi+f8FqlyAdouralcFWFQWF2+NgCHShjkCb+IFBLq9buZwE1xckQU4peSuQ==}
@@ -11360,6 +11376,21 @@ snapshots:
       commander: 14.0.2
       typescript: 5.8.3
 
+  '@solana/eslint-config-solana@4.0.0(a75c074b419cff6286bc2273f9285a13)':
+    dependencies:
+      '@eslint/js': 9.38.0
+      '@types/eslint__js': 8.42.3
+      eslint: 9.38.0(jiti@1.21.7)
+      eslint-plugin-jest: 28.11.0(@typescript-eslint/eslint-plugin@8.47.0(@typescript-eslint/parser@8.47.0(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.38.0(jiti@1.21.7))(jest@30.0.0-alpha.6(@types/node@24.10.0)(ts-node@10.9.2(@swc/core@1.13.19(@swc/helpers@0.5.17))(@types/node@24.10.0)(typescript@5.8.3)))(typescript@5.8.3)
+      eslint-plugin-react-hooks: 5.2.0(eslint@9.38.0(jiti@1.21.7))
+      eslint-plugin-simple-import-sort: 12.1.1(eslint@9.38.0(jiti@1.21.7))
+      eslint-plugin-sort-keys-fix: 1.1.2
+      eslint-plugin-typescript-sort-keys: 3.3.0(@typescript-eslint/parser@8.47.0(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3)
+      globals: 16.5.0
+      jest: 30.0.0-alpha.6(@types/node@24.10.0)(ts-node@10.9.2(@swc/core@1.13.19(@swc/helpers@0.5.17))(@types/node@24.10.0)(typescript@5.8.3))
+      typescript: 5.8.3
+      typescript-eslint: 8.17.0(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3)
+
   '@solana/eslint-config-solana@5.0.0(17b086cf3d6de5ed11614a6e1f48acc6)':
     dependencies:
       '@eslint/js': 9.39.1
@@ -11374,21 +11405,6 @@ snapshots:
       jest: 30.0.0-alpha.6(@types/node@24.10.0)(ts-node@10.9.2(@swc/core@1.13.19(@swc/helpers@0.5.17))(@types/node@24.10.0)(typescript@5.8.3))
       typescript: 5.9.3
       typescript-eslint: 8.17.0(eslint@9.39.1(jiti@1.21.7))(typescript@5.9.3)
-
-  '@solana/eslint-config-solana@5.0.0(a75c074b419cff6286bc2273f9285a13)':
-    dependencies:
-      '@eslint/js': 9.38.0
-      '@types/eslint__js': 8.42.3
-      eslint: 9.38.0(jiti@1.21.7)
-      eslint-plugin-jest: 28.11.0(@typescript-eslint/eslint-plugin@8.47.0(@typescript-eslint/parser@8.47.0(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.38.0(jiti@1.21.7))(jest@30.0.0-alpha.6(@types/node@24.10.0)(ts-node@10.9.2(@swc/core@1.13.19(@swc/helpers@0.5.17))(@types/node@24.10.0)(typescript@5.8.3)))(typescript@5.8.3)
-      eslint-plugin-react-hooks: 5.2.0(eslint@9.38.0(jiti@1.21.7))
-      eslint-plugin-simple-import-sort: 12.1.1(eslint@9.38.0(jiti@1.21.7))
-      eslint-plugin-sort-keys-fix: 1.1.2
-      eslint-plugin-typescript-sort-keys: 3.3.0(@typescript-eslint/parser@8.47.0(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3))(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3)
-      globals: 16.5.0
-      jest: 30.0.0-alpha.6(@types/node@24.10.0)(ts-node@10.9.2(@swc/core@1.13.19(@swc/helpers@0.5.17))(@types/node@24.10.0)(typescript@5.8.3))
-      typescript: 5.8.3
-      typescript-eslint: 8.17.0(eslint@9.38.0(jiti@1.21.7))(typescript@5.8.3)
 
   '@solana/prettier-config-solana@0.0.5(prettier@3.6.2)':
     dependencies:
@@ -12530,7 +12546,7 @@ snapshots:
   browserslist@4.28.0:
     dependencies:
       baseline-browser-mapping: 2.8.32
-      caniuse-lite: 1.0.30001759
+      caniuse-lite: 1.0.30001757
       electron-to-chromium: 1.5.263
       node-releases: 2.0.27
       update-browserslist-db: 1.1.4(browserslist@4.28.0)
@@ -12610,7 +12626,7 @@ snapshots:
 
   caniuse-lite@1.0.30001707: {}
 
-  caniuse-lite@1.0.30001759: {}
+  caniuse-lite@1.0.30001757: {}
 
   chalk@2.4.2:
     dependencies:
