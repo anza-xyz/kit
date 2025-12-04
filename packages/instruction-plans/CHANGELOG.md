@@ -1,5 +1,27 @@
 # @solana/instruction-plans
 
+## 5.1.0
+
+### Minor Changes
+
+- [#1044](https://github.com/anza-xyz/kit/pull/1044) [`e64a9b2`](https://github.com/anza-xyz/kit/commit/e64a9b263f7752bd470144d19562eff8819bd799) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add a function to summarize a `TransactionPlanResult`
+
+- [#1035](https://github.com/anza-xyz/kit/pull/1035) [`2bd0bc2`](https://github.com/anza-xyz/kit/commit/2bd0bc2b8d45eedca661ddf056341deba159a6b1) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add a function to flatten a transaction plan result
+
+- [#1056](https://github.com/anza-xyz/kit/pull/1056) [`a0c394b`](https://github.com/anza-xyz/kit/commit/a0c394b2f5fcaf543382ca30f052830ca91759e3) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Accept any `Error` object in failed `SingleTransactionPlanResult`
+
+- [#1043](https://github.com/anza-xyz/kit/pull/1043) [`5c1f9e5`](https://github.com/anza-xyz/kit/commit/5c1f9e5d61ae55851aaa44e7a5ab83ff09ffee28) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Make Transaction optional in successful transaction plan result + add signature
+
+### Patch Changes
+
+- Updated dependencies [[`becf5f6`](https://github.com/anza-xyz/kit/commit/becf5f63f1b97d43109b2488c7cd0806ce6329f4), [`32214f5`](https://github.com/anza-xyz/kit/commit/32214f57cfb79fb2566e773acec71635bac641df), [`32b13a8`](https://github.com/anza-xyz/kit/commit/32b13a8973fe0645af1f87f0068c289730b4062c), [`2f7bda8`](https://github.com/anza-xyz/kit/commit/2f7bda81ca8248797957bdf693e812abc90b1951), [`81a0eec`](https://github.com/anza-xyz/kit/commit/81a0eec57d196d4ce6b86897640dcab85c5deafd)]:
+    - @solana/errors@5.1.0
+    - @solana/transactions@5.1.0
+    - @solana/transaction-messages@5.1.0
+    - @solana/instructions@5.1.0
+    - @solana/keys@5.1.0
+    - @solana/promises@5.1.0
+
 ## 5.0.0
 
 ### Patch Changes

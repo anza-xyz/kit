@@ -1,5 +1,16 @@
 # @solana/codecs-strings
 
+## 5.1.0
+
+### Patch Changes
+
+- [#999](https://github.com/anza-xyz/kit/pull/999) [`d7f5a0c`](https://github.com/anza-xyz/kit/commit/d7f5a0c046f0a2f2836554fa671364de0b512e97) Thanks [@tmm](https://github.com/tmm)! - Some npm packages are needed for specific runtimes only (eg. React Native, Node). To prevent package managers from unconditionally installing these packages when they have `auto-install-peers` enabled, we are marking them as optional in `peerDependenciesMeta`. When running in React Native, be sure to explicitly install `fastestsmallesttextencoderdecoder`. When running in Node, be sure to explicitly install `ws`. When using `@solana/react`, we will presume that you have already installed `react`.
+
+- Updated dependencies [[`becf5f6`](https://github.com/anza-xyz/kit/commit/becf5f63f1b97d43109b2488c7cd0806ce6329f4), [`32214f5`](https://github.com/anza-xyz/kit/commit/32214f57cfb79fb2566e773acec71635bac641df), [`32b13a8`](https://github.com/anza-xyz/kit/commit/32b13a8973fe0645af1f87f0068c289730b4062c)]:
+    - @solana/errors@5.1.0
+    - @solana/codecs-core@5.1.0
+    - @solana/codecs-numbers@5.1.0
+
 ## 5.0.0
 
 ### Patch Changes

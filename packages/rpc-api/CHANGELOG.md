@@ -1,5 +1,24 @@
 # @solana/rpc-api
 
+## 5.1.0
+
+### Patch Changes
+
+- [#978](https://github.com/anza-xyz/kit/pull/978) [`c97df88`](https://github.com/anza-xyz/kit/commit/c97df8886948b281fff7d6b66429a59a9f7bdfa2) Thanks [@nonergodic](https://github.com/nonergodic)! - Expanded the type of several RPC inputs to accept readonly arrays of values
+
+- Updated dependencies [[`becf5f6`](https://github.com/anza-xyz/kit/commit/becf5f63f1b97d43109b2488c7cd0806ce6329f4), [`d7f5a0c`](https://github.com/anza-xyz/kit/commit/d7f5a0c046f0a2f2836554fa671364de0b512e97), [`32214f5`](https://github.com/anza-xyz/kit/commit/32214f57cfb79fb2566e773acec71635bac641df), [`32b13a8`](https://github.com/anza-xyz/kit/commit/32b13a8973fe0645af1f87f0068c289730b4062c), [`2f7bda8`](https://github.com/anza-xyz/kit/commit/2f7bda81ca8248797957bdf693e812abc90b1951), [`81a0eec`](https://github.com/anza-xyz/kit/commit/81a0eec57d196d4ce6b86897640dcab85c5deafd)]:
+    - @solana/errors@5.1.0
+    - @solana/codecs-strings@5.1.0
+    - @solana/addresses@5.1.0
+    - @solana/codecs-core@5.1.0
+    - @solana/transactions@5.1.0
+    - @solana/transaction-messages@5.1.0
+    - @solana/keys@5.1.0
+    - @solana/rpc-spec@5.1.0
+    - @solana/rpc-transformers@5.1.0
+    - @solana/rpc-types@5.1.0
+    - @solana/rpc-parsed-types@5.1.0
+
 ## 5.0.0
 
 ### Patch Changes
