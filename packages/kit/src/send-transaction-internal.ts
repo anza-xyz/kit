@@ -14,8 +14,7 @@ import {
 } from '@solana/transactions';
 
 interface SendAndConfirmDurableNonceTransactionConfig
-    extends SendTransactionBaseConfig,
-        SendTransactionConfigWithoutEncoding {
+    extends SendTransactionBaseConfig, SendTransactionConfigWithoutEncoding {
     confirmDurableNonceTransaction: (
         config: Omit<
             Parameters<typeof waitForDurableNonceTransactionConfirmation>[0],
@@ -26,8 +25,7 @@ interface SendAndConfirmDurableNonceTransactionConfig
 }
 
 interface SendAndConfirmTransactionWithBlockhashLifetimeConfig
-    extends SendTransactionBaseConfig,
-        SendTransactionConfigWithoutEncoding {
+    extends SendTransactionBaseConfig, SendTransactionConfigWithoutEncoding {
     confirmRecentTransaction: (
         config: Omit<
             Parameters<typeof waitForRecentTransactionConfirmation>[0],

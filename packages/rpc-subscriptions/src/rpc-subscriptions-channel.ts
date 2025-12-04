@@ -74,7 +74,7 @@ function createDefaultRpcSubscriptionsChannelCreatorImpl<TClusterUrl extends Clu
         throw new DOMException(
             protocolMatch
                 ? "Failed to construct 'WebSocket': The URL's scheme must be either 'ws' or " +
-                  `'wss'. '${protocolMatch[1]}:' is not allowed.`
+                      `'wss'. '${protocolMatch[1]}:' is not allowed.`
                 : `Failed to construct 'WebSocket': The URL '${config.url}' is invalid.`,
         );
     }

@@ -30,8 +30,9 @@ export type RpcSubscriptionChannelEvents<TInboundMessage> = {
  * Additionally, you can use this object to send messages of type `TOutboundMessage` back to the
  * remote end by calling its {@link RpcSubscriptionsChannel.send | `send(message)`} method.
  */
-export interface RpcSubscriptionsChannel<TOutboundMessage, TInboundMessage>
-    extends DataPublisher<RpcSubscriptionChannelEvents<TInboundMessage>> {
+export interface RpcSubscriptionsChannel<TOutboundMessage, TInboundMessage> extends DataPublisher<
+    RpcSubscriptionChannelEvents<TInboundMessage>
+> {
     send(message: TOutboundMessage): Promise<void>;
 }
 
