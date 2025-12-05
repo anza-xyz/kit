@@ -1,0 +1,84 @@
+---
+title: Offchain messages
+description: Build, compile, sign, and verify messages offchain
+---
+
+## Introduction
+
+Any time you want one or more parties to agree on something that is not governed by an onchain program, you can prepare a textual message for them to sign. Such offchain messages can contain arbitrary contents – like a statement of fact, or a contract – and must contain a list of one or more signers that have to provide a signature over the encoded message in order for all parties to consider the message ratified. You can use Kit to create, sign, verify, encode, and decode offchain messages.
+
+## Installation
+
+Offchain message utilities are **included within the `@solana/kit` library** but you may also install them using their standalone packages.
+
+To install offchain message utilities:
+
+```package-install
+@solana/offchain-messages
+```
+
+## What is an offchain message?
+
+An offchain message consists of some UTF-8 message text, and a list of one or more required signers. The message is considered ratified when all of the signers provide a signature over the encoded message.
+
+Here is an example of a contract being proposed by one person as an offchain message, and ratified by another.
+
+<Tabs items={["Proposing a message", "Ratifying a message"]}>
+  <Tab value="Proposing a message">
+    ```ts twoslash
+    const ursulaKeypair = null as unknown as CryptoKeyPair;
+    // ---cut-before---
+    import {
+        Address,
+        createSignerFromKeyPair,
+        getOffchainMessageEnvelopeEncoder,
+        OffchainMessage,
+        partiallySignOffchainMessageWithSigners,
+    } from '@solana/kit';
+
+    // Ursula creates the contract as an offchain message.
+    const ursulaSigner = await createSignerFromKeyPair(ursulaKeypair);
+    const offchainMessage: OffchainMessage = {
+        content:
+            "Ursula grants Ariel three days as a human, in exchange for Ariel's voice, on the " +
+            'condition that Ariel secures a kiss of true love from Prince Eric before the third ' +
+            'sunset to remain human permanently. If Ariel fails, she reverts to a mermaid and ' +
+            "becomes Ursula's property.",
+        requiredSignatories: [
+            ursulaSigner,
+            { address: 'ARiEL3q7uXvN9yZK8s2a5GfpHmQdR7cBv' as Address },
+        ],
+        version: 1,
+    };
+
+    // Ursula partially signs the message, producing an offchain message envelope.
+    const offchainMessageEnvelope = await partiallySignOffchainMessageWithSigners(offchainMessage);
+
+    // Ursula encodes the offchain message envelope to share with Ariel.
+    const offchainMessageEnvelopeBytes =
+        getOffchainMessageEnvelopeEncoder().encode(offchainMessageEnvelope);
+    ```
+    </Tab>
+    <Tab value="Ratifying a message">
+        ```ts twoslash
+        import { ReadonlyUint8Array } from '@solana/kit';
+        const arielKeypair = null as unknown as CryptoKeyPair;
+        const offchainMessageEnvelopeBytes = null as unknown as ReadonlyUint8Array;
+        // ---cut-before---
+        import { getOffchainMessageEnvelopeCodec, signOffchainMessageEnvelope } from '@solana/kit';
+
+        // Ariel decodes the offchain message envelope received from Ursula.
+        const offchainMessageEnvelope =
+            getOffchainMessageEnvelopeCodec().decode(offchainMessageEnvelopeBytes);
+
+        // To ratify the contract, she signs the message.
+        const fullySignedOffchainMessage =
+            await signOffchainMessageEnvelope([arielKeypair], offchainMessageEnvelope);
+
+        // Ariel encodes the fully signed offchain message envelope to share with Ursula.
+        const fullySignedOffchainMessageEnvelopeBytes =
+            getOffchainMessageEnvelopeCodec().encode(fullySignedOffchainMessage);
+        ```
+    </Tab>
+
+</Tabs>
