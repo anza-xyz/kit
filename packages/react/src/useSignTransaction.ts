@@ -78,7 +78,48 @@ export function useSignTransaction<TWalletAccount extends UiWalletAccount>(
     );
 }
 
-function useSignTransactions<TWalletAccount extends UiWalletAccount>(
+/**
+ * Use this to get a function capable of signing one or more serialized transactions with the private
+ * key of a {@link UiWalletAccount}. This supports batching multiple transactions in a single wallet
+ * prompt when the wallet implementation allows it.
+ *
+ * @example
+ * ```tsx
+ * import { useSignTransactions } from '@solana/react';
+ *
+ * function SignTransactionsButton({ account, transactionBytes1, transactionBytes2 }) {
+ *     const signTransactions = useSignTransactions(account, 'solana:devnet');
+ *     return (
+ *         <button
+ *             onClick={async () => {
+ *                 try {
+ *                     const [first, second] = await signTransactions(
+ *                         { transaction: transactionBytes1 },
+ *                         { transaction: transactionBytes2 },
+ *                     );
+ *                     window.alert(
+ *                         `First transaction bytes: ${first.signedTransaction.toString()}, second transaction bytes: ${second.signedTransaction.toString()}`,
+ *                     );
+ *                 } catch (e) {
+ *                     console.error('Failed to sign transactions', e);
+ *                 }
+ *             }}
+ *         >
+ *             Sign Transactions
+ *         </button>
+ *     );
+ * }
+ * ```
+ */
+export function useSignTransactions<TWalletAccount extends UiWalletAccount>(
+    uiWalletAccount: TWalletAccount,
+    chain: OnlySolanaChains<TWalletAccount['chains']>,
+): (...inputs: readonly Input[]) => Promise<readonly Output[]>;
+export function useSignTransactions<TWalletAccount extends UiWalletAccount>(
+    uiWalletAccount: TWalletAccount,
+    chain: `solana:${string}`,
+): (...inputs: readonly Input[]) => Promise<readonly Output[]>;
+export function useSignTransactions<TWalletAccount extends UiWalletAccount>(
     uiWalletAccount: TWalletAccount,
     chain: `solana:${string}`,
 ): (...inputs: readonly Input[]) => Promise<readonly Output[]> {

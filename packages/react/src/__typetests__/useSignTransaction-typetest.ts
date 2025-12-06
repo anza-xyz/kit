@@ -3,7 +3,7 @@
 import { address } from '@solana/addresses';
 import { UiWalletAccount } from '@wallet-standard/ui';
 
-import { useSignTransaction } from '../useSignTransaction';
+import { useSignTransaction, useSignTransactions } from '../useSignTransaction';
 
 const mockWalletAccount = {
     address: address('123'),
@@ -24,6 +24,24 @@ const mockWalletAccount = {
 
     // It rejects a chain in a non-Solana namespace
     useSignTransaction(
+        mockWalletAccount,
+        // @ts-expect-error Non-Solana chain
+        'bitcoin:mainnet',
+    );
+}
+
+// [DESCRIBE] useSignTransactions.
+{
+    // It accepts any chain in the solana namespace
+    useSignTransactions(mockWalletAccount, 'solana:danknet');
+    useSignTransactions(mockWalletAccount, 'solana:basednet');
+
+    // It accepts one of the chains actually supported by the wallet account
+    const signTransactions = useSignTransactions(mockWalletAccount, 'solana:danknet');
+    signTransactions({ transaction: new Uint8Array() }, { transaction: new Uint8Array() }).catch(() => {});
+
+    // It rejects a chain in a non-Solana namespace
+    useSignTransactions(
         mockWalletAccount,
         // @ts-expect-error Non-Solana chain
         'bitcoin:mainnet',

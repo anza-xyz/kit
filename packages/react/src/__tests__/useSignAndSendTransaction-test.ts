@@ -11,7 +11,7 @@ import {
 } from '@wallet-standard/ui-registry';
 
 import { renderHook } from '../test-renderer';
-import { useSignAndSendTransaction } from '../useSignAndSendTransaction';
+import { useSignAndSendTransaction, useSignAndSendTransactions } from '../useSignAndSendTransaction';
 
 jest.mock('@wallet-standard/ui-registry');
 
@@ -126,6 +126,76 @@ describe('useSignAndSendTransaction', () => {
                     transaction: new Uint8Array([1, 2, 3]),
                 });
             }
+        });
+    });
+    describe('useSignAndSendTransactions', () => {
+        it("passes through multiple inputs to the wallet's `signAndSendTransaction` implementation", async () => {
+            expect.assertions(3);
+            mockSignAndSendTransaction.mockResolvedValueOnce([{ signature: 'abc' }, { signature: 'def' }]);
+            const { result } = renderHook(() => useSignAndSendTransactions(mockUiWalletAccount, 'solana:danknet'));
+            // eslint-disable-next-line jest/no-conditional-in-test
+            if (result.__type === 'error' || !result.current) {
+                throw result.current;
+            } else {
+                const signAndSendTransactions = result.current;
+                const promise = signAndSendTransactions(
+                    {
+                        options: { minContextSlot: 123n },
+                        transaction: new Uint8Array([1, 2, 3]),
+                    },
+                    { transaction: new Uint8Array([4, 5, 6]) },
+                );
+                await jest.runAllTimersAsync();
+                const results = await promise;
+                // eslint-disable-next-line jest/no-conditional-expect
+                expect(mockSignAndSendTransaction).toHaveBeenCalledTimes(1);
+                // eslint-disable-next-line jest/no-conditional-expect
+                expect(mockSignAndSendTransaction).toHaveBeenCalledWith(
+                    {
+                        account: mockWalletAccount,
+                        chain: 'solana:danknet',
+                        options: { minContextSlot: 123 },
+                        transaction: new Uint8Array([1, 2, 3]),
+                    },
+                    {
+                        account: mockWalletAccount,
+                        chain: 'solana:danknet',
+                        transaction: new Uint8Array([4, 5, 6]),
+                    },
+                );
+                // eslint-disable-next-line jest/no-conditional-expect
+                expect(results).toEqual([{ signature: 'abc' }, { signature: 'def' }]);
+            }
+        });
+        it('returns an empty array without calling the wallet when no inputs are provided', async () => {
+            expect.assertions(2);
+            const { result } = renderHook(() => useSignAndSendTransactions(mockUiWalletAccount, 'solana:danknet'));
+            // eslint-disable-next-line jest/no-conditional-in-test
+            if (result.__type === 'error' || !result.current) {
+                throw result.current;
+            } else {
+                const signAndSendTransactions = result.current;
+                const outputs = await signAndSendTransactions();
+                // eslint-disable-next-line jest/no-conditional-expect
+                expect(mockSignAndSendTransaction).not.toHaveBeenCalled();
+                // eslint-disable-next-line jest/no-conditional-expect
+                expect(outputs).toEqual([]);
+            }
+        });
+        it('fatals when passed a wallet account that does not support the specified chain', () => {
+            const { result } = renderHook(() =>
+                useSignAndSendTransactions({ ...mockUiWalletAccount, chains: ['solana:basednet'] }, 'solana:danknet'),
+            );
+            expect(result.__type).toBe('error');
+            expect(result.current).toEqual(
+                new WalletStandardError(WALLET_STANDARD_ERROR__FEATURES__WALLET_ACCOUNT_CHAIN_UNSUPPORTED, {
+                    address: 'abc',
+                    chain: 'solana:danknet',
+                    featureName: 'solana:signAndSendTransaction',
+                    supportedChains: ['solana:basednet'],
+                    supportedFeatures: ['solana:signAndSendTransaction'],
+                }),
+            );
         });
     });
 });
