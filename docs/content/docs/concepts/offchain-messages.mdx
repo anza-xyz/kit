@@ -108,6 +108,7 @@ Here is an example of a contract being proposed by one person as an offchain mes
         // Ursula then verifies the signatures on the envelope.
         try {
             await verifyOffchainMessageEnvelope(receivedOffchainMessageEnvelope);
+            console.log('We have a deal!');
         } catch(e) {
             if (isSolanaError(e, SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURE_VERIFICATION_FAILURE)) {
                 console.error('We do not have a deal!');
