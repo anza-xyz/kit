@@ -1,5 +1,23 @@
 # @solana/transaction-confirmation
 
+## 5.1.0
+
+### Patch Changes
+
+- [#1003](https://github.com/anza-xyz/kit/pull/1003) [`18e7e2c`](https://github.com/anza-xyz/kit/commit/18e7e2c9d9013be6223932398f40cbc276c4a0e9) Thanks [@damianac](https://github.com/damianac)! - Actually fixed a bug where transaction errors discovered during recent transaction confirmation might not be thrown. The fix in #793 was insufficient.
+
+- Updated dependencies [[`becf5f6`](https://github.com/anza-xyz/kit/commit/becf5f63f1b97d43109b2488c7cd0806ce6329f4), [`d7f5a0c`](https://github.com/anza-xyz/kit/commit/d7f5a0c046f0a2f2836554fa671364de0b512e97), [`32214f5`](https://github.com/anza-xyz/kit/commit/32214f57cfb79fb2566e773acec71635bac641df), [`32b13a8`](https://github.com/anza-xyz/kit/commit/32b13a8973fe0645af1f87f0068c289730b4062c), [`2f7bda8`](https://github.com/anza-xyz/kit/commit/2f7bda81ca8248797957bdf693e812abc90b1951), [`eb49ed7`](https://github.com/anza-xyz/kit/commit/eb49ed7dd45f2a5a0098b3de5ef482a813f8ad47), [`81a0eec`](https://github.com/anza-xyz/kit/commit/81a0eec57d196d4ce6b86897640dcab85c5deafd)]:
+    - @solana/errors@5.1.0
+    - @solana/codecs-strings@5.1.0
+    - @solana/addresses@5.1.0
+    - @solana/transactions@5.1.0
+    - @solana/rpc@5.1.0
+    - @solana/transaction-messages@5.1.0
+    - @solana/keys@5.1.0
+    - @solana/rpc-subscriptions@5.1.0
+    - @solana/rpc-types@5.1.0
+    - @solana/promises@5.1.0
+
 ## 5.0.0
 
 ### Patch Changes
