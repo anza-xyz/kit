@@ -24,7 +24,7 @@
         "@solana/tsconfig": "workspace:*",
         "@swc/jest": "^0.2.39",
         "@types/jest": "^29.5.14",
-        "@types/node": "^24",
+        "@types/node": "^25",
         "@typescript-eslint/eslint-plugin": "^8.47.0",
         "@typescript-eslint/parser": "^8.47.0",
         "agadoo": "^3.0.0",
