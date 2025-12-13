@@ -6,6 +6,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { Balance } from '../components/Balance';
 import { FeatureNotSupportedCallout } from '../components/FeatureNotSupportedCallout';
 import { FeaturePanel } from '../components/FeaturePanel';
+import { SolanaPartialSignTransactionFeaturePanel } from '../components/SolanaPartialSignTransactionFeaturePanel';
 import { SolanaSignAndSendTransactionFeaturePanel } from '../components/SolanaSignAndSendTransactionFeaturePanel';
 import { SolanaSignMessageFeaturePanel } from '../components/SolanaSignMessageFeaturePanel';
 import { SolanaSignTransactionFeaturePanel } from '../components/SolanaSignTransactionFeaturePanel';
@@ -73,6 +74,14 @@ function Root() {
                                 resetKeys={errorBoundaryResetKeys}
                             >
                                 <SolanaSignTransactionFeaturePanel account={selectedWalletAccount} />
+                            </ErrorBoundary>
+                        </FeaturePanel>
+                        <FeaturePanel label="Partial Sign Transaction">
+                            <ErrorBoundary
+                                FallbackComponent={FeatureNotSupportedCallout}
+                                resetKeys={errorBoundaryResetKeys}
+                            >
+                                <SolanaPartialSignTransactionFeaturePanel account={selectedWalletAccount} />
                             </ErrorBoundary>
                         </FeaturePanel>
                     </DataList.Root>
