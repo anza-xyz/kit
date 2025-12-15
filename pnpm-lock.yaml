@@ -711,6 +711,9 @@ importers:
       '@solana/offchain-messages':
         specifier: workspace:*
         version: link:../offchain-messages
+      '@solana/plugin-core':
+        specifier: workspace:*
+        version: link:../plugin-core
       '@solana/programs':
         specifier: workspace:*
         version: link:../programs
@@ -803,6 +806,12 @@ importers:
         version: link:../errors
       typescript:
         specifier: '>=5.9.3'
+        version: 5.9.3
+
+  packages/plugin-core:
+    dependencies:
+      typescript:
+        specifier: '>=5.3.3'
         version: 5.9.3
 
   packages/programs:
