@@ -653,6 +653,7 @@
  */
 export * from './add-codec-sentinel';
 export * from './add-codec-size-prefix';
+export * from './array-buffers';
 export * from './assertions';
 export * from './bytes';
 export * from './codec';

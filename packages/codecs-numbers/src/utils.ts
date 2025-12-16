@@ -6,7 +6,7 @@ import {
     FixedSizeDecoder,
     FixedSizeEncoder,
     Offset,
-    ReadonlyUint8Array,
+    toArrayBuffer,
 } from '@solana/codecs-core';
 
 import { assertNumberIsBetweenForCodec } from './assertions';
@@ -60,14 +60,4 @@ export function numberDecoderFactory<TTo extends bigint | number, TSize extends 
             return [input.get(view, isLittleEndian(input.config)), offset + input.size];
         },
     });
-}
-
-/**
- * Helper function to ensure that the ArrayBuffer is converted properly from a Uint8Array
- * Source: https://stackoverflow.com/questions/37228285/uint8array-to-arraybuffer
- */
-function toArrayBuffer(bytes: ReadonlyUint8Array | Uint8Array, offset?: number, length?: number): ArrayBuffer {
-    const bytesOffset = bytes.byteOffset + (offset ?? 0);
-    const bytesLength = length ?? bytes.byteLength;
-    return bytes.buffer.slice(bytesOffset, bytesOffset + bytesLength);
 }
