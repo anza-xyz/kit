@@ -552,8 +552,8 @@ importers:
         specifier: ^0.14.0
         version: 0.14.0
       '@solana/eslint-config-solana':
-        specifier: ^5.0.1
-        version: 5.0.1(b3dbbffd0fb1a20dca89011bc10e4e66)
+        specifier: ^6.0.0
+        version: 6.0.0(b3dbbffd0fb1a20dca89011bc10e4e66)
       '@typescript-eslint/eslint-plugin':
         specifier: ^8.50.0
         version: 8.50.0(@typescript-eslint/parser@8.50.0(eslint@9.39.1(jiti@1.21.7))(typescript@5.9.3))(eslint@9.39.1(jiti@1.21.7))(typescript@5.9.3)
@@ -4358,8 +4358,8 @@ packages:
     peerDependencies:
       typescript: '>=5.3.3'
 
-  '@solana/eslint-config-solana@5.0.1':
-    resolution: {integrity: sha512-Fnrd5UWTESJmLAwVs7O+VQtQx52E41UoEmW6UGELlxMxZPAH2dQilvJaZXn8CJD1nhFky1YDN/r4BOX0B0hNNw==}
+  '@solana/eslint-config-solana@6.0.0':
+    resolution: {integrity: sha512-tl3C2ZK8buItUQNVCwnveR2iiLALr5XZ8cevswbTDQN1SA29xQWPFRYR/JPyXLd7iOGNAo4HwvIoxNmkLjdZsQ==}
     peerDependencies:
       '@eslint/js': ^9.39.1
       '@types/eslint': ^9.6.1
@@ -11184,7 +11184,7 @@ snapshots:
       commander: 14.0.2
       typescript: 5.9.3
 
-  '@solana/eslint-config-solana@5.0.1(b3dbbffd0fb1a20dca89011bc10e4e66)':
+  '@solana/eslint-config-solana@6.0.0(b3dbbffd0fb1a20dca89011bc10e4e66)':
     dependencies:
       '@eslint/js': 9.39.2
       '@types/eslint': 9.6.1
