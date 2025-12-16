@@ -77,7 +77,7 @@
         "@solana/errors": "workspace:*"
     },
     "devDependencies": {
-        "tinybench": "^5.1.0"
+        "tinybench": "^6.0.0"
     },
     "peerDependencies": {
         "typescript": ">=5.9.3"
