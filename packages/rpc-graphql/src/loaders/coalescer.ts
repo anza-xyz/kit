@@ -2,7 +2,7 @@ import { DataSlice } from '@solana/rpc-types';
 
 import { BatchLoadPromiseCallback, cacheKeyFn } from './loader';
 
-type Encoding = ('base58' | 'base64' | 'base64+zstd' | 'jsonParsed') | ('base58' | 'base64' | 'json' | 'jsonParsed');
+type Encoding = 'base58' | 'base64' | 'base64+zstd' | 'json' | 'jsonParsed';
 
 export type Fetch<TArgs extends { encoding?: Encoding }, TValue> = Readonly<{
     args: TArgs;

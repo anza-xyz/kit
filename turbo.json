@@ -17,14 +17,10 @@
                 "test:treeshakability:native",
                 "test:treeshakability:node"
             ],
-            "outputs": [
-                "dist/**"
-            ]
+            "outputs": ["dist/**"]
         },
         "compile:docs": {
-            "dependsOn": [
-                "^compile:typedefs"
-            ],
+            "dependsOn": ["^compile:typedefs"],
             "inputs": [
                 "$TURBO_DEFAULT$",
                 "tsconfig.*",
@@ -32,36 +28,17 @@
                 "$TURBO_ROOT$/typedoc.plugin.mjs",
                 "src/**"
             ],
-            "outputs": [
-                ".docs/**"
-            ]
+            "outputs": [".docs/**"]
         },
         "compile:js": {
-            "dependsOn": [
-                "^compile:js"
-            ],
-            "inputs": [
-                "$TURBO_DEFAULT$",
-                "tsconfig.*",
-                "src/**",
-                "../build-scripts/*.ts"
-            ],
-            "outputs": [
-                "dist/**"
-            ]
+            "dependsOn": ["^compile:js"],
+            "inputs": ["$TURBO_DEFAULT$", "tsconfig.*", "src/**", "../build-scripts/*.ts"],
+            "outputs": ["dist/**"]
         },
         "compile:typedefs": {
-            "dependsOn": [
-                "^compile:typedefs"
-            ],
-            "inputs": [
-                "$TURBO_DEFAULT$",
-                "tsconfig.*",
-                "src/**"
-            ],
-            "outputs": [
-                "dist/**/*.d.ts"
-            ]
+            "dependsOn": ["^compile:typedefs"],
+            "inputs": ["$TURBO_DEFAULT$", "tsconfig.*", "src/**"],
+            "outputs": ["dist/**/*.d.ts"]
         },
         "publish-packages": {
             "dependsOn": [
@@ -87,100 +64,47 @@
             ]
         },
         "style:fix": {
-            "inputs": [
-                "$TURBO_DEFAULT$",
-                "*"
-            ],
-            "outputs": [
-                "*"
-            ]
+            "inputs": ["$TURBO_DEFAULT$", "*"],
+            "outputs": ["*"]
         },
         "test:lint": {
-            "dependsOn": [
-                "^compile:typedefs"
-            ],
-            "inputs": [
-                "$TURBO_DEFAULT$",
-                "src/**",
-                "test/**"
-            ],
+            "dependsOn": ["^compile:typedefs"],
+            "inputs": ["$TURBO_DEFAULT$", "src/**", "test/**"],
             "outputs": []
         },
         "test:prettier": {
-            "inputs": [
-                "$TURBO_DEFAULT$",
-                "*"
-            ],
+            "inputs": ["$TURBO_DEFAULT$", "*"],
             "outputs": []
         },
         "test:typecheck": {
-            "dependsOn": [
-                "^compile:typedefs"
-            ],
-            "inputs": [
-                "$TURBO_DEFAULT$",
-                "tsconfig.*",
-                "src/**"
-            ],
+            "dependsOn": ["^compile:typedefs"],
+            "inputs": ["$TURBO_DEFAULT$", "tsconfig.*", "src/**"],
             "outputs": []
         },
         "test:unit:browser": {
-            "dependsOn": [
-                "^compile:js"
-            ],
-            "inputs": [
-                "$TURBO_DEFAULT$",
-                "../../.agave/**/version.yml",
-                "src/**"
-            ],
+            "dependsOn": ["^compile:js"],
+            "inputs": ["$TURBO_DEFAULT$", "../../.agave/**/version.yml", "src/**"],
             "outputs": []
         },
         "test:unit:node": {
-            "dependsOn": [
-                "^compile:js"
-            ],
-            "inputs": [
-                "$TURBO_DEFAULT$",
-                "../../.agave/**/version.yml",
-                "src/**"
-            ],
+            "dependsOn": ["^compile:js"],
+            "inputs": ["$TURBO_DEFAULT$", "../../.agave/**/version.yml", "src/**"],
             "outputs": []
         },
         "test:treeshakability:browser": {
-            "dependsOn": [
-                "compile:js"
-            ]
+            "dependsOn": ["compile:js"]
         },
         "test:treeshakability:native": {
-            "dependsOn": [
-                "compile:js"
-            ]
+            "dependsOn": ["compile:js"]
         },
         "test:treeshakability:node": {
-            "dependsOn": [
-                "compile:js"
-            ]
+            "dependsOn": ["compile:js"]
         },
         "@solana/example-react-app#compile:js": {
-            "dependsOn": [
-                "^compile:js",
-                "^compile:typedefs"
-            ],
-            "env": [
-                "REACT_EXAMPLE_APP_BASE_PATH",
-                "REACT_EXAMPLE_APP_ENABLE_MAINNET"
-            ],
-            "inputs": [
-                "$TURBO_DEFAULT$",
-                "index.html",
-                "tsconfig.*",
-                "vite.config.ts",
-                "public/**",
-                "src/**"
-            ],
-            "outputs": [
-                "dist/**"
-            ]
+            "dependsOn": ["^compile:js", "^compile:typedefs"],
+            "env": ["REACT_EXAMPLE_APP_BASE_PATH", "REACT_EXAMPLE_APP_ENABLE_MAINNET"],
+            "inputs": ["$TURBO_DEFAULT$", "index.html", "tsconfig.*", "vite.config.ts", "public/**", "src/**"],
+            "outputs": ["dist/**"]
         }
     },
     "ui": "stream"

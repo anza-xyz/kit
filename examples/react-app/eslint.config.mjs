@@ -1,23 +1,17 @@
-import solanaReactConfig from '@solana/eslint-config-solana/react';
+import solanaReactConfig from '@solana/eslint-config/eslint.config.react.mjs';
 import reactRefreshPlugin from 'eslint-plugin-react-refresh';
 import globals from 'globals';
-
-import baseConfig from '../../eslint.config.mjs';
 
 export default [
     {
         ignores: ['**/dist', '**/*.css'],
     },
-    ...baseConfig,
     ...solanaReactConfig,
     {
         languageOptions: {
             globals: {
                 ...globals.browser,
                 ...globals.es2020,
-            },
-            parserOptions: {
-                project: './tsconfig.app.json',
             },
         },
         plugins: {
@@ -36,19 +30,4 @@ export default [
             ],
         },
     },
-].map(
-    // FIXME: Without this hack, this error results:
-    // ConfigError: Config (unnamed): Key "plugins": Cannot redefine plugin "typescript-sort-keys".
-    (() => {
-        let typescriptSortKeysPluginFound = false;
-        return config => {
-            if (config.plugins?.['typescript-sort-keys']) {
-                if (typescriptSortKeysPluginFound === false) {
-                    delete config.plugins['typescript-sort-keys'];
-                }
-                typescriptSortKeysPluginFound = true;
-            }
-            return config;
-        };
-    })(),
-);
+];

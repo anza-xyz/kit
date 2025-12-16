@@ -138,7 +138,7 @@ describe('createNonceInvalidationPromiseFactory', () => {
             nonceAccountAddress: '9'.repeat(44) as Address,
         });
         await jest.runAllTimersAsync();
-        await expect(Promise.race([invalidationPromise, 'pending'])).resolves.toBe('pending');
+        await expect(Promise.race([invalidationPromise, Promise.resolve('pending')])).resolves.toBe('pending');
     });
     it('fatals when the nonce account can not be found', async () => {
         expect.assertions(1);
@@ -192,7 +192,7 @@ describe('createNonceInvalidationPromiseFactory', () => {
             nonceAccountAddress: '9'.repeat(44) as Address,
         });
         await jest.runAllTimersAsync();
-        await expect(Promise.race([invalidationPromise, 'pending'])).resolves.toBe('pending');
+        await expect(Promise.race([invalidationPromise, Promise.resolve('pending')])).resolves.toBe('pending');
     });
     it('fatals when the nonce value returned by the account subscription is different than the expected one', async () => {
         expect.assertions(1);

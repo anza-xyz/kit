@@ -11,8 +11,10 @@
  * bytes[0] = 42; // Type error: Cannot assign to '0' because it is a read-only property.
  * ```
  */
-export interface ReadonlyUint8Array<TArrayBuffer extends ArrayBufferLike = ArrayBufferLike>
-    extends Omit<Uint8Array<TArrayBuffer>, TypedArrayMutableProperties> {
+export interface ReadonlyUint8Array<TArrayBuffer extends ArrayBufferLike = ArrayBufferLike> extends Omit<
+    Uint8Array<TArrayBuffer>,
+    TypedArrayMutableProperties
+> {
     readonly [n: number]: number;
 }
 

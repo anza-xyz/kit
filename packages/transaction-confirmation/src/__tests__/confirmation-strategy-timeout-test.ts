@@ -16,9 +16,9 @@ describe('getTimeoutPromise', () => {
             commitment,
         });
         await jest.advanceTimersByTimeAsync(defaultTimeoutMs - 1);
-        await expect(Promise.race([timeoutPromise, 'pending'])).resolves.toBe('pending');
+        await expect(Promise.race([timeoutPromise, Promise.resolve('pending')])).resolves.toBe('pending');
         await jest.advanceTimersByTimeAsync(1);
-        await expect(Promise.race([timeoutPromise, 'pending'])).rejects.toThrow();
+        await expect(Promise.race([timeoutPromise, Promise.resolve('pending')])).rejects.toThrow();
     });
     it('throws an abort error when aborted before the timeout', async () => {
         expect.assertions(1);

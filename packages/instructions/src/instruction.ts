@@ -39,8 +39,9 @@ export interface Instruction<
  * >;
  * ```
  */
-export interface InstructionWithAccounts<TAccounts extends readonly (AccountLookupMeta | AccountMeta)[]>
-    extends Instruction {
+export interface InstructionWithAccounts<
+    TAccounts extends readonly (AccountLookupMeta | AccountMeta)[],
+> extends Instruction {
     readonly accounts: TAccounts;
 }
 

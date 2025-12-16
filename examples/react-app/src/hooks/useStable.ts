@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/refs */
 import { useRef } from 'react';
 
 const UNRESOLVED = Symbol();

@@ -75,6 +75,7 @@
     "dependencies": {
         "@solana/addresses": "workspace:*",
         "@solana/errors": "workspace:*",
+        "@solana/eslint-config": "workspace:*",
         "@solana/keys": "workspace:*",
         "@solana/promises": "workspace:*",
         "@solana/signers": "workspace:*",

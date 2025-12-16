@@ -83,7 +83,9 @@ describe('createSignatureConfirmationPromiseFactory', () => {
                 signature: 'abc' as Signature,
             });
             await jest.runAllTimersAsync();
-            await expect(Promise.race([signatureConfirmationPromise, 'pending'])).resolves.toBe('pending');
+            await expect(Promise.race([signatureConfirmationPromise, Promise.resolve('pending')])).resolves.toBe(
+                'pending',
+            );
         },
     );
     it('continues to pend when no signature status is returned by the one-shot query', async () => {
@@ -97,7 +99,7 @@ describe('createSignatureConfirmationPromiseFactory', () => {
             signature: 'abc' as Signature,
         });
         await jest.runAllTimersAsync();
-        await expect(Promise.race([signatureConfirmationPromise, 'pending'])).resolves.toBe('pending');
+        await expect(Promise.race([signatureConfirmationPromise, Promise.resolve('pending')])).resolves.toBe('pending');
     });
     it('resolves when the signature status returned by the one-shot query is at the target level of commitment', async () => {
         expect.assertions(1);

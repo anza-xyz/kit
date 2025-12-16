@@ -1,5 +1,1 @@
-import solanaReactConfig from '@solana/eslint-config-solana/react';
-
-import baseConfig from '../../eslint.config.mjs';
-
-export default [...solanaReactConfig, ...baseConfig];
+export { default } from '@solana/eslint-config/eslint.config.react.mjs';

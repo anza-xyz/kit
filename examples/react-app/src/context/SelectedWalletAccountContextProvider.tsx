@@ -67,7 +67,8 @@ export function SelectedWalletAccountContextProvider({ children }: { children: R
     useEffect(() => {
         const savedWalletAccount = getSavedWalletAccount(wallets);
         if (savedWalletAccount) {
-            setSelectedWalletAccountInternal(savedWalletAccount);
+            // FIXME: Rewrite this not to run afoul of react-hooks/set-state-in-effect
+            setSelectedWalletAccountInternal(savedWalletAccount); // eslint-disable-line react-hooks/set-state-in-effect
         }
     }, [wallets]);
     const walletAccount = useMemo(() => {
@@ -90,7 +91,8 @@ export function SelectedWalletAccountContextProvider({ children }: { children: R
         // If there is a selected wallet account but the wallet to which it belongs has since
         // disconnected, clear the selected wallet.
         if (selectedWalletAccount && !walletAccount) {
-            setSelectedWalletAccountInternal(undefined);
+            // FIXME: Rewrite this not to run afoul of react-hooks/set-state-in-effect
+            setSelectedWalletAccountInternal(undefined); // eslint-disable-line react-hooks/set-state-in-effect
         }
     }, [selectedWalletAccount, walletAccount]);
     return (

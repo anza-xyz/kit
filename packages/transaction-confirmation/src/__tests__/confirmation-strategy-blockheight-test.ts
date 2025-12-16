@@ -60,7 +60,7 @@ describe('createBlockHeightExceedencePromiseFactory', () => {
             lastValidBlockHeight: 100n,
         });
         await jest.runAllTimersAsync();
-        await expect(Promise.race([exceedencePromise, 'pending'])).resolves.toBe('pending');
+        await expect(Promise.race([exceedencePromise, Promise.resolve('pending')])).resolves.toBe('pending');
     });
     it('throws when the slot at which the block height is expected to be exceeded is reached', async () => {
         expect.assertions(1);
@@ -101,7 +101,7 @@ describe('createBlockHeightExceedencePromiseFactory', () => {
             lastValidBlockHeight: 100n,
         });
         await jest.runOnlyPendingTimersAsync();
-        await expect(Promise.race([exceedencePromise, 'pending'])).resolves.toBe('pending');
+        await expect(Promise.race([exceedencePromise, Promise.resolve('pending')])).resolves.toBe('pending');
     });
     it('throws when the slot height / block height delta eventually satisfies the slot at which the block height is expected to be exceeded being reached', async () => {
         expect.assertions(1);
@@ -146,7 +146,7 @@ describe('createBlockHeightExceedencePromiseFactory', () => {
             lastValidBlockHeight: 100n,
         });
         await jest.runOnlyPendingTimersAsync();
-        await expect(Promise.race([exceedencePromise, 'pending'])).resolves.toBe('pending');
+        await expect(Promise.race([exceedencePromise, Promise.resolve('pending')])).resolves.toBe('pending');
     });
     it.each(['processed', 'confirmed', 'finalized'] as Commitment[])(
         'calls the epoch info getter with the configured commitment when configured with `%s` commitment',

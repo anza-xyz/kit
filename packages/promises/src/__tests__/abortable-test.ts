@@ -34,7 +34,7 @@ describe('getAbortablePromise()', () => {
         expect.assertions(2);
         const controller = new AbortController();
         const abortablePromise = getAbortablePromise(promise, controller.signal);
-        await expect(Promise.race(['pending', abortablePromise])).resolves.toBe('pending');
+        await expect(Promise.race([Promise.resolve('pending'), abortablePromise])).resolves.toBe('pending');
         controller.abort('o no');
         await expect(abortablePromise).rejects.toBe('o no');
     });
@@ -48,7 +48,7 @@ describe('getAbortablePromise()', () => {
         expect.assertions(2);
         const signal = new AbortController().signal;
         const abortablePromise = getAbortablePromise(promise, signal);
-        await expect(Promise.race(['pending', abortablePromise])).resolves.toBe('pending');
+        await expect(Promise.race([Promise.resolve('pending'), abortablePromise])).resolves.toBe('pending');
         reject('mais non');
         await expect(abortablePromise).rejects.toBe('mais non');
     });
@@ -62,13 +62,15 @@ describe('getAbortablePromise()', () => {
         expect.assertions(2);
         const signal = new AbortController().signal;
         const abortablePromise = getAbortablePromise(promise, signal);
-        await expect(Promise.race(['pending', abortablePromise])).resolves.toBe('pending');
+        await expect(Promise.race([Promise.resolve('pending'), abortablePromise])).resolves.toBe('pending');
         resolve(123);
         await expect(abortablePromise).resolves.toBe(123);
     });
     it('pends when neither the promise has resolved nor the signal aborted', async () => {
         expect.assertions(1);
         const signal = new AbortController().signal;
-        await expect(Promise.race(['pending', getAbortablePromise(promise, signal)])).resolves.toBe('pending');
+        await expect(Promise.race([Promise.resolve('pending'), getAbortablePromise(promise, signal)])).resolves.toBe(
+            'pending',
+        );
     });
 });
