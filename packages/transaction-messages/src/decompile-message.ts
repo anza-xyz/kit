@@ -11,7 +11,7 @@ import { AccountLookupMeta, AccountMeta, AccountRole, Instruction } from '@solan
 import type { Blockhash } from '@solana/rpc-types';
 
 import { AddressesByLookupTableAddress } from './addresses-by-lookup-table-address';
-import { setTransactionMessageLifetimeUsingBlockhash } from './blockhash';
+import { BlockhashLifetimeConstraint, setTransactionMessageLifetimeUsingBlockhash } from './blockhash';
 import { CompiledTransactionMessage, CompiledTransactionMessageWithLifetime } from './compile';
 import type { getCompiledAddressTableLookups } from './compile/address-table-lookups';
 import { createTransactionMessage } from './create-transaction-message';
@@ -20,7 +20,7 @@ import { isAdvanceNonceAccountInstruction } from './durable-nonce-instruction';
 import { setTransactionMessageFeePayer, TransactionMessageWithFeePayer } from './fee-payer';
 import { appendTransactionMessageInstruction } from './instructions';
 import { TransactionMessageWithLifetime } from './lifetime';
-import { BaseTransactionMessage, TransactionVersion } from './transaction-message';
+import { TransactionMessage, TransactionVersion } from './transaction-message';
 
 function getAccountMetas(message: CompiledTransactionMessage): AccountMeta[] {
     const { header } = message;
@@ -142,10 +142,7 @@ function convertInstruction(
 }
 
 type LifetimeConstraint =
-    | {
-          blockhash: Blockhash;
-          lastValidBlockHeight: bigint;
-      }
+    | BlockhashLifetimeConstraint
     | {
           nonce: Nonce;
           nonceAccountAddress: Address;
@@ -210,7 +207,7 @@ export type DecompileTransactionMessageConfig = {
 export function decompileTransactionMessage(
     compiledTransactionMessage: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime,
     config?: DecompileTransactionMessageConfig,
-): BaseTransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithLifetime {
+): TransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithLifetime {
     const feePayer = compiledTransactionMessage.staticAccounts[0];
     if (!feePayer) {
         throw new SolanaError(SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_FEE_PAYER_MISSING);
@@ -245,11 +242,11 @@ export function decompileTransactionMessage(
         m =>
             instructions.reduce(
                 (acc, instruction) => appendTransactionMessageInstruction(instruction, acc),
-                m as BaseTransactionMessage & TransactionMessageWithFeePayer,
+                m as TransactionMessage,
             ),
         m =>
             'blockhash' in lifetimeConstraint
                 ? setTransactionMessageLifetimeUsingBlockhash(lifetimeConstraint, m)
                 : setTransactionMessageLifetimeUsingDurableNonce(lifetimeConstraint, m),
-    );
+    ) as TransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithLifetime;
 }
