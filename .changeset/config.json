@@ -9,7 +9,7 @@
       "repo": "anza-xyz/kit"
     }
   ],
-  "fixed": [["@solana/!({example-*,*-impl,build-scripts,test-*,tsconfig,web3.js})"]],
+  "fixed": [["@solana/!({example-*,*-impl,build-scripts,eslint-config,test-*,tsconfig,web3.js})"]],
   "linked": [],
   "snapshot": {
     "useCalculatedVersion": true
