@@ -3,7 +3,7 @@ import { SOLANA_ERROR__KEYS__INVALID_PRIVATE_KEY_BYTE_LENGTH, SolanaError } from
 
 import { ED25519_ALGORITHM_IDENTIFIER } from './algorithm';
 
-function addPkcs8Header(bytes: ReadonlyUint8Array): ReadonlyUint8Array {
+function addPkcs8Header(bytes: ReadonlyUint8Array): ReadonlyUint8Array<ArrayBuffer> {
     // prettier-ignore
     return new Uint8Array([
         /**

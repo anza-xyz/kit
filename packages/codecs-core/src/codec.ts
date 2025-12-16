@@ -24,7 +24,7 @@ export type Offset = number;
  */
 type BaseEncoder<TFrom> = {
     /** Encode the provided value and return the encoded bytes directly. */
-    readonly encode: (value: TFrom) => ReadonlyUint8Array;
+    readonly encode: (value: TFrom) => ReadonlyUint8Array<ArrayBuffer>;
     /**
      * Writes the encoded value into the provided byte array at the given offset.
      * Returns the offset of the next byte after the encoded value.

@@ -1,7 +1,5 @@
 import '@solana/test-matchers/toBeFrozenObject';
 
-import { ImplicitArrayBuffer } from 'node:buffer';
-
 import { address } from '@solana/addresses';
 import { AccountRole, Instruction } from '@solana/instructions';
 import { PublicKey, TransactionInstruction } from '@solana/web3.js';
@@ -9,13 +7,11 @@ import { PublicKey, TransactionInstruction } from '@solana/web3.js';
 import { fromLegacyPublicKey } from '../address';
 import { fromLegacyTransactionInstruction } from '../instruction';
 
-function toLegacyByteArrayAppropriateForPlatform<TArrayBuffer extends ArrayBufferLike>(
-    data: ImplicitArrayBuffer<TArrayBuffer>,
-) {
+function toLegacyByteArrayAppropriateForPlatform<TArrayBuffer extends ArrayBuffer>(data: Uint8Array<TArrayBuffer>) {
     if (__NODEJS__) {
         return Buffer.from(data);
     } else {
-        return new Uint8Array(data as TArrayBuffer) as Buffer<TArrayBuffer>;
+        return new Uint8Array(data) as Buffer<TArrayBuffer>;
     }
 }
 

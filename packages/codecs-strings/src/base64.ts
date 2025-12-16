@@ -2,6 +2,7 @@ import {
     combineCodec,
     createDecoder,
     createEncoder,
+    toArrayBuffer,
     transformDecoder,
     transformEncoder,
     VariableSizeCodec,
@@ -112,7 +113,7 @@ export const getBase64Decoder = (): VariableSizeDecoder<string> => {
 
     if (__NODEJS__) {
         return createDecoder({
-            read: (bytes, offset = 0) => [Buffer.from(bytes, offset).toString('base64'), bytes.length],
+            read: (bytes, offset = 0) => [Buffer.from(toArrayBuffer(bytes), offset).toString('base64'), bytes.length],
         });
     }
 
