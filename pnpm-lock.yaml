@@ -720,6 +720,9 @@ importers:
       '@solana/rpc':
         specifier: workspace:*
         version: link:../rpc
+      '@solana/rpc-api':
+        specifier: workspace:*
+        version: link:../rpc-api
       '@solana/rpc-parsed-types':
         specifier: workspace:*
         version: link:../rpc-parsed-types
