@@ -100,4 +100,17 @@ type V0TransactionMessage = Extract<TransactionMessage, { version: 0 }>;
             TransactionMessageWithDurableNonceLifetime &
             TransactionMessageWithFeePayer<'mockFeePayer'>;
     }
+
+    // It can narrow the result by transaction version
+    {
+        type TransactionMessageNotLegacy = Exclude<TransactionMessage, { version: 'legacy' }>;
+
+        const message = null as unknown as TransactionMessage;
+        const messageWithFeePayer = setTransactionMessageFeePayer(mockFeePayer, message);
+        // @ts-expect-error Could be legacy
+        messageWithFeePayer satisfies TransactionMessageNotLegacy;
+        if (messageWithFeePayer.version === 0) {
+            messageWithFeePayer satisfies TransactionMessageNotLegacy;
+        }
+    }
 }
