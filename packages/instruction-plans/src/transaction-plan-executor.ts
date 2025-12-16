@@ -6,7 +6,7 @@ import {
 } from '@solana/errors';
 import { Signature } from '@solana/keys';
 import { getAbortablePromise } from '@solana/promises';
-import { BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
+import { TransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
 import { Transaction } from '@solana/transactions';
 
 import type {
@@ -36,7 +36,7 @@ type ExecuteResult<TContext extends TransactionPlanResultContext> = {
 } & ({ signature: Signature } | { transaction: Transaction });
 
 type ExecuteTransactionMessage = <TContext extends TransactionPlanResultContext = TransactionPlanResultContext>(
-    transactionMessage: BaseTransactionMessage & TransactionMessageWithFeePayer,
+    transactionMessage: TransactionMessage & TransactionMessageWithFeePayer,
     config?: { abortSignal?: AbortSignal },
 ) => Promise<ExecuteResult<TContext>>;
 
