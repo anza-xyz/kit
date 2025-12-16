@@ -1,9 +1,9 @@
 import {
-    BaseTransactionMessage,
     compileTransactionMessage,
     getCompiledTransactionMessageEncoder,
     isTransactionMessageWithBlockhashLifetime,
     isTransactionMessageWithDurableNonceLifetime,
+    TransactionMessage,
     TransactionMessageWithFeePayer,
 } from '@solana/transaction-messages';
 
@@ -21,12 +21,12 @@ import type { SignaturesMap, TransactionFromTransactionMessage, TransactionMessa
  * level. In order to be signable, a transaction message must:
  *
  * - have a version and a list of zero or more instructions (ie. conform to
- *   {@link BaseTransactionMessage})
+ *   {@link TransactionMessage})
  * - have a fee payer set (ie. conform to {@link TransactionMessageWithFeePayer})
  * - have a lifetime specified (ie. conform to {@link TransactionMessageWithBlockhashLifetime} or
  *   {@link TransactionMessageWithDurableNonceLifetime})
  */
-export function compileTransaction<TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer>(
+export function compileTransaction<TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer>(
     transactionMessage: TTransactionMessage,
 ): Readonly<TransactionFromTransactionMessage<TTransactionMessage>> {
     type ReturnType = Readonly<TransactionFromTransactionMessage<TTransactionMessage>>;
