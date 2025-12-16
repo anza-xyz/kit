@@ -9,7 +9,7 @@ import {
     isAdvanceNonceAccountInstruction,
 } from './durable-nonce-instruction';
 import { ExcludeTransactionMessageLifetime } from './lifetime';
-import { BaseTransactionMessage } from './transaction-message';
+import { TransactionMessage } from './transaction-message';
 import { ExcludeTransactionMessageWithinSizeLimit } from './transaction-message-size';
 
 type DurableNonceConfig<
@@ -65,7 +65,7 @@ export interface TransactionMessageWithDurableNonceLifetime<
 /**
  * A helper type to exclude the durable nonce lifetime constraint from a transaction message.
  */
-export type ExcludeTransactionMessageDurableNonceLifetime<TTransactionMessage extends BaseTransactionMessage> =
+export type ExcludeTransactionMessageDurableNonceLifetime<TTransactionMessage extends TransactionMessage> =
     TTransactionMessage extends TransactionMessageWithDurableNonceLifetime
         ? ExcludeTransactionMessageLifetime<TTransactionMessage>
         : TTransactionMessage;
@@ -94,8 +94,8 @@ export type ExcludeTransactionMessageDurableNonceLifetime<TTransactionMessage ex
  * ```
  */
 export function isTransactionMessageWithDurableNonceLifetime(
-    transactionMessage: BaseTransactionMessage | (BaseTransactionMessage & TransactionMessageWithDurableNonceLifetime),
-): transactionMessage is BaseTransactionMessage & TransactionMessageWithDurableNonceLifetime {
+    transactionMessage: TransactionMessage | (TransactionMessage & TransactionMessageWithDurableNonceLifetime),
+): transactionMessage is TransactionMessage & TransactionMessageWithDurableNonceLifetime {
     return (
         'lifetimeConstraint' in transactionMessage &&
         typeof transactionMessage.lifetimeConstraint.nonce === 'string' &&
@@ -127,8 +127,8 @@ export function isTransactionMessageWithDurableNonceLifetime(
  * ```
  */
 export function assertIsTransactionMessageWithDurableNonceLifetime(
-    transactionMessage: BaseTransactionMessage | (BaseTransactionMessage & TransactionMessageWithDurableNonceLifetime),
-): asserts transactionMessage is BaseTransactionMessage & TransactionMessageWithDurableNonceLifetime {
+    transactionMessage: TransactionMessage | (TransactionMessage & TransactionMessageWithDurableNonceLifetime),
+): asserts transactionMessage is TransactionMessage & TransactionMessageWithDurableNonceLifetime {
     if (!isTransactionMessageWithDurableNonceLifetime(transactionMessage)) {
         throw new SolanaError(SOLANA_ERROR__TRANSACTION__EXPECTED_NONCE_LIFETIME);
     }
@@ -178,7 +178,7 @@ function isAdvanceNonceAccountInstructionForNonce<
  * ```
  */
 export function setTransactionMessageLifetimeUsingDurableNonce<
-    TTransactionMessage extends BaseTransactionMessage,
+    TTransactionMessage extends TransactionMessage,
     TNonceAccountAddress extends string = string,
     TNonceAuthorityAddress extends string = string,
     TNonceValue extends string = string,
@@ -247,28 +247,30 @@ export function setTransactionMessageLifetimeUsingDurableNonce<
  * representing the nonce value.
  */
 type SetTransactionMessageWithDurableNonceLifetime<
-    TTransactionMessage extends BaseTransactionMessage,
+    TTransactionMessage extends TransactionMessage,
     TNonceAccountAddress extends string = string,
     TNonceAuthorityAddress extends string = string,
     TNonceValue extends string = string,
-> = Omit<
-    // 1. The transaction message only grows in size if it currently has a different (or no) lifetime.
-    TTransactionMessage extends TransactionMessageWithDurableNonceLifetime
-        ? TTransactionMessage
-        : ExcludeTransactionMessageWithinSizeLimit<TTransactionMessage>,
-    // 2. Remove the instructions array as we are going to replace it with a new one.
-    'instructions'
-> & {
-    // 3. Replace or prepend the first instruction with the advance nonce account instruction.
-    readonly instructions: TTransactionMessage['instructions'] extends readonly [
-        AdvanceNonceAccountInstruction,
-        ...infer TTail extends readonly Instruction[],
-    ]
-        ? readonly [AdvanceNonceAccountInstruction<TNonceAccountAddress, TNonceAuthorityAddress>, ...TTail]
-        : readonly [
-              AdvanceNonceAccountInstruction<TNonceAccountAddress, TNonceAuthorityAddress>,
-              ...TTransactionMessage['instructions'],
-          ];
-    // 4. Set the lifetime constraint to the nonce value.
-    readonly lifetimeConstraint: NonceLifetimeConstraint<TNonceValue>;
-};
+> = TTransactionMessage extends unknown
+    ? Omit<
+          // 1. The transaction message only grows in size if it currently has a different (or no) lifetime.
+          TTransactionMessage extends TransactionMessageWithDurableNonceLifetime
+              ? TTransactionMessage
+              : ExcludeTransactionMessageWithinSizeLimit<TTransactionMessage>,
+          // 2. Remove the instructions array as we are going to replace it with a new one.
+          'instructions'
+      > & {
+          // 3. Replace or prepend the first instruction with the advance nonce account instruction.
+          readonly instructions: TTransactionMessage['instructions'] extends readonly [
+              AdvanceNonceAccountInstruction,
+              ...infer TTail extends readonly Instruction[],
+          ]
+              ? readonly [AdvanceNonceAccountInstruction<TNonceAccountAddress, TNonceAuthorityAddress>, ...TTail]
+              : readonly [
+                    AdvanceNonceAccountInstruction<TNonceAccountAddress, TNonceAuthorityAddress>,
+                    ...TTransactionMessage['instructions'],
+                ];
+          // 4. Set the lifetime constraint to the nonce value.
+          readonly lifetimeConstraint: NonceLifetimeConstraint<TNonceValue>;
+      }
+    : never;

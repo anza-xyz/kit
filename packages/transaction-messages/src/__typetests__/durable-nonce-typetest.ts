@@ -14,7 +14,7 @@ import {
 import { AdvanceNonceAccountInstruction } from '../durable-nonce-instruction';
 import { setTransactionMessageFeePayer, TransactionMessageWithFeePayer } from '../fee-payer';
 import { appendTransactionMessageInstruction } from '../instructions';
-import { BaseTransactionMessage, TransactionMessage } from '../transaction-message';
+import { TransactionMessage } from '../transaction-message';
 import { TransactionMessageWithinSizeLimit } from '../transaction-message-size';
 
 const mockNonceConfig = {
@@ -37,11 +37,11 @@ type V0TransactionMessage = Extract<TransactionMessage, { version: 0 }>;
 {
     // It narrows the transaction message type to one with a nonce-based lifetime.
     {
-        const message = null as unknown as BaseTransactionMessage & { some: 1 };
+        const message = null as unknown as TransactionMessage & { some: 1 };
         if (isTransactionMessageWithDurableNonceLifetime(message)) {
-            message satisfies BaseTransactionMessage & TransactionMessageWithDurableNonceLifetime & { some: 1 };
+            message satisfies TransactionMessage & TransactionMessageWithDurableNonceLifetime & { some: 1 };
         } else {
-            message satisfies BaseTransactionMessage & { some: 1 };
+            message satisfies TransactionMessage & { some: 1 };
             // @ts-expect-error It does not have a nonce-based lifetime.
             message satisfies TransactionMessageWithDurableNonceLifetime;
         }
@@ -52,7 +52,7 @@ type V0TransactionMessage = Extract<TransactionMessage, { version: 0 }>;
 {
     // It narrows the transaction message type to one with a nonce-based lifetime.
     {
-        const message = null as unknown as BaseTransactionMessage & { some: 1 };
+        const message = null as unknown as TransactionMessage & { some: 1 };
         // @ts-expect-error Should not be durable nonce lifetime
         message satisfies TransactionMessageWithDurableNonceLifetime;
         // @ts-expect-error Should not have a nonce-based lifetime
@@ -60,7 +60,7 @@ type V0TransactionMessage = Extract<TransactionMessage, { version: 0 }>;
         // @ts-expect-error Should not start with a nonce instruction.
         message.instructions[0] satisfies AdvanceNonceAccountInstruction;
         assertIsTransactionMessageWithDurableNonceLifetime(message);
-        message satisfies BaseTransactionMessage & TransactionMessageWithDurableNonceLifetime & { some: 1 };
+        message satisfies TransactionMessage & TransactionMessageWithDurableNonceLifetime & { some: 1 };
         message satisfies TransactionMessageWithDurableNonceLifetime;
         message satisfies { lifetimeConstraint: { nonce: Nonce } };
         message.instructions[0] satisfies AdvanceNonceAccountInstruction;
@@ -97,7 +97,7 @@ type V0TransactionMessage = Extract<TransactionMessage, { version: 0 }>;
             m => setTransactionMessageLifetimeUsingDurableNonce(mockNonceConfig, m),
         );
 
-        message satisfies BaseTransactionMessage & TransactionMessageWithFeePayer;
+        message satisfies TransactionMessage & TransactionMessageWithFeePayer;
         message satisfies TransactionMessageWithDurableNonceLifetime<'nonce', 'nonceAuthority', 'nonce'>;
         message.instructions satisfies readonly [
             AdvanceNonceAccountInstruction<'nonce', 'nonceAuthority'>,
@@ -116,7 +116,7 @@ type V0TransactionMessage = Extract<TransactionMessage, { version: 0 }>;
             m => setTransactionMessageLifetimeUsingDurableNonce(newMockNonceConfig, m),
         );
 
-        message satisfies BaseTransactionMessage & TransactionMessageWithFeePayer;
+        message satisfies TransactionMessage & TransactionMessageWithFeePayer;
         message satisfies TransactionMessageWithDurableNonceLifetime<'newNonce', 'newNonceAuthority', 'newNonce'>;
         message.instructions satisfies readonly [
             AdvanceNonceAccountInstruction<'newNonce', 'newNonceAuthority'>,
@@ -126,7 +126,7 @@ type V0TransactionMessage = Extract<TransactionMessage, { version: 0 }>;
 
     // It keeps the size limit type safety if we are only updating the durable nonce lifetime.
     {
-        const message = null as unknown as BaseTransactionMessage &
+        const message = null as unknown as TransactionMessage &
             TransactionMessageWithDurableNonceLifetime &
             TransactionMessageWithinSizeLimit;
         const newMessage = setTransactionMessageLifetimeUsingDurableNonce(mockNonceConfig, message);
@@ -135,7 +135,7 @@ type V0TransactionMessage = Extract<TransactionMessage, { version: 0 }>;
 
     // It removes the size limit type safety if we previously has a blockhash lifetime.
     {
-        const message = null as unknown as BaseTransactionMessage &
+        const message = null as unknown as TransactionMessage &
             TransactionMessageWithBlockhashLifetime &
             TransactionMessageWithinSizeLimit;
         const newMessage = setTransactionMessageLifetimeUsingDurableNonce(mockNonceConfig, message);
@@ -145,7 +145,7 @@ type V0TransactionMessage = Extract<TransactionMessage, { version: 0 }>;
 
     // It removes the size limit type safety if we previously had no lifetime set.
     {
-        const message = null as unknown as BaseTransactionMessage & TransactionMessageWithinSizeLimit;
+        const message = null as unknown as TransactionMessage & TransactionMessageWithinSizeLimit;
         const newMessage = setTransactionMessageLifetimeUsingDurableNonce(mockNonceConfig, message);
         // @ts-expect-error The message may no longer be within size limit.
         newMessage satisfies TransactionMessageWithinSizeLimit;
