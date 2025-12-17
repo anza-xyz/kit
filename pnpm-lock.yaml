@@ -838,9 +838,6 @@ importers:
       '@solana/errors':
         specifier: workspace:*
         version: link:../errors
-      '@solana/eslint-config':
-        specifier: workspace:*
-        version: link:../eslint-config
       '@solana/keys':
         specifier: workspace:*
         version: link:../keys
@@ -875,6 +872,9 @@ importers:
       '@solana/codecs-core':
         specifier: workspace:*
         version: link:../codecs-core
+      '@solana/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
       '@solana/rpc-types':
         specifier: workspace:*
         version: link:../rpc-types
