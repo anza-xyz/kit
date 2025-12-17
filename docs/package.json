@@ -48,6 +48,7 @@
     },
     "pnpm": {
         "overrides": {
+            "js-yaml@<3.14.2": "^3.14.2",
             "@vercel/node>path-to-regexp": "^6.3.0",
             "@vercel/remix-builder>path-to-regexp": "^6.3.0"
         }
