@@ -1,7 +1,7 @@
 import '@solana/test-matchers/toBeFrozenObject';
 
 import { Address } from '@solana/addresses';
-import { BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
+import { TransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
 
 import { setTransactionMessageFeePayerSigner, TransactionMessageWithFeePayerSigner } from '../fee-payer-signer';
 import { TransactionSigner } from '../transaction-signer';
@@ -10,7 +10,7 @@ import { createMockTransactionPartialSigner } from './__setup__';
 describe('setTransactionMessageFeePayerSigner', () => {
     let feePayerA: TransactionSigner;
     let feePayerB: TransactionSigner;
-    let baseTx: BaseTransactionMessage;
+    let baseTx: TransactionMessage;
     beforeEach(() => {
         baseTx = { instructions: [], version: 0 };
         feePayerA = createMockTransactionPartialSigner('1111' as Address);
@@ -21,7 +21,7 @@ describe('setTransactionMessageFeePayerSigner', () => {
         expect(txWithFeePayerA).toHaveProperty('feePayer', feePayerA);
     });
     describe('given a transaction with a fee payer signer already set', () => {
-        let txWithFeePayerA: BaseTransactionMessage & TransactionMessageWithFeePayerSigner;
+        let txWithFeePayerA: TransactionMessage & TransactionMessageWithFeePayerSigner;
         beforeEach(() => {
             txWithFeePayerA = { ...baseTx, feePayer: feePayerA };
         });
@@ -36,7 +36,7 @@ describe('setTransactionMessageFeePayerSigner', () => {
         });
     });
     describe('given a transaction with a non-signer fee payer already set', () => {
-        let txWithFeePayerA: BaseTransactionMessage & TransactionMessageWithFeePayer;
+        let txWithFeePayerA: TransactionMessage & TransactionMessageWithFeePayer;
         beforeEach(() => {
             txWithFeePayerA = { ...baseTx, feePayer: { address: feePayerA.address } };
         });

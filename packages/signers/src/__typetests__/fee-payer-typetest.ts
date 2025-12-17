@@ -38,4 +38,16 @@ const message = null as unknown as TransactionMessage;
         messageWithBobFeePayerSigner satisfies TransactionMessageWithFeePayer<'mallory'>;
         messageWithBobFeePayerSigner satisfies TransactionMessageWithFeePayerSigner<'bob'>;
     }
+
+    // It can narrow the result by transaction version
+    {
+        type TransactionMessageNotLegacy = Exclude<TransactionMessage, { version: 'legacy' }>;
+        const message = null as unknown as TransactionMessage;
+        const messageWithFeePayer = setTransactionMessageFeePayerSigner(aliceSigner, message);
+        // @ts-expect-error Could be legacy
+        messageWithFeePayer satisfies TransactionMessageNotLegacy;
+        if (messageWithFeePayer.version === 0) {
+            messageWithFeePayer satisfies TransactionMessageNotLegacy;
+        }
+    }
 }
