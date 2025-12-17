@@ -26,19 +26,16 @@ const compiledTransactionMessage = null as unknown as CompiledTransactionMessage
     CompiledTransactionMessageWithLifetime;
 const rpc = null as unknown as Rpc<GetMultipleAccountsApi>;
 
-// A function that only accepts v0 transactions
 type TransactionMessageNotLegacy = Exclude<TransactionMessage, { version: 'legacy' }>;
-function acceptsNonLegacyTransactionMessage(_msg: TransactionMessageNotLegacy) {}
 
 void (async () => {
     const transactionMessage = await decompileTransactionMessageFetchingLookupTables(compiledTransactionMessage, rpc);
 
     // @ts-expect-error Transaction has an unknown version
-    acceptsNonLegacyTransactionMessage(transactionMessage);
-
+    transactionMessage satisfies TransactionMessageNotLegacy;
     if (transactionMessage.version === 0) {
         // It typechecks when the transaction message is known to be v0
-        acceptsNonLegacyTransactionMessage(transactionMessage);
+        transactionMessage satisfies TransactionMessageNotLegacy;
     }
 
     // We update the transaction message using update functions to ensure the types flow correctly
@@ -61,10 +58,9 @@ void (async () => {
     );
 
     // @ts-expect-error Transaction has an unknown version
-    acceptsNonLegacyTransactionMessage(updatedMessage);
-
+    updatedMessage satisfies TransactionMessageNotLegacy;
     if (updatedMessage.version === 0) {
         // It typechecks when the transaction message is known to be v0
-        acceptsNonLegacyTransactionMessage(updatedMessage);
+        updatedMessage satisfies TransactionMessageNotLegacy;
     }
 })();
