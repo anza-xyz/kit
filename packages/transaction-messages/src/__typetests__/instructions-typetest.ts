@@ -15,13 +15,15 @@ import {
     prependTransactionMessageInstruction,
     prependTransactionMessageInstructions,
 } from '../instructions';
-import { BaseTransactionMessage } from '../transaction-message';
+import { BaseTransactionMessage, TransactionMessage } from '../transaction-message';
 import { TransactionMessageWithinSizeLimit } from '../transaction-message-size';
 
 type Instruction = BaseTransactionMessage['instructions'][number];
 type InstructionA = Instruction & { identifier: 'A' };
 type InstructionB = Instruction & { identifier: 'B' };
 type InstructionC = Instruction & { identifier: 'C' };
+
+type TransactionMessageNotLegacy = Exclude<TransactionMessage, { version: 'legacy' }>;
 
 // [DESCRIBE] appendTransactionMessageInstruction
 {
@@ -91,6 +93,17 @@ type InstructionC = Instruction & { identifier: 'C' };
         // @ts-expect-error Potentially no longer within size limit.
         newMessage satisfies TransactionMessageWithinSizeLimit;
     }
+
+    // It can narrow the version type
+    {
+        const message = null as unknown as TransactionMessage;
+        const newMessage = appendTransactionMessageInstruction(null as unknown as Instruction, message);
+        // @ts-expect-error Could be legacy
+        newMessage satisfies TransactionMessageNotLegacy;
+        if (newMessage.version === 0) {
+            newMessage satisfies TransactionMessageNotLegacy;
+        }
+    }
 }
 
 // [DESCRIBE] appendTransactionMessageInstructions
@@ -132,6 +145,17 @@ type InstructionC = Instruction & { identifier: 'C' };
         const newMessage = appendTransactionMessageInstructions([null as unknown as Instruction], message);
         // @ts-expect-error Potentially no longer within size limit.
         newMessage satisfies TransactionMessageWithinSizeLimit;
+    }
+
+    // It can narrow the version type
+    {
+        const message = null as unknown as TransactionMessage;
+        const newMessage = appendTransactionMessageInstructions([null as unknown as Instruction], message);
+        // @ts-expect-error Could be legacy
+        newMessage satisfies TransactionMessageNotLegacy;
+        if (newMessage.version === 0) {
+            newMessage satisfies TransactionMessageNotLegacy;
+        }
     }
 }
 
@@ -221,6 +245,17 @@ type InstructionC = Instruction & { identifier: 'C' };
         // @ts-expect-error Potentially no longer within size limit.
         newMessage satisfies TransactionMessageWithinSizeLimit;
     }
+
+    // It can narrow the version type
+    {
+        const message = null as unknown as TransactionMessage;
+        const newMessage = prependTransactionMessageInstruction(null as unknown as Instruction, message);
+        // @ts-expect-error Could be legacy
+        newMessage satisfies TransactionMessageNotLegacy;
+        if (newMessage.version === 0) {
+            newMessage satisfies TransactionMessageNotLegacy;
+        }
+    }
 }
 
 // [DESCRIBE] prependTransactionMessageInstructions
@@ -272,5 +307,16 @@ type InstructionC = Instruction & { identifier: 'C' };
         const newMessage = prependTransactionMessageInstructions([null as unknown as Instruction], message);
         // @ts-expect-error Potentially no longer within size limit.
         newMessage satisfies TransactionMessageWithinSizeLimit;
+    }
+
+    // It can narrow the version type
+    {
+        const message = null as unknown as TransactionMessage;
+        const newMessage = prependTransactionMessageInstructions([null as unknown as Instruction], message);
+        // @ts-expect-error Could be legacy
+        newMessage satisfies TransactionMessageNotLegacy;
+        if (newMessage.version === 0) {
+            newMessage satisfies TransactionMessageNotLegacy;
+        }
     }
 }

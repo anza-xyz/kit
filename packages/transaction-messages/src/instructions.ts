@@ -1,7 +1,7 @@
 import { Instruction } from '@solana/instructions';
 
 import { ExcludeTransactionMessageDurableNonceLifetime } from './durable-nonce';
-import { BaseTransactionMessage } from './transaction-message';
+import { TransactionMessage } from './transaction-message';
 import { ExcludeTransactionMessageWithinSizeLimit } from './transaction-message-size';
 
 /**
@@ -9,25 +9,29 @@ import { ExcludeTransactionMessageWithinSizeLimit } from './transaction-message-
  * without losing type information about the current instructions.
  */
 type AppendTransactionMessageInstructions<
-    TTransactionMessage extends BaseTransactionMessage,
+    TTransactionMessage extends TransactionMessage,
     TInstructions extends readonly Instruction[],
-> = Omit<ExcludeTransactionMessageWithinSizeLimit<TTransactionMessage>, 'instructions'> & {
-    readonly instructions: readonly [...TTransactionMessage['instructions'], ...TInstructions];
-};
+> = TTransactionMessage extends TransactionMessage
+    ? Omit<ExcludeTransactionMessageWithinSizeLimit<TTransactionMessage>, 'instructions'> & {
+          readonly instructions: readonly [...TTransactionMessage['instructions'], ...TInstructions];
+      }
+    : never;
 
 /**
  * A helper type to prepend instructions to a transaction message
  * without losing type information about the current instructions.
  */
 type PrependTransactionMessageInstructions<
-    TTransactionMessage extends BaseTransactionMessage,
+    TTransactionMessage extends TransactionMessage,
     TInstructions extends readonly Instruction[],
-> = Omit<
-    ExcludeTransactionMessageWithinSizeLimit<ExcludeTransactionMessageDurableNonceLifetime<TTransactionMessage>>,
-    'instructions'
-> & {
-    readonly instructions: readonly [...TInstructions, ...TTransactionMessage['instructions']];
-};
+> = TTransactionMessage extends TransactionMessage
+    ? Omit<
+          ExcludeTransactionMessageWithinSizeLimit<ExcludeTransactionMessageDurableNonceLifetime<TTransactionMessage>>,
+          'instructions'
+      > & {
+          readonly instructions: readonly [...TInstructions, ...TTransactionMessage['instructions']];
+      }
+    : never;
 
 /**
  * Given an instruction, this method will return a new transaction message with that instruction
@@ -52,7 +56,7 @@ type PrependTransactionMessageInstructions<
  * ```
  */
 export function appendTransactionMessageInstruction<
-    TTransactionMessage extends BaseTransactionMessage,
+    TTransactionMessage extends TransactionMessage,
     TInstruction extends Instruction,
 >(
     instruction: TInstruction,
@@ -89,7 +93,7 @@ export function appendTransactionMessageInstruction<
  * ```
  */
 export function appendTransactionMessageInstructions<
-    TTransactionMessage extends BaseTransactionMessage,
+    TTransactionMessage extends TransactionMessage,
     const TInstructions extends readonly Instruction[],
 >(
     instructions: TInstructions,
@@ -101,7 +105,7 @@ export function appendTransactionMessageInstructions<
             ...(transactionMessage.instructions as TTransactionMessage['instructions']),
             ...instructions,
         ] as readonly [...TTransactionMessage['instructions'], ...TInstructions]),
-    });
+    }) as AppendTransactionMessageInstructions<TTransactionMessage, TInstructions>;
 }
 
 /**
@@ -126,7 +130,7 @@ export function appendTransactionMessageInstructions<
  * ```
  */
 export function prependTransactionMessageInstruction<
-    TTransactionMessage extends BaseTransactionMessage,
+    TTransactionMessage extends TransactionMessage,
     TInstruction extends Instruction,
 >(
     instruction: TInstruction,
@@ -163,7 +167,7 @@ export function prependTransactionMessageInstruction<
  * ```
  */
 export function prependTransactionMessageInstructions<
-    TTransactionMessage extends BaseTransactionMessage,
+    TTransactionMessage extends TransactionMessage,
     const TInstructions extends readonly Instruction[],
 >(
     instructions: TInstructions,
@@ -175,5 +179,5 @@ export function prependTransactionMessageInstructions<
             ...instructions,
             ...(transactionMessage.instructions as TTransactionMessage['instructions']),
         ] as readonly [...TInstructions, ...TTransactionMessage['instructions']]),
-    });
+    }) as unknown as PrependTransactionMessageInstructions<TTransactionMessage, TInstructions>;
 }
