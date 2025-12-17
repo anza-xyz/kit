@@ -94,7 +94,7 @@
         "@types/react-test-renderer": "^19.1.0",
         "react": "^19.2.1",
         "react-error-boundary": "^5.0.0",
-        "react-test-renderer": "^19.2.1"
+        "react-test-renderer": "^19.2.3"
     },
     "peerDependencies": {
         "react": ">=18"
