@@ -8,7 +8,7 @@ import {
     setTransactionMessageLifetimeUsingBlockhash,
     TransactionMessageWithBlockhashLifetime,
 } from '../blockhash';
-import { BaseTransactionMessage } from '../transaction-message';
+import { TransactionMessage } from '../transaction-message';
 
 jest.mock('@solana/codecs-strings', () => ({
     ...jest.requireActual('@solana/codecs-strings'),
@@ -25,7 +25,7 @@ describe('assertIsTransactionMessageWithBlockhashLifetime', () => {
         jest.mocked(getBase58Encoder).mockReturnValue(originalGetBase58Encoder);
     });
     it('throws for a transaction with no lifetime constraint', () => {
-        const transaction: BaseTransactionMessage = {
+        const transaction: TransactionMessage = {
             instructions: [],
             version: 0,
         };
@@ -38,7 +38,7 @@ describe('assertIsTransactionMessageWithBlockhashLifetime', () => {
                 nonce: 'abcd',
             },
             version: 0,
-        } as BaseTransactionMessage;
+        } as TransactionMessage;
         expect(() => assertIsTransactionMessageWithBlockhashLifetime(transaction)).toThrow();
     });
     it('throws for a transaction with a blockhash but no lastValidBlockHeight in lifetimeConstraint', () => {
@@ -48,7 +48,7 @@ describe('assertIsTransactionMessageWithBlockhashLifetime', () => {
                 blockhash: '11111111111111111111111111111111',
             },
             version: 0,
-        } as BaseTransactionMessage;
+        } as TransactionMessage;
         expect(() => assertIsTransactionMessageWithBlockhashLifetime(transaction)).toThrow();
     });
     it('throws for a transaction with a lastValidBlockHeight but no blockhash in lifetimeConstraint', () => {
@@ -58,7 +58,7 @@ describe('assertIsTransactionMessageWithBlockhashLifetime', () => {
                 lastValidBlockHeight: 1234n,
             },
             version: 0,
-        } as BaseTransactionMessage;
+        } as TransactionMessage;
         expect(() => assertIsTransactionMessageWithBlockhashLifetime(transaction)).toThrow();
     });
     it('throws for a transaction with a blockhash lifetime but an invalid blockhash value', () => {
@@ -68,7 +68,7 @@ describe('assertIsTransactionMessageWithBlockhashLifetime', () => {
                 blockhash: 'not a valid blockhash value',
             },
             version: 0,
-        } as BaseTransactionMessage;
+        } as TransactionMessage;
         expect(() => assertIsTransactionMessageWithBlockhashLifetime(transaction)).toThrow();
     });
     it('does not throw for a transaction with a valid blockhash lifetime constraint', () => {
@@ -79,13 +79,13 @@ describe('assertIsTransactionMessageWithBlockhashLifetime', () => {
                 lastValidBlockHeight: 1234n,
             },
             version: 0,
-        } as BaseTransactionMessage;
+        } as TransactionMessage;
         expect(() => assertIsTransactionMessageWithBlockhashLifetime(transaction)).not.toThrow();
     });
 });
 
 describe('setTransactionMessageLifetimeUsingBlockhash', () => {
-    let baseTx: BaseTransactionMessage;
+    let baseTx: TransactionMessage;
     const BLOCKHASH_CONSTRAINT_A = {
         blockhash: 'F7vmkY3DTaxfagttWjQweib42b6ZHADSx94Tw8gHx3W7' as Blockhash,
         lastValidBlockHeight: 123n,
@@ -108,7 +108,7 @@ describe('setTransactionMessageLifetimeUsingBlockhash', () => {
         expect(txWithBlockhashLifetimeConstraint).toHaveProperty('lifetimeConstraint', BLOCKHASH_CONSTRAINT_A);
     });
     describe('given a transaction with a blockhash lifetime already set', () => {
-        let txWithBlockhashLifetimeConstraint: BaseTransactionMessage & TransactionMessageWithBlockhashLifetime;
+        let txWithBlockhashLifetimeConstraint: TransactionMessage & TransactionMessageWithBlockhashLifetime;
         beforeEach(() => {
             txWithBlockhashLifetimeConstraint = {
                 ...baseTx,

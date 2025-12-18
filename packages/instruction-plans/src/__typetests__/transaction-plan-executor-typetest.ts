@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 
 import {
-    BaseTransactionMessage,
     setTransactionMessageLifetimeUsingBlockhash,
+    TransactionMessage,
     TransactionMessageWithBlockhashLifetime,
     TransactionMessageWithFeePayer,
 } from '@solana/transaction-messages';
@@ -38,7 +38,7 @@ import type { TransactionPlanResult } from '../transaction-plan-result';
     {
         createTransactionPlanExecutor({
             executeTransactionMessage: message => {
-                message satisfies BaseTransactionMessage & TransactionMessageWithFeePayer;
+                message satisfies TransactionMessage & TransactionMessageWithFeePayer;
                 return Promise.resolve({ transaction: {} as Transaction });
             },
         });
