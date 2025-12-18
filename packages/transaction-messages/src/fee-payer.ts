@@ -1,6 +1,6 @@
 import { Address } from '@solana/addresses';
 
-import { BaseTransactionMessage } from './transaction-message';
+import { TransactionMessage } from './transaction-message';
 
 /**
  * Represents a transaction message for which a fee payer has been declared. A transaction must
@@ -13,10 +13,8 @@ export interface TransactionMessageWithFeePayer<TAddress extends string = string
 /**
  * A helper type to exclude the fee payer from a transaction message.
  */
-type ExcludeTransactionMessageFeePayer<TTransactionMessage extends BaseTransactionMessage> = Omit<
-    TTransactionMessage,
-    'feePayer'
->;
+type ExcludeTransactionMessageFeePayer<TTransactionMessage extends TransactionMessage> =
+    TTransactionMessage extends unknown ? Omit<TTransactionMessage, 'feePayer'> : never;
 
 /**
  * Given a base58-encoded address of a system account, this method will return a new transaction
@@ -34,7 +32,7 @@ type ExcludeTransactionMessageFeePayer<TTransactionMessage extends BaseTransacti
  */
 export function setTransactionMessageFeePayer<
     TFeePayerAddress extends string,
-    TTransactionMessage extends BaseTransactionMessage & Partial<TransactionMessageWithFeePayer>,
+    TTransactionMessage extends Partial<TransactionMessageWithFeePayer> & TransactionMessage,
 >(
     feePayer: Address<TFeePayerAddress>,
     transactionMessage: TTransactionMessage,
@@ -44,7 +42,7 @@ export function setTransactionMessageFeePayer<
         feePayer === transactionMessage.feePayer?.address &&
         isAddressOnlyFeePayer(transactionMessage.feePayer)
     ) {
-        return transactionMessage as unknown as Omit<TTransactionMessage, 'feePayer'> &
+        return transactionMessage as ExcludeTransactionMessageFeePayer<TTransactionMessage> &
             TransactionMessageWithFeePayer<TFeePayerAddress>;
     }
     const out = {
@@ -52,7 +50,8 @@ export function setTransactionMessageFeePayer<
         feePayer: Object.freeze({ address: feePayer }),
     };
     Object.freeze(out);
-    return out;
+    return out as ExcludeTransactionMessageFeePayer<TTransactionMessage> &
+        TransactionMessageWithFeePayer<TFeePayerAddress>;
 }
 
 function isAddressOnlyFeePayer(
