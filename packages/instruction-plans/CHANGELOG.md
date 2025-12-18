@@ -1,5 +1,17 @@
 # @solana/instruction-plans
 
+## 5.2.0
+
+### Patch Changes
+
+- Updated dependencies [[`109c78e`](https://github.com/anza-xyz/kit/commit/109c78e8972857323558ca913706a95cdb70c549)]:
+    - @solana/keys@5.2.0
+    - @solana/instructions@5.2.0
+    - @solana/transaction-messages@5.2.0
+    - @solana/transactions@5.2.0
+    - @solana/errors@5.2.0
+    - @solana/promises@5.2.0
+
 ## 5.1.0
 
 ### Minor Changes

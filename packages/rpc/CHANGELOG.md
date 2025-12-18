@@ -1,5 +1,20 @@
 # @solana/rpc
 
+## 5.2.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/rpc-api@5.2.0
+    - @solana/rpc-types@5.2.0
+    - @solana/rpc-transformers@5.2.0
+    - @solana/errors@5.2.0
+    - @solana/fast-stable-stringify@5.2.0
+    - @solana/functional@5.2.0
+    - @solana/rpc-spec@5.2.0
+    - @solana/rpc-spec-types@5.2.0
+    - @solana/rpc-transport-http@5.2.0
+
 ## 5.1.0
 
 ### Patch Changes

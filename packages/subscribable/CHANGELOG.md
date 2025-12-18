@@ -1,5 +1,12 @@
 # @solana/subscribable
 
+## 5.2.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/errors@5.2.0
+
 ## 5.1.0
 
 ### Patch Changes
