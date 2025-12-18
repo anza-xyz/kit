@@ -24,7 +24,7 @@
         "react": "^19.2.1",
         "react-dom": "^19.2.1",
         "react-error-boundary": "^5.0.0",
-        "swr": "^2.3.7"
+        "swr": "^2.3.8"
     },
     "devDependencies": {
         "@solana/eslint-config": "workspace:*",
