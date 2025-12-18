@@ -1,6 +1,6 @@
 {
     "name": "@solana/addresses",
-    "version": "5.1.0",
+    "version": "5.2.0",
     "description": "Helpers for generating account addresses",
     "homepage": "https://www.solanakit.com/api#solanaaddresses",
     "exports": {

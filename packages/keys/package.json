@@ -1,6 +1,6 @@
 {
     "name": "@solana/keys",
-    "version": "5.1.0",
+    "version": "5.2.0",
     "description": "Helpers for generating and transforming key material",
     "homepage": "https://www.solanakit.com/api#solanakeys",
     "exports": {

@@ -1,6 +1,6 @@
 {
     "name": "@solana/sysvars",
-    "version": "5.1.0",
+    "version": "5.2.0",
     "description": "An abstraction layer over signing messages and transactions in Solana",
     "homepage": "https://www.solanakit.com/api#solanasysvars",
     "exports": {
