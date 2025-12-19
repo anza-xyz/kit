@@ -232,7 +232,7 @@ This means that these accounts will take up less space in the compiled transacti
 ```ts
 import { address } from '@solana/addresses';
 import {
-    AddressesByLookupTableAddressm,
+    AddressesByLookupTableAddress,
     compressTransactionMessageUsingAddressLookupTables,
 } from '@solana/transaction-messages';
 import { fetchAddressLookupTable } from '@solana-program/address-lookup-table';
