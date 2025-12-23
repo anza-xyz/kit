@@ -28,7 +28,8 @@ const otherAddress = '2222' as Address<'2222'>;
     // as we provide the first type argument for the data type, we have to provide the second
     // one as well for the address since it won't be inferred and will default to `string`.
     fetchJsonParsedAccount<MockData, '1111'>(rpc, address) satisfies Promise<
-        MaybeAccount<MockData, '1111'> | MaybeEncodedAccount<'1111'>
+        | MaybeAccount<MockData & { parsedAccountMeta?: { program: string; type?: string } }, '1111'>
+        | MaybeEncodedAccount<'1111'>
     >;
     // @ts-expect-error It does not only satisfy MaybeAccount<MockData>.
     fetchJsonParsedAccount<MockData>(rpc, address) satisfies Promise<MaybeAccount<MockData>>;
@@ -57,24 +58,42 @@ const otherAddress = '2222' as Address<'2222'>;
     type MockData = { foo: 42 };
     type OtherMockData = { bar: 42 };
     fetchJsonParsedAccounts<MockData[]>(rpc, [] as Address[]) satisfies Promise<
-        (MaybeAccount<MockData> | MaybeEncodedAccount)[]
+        (MaybeAccount<MockData & { parsedAccountMeta?: { program: string; type?: string } }> | MaybeEncodedAccount)[]
     >;
     fetchJsonParsedAccounts<MockData[], ['1111', '2222']>(rpc, [address, otherAddress]) satisfies Promise<
         [
-            MaybeAccount<MockData, '1111'> | MaybeEncodedAccount<'1111'>,
-            MaybeAccount<MockData, '2222'> | MaybeEncodedAccount<'2222'>,
+            (
+                | MaybeAccount<MockData & { parsedAccountMeta?: { program: string; type?: string } }, '1111'>
+                | MaybeEncodedAccount<'1111'>
+            ),
+            (
+                | MaybeAccount<MockData & { parsedAccountMeta?: { program: string; type?: string } }, '2222'>
+                | MaybeEncodedAccount<'2222'>
+            ),
         ]
     >;
     fetchJsonParsedAccounts<[MockData, OtherMockData]>(rpc, [address, otherAddress]) satisfies Promise<
-        [MaybeAccount<MockData> | MaybeEncodedAccount, MaybeAccount<OtherMockData> | MaybeEncodedAccount]
+        [
+            MaybeAccount<MockData & { parsedAccountMeta?: { program: string; type?: string } }> | MaybeEncodedAccount,
+            (
+                | MaybeAccount<OtherMockData & { parsedAccountMeta?: { program: string; type?: string } }>
+                | MaybeEncodedAccount
+            ),
+        ]
     >;
     fetchJsonParsedAccounts<[MockData, OtherMockData], ['1111', '2222']>(rpc, [
         address,
         otherAddress,
     ]) satisfies Promise<
         [
-            MaybeAccount<MockData, '1111'> | MaybeEncodedAccount<'1111'>,
-            MaybeAccount<OtherMockData, '2222'> | MaybeEncodedAccount<'2222'>,
+            (
+                | MaybeAccount<MockData & { parsedAccountMeta?: { program: string; type?: string } }, '1111'>
+                | MaybeEncodedAccount<'1111'>
+            ),
+            (
+                | MaybeAccount<OtherMockData & { parsedAccountMeta?: { program: string; type?: string } }, '2222'>
+                | MaybeEncodedAccount<'2222'>
+            ),
         ]
     >;
 }

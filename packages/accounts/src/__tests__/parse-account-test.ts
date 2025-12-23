@@ -214,13 +214,57 @@ describe('parseJsonRpcAccount', () => {
         // And we expect the following parsed encoded account to be returned.
         expect(account).toStrictEqual({
             address: '1111' as Address<'1111'>,
-            data: { mint: '2222' as Address<'2222'>, owner: '3333' as Address<'3333'> },
+            data: {
+                mint: '2222' as Address<'2222'>,
+                owner: '3333' as Address<'3333'>,
+                parsedAccountMeta: {
+                    program: 'splToken',
+                    type: 'token',
+                },
+            },
             executable: false,
             exists: true,
             lamports: lamports(1_000_000_000n),
             programAddress: '9999' as Address<'9999'>,
             space: 165n,
         } as Account<MyData>);
+    });
+
+    it('parses an json parsed account without info', () => {
+        // Given an address and a json-parsed RPC account without info.
+        const address = '1111' as Address<'1111'>;
+        const rpcAccount = <JsonParsedRpcAccount>{
+            data: {
+                parsed: {
+                    type: 'token',
+                },
+                program: 'splToken',
+                space: 165n,
+            },
+            executable: false,
+            lamports: 1_000_000_000n,
+            owner: '9999',
+            space: 165n,
+        };
+
+        // When we parse that RPC account using the parseJsonRpcAccount function.
+        const account = parseJsonRpcAccount<object>(address, rpcAccount);
+
+        // Then we expect the metadata fields to be included.
+        expect(account).toStrictEqual({
+            address: '1111' as Address<'1111'>,
+            data: {
+                parsedAccountMeta: {
+                    program: 'splToken',
+                    type: 'token',
+                },
+            },
+            executable: false,
+            exists: true,
+            lamports: lamports(1_000_000_000n),
+            programAddress: '9999' as Address<'9999'>,
+            space: 165n,
+        });
     });
 
     it('parses an empty account', () => {

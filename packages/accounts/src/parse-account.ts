@@ -76,6 +76,8 @@ export function parseBase58RpcAccount<TAddress extends string = string>(
 }
 
 type JsonParsedRpcAccount = AccountInfoBase & { readonly data: JsonParsedDataResponse<unknown> };
+type ParsedAccountMeta = { program: string; type?: string };
+type JsonParsedAccountData<TData extends object> = TData & { parsedAccountMeta?: ParsedAccountMeta };
 
 /**
  * Parses an arbitrary `jsonParsed` account provided by the RPC client into an {@link Account} type
@@ -94,17 +96,23 @@ type JsonParsedRpcAccount = AccountInfoBase & { readonly data: JsonParsedDataRes
 export function parseJsonRpcAccount<TData extends object, TAddress extends string = string>(
     address: Address<TAddress>,
     rpcAccount: JsonParsedRpcAccount,
-): Account<TData, TAddress>;
+): Account<JsonParsedAccountData<TData>, TAddress>;
 export function parseJsonRpcAccount<TData extends object, TAddress extends string = string>(
     address: Address<TAddress>,
     rpcAccount: JsonParsedRpcAccount | null,
-): MaybeAccount<TData, TAddress>;
+): MaybeAccount<JsonParsedAccountData<TData>, TAddress>;
 export function parseJsonRpcAccount<TData extends object, TAddress extends string = string>(
     address: Address<TAddress>,
     rpcAccount: JsonParsedRpcAccount | null,
-): Account<TData, TAddress> | MaybeAccount<TData, TAddress> {
+): Account<JsonParsedAccountData<TData>, TAddress> | MaybeAccount<JsonParsedAccountData<TData>, TAddress> {
     if (!rpcAccount) return Object.freeze({ address, exists: false });
-    const data = rpcAccount.data.parsed.info as TData;
+    const parsed = rpcAccount.data.parsed;
+    const info = (parsed.info ?? {}) as TData;
+    const parsedAccountMeta =
+        rpcAccount.data.program || parsed.type
+            ? { program: rpcAccount.data.program, ...(parsed.type ? { type: parsed.type } : {}) }
+            : undefined;
+    const data = { ...info, ...(parsedAccountMeta ? { parsedAccountMeta } : {}) } as JsonParsedAccountData<TData>;
     return Object.freeze({ ...parseBaseAccount(rpcAccount), address, data, exists: true });
 }
 

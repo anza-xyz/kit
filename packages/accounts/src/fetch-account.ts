@@ -90,7 +90,10 @@ export async function fetchJsonParsedAccount<TData extends object, TAddress exte
     rpc: Rpc<GetAccountInfoApi>,
     address: Address<TAddress>,
     config: FetchAccountConfig = {},
-): Promise<MaybeAccount<TData, TAddress> | MaybeEncodedAccount<TAddress>> {
+): Promise<
+    | MaybeAccount<TData & { parsedAccountMeta?: { program: string; type?: string } }, TAddress>
+    | MaybeEncodedAccount<TAddress>
+> {
     const { abortSignal, ...rpcConfig } = config;
     const { value: account } = await rpc
         .getAccountInfo(address, { ...rpcConfig, encoding: 'jsonParsed' })
@@ -205,11 +208,17 @@ export async function fetchJsonParsedAccounts<
             : parseBase64RpcAccount(addresses[index], account as Parameters<typeof parseBase64RpcAccount>[1]);
     }) as {
         [P in keyof TAddresses]:
-            | MaybeAccount<TData[P & keyof TData], TAddresses[P]>
+            | MaybeAccount<
+                  TData[P & keyof TData] & { parsedAccountMeta?: { program: string; type?: string } },
+                  TAddresses[P]
+              >
             | MaybeEncodedAccount<TAddresses[P]>;
     } & {
         [P in keyof TData]:
-            | MaybeAccount<TData[P], TAddresses[P & keyof TAddresses]>
+            | MaybeAccount<
+                  TData[P] & { parsedAccountMeta?: { program: string; type?: string } },
+                  TAddresses[P & keyof TAddresses]
+              >
             | MaybeEncodedAccount<TAddresses[P & keyof TAddresses]>;
     };
 }

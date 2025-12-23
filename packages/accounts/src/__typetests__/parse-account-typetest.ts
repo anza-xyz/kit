@@ -39,11 +39,11 @@ type MyData = { mint: Address; token: Address };
 {
     // [parseJsonRpcAccount]: It returns a custom Account when the RPC is a JSON parsed account.
     const account = parseJsonRpcAccount<MyData, '1111'>(address, {} as JsonParsedRpcAccount);
-    account satisfies Account<MyData, '1111'>;
+    account satisfies Account<MyData & { parsedAccountMeta?: { program: string; type?: string } }, '1111'>;
 }
 
 {
     // [parseJsonRpcAccount]: It returns a MaybeAccount when passing null with a custom Data type.
     const account = parseJsonRpcAccount<MyData, '1111'>(address, null);
-    account satisfies MaybeAccount<MyData, '1111'>;
+    account satisfies MaybeAccount<MyData & { parsedAccountMeta?: { program: string; type?: string } }, '1111'>;
 }
