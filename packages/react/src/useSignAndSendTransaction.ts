@@ -81,7 +81,48 @@ export function useSignAndSendTransaction<TWalletAccount extends UiWalletAccount
     );
 }
 
-function useSignAndSendTransactions<TWalletAccount extends UiWalletAccount>(
+/**
+ * Use this to get a function capable of signing one or more serialized transactions with the private
+ * key of a {@link UiWalletAccount} and sending them to the network for processing. This supports
+ * wallets that allow batching multiple transactions in a single request.
+ *
+ * @example
+ * ```tsx
+ * import { useSignAndSendTransactions } from '@solana/react';
+ *
+ * function SignAndSendTransactionsButton({ account, transactionBytes1, transactionBytes2 }) {
+ *     const signAndSendTransactions = useSignAndSendTransactions(account, 'solana:devnet');
+ *     return (
+ *         <button
+ *             onClick={async () => {
+ *                 try {
+ *                     const [first, second] = await signAndSendTransactions(
+ *                         { transaction: transactionBytes1 },
+ *                         { transaction: transactionBytes2 },
+ *                     );
+ *                     window.alert(
+ *                         `Transaction signatures: ${first.signature.toString()}, ${second.signature.toString()}`,
+ *                     );
+ *                 } catch (e) {
+ *                     console.error('Failed to send transactions', e);
+ *                 }
+ *             }}
+ *         >
+ *             Sign and Send Transactions
+ *         </button>
+ *     );
+ * }
+ * ```
+ */
+export function useSignAndSendTransactions<TWalletAccount extends UiWalletAccount>(
+    uiWalletAccount: TWalletAccount,
+    chain: OnlySolanaChains<TWalletAccount['chains']>,
+): (...inputs: readonly Input[]) => Promise<readonly Output[]>;
+export function useSignAndSendTransactions<TWalletAccount extends UiWalletAccount>(
+    uiWalletAccount: TWalletAccount,
+    chain: `solana:${string}`,
+): (...inputs: readonly Input[]) => Promise<readonly Output[]>;
+export function useSignAndSendTransactions<TWalletAccount extends UiWalletAccount>(
     uiWalletAccount: TWalletAccount,
     chain: `solana:${string}`,
 ): (...inputs: readonly Input[]) => Promise<readonly Output[]> {
