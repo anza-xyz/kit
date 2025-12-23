@@ -118,7 +118,12 @@ describe('fetchJsonParsedAccount', () => {
         account satisfies MaybeAccount<MyData> | MaybeEncodedAccount;
         expect(account).toStrictEqual(<MaybeAccount<MyData>>{
             address,
-            data: { mint: '2222' as Address<'2222'>, owner: '3333' as Address<'3333'> },
+            data: {
+                mint: '2222' as Address<'2222'>,
+                owner: '3333' as Address<'3333'>,
+                program: 'splToken',
+                type: 'token',
+            },
             executable: false,
             exists: true,
             lamports: 1_000_000_000n,
@@ -286,7 +291,7 @@ describe('fetchJsonParsedAccounts', () => {
         // And account A is returned as an existing account.
         expect(accountA).toStrictEqual({
             address: addressA,
-            data: { mint: '3333', owner: '4444' },
+            data: { mint: '3333', owner: '4444', program: 'splToken', type: 'token' },
             executable: false,
             exists: true,
             lamports: 1_000_000_000n,
