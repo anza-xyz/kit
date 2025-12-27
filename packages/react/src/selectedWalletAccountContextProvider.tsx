@@ -18,6 +18,12 @@ export const SelectedWalletAccountContext = createContext<
         setSelectedWalletAccount: React.Dispatch<React.SetStateAction<SelectedWalletAccountState>>
     ]>([undefined, function setSelectedWalletAccount() { }]);
 
+/**
+ * Returns the saved wallet account when its corresponding wallet, and account is available.
+ * @param wallets 
+ * @param savedWalletKey 
+ * @returns 
+ */
 function findSavedWalletAccount(wallets: readonly UiWallet[], savedWalletKey: string | null): UiWalletAccount | undefined {
     if (!savedWalletKey) {
         return;
