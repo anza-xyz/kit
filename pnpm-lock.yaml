@@ -874,6 +874,9 @@ importers:
       '@wallet-standard/errors':
         specifier: ^0.1.1
         version: 0.1.1
+      '@wallet-standard/react':
+        specifier: ^1.0.1
+        version: 1.0.1(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       '@wallet-standard/ui':
         specifier: ^1.0.1
         version: 1.0.1
