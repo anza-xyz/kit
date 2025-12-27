@@ -3,6 +3,7 @@ import '@solana/test-matchers/toBeFrozenObject';
 import {
     SOLANA_ERROR__INSTRUCTION_ERROR__INVALID_ARGUMENT,
     SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN,
+    SOLANA_ERROR__INSTRUCTION_PLANS__NON_DIVISIBLE_TRANSACTION_PLANS_NOT_SUPPORTED,
     SolanaError,
 } from '@solana/errors';
 
@@ -16,7 +17,6 @@ import { createTransactionPlanExecutor } from '../transaction-plan-executor';
 import {
     canceledSingleTransactionPlanResult,
     failedSingleTransactionPlanResult,
-    nonDivisibleSequentialTransactionPlanResult,
     parallelTransactionPlanResult,
     sequentialTransactionPlanResult,
     successfulSingleTransactionPlanResult,
@@ -195,7 +195,7 @@ describe('createTransactionPlanExecutor', () => {
             expect(executeTransactionMessage).toHaveBeenNthCalledWith(2, messageB, { abortSignal: undefined });
         });
 
-        it('successfully executes a non-divisible sequential transaction plan', async () => {
+        it('throws when encountering a non-divisible sequential transaction plan', async () => {
             expect.assertions(1);
             const messageA = createMessage('A');
             const messageB = createMessage('B');
@@ -203,12 +203,23 @@ describe('createTransactionPlanExecutor', () => {
             const executor = createTransactionPlanExecutor({ executeTransactionMessage });
 
             const promise = executor(nonDivisibleSequentialTransactionPlan([messageA, messageB]));
-            await expect(promise).resolves.toStrictEqual(
-                nonDivisibleSequentialTransactionPlanResult([
-                    successfulSingleTransactionPlanResult(messageA, createTransaction('A')),
-                    successfulSingleTransactionPlanResult(messageB, createTransaction('B')),
-                ]),
+            await expect(promise).rejects.toThrow(
+                new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__NON_DIVISIBLE_TRANSACTION_PLANS_NOT_SUPPORTED),
             );
+        });
+
+        it('does no execute transactions before checking for non-divisible plans', async () => {
+            expect.assertions(1);
+            const messageA = createMessage('A');
+            const messageB = createMessage('B');
+            const messageC = createMessage('C');
+            const executeTransactionMessage = jest.fn().mockImplementation(forwardId);
+            const executor = createTransactionPlanExecutor({ executeTransactionMessage });
+
+            await executor(
+                sequentialTransactionPlan([messageA, nonDivisibleSequentialTransactionPlan([messageB, messageC])]),
+            ).catch(() => {});
+            expect(executeTransactionMessage).not.toHaveBeenCalled();
         });
 
         it('passes the abort signal to the `executeTransactionMessage` function', async () => {
@@ -544,7 +555,7 @@ describe('createTransactionPlanExecutor', () => {
                 parallelTransactionPlan([
                     sequentialTransactionPlan([messageA, parallelTransactionPlan([messageB, messageC]), messageD]),
                     messageE,
-                    nonDivisibleSequentialTransactionPlan([messageF, messageG]),
+                    sequentialTransactionPlan([messageF, messageG]),
                 ]),
             );
 
@@ -559,7 +570,7 @@ describe('createTransactionPlanExecutor', () => {
                         successfulSingleTransactionPlanResult(messageD, createTransaction('D')),
                     ]),
                     successfulSingleTransactionPlanResult(messageE, createTransaction('E')),
-                    nonDivisibleSequentialTransactionPlanResult([
+                    sequentialTransactionPlanResult([
                         successfulSingleTransactionPlanResult(messageF, createTransaction('F')),
                         successfulSingleTransactionPlanResult(messageG, createTransaction('G')),
                     ]),
@@ -589,7 +600,7 @@ describe('createTransactionPlanExecutor', () => {
                 parallelTransactionPlan([
                     sequentialTransactionPlan([messageA, parallelTransactionPlan([messageB, messageC]), messageD]),
                     messageE,
-                    nonDivisibleSequentialTransactionPlan([messageF, messageG]),
+                    sequentialTransactionPlan([messageF, messageG]),
                 ]),
             );
 
@@ -607,7 +618,7 @@ describe('createTransactionPlanExecutor', () => {
                             canceledSingleTransactionPlanResult(messageD),
                         ]),
                         successfulSingleTransactionPlanResult(messageE, createTransaction('E')),
-                        nonDivisibleSequentialTransactionPlanResult([
+                        sequentialTransactionPlanResult([
                             successfulSingleTransactionPlanResult(messageF, createTransaction('F')),
                             successfulSingleTransactionPlanResult(messageG, createTransaction('G')),
                         ]),
@@ -640,7 +651,7 @@ describe('createTransactionPlanExecutor', () => {
                 parallelTransactionPlan([
                     sequentialTransactionPlan([messageA, parallelTransactionPlan([messageB, messageC]), messageD]),
                     messageE,
-                    nonDivisibleSequentialTransactionPlan([messageF, messageG]),
+                    sequentialTransactionPlan([messageF, messageG]),
                 ]),
                 { abortSignal },
             );
@@ -662,7 +673,7 @@ describe('createTransactionPlanExecutor', () => {
                             canceledSingleTransactionPlanResult(messageD),
                         ]),
                         successfulSingleTransactionPlanResult(messageE, createTransaction('E')),
-                        nonDivisibleSequentialTransactionPlanResult([
+                        sequentialTransactionPlanResult([
                             successfulSingleTransactionPlanResult(messageF, createTransaction('F')),
                             successfulSingleTransactionPlanResult(messageG, createTransaction('G')),
                         ]),
@@ -691,7 +702,7 @@ describe('createTransactionPlanExecutor', () => {
                 parallelTransactionPlan([
                     sequentialTransactionPlan([messageA, parallelTransactionPlan([messageB, messageC]), messageD]),
                     messageE,
-                    nonDivisibleSequentialTransactionPlan([messageF, messageG]),
+                    sequentialTransactionPlan([messageF, messageG]),
                 ]),
                 { abortSignal },
             );
@@ -710,7 +721,7 @@ describe('createTransactionPlanExecutor', () => {
                             canceledSingleTransactionPlanResult(messageD),
                         ]),
                         canceledSingleTransactionPlanResult(messageE),
-                        nonDivisibleSequentialTransactionPlanResult([
+                        sequentialTransactionPlanResult([
                             canceledSingleTransactionPlanResult(messageF),
                             canceledSingleTransactionPlanResult(messageG),
                         ]),

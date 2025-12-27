@@ -113,6 +113,7 @@ import {
     SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN,
     SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN,
     SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_PACKER_ALREADY_COMPLETE,
+    SOLANA_ERROR__INSTRUCTION_PLANS__NON_DIVISIBLE_TRANSACTION_PLANS_NOT_SUPPORTED,
     SOLANA_ERROR__INVALID_BLOCKHASH_BYTE_LENGTH,
     SOLANA_ERROR__INVALID_NONCE,
     SOLANA_ERROR__INVARIANT_VIOLATION__CACHED_ABORTABLE_ITERABLE_CACHE_ENTRY_MISSING,
@@ -426,6 +427,8 @@ export const SolanaErrorMessages: Readonly<{
     [SOLANA_ERROR__INSTRUCTION_ERROR__UNSUPPORTED_SYSVAR]: 'Unsupported sysvar',
     [SOLANA_ERROR__INVARIANT_VIOLATION__INVALID_INSTRUCTION_PLAN_KIND]: 'Invalid instruction plan kind: $kind.',
     [SOLANA_ERROR__INSTRUCTION_PLANS__EMPTY_INSTRUCTION_PLAN]: 'The provided instruction plan is empty.',
+    [SOLANA_ERROR__INSTRUCTION_PLANS__NON_DIVISIBLE_TRANSACTION_PLANS_NOT_SUPPORTED]:
+        'This transaction plan executor does not support non-divisible sequential plans. To support them, you may create your own executor such that multi-transaction atomicity is preserved — e.g. by targetting RPCs that support transaction bundles.',
     [SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN]:
         'The provided transaction plan failed to execute. See the `transactionPlanResult` attribute and the `cause` error for more details.',
     [SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN]:
