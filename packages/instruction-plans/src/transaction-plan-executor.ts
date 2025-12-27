@@ -1,5 +1,6 @@
 import {
     SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN,
+    SOLANA_ERROR__INSTRUCTION_PLANS__NON_DIVISIBLE_TRANSACTION_PLANS_NOT_SUPPORTED,
     SOLANA_ERROR__INVARIANT_VIOLATION__INVALID_TRANSACTION_PLAN_KIND,
     SolanaError,
 } from '@solana/errors';
@@ -17,7 +18,6 @@ import type {
 import {
     canceledSingleTransactionPlanResult,
     failedSingleTransactionPlanResult,
-    nonDivisibleSequentialTransactionPlanResult,
     parallelTransactionPlanResult,
     sequentialTransactionPlanResult,
     successfulSingleTransactionPlanResult,
@@ -86,6 +86,10 @@ export function createTransactionPlanExecutor(config: TransactionPlanExecutorCon
             canceled: abortSignal?.aborted ?? false,
         };
 
+        // Fail early if there are non-divisible sequential plans in the
+        // transaction plan as they are not supported by this executor.
+        assertDivisibleSequentialPlansOnly(plan);
+
         const cancelHandler = () => {
             context.canceled = true;
         };
@@ -136,6 +140,10 @@ async function traverseSequential(
     transactionPlan: SequentialTransactionPlan,
     context: TraverseContext,
 ): Promise<TransactionPlanResult> {
+    if (!transactionPlan.divisible) {
+        throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__NON_DIVISIBLE_TRANSACTION_PLANS_NOT_SUPPORTED);
+    }
+
     const results: TransactionPlanResult[] = [];
 
     for (const subPlan of transactionPlan.plans) {
@@ -143,9 +151,7 @@ async function traverseSequential(
         results.push(result);
     }
 
-    return transactionPlan.divisible
-        ? sequentialTransactionPlanResult(results)
-        : nonDivisibleSequentialTransactionPlanResult(results);
+    return sequentialTransactionPlanResult(results);
 }
 
 async function traverseParallel(
@@ -193,5 +199,27 @@ function findErrorFromTransactionPlanResult(result: TransactionPlanResult): Erro
         if (error) {
             return error;
         }
+    }
+}
+
+function assertDivisibleSequentialPlansOnly(transactionPlan: TransactionPlan): void {
+    const kind = transactionPlan.kind;
+    switch (kind) {
+        case 'sequential':
+            if (!transactionPlan.divisible) {
+                throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__NON_DIVISIBLE_TRANSACTION_PLANS_NOT_SUPPORTED);
+            }
+            for (const subPlan of transactionPlan.plans) {
+                assertDivisibleSequentialPlansOnly(subPlan);
+            }
+            return;
+        case 'parallel':
+            for (const subPlan of transactionPlan.plans) {
+                assertDivisibleSequentialPlansOnly(subPlan);
+            }
+            return;
+        case 'single':
+        default:
+            return;
     }
 }
