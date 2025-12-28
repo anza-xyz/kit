@@ -1,5 +1,16 @@
 # @solana/codecs-core
 
+## 5.2.0
+
+### Patch Changes
+
+- [#1115](https://github.com/anza-xyz/kit/pull/1115) [`c391a44`](https://github.com/anza-xyz/kit/commit/c391a44eebd26707165991f8837f4d40fa988288) Thanks [@steveluscher](https://github.com/steveluscher)! - Created a function that gives you a non-shared `ArrayBuffer` given any kind of `Uint8Array`
+
+- [#1116](https://github.com/anza-xyz/kit/pull/1116) [`109c78e`](https://github.com/anza-xyz/kit/commit/109c78e8972857323558ca913706a95cdb70c549) Thanks [@steveluscher](https://github.com/steveluscher)! - Any `SharedArrayBuffer` that gets passed to a crypto operation like `signBytes` or `verifySignature` will now be copied as non-shared. Crypto operations like `sign` and `verify` reject `SharedArrayBuffers` otherwise
+
+- Updated dependencies [[`b80b092`](https://github.com/anza-xyz/kit/commit/b80b09239762262116cb70b43271ad98a2f716b5)]:
+    - @solana/errors@5.2.0
+
 ## 5.1.0
 
 ### Patch Changes
