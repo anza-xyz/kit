@@ -11,4 +11,4 @@ export * from './useWalletAccountMessageSigner';
 export * from './useWalletAccountTransactionSigner';
 export * from './useWalletAccountTransactionSendingSigner';
 
-export * from './selectedWalletAccountContextProvider'
+export * from './SelectedWalletAccountContextProvider'

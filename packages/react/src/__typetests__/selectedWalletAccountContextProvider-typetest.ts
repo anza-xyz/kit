@@ -1,6 +1,6 @@
 import React from "react";
 import type { UiWallet, UiWalletAccount } from "@wallet-standard/react";
-import { SelectedWalletAccountContext, SelectedWalletAccountContextProvider } from "../selectedWalletAccountContextProvider";
+import { SelectedWalletAccountContext, SelectedWalletAccountContextProvider } from "../SelectedWalletAccountContextProvider";
 
 /**
  * Positive: provider accepts correct props.
