@@ -1,4 +1,11 @@
-import { getUiWalletAccountStorageKey, UiWallet, UiWalletAccount, uiWalletAccountBelongsToUiWallet, uiWalletAccountsAreSame, useWallets } from "@wallet-standard/react";
+import {
+    getUiWalletAccountStorageKey,
+    type UiWallet,
+    type UiWalletAccount,
+    uiWalletAccountBelongsToUiWallet,
+    uiWalletAccountsAreSame,
+    useWallets
+} from "@wallet-standard/react";
 import React, { createContext } from "react";
 
 export type SelectedWalletAccountState = UiWalletAccount | undefined;
@@ -46,7 +53,9 @@ function findSavedWalletAccount(wallets: readonly UiWallet[], savedWalletKey: st
  * Saves the selected wallet account's storage key to a persistant storage. In future
  * sessions it will try to return that same wallet account, or at least one from the same brand of
  * wallet if the wallet from which it came is still in the Wallet Standard registry.
- * @param param0 
+ * @param children 
+ * @param filterWallet 
+ * @param stateSync
  * @returns 
  */
 export function SelectedWalletAccountContextProvider(
