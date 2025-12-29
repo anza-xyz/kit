@@ -5,6 +5,7 @@ import {
     TransactionMessageWithBlockhashLifetime,
     TransactionMessageWithDurableNonceLifetime,
     TransactionMessageWithFeePayer,
+    TransactionMessageWithinInstructionLimit,
     TransactionMessageWithinSizeLimit,
     TransactionMessageWithLifetime,
 } from '@solana/transaction-messages';
@@ -18,6 +19,7 @@ import {
     TransactionWithLifetime,
 } from '../lifetime';
 import { Transaction } from '../transaction';
+import { TransactionWithinInstructionLimit } from '../transaction-instruction-limit';
 import { TransactionWithinSizeLimit } from '../transaction-size';
 
 // [DESCRIBE] compileTransaction.
@@ -85,5 +87,16 @@ import { TransactionWithinSizeLimit } from '../transaction-size';
         );
 
         transaction satisfies Readonly<Transaction & TransactionWithinSizeLimit>;
+    }
+
+    // It forwards the within instruction limit flag from the transaction message to the transaction.
+    {
+        const transaction = compileTransaction(
+            null as unknown as TransactionMessage &
+                TransactionMessageWithFeePayer &
+                TransactionMessageWithinInstructionLimit,
+        );
+
+        transaction satisfies Readonly<Transaction & TransactionWithinInstructionLimit>;
     }
 }

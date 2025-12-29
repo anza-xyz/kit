@@ -1,9 +1,11 @@
 import { Address } from '@solana/addresses';
+import { SOLANA_ERROR__TRANSACTION__EXCEEDS_INSTRUCTION_LIMIT, SolanaError } from '@solana/errors';
 
 import { TransactionMessageWithBlockhashLifetime } from '../../blockhash';
 import { TransactionMessageWithFeePayer } from '../../fee-payer';
 import { TransactionMessageWithLifetime } from '../../lifetime';
 import { BaseTransactionMessage } from '../../transaction-message';
+import { TRANSACTION_MESSAGE_INSTRUCTION_LIMIT } from '../../transaction-message-instruction-limit';
 import { getCompiledAddressTableLookups } from '../address-table-lookups';
 import { getCompiledMessageHeader } from '../header';
 import { getCompiledInstructions } from '../instructions';
@@ -29,6 +31,20 @@ describe('compileTransactionMessage', () => {
             lifetimeConstraint: MOCK_LIFETIME_CONSTRAINT,
             version: 0,
         };
+    });
+    it('throws when the instruction limit is exceeded', () => {
+        const oversizedTx = {
+            ...baseTx,
+            instructions: new Array(TRANSACTION_MESSAGE_INSTRUCTION_LIMIT + 1).fill({
+                programAddress: 'abc' as Address<'abc'>,
+            }),
+        };
+        expect(() => compileTransactionMessage(oversizedTx)).toThrow(
+            new SolanaError(SOLANA_ERROR__TRANSACTION__EXCEEDS_INSTRUCTION_LIMIT, {
+                instructionCount: TRANSACTION_MESSAGE_INSTRUCTION_LIMIT + 1,
+                instructionLimit: TRANSACTION_MESSAGE_INSTRUCTION_LIMIT,
+            }),
+        );
     });
     describe('address table lookups', () => {
         const expectedAddressTableLookups = [] as ReturnType<typeof getCompiledAddressTableLookups>;

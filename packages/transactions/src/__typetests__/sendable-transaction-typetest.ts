@@ -1,6 +1,7 @@
 import { assertIsSendableTransaction, isSendableTransaction, SendableTransaction } from '../sendable-transaction';
 import { FullySignedTransaction } from '../signatures';
 import { Transaction } from '../transaction';
+import { TransactionWithinInstructionLimit } from '../transaction-instruction-limit';
 import { TransactionWithinSizeLimit } from '../transaction-size';
 
 // [DESCRIBE] SendableTransaction.
@@ -9,6 +10,7 @@ import { TransactionWithinSizeLimit } from '../transaction-size';
     {
         null as unknown as FullySignedTransaction &
             Transaction &
+            TransactionWithinInstructionLimit &
             TransactionWithinSizeLimit satisfies SendableTransaction;
     }
 
@@ -24,6 +26,8 @@ import { TransactionWithinSizeLimit } from '../transaction-size';
         null as unknown as FullySignedTransaction & Transaction satisfies SendableTransaction;
         // @ts-expect-error Not enough required conditions.
         null as unknown as Transaction & TransactionWithinSizeLimit satisfies SendableTransaction;
+        // @ts-expect-error Not enough required conditions.
+        null as unknown as Transaction & TransactionWithinInstructionLimit satisfies SendableTransaction;
     }
 }
 
@@ -35,12 +39,15 @@ import { TransactionWithinSizeLimit } from '../transaction-size';
         if (isSendableTransaction(transaction)) {
             transaction satisfies SendableTransaction;
             transaction satisfies FullySignedTransaction;
+            transaction satisfies TransactionWithinInstructionLimit;
             transaction satisfies TransactionWithinSizeLimit;
         } else {
             // @ts-expect-error Not sendable.
             transaction satisfies SendableTransaction;
             // @ts-expect-error Not fully signed.
             transaction satisfies FullySignedTransaction;
+            // @ts-expect-error Not within instruction limit.
+            transaction satisfies TransactionWithinInstructionLimit;
             // @ts-expect-error Not within size limit.
             transaction satisfies TransactionWithinSizeLimit;
         }
@@ -55,6 +62,7 @@ import { TransactionWithinSizeLimit } from '../transaction-size';
         assertIsSendableTransaction(transaction);
         transaction satisfies SendableTransaction;
         transaction satisfies FullySignedTransaction;
+        transaction satisfies TransactionWithinInstructionLimit;
         transaction satisfies TransactionWithinSizeLimit;
     }
 }

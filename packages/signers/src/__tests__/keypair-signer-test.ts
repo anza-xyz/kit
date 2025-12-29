@@ -6,6 +6,7 @@ import { generateKeyPair, SignatureBytes, signBytes } from '@solana/keys';
 import {
     partiallySignTransaction,
     Transaction,
+    TransactionWithinInstructionLimit,
     TransactionWithinSizeLimit,
     TransactionWithLifetime,
 } from '@solana/transactions';
@@ -150,8 +151,8 @@ describe('createSignerFromKeyPair', () => {
 
         // And given we have a couple of mock transactions to sign.
         const mockTransactions = [
-            {} as Transaction & TransactionWithinSizeLimit & TransactionWithLifetime,
-            {} as Transaction & TransactionWithinSizeLimit & TransactionWithLifetime,
+            {} as Transaction & TransactionWithinInstructionLimit & TransactionWithinSizeLimit & TransactionWithLifetime,
+            {} as Transaction & TransactionWithinInstructionLimit & TransactionWithinSizeLimit & TransactionWithLifetime,
         ];
 
         // And given we mock the next two calls of the partiallySignTransaction function.

@@ -208,6 +208,7 @@ import {
     SOLANA_ERROR__TRANSACTION__ADDRESS_MISSING,
     SOLANA_ERROR__TRANSACTION__ADDRESSES_CANNOT_SIGN_TRANSACTION,
     SOLANA_ERROR__TRANSACTION__CANNOT_ENCODE_WITH_EMPTY_SIGNATURES,
+    SOLANA_ERROR__TRANSACTION__EXCEEDS_INSTRUCTION_LIMIT,
     SOLANA_ERROR__TRANSACTION__EXCEEDS_SIZE_LIMIT,
     SOLANA_ERROR__TRANSACTION__EXPECTED_BLOCKHASH_LIFETIME,
     SOLANA_ERROR__TRANSACTION__EXPECTED_NONCE_LIFETIME,
@@ -677,6 +678,8 @@ export const SolanaErrorMessages: Readonly<{
     [SOLANA_ERROR__TRANSACTION__ADDRESS_MISSING]: 'Transaction is missing an address at index: $index.',
     [SOLANA_ERROR__TRANSACTION__CANNOT_ENCODE_WITH_EMPTY_SIGNATURES]:
         'Transaction has no expected signers therefore it cannot be encoded',
+    [SOLANA_ERROR__TRANSACTION__EXCEEDS_INSTRUCTION_LIMIT]:
+        'Transaction instruction count $instructionCount exceeds limit of $instructionLimit instructions',
     [SOLANA_ERROR__TRANSACTION__EXCEEDS_SIZE_LIMIT]:
         'Transaction size $transactionSize exceeds limit of $transactionSizeLimit bytes',
     [SOLANA_ERROR__TRANSACTION__EXPECTED_BLOCKHASH_LIFETIME]: 'Transaction does not have a blockhash lifetime',

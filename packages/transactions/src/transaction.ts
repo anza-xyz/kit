@@ -5,6 +5,7 @@ import type { Brand, EncodedString } from '@solana/nominal-types';
 import type { BaseTransactionMessage } from '@solana/transaction-messages';
 
 import type { SetTransactionLifetimeFromTransactionMessage } from './lifetime';
+import type { SetTransactionWithinInstructionLimitFromTransactionMessage } from './transaction-instruction-limit';
 import type { SetTransactionWithinSizeLimitFromTransactionMessage } from './transaction-size';
 
 export type TransactionMessageBytes = Brand<ReadonlyUint8Array, 'TransactionMessageBytes'>;
@@ -28,7 +29,10 @@ export type Transaction = Readonly<{
  * from the provided `BaseTransactionMessage` type.
  */
 export type TransactionFromTransactionMessage<TTransactionMessage extends BaseTransactionMessage> =
-    SetTransactionWithinSizeLimitFromTransactionMessage<
-        SetTransactionLifetimeFromTransactionMessage<Transaction, TTransactionMessage>,
+    SetTransactionWithinInstructionLimitFromTransactionMessage<
+        SetTransactionWithinSizeLimitFromTransactionMessage<
+            SetTransactionLifetimeFromTransactionMessage<Transaction, TTransactionMessage>,
+            TTransactionMessage
+        >,
         TTransactionMessage
     >;

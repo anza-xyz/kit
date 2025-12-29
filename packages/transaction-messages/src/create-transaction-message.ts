@@ -1,4 +1,5 @@
 import { TransactionMessage, TransactionVersion } from './transaction-message';
+import { TransactionMessageWithinInstructionLimit } from './transaction-message-instruction-limit';
 import { TransactionMessageWithinSizeLimit } from './transaction-message-size';
 
 type TransactionConfig<TVersion extends TransactionVersion> = Readonly<{
@@ -9,6 +10,7 @@ type EmptyTransactionMessage<TVersion extends TransactionVersion> = Omit<
     Extract<TransactionMessage, { version: TVersion }>,
     'instructions'
 > &
+    TransactionMessageWithinInstructionLimit &
     TransactionMessageWithinSizeLimit & { instructions: readonly [] };
 
 /**
