@@ -1,12 +1,14 @@
 import {
     SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN,
     SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_PACKER_ALREADY_COMPLETE,
+    SOLANA_ERROR__TRANSACTION__EXCEEDS_INSTRUCTION_LIMIT,
     SolanaError,
 } from '@solana/errors';
 import { Instruction } from '@solana/instructions';
 import {
     appendTransactionMessageInstruction,
     BaseTransactionMessage,
+    TRANSACTION_MESSAGE_INSTRUCTION_LIMIT,
     TransactionMessageWithFeePayer,
 } from '@solana/transaction-messages';
 import { getTransactionMessageSize, TRANSACTION_SIZE_LIMIT } from '@solana/transactions';
@@ -407,6 +409,13 @@ export function getLinearMessagePackerInstructionPlan({
                         throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_PACKER_ALREADY_COMPLETE);
                     }
 
+                    if (message.instructions.length >= TRANSACTION_MESSAGE_INSTRUCTION_LIMIT) {
+                        throw new SolanaError(SOLANA_ERROR__TRANSACTION__EXCEEDS_INSTRUCTION_LIMIT, {
+                            instructionCount: message.instructions.length,
+                            instructionLimit: TRANSACTION_MESSAGE_INSTRUCTION_LIMIT,
+                        });
+                    }
+
                     const messageSizeWithBaseInstruction = getTransactionMessageSize(
                         appendTransactionMessageInstruction(getInstruction(offset, 0), message),
                     );
@@ -479,6 +488,16 @@ export function getMessagePackerInstructionPlanFromInstructions<TInstruction ext
                     const originalMessageSize = getTransactionMessageSize(message);
 
                     for (let index = instructionIndex; index < instructions.length; index++) {
+                        if (message.instructions.length >= TRANSACTION_MESSAGE_INSTRUCTION_LIMIT) {
+                            if (index === instructionIndex) {
+                                throw new SolanaError(SOLANA_ERROR__TRANSACTION__EXCEEDS_INSTRUCTION_LIMIT, {
+                                    instructionCount: message.instructions.length,
+                                    instructionLimit: TRANSACTION_MESSAGE_INSTRUCTION_LIMIT,
+                                });
+                            }
+                            instructionIndex = index;
+                            return message;
+                        }
                         message = appendTransactionMessageInstruction(instructions[index], message);
                         const messageSize = getTransactionMessageSize(message);
 

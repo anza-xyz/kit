@@ -5,10 +5,12 @@ import { getAbortablePromise } from '@solana/promises';
 import { TransactionModifyingSigner } from '@solana/signers';
 import { getCompiledTransactionMessageDecoder } from '@solana/transaction-messages';
 import {
+    assertIsTransactionWithinInstructionLimit,
     assertIsTransactionWithinSizeLimit,
     getTransactionCodec,
     getTransactionLifetimeConstraintFromCompiledTransactionMessage,
     Transaction,
+    TransactionWithinInstructionLimit,
     TransactionWithinSizeLimit,
     TransactionWithLifetime,
 } from '@solana/transactions';
@@ -78,6 +80,7 @@ export function useWalletAccountTransactionSigner<TWalletAccount extends UiWalle
                 }
                 if (transactions.length === 0) {
                     return transactions as readonly (Transaction &
+                        TransactionWithinInstructionLimit &
                         TransactionWithinSizeLimit &
                         TransactionWithLifetime)[];
                 }
@@ -92,6 +95,7 @@ export function useWalletAccountTransactionSigner<TWalletAccount extends UiWalle
                     signedTransaction,
                 ) as (typeof transactions)[number];
 
+                assertIsTransactionWithinInstructionLimit(decodedSignedTransaction);
                 assertIsTransactionWithinSizeLimit(decodedSignedTransaction);
 
                 const existingLifetime =

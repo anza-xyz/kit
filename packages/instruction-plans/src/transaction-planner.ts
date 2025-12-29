@@ -4,12 +4,14 @@ import {
     SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN,
     SOLANA_ERROR__INVARIANT_VIOLATION__INVALID_INSTRUCTION_PLAN_KIND,
     SOLANA_ERROR__INVARIANT_VIOLATION__INVALID_TRANSACTION_PLAN_KIND,
+    SOLANA_ERROR__TRANSACTION__EXCEEDS_INSTRUCTION_LIMIT,
     SolanaError,
 } from '@solana/errors';
 import { getAbortablePromise } from '@solana/promises';
 import {
     appendTransactionMessageInstructions,
     BaseTransactionMessage,
+    TRANSACTION_MESSAGE_INSTRUCTION_LIMIT,
     TransactionMessageWithFeePayer,
 } from '@solana/transaction-messages';
 import { getTransactionMessageSize, TRANSACTION_SIZE_LIMIT } from '@solana/transactions';
@@ -320,12 +322,18 @@ async function selectAndMutateCandidate(
                 ),
                 context.abortSignal,
             );
-            if (getTransactionMessageSize(message) <= TRANSACTION_SIZE_LIMIT) {
+            if (
+                message.instructions.length <= TRANSACTION_MESSAGE_INSTRUCTION_LIMIT &&
+                getTransactionMessageSize(message) <= TRANSACTION_SIZE_LIMIT
+            ) {
                 candidate.message = message;
                 return candidate;
             }
         } catch (error) {
-            if (isSolanaError(error, SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN)) {
+            if (
+                isSolanaError(error, SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN) ||
+                isSolanaError(error, SOLANA_ERROR__TRANSACTION__EXCEEDS_INSTRUCTION_LIMIT)
+            ) {
                 // Try the next candidate.
             } else {
                 throw error;
@@ -351,6 +359,12 @@ async function createNewMessage(
         ),
         context.abortSignal,
     );
+    if (updatedMessage.instructions.length > TRANSACTION_MESSAGE_INSTRUCTION_LIMIT) {
+        throw new SolanaError(SOLANA_ERROR__TRANSACTION__EXCEEDS_INSTRUCTION_LIMIT, {
+            instructionCount: updatedMessage.instructions.length,
+            instructionLimit: TRANSACTION_MESSAGE_INSTRUCTION_LIMIT,
+        });
+    }
     const updatedMessageSize = getTransactionMessageSize(updatedMessage);
     if (updatedMessageSize > TRANSACTION_SIZE_LIMIT) {
         const newMessageSize = getTransactionMessageSize(newMessage);

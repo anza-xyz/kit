@@ -1,7 +1,12 @@
+import { SOLANA_ERROR__TRANSACTION__EXCEEDS_INSTRUCTION_LIMIT, SolanaError } from '@solana/errors';
 import { Instruction } from '@solana/instructions';
 
 import { ExcludeTransactionMessageDurableNonceLifetime } from './durable-nonce';
 import { BaseTransactionMessage } from './transaction-message';
+import {
+    ExcludeTransactionMessageWithinInstructionLimit,
+    TRANSACTION_MESSAGE_INSTRUCTION_LIMIT,
+} from './transaction-message-instruction-limit';
 import { ExcludeTransactionMessageWithinSizeLimit } from './transaction-message-size';
 
 /**
@@ -11,7 +16,10 @@ import { ExcludeTransactionMessageWithinSizeLimit } from './transaction-message-
 type AppendTransactionMessageInstructions<
     TTransactionMessage extends BaseTransactionMessage,
     TInstructions extends readonly Instruction[],
-> = Omit<ExcludeTransactionMessageWithinSizeLimit<TTransactionMessage>, 'instructions'> & {
+> = Omit<
+    ExcludeTransactionMessageWithinInstructionLimit<ExcludeTransactionMessageWithinSizeLimit<TTransactionMessage>>,
+    'instructions'
+> & {
     readonly instructions: readonly [...TTransactionMessage['instructions'], ...TInstructions];
 };
 
@@ -23,7 +31,9 @@ type PrependTransactionMessageInstructions<
     TTransactionMessage extends BaseTransactionMessage,
     TInstructions extends readonly Instruction[],
 > = Omit<
-    ExcludeTransactionMessageWithinSizeLimit<ExcludeTransactionMessageDurableNonceLifetime<TTransactionMessage>>,
+    ExcludeTransactionMessageWithinInstructionLimit<
+        ExcludeTransactionMessageWithinSizeLimit<ExcludeTransactionMessageDurableNonceLifetime<TTransactionMessage>>
+    >,
     'instructions'
 > & {
     readonly instructions: readonly [...TInstructions, ...TTransactionMessage['instructions']];
@@ -95,6 +105,13 @@ export function appendTransactionMessageInstructions<
     instructions: TInstructions,
     transactionMessage: TTransactionMessage,
 ): AppendTransactionMessageInstructions<TTransactionMessage, TInstructions> {
+    const instructionCount = transactionMessage.instructions.length + instructions.length;
+    if (instructionCount > TRANSACTION_MESSAGE_INSTRUCTION_LIMIT) {
+        throw new SolanaError(SOLANA_ERROR__TRANSACTION__EXCEEDS_INSTRUCTION_LIMIT, {
+            instructionCount,
+            instructionLimit: TRANSACTION_MESSAGE_INSTRUCTION_LIMIT,
+        });
+    }
     return Object.freeze({
         ...transactionMessage,
         instructions: Object.freeze([
@@ -169,6 +186,13 @@ export function prependTransactionMessageInstructions<
     instructions: TInstructions,
     transactionMessage: TTransactionMessage,
 ): PrependTransactionMessageInstructions<TTransactionMessage, TInstructions> {
+    const instructionCount = transactionMessage.instructions.length + instructions.length;
+    if (instructionCount > TRANSACTION_MESSAGE_INSTRUCTION_LIMIT) {
+        throw new SolanaError(SOLANA_ERROR__TRANSACTION__EXCEEDS_INSTRUCTION_LIMIT, {
+            instructionCount,
+            instructionLimit: TRANSACTION_MESSAGE_INSTRUCTION_LIMIT,
+        });
+    }
     return Object.freeze({
         ...(transactionMessage as ExcludeTransactionMessageDurableNonceLifetime<TTransactionMessage>),
         instructions: Object.freeze([

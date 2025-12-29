@@ -1,6 +1,9 @@
+import { SOLANA_ERROR__TRANSACTION__EXCEEDS_INSTRUCTION_LIMIT, SolanaError } from '@solana/errors';
+
 import { TransactionMessageWithFeePayer } from '../fee-payer';
 import { TransactionMessageWithLifetime } from '../lifetime';
 import { BaseTransactionMessage } from '../transaction-message';
+import { TRANSACTION_MESSAGE_INSTRUCTION_LIMIT } from '../transaction-message-instruction-limit';
 import { getAddressMapFromInstructions, getOrderedAccountsFromAddressMap } from './accounts';
 import { getCompiledAddressTableLookups } from './address-table-lookups';
 import { getCompiledMessageHeader } from './header';
@@ -66,6 +69,14 @@ export function compileTransactionMessage<
     TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer,
 >(transactionMessage: TTransactionMessage): CompiledTransactionMessageFromTransactionMessage<TTransactionMessage> {
     type ReturnType = CompiledTransactionMessageFromTransactionMessage<TTransactionMessage>;
+
+    const instructionCount = transactionMessage.instructions.length;
+    if (instructionCount > TRANSACTION_MESSAGE_INSTRUCTION_LIMIT) {
+        throw new SolanaError(SOLANA_ERROR__TRANSACTION__EXCEEDS_INSTRUCTION_LIMIT, {
+            instructionCount,
+            instructionLimit: TRANSACTION_MESSAGE_INSTRUCTION_LIMIT,
+        });
+    }
 
     const addressMap = getAddressMapFromInstructions(
         transactionMessage.feePayer.address,

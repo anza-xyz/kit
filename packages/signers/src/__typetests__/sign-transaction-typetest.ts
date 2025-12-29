@@ -5,12 +5,14 @@ import {
     TransactionMessageWithBlockhashLifetime,
     TransactionMessageWithDurableNonceLifetime,
     TransactionMessageWithFeePayer,
+    TransactionMessageWithinInstructionLimit,
     TransactionMessageWithinSizeLimit,
     TransactionMessageWithLifetime,
 } from '@solana/transaction-messages';
 import {
     FullySignedTransaction,
     Transaction,
+    TransactionWithinInstructionLimit,
     TransactionWithinSizeLimit,
     TransactionWithLifetime,
 } from '@solana/transactions';
@@ -80,6 +82,18 @@ import { TransactionMessageWithSingleSendingSigner } from '../transaction-with-s
 }
 
 {
+    // [partiallySignTransactionMessageWithSigners]: returns a transaction with a `TransactionWithinInstructionLimit` flag
+    const transactionMessage = null as unknown as BaseTransactionMessage &
+        TransactionMessageWithFeePayer &
+        TransactionMessageWithinInstructionLimit &
+        TransactionMessageWithLifetime &
+        TransactionMessageWithSigners;
+    partiallySignTransactionMessageWithSigners(transactionMessage) satisfies Promise<
+        Readonly<Transaction & TransactionWithinInstructionLimit>
+    >;
+}
+
+{
     // [signTransactionMessageWithSigners]: returns a fully signed transaction with a lifetime when the input message has a blockhash lifetime
     const transactionMessage = null as unknown as BaseTransactionMessage &
         TransactionMessageWithBlockhashLifetime &
@@ -132,6 +146,18 @@ import { TransactionMessageWithSingleSendingSigner } from '../transaction-with-s
         TransactionMessageWithSigners;
     signTransactionMessageWithSigners(transactionMessage) satisfies Promise<
         Readonly<FullySignedTransaction & Transaction & TransactionWithinSizeLimit>
+    >;
+}
+
+{
+    // [signTransactionMessageWithSigners]: returns a transaction with a `TransactionWithinInstructionLimit` flag
+    const transactionMessage = null as unknown as BaseTransactionMessage &
+        TransactionMessageWithFeePayer &
+        TransactionMessageWithinInstructionLimit &
+        TransactionMessageWithLifetime &
+        TransactionMessageWithSigners;
+    signTransactionMessageWithSigners(transactionMessage) satisfies Promise<
+        Readonly<FullySignedTransaction & Transaction & TransactionWithinInstructionLimit>
     >;
 }
 

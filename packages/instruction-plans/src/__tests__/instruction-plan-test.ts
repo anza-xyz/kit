@@ -4,6 +4,7 @@ import { Address } from '@solana/addresses';
 import {
     SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN,
     SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_PACKER_ALREADY_COMPLETE,
+    SOLANA_ERROR__TRANSACTION__EXCEEDS_INSTRUCTION_LIMIT,
     SolanaError,
 } from '@solana/errors';
 import { pipe } from '@solana/functional';
@@ -12,6 +13,7 @@ import {
     BaseTransactionMessage,
     createTransactionMessage,
     setTransactionMessageFeePayer,
+    TRANSACTION_MESSAGE_INSTRUCTION_LIMIT,
     TransactionMessageWithFeePayer,
 } from '@solana/transaction-messages';
 import { getTransactionMessageSize, TRANSACTION_SIZE_LIMIT } from '@solana/transactions';
@@ -287,6 +289,22 @@ describe('getMessagePackerInstructionPlanFromInstructions', () => {
             new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN, {
                 numBytesRequired: 150,
                 numFreeBytes: 100,
+            }),
+        );
+    });
+    it('throws when the message is already at the instruction limit', () => {
+        const plan = getMessagePackerInstructionPlanFromInstructions([createInstruction('A')]);
+        const fullMessage: BaseTransactionMessage & TransactionMessageWithFeePayer = {
+            feePayer: { address: 'E9Nykp3rSdza2moQutaJ3K3RSC8E5iFERX2SqLTsQfjJ' as Address },
+            instructions: new Array(TRANSACTION_MESSAGE_INSTRUCTION_LIMIT).fill(createInstruction('A')),
+            version: 0,
+        };
+
+        const messagePacker = plan.getMessagePacker();
+        expect(() => messagePacker.packMessageToCapacity(fullMessage)).toThrow(
+            new SolanaError(SOLANA_ERROR__TRANSACTION__EXCEEDS_INSTRUCTION_LIMIT, {
+                instructionCount: TRANSACTION_MESSAGE_INSTRUCTION_LIMIT,
+                instructionLimit: TRANSACTION_MESSAGE_INSTRUCTION_LIMIT,
             }),
         );
     });
