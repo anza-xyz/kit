@@ -71,7 +71,6 @@ export function SelectedWalletAccountContextProvider(
         () => {
             const savedWalletKey = stateSync.getSelectedWallet();
             const savedWalletAccount = findSavedWalletAccount(filteredWallets, savedWalletKey);
-            console.log("found saved wallet account, and initialized the selectedWalletAccount:", savedWalletAccount);
             return savedWalletAccount;
         });
 
@@ -81,7 +80,6 @@ export function SelectedWalletAccountContextProvider(
         React.SetStateAction<SelectedWalletAccountState>
     > = React.useCallback(setStateAction => {
         wasSetterInvokedRef.current = true;
-        console.log("setSelectedWalletAccount invoked with:", setStateAction);
         setSelectedWalletAccountInternal(prevSelectedWalletAccount => {
             const nextWalletAccount =
                 typeof setStateAction === 'function' ? setStateAction(prevSelectedWalletAccount) : setStateAction;
@@ -91,7 +89,6 @@ export function SelectedWalletAccountContextProvider(
 
     //Sync to persistant storage when selectedWalletAccount changes
     React.useEffect(() => {
-        console.log("syncing selected account to storage:", selectedWalletAccount);
         if (!wasSetterInvokedRef.current) return;
 
         const accountKey = selectedWalletAccount
@@ -99,7 +96,6 @@ export function SelectedWalletAccountContextProvider(
             : undefined;
 
         if (accountKey) {
-            console.log("Storing selected wallet account key:", accountKey);
             stateSync.storeSelectedWallet(accountKey);
         } else {
             stateSync.deleteSelectedWallet();
@@ -110,60 +106,45 @@ export function SelectedWalletAccountContextProvider(
     //Auto-restore saved wallet account if it appears later, 
     //and if the user hasn't made an explicit choice yet.
     React.useEffect(() => {
-        console.log("checking for saved wallet account to restore...");
         if (wasSetterInvokedRef.current) return;
         const savedWalletKey = stateSync.getSelectedWallet();
         const savedAccount = findSavedWalletAccount(filteredWallets, savedWalletKey);
         if (savedAccount && selectedWalletAccount && uiWalletAccountsAreSame(savedAccount, selectedWalletAccount)) {
-            console.log("Saved wallet account is already in selectedWalletAccount, no need to restore.");
             return;
         }
         if (savedAccount) {
-            console.log("Restoring saved wallet account:", savedAccount);
             setSelectedWalletAccountInternal(savedAccount);
         }
     }, [filteredWallets, stateSync, selectedWalletAccount]);
 
     const walletAccount = React.useMemo(() => {
-        console.log("resolving walletAccount");
-        console.log("selectedWalletAccount:", selectedWalletAccount);
-        console.log("available filteredWallets:", filteredWallets);
         if (!selectedWalletAccount) return;
         for (const wallet of filteredWallets) {
             for (const account of wallet.accounts) {
                 if (uiWalletAccountsAreSame(account, selectedWalletAccount)) {
-                    console.log("Found matching wallet account:", account);
                     return account;
                 }
             }
             if (uiWalletAccountBelongsToUiWallet(selectedWalletAccount, wallet) && wallet.accounts[0]) {
-                console.log("Selected wallet account's wallet is available, returning first account from that wallet:", wallet.accounts[0]);
                 return wallet.accounts[0];
             }
-            console.log("No matching account in wallet:", wallet.name);
         }
     }, [selectedWalletAccount, filteredWallets]);
-
-    console.log("derived walletAccount:", walletAccount);
 
     React.useEffect(() => {
         // If there is a selected wallet account but the wallet to which it belongs has since
         // disconnected, clear the selected wallet. This is an automatic cleanup and should not
         // mark the 'wasSetterInvoked' ref (so we use the internal setter).
         // Cleanup shouldn't be run if user has made a selection or selectedWalletAccount/walletAccount are loading or undefined
-        console.log("checking if selectedWalletAccount is still valid...");
-        console.log("selectedWalletAccount:", selectedWalletAccount);
-        console.log("walletAccount:", walletAccount);
         if (!selectedWalletAccount) return; //still loading ...
-        if (!walletAccount || !uiWalletAccountsAreSame(walletAccount, selectedWalletAccount)) {
-            console.log("Selected wallet account is no longer valid, clearing it.");
+        if (wasSetterInvokedRef.current) return; //user made a selection
+        if (!walletAccount) {
             setSelectedWalletAccountInternal(undefined);
         }
     }, [selectedWalletAccount, walletAccount]);
 
-
     return (
-        <SelectedWalletAccountContext.Provider value={[selectedWalletAccount, setSelectedWalletAccount]}>
+        <SelectedWalletAccountContext.Provider value={[walletAccount, setSelectedWalletAccount]}>
             {children}
         </SelectedWalletAccountContext.Provider>
     )
