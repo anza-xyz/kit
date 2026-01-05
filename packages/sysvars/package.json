@@ -21,7 +21,11 @@
             "require": "./dist/index.node.cjs"
         },
         "react-native": "./dist/index.native.mjs",
-        "types": "./dist/types/index.d.ts"
+        "types": "./dist/types/index.d.ts",
+        "default": {
+            "import": "./dist/index.browser.mjs",
+            "require": "./dist/index.browser.cjs"
+        }
     },
     "browser": {
         "./dist/index.node.cjs": "./dist/index.browser.cjs",
