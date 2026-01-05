@@ -40,6 +40,8 @@ For use in a browser, without a build system:
 
 To get a feel for the API, run and modify the live examples in the `examples/` directory. There, you will find a series of single-purpose Node scripts that demonstrate a specific feature or use case. You will also find a React application that you can run in a browser, that demonstrates being able to create, sign, and send transactions using browser wallets.
 
+For a fully baked intro, see: [Getting started with Solana kit](https://www.solanakit.com/docs/getting-started)
+
 # What's New in Kit
 
 Kit is a response to many of the pain points you have communicated to us when developing Solana applications with web3.js.
