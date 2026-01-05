@@ -2,6 +2,7 @@ import type {
     TransactionMessage,
     TransactionMessageWithBlockhashLifetime,
     TransactionMessageWithDurableNonceLifetime,
+    TransactionMessageWithinInstructionLimit,
     TransactionMessageWithinSizeLimit,
 } from '@solana/transaction-messages';
 
@@ -11,6 +12,7 @@ import type {
     TransactionWithLifetime,
 } from '../lifetime';
 import type { Transaction, TransactionFromTransactionMessage } from '../transaction';
+import { TransactionWithinInstructionLimit } from '../transaction-instruction-limit';
 import { TransactionWithinSizeLimit } from '../transaction-size';
 
 // [DESCRIBE] TransactionFromTransactionMessage.
@@ -65,5 +67,11 @@ import { TransactionWithinSizeLimit } from '../transaction-size';
     {
         type Result = TransactionFromTransactionMessage<TransactionMessage & TransactionMessageWithinSizeLimit>;
         null as unknown as Result satisfies Readonly<Transaction & TransactionWithinSizeLimit>;
+    }
+
+    // It forwards the within instruction limit flag from the transaction message to the transaction.
+    {
+        type Result = TransactionFromTransactionMessage<TransactionMessage & TransactionMessageWithinInstructionLimit>;
+        null as unknown as Result satisfies Readonly<Transaction & TransactionWithinInstructionLimit>;
     }
 }

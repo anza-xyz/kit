@@ -3,9 +3,11 @@ import { SignatureBytes } from '@solana/keys';
 import { BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
 import {
     assertIsFullySignedTransaction,
+    assertIsTransactionWithinInstructionLimit,
     compileTransaction,
     SendableTransaction,
     Transaction,
+    TransactionWithinInstructionLimit,
     TransactionWithinSizeLimit,
     TransactionWithLifetime,
 } from '@solana/transactions';
@@ -65,7 +67,7 @@ import { assertIsTransactionMessageWithSingleSendingSigner } from './transaction
 export async function partiallySignTransactionMessageWithSigners(
     transactionMessage: BaseTransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithSigners,
     config?: TransactionPartialSignerConfig,
-): Promise<Transaction & TransactionWithinSizeLimit & TransactionWithLifetime> {
+): Promise<Transaction & TransactionWithinInstructionLimit & TransactionWithinSizeLimit & TransactionWithLifetime> {
     const { partialSigners, modifyingSigners } = categorizeTransactionSigners(
         deduplicateSigners(getSignersFromTransactionMessage(transactionMessage).filter(isTransactionSigner)),
         { identifySendingSigner: false },
@@ -272,7 +274,7 @@ async function signModifyingAndPartialTransactionSigners(
     modifyingSigners: readonly TransactionModifyingSigner[] = [],
     partialSigners: readonly TransactionPartialSigner[] = [],
     config?: TransactionModifyingSignerConfig,
-): Promise<Transaction & TransactionWithinSizeLimit & TransactionWithLifetime> {
+): Promise<Transaction & TransactionWithinInstructionLimit & TransactionWithinSizeLimit & TransactionWithLifetime> {
     // serialize the transaction
     const transaction = compileTransaction(transactionMessage);
 
@@ -284,7 +286,11 @@ async function signModifyingAndPartialTransactionSigners(
             return Object.freeze(tx);
         },
         Promise.resolve(transaction) as Promise<Readonly<Transaction & TransactionWithLifetime>>,
-    )) as Transaction & TransactionWithinSizeLimit & TransactionWithLifetime;
+    )) as Transaction & TransactionWithinInstructionLimit & TransactionWithinSizeLimit & TransactionWithLifetime;
+
+    if (modifiedTransaction.messageBytes.byteLength > 0) {
+        assertIsTransactionWithinInstructionLimit(modifiedTransaction);
+    }
 
     // Handle partial signers in parallel.
     config?.abortSignal?.throwIfAborted();

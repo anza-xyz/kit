@@ -16,6 +16,7 @@ import {
     prependTransactionMessageInstructions,
 } from '../instructions';
 import { BaseTransactionMessage } from '../transaction-message';
+import { TransactionMessageWithinInstructionLimit } from '../transaction-message-instruction-limit';
 import { TransactionMessageWithinSizeLimit } from '../transaction-message-size';
 
 type Instruction = BaseTransactionMessage['instructions'][number];
@@ -91,6 +92,14 @@ type InstructionC = Instruction & { identifier: 'C' };
         // @ts-expect-error Potentially no longer within size limit.
         newMessage satisfies TransactionMessageWithinSizeLimit;
     }
+
+    // It removes the instruction limit type safety.
+    {
+        const message = null as unknown as BaseTransactionMessage & TransactionMessageWithinInstructionLimit;
+        const newMessage = appendTransactionMessageInstruction(null as unknown as Instruction, message);
+        // @ts-expect-error Potentially no longer within instruction limit.
+        newMessage satisfies TransactionMessageWithinInstructionLimit;
+    }
 }
 
 // [DESCRIBE] appendTransactionMessageInstructions
@@ -132,6 +141,14 @@ type InstructionC = Instruction & { identifier: 'C' };
         const newMessage = appendTransactionMessageInstructions([null as unknown as Instruction], message);
         // @ts-expect-error Potentially no longer within size limit.
         newMessage satisfies TransactionMessageWithinSizeLimit;
+    }
+
+    // It removes the instruction limit type safety.
+    {
+        const message = null as unknown as BaseTransactionMessage & TransactionMessageWithinInstructionLimit;
+        const newMessage = appendTransactionMessageInstructions([null as unknown as Instruction], message);
+        // @ts-expect-error Potentially no longer within instruction limit.
+        newMessage satisfies TransactionMessageWithinInstructionLimit;
     }
 }
 
@@ -221,6 +238,14 @@ type InstructionC = Instruction & { identifier: 'C' };
         // @ts-expect-error Potentially no longer within size limit.
         newMessage satisfies TransactionMessageWithinSizeLimit;
     }
+
+    // It removes the instruction limit type safety.
+    {
+        const message = null as unknown as BaseTransactionMessage & TransactionMessageWithinInstructionLimit;
+        const newMessage = prependTransactionMessageInstruction(null as unknown as Instruction, message);
+        // @ts-expect-error Potentially no longer within instruction limit.
+        newMessage satisfies TransactionMessageWithinInstructionLimit;
+    }
 }
 
 // [DESCRIBE] prependTransactionMessageInstructions
@@ -272,5 +297,13 @@ type InstructionC = Instruction & { identifier: 'C' };
         const newMessage = prependTransactionMessageInstructions([null as unknown as Instruction], message);
         // @ts-expect-error Potentially no longer within size limit.
         newMessage satisfies TransactionMessageWithinSizeLimit;
+    }
+
+    // It removes the instruction limit type safety.
+    {
+        const message = null as unknown as BaseTransactionMessage & TransactionMessageWithinInstructionLimit;
+        const newMessage = prependTransactionMessageInstructions([null as unknown as Instruction], message);
+        // @ts-expect-error Potentially no longer within instruction limit.
+        newMessage satisfies TransactionMessageWithinInstructionLimit;
     }
 }

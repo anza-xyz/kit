@@ -1,5 +1,6 @@
 import { createTransactionMessage } from '../create-transaction-message';
 import { TransactionMessage } from '../transaction-message';
+import { TransactionMessageWithinInstructionLimit } from '../transaction-message-instruction-limit';
 import { TransactionMessageWithinSizeLimit } from '../transaction-message-size';
 
 type LegacyTransactionMessage = Extract<TransactionMessage, { version: 'legacy' }>;
@@ -25,4 +26,10 @@ type V0TransactionMessage = Extract<TransactionMessage, { version: 0 }>;
 {
     createTransactionMessage({ version: 'legacy' }) satisfies TransactionMessageWithinSizeLimit;
     createTransactionMessage({ version: 0 }) satisfies TransactionMessageWithinSizeLimit;
+}
+
+// It returns an empty transaction message with instruction limit type safety.
+{
+    createTransactionMessage({ version: 'legacy' }) satisfies TransactionMessageWithinInstructionLimit;
+    createTransactionMessage({ version: 0 }) satisfies TransactionMessageWithinInstructionLimit;
 }

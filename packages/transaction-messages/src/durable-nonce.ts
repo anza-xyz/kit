@@ -1,5 +1,9 @@
 import { Address } from '@solana/addresses';
-import { SOLANA_ERROR__TRANSACTION__EXPECTED_NONCE_LIFETIME, SolanaError } from '@solana/errors';
+import {
+    SOLANA_ERROR__TRANSACTION__EXCEEDS_INSTRUCTION_LIMIT,
+    SOLANA_ERROR__TRANSACTION__EXPECTED_NONCE_LIFETIME,
+    SolanaError,
+} from '@solana/errors';
 import { Instruction } from '@solana/instructions';
 import { Brand } from '@solana/nominal-types';
 
@@ -10,6 +14,10 @@ import {
 } from './durable-nonce-instruction';
 import { ExcludeTransactionMessageLifetime } from './lifetime';
 import { BaseTransactionMessage } from './transaction-message';
+import {
+    ExcludeTransactionMessageWithinInstructionLimit,
+    TRANSACTION_MESSAGE_INSTRUCTION_LIMIT,
+} from './transaction-message-instruction-limit';
 import { ExcludeTransactionMessageWithinSizeLimit } from './transaction-message-size';
 
 type DurableNonceConfig<
@@ -234,6 +242,14 @@ export function setTransactionMessageLifetimeUsingDurableNonce<
         ];
     }
 
+    const instructionCount = newInstructions.length;
+    if (instructionCount > TRANSACTION_MESSAGE_INSTRUCTION_LIMIT) {
+        throw new SolanaError(SOLANA_ERROR__TRANSACTION__EXCEEDS_INSTRUCTION_LIMIT, {
+            instructionCount,
+            instructionLimit: TRANSACTION_MESSAGE_INSTRUCTION_LIMIT,
+        });
+    }
+
     return Object.freeze({
         ...transactionMessage,
         instructions: Object.freeze(newInstructions),
@@ -255,7 +271,9 @@ type SetTransactionMessageWithDurableNonceLifetime<
     // 1. The transaction message only grows in size if it currently has a different (or no) lifetime.
     TTransactionMessage extends TransactionMessageWithDurableNonceLifetime
         ? TTransactionMessage
-        : ExcludeTransactionMessageWithinSizeLimit<TTransactionMessage>,
+        : ExcludeTransactionMessageWithinInstructionLimit<
+              ExcludeTransactionMessageWithinSizeLimit<TTransactionMessage>
+          >,
     // 2. Remove the instructions array as we are going to replace it with a new one.
     'instructions'
 > & {

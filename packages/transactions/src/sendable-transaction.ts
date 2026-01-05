@@ -1,6 +1,11 @@
 import { assertIsFullySignedTransaction, FullySignedTransaction, isFullySignedTransaction } from './signatures';
 import { Transaction } from './transaction';
 import {
+    assertIsTransactionWithinInstructionLimit,
+    isTransactionWithinInstructionLimit,
+    TransactionWithinInstructionLimit,
+} from './transaction-instruction-limit';
+import {
     assertIsTransactionWithinSizeLimit,
     isTransactionWithinSizeLimit,
     TransactionWithinSizeLimit,
@@ -13,7 +18,9 @@ import {
  * @see {@link isSendableTransaction}
  * @see {@link assertIsSendableTransaction}
  */
-export type SendableTransaction = FullySignedTransaction & TransactionWithinSizeLimit;
+export type SendableTransaction = FullySignedTransaction &
+    TransactionWithinInstructionLimit &
+    TransactionWithinSizeLimit;
 
 /**
  * Checks if a transaction has all the required
@@ -34,7 +41,11 @@ export type SendableTransaction = FullySignedTransaction & TransactionWithinSize
 export function isSendableTransaction<TTransaction extends Transaction>(
     transaction: TTransaction,
 ): transaction is SendableTransaction & TTransaction {
-    return isFullySignedTransaction(transaction) && isTransactionWithinSizeLimit(transaction);
+    return (
+        isFullySignedTransaction(transaction) &&
+        isTransactionWithinInstructionLimit(transaction) &&
+        isTransactionWithinSizeLimit(transaction)
+    );
 }
 
 /**
@@ -73,5 +84,6 @@ export function assertIsSendableTransaction<TTransaction extends Transaction>(
     transaction: TTransaction,
 ): asserts transaction is SendableTransaction & TTransaction {
     assertIsFullySignedTransaction(transaction);
+    assertIsTransactionWithinInstructionLimit(transaction);
     assertIsTransactionWithinSizeLimit(transaction);
 }

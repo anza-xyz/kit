@@ -1,6 +1,11 @@
 import { Address } from '@solana/addresses';
 import { SOLANA_ERROR__SIGNER__EXPECTED_TRANSACTION_MODIFYING_SIGNER, SolanaError } from '@solana/errors';
-import { Transaction, TransactionWithinSizeLimit, TransactionWithLifetime } from '@solana/transactions';
+import {
+    Transaction,
+    TransactionWithinInstructionLimit,
+    TransactionWithinSizeLimit,
+    TransactionWithLifetime,
+} from '@solana/transactions';
 
 import { BaseTransactionSignerConfig } from './types';
 
@@ -32,7 +37,7 @@ export type TransactionModifyingSignerConfig = BaseTransactionSignerConfig;
  *     address: address('1234..5678'),
  *     modifyAndSignTransactions: async (
  *         transactions: Transaction[]
- *     ): Promise<(Transaction & TransactionWithinSizeLimit & TransactionWithLifetime)[]> => {
+ *     ): Promise<(Transaction & TransactionWithinInstructionLimit & TransactionWithinSizeLimit & TransactionWithLifetime)[]> => {
  *         // My custom signing logic.
  *     },
  * };
@@ -59,7 +64,9 @@ export type TransactionModifyingSigner<TAddress extends string = string> = Reado
     modifyAndSignTransactions(
         transactions: readonly (Transaction | (Transaction & TransactionWithLifetime))[],
         config?: TransactionModifyingSignerConfig,
-    ): Promise<readonly (Transaction & TransactionWithinSizeLimit & TransactionWithLifetime)[]>;
+    ): Promise<
+        readonly (Transaction & TransactionWithinInstructionLimit & TransactionWithinSizeLimit & TransactionWithLifetime)[]
+    >;
 }>;
 
 /**
