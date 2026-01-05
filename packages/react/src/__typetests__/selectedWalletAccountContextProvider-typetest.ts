@@ -1,9 +1,8 @@
-import React from 'react';
 import type { UiWallet, UiWalletAccount } from '@wallet-standard/react';
-import {
-    SelectedWalletAccountContext,
-    SelectedWalletAccountContextProvider,
-} from '../SelectedWalletAccountContextProvider';
+import React from 'react';
+
+import type { useSelectedWalletAccount } from '../selectedWalletAccountContext';
+import { SelectedWalletAccountContextProvider } from '../SelectedWalletAccountContextProvider';
 
 /**
  * Positive: provider accepts correct props.
@@ -12,9 +11,9 @@ React.createElement(SelectedWalletAccountContextProvider, {
     children: React.createElement('div', null),
     filterWallet: (_wallet: UiWallet) => true,
     stateSync: {
-        storeSelectedWallet: (_walletId: string) => {},
-        getSelectedWallet: () => null,
         deleteSelectedWallet: () => {},
+        getSelectedWallet: () => null,
+        storeSelectedWallet: (_walletId: string) => {},
     },
 });
 
@@ -22,22 +21,23 @@ React.createElement(SelectedWalletAccountContextProvider, {
  * Negative: filterWallet must return a boolean.
  */
 React.createElement(SelectedWalletAccountContextProvider, {
+    children: React.createElement('div', null),
     //@ts-expect-error filterWallet must return a boolean
     filterWallet: (_wallet: UiWallet) => 'not a boolean',
     stateSync: {
-        storeSelectedWallet: (_walletId: string) => {},
-        getSelectedWallet: () => null,
         deleteSelectedWallet: () => {},
+        getSelectedWallet: () => null,
+        storeSelectedWallet: (_walletId: string) => {},
     },
-    children: React.createElement('div', null),
 });
 
 /**
  * Context value: tuple shape and setter behavior.
  */
-type Ctx = React.ContextType<typeof SelectedWalletAccountContext>;
-const ctxValue: Ctx = React.useContext(SelectedWalletAccountContext);
-const [, setSelected] = ctxValue;
+type CtxValue = ReturnType<typeof useSelectedWalletAccount>;
+type SetSelected = CtxValue[1];
+
+declare const setSelected: SetSelected;
 // Positive: setter accepts undefined
 setSelected(undefined);
 // Positive: setter accepts an updater function

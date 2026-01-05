@@ -1,3 +1,4 @@
+import React from "react";
 import type {
     UiWallet,
     UiWalletAccount,
@@ -8,9 +9,7 @@ import {
     uiWalletAccountsAreSame,
     useWallets
 } from "@wallet-standard/react";
-import React, { createContext } from "react";
-
-export type SelectedWalletAccountState = UiWalletAccount | undefined;
+import { SelectedWalletAccountContext, SelectedWalletAccountState } from "./selectedWalletAccountContext";
 
 export type SelectedWalletAccountContextProviderProps = { children: React.ReactNode } & {
     filterWallet: (wallet: UiWallet) => Boolean,
@@ -20,12 +19,6 @@ export type SelectedWalletAccountContextProviderProps = { children: React.ReactN
         deleteSelectedWallet: () => void,
     }
 };
-
-export const SelectedWalletAccountContext = createContext<
-    readonly [
-        selectedWalletAccount: SelectedWalletAccountState,
-        setSelectedWalletAccount: React.Dispatch<React.SetStateAction<SelectedWalletAccountState>>
-    ]>([undefined, function setSelectedWalletAccount() { }]);
 
 /**
 * Returns the saved wallet account when its corresponding wallet, and account is available.

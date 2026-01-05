@@ -1,9 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent, act, waitFor } from "@testing-library/react";
-import {
-    SelectedWalletAccountContext,
-    SelectedWalletAccountContextProvider
-} from "../SelectedWalletAccountContextProvider";
+import { SelectedWalletAccountContextProvider } from "../SelectedWalletAccountContextProvider";
+import { useSelectedWalletAccount } from "../selectedWalletAccountContext";
 
 // Mock wallet-standard/react exports the provider depends on
 jest.mock("@wallet-standard/react", () => {
@@ -31,7 +29,7 @@ function Consumer() {
     if (renderCount > 10) {
         throw new Error("Too many re-renders");
     }
-    const [selectedWalletAccount, setSelectedWalletAccount] = React.useContext(SelectedWalletAccountContext);
+    const [selectedWalletAccount, setSelectedWalletAccount] = useSelectedWalletAccount();
     return (
         <div>
             <div data-testid="selected">{selectedWalletAccount ? selectedWalletAccount.address : 'none'}</div>
