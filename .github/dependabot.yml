@@ -11,8 +11,6 @@ updates:
       interval: daily
       time: '01:00'
       timezone: America/Los_Angeles
-    labels:
-      - 'automerge'
     ignore:
       - dependency-name: '@radix-ui/react-dropdown-menu'
     groups:
