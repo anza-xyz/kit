@@ -7,6 +7,9 @@ import type { Lamports } from '@solana/rpc-types';
  * Values are sourced from the on-chain rent parameters in the Solana runtime:
  * https://github.com/anza-xyz/solana-sdk/blob/c07f692e41d757057c8700211a9300cdcd6d33b1/rent/src/lib.rs#L93-L97
  *
+ * Note that this logic may change, or be incorrect depending on the cluster you are connected to.
+ * You can always use the RPC method `getMinimumBalanceForRentExemption` to get the current value.
+ *
  * @param space The number of bytes of account data.
  */
 export function getMinimumBalanceForRentExemption(space: bigint): Lamports {
