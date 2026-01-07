@@ -76,7 +76,8 @@
         "@solana/errors": "workspace:*",
         "@solana/functional": "workspace:*",
         "@solana/rpc-subscriptions-spec": "workspace:*",
-        "@solana/subscribable": "workspace:*"
+        "@solana/subscribable": "workspace:*",
+        "ws": "^8.18.0"
     },
     "devDependencies": {
         "@solana/event-target-impl": "workspace:*",
@@ -84,13 +85,7 @@
         "jest-websocket-mock": "^2.5.0"
     },
     "peerDependencies": {
-        "typescript": ">=5.9.3",
-        "ws": "^8.18.0"
-    },
-    "peerDependenciesMeta": {
-        "ws": {
-            "optional": true
-        }
+        "typescript": ">=5.9.3"
     },
     "engines": {
         "node": ">=20.18.0"

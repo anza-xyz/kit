@@ -51,16 +51,11 @@
         "supports bigint and not dead",
         "maintained node versions"
     ],
-    "devDependencies": {
-        "@types/ws": "^8.18.1"
-    },
-    "peerDependencies": {
+    "dependencies": {
         "ws": "^8.18.0"
     },
-    "peerDependenciesMeta": {
-        "ws": {
-            "optional": true
-        }
+    "devDependencies": {
+        "@types/ws": "^8.18.1"
     },
     "engines": {
         "node": ">=20.18.0"
