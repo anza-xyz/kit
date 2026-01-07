@@ -1,7 +1,9 @@
-import { Config } from '@jest/types';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
-const config: Partial<Config.InitialProjectOptions> = {
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const config = {
     resetMocks: true,
     restoreMocks: true,
     roots: ['<rootDir>/src/'],
