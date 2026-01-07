@@ -1,5 +1,14 @@
 # @solana/codecs-data-structures
 
+## 5.2.0
+
+### Patch Changes
+
+- Updated dependencies [[`b80b092`](https://github.com/anza-xyz/kit/commit/b80b09239762262116cb70b43271ad98a2f716b5), [`c391a44`](https://github.com/anza-xyz/kit/commit/c391a44eebd26707165991f8837f4d40fa988288), [`109c78e`](https://github.com/anza-xyz/kit/commit/109c78e8972857323558ca913706a95cdb70c549)]:
+    - @solana/errors@5.2.0
+    - @solana/codecs-core@5.2.0
+    - @solana/codecs-numbers@5.2.0
+
 ## 5.1.0
 
 ### Patch Changes

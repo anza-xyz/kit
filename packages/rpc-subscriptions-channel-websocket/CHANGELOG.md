@@ -1,5 +1,17 @@
 # @solana/rpc-subscriptions-channel-websocket
 
+## 5.2.0
+
+### Patch Changes
+
+- [#1163](https://github.com/anza-xyz/kit/pull/1163) [`7d5a57c`](https://github.com/anza-xyz/kit/commit/7d5a57c209140fd7cd4721a2dc9a4ab10b8ac907) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Node users no longer need to manually install `ws`. Browser builds remain unaffected as conditional exports ensure `ws` is never bundled for browser environments.
+
+- Updated dependencies [[`b80b092`](https://github.com/anza-xyz/kit/commit/b80b09239762262116cb70b43271ad98a2f716b5)]:
+    - @solana/errors@5.2.0
+    - @solana/rpc-subscriptions-spec@5.2.0
+    - @solana/subscribable@5.2.0
+    - @solana/functional@5.2.0
+
 ## 5.1.0
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @solana/programs
 
+## 5.2.0
+
+### Patch Changes
+
+- Updated dependencies [[`b80b092`](https://github.com/anza-xyz/kit/commit/b80b09239762262116cb70b43271ad98a2f716b5)]:
+    - @solana/errors@5.2.0
+    - @solana/addresses@5.2.0
+
 ## 5.1.0
 
 ### Patch Changes

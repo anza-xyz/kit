@@ -1,5 +1,41 @@
 # @solana/kit
 
+## 5.2.0
+
+### Minor Changes
+
+- [#1113](https://github.com/anza-xyz/kit/pull/1113) [`b1937c7`](https://github.com/anza-xyz/kit/commit/b1937c7385050b911f50ac36913a6cfe4575036d) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add new `@solana/plugin-core` package enabling us to create modular Kit clients that can be extended with plugins.
+
+- [#1139](https://github.com/anza-xyz/kit/pull/1139) [`6dbaf66`](https://github.com/anza-xyz/kit/commit/6dbaf66015198bd912ec0800c1db1fd63b68e7a2) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Return more precise types from transaction message functions
+
+    Deprecate `BaseTransactionMessage` in favour of `TransactionMessage`
+
+### Patch Changes
+
+- Updated dependencies [[`b80b092`](https://github.com/anza-xyz/kit/commit/b80b09239762262116cb70b43271ad98a2f716b5), [`b1937c7`](https://github.com/anza-xyz/kit/commit/b1937c7385050b911f50ac36913a6cfe4575036d), [`109c78e`](https://github.com/anza-xyz/kit/commit/109c78e8972857323558ca913706a95cdb70c549), [`6dbaf66`](https://github.com/anza-xyz/kit/commit/6dbaf66015198bd912ec0800c1db1fd63b68e7a2)]:
+    - @solana/instruction-plans@5.2.0
+    - @solana/errors@5.2.0
+    - @solana/plugin-core@5.2.0
+    - @solana/keys@5.2.0
+    - @solana/transaction-messages@5.2.0
+    - @solana/transactions@5.2.0
+    - @solana/signers@5.2.0
+    - @solana/accounts@5.2.0
+    - @solana/addresses@5.2.0
+    - @solana/instructions@5.2.0
+    - @solana/offchain-messages@5.2.0
+    - @solana/programs@5.2.0
+    - @solana/rpc@5.2.0
+    - @solana/rpc-api@5.2.0
+    - @solana/rpc-subscriptions@5.2.0
+    - @solana/rpc-types@5.2.0
+    - @solana/sysvars@5.2.0
+    - @solana/transaction-confirmation@5.2.0
+    - @solana/codecs@5.2.0
+    - @solana/rpc-parsed-types@5.2.0
+    - @solana/functional@5.2.0
+    - @solana/rpc-spec-types@5.2.0
+
 ## 5.1.0
 
 ### Minor Changes
