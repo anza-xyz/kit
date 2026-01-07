@@ -1,5 +1,37 @@
 # @solana/kit
 
+## 5.3.0
+
+### Minor Changes
+
+- [#1065](https://github.com/anza-xyz/kit/pull/1065) [`fafa52f`](https://github.com/anza-xyz/kit/commit/fafa52f6d058a12c7f0f7125f61906160aad2a37) Thanks [@rajgoesout](https://github.com/rajgoesout)! - Add local rent exemption calculator
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/accounts@5.3.0
+    - @solana/addresses@5.3.0
+    - @solana/codecs@5.3.0
+    - @solana/errors@5.3.0
+    - @solana/functional@5.3.0
+    - @solana/instruction-plans@5.3.0
+    - @solana/instructions@5.3.0
+    - @solana/keys@5.3.0
+    - @solana/offchain-messages@5.3.0
+    - @solana/plugin-core@5.3.0
+    - @solana/programs@5.3.0
+    - @solana/rpc@5.3.0
+    - @solana/rpc-api@5.3.0
+    - @solana/rpc-parsed-types@5.3.0
+    - @solana/rpc-spec-types@5.3.0
+    - @solana/rpc-subscriptions@5.3.0
+    - @solana/rpc-types@5.3.0
+    - @solana/signers@5.3.0
+    - @solana/sysvars@5.3.0
+    - @solana/transaction-confirmation@5.3.0
+    - @solana/transaction-messages@5.3.0
+    - @solana/transactions@5.3.0
+
 ## 5.2.0
 
 ### Minor Changes

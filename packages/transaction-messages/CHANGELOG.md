@@ -1,5 +1,20 @@
 # @solana/transaction-messages
 
+## 5.3.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/addresses@5.3.0
+    - @solana/codecs-core@5.3.0
+    - @solana/codecs-data-structures@5.3.0
+    - @solana/codecs-numbers@5.3.0
+    - @solana/errors@5.3.0
+    - @solana/functional@5.3.0
+    - @solana/instructions@5.3.0
+    - @solana/nominal-types@5.3.0
+    - @solana/rpc-types@5.3.0
+
 ## 5.2.0
 
 ### Minor Changes

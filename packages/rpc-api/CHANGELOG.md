@@ -1,5 +1,22 @@
 # @solana/rpc-api
 
+## 5.3.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/addresses@5.3.0
+    - @solana/codecs-core@5.3.0
+    - @solana/codecs-strings@5.3.0
+    - @solana/errors@5.3.0
+    - @solana/keys@5.3.0
+    - @solana/rpc-parsed-types@5.3.0
+    - @solana/rpc-spec@5.3.0
+    - @solana/rpc-transformers@5.3.0
+    - @solana/rpc-types@5.3.0
+    - @solana/transaction-messages@5.3.0
+    - @solana/transactions@5.3.0
+
 ## 5.2.0
 
 ### Patch Changes

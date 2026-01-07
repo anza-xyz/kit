@@ -1,5 +1,12 @@
 # @solana/codecs-core
 
+## 5.3.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/errors@5.3.0
+
 ## 5.2.0
 
 ### Patch Changes

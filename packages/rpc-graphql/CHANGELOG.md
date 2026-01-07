@@ -1,5 +1,13 @@
 # @solana/rpc-graphql
 
+## 5.3.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/codecs-strings@5.3.0
+    - @solana/fast-stable-stringify@5.3.0
+
 ## 5.2.0
 
 ### Patch Changes

@@ -1,5 +1,17 @@
 # @solana/instruction-plans
 
+## 5.3.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/errors@5.3.0
+    - @solana/instructions@5.3.0
+    - @solana/keys@5.3.0
+    - @solana/promises@5.3.0
+    - @solana/transaction-messages@5.3.0
+    - @solana/transactions@5.3.0
+
 ## 5.2.0
 
 ### Minor Changes
