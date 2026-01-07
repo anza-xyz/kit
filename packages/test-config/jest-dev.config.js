@@ -1,10 +1,12 @@
-import type { Config } from 'jest';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
-const config: Config = {
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const config = {
     projects: [
-        path.resolve(__dirname, 'jest-lint.config.ts'),
-        path.resolve(__dirname, 'jest-prettier.config.ts'),
+        path.resolve(__dirname, 'jest-lint.config.js'),
+        path.resolve(__dirname, 'jest-prettier.config.js'),
         path.resolve(__dirname, 'jest-unit.config.browser.js'),
         path.resolve(__dirname, 'jest-unit.config.node.js'),
     ],

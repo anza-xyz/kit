@@ -1,10 +1,11 @@
 import path from 'node:path';
+import { fileURLToPath } from 'url';
 
-import { Config } from '@jest/types';
+import commonConfig from './jest-unit.config.common.js';
 
-import commonConfig from './jest-unit.config.common';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const config: Partial<Config.InitialProjectOptions> = {
+const config = {
     ...commonConfig,
     displayName: {
         color: 'grey',
