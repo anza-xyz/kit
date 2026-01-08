@@ -1,32 +1,33 @@
-import React from "react";
-import type {
-    UiWallet,
-    UiWalletAccount,
-} from "@wallet-standard/react";
+import type { UiWallet, UiWalletAccount } from '@wallet-standard/react';
 import {
     getUiWalletAccountStorageKey,
     uiWalletAccountBelongsToUiWallet,
     uiWalletAccountsAreSame,
-    useWallets
-} from "@wallet-standard/react";
-import { SelectedWalletAccountContext, SelectedWalletAccountState } from "./selectedWalletAccountContext";
+    useWallets,
+} from '@wallet-standard/react';
+import React from 'react';
 
-export type SelectedWalletAccountContextProviderProps = { children: React.ReactNode } & {
-    filterWallet: (wallet: UiWallet) => Boolean,
+import { SelectedWalletAccountContext, SelectedWalletAccountState } from './selectedWalletAccountContext';
+
+export type SelectedWalletAccountContextProviderProps = {
+    filterWallet: (wallet: UiWallet) => boolean;
     stateSync: {
-        storeSelectedWallet: (walletId: string) => void,
-        getSelectedWallet: () => string | null,
-        deleteSelectedWallet: () => void,
-    }
-};
+        deleteSelectedWallet: () => void;
+        getSelectedWallet: () => string | null;
+        storeSelectedWallet: (walletId: string) => void;
+    };
+} & { children: React.ReactNode };
 
 /**
-* Returns the saved wallet account when its corresponding wallet, and account is available.
-* @param wallets 
-* @param savedWalletKey 
-* @returns 
-*/
-function findSavedWalletAccount(wallets: readonly UiWallet[], savedWalletKey: string | null): UiWalletAccount | undefined {
+ * Returns the saved wallet account when its corresponding wallet, and account is available.
+ * @param wallets
+ * @param savedWalletKey
+ * @returns
+ */
+function findSavedWalletAccount(
+    wallets: readonly UiWallet[],
+    savedWalletKey: string | null,
+): UiWalletAccount | undefined {
     if (!savedWalletKey) {
         return;
     }
@@ -45,48 +46,52 @@ function findSavedWalletAccount(wallets: readonly UiWallet[], savedWalletKey: st
 }
 
 /**
-* Saves the selected wallet account's storage key to a persistant storage. In future
-* sessions it will try to return that same wallet account, or at least one from the same brand of
-* wallet if the wallet from which it came is still in the Wallet Standard registry.
-* @param children 
-* @param filterWallet 
-* @param stateSync
-* @returns 
-*/
-export function SelectedWalletAccountContextProvider(
-    { children, filterWallet, stateSync }: SelectedWalletAccountContextProviderProps) {
+ * Saves the selected wallet account's storage key to a persistant storage. In future
+ * sessions it will try to return that same wallet account, or at least one from the same brand of
+ * wallet if the wallet from which it came is still in the Wallet Standard registry.
+ * @param children
+ * @param filterWallet
+ * @param stateSync
+ * @returns
+ */
+export function SelectedWalletAccountContextProvider({
+    children,
+    filterWallet,
+    stateSync,
+}: SelectedWalletAccountContextProviderProps) {
     const wallets = useWallets();
     const filteredWallets = React.useMemo(() => wallets.filter(filterWallet), [wallets, filterWallet]);
 
     const wasSetterInvokedRef = React.useRef(false);
 
-    const [selectedWalletAccount, setSelectedWalletAccountInternal] = React.useState<SelectedWalletAccountState>(
-        () => {
-            const savedWalletKey = stateSync.getSelectedWallet();
-            const savedWalletAccount = findSavedWalletAccount(filteredWallets, savedWalletKey);
-            return savedWalletAccount;
-        });
+    const [selectedWalletAccount, setSelectedWalletAccountInternal] = React.useState<SelectedWalletAccountState>(() => {
+        const savedWalletKey = stateSync.getSelectedWallet();
+        const savedWalletAccount = findSavedWalletAccount(filteredWallets, savedWalletKey);
+        return savedWalletAccount;
+    });
 
     // Public setter: mark the per-instance ref synchronously to avoid races, then schedule state update.
     // useCallback stabilises the setter for consumers.
-    const setSelectedWalletAccount: React.Dispatch<
-        React.SetStateAction<SelectedWalletAccountState>
-    > = React.useCallback(setStateAction => {
-        wasSetterInvokedRef.current = true;
-        setSelectedWalletAccountInternal(prevSelectedWalletAccount => {
-            const nextWalletAccount =
-                typeof setStateAction === 'function' ? setStateAction(prevSelectedWalletAccount) : setStateAction;
-            return nextWalletAccount;
-        });
-    }, [setSelectedWalletAccountInternal]);
+    const setSelectedWalletAccount: React.Dispatch<React.SetStateAction<SelectedWalletAccountState>> =
+        React.useCallback(
+            setStateAction => {
+                wasSetterInvokedRef.current = true;
+                setSelectedWalletAccountInternal(prevSelectedWalletAccount => {
+                    const nextWalletAccount =
+                        typeof setStateAction === 'function'
+                            ? setStateAction(prevSelectedWalletAccount)
+                            : setStateAction;
+                    return nextWalletAccount;
+                });
+            },
+            [setSelectedWalletAccountInternal],
+        );
 
     //Sync to persistant storage when selectedWalletAccount changes
     React.useEffect(() => {
         if (!wasSetterInvokedRef.current) return;
 
-        const accountKey = selectedWalletAccount
-            ? getUiWalletAccountStorageKey(selectedWalletAccount)
-            : undefined;
+        const accountKey = selectedWalletAccount ? getUiWalletAccountStorageKey(selectedWalletAccount) : undefined;
 
         if (accountKey) {
             stateSync.storeSelectedWallet(accountKey);
@@ -95,8 +100,7 @@ export function SelectedWalletAccountContextProvider(
         }
     }, [selectedWalletAccount, stateSync]);
 
-
-    //Auto-restore saved wallet account if it appears later, 
+    //Auto-restore saved wallet account if it appears later,
     //and if the user hasn't made an explicit choice yet.
     React.useEffect(() => {
         if (wasSetterInvokedRef.current) return;
@@ -140,5 +144,5 @@ export function SelectedWalletAccountContextProvider(
         <SelectedWalletAccountContext.Provider value={[walletAccount, setSelectedWalletAccount, filteredWallets]}>
             {children}
         </SelectedWalletAccountContext.Provider>
-    )
+    );
 }
