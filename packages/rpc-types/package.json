@@ -1,6 +1,6 @@
 {
     "name": "@solana/rpc-types",
-    "version": "5.3.0",
+    "version": "5.4.0",
     "description": "Type definitions for values used in the Solana RPC, and helper functions for working with them",
     "homepage": "https://www.solanakit.com/api#solanarpc-types",
     "exports": {

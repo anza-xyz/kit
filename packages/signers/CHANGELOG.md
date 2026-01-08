@@ -1,5 +1,20 @@
 # @solana/signers
 
+## 5.4.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/addresses@5.4.0
+    - @solana/codecs-core@5.4.0
+    - @solana/errors@5.4.0
+    - @solana/instructions@5.4.0
+    - @solana/keys@5.4.0
+    - @solana/nominal-types@5.4.0
+    - @solana/offchain-messages@5.4.0
+    - @solana/transaction-messages@5.4.0
+    - @solana/transactions@5.4.0
+
 ## 5.3.0
 
 ### Patch Changes
