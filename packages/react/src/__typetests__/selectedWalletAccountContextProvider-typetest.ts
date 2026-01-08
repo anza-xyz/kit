@@ -10,11 +10,11 @@ import { SelectedWalletAccountContextProvider } from '../SelectedWalletAccountCo
     {
         React.createElement(SelectedWalletAccountContextProvider, {
             children: React.createElement('div', null),
-            filterWallet: (_wallet: UiWallet) => true,
+            filterWallets: (_wallet: UiWallet) => true,
             stateSync: {
                 deleteSelectedWallet: () => {},
                 getSelectedWallet: () => null,
-                storeSelectedWallet: (_walletId: string) => {},
+                storeSelectedWallet: (_accountKey: string) => {},
             },
         });
     }
@@ -24,11 +24,11 @@ import { SelectedWalletAccountContextProvider } from '../SelectedWalletAccountCo
         React.createElement(SelectedWalletAccountContextProvider, {
             children: React.createElement('div', null),
             // @ts-expect-error filterWallet must return a boolean
-            filterWallet: (_wallet: UiWallet) => 'not a boolean',
+            filterWallets: (_wallet: UiWallet) => 'not a boolean',
             stateSync: {
                 deleteSelectedWallet: () => {},
                 getSelectedWallet: () => null,
-                storeSelectedWallet: (_walletId: string) => {},
+                storeSelectedWallet: (_accountKey: string) => {},
             },
         });
     }

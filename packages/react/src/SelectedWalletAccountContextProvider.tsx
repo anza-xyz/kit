@@ -10,19 +10,19 @@ import React from 'react';
 import { SelectedWalletAccountContext, SelectedWalletAccountState } from './selectedWalletAccountContext';
 
 export type SelectedWalletAccountContextProviderProps = {
-    filterWallet: (wallet: UiWallet) => boolean;
+    filterWallets: (wallet: UiWallet) => boolean;
     stateSync: {
         deleteSelectedWallet: () => void;
         getSelectedWallet: () => string | null;
-        storeSelectedWallet: (walletId: string) => void;
+        storeSelectedWallet: (accountKey: string) => void;
     };
 } & { children: React.ReactNode };
 
 /**
  * Returns the saved wallet account when its corresponding wallet, and account is available.
- * @param wallets
- * @param savedWalletKey
- * @returns
+ * @param wallets All wallets available to select in the app
+ * @param savedWalletKey The saved wallet account storage key
+ * @returns The saved wallet account, or undefined if not found
  */
 function findSavedWalletAccount(
     wallets: readonly UiWallet[],
@@ -49,19 +49,18 @@ function findSavedWalletAccount(
  * Saves the selected wallet account's storage key to a persistant storage. In future
  * sessions it will try to return that same wallet account, or at least one from the same brand of
  * wallet if the wallet from which it came is still in the Wallet Standard registry.
- * @param children
- * @param filterWallet
- * @param stateSync
- * @returns
+ * @param children The child components that will have access to the selected wallet account context
+ * @param filterWallets A function to filter which wallets are available in the app
+ * @param stateSync An object with methods to synchronize the selected wallet account state with persistent storage
+ * @returns A React component that provides the selected wallet account context to its children
  */
 export function SelectedWalletAccountContextProvider({
     children,
-    filterWallet,
+    filterWallets,
     stateSync,
 }: SelectedWalletAccountContextProviderProps) {
     const wallets = useWallets();
-    const filteredWallets = React.useMemo(() => wallets.filter(filterWallet), [wallets, filterWallet]);
-
+    const filteredWallets = React.useMemo(() => wallets.filter(filterWallets), [wallets, filterWallets]);
     const wasSetterInvokedRef = React.useRef(false);
 
     const [selectedWalletAccount, setSelectedWalletAccountInternal] = React.useState<SelectedWalletAccountState>(() => {

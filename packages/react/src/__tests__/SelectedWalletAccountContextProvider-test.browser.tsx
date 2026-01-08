@@ -89,7 +89,7 @@ describe('SelectedWalletAccountContextProvider', () => {
         const allowOnlyA = (wallet: UiWallet) => wallet.name === 'WalletA';
 
         render(
-            <SelectedWalletAccountContextProvider filterWallet={allowOnlyA} stateSync={stateSync}>
+            <SelectedWalletAccountContextProvider filterWallets={allowOnlyA} stateSync={stateSync}>
                 <Consumer />
             </SelectedWalletAccountContextProvider>,
         );
@@ -123,7 +123,7 @@ describe('SelectedWalletAccountContextProvider', () => {
         const allowWallets = () => true;
 
         render(
-            <SelectedWalletAccountContextProvider filterWallet={allowWallets} stateSync={stateSync}>
+            <SelectedWalletAccountContextProvider filterWallets={allowWallets} stateSync={stateSync}>
                 <Consumer />
             </SelectedWalletAccountContextProvider>,
         );
@@ -146,7 +146,7 @@ describe('SelectedWalletAccountContextProvider', () => {
         const allowWallets = () => true;
 
         render(
-            <SelectedWalletAccountContextProvider filterWallet={allowWallets} stateSync={stateSync}>
+            <SelectedWalletAccountContextProvider filterWallets={allowWallets} stateSync={stateSync}>
                 <Consumer />
             </SelectedWalletAccountContextProvider>,
         );
@@ -168,7 +168,7 @@ describe('SelectedWalletAccountContextProvider', () => {
         const allowWallets = () => true;
 
         render(
-            <SelectedWalletAccountContextProvider filterWallet={allowWallets} stateSync={stateSync}>
+            <SelectedWalletAccountContextProvider filterWallets={allowWallets} stateSync={stateSync}>
                 <Consumer />
             </SelectedWalletAccountContextProvider>,
         );
@@ -198,7 +198,7 @@ describe('SelectedWalletAccountContextProvider', () => {
         const allowWallets = () => true;
 
         render(
-            <SelectedWalletAccountContextProvider filterWallet={allowWallets} stateSync={stateSync}>
+            <SelectedWalletAccountContextProvider filterWallets={allowWallets} stateSync={stateSync}>
                 <Consumer />
             </SelectedWalletAccountContextProvider>,
         );
@@ -235,7 +235,7 @@ describe('SelectedWalletAccountContextProvider', () => {
 
         const { rerender } = render(
             <SelectedWalletAccountContextProvider
-                filterWallet={allowWallets}
+                filterWallets={allowWallets}
                 stateSync={{
                     deleteSelectedWallet,
                     getSelectedWallet,
@@ -257,7 +257,7 @@ describe('SelectedWalletAccountContextProvider', () => {
         act(() => {
             rerender(
                 <SelectedWalletAccountContextProvider
-                    filterWallet={allowWallets}
+                    filterWallets={allowWallets}
                     stateSync={{
                         deleteSelectedWallet,
                         getSelectedWallet,
@@ -286,7 +286,7 @@ describe('SelectedWalletAccountContextProvider', () => {
 
         const { rerender } = render(
             <SelectedWalletAccountContextProvider
-                filterWallet={allowWallets}
+                filterWallets={allowWallets}
                 stateSync={{
                     deleteSelectedWallet,
                     getSelectedWallet,
@@ -308,7 +308,7 @@ describe('SelectedWalletAccountContextProvider', () => {
         act(() => {
             rerender(
                 <SelectedWalletAccountContextProvider
-                    filterWallet={allowWallets}
+                    filterWallets={allowWallets}
                     stateSync={{
                         deleteSelectedWallet,
                         getSelectedWallet,

@@ -876,7 +876,7 @@ importers:
         version: 0.1.1
       '@wallet-standard/react':
         specifier: ^1.0.1
-        version: 1.0.1(react-dom@19.2.1(react@19.2.3))(react@19.2.3)
+        version: 1.0.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@wallet-standard/ui':
         specifier: ^1.0.1
         version: 1.0.1
@@ -895,7 +895,7 @@ importers:
         version: link:../rpc-types
       '@testing-library/react':
         specifier: ^16.3.1
-        version: 16.3.1(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.3))(react@19.2.3)
+        version: 16.3.1(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@types/react':
         specifier: ^19.2.1
         version: 19.2.7
@@ -905,12 +905,15 @@ importers:
       react:
         specifier: ^19.2.3
         version: 19.2.3
+      react-dom:
+        specifier: ^19.2.3
+        version: 19.2.3(react@19.2.3)
       react-error-boundary:
         specifier: ^5.0.0
         version: 5.0.0(react@19.2.3)
       react-test-renderer:
-        specifier: ^19.2.1
-        version: 19.2.1(react@19.2.3)
+        specifier: ^19.2.3
+        version: 19.2.3(react@19.2.3)
 
   packages/rpc:
     dependencies:
@@ -7242,6 +7245,11 @@ packages:
     peerDependencies:
       react: ^19.2.1
 
+  react-dom@19.2.3:
+    resolution: {integrity: sha512-yELu4WmLPw5Mr/lmeEpox5rw3RETacE++JgHqQzd2dg+YbJuat3jH4ingc+WPZhxaoFzdv9y33G+F7Nl5O0GBg==}
+    peerDependencies:
+      react: ^19.2.3
+
   react-error-boundary@5.0.0:
     resolution: {integrity: sha512-tnjAxG+IkpLephNcePNA7v6F/QpWLH8He65+DmedchDwg162JZqx4NmbXj0mlAYVVEd81OW7aFhmbsScYfiAFQ==}
     peerDependencies:
@@ -7253,8 +7261,8 @@ packages:
   react-is@18.3.1:
     resolution: {integrity: sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg==}
 
-  react-is@19.2.1:
-    resolution: {integrity: sha512-L7BnWgRbMwzMAubQcS7sXdPdNLmKlucPlopgAzx7FtYbksWZgEWiuYM5x9T6UqS2Ne0rsgQTq5kY2SGqpzUkYA==}
+  react-is@19.2.3:
+    resolution: {integrity: sha512-qJNJfu81ByyabuG7hPFEbXqNcWSU3+eVus+KJs+0ncpGfMyYdvSmxiJxbWR65lYi1I+/0HBcliO029gc4F+PnA==}
 
   react-remove-scroll-bar@2.3.8:
     resolution: {integrity: sha512-9r+yi9+mgU33AKcj6IbT9oRCO78WriSj6t/cF8DWBZJ9aOGPOTEDvdUDz1FwKim7QXWwmHqtdHnRJfhAxEG46Q==}
@@ -7286,10 +7294,10 @@ packages:
       '@types/react':
         optional: true
 
-  react-test-renderer@19.2.1:
-    resolution: {integrity: sha512-xsyf515ij+d8Rs/tsDZSJYXn+GdYO/IOw9BVFtjJbrrFR+dL1yZQQN1ChxY6otYAsCeAHhU0XsKyJUzP6omyvQ==}
+  react-test-renderer@19.2.3:
+    resolution: {integrity: sha512-TMR1LnSFiWZMJkCgNf5ATSvAheTT2NvKIwiVwdBPHxjBI7n/JbWd4gaZ16DVd9foAXdvDz+sB5yxZTwMjPRxpw==}
     peerDependencies:
-      react: ^19.2.1
+      react: ^19.2.3
 
   react@19.2.3:
     resolution: {integrity: sha512-Ku/hhYbVjOQnXDZFv2+RibmLFGwFdeeKHFcOTlrt7xplBnya5OGn/hIRDsqDiSUcfORsDC7MPxwork8jBwsIWA==}
@@ -11437,12 +11445,12 @@ snapshots:
       picocolors: 1.1.1
       pretty-format: 27.5.1
 
-  '@testing-library/react@16.3.1(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.3))(react@19.2.3)':
+  '@testing-library/react@16.3.1(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
       '@babel/runtime': 7.28.4
       '@testing-library/dom': 10.4.1
       react: 19.2.3
-      react-dom: 19.2.1(react@19.2.3)
+      react-dom: 19.2.3(react@19.2.3)
     optionalDependencies:
       '@types/react': 19.2.7
       '@types/react-dom': 19.2.3(@types/react@19.2.7)
@@ -11954,9 +11962,28 @@ snapshots:
       react: 19.2.3
       react-dom: 19.2.1(react@19.2.3)
 
+  '@wallet-standard/react-core@1.0.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
+    dependencies:
+      '@wallet-standard/app': 1.1.0
+      '@wallet-standard/base': 1.1.0
+      '@wallet-standard/errors': 0.1.1
+      '@wallet-standard/experimental-features': 0.2.0
+      '@wallet-standard/features': 1.1.0
+      '@wallet-standard/ui': 1.0.1
+      '@wallet-standard/ui-registry': 1.0.1
+      react: 19.2.3
+      react-dom: 19.2.3(react@19.2.3)
+
   '@wallet-standard/react@1.0.1(react-dom@19.2.1(react@19.2.3))(react@19.2.3)':
     dependencies:
       '@wallet-standard/react-core': 1.0.1(react-dom@19.2.1(react@19.2.3))(react@19.2.3)
+    transitivePeerDependencies:
+      - react
+      - react-dom
+
+  '@wallet-standard/react@1.0.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
+    dependencies:
+      '@wallet-standard/react-core': 1.0.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
     transitivePeerDependencies:
       - react
       - react-dom
@@ -14858,6 +14885,11 @@ snapshots:
       react: 19.2.3
       scheduler: 0.27.0
 
+  react-dom@19.2.3(react@19.2.3):
+    dependencies:
+      react: 19.2.3
+      scheduler: 0.27.0
+
   react-error-boundary@5.0.0(react@19.2.3):
     dependencies:
       '@babel/runtime': 7.26.10
@@ -14867,7 +14899,7 @@ snapshots:
 
   react-is@18.3.1: {}
 
-  react-is@19.2.1: {}
+  react-is@19.2.3: {}
 
   react-remove-scroll-bar@2.3.8(@types/react@19.2.7)(react@19.2.3):
     dependencies:
@@ -14896,10 +14928,10 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.7
 
-  react-test-renderer@19.2.1(react@19.2.3):
+  react-test-renderer@19.2.3(react@19.2.3):
     dependencies:
       react: 19.2.3
-      react-is: 19.2.1
+      react-is: 19.2.3
       scheduler: 0.27.0
 
   react@19.2.3: {}

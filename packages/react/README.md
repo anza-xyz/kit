@@ -405,7 +405,7 @@ function SignAndSendTransactionsButton({ account, transactionBytes1, transaction
 
 ### `useSelectedWalletAccount()`
 
-This hook returns the wallet account you have selected, a function to change the selection, and a list of wallets which pass a filter condition you have provided. This hook must be used in a React Component inside `SelectedWalletAccountContextProvider`.
+This hook returns the wallet account that is selected, a function to change the selection, and a list of wallets which pass a filter condition you have provided. This hook must be used in a React Component inside `SelectedWalletAccountContextProvider`.
 
 #### Arguments
 
@@ -415,9 +415,9 @@ This hook doesn't take any arguments.
 
 The function returns an array consisting of the following elements in the order given:
 
-- `SelectedWalletAccount`: This element could be a `UiWalletAccount` or `undefined`, and represents the user chosen wallet account.
+- `SelectedWalletAccount`: This element could be a `UiWalletAccount` or `undefined`, and represents the selected wallet account.
 - `SetSelectedWalletAccount`: A setter function to set the SelectedWalletAccount state. It takes an argument which could be a callback function `(prevState)=>newState` or `newState`.
-- `filteredWallets`: List of allowed wallets on the basis provided as `filterWallet` function in `SelectedWalletAccountContextProvider`
+- `filteredWallets`: List of filtered wallets using the function provided as `filterWallet` function in `SelectedWalletAccountContextProvider`
 
 #### Example
 
@@ -452,11 +452,11 @@ This is a react context provider for `SelectedWalletAccountContext`. It provides
 
 The provider takes the following props:
 
-- `filterWallet`: a function used to filter out blocked/unwanted wallets. Its type as `(UiWallet)=>boolean`.
-- `stateSync`: an object with three property as follows:
-    - `storeSelectedWallet`: a function used to store a selected wallet account identifier into persistent storage by using a storage key. It takes a identifier string. `(accountKey)=>void`.
-    - `getSelectedWallet`: a function used to retrieve the persisted wallet account identifier by using the storage key, from the persistent storage. `()=>accountKey | null`
-    - `deleteSelectedWallet`: clears any persisted `accountKey` from the persistent storage by using the storage key. `()=>void`.
+- `filterWallet`: a function used to filter supported wallets. For example you might use this to restrict your app to wallets that support `solana:mainnet`.
+- `stateSync`: an object to store the selected wallet, with these properties:
+    - `storeSelectedWallet`: a function used to store a selected wallet account identifier (as a string) into persistent storage. For example this might write to local storage in the browser. The string stored is `${walletName}:${accountAddress}`.
+    - `getSelectedWallet`: a function used to retrieve the persisted wallet account identifier from the persistent storage.
+    - `deleteSelectedWallet`: clears any persisted wallet account identifier from the persistent storage.
 
 #### Example
 
