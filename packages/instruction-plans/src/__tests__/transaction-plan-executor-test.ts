@@ -31,9 +31,16 @@ async function expectFailedToExecute(
     error: SolanaError<typeof SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN>,
 ): Promise<void> {
     const transactionPlanResult = error.context.transactionPlanResult;
-    await expect(promise).rejects.toThrow(error);
-    // This second expectation is necessary since `toThrow` will only check the
-    // error message and `transactionPlanResult` is not part of the message.
+    // Check for the error code and message (but not the full context since transactionPlanResult is non-enumerable)
+    await expect(promise).rejects.toThrow(
+        expect.objectContaining({
+            context: expect.objectContaining({
+                __code: SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN,
+            }),
+            name: 'SolanaError',
+        }),
+    );
+    // This second expectation checks for transactionPlanResult which is a non-enumerable property
     await expect(promise).rejects.toThrow(
         expect.objectContaining({ context: expect.objectContaining({ transactionPlanResult }) }),
     );
