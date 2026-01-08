@@ -137,7 +137,7 @@ export function SelectedWalletAccountContextProvider(
     }, [selectedWalletAccount, walletAccount]);
 
     return (
-        <SelectedWalletAccountContext.Provider value={[walletAccount, setSelectedWalletAccount]}>
+        <SelectedWalletAccountContext.Provider value={[walletAccount, setSelectedWalletAccount, filteredWallets]}>
             {children}
         </SelectedWalletAccountContext.Provider>
     )
