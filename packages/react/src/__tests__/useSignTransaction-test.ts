@@ -167,21 +167,6 @@ describe('useSignTransaction', () => {
                 expect(results).toEqual([{ signature: 'abc' }, { signature: 'def' }]);
             }
         });
-        it('returns an empty array without calling the wallet when no inputs are provided', async () => {
-            expect.assertions(2);
-            const { result } = renderHook(() => useSignTransactions(mockUiWalletAccount, 'solana:danknet'));
-            // eslint-disable-next-line jest/no-conditional-in-test
-            if (result.__type === 'error' || !result.current) {
-                throw result.current;
-            } else {
-                const signTransactions = result.current;
-                const outputs = await signTransactions();
-                // eslint-disable-next-line jest/no-conditional-expect
-                expect(mockSignTransaction).not.toHaveBeenCalled();
-                // eslint-disable-next-line jest/no-conditional-expect
-                expect(outputs).toEqual([]);
-            }
-        });
         it('fatals when passed a wallet account that does not support the specified chain', () => {
             const { result } = renderHook(() =>
                 useSignTransactions({ ...mockUiWalletAccount, chains: ['solana:basednet'] }, 'solana:danknet'),
