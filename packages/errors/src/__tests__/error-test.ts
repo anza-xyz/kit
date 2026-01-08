@@ -73,10 +73,7 @@ describe('SolanaError', () => {
             expect(errorWithOption.context).not.toHaveProperty(propName);
         });
         it('calls the message formatter with the error option omitted', () => {
-            expect(getErrorMessage).toHaveBeenCalledWith(
-                123,
-                expect.not.objectContaining({ [propName]: errorOptionValue }),
-            );
+            expect(getErrorMessage).toHaveBeenCalledWith(123, undefined);
         });
     });
     it('sets its message to the output of the message formatter', async () => {
