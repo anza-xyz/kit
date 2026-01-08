@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import type { UiWallet, UiWalletAccount } from '@wallet-standard/react';
 import React from 'react';
 
@@ -49,3 +50,22 @@ setSelected(
     // @ts-expect-error must be of correct type
     'not a wallet account or undefined',
 );
+
+type SelectedWallet = CtxValue[0];
+declare const selected: SelectedWallet;
+
+// type-level assertion helpers
+type Assert<T extends true> = T;
+// allows undefined
+// @ts-expect-error TS6196
+type _AssertAllowsUndefined = Assert<undefined extends SelectedWallet ? true : false>;
+// allows UiWalletAccount
+// @ts-expect-error TS6196
+type _AssertAllowsWallet = Assert<UiWalletAccount extends SelectedWallet ? true : false>;
+
+// Positive: selected wallet account can be a UiWalletAccount
+// @ts-expect-error TS6196
+const _selected2: UiWalletAccount = selected!;
+
+type FilteredWallets = CtxValue[2];
+declare const filteredWallets: FilteredWallets;

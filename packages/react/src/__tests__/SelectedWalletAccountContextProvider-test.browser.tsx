@@ -23,22 +23,24 @@ function makeWallet(name: string, accounts: string[]) {
     };
 }
 
+/** Used to track and error out on infinite re-renders */
 let renderCount = 0;
 function Consumer() {
     renderCount++;
     if (renderCount > 10) {
         throw new Error("Too many re-renders");
     }
-    const [selectedWalletAccount, setSelectedWalletAccount] = useSelectedWalletAccount();
+    const [walletAccount, setWalletAccount, filteredWallets] = useSelectedWalletAccount();
     return (
         <div>
-            <div data-testid="selected">{selectedWalletAccount ? selectedWalletAccount.address : 'none'}</div>
-            <button data-testid="pick-b" onClick={() => setSelectedWalletAccount({ address: '0xabc', walletName: 'WalletB' } as any)}>
+            <div data-testid="selected">{walletAccount ? walletAccount.address : 'none'}</div>
+            <button data-testid="pick-b" onClick={() => setWalletAccount({ address: 'abc', walletName: 'WalletB' } as any)}>
                 Pick B
             </button>
-            <button data-testid="clear" onClick={() => setSelectedWalletAccount(undefined)}>
+            <button data-testid="clear" onClick={() => setWalletAccount(undefined)}>
                 Clear
             </button>
+            <div data-testid="filtered-wallets">{filteredWallets.map(w => w.name).join(", ")}</div>
         </div>
     );
 }
@@ -61,16 +63,53 @@ describe("SelectedWalletAccountContextProvider", () => {
         renderCount = 0;
     });
 
+    test("only filtered wallets are usable", () => {
+        const stateSync = {
+            getSelectedWallet: jest.fn(),
+            storeSelectedWallet: jest.fn(),
+            deleteSelectedWallet: jest.fn(),
+        };
+        const walletA = makeWallet("WalletA", ["123"]);
+        const walletB = makeWallet("WalletB", ["abc"]);
+        
+        const mockWallets = [
+            walletA,
+            walletB,
+        ];
+        (useWallets as jest.Mock).mockReturnValue(mockWallets);
+        const allowOnlyA = (wallet: any) => wallet.name === "WalletA";
+
+        render(
+            <SelectedWalletAccountContextProvider
+                filterWallet={allowOnlyA}
+                stateSync={stateSync}
+            >
+                <Consumer />
+            </SelectedWalletAccountContextProvider>
+        );
+
+        expect(screen.getByTestId("selected").textContent).toBe("none");
+        expect(screen.getByTestId("filtered-wallets").textContent).toContain("WalletA");
+        expect(screen.getByTestId("filtered-wallets").textContent).not.toContain("WalletB");
+
+        act(()=>{
+            fireEvent.click(screen.getByTestId("pick-b"));
+        })
+
+        /** Even if walletB is selected, since it is not available the provider will return 'undefined' for the walletAccount */
+        expect(screen.getByTestId("selected").textContent).toBe("none");
+    });
+
     test("initializes from saved key", () => {
         //saved key matchs a wallet that is available from useWallets
         const stateSync = {
-            getSelectedWallet: jest.fn().mockReturnValue("WalletA:0x123"),
+            getSelectedWallet: jest.fn().mockReturnValue("WalletA:123"),
             storeSelectedWallet: jest.fn(),
             deleteSelectedWallet: jest.fn(),
         };
 
-        const walletA = makeWallet("WalletA", ["0x123", "0x456"]);
-        const walletB = makeWallet("WalletB", ["0xabc"]);
+        const walletA = makeWallet("WalletA", ["123", "456"]);
+        const walletB = makeWallet("WalletB", ["abc"]);
 
         const mockWallets = [
             walletA,
@@ -89,7 +128,7 @@ describe("SelectedWalletAccountContextProvider", () => {
             </SelectedWalletAccountContextProvider>
         );
 
-        expect(screen.getByTestId("selected").textContent).toBe("0x123");
+        expect(screen.getByTestId("selected").textContent).toBe("123");
         expect(stateSync.getSelectedWallet).toHaveBeenCalled();
     });
 
@@ -102,8 +141,8 @@ describe("SelectedWalletAccountContextProvider", () => {
         };
 
         const mockWallets = [
-            makeWallet("WalletA", ["0x123", "0x456"]),
-            makeWallet("WalletB", ["0xabc"]),
+            makeWallet("WalletA", ["123", "456"]),
+            makeWallet("WalletB", ["abc"]),
         ];
         (useWallets as jest.Mock).mockReturnValue(mockWallets);
 
@@ -130,8 +169,8 @@ describe("SelectedWalletAccountContextProvider", () => {
         };
 
         const mockWallets = [
-            makeWallet("WalletA", ["0x123", "0x456"]),
-            makeWallet("WalletB", ["0xabc"]),
+            makeWallet("WalletA", ["123", "456"]),
+            makeWallet("WalletB", ["abc"]),
         ];
         (useWallets as jest.Mock).mockReturnValue(mockWallets);
 
@@ -154,8 +193,8 @@ describe("SelectedWalletAccountContextProvider", () => {
             fireEvent.click(screen.getByTestId("pick-b"));
         });
 
-        expect(screen.getByTestId("selected").textContent).toBe("0xabc");
-        expect(stateSync.storeSelectedWallet).toHaveBeenCalledWith("WalletB:0xabc");
+        expect(screen.getByTestId("selected").textContent).toBe("abc");
+        expect(stateSync.storeSelectedWallet).toHaveBeenCalledWith("WalletB:abc");
     });
 
     test("allows changing and clearing selection", async () => {
@@ -166,8 +205,8 @@ describe("SelectedWalletAccountContextProvider", () => {
         };
 
         const mockWallets = [
-            makeWallet("WalletA", ["0x123", "0x456"]),
-            makeWallet("WalletB", ["0xabc"]),
+            makeWallet("WalletA", ["123", "456"]),
+            makeWallet("WalletB", ["abc"]),
         ];
         (useWallets as jest.Mock).mockReturnValue(mockWallets);
 
@@ -188,9 +227,9 @@ describe("SelectedWalletAccountContextProvider", () => {
         //Pick B
         fireEvent.click(screen.getByTestId("pick-b"));
 
-        expect(screen.getByTestId("selected").textContent).toBe("0xabc");
+        expect(screen.getByTestId("selected").textContent).toBe("abc");
         await waitFor(() => {
-            expect(stateSync.storeSelectedWallet).toHaveBeenCalledWith("WalletB:0xabc");
+            expect(stateSync.storeSelectedWallet).toHaveBeenCalledWith("WalletB:abc");
         });
 
         //Clear
@@ -203,7 +242,7 @@ describe("SelectedWalletAccountContextProvider", () => {
     test
 
     test('auto-restores saved wallet when it appears later', () => {
-        const getSelectedWallet = jest.fn().mockReturnValue('WalletA:0x123');
+        const getSelectedWallet = jest.fn().mockReturnValue('WalletA:123');
         const storeSelectedWallet = jest.fn();
         const deleteSelectedWallet = jest.fn();
 
@@ -232,7 +271,7 @@ describe("SelectedWalletAccountContextProvider", () => {
         expect(getSelectedWallet).toHaveBeenCalled();
 
         //Now update wallets to include the saved one
-        const mockWalletsUpdated = [makeWallet('WalletA', ['0x123']), makeWallet('WalletB', ['0xabc'])];
+        const mockWalletsUpdated = [makeWallet('WalletA', ['123']), makeWallet('WalletB', ['abc'])];
         useWalletsMock.mockReturnValue(mockWalletsUpdated);
 
         act(() => {
@@ -250,18 +289,18 @@ describe("SelectedWalletAccountContextProvider", () => {
             );
         });
 
-        expect(screen.getByTestId('selected').textContent).toBe('0x123');
+        expect(screen.getByTestId('selected').textContent).toBe('123');
     });
 
     test("clears in-memory selection when selected wallet disappears", () => {
-        const getSelectedWallet = jest.fn().mockReturnValue("WalletA:0x123");
+        const getSelectedWallet = jest.fn().mockReturnValue("WalletA:123");
         const storeSelectedWallet = jest.fn();
         const deleteSelectedWallet = jest.fn();
 
         //First render with WalletA present
         const mockWallets = [
-            makeWallet("WalletA", ["0x123", "0x456"]),
-            makeWallet("WalletB", ["0xabc"]),
+            makeWallet("WalletA", ["123", "456"]),
+            makeWallet("WalletB", ["abc"]),
         ];
         const useWalletsMock = useWallets as jest.Mock;
         useWalletsMock.mockReturnValue(mockWallets);
@@ -281,13 +320,13 @@ describe("SelectedWalletAccountContextProvider", () => {
             </SelectedWalletAccountContextProvider>
         );
 
-        //WalletA:0x123 is selected
-        expect(screen.getByTestId("selected").textContent).toBe("0x123");
+        //WalletA:123 is selected
+        expect(screen.getByTestId("selected").textContent).toBe("123");
         expect(getSelectedWallet).toHaveBeenCalled();
 
         //Now update wallets to remove WalletA
         const mockWalletsUpdated = [
-            makeWallet("WalletB", ["0xabc"]),
+            makeWallet("WalletB", ["abc"]),
         ];
         useWalletsMock.mockReturnValue(mockWalletsUpdated);
 
