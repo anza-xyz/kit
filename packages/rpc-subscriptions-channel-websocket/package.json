@@ -1,6 +1,6 @@
 {
     "name": "@solana/rpc-subscriptions-channel-websocket",
-    "version": "5.3.0",
+    "version": "5.4.0",
     "description": "An RPC Subscriptions transport that uses WebSockets",
     "homepage": "https://www.solanakit.com/api#solanarpc-subscriptions-channel-websocket",
     "exports": {

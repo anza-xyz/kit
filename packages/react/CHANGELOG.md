@@ -1,5 +1,24 @@
 # @solana/react
 
+## 5.4.0
+
+### Minor Changes
+
+- [#1154](https://github.com/anza-xyz/kit/pull/1154) [`fec04ae`](https://github.com/anza-xyz/kit/commit/fec04ae9cd0939c556b832e20440d27c4574561a) Thanks [@ningthoujamSwamikumar](https://github.com/ningthoujamSwamikumar)! - Add a context provider `<SelectedWalletAccountContext>` and `useSelectedWalletAccount` to persist a selected wallet account
+
+- [#1105](https://github.com/anza-xyz/kit/pull/1105) [`a301da8`](https://github.com/anza-xyz/kit/commit/a301da85ec21901fd1836d784ba46cc1d8ddddc2) Thanks [@rajgoesout](https://github.com/rajgoesout)! - Add `useSignTransactions` and `useSignAndSendTransactions` hooks that you can use to send multiple transactions to a connected wallet.
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/addresses@5.4.0
+    - @solana/errors@5.4.0
+    - @solana/keys@5.4.0
+    - @solana/promises@5.4.0
+    - @solana/signers@5.4.0
+    - @solana/transaction-messages@5.4.0
+    - @solana/transactions@5.4.0
+
 ## 5.3.0
 
 ### Patch Changes
