@@ -402,3 +402,83 @@ function SignAndSendTransactionsButton({ account, transactionBytes1, transaction
     );
 }
 ```
+
+### `useSelectedWalletAccount()`
+
+This hook returns the wallet account you have selected, a function to change the selection, and a list of wallets which pass a filter condition you have provided. This hook must be used in a React Component inside `SelectedWalletAccountContextProvider`.
+
+#### Arguments
+
+This hook doesn't take any arguments.
+
+#### Returns
+
+The function returns an array consisting of the following elements in the order given:
+
+- `SelectedWalletAccount`: This element could be a `UiWalletAccount` or `undefined`, and represents the user chosen wallet account.
+- `SetSelectedWalletAccount`: A setter function to set the SelectedWalletAccount state. It takes an argument which could be a callback function `(prevState)=>newState` or `newState`.
+- `filteredWallets`: List of allowed wallets on the basis provided as `filterWallet` function in `SelectedWalletAccountContextProvider`
+
+#### Example
+
+```tsx
+import React from 'react';
+import { useSelectedWalletAccount } from '@solana/react';
+
+function WalletInfo() {
+    const [selectedAccount, setSelectedAccount, filteredWallets] = useSelectedWalletAccount();
+
+    if (!selectedAccount) {
+        return <div>No wallet selected</div>;
+    }
+
+    return (
+        <div>
+            <p>Address: {selectedAccount.address}</p>
+
+            <button onClick={() => setSelectedAccount(undefined)}>Clear selection</button>
+
+            <p>Available wallets: {filteredWallets.length}</p>
+        </div>
+    );
+}
+```
+
+### `SelectedWalletAccountContextProvider`
+
+This is a react context provider for `SelectedWalletAccountContext`. It provides its children access to the context by using either `useSelectedWalletAccount()` or `useContext(SelectedWalletAccountContext)`.
+
+#### Props
+
+The provider takes the following props:
+
+- `filterWallet`: a function used to filter out blocked/unwanted wallets. Its type as `(UiWallet)=>boolean`.
+- `stateSync`: an object with three property as follows:
+    - `storeSelectedWallet`: a function used to store a selected wallet account identifier into persistent storage by using a storage key. It takes a identifier string. `(accountKey)=>void`.
+    - `getSelectedWallet`: a function used to retrieve the persisted wallet account identifier by using the storage key, from the persistent storage. `()=>accountKey | null`
+    - `deleteSelectedWallet`: clears any persisted `accountKey` from the persistent storage by using the storage key. `()=>void`.
+
+#### Example
+
+```tsx
+import React from 'react';
+import { SelectedWalletAccountContextProvider } from '@solana/react';
+import type { UiWallet } from '@wallet-standard/react';
+
+const STORAGE_KEY = 'solana-wallet-account-id';
+
+export function App() {
+    return (
+        <SelectedWalletAccountContextProvider
+            filterWallet={(wallet: UiWallet) => wallet.accounts.length > 0}
+            stateSync={{
+                getSelectedWallet: () => localStorage.getItem(STORAGE_KEY),
+                storeSelectedWallet: accountKey => localStorage.setItem(STORAGE_KEY, accountKey),
+                deleteSelectedWallet: () => localStorage.removeItem(STORAGE_KEY),
+            }}
+        >
+            <WalletInfo />
+        </SelectedWalletAccountContextProvider>
+    );
+}
+```
