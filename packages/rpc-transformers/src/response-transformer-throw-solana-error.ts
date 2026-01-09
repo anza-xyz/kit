@@ -11,7 +11,9 @@ type JsonRpcResponse = { error: Parameters<typeof getSolanaErrorFromJsonRpcError
 // Note: These are relative to the error.data root, not result.value like in success responses
 const SIMULATE_TRANSACTION_ALLOWED_NUMERIC_KEYPATHS: readonly KeyPath[] = [
     ['loadedAccountsDataSize'],
+    // Parsed account data fields (includes nested fields like data.parsed.info.decimals, etc.)
     ...jsonParsedAccountsConfigs.map(c => ['accounts', KEYPATH_WILDCARD, ...c]),
+    // Inner instructions fields (index, accounts array elements, programIdIndex, stackHeight)
     ...innerInstructionsConfigs.map(c => ['innerInstructions', KEYPATH_WILDCARD, ...c]),
 ];
 
