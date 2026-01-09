@@ -83,8 +83,7 @@
         "tinybench": "^6.0.0"
     },
     "peerDependencies": {
-        "fastestsmallesttextencoderdecoder": "^1.0.22",
-        "typescript": ">=5.9.3"
+        "fastestsmallesttextencoderdecoder": "^1.0.22"
     },
     "peerDependenciesMeta": {
         "fastestsmallesttextencoderdecoder": {
