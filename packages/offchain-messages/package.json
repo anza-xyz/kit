@@ -84,13 +84,5 @@
     },
     "engines": {
         "node": ">=20.18.0"
-    },
-    "peerDependencies": {
-        "typescript": ">=5.9.3"
-    },
-    "peerDependenciesMeta": {
-        "typescript": {
-            "optional": true
-        }
     }
 }
