@@ -83,6 +83,11 @@
     "peerDependencies": {
         "typescript": ">=5.9.3"
     },
+    "peerDependenciesMeta": {
+        "typescript": {
+            "optional": true
+        }
+    },
     "devDependencies": {
         "tinybench": "^6.0.0"
     },
