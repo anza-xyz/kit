@@ -89,6 +89,9 @@
     "peerDependenciesMeta": {
         "fastestsmallesttextencoderdecoder": {
             "optional": true
+        },
+        "typescript": {
+            "optional": true
         }
     },
     "engines": {

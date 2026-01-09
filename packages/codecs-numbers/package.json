@@ -79,6 +79,11 @@
     "peerDependencies": {
         "typescript": ">=5.9.3"
     },
+    "peerDependenciesMeta": {
+        "typescript": {
+            "optional": true
+        }
+    },
     "engines": {
         "node": ">=20.18.0"
     }
