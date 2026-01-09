@@ -43,15 +43,15 @@ export interface RpcSimulateTransactionResult {
                         // Json
                         parsed: unknown;
                         program: string;
-                        space: number;
+                        space: bigint;
                     }
                   // Binary
                   | [encodedBytes: string, encoding: 'base58' | 'base64' | 'base64+zstd' | 'binary' | 'jsonParsed'];
               executable: boolean;
-              lamports: number;
+              lamports: bigint;
               owner: string;
-              rentEpoch: number;
-              space?: number;
+              rentEpoch: bigint;
+              space?: bigint;
           } | null)[]
         | null;
     err: TransactionError | null;
