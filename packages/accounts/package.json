@@ -80,9 +80,6 @@
         "@solana/rpc-spec": "workspace:*",
         "@solana/rpc-types": "workspace:*"
     },
-    "peerDependencies": {
-        "typescript": ">=5.9.3"
-    },
     "engines": {
         "node": ">=20.18.0"
     }

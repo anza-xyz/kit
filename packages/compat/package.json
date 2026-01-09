@@ -83,9 +83,6 @@
     "devDependencies": {
         "@solana/web3.js": "^1"
     },
-    "peerDependencies": {
-        "typescript": ">=5.9.3"
-    },
     "engines": {
         "node": ">=20.18.0"
     }

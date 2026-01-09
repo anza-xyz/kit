@@ -89,9 +89,6 @@
         "@solana/addresses": "workspace:*",
         "@solana/event-target-impl": "workspace:*"
     },
-    "peerDependencies": {
-        "typescript": ">=5.9.3"
-    },
     "engines": {
         "node": ">=20.18.0"
     }

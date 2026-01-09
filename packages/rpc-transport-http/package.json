@@ -84,9 +84,6 @@
         "undici": "^7.18.2",
         "zx": "^8.8.5"
     },
-    "peerDependencies": {
-        "typescript": ">=5.9.3"
-    },
     "engines": {
         "node": ">=20.18.0"
     }
