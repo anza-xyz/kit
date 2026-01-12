@@ -85,7 +85,7 @@
         "zx": "^8.8.5"
     },
     "peerDependencies": {
-        "typescript": ">=5.9.3"
+        "typescript": "^5.0.0"
     },
     "peerDependenciesMeta": {
         "typescript": {
