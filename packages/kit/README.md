@@ -46,6 +46,22 @@ Returns a `TransactionMessage` from a `CompiledTransactionMessage`. If any of th
 
 Given a list of addresses belonging to address lookup tables, returns a map of lookup table addresses to an ordered array of the addresses they contain.
 
+### `getMinimumBalanceForRentExemption(space)`
+
+Calculates the minimum `Lamports` required to make an account rent exempt for a given data size, without performing an RPC call.
+
+Values are sourced from the on-chain rent parameters in the Solana runtime:
+https://github.com/anza-xyz/solana-sdk/blob/c07f692e41d757057c8700211a9300cdcd6d33b1/rent/src/lib.rs#L93-L97
+
+Note that this logic may change, or be incorrect depending on the cluster you are connected to. You can always use the RPC method `getMinimumBalanceForRentExemption` to get the current value.
+
+```ts
+import { getMinimumBalanceForRentExemption } from '@solana/kit';
+
+const mintSize = 82n;
+const rentExemptLamports = getMinimumBalanceForRentExemption(mintSize);
+```
+
 ### `getComputeUnitEstimateForTransactionMessageFactory({rpc})`
 
 Correctly budgeting a compute unit limit for your transaction message can increase the probability that your transaction will be accepted for processing. If you don't declare a compute unit limit on your transaction, validators will assume an upper limit of 200K compute units (CU) per instruction.
