@@ -4,7 +4,7 @@
     "private": true,
     "scripts": {
         "build": "NODE_OPTIONS='--max-old-space-size=8192' next build",
-        "dev": "NODE_OPTIONS=\"--localstorage-file=$(mktemp)\" next dev --turbo",
+        "dev": "NODE_OPTIONS=\"--no-experimental-webstorage\" next dev --turbo",
         "start": "next start",
         "postinstall": "fumadocs-mdx",
         "prebuild": "./build-api-docs.sh",
