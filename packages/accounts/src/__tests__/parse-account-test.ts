@@ -230,6 +230,218 @@ describe('parseJsonRpcAccount', () => {
         } as Account<MyData>);
     });
 
+    it('preserves array data and includes metadata when available', () => {
+        // Given an address and a json-parsed RPC account with array data.
+        const address = '1111' as Address<'1111'>;
+        const rpcAccount = <JsonParsedRpcAccount>{
+            data: {
+                parsed: {
+                    info: [
+                        {
+                            blockhash: '1111',
+                            feeCalculator: { lamportsPerSignature: '1' },
+                        },
+                    ],
+                    type: 'recentBlockhashes',
+                },
+                program: 'sysvar',
+                space: 165n,
+            },
+            executable: false,
+            lamports: 1_000_000_000n,
+            owner: '9999',
+            space: 165n,
+        };
+
+        // When we parse that RPC account using the parseJsonRpcAccount function.
+        type MyData = { blockhash: string; feeCalculator: { lamportsPerSignature: string } }[];
+        const account = parseJsonRpcAccount<MyData>(address, rpcAccount);
+
+        // Then we expect the data to remain an array and include metadata.
+        expect(Array.isArray(account.data)).toBe(true);
+        expect(account.data).toMatchObject(
+            expect.arrayContaining([
+                {
+                    blockhash: '1111',
+                    feeCalculator: { lamportsPerSignature: '1' },
+                },
+            ]),
+        );
+        const dataWithMeta = account.data as unknown as {
+            parsedAccountMeta?: { program: string; type?: string };
+        };
+        expect(dataWithMeta.parsedAccountMeta).toStrictEqual({
+            program: 'sysvar',
+            type: 'recentBlockhashes',
+        });
+    });
+
+    it('parses metadata without a type when not provided', () => {
+        // Given an address and a json-parsed RPC account without a parsed type.
+        const address = '1111' as Address<'1111'>;
+        const rpcAccount = <JsonParsedRpcAccount>{
+            data: {
+                parsed: {
+                    info: { mint: '2222' as Address<'2222'> },
+                },
+                program: 'splToken',
+                space: 165n,
+            },
+            executable: false,
+            lamports: 1_000_000_000n,
+            owner: '9999',
+            space: 165n,
+        };
+
+        // When we parse that RPC account using the parseJsonRpcAccount function.
+        type MyData = { mint: Address };
+        const account = parseJsonRpcAccount<MyData>(address, rpcAccount);
+
+        // Then we expect metadata to include only the program.
+        expect(account).toMatchObject({
+            data: {
+                mint: '2222',
+                parsedAccountMeta: {
+                    program: 'splToken',
+                },
+            },
+        });
+    });
+
+    it('does not include metadata when program and type are missing', () => {
+        // Given an address and a json-parsed RPC account without metadata.
+        const address = '1111' as Address<'1111'>;
+        const rpcAccount = <JsonParsedRpcAccount>{
+            data: {
+                parsed: {
+                    info: { mint: '2222' as Address<'2222'> },
+                },
+                program: undefined as unknown as string,
+                space: 165n,
+            },
+            executable: false,
+            lamports: 1_000_000_000n,
+            owner: '9999',
+            space: 165n,
+        };
+
+        // When we parse that RPC account using the parseJsonRpcAccount function.
+        type MyData = { mint: Address };
+        const account = parseJsonRpcAccount<MyData>(address, rpcAccount);
+
+        // Then we expect parsedAccountMeta to be omitted.
+        expect(account).toMatchObject({
+            data: {
+                mint: '2222',
+            },
+        });
+        expect('parsedAccountMeta' in account.data).toBe(false);
+    });
+
+    it('includes metadata when only type is provided', () => {
+        // Given an address and a json-parsed RPC account with only a type.
+        const address = '1111' as Address<'1111'>;
+        const rpcAccount = <JsonParsedRpcAccount>{
+            data: {
+                parsed: {
+                    info: { mint: '2222' as Address<'2222'> },
+                    type: 'token',
+                },
+                program: undefined as unknown as string,
+                space: 165n,
+            },
+            executable: false,
+            lamports: 1_000_000_000n,
+            owner: '9999',
+            space: 165n,
+        };
+
+        // When we parse that RPC account using the parseJsonRpcAccount function.
+        type MyData = { mint: Address };
+        const account = parseJsonRpcAccount<MyData>(address, rpcAccount);
+
+        // Then we expect metadata to include only the type.
+        expect(account).toMatchObject({
+            data: {
+                mint: '2222',
+                parsedAccountMeta: {
+                    type: 'token',
+                },
+            },
+        });
+    });
+
+    it('uses metadata when info is null', () => {
+        // Given an address and a json-parsed RPC account with null info.
+        const address = '1111' as Address<'1111'>;
+        const rpcAccount = <JsonParsedRpcAccount>{
+            data: {
+                parsed: {
+                    info: null,
+                    type: 'token',
+                },
+                program: 'splToken',
+                space: 165n,
+            },
+            executable: false,
+            lamports: 1_000_000_000n,
+            owner: '9999',
+            space: 165n,
+        };
+
+        // When we parse that RPC account using the parseJsonRpcAccount function.
+        const account = parseJsonRpcAccount<object>(address, rpcAccount);
+
+        // Then we expect the data to only include metadata.
+        expect(account).toMatchObject({
+            data: {
+                parsedAccountMeta: {
+                    program: 'splToken',
+                    type: 'token',
+                },
+            },
+        });
+    });
+
+    it('preserves array data when metadata is missing', () => {
+        // Given an address and a json-parsed RPC account with array info and no metadata.
+        const address = '1111' as Address<'1111'>;
+        const rpcAccount = <JsonParsedRpcAccount>{
+            data: {
+                parsed: {
+                    info: [
+                        {
+                            blockhash: '1111',
+                            feeCalculator: { lamportsPerSignature: '1' },
+                        },
+                    ],
+                },
+                program: undefined as unknown as string,
+                space: 165n,
+            },
+            executable: false,
+            lamports: 1_000_000_000n,
+            owner: '9999',
+            space: 165n,
+        };
+
+        // When we parse that RPC account using the parseJsonRpcAccount function.
+        type MyData = { blockhash: string; feeCalculator: { lamportsPerSignature: string } }[];
+        const account = parseJsonRpcAccount<MyData>(address, rpcAccount);
+
+        // Then we expect the data to remain an array without metadata.
+        expect(Array.isArray(account.data)).toBe(true);
+        expect(account.data).toMatchObject(
+            expect.arrayContaining([
+                {
+                    blockhash: '1111',
+                    feeCalculator: { lamportsPerSignature: '1' },
+                },
+            ]),
+        );
+        expect('parsedAccountMeta' in (account.data as unknown as object)).toBe(false);
+    });
+
     it('parses an json parsed account without info', () => {
         // Given an address and a json-parsed RPC account without info.
         const address = '1111' as Address<'1111'>;
