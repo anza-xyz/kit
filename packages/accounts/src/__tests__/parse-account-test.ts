@@ -267,10 +267,7 @@ describe('parseJsonRpcAccount', () => {
                 },
             ]),
         );
-        const dataWithMeta = account.data as unknown as {
-            parsedAccountMeta?: { program: string; type?: string };
-        };
-        expect(dataWithMeta.parsedAccountMeta).toStrictEqual({
+        expect(account.data.parsedAccountMeta).toStrictEqual({
             program: 'sysvar',
             type: 'recentBlockhashes',
         });
@@ -330,12 +327,9 @@ describe('parseJsonRpcAccount', () => {
         const account = parseJsonRpcAccount<MyData>(address, rpcAccount);
 
         // Then we expect parsedAccountMeta to be omitted.
-        expect(account).toMatchObject({
-            data: {
-                mint: '2222',
-            },
+        expect(account.data).toEqual({
+            mint: '2222',
         });
-        expect('parsedAccountMeta' in account.data).toBe(false);
     });
 
     it('includes metadata when only type is provided', () => {
@@ -431,7 +425,7 @@ describe('parseJsonRpcAccount', () => {
 
         // Then we expect the data to remain an array without metadata.
         expect(Array.isArray(account.data)).toBe(true);
-        expect(account.data).toMatchObject(
+        expect(account.data).toEqual(
             expect.arrayContaining([
                 {
                     blockhash: '1111',
@@ -439,7 +433,6 @@ describe('parseJsonRpcAccount', () => {
                 },
             ]),
         );
-        expect('parsedAccountMeta' in (account.data as unknown as object)).toBe(false);
     });
 
     it('parses an json parsed account without info', () => {

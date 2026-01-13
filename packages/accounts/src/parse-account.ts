@@ -106,26 +106,15 @@ export function parseJsonRpcAccount<TData extends object, TAddress extends strin
     rpcAccount: JsonParsedRpcAccount | null,
 ): Account<JsonParsedAccountData<TData>, TAddress> | MaybeAccount<JsonParsedAccountData<TData>, TAddress> {
     if (!rpcAccount) return Object.freeze({ address, exists: false });
-    const parsed = rpcAccount.data.parsed;
-    const info = parsed.info as TData | undefined;
-    const parsedAccountMeta =
-        rpcAccount.data.program || parsed.type
-            ? { program: rpcAccount.data.program, ...(parsed.type ? { type: parsed.type } : {}) }
-            : undefined;
-    let data: JsonParsedAccountData<TData>;
-    if (parsedAccountMeta) {
-        if (Array.isArray(info)) {
-            const infoArray = [...info] as unknown as JsonParsedAccountData<TData>;
-            (infoArray as unknown as { parsedAccountMeta?: ParsedAccountMeta }).parsedAccountMeta = parsedAccountMeta;
-            data = infoArray;
-        } else if (info && typeof info === 'object') {
-            data = { ...(info as object), parsedAccountMeta } as JsonParsedAccountData<TData>;
-        } else {
-            data = { parsedAccountMeta } as JsonParsedAccountData<TData>;
-        }
-    } else {
-        data = (info ?? {}) as JsonParsedAccountData<TData>;
+    const data = (rpcAccount.data.parsed.info || {}) as TData;
+
+    if (rpcAccount.data.program || rpcAccount.data.parsed.type) {
+        (data as JsonParsedAccountData<TData>).parsedAccountMeta = {
+            program: rpcAccount.data.program,
+            type: rpcAccount.data.parsed.type,
+        };
     }
+
     return Object.freeze({ ...parseBaseAccount(rpcAccount), address, data, exists: true });
 }
 
