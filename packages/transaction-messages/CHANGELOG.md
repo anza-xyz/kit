@@ -1,5 +1,11 @@
 # @solana/transaction-messages
 
+## [Unreleased]
+
+### Breaking Changes
+
+-   **BREAKING**: Removed public export of deprecated `BaseTransactionMessage` type. Use `TransactionMessage` instead. (#1147)
+
 ## 5.3.0
 
 ### Patch Changes

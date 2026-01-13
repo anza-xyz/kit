@@ -1,9 +1,11 @@
 import { AccountMeta, Instruction } from '@solana/instructions';
 
 /**
- * @deprecated Use `TransactionMessage` instead.
+ * Internal base type for transaction messages. External code should use `TransactionMessage` instead.
+ * 
+ * @internal This type is exported for internal package use only and should not be used by external consumers.
+ * It may be removed in a future version without notice.
  */
-// TODO(#1147) Stop exporting this in a future major version.
 export type BaseTransactionMessage<
     TVersion extends TransactionVersion = TransactionVersion,
     TInstruction extends Instruction = Instruction,

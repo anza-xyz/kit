@@ -3,7 +3,7 @@ import { Address } from '@solana/addresses';
 import { TransactionMessageWithBlockhashLifetime } from '../../blockhash';
 import { TransactionMessageWithFeePayer } from '../../fee-payer';
 import { TransactionMessageWithLifetime } from '../../lifetime';
-import { BaseTransactionMessage } from '../../transaction-message';
+import { TransactionMessage } from '../../transaction-message';
 import { getCompiledAddressTableLookups } from '../address-table-lookups';
 import { getCompiledMessageHeader } from '../header';
 import { getCompiledInstructions } from '../instructions';
@@ -21,7 +21,7 @@ const MOCK_LIFETIME_CONSTRAINT =
     'SOME_CONSTRAINT' as unknown as TransactionMessageWithBlockhashLifetime['lifetimeConstraint'];
 
 describe('compileTransactionMessage', () => {
-    let baseTx: BaseTransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithLifetime;
+    let baseTx: TransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithLifetime;
     beforeEach(() => {
         baseTx = {
             feePayer: { address: 'abc' as Address<'abc'> },
@@ -52,7 +52,9 @@ describe('compileTransactionMessage', () => {
         it('sets `addressTableLookups` to the return value of `getCompiledAddressTableLookups`', () => {
             const message = compileTransactionMessage(baseTx);
             expect(getCompiledAddressTableLookups).toHaveBeenCalled();
-            expect(message.addressTableLookups).toBe(expectedAddressTableLookups);
+            expect((message as Extract<typeof message, { addressTableLookups?: unknown }>).addressTableLookups).toBe(
+                expectedAddressTableLookups,
+            );
         });
     });
     describe('message header', () => {
