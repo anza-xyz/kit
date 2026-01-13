@@ -1,5 +1,35 @@
 # @solana/kit
 
+## 5.4.0
+
+### Patch Changes
+
+- [#1187](https://github.com/anza-xyz/kit/pull/1187) [`f5f89eb`](https://github.com/anza-xyz/kit/commit/f5f89eb8e769d5b6056b2f686d51a7ef4a0d1d09) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Make Typescript peer dependency optional + reduce required version to ^5
+
+- Updated dependencies [[`fb1c576`](https://github.com/anza-xyz/kit/commit/fb1c5761122bebc9955179a911a79a33a391e032), [`f5f89eb`](https://github.com/anza-xyz/kit/commit/f5f89eb8e769d5b6056b2f686d51a7ef4a0d1d09), [`189de37`](https://github.com/anza-xyz/kit/commit/189de37f76bcb273986d750fd6ed6541f711103b)]:
+    - @solana/accounts@5.4.0
+    - @solana/transaction-confirmation@5.4.0
+    - @solana/transaction-messages@5.4.0
+    - @solana/instruction-plans@5.4.0
+    - @solana/offchain-messages@5.4.0
+    - @solana/rpc-subscriptions@5.4.0
+    - @solana/rpc-parsed-types@5.4.0
+    - @solana/rpc-spec-types@5.4.0
+    - @solana/instructions@5.4.0
+    - @solana/transactions@5.4.0
+    - @solana/plugin-core@5.4.0
+    - @solana/functional@5.4.0
+    - @solana/addresses@5.4.0
+    - @solana/rpc-types@5.4.0
+    - @solana/programs@5.4.0
+    - @solana/rpc-api@5.4.0
+    - @solana/signers@5.4.0
+    - @solana/sysvars@5.4.0
+    - @solana/codecs@5.4.0
+    - @solana/errors@5.4.0
+    - @solana/keys@5.4.0
+    - @solana/rpc@5.4.0
+
 ## 5.3.0
 
 ### Minor Changes
