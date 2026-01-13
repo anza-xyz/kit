@@ -3,7 +3,7 @@ import { Address } from '@solana/addresses';
 import { TransactionMessageWithBlockhashLifetime } from '../blockhash';
 import { TransactionMessageWithDurableNonceLifetime } from '../durable-nonce';
 import { setTransactionMessageFeePayer, TransactionMessageWithFeePayer } from '../fee-payer';
-import { BaseTransactionMessage, TransactionMessage } from '../transaction-message';
+import { TransactionMessage } from '../transaction-message';
 
 const mockFeePayer = 'mock' as Address<'mockFeePayer'>;
 const aliceAddress = 'alice' as Address<'alice'>;
@@ -16,17 +16,17 @@ type V0TransactionMessage = Extract<TransactionMessage, { version: 0 }>;
 {
     // It adds the fee payer to the new message
     {
-        const message = null as unknown as BaseTransactionMessage & { some: 1 };
+        const message = null as unknown as TransactionMessage & { some: 1 };
         const messageWithFeePayer = setTransactionMessageFeePayer(aliceAddress, message);
-        messageWithFeePayer satisfies BaseTransactionMessage & TransactionMessageWithFeePayer<'alice'> & { some: 1 };
+        messageWithFeePayer satisfies TransactionMessage & TransactionMessageWithFeePayer<'alice'> & { some: 1 };
     }
 
     // It *replaces* an existing fee payer with the new one
     {
-        const messageWithAliceFeePayer = null as unknown as BaseTransactionMessage &
+        const messageWithAliceFeePayer = null as unknown as TransactionMessage &
             TransactionMessageWithFeePayer<'alice'> & { some: 1 };
         const messageWithBobFeePayer = setTransactionMessageFeePayer(bobAddress, messageWithAliceFeePayer);
-        messageWithBobFeePayer satisfies BaseTransactionMessage & TransactionMessageWithFeePayer<'bob'> & { some: 1 };
+        messageWithBobFeePayer satisfies TransactionMessage & TransactionMessageWithFeePayer<'bob'> & { some: 1 };
         // @ts-expect-error Alice should no longer be a payer.
         messageWithBobFeePayer satisfies TransactionMessageWithFeePayer<'alice'>;
     }
