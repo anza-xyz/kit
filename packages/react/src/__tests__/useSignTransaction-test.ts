@@ -89,6 +89,9 @@ describe('useSignTransaction', () => {
                 supportedFeatures: ['solana:signTransaction'],
             }),
         );
+        expect(result.current).toMatchObject({
+            context: { featureName: 'solana:signTransaction' },
+        });
     });
     it('fatals when the wallet account lookup for the supplied React wallet account fails', () => {
         jest.mocked(getWalletAccountForUiWalletAccount_DO_NOT_USE_OR_YOU_WILL_BE_FIRED).mockImplementation(() => {
@@ -181,6 +184,9 @@ describe('useSignTransaction', () => {
                     supportedFeatures: ['solana:signTransaction'],
                 }),
             );
+            expect(result.current).toMatchObject({
+                context: { featureName: 'solana:signTransaction' },
+            });
         });
     });
 });

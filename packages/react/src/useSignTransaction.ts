@@ -1,5 +1,4 @@
 import {
-    SolanaSignAndSendTransaction,
     SolanaSignTransaction,
     SolanaSignTransactionFeature,
     SolanaSignTransactionInput,
@@ -127,7 +126,7 @@ export function useSignTransactions<TWalletAccount extends UiWalletAccount>(
         throw new WalletStandardError(WALLET_STANDARD_ERROR__FEATURES__WALLET_ACCOUNT_CHAIN_UNSUPPORTED, {
             address: uiWalletAccount.address,
             chain,
-            featureName: SolanaSignAndSendTransaction,
+            featureName: SolanaSignTransaction,
             supportedChains: [...uiWalletAccount.chains],
             supportedFeatures: [...uiWalletAccount.features],
         });
