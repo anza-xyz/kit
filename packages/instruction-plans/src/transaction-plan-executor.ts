@@ -151,7 +151,7 @@ async function traverseSingle(
     context: TraverseContext,
 ): Promise<TransactionPlanResult> {
     if (context.canceled) {
-        return canceledSingleTransactionPlanResult(transactionPlan.message);
+        return canceledSingleTransactionPlanResult(transactionPlan.message, context.abortSignal?.reason);
     }
 
     try {

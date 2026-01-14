@@ -120,8 +120,7 @@ describe('createTransactionPlanExecutor', () => {
             abortController.abort(cause);
             const promise = executor(singleTransactionPlan(messageA), { abortSignal });
 
-            // TODO: loses the abort cause, add that to `canceledSingleTransactionPlanResult`?
-            await expect(promise).resolves.toStrictEqual(canceledSingleTransactionPlanResult(messageA));
+            await expect(promise).resolves.toStrictEqual(canceledSingleTransactionPlanResult(messageA, cause));
             expect(executeTransactionMessage).not.toHaveBeenCalled();
         });
 
@@ -288,7 +287,7 @@ describe('createTransactionPlanExecutor', () => {
                 sequentialTransactionPlanResult([
                     successfulSingleTransactionPlanResult(messageA, createTransaction('A')),
                     failedSingleTransactionPlanResult(messageB, cause),
-                    canceledSingleTransactionPlanResult(messageC),
+                    canceledSingleTransactionPlanResult(messageC, cause),
                 ]),
             );
 
@@ -313,8 +312,8 @@ describe('createTransactionPlanExecutor', () => {
 
             await expect(promise).resolves.toStrictEqual(
                 sequentialTransactionPlanResult([
-                    canceledSingleTransactionPlanResult(messageA),
-                    canceledSingleTransactionPlanResult(messageB),
+                    canceledSingleTransactionPlanResult(messageA, cause),
+                    canceledSingleTransactionPlanResult(messageB, cause),
                 ]),
             );
 
@@ -454,9 +453,9 @@ describe('createTransactionPlanExecutor', () => {
 
             await expect(promise).resolves.toStrictEqual(
                 parallelTransactionPlanResult([
-                    canceledSingleTransactionPlanResult(messageA),
-                    canceledSingleTransactionPlanResult(messageB),
-                    canceledSingleTransactionPlanResult(messageC),
+                    canceledSingleTransactionPlanResult(messageA, cause),
+                    canceledSingleTransactionPlanResult(messageB, cause),
+                    canceledSingleTransactionPlanResult(messageC, cause),
                 ]),
             );
         });
@@ -596,7 +595,7 @@ describe('createTransactionPlanExecutor', () => {
                             successfulSingleTransactionPlanResult(messageB, createTransaction('B')),
                             failedSingleTransactionPlanResult(messageC, cause),
                         ]),
-                        canceledSingleTransactionPlanResult(messageD),
+                        canceledSingleTransactionPlanResult(messageD, cause),
                     ]),
                     successfulSingleTransactionPlanResult(messageE, createTransaction('E')),
                     sequentialTransactionPlanResult([
@@ -635,17 +634,17 @@ describe('createTransactionPlanExecutor', () => {
             await expect(promise).resolves.toStrictEqual(
                 parallelTransactionPlanResult([
                     sequentialTransactionPlanResult([
-                        canceledSingleTransactionPlanResult(messageA),
+                        canceledSingleTransactionPlanResult(messageA, cause),
                         parallelTransactionPlanResult([
-                            canceledSingleTransactionPlanResult(messageB),
-                            canceledSingleTransactionPlanResult(messageC),
+                            canceledSingleTransactionPlanResult(messageB, cause),
+                            canceledSingleTransactionPlanResult(messageC, cause),
                         ]),
-                        canceledSingleTransactionPlanResult(messageD),
+                        canceledSingleTransactionPlanResult(messageD, cause),
                     ]),
-                    canceledSingleTransactionPlanResult(messageE),
+                    canceledSingleTransactionPlanResult(messageE, cause),
                     sequentialTransactionPlanResult([
-                        canceledSingleTransactionPlanResult(messageF),
-                        canceledSingleTransactionPlanResult(messageG),
+                        canceledSingleTransactionPlanResult(messageF, cause),
+                        canceledSingleTransactionPlanResult(messageG, cause),
                     ]),
                 ]),
             );

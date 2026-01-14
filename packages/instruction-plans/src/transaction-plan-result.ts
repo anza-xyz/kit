@@ -170,7 +170,7 @@ export type SingleTransactionPlanResult<
 export type TransactionPlanResultStatus<TContext extends TransactionPlanResultContext = TransactionPlanResultContext> =
     | Readonly<{ context: TContext; kind: 'successful'; signature: Signature; transaction?: Transaction }>
     | Readonly<{ error: Error; kind: 'failed' }>
-    | Readonly<{ kind: 'canceled' }>;
+    | Readonly<{ kind: 'canceled'; reason?: unknown }>;
 
 /**
  * Creates a divisible {@link SequentialTransactionPlanResult} from an array of nested results.
@@ -397,11 +397,14 @@ export function canceledSingleTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer = BaseTransactionMessage &
         TransactionMessageWithFeePayer,
->(transactionMessage: TTransactionMessage): SingleTransactionPlanResult<TContext, TTransactionMessage> {
+>(
+    transactionMessage: TTransactionMessage,
+    reason?: unknown,
+): SingleTransactionPlanResult<TContext, TTransactionMessage> {
     return Object.freeze({
         kind: 'single',
         message: transactionMessage,
-        status: Object.freeze({ kind: 'canceled' }),
+        status: Object.freeze({ kind: 'canceled' as const, reason }),
     });
 }
 
