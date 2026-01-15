@@ -59,4 +59,33 @@ import type { TransactionPlanResult } from '../transaction-plan-result';
             },
         });
     }
+
+    // It returns a successful result, which may be nested.
+    void (async () => {
+        const executor = null as unknown as TransactionPlanExecutor;
+        const transactionPlan = null as unknown as TransactionPlan;
+        const result = await executor(transactionPlan);
+
+        function _checkRecursive(r: typeof result) {
+            switch (r.kind) {
+                case 'single': {
+                    r.status.kind satisfies 'successful';
+                    return;
+                }
+                case 'sequential': {
+                    for (const subResult of r.plans) {
+                        _checkRecursive(subResult);
+                    }
+                    return;
+                }
+                case 'parallel': {
+                    for (const subResult of r.plans) {
+                        _checkRecursive(subResult);
+                    }
+                    return;
+                }
+            }
+        }
+        void _checkRecursive(result);
+    })();
 }

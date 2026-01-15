@@ -29,6 +29,17 @@ export type TransactionPlanResult<TContext extends TransactionPlanResultContext 
     | SequentialTransactionPlanResult<TContext>
     | SingleTransactionPlanResult<TContext>;
 
+export type SuccessfulTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+> =
+    | SuccessfulSingleTransactionPlanResult<TContext>
+    | (Omit<ParallelTransactionPlanResult<TContext>, 'plans'> & {
+          plans: SuccessfulTransactionPlanResult<TContext>[];
+      })
+    | (Omit<SequentialTransactionPlanResult<TContext>, 'plans'> & {
+          plans: SuccessfulTransactionPlanResult<TContext>[];
+      });
+
 /** A context object that may be passed along with successful results. */
 export type TransactionPlanResultContext = Record<number | string | symbol, unknown>;
 
@@ -284,7 +295,7 @@ export function successfulSingleTransactionPlanResult<
     transactionMessage: TTransactionMessage,
     transaction: Transaction,
     context?: TContext,
-): SingleTransactionPlanResult<TContext, TTransactionMessage> {
+): SuccessfulSingleTransactionPlanResult<TContext, TTransactionMessage> {
     return Object.freeze({
         kind: 'single',
         message: transactionMessage,
@@ -329,7 +340,7 @@ export function successfulSingleTransactionPlanResultFromSignature<
     transactionMessage: TTransactionMessage,
     signature: Signature,
     context?: TContext,
-): SingleTransactionPlanResult<TContext, TTransactionMessage> {
+): SuccessfulSingleTransactionPlanResult<TContext> {
     return Object.freeze({
         kind: 'single',
         message: transactionMessage,
@@ -430,17 +441,25 @@ export function flattenTransactionPlanResult(result: TransactionPlanResult): Sin
 /**
  * A {@link SingleTransactionPlanResult} with 'successful' status.
  */
-export type SuccessfulSingleTransactionPlanResult = SingleTransactionPlanResult & { status: { kind: 'successful' } };
+export type SuccessfulSingleTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer = BaseTransactionMessage &
+        TransactionMessageWithFeePayer,
+> = SingleTransactionPlanResult<TContext, TTransactionMessage> & { status: { kind: 'successful' } };
 
 /**
  * A {@link SingleTransactionPlanResult} with 'failed' status.
  */
-export type FailedSingleTransactionPlanResult = SingleTransactionPlanResult & { status: { kind: 'failed' } };
+export type FailedSingleTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+> = SingleTransactionPlanResult<TContext> & { status: { kind: 'failed' } };
 
 /**
  * A {@link SingleTransactionPlanResult} with 'canceled' status.
  */
-export type CanceledSingleTransactionPlanResult = SingleTransactionPlanResult & { status: { kind: 'canceled' } };
+export type CanceledSingleTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+> = SingleTransactionPlanResult<TContext> & { status: { kind: 'canceled' } };
 
 /**
  * A summary of a {@link TransactionPlanResult}, categorizing transactions by their execution status.
@@ -449,37 +468,40 @@ export type CanceledSingleTransactionPlanResult = SingleTransactionPlanResult & 
  * - `failedTransactions`: An array of failed transactions, each including the error that caused the failure.
  * - `canceledTransactions`: An array of canceled transactions.
  */
-export type TransactionPlanResultSummary = Readonly<{
-    canceledTransactions: CanceledSingleTransactionPlanResult[];
-    failedTransactions: FailedSingleTransactionPlanResult[];
-    successful: boolean;
-    successfulTransactions: SuccessfulSingleTransactionPlanResult[];
-}>;
+export type TransactionPlanResultSummary<TContext extends TransactionPlanResultContext = TransactionPlanResultContext> =
+    Readonly<{
+        canceledTransactions: CanceledSingleTransactionPlanResult<TContext>[];
+        failedTransactions: FailedSingleTransactionPlanResult<TContext>[];
+        successful: boolean;
+        successfulTransactions: SuccessfulSingleTransactionPlanResult<TContext>[];
+    }>;
 
 /**
  * Summarize a {@link TransactionPlanResult} into a {@link TransactionPlanResultSummary}.
  * @param result The transaction plan result to summarize
  * @returns A summary of the transaction plan result
  */
-export function summarizeTransactionPlanResult(result: TransactionPlanResult): TransactionPlanResultSummary {
-    const successfulTransactions: TransactionPlanResultSummary['successfulTransactions'] = [];
-    const failedTransactions: TransactionPlanResultSummary['failedTransactions'] = [];
-    const canceledTransactions: TransactionPlanResultSummary['canceledTransactions'] = [];
+export function summarizeTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+>(result: TransactionPlanResult<TContext>): TransactionPlanResultSummary<TContext> {
+    const successfulTransactions: TransactionPlanResultSummary<TContext>['successfulTransactions'] = [];
+    const failedTransactions: TransactionPlanResultSummary<TContext>['failedTransactions'] = [];
+    const canceledTransactions: TransactionPlanResultSummary<TContext>['canceledTransactions'] = [];
 
     const flattenedResults = flattenTransactionPlanResult(result);
 
     for (const singleResult of flattenedResults) {
         switch (singleResult.status.kind) {
             case 'successful': {
-                successfulTransactions.push(singleResult as SuccessfulSingleTransactionPlanResult);
+                successfulTransactions.push(singleResult as SuccessfulSingleTransactionPlanResult<TContext>);
                 break;
             }
             case 'failed': {
-                failedTransactions.push(singleResult as FailedSingleTransactionPlanResult);
+                failedTransactions.push(singleResult as FailedSingleTransactionPlanResult<TContext>);
                 break;
             }
             case 'canceled': {
-                canceledTransactions.push(singleResult as CanceledSingleTransactionPlanResult);
+                canceledTransactions.push(singleResult as CanceledSingleTransactionPlanResult<TContext>);
                 break;
             }
         }

@@ -22,6 +22,7 @@ import {
     sequentialTransactionPlanResult,
     successfulSingleTransactionPlanResult,
     successfulSingleTransactionPlanResultFromSignature,
+    SuccessfulTransactionPlanResult,
     type TransactionPlanResult,
     type TransactionPlanResultContext,
 } from './transaction-plan-result';
@@ -29,7 +30,7 @@ import {
 export type TransactionPlanExecutor<TContext extends TransactionPlanResultContext = TransactionPlanResultContext> = (
     transactionPlan: TransactionPlan,
     config?: { abortSignal?: AbortSignal },
-) => Promise<TransactionPlanResult<TContext>>;
+) => Promise<SuccessfulTransactionPlanResult<TContext>>;
 
 type ExecuteResult<TContext extends TransactionPlanResultContext> = {
     context?: TContext;
@@ -79,7 +80,7 @@ export type TransactionPlanExecutorConfig = {
  * @see {@link TransactionPlannerConfig}
  */
 export function createTransactionPlanExecutor(config: TransactionPlanExecutorConfig): TransactionPlanExecutor {
-    return async (plan, { abortSignal } = {}): Promise<TransactionPlanResult> => {
+    return async (plan, { abortSignal } = {}): Promise<SuccessfulTransactionPlanResult> => {
         const context: TraverseContext = {
             ...config,
             abortSignal: abortSignal,
@@ -112,7 +113,8 @@ export function createTransactionPlanExecutor(config: TransactionPlanExecutorCon
             throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, context);
         }
 
-        return transactionPlanResult;
+        // If we didn't throw, the transaction plan execution was successful.
+        return transactionPlanResult as SuccessfulTransactionPlanResult;
     };
 }
 
