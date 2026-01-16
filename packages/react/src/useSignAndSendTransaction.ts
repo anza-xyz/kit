@@ -142,6 +142,9 @@ export function useSignAndSendTransactions<TWalletAccount extends UiWalletAccoun
     const account = getWalletAccountForUiWalletAccount_DO_NOT_USE_OR_YOU_WILL_BE_FIRED(uiWalletAccount);
     return useCallback(
         async (...inputs) => {
+            if (inputs.length === 0) {
+                return [];
+            }
             const inputsWithChainAndAccount = inputs.map(({ options, ...rest }) => {
                 const minContextSlot = options?.minContextSlot;
                 return {
