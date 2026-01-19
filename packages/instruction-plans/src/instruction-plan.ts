@@ -1,6 +1,8 @@
 import {
+    SOLANA_ERROR__INSTRUCTION_PLANS__CANNOT_GET_INSTRUCTIONS_FROM_MESSAGE_PACKER_INSTRUCTION_PLAN,
     SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN,
     SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_PACKER_ALREADY_COMPLETE,
+    SOLANA_ERROR__INVARIANT_VIOLATION__INVALID_INSTRUCTION_PLAN_KIND,
     SolanaError,
 } from '@solana/errors';
 import { Instruction } from '@solana/instructions';
@@ -538,4 +540,36 @@ export function getReallocMessagePackerInstructionPlan({
         .map((_, i) => getInstruction(i === numberOfInstructions - 1 ? lastInstructionSize : REALLOC_LIMIT));
 
     return getMessagePackerInstructionPlanFromInstructions(instructions);
+}
+
+/**
+ * Extract the list of instructions from an instruction plan.
+ * @param plan
+ *
+ * @example
+ * ```ts
+ * const plan = sequentialInstructionPlan([
+ *   instructionA,
+ *   instructionB
+ * ])
+ *
+ * const instructions = getInstructionsFromInstructionPlan(plan);
+ * // instructions is [instructionA, instructionB]
+ * ```
+ */
+export function getInstructionsFromInstructionPlan(plan: InstructionPlan): Instruction[] {
+    const kind = plan.kind;
+    switch (kind) {
+        case 'single':
+            return [plan.instruction];
+        case 'sequential':
+        case 'parallel':
+            return plan.plans.flatMap(getInstructionsFromInstructionPlan);
+        case 'messagePacker':
+            throw new SolanaError(
+                SOLANA_ERROR__INSTRUCTION_PLANS__CANNOT_GET_INSTRUCTIONS_FROM_MESSAGE_PACKER_INSTRUCTION_PLAN,
+            );
+        default:
+            throw new SolanaError(SOLANA_ERROR__INVARIANT_VIOLATION__INVALID_INSTRUCTION_PLAN_KIND, { kind });
+    }
 }

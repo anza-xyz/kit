@@ -2,6 +2,7 @@ import '@solana/test-matchers/toBeFrozenObject';
 
 import { Address } from '@solana/addresses';
 import {
+    SOLANA_ERROR__INSTRUCTION_PLANS__CANNOT_GET_INSTRUCTIONS_FROM_MESSAGE_PACKER_INSTRUCTION_PLAN,
     SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN,
     SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_PACKER_ALREADY_COMPLETE,
     SolanaError,
@@ -17,6 +18,7 @@ import {
 import { getTransactionMessageSize, TRANSACTION_SIZE_LIMIT } from '@solana/transactions';
 
 import {
+    getInstructionsFromInstructionPlan,
     getLinearMessagePackerInstructionPlan,
     getMessagePackerInstructionPlanFromInstructions,
     getReallocMessagePackerInstructionPlan,
@@ -353,5 +355,63 @@ describe('getReallocMessagePackerInstructionPlan', () => {
             totalSize: 15_000,
         });
         expect(plan.getMessagePacker()).toBeFrozenObject();
+    });
+});
+
+describe('flattenInstructionPlan', () => {
+    it('returns the instruction in an array for single plans', () => {
+        const instruction = createInstruction('A');
+        const plan = singleInstructionPlan(instruction);
+        expect(getInstructionsFromInstructionPlan(plan)).toStrictEqual([instruction]);
+    });
+    it('flattens sequential plans into an array of instructions', () => {
+        const instructionA = createInstruction('A');
+        const instructionB = createInstruction('B');
+        const plan = sequentialInstructionPlan([instructionA, instructionB]);
+        expect(getInstructionsFromInstructionPlan(plan)).toStrictEqual([instructionA, instructionB]);
+    });
+    it('flattens parallel plans into an array of instructions', () => {
+        const instructionA = createInstruction('A');
+        const instructionB = createInstruction('B');
+        const plan = parallelInstructionPlan([instructionA, instructionB]);
+        expect(getInstructionsFromInstructionPlan(plan)).toStrictEqual([instructionA, instructionB]);
+    });
+    it('flattens nested sequential plans', () => {
+        const instructionA = createInstruction('A');
+        const instructionB = createInstruction('B');
+        const instructionC = createInstruction('C');
+        const plan = sequentialInstructionPlan([instructionA, sequentialInstructionPlan([instructionB, instructionC])]);
+        expect(getInstructionsFromInstructionPlan(plan)).toStrictEqual([instructionA, instructionB, instructionC]);
+    });
+    it('flattens nested parallel plans', () => {
+        const instructionA = createInstruction('A');
+        const instructionB = createInstruction('B');
+        const instructionC = createInstruction('C');
+        const plan = parallelInstructionPlan([instructionA, parallelInstructionPlan([instructionB, instructionC])]);
+        expect(getInstructionsFromInstructionPlan(plan)).toStrictEqual([instructionA, instructionB, instructionC]);
+    });
+    it('flattens mixed nested plans', () => {
+        const instructionA = createInstruction('A');
+        const instructionB = createInstruction('B');
+        const instructionC = createInstruction('C');
+        const instructionD = createInstruction('D');
+        const plan = sequentialInstructionPlan([
+            instructionA,
+            parallelInstructionPlan([instructionB, sequentialInstructionPlan([instructionC, instructionD])]),
+        ]);
+        expect(getInstructionsFromInstructionPlan(plan)).toStrictEqual([
+            instructionA,
+            instructionB,
+            instructionC,
+            instructionD,
+        ]);
+    });
+    it('throws when trying to flatten a messagePacker plan', () => {
+        const plan = getMessagePackerInstructionPlanFromInstructions([createInstruction('A')]);
+        expect(() => getInstructionsFromInstructionPlan(plan)).toThrow(
+            new SolanaError(
+                SOLANA_ERROR__INSTRUCTION_PLANS__CANNOT_GET_INSTRUCTIONS_FROM_MESSAGE_PACKER_INSTRUCTION_PLAN,
+            ),
+        );
     });
 });
