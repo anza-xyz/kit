@@ -12,14 +12,14 @@ import type { Lamports } from '@solana/rpc-types';
  *
  * @param space The number of bytes of account data.
  */
-export function getMinimumBalanceForRentExemption(space: bigint): Lamports {
+export function getMinimumBalanceForRentExemption(space: bigint | number): Lamports {
     const RENT = {
         ACCOUNT_STORAGE_OVERHEAD: 128n,
         DEFAULT_EXEMPTION_THRESHOLD: 2n,
         DEFAULT_LAMPORTS_PER_BYTE_YEAR: 3_480n,
     } as const;
     const requiredLamports =
-        (RENT.ACCOUNT_STORAGE_OVERHEAD + space) *
+        (RENT.ACCOUNT_STORAGE_OVERHEAD + BigInt(space)) *
         RENT.DEFAULT_LAMPORTS_PER_BYTE_YEAR *
         RENT.DEFAULT_EXEMPTION_THRESHOLD;
     return requiredLamports as Lamports;

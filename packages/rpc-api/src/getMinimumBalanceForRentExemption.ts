@@ -15,7 +15,7 @@ export type GetMinimumBalanceForRentExemptionApi = {
          * The number of bytes of account data for which an exemption from rent collection is being
          * sought.
          */
-        size: bigint,
+        size: bigint | number,
         config?: Readonly<{
             /**
              * Return the minimum balance as of the highest slot that has reached this level of
