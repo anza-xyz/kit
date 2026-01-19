@@ -421,6 +421,10 @@ export function canceledSingleTransactionPlanResult<
  * @param result The transaction plan result to flatten
  * @returns An array of single transaction plan results
  */
+export function flattenTransactionPlanResult(
+    result: SuccessfulTransactionPlanResult,
+): (SingleTransactionPlanResult & { status: { kind: 'successful' } })[];
+export function flattenTransactionPlanResult(result: TransactionPlanResult): SingleTransactionPlanResult[];
 export function flattenTransactionPlanResult(result: TransactionPlanResult): SingleTransactionPlanResult[] {
     const transactionPlanResults: SingleTransactionPlanResult[] = [];
 
