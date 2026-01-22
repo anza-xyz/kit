@@ -360,6 +360,65 @@ function parseSingleInstructionPlans(plans: (Instruction | InstructionPlan)[]): 
 }
 
 /**
+ * Finds the first instruction plan in the tree that matches the given predicate.
+ *
+ * This function performs a depth-first search through the instruction plan tree,
+ * returning the first plan that satisfies the predicate. It checks the root plan
+ * first, then recursively searches through nested plans.
+ *
+ * @param instructionPlan - The instruction plan tree to search.
+ * @param predicate - A function that returns `true` for the plan to find.
+ * @returns The first matching instruction plan, or `undefined` if no match is found.
+ *
+ * @example
+ * Finding a non-divisible sequential plan.
+ * ```ts
+ * const plan = parallelInstructionPlan([
+ *   sequentialInstructionPlan([instructionA, instructionB]),
+ *   nonDivisibleSequentialInstructionPlan([instructionC, instructionD]),
+ * ]);
+ *
+ * const nonDivisible = findInstructionPlan(
+ *   plan,
+ *   (p) => p.kind === 'sequential' && !p.divisible,
+ * );
+ * // Returns the non-divisible sequential plan containing instructionC and instructionD.
+ * ```
+ *
+ * @example
+ * Finding a specific single instruction plan.
+ * ```ts
+ * const plan = sequentialInstructionPlan([instructionA, instructionB, instructionC]);
+ *
+ * const found = findInstructionPlan(
+ *   plan,
+ *   (p) => p.kind === 'single' && p.instruction === instructionB,
+ * );
+ * // Returns the SingleInstructionPlan wrapping instructionB.
+ * ```
+ *
+ * @see {@link InstructionPlan}
+ */
+export function findInstructionPlan(
+    instructionPlan: InstructionPlan,
+    predicate: (plan: InstructionPlan) => boolean,
+): InstructionPlan | undefined {
+    if (predicate(instructionPlan)) {
+        return instructionPlan;
+    }
+    if (instructionPlan.kind === 'single' || instructionPlan.kind === 'messagePacker') {
+        return undefined;
+    }
+    for (const subPlan of instructionPlan.plans) {
+        const foundPlan = findInstructionPlan(subPlan, predicate);
+        if (foundPlan) {
+            return foundPlan;
+        }
+    }
+    return undefined;
+}
+
+/**
  * Creates a {@link MessagePackerInstructionPlan} that packs instructions
  * such that each instruction consumes as many bytes as possible from the given
  * `totalLength` while still being able to fit into the given transaction messages.

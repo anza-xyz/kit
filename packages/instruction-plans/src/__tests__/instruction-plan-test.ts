@@ -17,6 +17,7 @@ import {
 import { getTransactionMessageSize, TRANSACTION_SIZE_LIMIT } from '@solana/transactions';
 
 import {
+    findInstructionPlan,
     getLinearMessagePackerInstructionPlan,
     getMessagePackerInstructionPlanFromInstructions,
     getReallocMessagePackerInstructionPlan,
@@ -353,5 +354,92 @@ describe('getReallocMessagePackerInstructionPlan', () => {
             totalSize: 15_000,
         });
         expect(plan.getMessagePacker()).toBeFrozenObject();
+    });
+});
+
+describe('findInstructionPlan', () => {
+    it('returns the plan itself when it matches the predicate', () => {
+        const instructionA = createInstruction('A');
+        const plan = singleInstructionPlan(instructionA);
+        const result = findInstructionPlan(plan, p => p.kind === 'single');
+        expect(result).toBe(plan);
+    });
+    it('returns undefined when no plan matches the predicate', () => {
+        const instructionA = createInstruction('A');
+        const plan = singleInstructionPlan(instructionA);
+        const result = findInstructionPlan(plan, p => p.kind === 'parallel');
+        expect(result).toBeUndefined();
+    });
+    it('finds a nested plan in a parallel structure', () => {
+        const instructionA = createInstruction('A');
+        const instructionB = createInstruction('B');
+        const nestedSequential = sequentialInstructionPlan([instructionA, instructionB]);
+        const plan = parallelInstructionPlan([nestedSequential]);
+        const result = findInstructionPlan(plan, p => p.kind === 'sequential');
+        expect(result).toBe(nestedSequential);
+    });
+    it('finds a nested plan in a sequential structure', () => {
+        const instructionA = createInstruction('A');
+        const instructionB = createInstruction('B');
+        const nestedParallel = parallelInstructionPlan([instructionA, instructionB]);
+        const plan = sequentialInstructionPlan([nestedParallel]);
+        const result = findInstructionPlan(plan, p => p.kind === 'parallel');
+        expect(result).toBe(nestedParallel);
+    });
+    it('returns the first matching plan in top-down order', () => {
+        const instructionA = createInstruction('A');
+        const instructionB = createInstruction('B');
+        const innerSequential = sequentialInstructionPlan([instructionA]);
+        const outerSequential = sequentialInstructionPlan([innerSequential, instructionB]);
+        const result = findInstructionPlan(outerSequential, p => p.kind === 'sequential');
+        expect(result).toBe(outerSequential);
+    });
+    it('finds a deeply nested plan', () => {
+        const instructionA = createInstruction('A');
+        const deepSingle = singleInstructionPlan(instructionA);
+        const plan = parallelInstructionPlan([sequentialInstructionPlan([parallelInstructionPlan([deepSingle])])]);
+        const result = findInstructionPlan(plan, p => p.kind === 'single');
+        expect(result).toBe(deepSingle);
+    });
+    it('supports complex predicates that inspect nested properties', () => {
+        const instructionA = createInstruction('A');
+        const instructionB = createInstruction('B');
+        const instructionC = createInstruction('C');
+        const targetPlan = sequentialInstructionPlan([instructionA, instructionB]);
+        const plan = parallelInstructionPlan([singleInstructionPlan(instructionC), targetPlan]);
+        const result = findInstructionPlan(
+            plan,
+            // eslint-disable-next-line jest/no-conditional-in-test
+            p => p.kind === 'sequential' && p.plans.length === 2,
+        );
+        expect(result).toBe(targetPlan);
+    });
+    it('returns undefined when searching an empty parallel plan', () => {
+        const plan = parallelInstructionPlan([]);
+        const result = findInstructionPlan(plan, p => p.kind === 'single');
+        expect(result).toBeUndefined();
+    });
+    it('finds non-divisible sequential plans', () => {
+        const instructionA = createInstruction('A');
+        const instructionB = createInstruction('B');
+        const nonDivisible = nonDivisibleSequentialInstructionPlan([instructionA, instructionB]);
+        const plan = parallelInstructionPlan([sequentialInstructionPlan([createInstruction('C')]), nonDivisible]);
+        const result = findInstructionPlan(
+            plan,
+            // eslint-disable-next-line jest/no-conditional-in-test
+            p => p.kind === 'sequential' && !p.divisible,
+        );
+        expect(result).toBe(nonDivisible);
+    });
+    it('returns undefined when searching a messagePacker plan that does not match', () => {
+        const messagePackerPlan = getMessagePackerInstructionPlanFromInstructions([createInstruction('A')]);
+        const result = findInstructionPlan(messagePackerPlan, p => p.kind === 'single');
+        expect(result).toBeUndefined();
+    });
+    it('finds a messagePacker plan when it matches the predicate', () => {
+        const messagePackerPlan = getMessagePackerInstructionPlanFromInstructions([createInstruction('A')]);
+        const plan = parallelInstructionPlan([singleInstructionPlan(createInstruction('B')), messagePackerPlan]);
+        const result = findInstructionPlan(plan, p => p.kind === 'messagePacker');
+        expect(result).toBe(messagePackerPlan);
     });
 });
