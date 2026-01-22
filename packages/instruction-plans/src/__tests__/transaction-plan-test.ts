@@ -1,6 +1,7 @@
 import '@solana/test-matchers/toBeFrozenObject';
 
 import {
+    findTransactionPlan,
     getAllSingleTransactionPlans,
     nonDivisibleSequentialTransactionPlan,
     parallelTransactionPlan,
@@ -202,5 +203,81 @@ describe('getAllSingleTransactionPlans', () => {
             singleTransactionPlan(messageD),
             singleTransactionPlan(messageE),
         ]);
+    });
+});
+
+describe('findTransactionPlan', () => {
+    it('returns the plan itself when it matches the predicate', () => {
+        const messageA = createMessage('A');
+        const plan = singleTransactionPlan(messageA);
+        const result = findTransactionPlan(plan, p => p.kind === 'single');
+        expect(result).toBe(plan);
+    });
+    it('returns undefined when no plan matches the predicate', () => {
+        const messageA = createMessage('A');
+        const plan = singleTransactionPlan(messageA);
+        const result = findTransactionPlan(plan, p => p.kind === 'parallel');
+        expect(result).toBeUndefined();
+    });
+    it('finds a nested plan in a parallel structure', () => {
+        const messageA = createMessage('A');
+        const messageB = createMessage('B');
+        const nestedSequential = sequentialTransactionPlan([messageA, messageB]);
+        const plan = parallelTransactionPlan([nestedSequential]);
+        const result = findTransactionPlan(plan, p => p.kind === 'sequential');
+        expect(result).toBe(nestedSequential);
+    });
+    it('finds a nested plan in a sequential structure', () => {
+        const messageA = createMessage('A');
+        const messageB = createMessage('B');
+        const nestedParallel = parallelTransactionPlan([messageA, messageB]);
+        const plan = sequentialTransactionPlan([nestedParallel]);
+        const result = findTransactionPlan(plan, p => p.kind === 'parallel');
+        expect(result).toBe(nestedParallel);
+    });
+    it('returns the first matching plan in top-down order', () => {
+        const messageA = createMessage('A');
+        const messageB = createMessage('B');
+        const innerSequential = sequentialTransactionPlan([messageA]);
+        const outerSequential = sequentialTransactionPlan([innerSequential, messageB]);
+        const result = findTransactionPlan(outerSequential, p => p.kind === 'sequential');
+        expect(result).toBe(outerSequential);
+    });
+    it('finds a deeply nested plan', () => {
+        const messageA = createMessage('A');
+        const deepSingle = singleTransactionPlan(messageA);
+        const plan = parallelTransactionPlan([sequentialTransactionPlan([parallelTransactionPlan([deepSingle])])]);
+        const result = findTransactionPlan(plan, p => p.kind === 'single');
+        expect(result).toBe(deepSingle);
+    });
+    it('supports complex predicates that inspect nested properties', () => {
+        const messageA = createMessage('A');
+        const messageB = createMessage('B');
+        const messageC = createMessage('C');
+        const targetPlan = sequentialTransactionPlan([messageA, messageB]);
+        const plan = parallelTransactionPlan([singleTransactionPlan(messageC), targetPlan]);
+        const result = findTransactionPlan(
+            plan,
+            // eslint-disable-next-line jest/no-conditional-in-test
+            p => p.kind === 'sequential' && p.plans.length === 2,
+        );
+        expect(result).toBe(targetPlan);
+    });
+    it('returns undefined when searching an empty parallel plan', () => {
+        const plan = parallelTransactionPlan([]);
+        const result = findTransactionPlan(plan, p => p.kind === 'single');
+        expect(result).toBeUndefined();
+    });
+    it('finds non-divisible sequential plans', () => {
+        const messageA = createMessage('A');
+        const messageB = createMessage('B');
+        const nonDivisible = nonDivisibleSequentialTransactionPlan([messageA, messageB]);
+        const plan = parallelTransactionPlan([sequentialTransactionPlan([createMessage('C')]), nonDivisible]);
+        const result = findTransactionPlan(
+            plan,
+            // eslint-disable-next-line jest/no-conditional-in-test
+            p => p.kind === 'sequential' && !p.divisible,
+        );
+        expect(result).toBe(nonDivisible);
     });
 });

@@ -276,3 +276,63 @@ export function getAllSingleTransactionPlans(transactionPlan: TransactionPlan): 
     }
     return transactionPlan.plans.flatMap(getAllSingleTransactionPlans);
 }
+
+/**
+ * Finds the first transaction plan in the tree that matches the given predicate.
+ *
+ * This function performs a depth-first search through the transaction plan tree,
+ * returning the first plan that satisfies the predicate. It checks the root plan
+ * first, then recursively searches through nested plans.
+ *
+ * @param transactionPlan - The transaction plan tree to search.
+ * @param predicate - A function that returns `true` for the plan to find.
+ * @return The first matching transaction plan, or `undefined` if no match is found.
+ *
+ * @example
+ * Finding a non-divisible sequential plan.
+ * ```ts
+ * const plan = parallelTransactionPlan([
+ *   sequentialTransactionPlan([messageA, messageB]),
+ *   nonDivisibleSequentialTransactionPlan([messageC, messageD]),
+ * ]);
+ *
+ * const nonDivisible = findTransactionPlan(
+ *   plan,
+ *   (p) => p.kind === 'sequential' && !p.divisible,
+ * );
+ * // Returns the non-divisible sequential plan containing messageC and messageD.
+ * ```
+ *
+ * @example
+ * Finding a specific single transaction plan.
+ * ```ts
+ * const plan = sequentialTransactionPlan([messageA, messageB, messageC]);
+ *
+ * const found = findTransactionPlan(
+ *   plan,
+ *   (p) => p.kind === 'single' && p.message === messageB,
+ * );
+ * // Returns the SingleTransactionPlan wrapping messageB.
+ * ```
+ *
+ * @see {@link TransactionPlan}
+ * @see {@link getAllSingleTransactionPlans}
+ */
+export function findTransactionPlan(
+    transactionPlan: TransactionPlan,
+    predicate: (plan: TransactionPlan) => boolean,
+): TransactionPlan | undefined {
+    if (predicate(transactionPlan)) {
+        return transactionPlan;
+    }
+    if (transactionPlan.kind === 'single') {
+        return undefined;
+    }
+    for (const subPlan of transactionPlan.plans) {
+        const foundPlan = findTransactionPlan(subPlan, predicate);
+        if (foundPlan) {
+            return foundPlan;
+        }
+    }
+    return undefined;
+}
