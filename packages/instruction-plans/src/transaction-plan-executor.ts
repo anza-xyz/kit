@@ -98,8 +98,6 @@ export function createTransactionPlanExecutor(config: TransactionPlanExecutorCon
         abortSignal?.removeEventListener('abort', cancelHandler);
 
         if (context.canceled) {
-            const abortReason = abortSignal?.aborted ? abortSignal.reason : undefined;
-            const context = { cause: findErrorFromTransactionPlanResult(transactionPlanResult) ?? abortReason };
             // Here we want the `transactionPlanResult` to be available in the error context
             // so applications can create recovery plans but we don't want this object to be
             // serialized with the error. This is why we set it as a non-enumerable property.
@@ -187,18 +185,6 @@ async function traverseSingle(
     } catch (error) {
         context.canceled = true;
         return failedSingleTransactionPlanResult(transactionPlan.message, error as Error);
-    }
-}
-
-function findErrorFromTransactionPlanResult(result: TransactionPlanResult): Error | undefined {
-    if (result.kind === 'single') {
-        return result.status.kind === 'failed' ? result.status.error : undefined;
-    }
-    for (const plan of result.plans) {
-        const error = findErrorFromTransactionPlanResult(plan);
-        if (error) {
-            return error;
-        }
     }
 }
 

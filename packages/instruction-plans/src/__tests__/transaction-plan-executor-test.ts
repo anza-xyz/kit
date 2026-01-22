@@ -103,7 +103,6 @@ describe('createTransactionPlanExecutor', () => {
             await expectFailedToExecute(
                 promise,
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
-                    cause,
                     transactionPlanResult: failedSingleTransactionPlanResult(messageA, cause),
                 }),
             );
@@ -120,7 +119,6 @@ describe('createTransactionPlanExecutor', () => {
             await expectFailedToExecute(
                 promise,
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
-                    cause,
                     transactionPlanResult: failedSingleTransactionPlanResult(messageA, cause),
                 }),
             );
@@ -142,7 +140,6 @@ describe('createTransactionPlanExecutor', () => {
             await expectFailedToExecute(
                 promise,
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
-                    cause,
                     transactionPlanResult: failedSingleTransactionPlanResult(messageA, cause),
                 }),
             );
@@ -163,7 +160,6 @@ describe('createTransactionPlanExecutor', () => {
             await expectFailedToExecute(
                 promise,
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
-                    cause,
                     transactionPlanResult: canceledSingleTransactionPlanResult(messageA),
                 }),
             );
@@ -276,7 +272,6 @@ describe('createTransactionPlanExecutor', () => {
             await expectFailedToExecute(
                 promise,
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
-                    cause,
                     transactionPlanResult: sequentialTransactionPlanResult([
                         successfulSingleTransactionPlanResult(messageA, createTransaction('A')),
                         failedSingleTransactionPlanResult(messageB, cause),
@@ -297,7 +292,6 @@ describe('createTransactionPlanExecutor', () => {
             await expectFailedToExecute(
                 promise,
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
-                    cause,
                     transactionPlanResult: sequentialTransactionPlanResult([
                         failedSingleTransactionPlanResult(messageA, cause),
                         canceledSingleTransactionPlanResult(messageB),
@@ -341,7 +335,6 @@ describe('createTransactionPlanExecutor', () => {
             await expectFailedToExecute(
                 promise,
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
-                    cause,
                     transactionPlanResult: sequentialTransactionPlanResult([
                         successfulSingleTransactionPlanResult(messageA, createTransaction('A')),
                         failedSingleTransactionPlanResult(messageB, cause),
@@ -372,7 +365,6 @@ describe('createTransactionPlanExecutor', () => {
             await expectFailedToExecute(
                 promise,
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
-                    cause,
                     transactionPlanResult: sequentialTransactionPlanResult([
                         canceledSingleTransactionPlanResult(messageA),
                         canceledSingleTransactionPlanResult(messageB),
@@ -465,7 +457,6 @@ describe('createTransactionPlanExecutor', () => {
             await expectFailedToExecute(
                 promise,
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
-                    cause,
                     transactionPlanResult: parallelTransactionPlanResult([
                         successfulSingleTransactionPlanResult(messageA, createTransaction('A')),
                         failedSingleTransactionPlanResult(messageB, cause),
@@ -498,7 +489,6 @@ describe('createTransactionPlanExecutor', () => {
             await expectFailedToExecute(
                 promise,
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
-                    cause,
                     transactionPlanResult: parallelTransactionPlanResult([
                         successfulSingleTransactionPlanResult(messageA, createTransaction('A')),
                         failedSingleTransactionPlanResult(messageB, cause),
@@ -525,7 +515,6 @@ describe('createTransactionPlanExecutor', () => {
             await expectFailedToExecute(
                 promise,
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
-                    cause,
                     transactionPlanResult: parallelTransactionPlanResult([
                         canceledSingleTransactionPlanResult(messageA),
                         canceledSingleTransactionPlanResult(messageB),
@@ -614,7 +603,6 @@ describe('createTransactionPlanExecutor', () => {
             await expectFailedToExecute(
                 promise,
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
-                    cause,
                     transactionPlanResult: parallelTransactionPlanResult([
                         sequentialTransactionPlanResult([
                             successfulSingleTransactionPlanResult(messageA, createTransaction('A')),
@@ -669,7 +657,6 @@ describe('createTransactionPlanExecutor', () => {
             await expectFailedToExecute(
                 promise,
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
-                    cause,
                     transactionPlanResult: parallelTransactionPlanResult([
                         sequentialTransactionPlanResult([
                             successfulSingleTransactionPlanResult(messageA, createTransaction('A')),
@@ -717,7 +704,6 @@ describe('createTransactionPlanExecutor', () => {
             await expectFailedToExecute(
                 promise,
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
-                    cause,
                     transactionPlanResult: parallelTransactionPlanResult([
                         sequentialTransactionPlanResult([
                             canceledSingleTransactionPlanResult(messageA),
