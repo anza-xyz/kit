@@ -1,11 +1,19 @@
+import { getSolanaErrorFromTransactionError, isSolanaError, SOLANA_ERROR__INVALID_NONCE } from '@solana/errors';
+import { Signature } from '@solana/keys';
 import type { GetAccountInfoApi, GetSignatureStatusesApi, Rpc, SendTransactionApi } from '@solana/rpc';
 import type { AccountNotificationsApi, RpcSubscriptions, SignatureNotificationsApi } from '@solana/rpc-subscriptions';
+import { commitmentComparator } from '@solana/rpc-types';
 import {
     createNonceInvalidationPromiseFactory,
     createRecentSignatureConfirmationPromiseFactory,
     waitForDurableNonceTransactionConfirmation,
 } from '@solana/transaction-confirmation';
-import { SendableTransaction, Transaction, TransactionWithDurableNonceLifetime } from '@solana/transactions';
+import {
+    getSignatureFromTransaction,
+    SendableTransaction,
+    Transaction,
+    TransactionWithDurableNonceLifetime,
+} from '@solana/transactions';
 
 import { sendAndConfirmDurableNonceTransaction_INTERNAL_ONLY_DO_NOT_EXPORT } from './send-transaction-internal';
 
@@ -82,15 +90,68 @@ export function sendAndConfirmDurableNonceTransactionFactory<
         rpc,
         rpcSubscriptions,
     } as Parameters<typeof createRecentSignatureConfirmationPromiseFactory>[0]);
+
+    /**
+     * Creates a wrapped version of getNonceInvalidationPromise that handles the race condition
+     * where the nonce account update notification arrives before the signature confirmation.
+     *
+     * When the nonce changes, we check if our transaction actually landed on-chain.
+     * If it did, we don't throw - letting the signature confirmation promise continue.
+     */
+    function createNonceInvalidationPromiseHandlingRaceCondition(
+        signature: Signature,
+    ): typeof getNonceInvalidationPromise {
+        return async function wrappedGetNonceInvalidationPromise(config) {
+            try {
+                return await getNonceInvalidationPromise(config);
+            } catch (e) {
+                // If nonce became invalid, check if our transaction actually landed
+                if (isSolanaError(e, SOLANA_ERROR__INVALID_NONCE)) {
+                    const { value: statuses } = await rpc
+                        .getSignatureStatuses([signature])
+                        .send({ abortSignal: config.abortSignal });
+                    const status = statuses[0];
+
+                    if (status === null) {
+                        // Transaction doesn't exist - nonce was truly invalid
+                        throw e;
+                    }
+
+                    // Check if status meets required commitment
+                    if (
+                        status.confirmationStatus !== null &&
+                        commitmentComparator(status.confirmationStatus, config.commitment) >= 0
+                    ) {
+                        // Transaction failed on-chain, throw the error from the transaction
+                        if (status.err !== null) {
+                            throw getSolanaErrorFromTransactionError(status.err);
+                        }
+                        // Transaction succeeded, resolve the promise successfully
+                        return;
+                    }
+
+                    // Commitment not met yet - return a never-resolving promise
+                    // This lets the signature confirmation promise continue
+                    return await new Promise(() => {});
+                }
+                throw e;
+            }
+        };
+    }
+
     async function confirmDurableNonceTransaction(
         config: Omit<
             Parameters<typeof waitForDurableNonceTransactionConfirmation>[0],
             'getNonceInvalidationPromise' | 'getRecentSignatureConfirmationPromise'
         >,
     ) {
+        const wrappedGetNonceInvalidationPromise = createNonceInvalidationPromiseHandlingRaceCondition(
+            getSignatureFromTransaction(config.transaction),
+        );
+
         await waitForDurableNonceTransactionConfirmation({
             ...config,
-            getNonceInvalidationPromise,
+            getNonceInvalidationPromise: wrappedGetNonceInvalidationPromise,
             getRecentSignatureConfirmationPromise,
         });
     }
