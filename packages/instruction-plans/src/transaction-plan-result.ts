@@ -406,6 +406,53 @@ export function canceledSingleTransactionPlanResult<
 }
 
 /**
+ * Finds the first transaction plan result in the tree that matches the given predicate.
+ *
+ * This function performs a depth-first search through the transaction plan result tree,
+ * returning the first result that satisfies the predicate. It checks the root result
+ * first, then recursively searches through nested results.
+ *
+ * @param transactionPlanResult - The transaction plan result tree to search.
+ * @param predicate - A function that returns `true` for the result to find.
+ * @returns The first matching transaction plan result, or `undefined` if no match is found.
+ *
+ * @example
+ * Finding a failed transaction result.
+ * ```ts
+ * const result = parallelTransactionPlanResult([
+ *   successfulSingleTransactionPlanResult(messageA, transactionA),
+ *   failedSingleTransactionPlanResult(messageB, error),
+ * ]);
+ *
+ * const failed = findTransactionPlanResult(
+ *   result,
+ *   (r) => r.kind === 'single' && r.status.kind === 'failed',
+ * );
+ * // Returns the failed single transaction plan result for messageB.
+ * ```
+ *
+ * @see {@link TransactionPlanResult}
+ */
+export function findTransactionPlanResult<TContext extends TransactionPlanResultContext = TransactionPlanResultContext>(
+    transactionPlanResult: TransactionPlanResult<TContext>,
+    predicate: (result: TransactionPlanResult<TContext>) => boolean,
+): TransactionPlanResult<TContext> | undefined {
+    if (predicate(transactionPlanResult)) {
+        return transactionPlanResult;
+    }
+    if (transactionPlanResult.kind === 'single') {
+        return undefined;
+    }
+    for (const subResult of transactionPlanResult.plans) {
+        const foundResult = findTransactionPlanResult(subResult, predicate);
+        if (foundResult) {
+            return foundResult;
+        }
+    }
+    return undefined;
+}
+
+/**
  * Flattens a {@link TransactionPlanResult} into an array of {@link SingleTransactionPlanResult}.
  * @param result The transaction plan result to flatten
  * @returns An array of single transaction plan results

@@ -6,6 +6,7 @@ import { Signature } from '@solana/keys';
 import {
     canceledSingleTransactionPlanResult,
     failedSingleTransactionPlanResult,
+    findTransactionPlanResult,
     flattenTransactionPlanResult,
     nonDivisibleSequentialTransactionPlanResult,
     parallelTransactionPlanResult,
@@ -223,6 +224,133 @@ describe('nonDivisibleSequentialTransactionPlanResult', () => {
         const planB = canceledSingleTransactionPlanResult(createMessage('B'));
         const result = nonDivisibleSequentialTransactionPlanResult([planA, planB]);
         expect(result).toBeFrozenObject();
+    });
+});
+
+describe('findTransactionPlanResult', () => {
+    it('returns the result itself when it matches the predicate', () => {
+        const messageA = createMessage('A');
+        const result = canceledSingleTransactionPlanResult(messageA);
+        const found = findTransactionPlanResult(result, r => r.kind === 'single');
+        expect(found).toBe(result);
+    });
+    it('returns undefined when no result matches the predicate', () => {
+        const messageA = createMessage('A');
+        const result = canceledSingleTransactionPlanResult(messageA);
+        const found = findTransactionPlanResult(result, r => r.kind === 'parallel');
+        expect(found).toBeUndefined();
+    });
+    it('finds a nested result in a parallel structure', () => {
+        const messageA = createMessage('A');
+        const messageB = createMessage('B');
+        const nestedSequential = sequentialTransactionPlanResult([
+            canceledSingleTransactionPlanResult(messageA),
+            canceledSingleTransactionPlanResult(messageB),
+        ]);
+        const result = parallelTransactionPlanResult([nestedSequential]);
+        const found = findTransactionPlanResult(result, r => r.kind === 'sequential');
+        expect(found).toBe(nestedSequential);
+    });
+    it('finds a nested result in a sequential structure', () => {
+        const messageA = createMessage('A');
+        const messageB = createMessage('B');
+        const nestedParallel = parallelTransactionPlanResult([
+            canceledSingleTransactionPlanResult(messageA),
+            canceledSingleTransactionPlanResult(messageB),
+        ]);
+        const result = sequentialTransactionPlanResult([nestedParallel]);
+        const found = findTransactionPlanResult(result, r => r.kind === 'parallel');
+        expect(found).toBe(nestedParallel);
+    });
+    it('returns the first matching result in top-down order', () => {
+        const messageA = createMessage('A');
+        const messageB = createMessage('B');
+        const innerSequential = sequentialTransactionPlanResult([canceledSingleTransactionPlanResult(messageA)]);
+        const outerSequential = sequentialTransactionPlanResult([
+            innerSequential,
+            canceledSingleTransactionPlanResult(messageB),
+        ]);
+        const found = findTransactionPlanResult(outerSequential, r => r.kind === 'sequential');
+        expect(found).toBe(outerSequential);
+    });
+    it('finds a deeply nested result', () => {
+        const messageA = createMessage('A');
+        const deepSingle = canceledSingleTransactionPlanResult(messageA);
+        const result = parallelTransactionPlanResult([
+            sequentialTransactionPlanResult([parallelTransactionPlanResult([deepSingle])]),
+        ]);
+        const found = findTransactionPlanResult(result, r => r.kind === 'single');
+        expect(found).toBe(deepSingle);
+    });
+    it('supports complex predicates that inspect nested properties', () => {
+        const messageA = createMessage('A');
+        const messageB = createMessage('B');
+        const messageC = createMessage('C');
+        const targetResult = sequentialTransactionPlanResult([
+            canceledSingleTransactionPlanResult(messageA),
+            canceledSingleTransactionPlanResult(messageB),
+        ]);
+        const result = parallelTransactionPlanResult([canceledSingleTransactionPlanResult(messageC), targetResult]);
+        const found = findTransactionPlanResult(
+            result,
+            // eslint-disable-next-line jest/no-conditional-in-test
+            r => r.kind === 'sequential' && r.plans.length === 2,
+        );
+        expect(found).toBe(targetResult);
+    });
+    it('returns undefined when searching an empty parallel result', () => {
+        const result = parallelTransactionPlanResult([]);
+        const found = findTransactionPlanResult(result, r => r.kind === 'single');
+        expect(found).toBeUndefined();
+    });
+    it('finds non-divisible sequential results', () => {
+        const messageA = createMessage('A');
+        const messageB = createMessage('B');
+        const nonDivisible = nonDivisibleSequentialTransactionPlanResult([
+            canceledSingleTransactionPlanResult(messageA),
+            canceledSingleTransactionPlanResult(messageB),
+        ]);
+        const result = parallelTransactionPlanResult([
+            sequentialTransactionPlanResult([canceledSingleTransactionPlanResult(createMessage('C'))]),
+            nonDivisible,
+        ]);
+        const found = findTransactionPlanResult(
+            result,
+            // eslint-disable-next-line jest/no-conditional-in-test
+            r => r.kind === 'sequential' && !r.divisible,
+        );
+        expect(found).toBe(nonDivisible);
+    });
+    it('finds a failed single transaction result', () => {
+        const messageA = createMessage('A');
+        const messageB = createMessage('B');
+        const error = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
+        const failedResult = failedSingleTransactionPlanResult(messageB, error);
+        const result = parallelTransactionPlanResult([
+            successfulSingleTransactionPlanResult(messageA, createTransaction('A')),
+            failedResult,
+        ]);
+        const found = findTransactionPlanResult(
+            result,
+            // eslint-disable-next-line jest/no-conditional-in-test
+            r => r.kind === 'single' && r.status.kind === 'failed',
+        );
+        expect(found).toBe(failedResult);
+    });
+    it('finds a successful single transaction result', () => {
+        const messageA = createMessage('A');
+        const messageB = createMessage('B');
+        const successfulResult = successfulSingleTransactionPlanResult(messageA, createTransaction('A'));
+        const result = sequentialTransactionPlanResult([
+            successfulResult,
+            canceledSingleTransactionPlanResult(messageB),
+        ]);
+        const found = findTransactionPlanResult(
+            result,
+            // eslint-disable-next-line jest/no-conditional-in-test
+            r => r.kind === 'single' && r.status.kind === 'successful',
+        );
+        expect(found).toBe(successfulResult);
     });
 });
 
