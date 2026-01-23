@@ -432,6 +432,8 @@ export function canceledSingleTransactionPlanResult<
  * ```
  *
  * @see {@link TransactionPlanResult}
+ * @see {@link everyTransactionPlanResult}
+ * @see {@link flattenTransactionPlanResult}
  */
 export function findTransactionPlanResult<TContext extends TransactionPlanResultContext = TransactionPlanResultContext>(
     transactionPlanResult: TransactionPlanResult<TContext>,
@@ -450,6 +452,60 @@ export function findTransactionPlanResult<TContext extends TransactionPlanResult
         }
     }
     return undefined;
+}
+
+/**
+ * Checks if every transaction plan result in the tree satisfies the given predicate.
+ *
+ * This function performs a depth-first traversal through the transaction plan result tree,
+ * returning `true` only if the predicate returns `true` for every result in the tree
+ * (including the root result and all nested results).
+ *
+ * @param transactionPlanResult - The transaction plan result tree to check.
+ * @param predicate - A function that returns `true` if the result satisfies the condition.
+ * @return `true` if every result in the tree satisfies the predicate, `false` otherwise.
+ *
+ * @example
+ * Checking if all transactions were successful.
+ * ```ts
+ * const result = parallelTransactionPlanResult([
+ *   successfulSingleTransactionPlanResult(messageA, transactionA),
+ *   successfulSingleTransactionPlanResult(messageB, transactionB),
+ * ]);
+ *
+ * const allSuccessful = everyTransactionPlanResult(
+ *   result,
+ *   (r) => r.kind !== 'single' || r.status.kind === 'successful',
+ * );
+ * // Returns true because all single results are successful.
+ * ```
+ *
+ * @example
+ * Checking if no transactions were canceled.
+ * ```ts
+ * const result = sequentialTransactionPlanResult([resultA, resultB, resultC]);
+ *
+ * const noCanceled = everyTransactionPlanResult(
+ *   result,
+ *   (r) => r.kind !== 'single' || r.status.kind !== 'canceled',
+ * );
+ * ```
+ *
+ * @see {@link TransactionPlanResult}
+ * @see {@link findTransactionPlanResult}
+ * @see {@link flattenTransactionPlanResult}
+ */
+export function everyTransactionPlanResult(
+    transactionPlanResult: TransactionPlanResult,
+    predicate: (plan: TransactionPlanResult) => boolean,
+): boolean {
+    if (!predicate(transactionPlanResult)) {
+        return false;
+    }
+    if (transactionPlanResult.kind === 'single') {
+        return true;
+    }
+    return transactionPlanResult.plans.every(p => everyTransactionPlanResult(p, predicate));
 }
 
 /**

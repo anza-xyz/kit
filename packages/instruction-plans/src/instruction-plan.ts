@@ -398,6 +398,7 @@ function parseSingleInstructionPlans(plans: (Instruction | InstructionPlan)[]): 
  * ```
  *
  * @see {@link InstructionPlan}
+ * @see {@link everyInstructionPlan}
  */
 export function findInstructionPlan(
     instructionPlan: InstructionPlan,
@@ -416,6 +417,59 @@ export function findInstructionPlan(
         }
     }
     return undefined;
+}
+
+/**
+ * Checks if every instruction plan in the tree satisfies the given predicate.
+ *
+ * This function performs a depth-first traversal through the instruction plan tree,
+ * returning `true` only if the predicate returns `true` for every plan in the tree
+ * (including the root plan and all nested plans).
+ *
+ * @param instructionPlan - The instruction plan tree to check.
+ * @param predicate - A function that returns `true` if the plan satisfies the condition.
+ * @return `true` if every plan in the tree satisfies the predicate, `false` otherwise.
+ *
+ * @example
+ * Checking if all plans are divisible.
+ * ```ts
+ * const plan = sequentialInstructionPlan([
+ *   parallelInstructionPlan([instructionA, instructionB]),
+ *   sequentialInstructionPlan([instructionC, instructionD]),
+ * ]);
+ *
+ * const allDivisible = everyInstructionPlan(
+ *   plan,
+ *   (p) => p.kind !== 'sequential' || p.divisible,
+ * );
+ * // Returns true because all sequential plans are divisible.
+ * ```
+ *
+ * @example
+ * Checking if all single instructions use a specific program.
+ * ```ts
+ * const plan = parallelInstructionPlan([instructionA, instructionB, instructionC]);
+ *
+ * const allUseSameProgram = everyInstructionPlan(
+ *   plan,
+ *   (p) => p.kind !== 'single' || p.instruction.programAddress === myProgramAddress,
+ * );
+ * ```
+ *
+ * @see {@link InstructionPlan}
+ * @see {@link findInstructionPlan}
+ */
+export function everyInstructionPlan(
+    instructionPlan: InstructionPlan,
+    predicate: (plan: InstructionPlan) => boolean,
+): boolean {
+    if (!predicate(instructionPlan)) {
+        return false;
+    }
+    if (instructionPlan.kind === 'single' || instructionPlan.kind === 'messagePacker') {
+        return true;
+    }
+    return instructionPlan.plans.every(p => everyInstructionPlan(p, predicate));
 }
 
 /**

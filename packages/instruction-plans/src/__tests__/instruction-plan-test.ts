@@ -17,6 +17,7 @@ import {
 import { getTransactionMessageSize, TRANSACTION_SIZE_LIMIT } from '@solana/transactions';
 
 import {
+    everyInstructionPlan,
     findInstructionPlan,
     getLinearMessagePackerInstructionPlan,
     getMessagePackerInstructionPlanFromInstructions,
@@ -441,5 +442,94 @@ describe('findInstructionPlan', () => {
         const plan = parallelInstructionPlan([singleInstructionPlan(createInstruction('B')), messagePackerPlan]);
         const result = findInstructionPlan(plan, p => p.kind === 'messagePacker');
         expect(result).toBe(messagePackerPlan);
+    });
+});
+
+describe('everyInstructionPlan', () => {
+    it('returns true when all plans match the predicate', () => {
+        const plan = sequentialInstructionPlan([sequentialInstructionPlan([]), sequentialInstructionPlan([])]);
+        const result = everyInstructionPlan(plan, p => p.kind === 'sequential');
+        expect(result).toBe(true);
+    });
+    it('returns false when at least one plan does not match the predicate', () => {
+        const plan = sequentialInstructionPlan([parallelInstructionPlan([]), sequentialInstructionPlan([])]);
+        const result = everyInstructionPlan(plan, p => p.kind === 'sequential');
+        expect(result).toBe(false);
+    });
+    it('matches single instruction plans', () => {
+        const plan = singleInstructionPlan(createInstruction('A'));
+        const result = everyInstructionPlan(plan, p => p.kind === 'single');
+        expect(result).toBe(true);
+    });
+    it('matches sequential instruction plans', () => {
+        const plan = sequentialInstructionPlan([]);
+        const result = everyInstructionPlan(plan, p => p.kind === 'sequential');
+        expect(result).toBe(true);
+    });
+    it('matches non-divisible sequential instruction plans', () => {
+        const plan = nonDivisibleSequentialInstructionPlan([]);
+        // eslint-disable-next-line jest/no-conditional-in-test
+        const result = everyInstructionPlan(plan, p => p.kind === 'sequential' && !p.divisible);
+        expect(result).toBe(true);
+    });
+    it('matches parallel instruction plans', () => {
+        const plan = parallelInstructionPlan([]);
+        const result = everyInstructionPlan(plan, p => p.kind === 'parallel');
+        expect(result).toBe(true);
+    });
+    it('matches message packer instruction plans', () => {
+        const plan = getMessagePackerInstructionPlanFromInstructions([createInstruction('A')]);
+        const result = everyInstructionPlan(plan, p => p.kind === 'messagePacker');
+        expect(result).toBe(true);
+    });
+    it('matches complex instruction plans', () => {
+        const plan = sequentialInstructionPlan([
+            parallelInstructionPlan([createInstruction('A'), createInstruction('B')]),
+            nonDivisibleSequentialInstructionPlan([createInstruction('A'), createInstruction('C')]),
+        ]);
+        const result = everyInstructionPlan(plan, p => {
+            // eslint-disable-next-line jest/no-conditional-in-test
+            if (p.kind !== 'single') return true;
+            const instruction = p.instruction as ReturnType<typeof createInstruction>;
+            return ['A', 'B', 'C'].includes(instruction.id);
+        });
+        expect(result).toBe(true);
+    });
+    it('returns false on complex instruction plans', () => {
+        const plan = sequentialInstructionPlan([
+            parallelInstructionPlan([createInstruction('A'), createInstruction('B')]),
+            nonDivisibleSequentialInstructionPlan([createInstruction('A'), createInstruction('C')]),
+        ]);
+        const result = everyInstructionPlan(plan, p => {
+            // eslint-disable-next-line jest/no-conditional-in-test
+            if (p.kind !== 'single') return true;
+            const instruction = p.instruction as ReturnType<typeof createInstruction>;
+            return instruction.id === 'A';
+        });
+        expect(result).toBe(false);
+    });
+    it('fails fast before evaluating children', () => {
+        const predicate = jest.fn().mockReturnValueOnce(false);
+        const instructionA = singleInstructionPlan(createInstruction('A'));
+        const instructionB = singleInstructionPlan(createInstruction('B'));
+        const plan = sequentialInstructionPlan([instructionA, instructionB]);
+        const result = everyInstructionPlan(plan, predicate);
+        expect(result).toBe(false);
+        expect(predicate).toHaveBeenCalledTimes(1);
+        expect(predicate).toHaveBeenNthCalledWith(1, plan);
+        expect(predicate).not.toHaveBeenCalledWith(instructionA);
+        expect(predicate).not.toHaveBeenCalledWith(instructionB);
+    });
+    it('fails fast before evaluating siblings', () => {
+        const predicate = jest.fn().mockReturnValueOnce(true).mockReturnValueOnce(false);
+        const instructionA = singleInstructionPlan(createInstruction('A'));
+        const instructionB = singleInstructionPlan(createInstruction('B'));
+        const plan = sequentialInstructionPlan([instructionA, instructionB]);
+        const result = everyInstructionPlan(plan, predicate);
+        expect(result).toBe(false);
+        expect(predicate).toHaveBeenCalledTimes(2);
+        expect(predicate).toHaveBeenNthCalledWith(1, plan);
+        expect(predicate).toHaveBeenNthCalledWith(2, instructionA);
+        expect(predicate).not.toHaveBeenCalledWith(instructionB);
     });
 });

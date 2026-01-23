@@ -316,6 +316,7 @@ export function getAllSingleTransactionPlans(transactionPlan: TransactionPlan): 
  * ```
  *
  * @see {@link TransactionPlan}
+ * @see {@link everyTransactionPlan}
  * @see {@link getAllSingleTransactionPlans}
  */
 export function findTransactionPlan(
@@ -335,4 +336,58 @@ export function findTransactionPlan(
         }
     }
     return undefined;
+}
+
+/**
+ * Checks if every transaction plan in the tree satisfies the given predicate.
+ *
+ * This function performs a depth-first traversal through the transaction plan tree,
+ * returning `true` only if the predicate returns `true` for every plan in the tree
+ * (including the root plan and all nested plans).
+ *
+ * @param transactionPlan - The transaction plan tree to check.
+ * @param predicate - A function that returns `true` if the plan satisfies the condition.
+ * @return `true` if every plan in the tree satisfies the predicate, `false` otherwise.
+ *
+ * @example
+ * Checking if all plans are divisible.
+ * ```ts
+ * const plan = sequentialTransactionPlan([
+ *   parallelTransactionPlan([messageA, messageB]),
+ *   sequentialTransactionPlan([messageC, messageD]),
+ * ]);
+ *
+ * const allDivisible = everyTransactionPlan(
+ *   plan,
+ *   (p) => p.kind !== 'sequential' || p.divisible,
+ * );
+ * // Returns true because all sequential plans are divisible.
+ * ```
+ *
+ * @example
+ * Checking if all single plans have a specific fee payer.
+ * ```ts
+ * const plan = parallelTransactionPlan([messageA, messageB, messageC]);
+ *
+ * const allUseSameFeePayer = everyTransactionPlan(
+ *   plan,
+ *   (p) => p.kind !== 'single' || p.message.feePayer.address === myFeePayer,
+ * );
+ * ```
+ *
+ * @see {@link TransactionPlan}
+ * @see {@link findTransactionPlan}
+ * @see {@link getAllSingleTransactionPlans}
+ */
+export function everyTransactionPlan(
+    transactionPlan: TransactionPlan,
+    predicate: (plan: TransactionPlan) => boolean,
+): boolean {
+    if (!predicate(transactionPlan)) {
+        return false;
+    }
+    if (transactionPlan.kind === 'single') {
+        return true;
+    }
+    return transactionPlan.plans.every(p => everyTransactionPlan(p, predicate));
 }

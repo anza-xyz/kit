@@ -1,6 +1,7 @@
 import '@solana/test-matchers/toBeFrozenObject';
 
 import {
+    everyTransactionPlan,
     findTransactionPlan,
     getAllSingleTransactionPlans,
     nonDivisibleSequentialTransactionPlan,
@@ -279,5 +280,89 @@ describe('findTransactionPlan', () => {
             p => p.kind === 'sequential' && !p.divisible,
         );
         expect(result).toBe(nonDivisible);
+    });
+});
+
+describe('everyTransactionPlan', () => {
+    it('returns true when all plans match the predicate', () => {
+        const plan = sequentialTransactionPlan([sequentialTransactionPlan([]), sequentialTransactionPlan([])]);
+        const result = everyTransactionPlan(plan, p => p.kind === 'sequential');
+        expect(result).toBe(true);
+    });
+    it('returns false when at least one plan does not match the predicate', () => {
+        const plan = sequentialTransactionPlan([parallelTransactionPlan([]), sequentialTransactionPlan([])]);
+        const result = everyTransactionPlan(plan, p => p.kind === 'sequential');
+        expect(result).toBe(false);
+    });
+    it('matches single transaction plans', () => {
+        const plan = singleTransactionPlan(createMessage('A'));
+        const result = everyTransactionPlan(plan, p => p.kind === 'single');
+        expect(result).toBe(true);
+    });
+    it('matches sequential transaction plans', () => {
+        const plan = sequentialTransactionPlan([]);
+        const result = everyTransactionPlan(plan, p => p.kind === 'sequential');
+        expect(result).toBe(true);
+    });
+    it('matches non-divisible sequential transaction plans', () => {
+        const plan = nonDivisibleSequentialTransactionPlan([]);
+        // eslint-disable-next-line jest/no-conditional-in-test
+        const result = everyTransactionPlan(plan, p => p.kind === 'sequential' && !p.divisible);
+        expect(result).toBe(true);
+    });
+    it('matches parallel transaction plans', () => {
+        const plan = parallelTransactionPlan([]);
+        const result = everyTransactionPlan(plan, p => p.kind === 'parallel');
+        expect(result).toBe(true);
+    });
+    it('matches complex transaction plans', () => {
+        const plan = sequentialTransactionPlan([
+            parallelTransactionPlan([createMessage('A'), createMessage('B')]),
+            nonDivisibleSequentialTransactionPlan([createMessage('A'), createMessage('C')]),
+        ]);
+        const result = everyTransactionPlan(plan, p => {
+            // eslint-disable-next-line jest/no-conditional-in-test
+            if (p.kind !== 'single') return true;
+            const message = p.message as ReturnType<typeof createMessage>;
+            return ['A', 'B', 'C'].includes(message.id);
+        });
+        expect(result).toBe(true);
+    });
+    it('returns false on complex transaction plans', () => {
+        const plan = sequentialTransactionPlan([
+            parallelTransactionPlan([createMessage('A'), createMessage('B')]),
+            nonDivisibleSequentialTransactionPlan([createMessage('A'), createMessage('C')]),
+        ]);
+        const result = everyTransactionPlan(plan, p => {
+            // eslint-disable-next-line jest/no-conditional-in-test
+            if (p.kind !== 'single') return true;
+            const message = p.message as ReturnType<typeof createMessage>;
+            return message.id === 'A';
+        });
+        expect(result).toBe(false);
+    });
+    it('fails fast before evaluating children', () => {
+        const predicate = jest.fn().mockReturnValueOnce(false);
+        const messageA = singleTransactionPlan(createMessage('A'));
+        const messageB = singleTransactionPlan(createMessage('B'));
+        const plan = sequentialTransactionPlan([messageA, messageB]);
+        const result = everyTransactionPlan(plan, predicate);
+        expect(result).toBe(false);
+        expect(predicate).toHaveBeenCalledTimes(1);
+        expect(predicate).toHaveBeenNthCalledWith(1, plan);
+        expect(predicate).not.toHaveBeenCalledWith(messageA);
+        expect(predicate).not.toHaveBeenCalledWith(messageB);
+    });
+    it('fails fast before evaluating siblings', () => {
+        const predicate = jest.fn().mockReturnValueOnce(true).mockReturnValueOnce(false);
+        const messageA = singleTransactionPlan(createMessage('A'));
+        const messageB = singleTransactionPlan(createMessage('B'));
+        const plan = sequentialTransactionPlan([messageA, messageB]);
+        const result = everyTransactionPlan(plan, predicate);
+        expect(result).toBe(false);
+        expect(predicate).toHaveBeenCalledTimes(2);
+        expect(predicate).toHaveBeenNthCalledWith(1, plan);
+        expect(predicate).toHaveBeenNthCalledWith(2, messageA);
+        expect(predicate).not.toHaveBeenCalledWith(messageB);
     });
 });

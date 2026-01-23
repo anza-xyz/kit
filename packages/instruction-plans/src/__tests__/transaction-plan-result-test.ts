@@ -5,6 +5,7 @@ import { Signature } from '@solana/keys';
 
 import {
     canceledSingleTransactionPlanResult,
+    everyTransactionPlanResult,
     failedSingleTransactionPlanResult,
     findTransactionPlanResult,
     flattenTransactionPlanResult,
@@ -351,6 +352,120 @@ describe('findTransactionPlanResult', () => {
             r => r.kind === 'single' && r.status.kind === 'successful',
         );
         expect(found).toBe(successfulResult);
+    });
+});
+
+describe('everyTransactionPlanResult', () => {
+    it('returns true when all plans match the predicate', () => {
+        const plan = sequentialTransactionPlanResult([
+            sequentialTransactionPlanResult([]),
+            sequentialTransactionPlanResult([]),
+        ]);
+        const result = everyTransactionPlanResult(plan, p => p.kind === 'sequential');
+        expect(result).toBe(true);
+    });
+    it('returns false when at least one plan does not match the predicate', () => {
+        const plan = sequentialTransactionPlanResult([
+            parallelTransactionPlanResult([]),
+            sequentialTransactionPlanResult([]),
+        ]);
+        const result = everyTransactionPlanResult(plan, p => p.kind === 'sequential');
+        expect(result).toBe(false);
+    });
+    it('matches successful single transaction plans', () => {
+        const plan = successfulSingleTransactionPlanResult(createMessage('A'), createTransaction('A'));
+        // eslint-disable-next-line jest/no-conditional-in-test
+        const result = everyTransactionPlanResult(plan, p => p.kind === 'single' && p.status.kind === 'successful');
+        expect(result).toBe(true);
+    });
+    it('matches failed single transaction plans', () => {
+        const plan = failedSingleTransactionPlanResult(
+            createMessage('A'),
+            new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
+        );
+        // eslint-disable-next-line jest/no-conditional-in-test
+        const result = everyTransactionPlanResult(plan, p => p.kind === 'single' && p.status.kind === 'failed');
+        expect(result).toBe(true);
+    });
+    it('matches canceled single transaction plans', () => {
+        const plan = canceledSingleTransactionPlanResult(createMessage('A'));
+        // eslint-disable-next-line jest/no-conditional-in-test
+        const result = everyTransactionPlanResult(plan, p => p.kind === 'single' && p.status.kind === 'canceled');
+        expect(result).toBe(true);
+    });
+    it('matches sequential transaction plans', () => {
+        const plan = sequentialTransactionPlanResult([]);
+        const result = everyTransactionPlanResult(plan, p => p.kind === 'sequential');
+        expect(result).toBe(true);
+    });
+    it('matches non-divisible sequential transaction plans', () => {
+        const plan = nonDivisibleSequentialTransactionPlanResult([]);
+        // eslint-disable-next-line jest/no-conditional-in-test
+        const result = everyTransactionPlanResult(plan, p => p.kind === 'sequential' && !p.divisible);
+        expect(result).toBe(true);
+    });
+    it('matches parallel transaction plans', () => {
+        const plan = parallelTransactionPlanResult([]);
+        const result = everyTransactionPlanResult(plan, p => p.kind === 'parallel');
+        expect(result).toBe(true);
+    });
+    it('matches complex transaction plans', () => {
+        const resultA = successfulSingleTransactionPlanResult(createMessage('A'), createTransaction('A'));
+        const resultB = failedSingleTransactionPlanResult(
+            createMessage('B'),
+            new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
+        );
+        const resultC = canceledSingleTransactionPlanResult(createMessage('C'));
+        const plan = sequentialTransactionPlanResult([
+            parallelTransactionPlanResult([resultA, resultB]),
+            nonDivisibleSequentialTransactionPlanResult([resultA, resultC]),
+        ]);
+        const result = everyTransactionPlanResult(plan, p => {
+            // eslint-disable-next-line jest/no-conditional-in-test
+            if (p.kind !== 'single') return true;
+            const message = p.message as ReturnType<typeof createMessage>;
+            return ['A', 'B', 'C'].includes(message.id);
+        });
+        expect(result).toBe(true);
+    });
+    it('returns false on complex transaction plans', () => {
+        const resultA = successfulSingleTransactionPlanResult(createMessage('A'), createTransaction('A'));
+        const resultB = failedSingleTransactionPlanResult(
+            createMessage('B'),
+            new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
+        );
+        const resultC = canceledSingleTransactionPlanResult(createMessage('C'));
+        const plan = sequentialTransactionPlanResult([
+            parallelTransactionPlanResult([resultA, resultB]),
+            nonDivisibleSequentialTransactionPlanResult([resultA, resultC]),
+        ]);
+        // eslint-disable-next-line jest/no-conditional-in-test
+        const result = everyTransactionPlanResult(plan, p => p.kind !== 'single' || p.status.kind === 'successful');
+        expect(result).toBe(false);
+    });
+    it('fails fast before evaluating children', () => {
+        const predicate = jest.fn().mockReturnValueOnce(false);
+        const messageA = successfulSingleTransactionPlanResult(createMessage('A'), createTransaction('A'));
+        const messageB = successfulSingleTransactionPlanResult(createMessage('B'), createTransaction('B'));
+        const plan = sequentialTransactionPlanResult([messageA, messageB]);
+        const result = everyTransactionPlanResult(plan, predicate);
+        expect(result).toBe(false);
+        expect(predicate).toHaveBeenCalledTimes(1);
+        expect(predicate).toHaveBeenNthCalledWith(1, plan);
+        expect(predicate).not.toHaveBeenCalledWith(messageA);
+        expect(predicate).not.toHaveBeenCalledWith(messageB);
+    });
+    it('fails fast before evaluating siblings', () => {
+        const predicate = jest.fn().mockReturnValueOnce(true).mockReturnValueOnce(false);
+        const messageA = successfulSingleTransactionPlanResult(createMessage('A'), createTransaction('A'));
+        const messageB = successfulSingleTransactionPlanResult(createMessage('B'), createTransaction('B'));
+        const plan = sequentialTransactionPlanResult([messageA, messageB]);
+        const result = everyTransactionPlanResult(plan, predicate);
+        expect(result).toBe(false);
+        expect(predicate).toHaveBeenCalledTimes(2);
+        expect(predicate).toHaveBeenNthCalledWith(1, plan);
+        expect(predicate).toHaveBeenNthCalledWith(2, messageA);
+        expect(predicate).not.toHaveBeenCalledWith(messageB);
     });
 });
 
