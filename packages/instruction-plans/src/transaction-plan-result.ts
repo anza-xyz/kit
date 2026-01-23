@@ -1,3 +1,7 @@
+import {
+    SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_SINGLE_TRANSACTION_PLAN_RESULT_NOT_FOUND,
+    SolanaError,
+} from '@solana/errors';
 import { Signature } from '@solana/keys';
 import { BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
 import { getSignatureFromTransaction, Transaction } from '@solana/transactions';
@@ -455,6 +459,64 @@ export function findTransactionPlanResult<TContext extends TransactionPlanResult
 }
 
 /**
+ * Retrieves the first failed transaction plan result from a transaction plan result tree.
+ *
+ * This function searches the transaction plan result tree using a depth-first traversal
+ * and returns the first single transaction result with a 'failed' status. If no failed
+ * result is found, it throws a {@link SolanaError}.
+ *
+ * @param transactionPlanResult - The transaction plan result tree to search.
+ * @return The first failed single transaction plan result.
+ * @throws Throws a {@link SolanaError} with code
+ * `SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_SINGLE_TRANSACTION_PLAN_RESULT_NOT_FOUND` if no
+ * failed transaction plan result is found. The error context contains a non-enumerable
+ * `transactionPlanResult` property for recovery purposes.
+ *
+ * @example
+ * Retrieving the first failed result from a parallel execution.
+ * ```ts
+ * const result = parallelTransactionPlanResult([
+ *   successfulSingleTransactionPlanResult(messageA, transactionA),
+ *   failedSingleTransactionPlanResult(messageB, error),
+ *   failedSingleTransactionPlanResult(messageC, anotherError),
+ * ]);
+ *
+ * const firstFailed = getFirstFailedSingleTransactionPlanResult(result);
+ * // Returns the failed result for messageB.
+ * ```
+ *
+ * @see {@link FailedSingleTransactionPlanResult}
+ * @see {@link findTransactionPlanResult}
+ */
+export function getFirstFailedSingleTransactionPlanResult(
+    transactionPlanResult: TransactionPlanResult,
+): FailedSingleTransactionPlanResult {
+    const result = findTransactionPlanResult(
+        transactionPlanResult,
+        r => r.kind === 'single' && r.status.kind === 'failed',
+    );
+
+    if (!result) {
+        // Here we want the `transactionPlanResult` to be available in the error context
+        // so applications can recover but we don't want this object to be
+        // serialized with the error. This is why we set it as a non-enumerable property.
+        const context = {};
+        Object.defineProperty(context, 'transactionPlanResult', {
+            configurable: false,
+            enumerable: false,
+            value: transactionPlanResult,
+            writable: false,
+        });
+        throw new SolanaError(
+            SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_SINGLE_TRANSACTION_PLAN_RESULT_NOT_FOUND,
+            context,
+        );
+    }
+
+    return result as FailedSingleTransactionPlanResult;
+}
+
+/**
  * Checks if every transaction plan result in the tree satisfies the given predicate.
  *
  * This function performs a depth-first traversal through the transaction plan result tree,
@@ -533,7 +595,9 @@ export function flattenTransactionPlanResult(result: TransactionPlanResult): Sin
 /**
  * A {@link SingleTransactionPlanResult} with 'successful' status.
  */
-export type SuccessfulSingleTransactionPlanResult = SingleTransactionPlanResult & { status: { kind: 'successful' } };
+export type SuccessfulSingleTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+> = SingleTransactionPlanResult<TContext> & { status: { kind: 'successful' } };
 
 /**
  * A {@link SingleTransactionPlanResult} with 'failed' status.

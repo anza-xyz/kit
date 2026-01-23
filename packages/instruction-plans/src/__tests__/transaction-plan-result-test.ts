@@ -1,6 +1,10 @@
 import '@solana/test-matchers/toBeFrozenObject';
 
-import { SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE, SolanaError } from '@solana/errors';
+import {
+    SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_SINGLE_TRANSACTION_PLAN_RESULT_NOT_FOUND,
+    SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE,
+    SolanaError,
+} from '@solana/errors';
 import { Signature } from '@solana/keys';
 
 import {
@@ -9,6 +13,7 @@ import {
     failedSingleTransactionPlanResult,
     findTransactionPlanResult,
     flattenTransactionPlanResult,
+    getFirstFailedSingleTransactionPlanResult,
     nonDivisibleSequentialTransactionPlanResult,
     parallelTransactionPlanResult,
     sequentialTransactionPlanResult,
@@ -607,5 +612,150 @@ describe('summarizeTransactionPlanResult', () => {
             successful: false,
             successfulTransactions: [planA],
         });
+    });
+});
+
+describe('getFirstFailedSingleTransactionPlanResult', () => {
+    it('returns the failed result from a single failed transaction', () => {
+        const messageA = createMessage('A');
+        const error = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
+        const failedResult = failedSingleTransactionPlanResult(messageA, error);
+
+        const result = getFirstFailedSingleTransactionPlanResult(failedResult);
+        expect(result).toBe(failedResult);
+    });
+
+    it('returns the first failed result from a parallel structure', () => {
+        const messageA = createMessage('A');
+        const messageB = createMessage('B');
+        const error = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
+        const failedResult = failedSingleTransactionPlanResult(messageB, error);
+        const parallelResult = parallelTransactionPlanResult([
+            successfulSingleTransactionPlanResult(messageA, createTransaction('A')),
+            failedResult,
+        ]);
+
+        const result = getFirstFailedSingleTransactionPlanResult(parallelResult);
+        expect(result).toBe(failedResult);
+    });
+
+    it('returns the first failed result from a sequential structure', () => {
+        const messageA = createMessage('A');
+        const messageB = createMessage('B');
+        const error = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
+        const failedResult = failedSingleTransactionPlanResult(messageB, error);
+        const sequentialResult = sequentialTransactionPlanResult([
+            successfulSingleTransactionPlanResult(messageA, createTransaction('A')),
+            failedResult,
+        ]);
+
+        const result = getFirstFailedSingleTransactionPlanResult(sequentialResult);
+        expect(result).toBe(failedResult);
+    });
+
+    it('returns the first failed result from a deeply nested structure', () => {
+        const messageA = createMessage('A');
+        const messageB = createMessage('B');
+        const messageC = createMessage('C');
+        const error = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
+        const failedResult = failedSingleTransactionPlanResult(messageC, error);
+        const nestedResult = parallelTransactionPlanResult([
+            sequentialTransactionPlanResult([
+                successfulSingleTransactionPlanResult(messageA, createTransaction('A')),
+                parallelTransactionPlanResult([
+                    successfulSingleTransactionPlanResult(messageB, createTransaction('B')),
+                    failedResult,
+                ]),
+            ]),
+        ]);
+
+        const result = getFirstFailedSingleTransactionPlanResult(nestedResult);
+        expect(result).toBe(failedResult);
+    });
+
+    it('returns the first failed result when multiple failures exist', () => {
+        const messageA = createMessage('A');
+        const messageB = createMessage('B');
+        const error = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
+        const firstFailedResult = failedSingleTransactionPlanResult(messageA, error);
+        const secondFailedResult = failedSingleTransactionPlanResult(messageB, error);
+        const parallelResult = parallelTransactionPlanResult([firstFailedResult, secondFailedResult]);
+
+        const result = getFirstFailedSingleTransactionPlanResult(parallelResult);
+        expect(result).toBe(firstFailedResult);
+    });
+
+    it('throws SolanaError when no failed result exists (all successful)', () => {
+        const messageA = createMessage('A');
+        const messageB = createMessage('B');
+        const successfulResult = parallelTransactionPlanResult([
+            successfulSingleTransactionPlanResult(messageA, createTransaction('A')),
+            successfulSingleTransactionPlanResult(messageB, createTransaction('B')),
+        ]);
+
+        expect(() => getFirstFailedSingleTransactionPlanResult(successfulResult)).toThrow(
+            new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_SINGLE_TRANSACTION_PLAN_RESULT_NOT_FOUND, {
+                context: expect.any(Object),
+            }),
+        );
+    });
+
+    it('throws SolanaError when no failed result exists (all canceled)', () => {
+        const messageA = createMessage('A');
+        const messageB = createMessage('B');
+        const canceledResult = parallelTransactionPlanResult([
+            canceledSingleTransactionPlanResult(messageA),
+            canceledSingleTransactionPlanResult(messageB),
+        ]);
+
+        expect(() => getFirstFailedSingleTransactionPlanResult(canceledResult)).toThrow(
+            new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_SINGLE_TRANSACTION_PLAN_RESULT_NOT_FOUND, {
+                context: {
+                    transactionPlanResult: canceledResult,
+                },
+            }),
+        );
+    });
+
+    it('throws SolanaError when no failed result exists (mixed successful/canceled)', () => {
+        const messageA = createMessage('A');
+        const messageB = createMessage('B');
+        const mixedResult = sequentialTransactionPlanResult([
+            successfulSingleTransactionPlanResult(messageA, createTransaction('A')),
+            canceledSingleTransactionPlanResult(messageB),
+        ]);
+
+        expect(() => getFirstFailedSingleTransactionPlanResult(mixedResult)).toThrow(
+            new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_SINGLE_TRANSACTION_PLAN_RESULT_NOT_FOUND, {
+                context: {
+                    transactionPlanResult: mixedResult,
+                },
+            }),
+        );
+    });
+
+    it('throws an error where context contains transactionPlanResult as non-enumerable', () => {
+        const messageA = createMessage('A');
+        const successfulResult = successfulSingleTransactionPlanResult(messageA, createTransaction('A'));
+
+        let caughtError:
+            | SolanaError<typeof SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_SINGLE_TRANSACTION_PLAN_RESULT_NOT_FOUND>
+            | undefined;
+        try {
+            getFirstFailedSingleTransactionPlanResult(successfulResult);
+        } catch (error) {
+            caughtError = error as SolanaError<
+                typeof SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_SINGLE_TRANSACTION_PLAN_RESULT_NOT_FOUND
+            >;
+        }
+
+        expect(caughtError).toBeInstanceOf(SolanaError);
+
+        // The transactionPlanResult should be accessible directly on the context
+        expect(caughtError!.context.transactionPlanResult).toBe(successfulResult);
+
+        // But it should not be enumerable (won't appear in Object.keys or JSON.stringify)
+        expect(Object.keys(caughtError!.context)).not.toContain('transactionPlanResult');
+        expect(Object.prototype.propertyIsEnumerable.call(caughtError!.context, 'transactionPlanResult')).toBe(false);
     });
 });
