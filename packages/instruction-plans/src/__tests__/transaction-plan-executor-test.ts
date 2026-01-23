@@ -4,6 +4,7 @@ import {
     SOLANA_ERROR__INSTRUCTION_ERROR__INVALID_ARGUMENT,
     SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN,
     SOLANA_ERROR__INSTRUCTION_PLANS__NON_DIVISIBLE_TRANSACTION_PLANS_NOT_SUPPORTED,
+    SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE,
     SolanaError,
 } from '@solana/errors';
 
@@ -13,7 +14,7 @@ import {
     sequentialTransactionPlan,
     singleTransactionPlan,
 } from '../transaction-plan';
-import { createTransactionPlanExecutor } from '../transaction-plan-executor';
+import { createTransactionPlanExecutor, passthroughFailedTransactionPlanExecution } from '../transaction-plan-executor';
 import {
     canceledSingleTransactionPlanResult,
     failedSingleTransactionPlanResult,
@@ -736,5 +737,36 @@ describe('createTransactionPlanExecutor', () => {
                 }),
             );
         });
+    });
+});
+
+describe('passthroughFailedTransactionPlanExecution', () => {
+    it('returns the resolved result as-is', async () => {
+        expect.assertions(1);
+        const result = successfulSingleTransactionPlanResult(createMessage('A'), createTransaction('A'));
+        const promise = Promise.resolve(result);
+        await expect(passthroughFailedTransactionPlanExecution(promise)).resolves.toBe(result);
+    });
+    it('returns the result inside the rejected execution error', async () => {
+        expect.assertions(1);
+        const result = failedSingleTransactionPlanResult(
+            createMessage('A'),
+            new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
+        );
+        const promise = Promise.reject(
+            new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
+                transactionPlanResult: result,
+            }),
+        );
+        await expect(passthroughFailedTransactionPlanExecution(promise)).resolves.toBe(result);
+    });
+    it('does not catch errors other than failed execution errors', async () => {
+        expect.assertions(1);
+        const promise = Promise.reject(
+            new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__NON_DIVISIBLE_TRANSACTION_PLANS_NOT_SUPPORTED),
+        );
+        await expect(passthroughFailedTransactionPlanExecution(promise)).rejects.toThrow(
+            new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__NON_DIVISIBLE_TRANSACTION_PLANS_NOT_SUPPORTED),
+        );
     });
 });
