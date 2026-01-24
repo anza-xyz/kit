@@ -15,9 +15,9 @@ If you haven't done so already, please **enable two-factor auth** in your GitHub
 
 --
 
-If you do not receive a response in the advisory, send an email to security@solanalabs.com with the full URL of the advisory you have created. DO NOT include attachments or provide detail sufficient for exploitation regarding the security issue in this email. **Only provide such details in the advisory**.
+If you do not receive a response in the advisory, send an email to security@anza.xyz with the full URL of the advisory you have created. DO NOT include attachments or provide detail sufficient for exploitation regarding the security issue in this email. **Only provide such details in the advisory**.
 
-If you do not receive a response from security@solanalabs.com please follow up with the team directly. You can do this in the `#js` channel of the [Solana Tech discord server](https://solana.com/discord), by pinging the `Solana Labs` role in the channel and referencing the fact that you submitted a security problem.
+If you do not receive a response from security@anza.xyz please follow up with the team directly. You can do this in the `#sdk` channel of the [Solana Tech discord server](https://solana.com/discord), by pinging the `Anza` role in the channel and referencing the fact that you submitted a security problem.
 
 <a name="process"></a>
 
