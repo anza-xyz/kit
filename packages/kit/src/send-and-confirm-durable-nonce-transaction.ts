@@ -107,12 +107,18 @@ export function sendAndConfirmDurableNonceTransactionFactory<
             } catch (e) {
                 // If nonce became invalid, check if our transaction actually landed
                 if (isSolanaError(e, SOLANA_ERROR__INVALID_NONCE)) {
-                    const { value: statuses } = await rpc
-                        .getSignatureStatuses([signature])
-                        .send({ abortSignal: config.abortSignal });
-                    const status = statuses[0];
+                    let status;
+                    try {
+                        const { value: statuses } = await rpc
+                            .getSignatureStatuses([signature])
+                            .send({ abortSignal: config.abortSignal });
+                        status = statuses[0];
+                    } catch {
+                        // RPC failed - propagate the original nonce error
+                        throw e;
+                    }
 
-                    if (status === null) {
+                    if (status === null || status === undefined) {
                         // Transaction doesn't exist - nonce was truly invalid
                         throw e;
                     }

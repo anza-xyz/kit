@@ -219,6 +219,35 @@ describe('sendAndConfirmDurableNonceTransactionFactory', () => {
             ).rejects.toThrow(SolanaError);
         });
 
+        it('throws INVALID_NONCE when getSignatureStatuses RPC call fails', async () => {
+            expect.assertions(2);
+
+            // Setup: nonce invalidation throws INVALID_NONCE
+            const invalidNonceError = new SolanaError(SOLANA_ERROR__INVALID_NONCE, {
+                actualNonceValue: 'xyz',
+                expectedNonceValue: 'abc',
+            });
+            mockGetNonceInvalidationPromise.mockRejectedValue(invalidNonceError);
+
+            // Setup: getSignatureStatuses throws
+            getSignatureStatusesMock.mockRejectedValue(new Error('RPC connection failed'));
+
+            const sendAndConfirm = sendAndConfirmDurableNonceTransactionFactory({
+                rpc,
+                rpcSubscriptions,
+            });
+
+            // Should throw INVALID_NONCE (not the RPC error)
+            await expect(
+                sendAndConfirm(MOCK_DURABLE_NONCE_TRANSACTION, {
+                    commitment: 'finalized',
+                }),
+            ).rejects.toThrow(invalidNonceError);
+
+            // Verify getSignatureStatuses was called (the RPC error was caught and ignored)
+            expect(rpc.getSignatureStatuses).toHaveBeenCalled();
+        });
+
         it('does not throw when transaction exists with an error at an earlier commitment', async () => {
             expect.assertions(2);
 
