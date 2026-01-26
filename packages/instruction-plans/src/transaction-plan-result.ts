@@ -153,7 +153,7 @@ export type ParallelTransactionPlanResult<
 export type SingleTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer = BaseTransactionMessage &
-    TransactionMessageWithFeePayer,
+        TransactionMessageWithFeePayer,
 > = Readonly<{
     kind: 'single';
     message: TTransactionMessage;
@@ -283,7 +283,7 @@ export function parallelTransactionPlanResult<
 export function successfulSingleTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer = BaseTransactionMessage &
-    TransactionMessageWithFeePayer,
+        TransactionMessageWithFeePayer,
 >(
     transactionMessage: TTransactionMessage,
     transaction: Transaction,
@@ -328,7 +328,7 @@ export function successfulSingleTransactionPlanResult<
 export function successfulSingleTransactionPlanResultFromSignature<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer = BaseTransactionMessage &
-    TransactionMessageWithFeePayer,
+        TransactionMessageWithFeePayer,
 >(
     transactionMessage: TTransactionMessage,
     signature: Signature,
@@ -370,7 +370,7 @@ export function successfulSingleTransactionPlanResultFromSignature<
 export function failedSingleTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer = BaseTransactionMessage &
-    TransactionMessageWithFeePayer,
+        TransactionMessageWithFeePayer,
 >(transactionMessage: TTransactionMessage, error: Error): SingleTransactionPlanResult<TContext, TTransactionMessage> {
     return Object.freeze({
         kind: 'single',
@@ -400,7 +400,7 @@ export function failedSingleTransactionPlanResult<
 export function canceledSingleTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer = BaseTransactionMessage &
-    TransactionMessageWithFeePayer,
+        TransactionMessageWithFeePayer,
 >(transactionMessage: TTransactionMessage): SingleTransactionPlanResult<TContext, TTransactionMessage> {
     return Object.freeze({
         kind: 'single',

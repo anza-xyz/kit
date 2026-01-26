@@ -22,7 +22,7 @@ import {
     SingleInstructionPlan,
 } from './instruction-plan';
 import {
-    getAllSingleTransactionPlans,
+    flattenTransactionPlan,
     nonDivisibleSequentialTransactionPlan,
     parallelTransactionPlan,
     sequentialTransactionPlan,
@@ -300,7 +300,7 @@ function getSequentialCandidate(latestPlan: MutableTransactionPlan): MutableSing
 }
 
 function getParallelCandidates(latestPlan: TransactionPlan): MutableSingleTransactionPlan[] {
-    return getAllSingleTransactionPlans(latestPlan);
+    return flattenTransactionPlan(latestPlan);
 }
 
 async function selectAndMutateCandidate(

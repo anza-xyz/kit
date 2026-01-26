@@ -562,7 +562,7 @@ export function transformInstructionPlan(
  * // Array of `SingleInstructionPlan` containing:
  * // instructionA, instructionB, instructionC, instructionD and instructionE.
  * ```
- * 
+ *
  * @see {@link InstructionPlan}
  * @see {@link findInstructionPlan}
  * @see {@link everyInstructionPlan}
