@@ -1,6 +1,7 @@
 import type { BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
 
 import {
+    flattenTransactionPlan,
     getAllSingleTransactionPlans,
     nonDivisibleSequentialTransactionPlan,
     ParallelTransactionPlan,
@@ -88,6 +89,26 @@ const messageC = null as unknown as BaseTransactionMessage & TransactionMessageW
             nonDivisibleSequentialTransactionPlan([messageC]),
         ]);
         const singlePlans = getAllSingleTransactionPlans(plan);
+        singlePlans satisfies SingleTransactionPlan[];
+    }
+}
+
+// [DESCRIBE] flattenTransactionPlan
+{
+    // It extracts single transaction plans from a simple plan.
+    {
+        const plan = singleTransactionPlan(messageA);
+        const singlePlans = flattenTransactionPlan(plan);
+        singlePlans satisfies SingleTransactionPlan[];
+    }
+
+    // It extracts single transaction plans from a nested plan.
+    {
+        const plan = parallelTransactionPlan([
+            sequentialTransactionPlan([messageA, messageB]),
+            nonDivisibleSequentialTransactionPlan([messageC]),
+        ]);
+        const singlePlans = flattenTransactionPlan(plan);
         singlePlans satisfies SingleTransactionPlan[];
     }
 }

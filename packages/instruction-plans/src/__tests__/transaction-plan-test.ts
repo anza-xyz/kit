@@ -3,6 +3,7 @@ import '@solana/test-matchers/toBeFrozenObject';
 import {
     everyTransactionPlan,
     findTransactionPlan,
+    flattenTransactionPlan,
     getAllSingleTransactionPlans,
     nonDivisibleSequentialTransactionPlan,
     parallelTransactionPlan,
@@ -198,6 +199,49 @@ describe('getAllSingleTransactionPlans', () => {
             messageE,
         ]);
         const result = getAllSingleTransactionPlans(plan);
+        expect(result).toEqual([
+            singleTransactionPlan(messageA),
+            singleTransactionPlan(messageB),
+            singleTransactionPlan(messageC),
+            singleTransactionPlan(messageD),
+            singleTransactionPlan(messageE),
+        ]);
+    });
+});
+
+describe('flattenTransactionPlan', () => {
+    it('returns the single transaction plan when given a SingleTransactionPlan', () => {
+        const messageA = createMessage('A');
+        const plan = singleTransactionPlan(messageA);
+        const result = flattenTransactionPlan(plan);
+        expect(result).toEqual([plan]);
+    });
+    it('returns all single transaction plans from a ParallelTransactionPlan', () => {
+        const messageA = createMessage('A');
+        const messageB = createMessage('B');
+        const plan = parallelTransactionPlan([messageA, messageB]);
+        const result = flattenTransactionPlan(plan);
+        expect(result).toEqual([singleTransactionPlan(messageA), singleTransactionPlan(messageB)]);
+    });
+    it('returns all single transaction plans from a SequentialTransactionPlan', () => {
+        const messageA = createMessage('A');
+        const messageB = createMessage('B');
+        const plan = sequentialTransactionPlan([messageA, messageB]);
+        const result = flattenTransactionPlan(plan);
+        expect(result).toEqual([singleTransactionPlan(messageA), singleTransactionPlan(messageB)]);
+    });
+    it('returns all single transaction plans from a complex nested structure', () => {
+        const messageA = createMessage('A');
+        const messageB = createMessage('B');
+        const messageC = createMessage('C');
+        const messageD = createMessage('D');
+        const messageE = createMessage('E');
+        const plan = parallelTransactionPlan([
+            sequentialTransactionPlan([messageA, messageB]),
+            nonDivisibleSequentialTransactionPlan([messageC, messageD]),
+            messageE,
+        ]);
+        const result = flattenTransactionPlan(plan);
         expect(result).toEqual([
             singleTransactionPlan(messageA),
             singleTransactionPlan(messageB),

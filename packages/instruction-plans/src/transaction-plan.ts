@@ -247,6 +247,11 @@ function parseSingleTransactionPlans(
 }
 
 /**
+ * @deprecated Use {@link flattenTransactionPlan} instead.
+ */
+export const getAllSingleTransactionPlans = flattenTransactionPlan;
+
+/**
  * Retrieves all individual {@link SingleTransactionPlan} instances from a transaction plan tree.
  *
  * This function recursively traverses any nested structure of transaction plans and extracts
@@ -265,16 +270,21 @@ function parseSingleTransactionPlans(
  *   messageE,
  * ]);
  *
- * const singlePlans = getAllSingleTransactionPlans(plan);
+ * const singlePlans = flattenTransactionPlan(plan);
  * // Array of `SingleTransactionPlan` containing:
  * // messageA, messageB, messageC and messageD.
+ *
+ * @see {@link TransactionPlan}
+ * @see {@link findTransactionPlan}
+ * @see {@link everyTransactionPlan}
+ * @see {@link transformTransactionPlan}
  * ```
  */
-export function getAllSingleTransactionPlans(transactionPlan: TransactionPlan): SingleTransactionPlan[] {
+export function flattenTransactionPlan(transactionPlan: TransactionPlan): SingleTransactionPlan[] {
     if (transactionPlan.kind === 'single') {
         return [transactionPlan];
     }
-    return transactionPlan.plans.flatMap(getAllSingleTransactionPlans);
+    return transactionPlan.plans.flatMap(flattenTransactionPlan);
 }
 
 /**
@@ -318,7 +328,7 @@ export function getAllSingleTransactionPlans(transactionPlan: TransactionPlan): 
  * @see {@link TransactionPlan}
  * @see {@link everyTransactionPlan}
  * @see {@link transformTransactionPlan}
- * @see {@link getAllSingleTransactionPlans}
+ * @see {@link flattenTransactionPlan}
  */
 export function findTransactionPlan(
     transactionPlan: TransactionPlan,
@@ -379,7 +389,7 @@ export function findTransactionPlan(
  * @see {@link TransactionPlan}
  * @see {@link findTransactionPlan}
  * @see {@link transformTransactionPlan}
- * @see {@link getAllSingleTransactionPlans}
+ * @see {@link flattenTransactionPlan}
  */
 export function everyTransactionPlan(
     transactionPlan: TransactionPlan,
@@ -437,6 +447,7 @@ export function everyTransactionPlan(
  * @see {@link TransactionPlan}
  * @see {@link findTransactionPlan}
  * @see {@link everyTransactionPlan}
+ * @see {@link flattenTransactionPlan}
  */
 export function transformTransactionPlan(
     transactionPlan: TransactionPlan,
