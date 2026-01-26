@@ -317,6 +317,7 @@ export function getAllSingleTransactionPlans(transactionPlan: TransactionPlan): 
  *
  * @see {@link TransactionPlan}
  * @see {@link everyTransactionPlan}
+ * @see {@link transformTransactionPlan}
  * @see {@link getAllSingleTransactionPlans}
  */
 export function findTransactionPlan(
@@ -377,6 +378,7 @@ export function findTransactionPlan(
  *
  * @see {@link TransactionPlan}
  * @see {@link findTransactionPlan}
+ * @see {@link transformTransactionPlan}
  * @see {@link getAllSingleTransactionPlans}
  */
 export function everyTransactionPlan(
@@ -390,4 +392,65 @@ export function everyTransactionPlan(
         return true;
     }
     return transactionPlan.plans.every(p => everyTransactionPlan(p, predicate));
+}
+
+/**
+ * Transforms a transaction plan tree using a bottom-up approach.
+ *
+ * This function recursively traverses the transaction plan tree, applying the
+ * transformation function to each plan. The transformation is applied bottom-up,
+ * meaning nested plans are transformed first, then the parent plans receive
+ * the already-transformed children before being transformed themselves.
+ *
+ * All transformed plans are frozen using `Object.freeze` to ensure immutability.
+ *
+ * @param transactionPlan - The transaction plan tree to transform.
+ * @param fn - A function that transforms each plan and returns a new plan.
+ * @return A new transformed transaction plan tree.
+ *
+ * @example
+ * Removing parallelism by converting parallel plans to sequential.
+ * ```ts
+ * const plan = parallelTransactionPlan([messageA, messageB, messageC]);
+ *
+ * const transformed = transformTransactionPlan(plan, (p) => {
+ *   if (p.kind === 'parallel') {
+ *     return sequentialTransactionPlan(p.plans);
+ *   }
+ *   return p;
+ * });
+ * ```
+ *
+ * @example
+ * Updating the fee payer on all transaction messages.
+ * ```ts
+ * const plan = parallelTransactionPlan([messageA, messageB]);
+ *
+ * const transformed = transformTransactionPlan(plan, (p) => {
+ *   if (p.kind === 'single') {
+ *     return singleTransactionPlan({ ...p.message, feePayer: newFeePayer });
+ *   }
+ *   return p;
+ * });
+ * ```
+ *
+ * @see {@link TransactionPlan}
+ * @see {@link findTransactionPlan}
+ * @see {@link everyTransactionPlan}
+ */
+export function transformTransactionPlan(
+    transactionPlan: TransactionPlan,
+    fn: (plan: TransactionPlan) => TransactionPlan,
+): TransactionPlan {
+    if (transactionPlan.kind === 'single') {
+        return Object.freeze(fn(transactionPlan));
+    }
+    return Object.freeze(
+        fn(
+            Object.freeze({
+                ...transactionPlan,
+                plans: transactionPlan.plans.map(p => transformTransactionPlan(p, fn)),
+            }),
+        ),
+    );
 }

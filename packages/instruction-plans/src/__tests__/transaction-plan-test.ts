@@ -8,6 +8,7 @@ import {
     parallelTransactionPlan,
     sequentialTransactionPlan,
     singleTransactionPlan,
+    transformTransactionPlan,
 } from '../transaction-plan';
 import { createMessage } from './__setup__';
 
@@ -364,5 +365,137 @@ describe('everyTransactionPlan', () => {
         expect(predicate).toHaveBeenNthCalledWith(1, plan);
         expect(predicate).toHaveBeenNthCalledWith(2, messageA);
         expect(predicate).not.toHaveBeenCalledWith(messageB);
+    });
+});
+
+describe('transformTransactionPlan', () => {
+    it('transforms single transaction plans', () => {
+        const plan = singleTransactionPlan(createMessage('A'));
+        const transformedPlan = transformTransactionPlan(plan, p =>
+            // eslint-disable-next-line jest/no-conditional-in-test
+            p.kind === 'single' ? { ...p, message: { ...p.message, id: 'New A' } } : p,
+        );
+        expect(transformedPlan).toStrictEqual(singleTransactionPlan(createMessage('New A')));
+    });
+    it('transforms sequential transaction plans', () => {
+        const plan = sequentialTransactionPlan([createMessage('A'), createMessage('B')]);
+        const transformedPlan = transformTransactionPlan(plan, p =>
+            // eslint-disable-next-line jest/no-conditional-in-test
+            p.kind === 'sequential' ? { ...p, plans: p.plans.reverse() } : p,
+        );
+        expect(transformedPlan).toStrictEqual(sequentialTransactionPlan([createMessage('B'), createMessage('A')]));
+    });
+    it('transforms non-divisible sequential transaction plans', () => {
+        const plan = nonDivisibleSequentialTransactionPlan([createMessage('A'), createMessage('B')]);
+        const transformedPlan = transformTransactionPlan(plan, p =>
+            // eslint-disable-next-line jest/no-conditional-in-test
+            p.kind === 'sequential' ? { ...p, plans: p.plans.reverse() } : p,
+        );
+        expect(transformedPlan).toStrictEqual(
+            nonDivisibleSequentialTransactionPlan([createMessage('B'), createMessage('A')]),
+        );
+    });
+    it('transforms parallel transaction plans', () => {
+        const plan = parallelTransactionPlan([createMessage('A'), createMessage('B')]);
+        const transformedPlan = transformTransactionPlan(plan, p =>
+            // eslint-disable-next-line jest/no-conditional-in-test
+            p.kind === 'parallel' ? { ...p, plans: p.plans.reverse() } : p,
+        );
+        expect(transformedPlan).toStrictEqual(parallelTransactionPlan([createMessage('B'), createMessage('A')]));
+    });
+    it('transforms using a bottom-up approach', () => {
+        // Given the following nested plans.
+        const plan = sequentialTransactionPlan([
+            createMessage('A'),
+            sequentialTransactionPlan([createMessage('B'), createMessage('C')]),
+        ]);
+
+        // And given an array of message IDs that were seen by sequential plans during transformation.
+        const seenTransactionMessageIds: string[] = [];
+
+        // When transforming by prepending "New " to single transaction plan IDs
+        // And recording the seen transaction message IDs in sequential plans.
+        transformTransactionPlan(plan, p => {
+            // eslint-disable-next-line jest/no-conditional-in-test
+            if (p.kind === 'single') {
+                const message = p.message as ReturnType<typeof createMessage>;
+                return { ...p, message: { ...message, id: `New ${message.id}` } };
+            }
+            // eslint-disable-next-line jest/no-conditional-in-test
+            if (p.kind === 'sequential') {
+                const seenMessages = p.plans
+                    .filter(subPlan => subPlan.kind === 'single')
+                    .map(subPlan => subPlan.message as ReturnType<typeof createMessage>);
+                seenTransactionMessageIds.push(...seenMessages.map(message => message.id));
+            }
+            return p;
+        });
+
+        // Then we expect the seen message IDs to have already been transformed
+        // using a bottom-up approach.
+        expect(seenTransactionMessageIds).toStrictEqual(['New B', 'New C', 'New A']);
+    });
+    it('can be used to duplicate transactions', () => {
+        const plan = sequentialTransactionPlan([createMessage('A'), createMessage('B')]);
+        const transformedPlan = transformTransactionPlan(plan, p =>
+            // eslint-disable-next-line jest/no-conditional-in-test
+            p.kind === 'single' ? sequentialTransactionPlan([p.message, p.message]) : p,
+        );
+        expect(transformedPlan).toStrictEqual(
+            sequentialTransactionPlan([
+                sequentialTransactionPlan([createMessage('A'), createMessage('A')]),
+                sequentialTransactionPlan([createMessage('B'), createMessage('B')]),
+            ]),
+        );
+    });
+    it('can be used to remove parallelism', () => {
+        const plan = parallelTransactionPlan([createMessage('A'), createMessage('B')]);
+        const transformedPlan = transformTransactionPlan(plan, p =>
+            // eslint-disable-next-line jest/no-conditional-in-test
+            p.kind === 'parallel' ? sequentialTransactionPlan(p.plans) : p,
+        );
+        expect(transformedPlan).toStrictEqual(sequentialTransactionPlan([createMessage('A'), createMessage('B')]));
+    });
+    it('can be used to flatten nested transaction plans', () => {
+        const plan = sequentialTransactionPlan([
+            sequentialTransactionPlan([createMessage('A'), createMessage('B')]),
+            sequentialTransactionPlan([
+                createMessage('C'),
+                sequentialTransactionPlan([createMessage('D'), createMessage('E')]),
+            ]),
+        ]);
+        const transformedPlan = transformTransactionPlan(plan, p => {
+            // eslint-disable-next-line jest/no-conditional-in-test
+            if (p.kind !== 'sequential') return p;
+            const subPlans = p.plans.flatMap(subPlan =>
+                // eslint-disable-next-line jest/no-conditional-in-test
+                subPlan.kind === 'sequential' && p.divisible === subPlan.divisible ? subPlan.plans : [subPlan],
+            );
+            return { ...p, plans: subPlans };
+        });
+        expect(transformedPlan).toStrictEqual(
+            sequentialTransactionPlan([
+                createMessage('A'),
+                createMessage('B'),
+                createMessage('C'),
+                createMessage('D'),
+                createMessage('E'),
+            ]),
+        );
+    });
+    it('keeps transformed single transaction plans frozen', () => {
+        const plan = singleTransactionPlan(createMessage('A'));
+        const transformedPlan = transformTransactionPlan(plan, p => ({ ...p }));
+        expect(transformedPlan).toBeFrozenObject();
+    });
+    it('keeps transformed sequential transaction plans frozen', () => {
+        const plan = sequentialTransactionPlan([createMessage('A')]);
+        const transformedPlan = transformTransactionPlan(plan, p => ({ ...p }));
+        expect(transformedPlan).toBeFrozenObject();
+    });
+    it('keeps transformed parallel transaction plans frozen', () => {
+        const plan = parallelTransactionPlan([createMessage('A')]);
+        const transformedPlan = transformTransactionPlan(plan, p => ({ ...p }));
+        expect(transformedPlan).toBeFrozenObject();
     });
 });

@@ -399,6 +399,7 @@ function parseSingleInstructionPlans(plans: (Instruction | InstructionPlan)[]): 
  *
  * @see {@link InstructionPlan}
  * @see {@link everyInstructionPlan}
+ * @see {@link transformInstructionPlan}
  */
 export function findInstructionPlan(
     instructionPlan: InstructionPlan,
@@ -458,6 +459,7 @@ export function findInstructionPlan(
  *
  * @see {@link InstructionPlan}
  * @see {@link findInstructionPlan}
+ * @see {@link transformInstructionPlan}
  */
 export function everyInstructionPlan(
     instructionPlan: InstructionPlan,
@@ -470,6 +472,67 @@ export function everyInstructionPlan(
         return true;
     }
     return instructionPlan.plans.every(p => everyInstructionPlan(p, predicate));
+}
+
+/**
+ * Transforms an instruction plan tree using a bottom-up approach.
+ *
+ * This function recursively traverses the instruction plan tree, applying the
+ * transformation function to each plan. The transformation is applied bottom-up,
+ * meaning nested plans are transformed first, then the parent plans receive
+ * the already-transformed children before being transformed themselves.
+ *
+ * All transformed plans are frozen using `Object.freeze` to ensure immutability.
+ *
+ * @param instructionPlan - The instruction plan tree to transform.
+ * @param fn - A function that transforms each plan and returns a new plan.
+ * @return A new transformed instruction plan tree.
+ *
+ * @example
+ * Making all sequential plans non-divisible to ensure atomicity.
+ * ```ts
+ * const plan = sequentialInstructionPlan([instructionA, instructionB]);
+ *
+ * const transformed = transformInstructionPlan(plan, (p) => {
+ *   if (p.kind === 'sequential' && p.divisible) {
+ *     return nonDivisibleSequentialInstructionPlan(p.plans);
+ *   }
+ *   return p;
+ * });
+ * ```
+ *
+ * @example
+ * Filtering out debug instructions before production execution.
+ * ```ts
+ * const plan = sequentialInstructionPlan([instructionA, debugInstruction, instructionB]);
+ *
+ * const transformed = transformInstructionPlan(plan, (p) => {
+ *   if (p.kind === 'sequential' || p.kind === 'parallel') {
+ *     return { ...p, plans: p.plans.filter((p) => !isDebugInstruction(p)) };
+ *   }
+ *   return p;
+ * });
+ * ```
+ *
+ * @see {@link InstructionPlan}
+ * @see {@link findInstructionPlan}
+ * @see {@link everyInstructionPlan}
+ */
+export function transformInstructionPlan(
+    instructionPlan: InstructionPlan,
+    fn: (plan: InstructionPlan) => InstructionPlan,
+): InstructionPlan {
+    if (instructionPlan.kind === 'single' || instructionPlan.kind === 'messagePacker') {
+        return Object.freeze(fn(instructionPlan));
+    }
+    return Object.freeze(
+        fn(
+            Object.freeze({
+                ...instructionPlan,
+                plans: instructionPlan.plans.map(p => transformInstructionPlan(p, fn)),
+            }),
+        ),
+    );
 }
 
 /**

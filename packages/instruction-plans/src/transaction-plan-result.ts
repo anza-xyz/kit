@@ -437,6 +437,7 @@ export function canceledSingleTransactionPlanResult<
  *
  * @see {@link TransactionPlanResult}
  * @see {@link everyTransactionPlanResult}
+ * @see {@link transformTransactionPlanResult}
  * @see {@link flattenTransactionPlanResult}
  */
 export function findTransactionPlanResult<TContext extends TransactionPlanResultContext = TransactionPlanResultContext>(
@@ -555,6 +556,7 @@ export function getFirstFailedSingleTransactionPlanResult(
  *
  * @see {@link TransactionPlanResult}
  * @see {@link findTransactionPlanResult}
+ * @see {@link transformTransactionPlanResult}
  * @see {@link flattenTransactionPlanResult}
  */
 export function everyTransactionPlanResult(
@@ -568,6 +570,57 @@ export function everyTransactionPlanResult(
         return true;
     }
     return transactionPlanResult.plans.every(p => everyTransactionPlanResult(p, predicate));
+}
+
+/**
+ * Transforms a transaction plan result tree using a bottom-up approach.
+ *
+ * This function recursively traverses the transaction plan result tree, applying the
+ * transformation function to each result. The transformation is applied bottom-up,
+ * meaning nested results are transformed first, then the parent results receive
+ * the already-transformed children before being transformed themselves.
+ *
+ * All transformed results are frozen using `Object.freeze` to ensure immutability.
+ *
+ * @param transactionPlanResult - The transaction plan result tree to transform.
+ * @param fn - A function that transforms each result and returns a new result.
+ * @return A new transformed transaction plan result tree.
+ *
+ * @example
+ * Converting all canceled results to failed results.
+ * ```ts
+ * const result = parallelTransactionPlanResult([
+ *   successfulSingleTransactionPlanResult(messageA, transactionA),
+ *   canceledSingleTransactionPlanResult(messageB),
+ * ]);
+ *
+ * const transformed = transformTransactionPlanResult(result, (r) => {
+ *   if (r.kind === 'single' && r.status.kind === 'canceled') {
+ *     return failedSingleTransactionPlanResult(r.message, new Error('Execution canceled'));
+ *   }
+ *   return r;
+ * });
+ * ```
+ *
+ * @see {@link TransactionPlanResult}
+ * @see {@link findTransactionPlanResult}
+ * @see {@link everyTransactionPlanResult}
+ */
+export function transformTransactionPlanResult(
+    transactionPlanResult: TransactionPlanResult,
+    fn: (plan: TransactionPlanResult) => TransactionPlanResult,
+): TransactionPlanResult {
+    if (transactionPlanResult.kind === 'single') {
+        return Object.freeze(fn(transactionPlanResult));
+    }
+    return Object.freeze(
+        fn(
+            Object.freeze({
+                ...transactionPlanResult,
+                plans: transactionPlanResult.plans.map(p => transformTransactionPlanResult(p, fn)),
+            }),
+        ),
+    );
 }
 
 /**
