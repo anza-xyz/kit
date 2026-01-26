@@ -108,7 +108,7 @@ describe('sendTransaction', () => {
                 expect.assertions(1);
                 const [secretKey, { value: latestBlockhash }] = await Promise.all([
                     getSecretKey(MOCK_PRIVATE_KEY_BYTES),
-                    rpc.getLatestBlockhash({ commitment: 'processed' }).send(),
+                    rpc.getLatestBlockhash({ commitment }).send(),
                 ]);
                 const message = getMockTransactionMessage({
                     blockhash: latestBlockhash.blockhash,
