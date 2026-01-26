@@ -153,7 +153,7 @@ export type ParallelTransactionPlanResult<
 export type SingleTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer = BaseTransactionMessage &
-        TransactionMessageWithFeePayer,
+    TransactionMessageWithFeePayer,
 > = Readonly<{
     kind: 'single';
     message: TTransactionMessage;
@@ -283,7 +283,7 @@ export function parallelTransactionPlanResult<
 export function successfulSingleTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer = BaseTransactionMessage &
-        TransactionMessageWithFeePayer,
+    TransactionMessageWithFeePayer,
 >(
     transactionMessage: TTransactionMessage,
     transaction: Transaction,
@@ -328,7 +328,7 @@ export function successfulSingleTransactionPlanResult<
 export function successfulSingleTransactionPlanResultFromSignature<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer = BaseTransactionMessage &
-        TransactionMessageWithFeePayer,
+    TransactionMessageWithFeePayer,
 >(
     transactionMessage: TTransactionMessage,
     signature: Signature,
@@ -370,7 +370,7 @@ export function successfulSingleTransactionPlanResultFromSignature<
 export function failedSingleTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer = BaseTransactionMessage &
-        TransactionMessageWithFeePayer,
+    TransactionMessageWithFeePayer,
 >(transactionMessage: TTransactionMessage, error: Error): SingleTransactionPlanResult<TContext, TTransactionMessage> {
     return Object.freeze({
         kind: 'single',
@@ -400,7 +400,7 @@ export function failedSingleTransactionPlanResult<
 export function canceledSingleTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer = BaseTransactionMessage &
-        TransactionMessageWithFeePayer,
+    TransactionMessageWithFeePayer,
 >(transactionMessage: TTransactionMessage): SingleTransactionPlanResult<TContext, TTransactionMessage> {
     return Object.freeze({
         kind: 'single',
@@ -605,6 +605,7 @@ export function everyTransactionPlanResult(
  * @see {@link TransactionPlanResult}
  * @see {@link findTransactionPlanResult}
  * @see {@link everyTransactionPlanResult}
+ * @see {@link flattenTransactionPlanResult}
  */
 export function transformTransactionPlanResult(
     transactionPlanResult: TransactionPlanResult,
@@ -624,25 +625,38 @@ export function transformTransactionPlanResult(
 }
 
 /**
- * Flattens a {@link TransactionPlanResult} into an array of {@link SingleTransactionPlanResult}.
- * @param result The transaction plan result to flatten
- * @returns An array of single transaction plan results
+ * Retrieves all individual {@link SingleTransactionPlanResult} instances from a transaction plan result tree.
+ *
+ * This function recursively traverses any nested structure of transaction plan results and extracts
+ * all the single results they contain. It's useful when you need to access all the individual
+ * transaction results, regardless of their organization in the result tree (parallel or sequential).
+ *
+ * @param result - The transaction plan result to extract single results from
+ * @returns An array of all single transaction plan results contained in the tree
+ *
+ * @example
+ * ```ts
+ * const result = parallelTransactionPlanResult([
+ *   sequentialTransactionPlanResult([resultA, resultB]),
+ *   nonDivisibleSequentialTransactionPlanResult([resultC, resultD]),
+ *   resultE,
+ * ]);
+ *
+ * const singleResults = flattenTransactionPlanResult(result);
+ * // Array of `SingleTransactionPlanResult` containing:
+ * // resultA, resultB, resultC, resultD and resultE.
+ * ```
+ *
+ * @see {@link TransactionPlanResult}
+ * @see {@link findTransactionPlanResult}
+ * @see {@link everyTransactionPlanResult}
+ * @see {@link transformTransactionPlanResult}
  */
 export function flattenTransactionPlanResult(result: TransactionPlanResult): SingleTransactionPlanResult[] {
-    const transactionPlanResults: SingleTransactionPlanResult[] = [];
-
-    function traverse(result: TransactionPlanResult) {
-        if (result.kind === 'single') {
-            transactionPlanResults.push(result);
-        } else {
-            for (const subResult of result.plans) {
-                traverse(subResult);
-            }
-        }
+    if (result.kind === 'single') {
+        return [result];
     }
-
-    traverse(result);
-    return transactionPlanResults;
+    return result.plans.flatMap(flattenTransactionPlanResult);
 }
 
 /**

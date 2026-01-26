@@ -4,6 +4,7 @@ import type { Transaction } from '@solana/transactions';
 import {
     canceledSingleTransactionPlanResult,
     failedSingleTransactionPlanResult,
+    flattenTransactionPlanResult,
     nonDivisibleSequentialTransactionPlanResult,
     ParallelTransactionPlanResult,
     parallelTransactionPlanResult,
@@ -166,5 +167,27 @@ type CustomContext = { customData: string };
         const result = canceledSingleTransactionPlanResult(messageA);
         result satisfies SingleTransactionPlanResult<TransactionPlanResultContext, typeof messageA>;
         result satisfies TransactionPlanResult;
+    }
+}
+
+// [DESCRIBE] flattenTransactionPlanResult
+{
+    // It extracts single plan results from a simple plan result.
+    {
+        const result = successfulSingleTransactionPlanResult(messageA, transactionA);
+        const results = flattenTransactionPlanResult(result);
+        results satisfies SingleTransactionPlanResult[];
+    }
+
+    // It extracts single plan results from a nested plan result.
+    {
+        const result = parallelTransactionPlanResult([
+            sequentialTransactionPlanResult([
+                successfulSingleTransactionPlanResult(messageA, transactionA),
+                successfulSingleTransactionPlanResult(messageB, transactionB),
+            ]),
+        ]);
+        const results = flattenTransactionPlanResult(result);
+        results satisfies SingleTransactionPlanResult[];
     }
 }
