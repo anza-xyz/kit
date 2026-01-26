@@ -20,6 +20,7 @@ import { getTransactionMessageSize, TRANSACTION_SIZE_LIMIT } from '@solana/trans
 import {
     everyInstructionPlan,
     findInstructionPlan,
+    flattenInstructionPlan,
     getLinearMessagePackerInstructionPlan,
     getMessagePackerInstructionPlanFromInstructions,
     getReallocMessagePackerInstructionPlan,
@@ -693,5 +694,56 @@ describe('transformInstructionPlan', () => {
         const plan = parallelInstructionPlan([createInstruction('A')]);
         const transformedPlan = transformInstructionPlan(plan, p => ({ ...p }));
         expect(transformedPlan).toBeFrozenObject();
+    });
+});
+
+describe('flattenInstructionPlan', () => {
+    it('returns the single instruction plan when given a SingleInstructionPlan', () => {
+        const instructionA = createInstruction('A');
+        const plan = singleInstructionPlan(instructionA);
+        const result = flattenInstructionPlan(plan);
+        expect(result).toStrictEqual([plan]);
+    });
+    it('returns the message packer plan when given a MessagePackerInstructionPlan', () => {
+        const plan = getMessagePackerInstructionPlanFromInstructions([createInstruction('A')]);
+        const result = flattenInstructionPlan(plan);
+        expect(result).toStrictEqual([plan]);
+    });
+    it('returns all leaf plans from a ParallelInstructionPlan', () => {
+        const instructionA = createInstruction('A');
+        const instructionB = createInstruction('B');
+        const plan = parallelInstructionPlan([instructionA, instructionB]);
+        const result = flattenInstructionPlan(plan);
+        expect(result).toStrictEqual([singleInstructionPlan(instructionA), singleInstructionPlan(instructionB)]);
+    });
+    it('returns all leaf plans from a SequentialInstructionPlan', () => {
+        const instructionA = createInstruction('A');
+        const instructionB = createInstruction('B');
+        const plan = sequentialInstructionPlan([instructionA, instructionB]);
+        const result = flattenInstructionPlan(plan);
+        expect(result).toStrictEqual([singleInstructionPlan(instructionA), singleInstructionPlan(instructionB)]);
+    });
+    it('returns all leaf plans from a complex nested structure', () => {
+        const instructionA = createInstruction('A');
+        const instructionB = createInstruction('B');
+        const instructionC = createInstruction('C');
+        const instructionD = createInstruction('D');
+        const instructionE = createInstruction('E');
+        const messagePackerPlan = getMessagePackerInstructionPlanFromInstructions([createInstruction('F')]);
+        const plan = parallelInstructionPlan([
+            sequentialInstructionPlan([instructionA, instructionB]),
+            nonDivisibleSequentialInstructionPlan([instructionC, instructionD]),
+            instructionE,
+            messagePackerPlan,
+        ]);
+        const result = flattenInstructionPlan(plan);
+        expect(result).toStrictEqual([
+            singleInstructionPlan(instructionA),
+            singleInstructionPlan(instructionB),
+            singleInstructionPlan(instructionC),
+            singleInstructionPlan(instructionD),
+            singleInstructionPlan(instructionE),
+            messagePackerPlan,
+        ]);
     });
 });

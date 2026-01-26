@@ -400,6 +400,7 @@ function parseSingleInstructionPlans(plans: (Instruction | InstructionPlan)[]): 
  * @see {@link InstructionPlan}
  * @see {@link everyInstructionPlan}
  * @see {@link transformInstructionPlan}
+ * @see {@link flattenInstructionPlan}
  */
 export function findInstructionPlan(
     instructionPlan: InstructionPlan,
@@ -460,6 +461,7 @@ export function findInstructionPlan(
  * @see {@link InstructionPlan}
  * @see {@link findInstructionPlan}
  * @see {@link transformInstructionPlan}
+ * @see {@link flattenInstructionPlan}
  */
 export function everyInstructionPlan(
     instructionPlan: InstructionPlan,
@@ -517,6 +519,7 @@ export function everyInstructionPlan(
  * @see {@link InstructionPlan}
  * @see {@link findInstructionPlan}
  * @see {@link everyInstructionPlan}
+ * @see {@link flattenInstructionPlan}
  */
 export function transformInstructionPlan(
     instructionPlan: InstructionPlan,
@@ -533,6 +536,45 @@ export function transformInstructionPlan(
             }),
         ),
     );
+}
+
+/**
+ * Retrieves all individual {@link SingleInstructionPlan} and {@link MessagePackerInstructionPlan}
+ * instances from an instruction plan tree.
+ *
+ * This function recursively traverses any nested structure of instruction plans and extracts
+ * all the leaf plans they contain. It's useful when you need to access all the individual
+ * instructions or message packers that will be executed, regardless of their organization
+ * in the plan tree (parallel or sequential).
+ *
+ * @param instructionPlan - The instruction plan to extract leaf plans from
+ * @returns An array of all single and message packer instruction plans contained in the tree
+ *
+ * @example
+ * ```ts
+ * const plan = parallelInstructionPlan([
+ *   sequentialInstructionPlan([instructionA, instructionB]),
+ *   nonDivisibleSequentialInstructionPlan([instructionC, instructionD]),
+ *   instructionE,
+ * ]);
+ *
+ * const leafPlans = flattenInstructionPlan(plan);
+ * // Array of `SingleInstructionPlan` containing:
+ * // instructionA, instructionB, instructionC, instructionD and instructionE.
+ * ```
+ * 
+ * @see {@link InstructionPlan}
+ * @see {@link findInstructionPlan}
+ * @see {@link everyInstructionPlan}
+ * @see {@link transformInstructionPlan}
+ */
+export function flattenInstructionPlan(
+    instructionPlan: InstructionPlan,
+): (MessagePackerInstructionPlan | SingleInstructionPlan)[] {
+    if (instructionPlan.kind === 'single' || instructionPlan.kind === 'messagePacker') {
+        return [instructionPlan];
+    }
+    return instructionPlan.plans.flatMap(flattenInstructionPlan);
 }
 
 /**

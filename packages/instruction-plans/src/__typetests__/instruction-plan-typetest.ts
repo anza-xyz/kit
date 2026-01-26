@@ -1,6 +1,7 @@
 import type { Instruction } from '@solana/instructions';
 
 import {
+    flattenInstructionPlan,
     getLinearMessagePackerInstructionPlan,
     getMessagePackerInstructionPlanFromInstructions,
     getReallocMessagePackerInstructionPlan,
@@ -105,5 +106,27 @@ const instructionC = null as unknown as Instruction & { id: 'C' };
             totalSize: 42,
         });
         plan satisfies MessagePackerInstructionPlan;
+    }
+}
+
+// [DESCRIBE] flattenInstructionPlan
+{
+    // It extracts leaf plans from a simple plan.
+    {
+        const plan = singleInstructionPlan(instructionA);
+        const leafPlans = flattenInstructionPlan(plan);
+        leafPlans satisfies (MessagePackerInstructionPlan | SingleInstructionPlan)[];
+    }
+
+    // It extracts leaf plans from a nested plan.
+    {
+        const messagePackerPlan = getMessagePackerInstructionPlanFromInstructions([instructionA]);
+        const plan = parallelInstructionPlan([
+            sequentialInstructionPlan([instructionA, instructionB]),
+            nonDivisibleSequentialInstructionPlan([instructionC]),
+            messagePackerPlan,
+        ]);
+        const leafPlans = flattenInstructionPlan(plan);
+        leafPlans satisfies (MessagePackerInstructionPlan | SingleInstructionPlan)[];
     }
 }
