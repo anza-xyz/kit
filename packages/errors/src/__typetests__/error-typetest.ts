@@ -55,12 +55,12 @@ if (isSolanaError(e, SOLANA_ERROR__TRANSACTION__SIGNATURES_MISSING)) {
 // `SolanaErrorContext` must not contain any keys reserved by `ErrorOptions` (eg. `cause`)
 null as unknown as SolanaErrorContext satisfies {
     [Code in keyof SolanaErrorContext]: SolanaErrorContext[Code] extends undefined
-    ? undefined
-    : {
-        [PP in keyof SolanaErrorContext[Code]]: PP extends keyof ErrorOptions
-        ? never
-        : SolanaErrorContext[Code][PP];
-    };
+        ? undefined
+        : {
+              [PP in keyof SolanaErrorContext[Code]]: PP extends keyof ErrorOptions
+                  ? never
+                  : SolanaErrorContext[Code][PP];
+          };
 };
 
 // Special errors have a nested `cause` property that is an optional `SolanaError`

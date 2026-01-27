@@ -61,6 +61,14 @@ export interface SolanaErrorWithDeprecatedCause<
  * }
  * ```
  */
+export function isSolanaError<TErrorCode extends SolanaErrorCodeWithDeprecatedCause>(
+    e: unknown,
+    code: TErrorCode,
+): e is SolanaErrorWithDeprecatedCause<TErrorCode>;
+export function isSolanaError<TErrorCode extends SolanaErrorCode>(
+    e: unknown,
+    code?: TErrorCode,
+): e is SolanaError<TErrorCode>;
 export function isSolanaError<TErrorCode extends SolanaErrorCode>(
     e: unknown,
     /**
@@ -68,9 +76,7 @@ export function isSolanaError<TErrorCode extends SolanaErrorCode>(
      * its error code is exactly this value.
      */
     code?: TErrorCode,
-): e is TErrorCode extends SolanaErrorCodeWithDeprecatedCause
-? SolanaErrorWithDeprecatedCause<SolanaErrorCodeWithDeprecatedCause & TErrorCode>
-: SolanaError<TErrorCode> {
+): e is SolanaError<TErrorCode> {
     const isSolanaError = e instanceof Error && e.name === 'SolanaError';
     if (isSolanaError) {
         if (code !== undefined) {
@@ -85,7 +91,7 @@ type SolanaErrorCodedContext = {
     [P in SolanaErrorCode]: Readonly<{
         __code: P;
     }> &
-    (SolanaErrorContext[P] extends undefined ? object : SolanaErrorContext[P]);
+        (SolanaErrorContext[P] extends undefined ? object : SolanaErrorContext[P]);
 };
 
 /**
@@ -131,8 +137,8 @@ export class SolanaError<TErrorCode extends SolanaErrorCode = SolanaErrorCode> e
         this.context = Object.freeze(
             context === undefined
                 ? {
-                    __code: code,
-                }
+                      __code: code,
+                  }
                 : context,
         ) as SolanaErrorCodedContext[TErrorCode];
         // This is necessary so that `isSolanaError()` can identify a `SolanaError` without having
