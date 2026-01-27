@@ -22,3 +22,7 @@ updates:
       solana-program-clients:
         patterns:
           - '@solana-program/*'
+      react:
+        patterns:
+          - 'react'
+          - 'react-dom'
