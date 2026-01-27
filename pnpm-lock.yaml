@@ -204,8 +204,8 @@ importers:
         specifier: ^0.4.26
         version: 0.4.26(eslint@9.39.2(jiti@1.21.7))
       globals:
-        specifier: ^17.1.0
-        version: 17.1.0
+        specifier: ^17.2.0
+        version: 17.2.0
       jest:
         specifier: ^30.0.0-alpha.6
         version: 30.0.0-alpha.6(@types/node@25.0.10)(ts-node@10.9.2(@swc/core@1.13.19(@swc/helpers@0.5.17))(@types/node@25.0.10)(typescript@5.9.3))
@@ -554,7 +554,7 @@ importers:
         version: 0.14.0
       '@solana/eslint-config-solana':
         specifier: ^6.0.0
-        version: 6.0.0(87f8bcd87ef59a882d2e126690de06a0)
+        version: 6.0.0(0caa28205e0dd35498b2ab9c5070b5dd)
       '@typescript-eslint/eslint-plugin':
         specifier: ^8.54.0
         version: 8.54.0(@typescript-eslint/parser@8.54.0(eslint@9.39.2(jiti@1.21.7))(typescript@5.9.3))(eslint@9.39.2(jiti@1.21.7))(typescript@5.9.3)
@@ -6366,8 +6366,8 @@ packages:
     resolution: {integrity: sha512-oahGvuMGQlPw/ivIYBjVSrWAfWLBeku5tpPE2fOPLi+WHffIWbuh2tCjhyQhTBPMf5E9jDEH4FOmTYgYwbKwtQ==}
     engines: {node: '>=18'}
 
-  globals@17.1.0:
-    resolution: {integrity: sha512-8HoIcWI5fCvG5NADj4bDav+er9B9JMj2vyL2pI8D0eismKyUvPLTSs+Ln3wqhwcp306i73iyVnEKx3F6T47TGw==}
+  globals@17.2.0:
+    resolution: {integrity: sha512-tovnCz/fEq+Ripoq+p/gN1u7l6A7wwkoBT9pRCzTHzsD/LvADIzXZdjmRymh5Ztf0DYC3Rwg5cZRYjxzBmzbWg==}
     engines: {node: '>=18'}
 
   globby@11.1.0:
@@ -12186,7 +12186,7 @@ snapshots:
       commander: 14.0.2
       typescript: 5.9.3
 
-  '@solana/eslint-config-solana@6.0.0(87f8bcd87ef59a882d2e126690de06a0)':
+  '@solana/eslint-config-solana@6.0.0(0caa28205e0dd35498b2ab9c5070b5dd)':
     dependencies:
       '@eslint/js': 9.39.2
       '@types/eslint': 9.6.1
@@ -12197,7 +12197,7 @@ snapshots:
       eslint-plugin-simple-import-sort: 12.1.1(eslint@9.39.2(jiti@1.21.7))
       eslint-plugin-sort-keys-fix: 1.1.2
       eslint-plugin-typescript-sort-keys: 3.3.0(@typescript-eslint/parser@8.54.0(eslint@9.39.2(jiti@1.21.7))(typescript@5.9.3))(eslint@9.39.2(jiti@1.21.7))(typescript@5.9.3)
-      globals: 17.1.0
+      globals: 17.2.0
       jest: 30.2.0(@types/node@25.0.10)(ts-node@10.9.2(@swc/core@1.13.19(@swc/helpers@0.5.17))(@types/node@25.0.10)(typescript@5.9.3))
       typescript: 5.9.3
       typescript-eslint: 8.50.0(eslint@9.39.2(jiti@1.21.7))(typescript@5.9.3)
@@ -14206,7 +14206,7 @@ snapshots:
 
   globals@14.0.0: {}
 
-  globals@17.1.0: {}
+  globals@17.2.0: {}
 
   globby@11.1.0:
     dependencies:
