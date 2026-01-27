@@ -30,6 +30,7 @@ import { createTransactionPlanner, TransactionPlanner } from '../transaction-pla
 import {
     createMessage,
     createMessagePackerInstructionPlan,
+    createSingleInstructionAtATimeMessagePackerInstructionPlan,
     FOREVER_PROMISE,
     instructionFactory,
     transactionPercentFactory,
@@ -1436,6 +1437,42 @@ describe('createTransactionPlanner', () => {
             ).resolves.toEqual(
                 singleTransactionPlan([instructionA, messagePackerB.get(0, txPercent(50)), instructionC]),
             );
+        });
+
+        /**
+         *  [Par] ─────────────────────────▶ [Tx: A + B + C]
+         *   │
+         *   ├── [A: 25%]
+         *   └── [NonDivSeq]
+         *        └── [MessagePackerWithMultipleIterations(B: 25%, C: 25%)]
+         *
+         * This tests a case where the entire message packer must be packed into a single transaction.
+         * It uses a message packer that has instructions that can fit, but require multiple iterations
+         * to be fully added.
+         */
+        it('accumulates all instructions when a message packer requires multiple iterations in fitEntirePlanInsideMessage', async () => {
+            expect.assertions(1);
+            const createTransactionMessage = createMockTransactionMessage;
+            const { instruction, singleTransactionPlan, txPercent } = getHelpers(createTransactionMessage);
+            const planner = createTransactionPlanner({ createTransactionMessage });
+
+            const instructionA = instruction('A', txPercent(25));
+            const instructionB = instruction('B', txPercent(25));
+            const instructionC = instruction('C', txPercent(25));
+
+            const multiIterPacker = createSingleInstructionAtATimeMessagePackerInstructionPlan([
+                instructionB,
+                instructionC,
+            ]);
+
+            await expect(
+                planner(
+                    parallelInstructionPlan([
+                        singleInstructionPlan(instructionA),
+                        nonDivisibleSequentialInstructionPlan([multiIterPacker]),
+                    ]),
+                ),
+            ).resolves.toEqual(singleTransactionPlan([instructionA, instructionB, instructionC]));
         });
     });
 

@@ -17,6 +17,34 @@ import { MessagePackerInstructionPlan } from '../instruction-plan';
 
 const MINIMUM_INSTRUCTION_SIZE = 35;
 
+/**
+ * Creates a message packer that packs one instruction at a time,
+ * even when there's space to pack more in a single iteration.
+ * This is useful for testing that the message packer loop correctly accumulates
+ * results across iterations.
+ */
+export function createSingleInstructionAtATimeMessagePackerInstructionPlan(
+    instructions: Instruction[],
+): MessagePackerInstructionPlan {
+    return Object.freeze({
+        getMessagePacker: () => {
+            let index = 0;
+            return {
+                done: () => index >= instructions.length,
+                packMessageToCapacity: message => {
+                    if (index >= instructions.length) {
+                        return message;
+                    }
+                    const instruction = instructions[index];
+                    index++;
+                    return appendTransactionMessageInstruction(instruction, message);
+                },
+            };
+        },
+        kind: 'messagePacker',
+    });
+}
+
 export const FOREVER_PROMISE = new Promise(() => {
     /* never resolve */
 });

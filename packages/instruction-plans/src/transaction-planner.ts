@@ -409,7 +409,7 @@ function fitEntirePlanInsideMessage(
             // eslint-disable-next-line no-case-declarations
             const messagePacker = instructionPlan.getMessagePacker();
             while (!messagePacker.done()) {
-                newMessage = messagePacker.packMessageToCapacity(message);
+                newMessage = messagePacker.packMessageToCapacity(newMessage);
             }
             return newMessage;
         default:
