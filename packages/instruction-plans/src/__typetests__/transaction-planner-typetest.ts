@@ -3,7 +3,7 @@
 import { Instruction } from '@solana/instructions';
 import {
     appendTransactionMessageInstruction,
-    BaseTransactionMessage,
+    TransactionMessage,
     TransactionMessageWithFeePayer,
 } from '@solana/transaction-messages';
 
@@ -31,7 +31,7 @@ import { createTransactionPlanner, type TransactionPlanner } from '../transactio
                 typeof createTransactionPlanner
             >[0]['createTransactionMessage'],
             onTransactionMessageUpdated: message => {
-                message satisfies BaseTransactionMessage & TransactionMessageWithFeePayer;
+                message satisfies TransactionMessage & TransactionMessageWithFeePayer;
                 return message;
             },
         });

@@ -1,4 +1,4 @@
-import type { BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
+import type { TransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
 import type { Transaction } from '@solana/transactions';
 
 import {
@@ -16,9 +16,9 @@ import {
     TransactionPlanResultContext,
 } from '../transaction-plan-result';
 
-const messageA = null as unknown as BaseTransactionMessage & TransactionMessageWithFeePayer & { id: 'A' };
-const messageB = null as unknown as BaseTransactionMessage & TransactionMessageWithFeePayer & { id: 'B' };
-const messageC = null as unknown as BaseTransactionMessage & TransactionMessageWithFeePayer & { id: 'C' };
+const messageA = null as unknown as TransactionMessage & TransactionMessageWithFeePayer & { id: 'A' };
+const messageB = null as unknown as TransactionMessage & TransactionMessageWithFeePayer & { id: 'B' };
+const messageC = null as unknown as TransactionMessage & TransactionMessageWithFeePayer & { id: 'C' };
 const transactionA = null as unknown as Transaction;
 const transactionB = null as unknown as Transaction;
 const error = null as unknown as Error;

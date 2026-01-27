@@ -6,9 +6,9 @@ import type { Instruction } from '@solana/instructions';
 import { SignatureBytes } from '@solana/keys';
 import {
     appendTransactionMessageInstruction,
-    type BaseTransactionMessage,
     createTransactionMessage,
     setTransactionMessageFeePayer,
+    type TransactionMessage,
     type TransactionMessageWithFeePayer,
 } from '@solana/transaction-messages';
 import { getTransactionMessageSize, SignaturesMap, Transaction, TRANSACTION_SIZE_LIMIT } from '@solana/transactions';
@@ -23,7 +23,7 @@ export const FOREVER_PROMISE = new Promise(() => {
 
 export function createMessage<TId extends string>(
     id: TId,
-): BaseTransactionMessage & TransactionMessageWithFeePayer & { id: TId } {
+): TransactionMessage & TransactionMessageWithFeePayer & { id: TId } {
     return pipe(
         createTransactionMessage({ version: 0 }),
         m => setTransactionMessageFeePayer('E9Nykp3rSdza2moQutaJ3K3RSC8E5iFERX2SqLTsQfjJ' as Address, m),
@@ -57,7 +57,7 @@ export function instructionFactory(baseSeed?: string) {
 }
 
 export function transactionPercentFactory(
-    createTransactionMessage: () => BaseTransactionMessage & TransactionMessageWithFeePayer,
+    createTransactionMessage: () => TransactionMessage & TransactionMessageWithFeePayer,
 ) {
     const minimumTransactionSize = getTransactionMessageSize(createTransactionMessage());
     const remainingSize = TRANSACTION_SIZE_LIMIT - minimumTransactionSize - 1; /* For shortU16. */

@@ -3,7 +3,7 @@ import {
     SolanaError,
 } from '@solana/errors';
 import { Signature } from '@solana/keys';
-import { BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
+import { TransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
 import { getSignatureFromTransaction, Transaction } from '@solana/transactions';
 
 /**
@@ -152,7 +152,7 @@ export type ParallelTransactionPlanResult<
  */
 export type SingleTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
-    TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer = BaseTransactionMessage &
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
 > = Readonly<{
     kind: 'single';
@@ -282,7 +282,7 @@ export function parallelTransactionPlanResult<
  */
 export function successfulSingleTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
-    TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer = BaseTransactionMessage &
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
 >(
     transactionMessage: TTransactionMessage,
@@ -327,7 +327,7 @@ export function successfulSingleTransactionPlanResult<
  */
 export function successfulSingleTransactionPlanResultFromSignature<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
-    TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer = BaseTransactionMessage &
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
 >(
     transactionMessage: TTransactionMessage,
@@ -369,7 +369,7 @@ export function successfulSingleTransactionPlanResultFromSignature<
  */
 export function failedSingleTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
-    TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer = BaseTransactionMessage &
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
 >(transactionMessage: TTransactionMessage, error: Error): SingleTransactionPlanResult<TContext, TTransactionMessage> {
     return Object.freeze({
@@ -399,7 +399,7 @@ export function failedSingleTransactionPlanResult<
  */
 export function canceledSingleTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
-    TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer = BaseTransactionMessage &
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
 >(transactionMessage: TTransactionMessage): SingleTransactionPlanResult<TContext, TTransactionMessage> {
     return Object.freeze({

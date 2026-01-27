@@ -4,7 +4,7 @@ import { SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN, Solan
 import { Instruction } from '@solana/instructions';
 import {
     appendTransactionMessageInstructions,
-    BaseTransactionMessage,
+    TransactionMessage,
     TransactionMessageWithFeePayer,
 } from '@solana/transaction-messages';
 import { getTransactionMessageSize, TRANSACTION_SIZE_LIMIT } from '@solana/transactions';
@@ -35,11 +35,11 @@ import {
     transactionPercentFactory,
 } from './__setup__';
 
-function createMockTransactionMessage(): BaseTransactionMessage & TransactionMessageWithFeePayer {
+function createMockTransactionMessage(): TransactionMessage & TransactionMessageWithFeePayer {
     return createMessage('mock-message');
 }
 
-function getHelpers(createTransactionMessage: () => BaseTransactionMessage & TransactionMessageWithFeePayer) {
+function getHelpers(createTransactionMessage: () => TransactionMessage & TransactionMessageWithFeePayer) {
     return {
         instruction: instructionFactory(),
         singleTransactionPlan: (instructions: Instruction[]) =>

@@ -6,7 +6,7 @@ import {
 import { Instruction } from '@solana/instructions';
 import {
     appendTransactionMessageInstruction,
-    BaseTransactionMessage,
+    TransactionMessage,
     TransactionMessageWithFeePayer,
 } from '@solana/transaction-messages';
 import { getTransactionMessageSize, TRANSACTION_SIZE_LIMIT } from '@solana/transactions';
@@ -247,8 +247,8 @@ export type MessagePacker = Readonly<{
      *   if the message packer is already done and no more instructions can be packed.
      */
     packMessageToCapacity: (
-        transactionMessage: BaseTransactionMessage & TransactionMessageWithFeePayer,
-    ) => BaseTransactionMessage & TransactionMessageWithFeePayer;
+        transactionMessage: TransactionMessage & TransactionMessageWithFeePayer,
+    ) => TransactionMessage & TransactionMessageWithFeePayer;
 }>;
 
 /**
@@ -620,7 +620,7 @@ export function getLinearMessagePackerInstructionPlan({
             let offset = 0;
             return Object.freeze({
                 done: () => offset >= totalBytes,
-                packMessageToCapacity: (message: BaseTransactionMessage & TransactionMessageWithFeePayer) => {
+                packMessageToCapacity: (message: TransactionMessage & TransactionMessageWithFeePayer) => {
                     if (offset >= totalBytes) {
                         throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_PACKER_ALREADY_COMPLETE);
                     }
@@ -689,7 +689,7 @@ export function getMessagePackerInstructionPlanFromInstructions<TInstruction ext
             let instructionIndex = 0;
             return Object.freeze({
                 done: () => instructionIndex >= instructions.length,
-                packMessageToCapacity: (message: BaseTransactionMessage & TransactionMessageWithFeePayer) => {
+                packMessageToCapacity: (message: TransactionMessage & TransactionMessageWithFeePayer) => {
                     if (instructionIndex >= instructions.length) {
                         throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_PACKER_ALREADY_COMPLETE);
                     }

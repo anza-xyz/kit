@@ -10,9 +10,9 @@ import { pipe } from '@solana/functional';
 import { Instruction } from '@solana/instructions';
 import {
     appendTransactionMessageInstruction,
-    BaseTransactionMessage,
     createTransactionMessage,
     setTransactionMessageFeePayer,
+    TransactionMessage,
     TransactionMessageWithFeePayer,
 } from '@solana/transaction-messages';
 import { getTransactionMessageSize, TRANSACTION_SIZE_LIMIT } from '@solana/transactions';
@@ -201,7 +201,7 @@ describe('nonDivisibleSequentialInstructionPlan', () => {
 });
 
 describe('getLinearMessagePackerInstructionPlan', () => {
-    let message: BaseTransactionMessage & TransactionMessageWithFeePayer;
+    let message: TransactionMessage & TransactionMessageWithFeePayer;
     beforeEach(() => {
         message = pipe(createTransactionMessage({ version: 0 }), m =>
             setTransactionMessageFeePayer('E9Nykp3rSdza2moQutaJ3K3RSC8E5iFERX2SqLTsQfjJ' as Address, m),
@@ -263,7 +263,7 @@ describe('getLinearMessagePackerInstructionPlan', () => {
 });
 
 describe('getMessagePackerInstructionPlanFromInstructions', () => {
-    let message: BaseTransactionMessage & TransactionMessageWithFeePayer;
+    let message: TransactionMessage & TransactionMessageWithFeePayer;
     beforeEach(() => {
         message = pipe(createTransactionMessage({ version: 0 }), m =>
             setTransactionMessageFeePayer('E9Nykp3rSdza2moQutaJ3K3RSC8E5iFERX2SqLTsQfjJ' as Address, m),
@@ -307,7 +307,7 @@ describe('getMessagePackerInstructionPlanFromInstructions', () => {
 });
 
 describe('getReallocMessagePackerInstructionPlan', () => {
-    let message: BaseTransactionMessage & TransactionMessageWithFeePayer;
+    let message: TransactionMessage & TransactionMessageWithFeePayer;
     beforeEach(() => {
         message = pipe(createTransactionMessage({ version: 0 }), m =>
             setTransactionMessageFeePayer('E9Nykp3rSdza2moQutaJ3K3RSC8E5iFERX2SqLTsQfjJ' as Address, m),

@@ -1,4 +1,4 @@
-import type { BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
+import type { TransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
 
 import {
     flattenTransactionPlan,
@@ -12,9 +12,9 @@ import {
     singleTransactionPlan,
 } from '../transaction-plan';
 
-const messageA = null as unknown as BaseTransactionMessage & TransactionMessageWithFeePayer & { id: 'A' };
-const messageB = null as unknown as BaseTransactionMessage & TransactionMessageWithFeePayer & { id: 'B' };
-const messageC = null as unknown as BaseTransactionMessage & TransactionMessageWithFeePayer & { id: 'C' };
+const messageA = null as unknown as TransactionMessage & TransactionMessageWithFeePayer & { id: 'A' };
+const messageB = null as unknown as TransactionMessage & TransactionMessageWithFeePayer & { id: 'B' };
+const messageC = null as unknown as TransactionMessage & TransactionMessageWithFeePayer & { id: 'C' };
 
 // [DESCRIBE] parallelTransactionPlan
 {

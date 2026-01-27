@@ -9,7 +9,7 @@ import {
 import { getAbortablePromise } from '@solana/promises';
 import {
     appendTransactionMessageInstructions,
-    BaseTransactionMessage,
+    TransactionMessage,
     TransactionMessageWithFeePayer,
 } from '@solana/transaction-messages';
 import { getTransactionMessageSize, TRANSACTION_SIZE_LIMIT } from '@solana/transactions';
@@ -50,15 +50,15 @@ type Mutable<T> = { -readonly [P in keyof T]: T[P] };
 type CreateTransactionMessage = (config?: {
     abortSignal?: AbortSignal;
 }) =>
-    | Promise<BaseTransactionMessage & TransactionMessageWithFeePayer>
-    | (BaseTransactionMessage & TransactionMessageWithFeePayer);
+    | Promise<TransactionMessage & TransactionMessageWithFeePayer>
+    | (TransactionMessage & TransactionMessageWithFeePayer);
 
 type OnTransactionMessageUpdated = (
-    transactionMessage: BaseTransactionMessage & TransactionMessageWithFeePayer,
+    transactionMessage: TransactionMessage & TransactionMessageWithFeePayer,
     config?: { abortSignal?: AbortSignal },
 ) =>
-    | Promise<BaseTransactionMessage & TransactionMessageWithFeePayer>
-    | (BaseTransactionMessage & TransactionMessageWithFeePayer);
+    | Promise<TransactionMessage & TransactionMessageWithFeePayer>
+    | (TransactionMessage & TransactionMessageWithFeePayer);
 
 /**
  * Configuration object for creating a new transaction planner.
@@ -246,7 +246,7 @@ async function traverseSingle(
     instructionPlan: SingleInstructionPlan,
     context: TraverseContext,
 ): Promise<MutableTransactionPlan | null> {
-    const predicate = (message: BaseTransactionMessage & TransactionMessageWithFeePayer) =>
+    const predicate = (message: TransactionMessage & TransactionMessageWithFeePayer) =>
         appendTransactionMessageInstructions([instructionPlan.instruction], message);
     const candidate = await selectAndMutateCandidate(context, context.parentCandidates, predicate);
     if (candidate) {
@@ -307,8 +307,8 @@ async function selectAndMutateCandidate(
     context: Pick<TraverseContext, 'abortSignal' | 'onTransactionMessageUpdated'>,
     candidates: MutableSingleTransactionPlan[],
     predicate: (
-        message: BaseTransactionMessage & TransactionMessageWithFeePayer,
-    ) => BaseTransactionMessage & TransactionMessageWithFeePayer,
+        message: TransactionMessage & TransactionMessageWithFeePayer,
+    ) => TransactionMessage & TransactionMessageWithFeePayer,
 ): Promise<MutableSingleTransactionPlan | null> {
     for (const candidate of candidates) {
         try {
@@ -338,9 +338,9 @@ async function selectAndMutateCandidate(
 async function createNewMessage(
     context: Pick<TraverseContext, 'abortSignal' | 'createTransactionMessage' | 'onTransactionMessageUpdated'>,
     predicate: (
-        message: BaseTransactionMessage & TransactionMessageWithFeePayer,
-    ) => BaseTransactionMessage & TransactionMessageWithFeePayer,
-): Promise<BaseTransactionMessage & TransactionMessageWithFeePayer> {
+        message: TransactionMessage & TransactionMessageWithFeePayer,
+    ) => TransactionMessage & TransactionMessageWithFeePayer,
+): Promise<TransactionMessage & TransactionMessageWithFeePayer> {
     const newMessage = await getAbortablePromise(
         Promise.resolve(context.createTransactionMessage({ abortSignal: context.abortSignal })),
         context.abortSignal,
@@ -381,9 +381,9 @@ function freezeTransactionPlan(plan: MutableTransactionPlan): TransactionPlan {
 
 function fitEntirePlanInsideMessage(
     instructionPlan: InstructionPlan,
-    message: BaseTransactionMessage & TransactionMessageWithFeePayer,
-): BaseTransactionMessage & TransactionMessageWithFeePayer {
-    let newMessage: BaseTransactionMessage & TransactionMessageWithFeePayer = message;
+    message: TransactionMessage & TransactionMessageWithFeePayer,
+): TransactionMessage & TransactionMessageWithFeePayer {
+    let newMessage: TransactionMessage & TransactionMessageWithFeePayer = message;
 
     const kind = instructionPlan.kind;
     switch (kind) {

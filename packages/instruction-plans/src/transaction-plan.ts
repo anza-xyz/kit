@@ -1,4 +1,4 @@
-import { BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
+import { TransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
 
 /**
  * A set of transaction messages with constraints on how they can be executed.
@@ -128,7 +128,7 @@ export type ParallelTransactionPlan = Readonly<{
  * @see {@link singleTransactionPlan}
  */
 export type SingleTransactionPlan<
-    TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer = BaseTransactionMessage &
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
 > = Readonly<{
     kind: 'single';
@@ -159,7 +159,7 @@ export type SingleTransactionPlan<
  * @see {@link ParallelTransactionPlan}
  */
 export function parallelTransactionPlan(
-    plans: (TransactionPlan | (BaseTransactionMessage & TransactionMessageWithFeePayer))[],
+    plans: (TransactionPlan | (TransactionMessage & TransactionMessageWithFeePayer))[],
 ): ParallelTransactionPlan {
     return Object.freeze({ kind: 'parallel', plans: parseSingleTransactionPlans(plans) });
 }
@@ -188,7 +188,7 @@ export function parallelTransactionPlan(
  * @see {@link SequentialTransactionPlan}
  */
 export function sequentialTransactionPlan(
-    plans: (TransactionPlan | (BaseTransactionMessage & TransactionMessageWithFeePayer))[],
+    plans: (TransactionPlan | (TransactionMessage & TransactionMessageWithFeePayer))[],
 ): SequentialTransactionPlan & { divisible: true } {
     return Object.freeze({ divisible: true, kind: 'sequential', plans: parseSingleTransactionPlans(plans) });
 }
@@ -217,7 +217,7 @@ export function sequentialTransactionPlan(
  * @see {@link SequentialTransactionPlan}
  */
 export function nonDivisibleSequentialTransactionPlan(
-    plans: (TransactionPlan | (BaseTransactionMessage & TransactionMessageWithFeePayer))[],
+    plans: (TransactionPlan | (TransactionMessage & TransactionMessageWithFeePayer))[],
 ): SequentialTransactionPlan & { divisible: false } {
     return Object.freeze({ divisible: false, kind: 'sequential', plans: parseSingleTransactionPlans(plans) });
 }
@@ -234,14 +234,14 @@ export function nonDivisibleSequentialTransactionPlan(
  * @see {@link SingleTransactionPlan}
  */
 export function singleTransactionPlan<
-    TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer = BaseTransactionMessage &
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
 >(transactionMessage: TTransactionMessage): SingleTransactionPlan<TTransactionMessage> {
     return Object.freeze({ kind: 'single', message: transactionMessage });
 }
 
 function parseSingleTransactionPlans(
-    plans: (TransactionPlan | (BaseTransactionMessage & TransactionMessageWithFeePayer))[],
+    plans: (TransactionPlan | (TransactionMessage & TransactionMessageWithFeePayer))[],
 ): TransactionPlan[] {
     return plans.map(plan => ('kind' in plan ? plan : singleTransactionPlan(plan)));
 }
