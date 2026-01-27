@@ -15,6 +15,8 @@ type GetSignaturesForAddressTransaction = Readonly<{
     signature: Signature;
     /** The slot that contains the block with the transaction */
     slot: Slot;
+    /** Index of the transaction in the block */
+    index: number;
 }>;
 
 type GetSignaturesForAddressApiResponse = readonly GetSignaturesForAddressTransaction[];
