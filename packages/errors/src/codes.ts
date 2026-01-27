@@ -624,3 +624,10 @@ export type SolanaErrorCode =
  * `cause`.
  */
 export type SolanaErrorCodeWithCause = typeof SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE;
+
+/**
+ * Errors of this type have a deprecated `cause` property. Consumers should use the error's
+ * `context` instead to access relevant error information.
+ */
+export type SolanaErrorCodeWithDeprecatedCause =
+    typeof SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN;
