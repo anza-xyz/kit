@@ -1,10 +1,18 @@
 import '@solana/test-matchers/toBeFrozenObject';
 
 import {
+    assertIsNonDivisibleSequentialTransactionPlan,
+    assertIsParallelTransactionPlan,
+    assertIsSequentialTransactionPlan,
+    assertIsSingleTransactionPlan,
     everyTransactionPlan,
     findTransactionPlan,
     flattenTransactionPlan,
     getAllSingleTransactionPlans,
+    isNonDivisibleSequentialTransactionPlan,
+    isParallelTransactionPlan,
+    isSequentialTransactionPlan,
+    isSingleTransactionPlan,
     nonDivisibleSequentialTransactionPlan,
     parallelTransactionPlan,
     sequentialTransactionPlan,
@@ -163,6 +171,118 @@ describe('nonDivisibleSequentialTransactionPlan', () => {
         const messageB = createMessage('B');
         const plan = nonDivisibleSequentialTransactionPlan([messageA, messageB]);
         expect(plan).toBeFrozenObject();
+    });
+});
+
+describe('isSingleTransactionPlan', () => {
+    it('returns true for SingleTransactionPlan', () => {
+        expect(isSingleTransactionPlan(singleTransactionPlan(createMessage('A')))).toBe(true);
+    });
+    it('returns false for other plans', () => {
+        expect(isSingleTransactionPlan(sequentialTransactionPlan([]))).toBe(false);
+        expect(isSingleTransactionPlan(nonDivisibleSequentialTransactionPlan([]))).toBe(false);
+        expect(isSingleTransactionPlan(parallelTransactionPlan([]))).toBe(false);
+    });
+});
+
+describe('assertIsSingleTransactionPlan', () => {
+    it('does nothing for SingleTransactionPlan', () => {
+        expect(() => assertIsSingleTransactionPlan(singleTransactionPlan(createMessage('A')))).not.toThrow();
+    });
+    it('throws for other plans', () => {
+        expect(() => assertIsSingleTransactionPlan(sequentialTransactionPlan([]))).toThrow(
+            'Unexpected transaction plan. Expected single plan, got sequential plan.',
+        );
+        expect(() => assertIsSingleTransactionPlan(nonDivisibleSequentialTransactionPlan([]))).toThrow(
+            'Unexpected transaction plan. Expected single plan, got sequential plan.',
+        );
+        expect(() => assertIsSingleTransactionPlan(parallelTransactionPlan([]))).toThrow(
+            'Unexpected transaction plan. Expected single plan, got parallel plan.',
+        );
+    });
+});
+
+describe('isSequentialTransactionPlan', () => {
+    it('returns true for SequentialTransactionPlan (divisible or not)', () => {
+        expect(isSequentialTransactionPlan(sequentialTransactionPlan([]))).toBe(true);
+        expect(isSequentialTransactionPlan(nonDivisibleSequentialTransactionPlan([]))).toBe(true);
+    });
+    it('returns false for other plans', () => {
+        expect(isSequentialTransactionPlan(singleTransactionPlan(createMessage('A')))).toBe(false);
+        expect(isSequentialTransactionPlan(parallelTransactionPlan([]))).toBe(false);
+    });
+});
+
+describe('assertIsSequentialTransactionPlan', () => {
+    it('does nothing for SequentialTransactionPlan', () => {
+        expect(() => assertIsSequentialTransactionPlan(sequentialTransactionPlan([]))).not.toThrow();
+        expect(() => assertIsSequentialTransactionPlan(nonDivisibleSequentialTransactionPlan([]))).not.toThrow();
+    });
+    it('throws for other plans', () => {
+        expect(() => assertIsSequentialTransactionPlan(singleTransactionPlan(createMessage('A')))).toThrow(
+            'Unexpected transaction plan. Expected sequential plan, got single plan.',
+        );
+        expect(() => assertIsSequentialTransactionPlan(parallelTransactionPlan([]))).toThrow(
+            'Unexpected transaction plan. Expected sequential plan, got parallel plan.',
+        );
+    });
+});
+
+describe('isNonDivisibleSequentialTransactionPlan', () => {
+    it('returns true for non-divisible SequentialTransactionPlan', () => {
+        expect(isNonDivisibleSequentialTransactionPlan(nonDivisibleSequentialTransactionPlan([]))).toBe(true);
+    });
+    it('returns false for other plans', () => {
+        expect(isNonDivisibleSequentialTransactionPlan(singleTransactionPlan(createMessage('A')))).toBe(false);
+        expect(isNonDivisibleSequentialTransactionPlan(sequentialTransactionPlan([]))).toBe(false);
+        expect(isNonDivisibleSequentialTransactionPlan(parallelTransactionPlan([]))).toBe(false);
+    });
+});
+
+describe('assertIsNonDivisibleSequentialTransactionPlan', () => {
+    it('does nothing for non-divisible SequentialTransactionPlan', () => {
+        expect(() =>
+            assertIsNonDivisibleSequentialTransactionPlan(nonDivisibleSequentialTransactionPlan([])),
+        ).not.toThrow();
+    });
+    it('throws for other plans', () => {
+        expect(() => assertIsNonDivisibleSequentialTransactionPlan(singleTransactionPlan(createMessage('A')))).toThrow(
+            'Unexpected transaction plan. Expected non-divisible sequential plan, got single plan.',
+        );
+        expect(() => assertIsNonDivisibleSequentialTransactionPlan(sequentialTransactionPlan([]))).toThrow(
+            'Unexpected transaction plan. Expected non-divisible sequential plan, got divisible sequential plan.',
+        );
+        expect(() => assertIsNonDivisibleSequentialTransactionPlan(parallelTransactionPlan([]))).toThrow(
+            'Unexpected transaction plan. Expected non-divisible sequential plan, got parallel plan.',
+        );
+    });
+});
+
+describe('isParallelTransactionPlan', () => {
+    it('returns true for ParallelTransactionPlan', () => {
+        expect(isParallelTransactionPlan(parallelTransactionPlan([]))).toBe(true);
+    });
+    it('returns false for other plans', () => {
+        expect(isParallelTransactionPlan(singleTransactionPlan(createMessage('A')))).toBe(false);
+        expect(isParallelTransactionPlan(sequentialTransactionPlan([]))).toBe(false);
+        expect(isParallelTransactionPlan(nonDivisibleSequentialTransactionPlan([]))).toBe(false);
+    });
+});
+
+describe('assertIsParallelTransactionPlan', () => {
+    it('does nothing for ParallelTransactionPlan', () => {
+        expect(() => assertIsParallelTransactionPlan(parallelTransactionPlan([]))).not.toThrow();
+    });
+    it('throws for other plans', () => {
+        expect(() => assertIsParallelTransactionPlan(singleTransactionPlan(createMessage('A')))).toThrow(
+            'Unexpected transaction plan. Expected parallel plan, got single plan.',
+        );
+        expect(() => assertIsParallelTransactionPlan(sequentialTransactionPlan([]))).toThrow(
+            'Unexpected transaction plan. Expected parallel plan, got sequential plan.',
+        );
+        expect(() => assertIsParallelTransactionPlan(nonDivisibleSequentialTransactionPlan([]))).toThrow(
+            'Unexpected transaction plan. Expected parallel plan, got sequential plan.',
+        );
     });
 });
 

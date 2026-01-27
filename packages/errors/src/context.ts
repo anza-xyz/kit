@@ -102,6 +102,9 @@ import {
     SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_SINGLE_TRANSACTION_PLAN_RESULT_NOT_FOUND,
     SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN,
     SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN,
+    SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_INSTRUCTION_PLAN,
+    SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN,
+    SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN_RESULT,
     SOLANA_ERROR__INVALID_BLOCKHASH_BYTE_LENGTH,
     SOLANA_ERROR__INVALID_NONCE,
     SOLANA_ERROR__INVARIANT_VIOLATION__CACHED_ABORTABLE_ITERABLE_CACHE_ENTRY_MISSING,
@@ -433,6 +436,21 @@ export type SolanaErrorContext = ReadonlyContextValue<
             [SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN]: {
                 numBytesRequired: number;
                 numFreeBytes: number;
+            };
+            [SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_INSTRUCTION_PLAN]: {
+                actualKind: string;
+                expectedKind: string;
+                instructionPlan: unknown;
+            };
+            [SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN]: {
+                actualKind: string;
+                expectedKind: string;
+                transactionPlan: unknown;
+            };
+            [SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN_RESULT]: {
+                actualKind: string;
+                expectedKind: string;
+                transactionPlanResult: unknown;
             };
             [SOLANA_ERROR__INSTRUCTION__EXPECTED_TO_HAVE_ACCOUNTS]: {
                 data?: ReadonlyUint8Array;

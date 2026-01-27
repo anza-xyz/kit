@@ -1,5 +1,6 @@
 import {
     SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_SINGLE_TRANSACTION_PLAN_RESULT_NOT_FOUND,
+    SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN_RESULT,
     SolanaError,
 } from '@solana/errors';
 import { Signature } from '@solana/keys';
@@ -407,6 +408,386 @@ export function canceledSingleTransactionPlanResult<
         message: transactionMessage,
         status: Object.freeze({ kind: 'canceled' }),
     });
+}
+
+/**
+ * Checks if the given transaction plan result is a {@link SingleTransactionPlanResult}.
+ *
+ * @param plan - The transaction plan result to check.
+ * @return `true` if the result is a single transaction plan result, `false` otherwise.
+ *
+ * @example
+ * ```ts
+ * const result: TransactionPlanResult = successfulSingleTransactionPlanResult(message, transaction);
+ *
+ * if (isSingleTransactionPlanResult(result)) {
+ *   console.log(result.status.kind); // TypeScript knows this is a SingleTransactionPlanResult.
+ * }
+ * ```
+ *
+ * @see {@link SingleTransactionPlanResult}
+ * @see {@link assertIsSingleTransactionPlanResult}
+ */
+export function isSingleTransactionPlanResult(plan: TransactionPlanResult): plan is SingleTransactionPlanResult {
+    return plan.kind === 'single';
+}
+
+/**
+ * Asserts that the given transaction plan result is a {@link SingleTransactionPlanResult}.
+ *
+ * @param plan - The transaction plan result to assert.
+ * @throws Throws a {@link SolanaError} with code
+ * `SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN_RESULT` if the result is not a single transaction plan result.
+ *
+ * @example
+ * ```ts
+ * const result: TransactionPlanResult = successfulSingleTransactionPlanResult(message, transaction);
+ *
+ * assertIsSingleTransactionPlanResult(result);
+ * console.log(result.status.kind); // TypeScript knows this is a SingleTransactionPlanResult.
+ * ```
+ *
+ * @see {@link SingleTransactionPlanResult}
+ * @see {@link isSingleTransactionPlanResult}
+ */
+export function assertIsSingleTransactionPlanResult(
+    plan: TransactionPlanResult,
+): asserts plan is SingleTransactionPlanResult {
+    if (!isSingleTransactionPlanResult(plan)) {
+        throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN_RESULT, {
+            actualKind: plan.kind,
+            expectedKind: 'single',
+            transactionPlanResult: plan,
+        });
+    }
+}
+
+/**
+ * Checks if the given transaction plan result is a successful {@link SingleTransactionPlanResult}.
+ *
+ * @param plan - The transaction plan result to check.
+ * @return `true` if the result is a successful single transaction plan result, `false` otherwise.
+ *
+ * @example
+ * ```ts
+ * const result: TransactionPlanResult = successfulSingleTransactionPlanResult(message, transaction);
+ *
+ * if (isSuccessfulSingleTransactionPlanResult(result)) {
+ *   console.log(result.status.signature); // TypeScript knows this is a successful result.
+ * }
+ * ```
+ *
+ * @see {@link SuccessfulSingleTransactionPlanResult}
+ * @see {@link assertIsSuccessfulSingleTransactionPlanResult}
+ */
+export function isSuccessfulSingleTransactionPlanResult(
+    plan: TransactionPlanResult,
+): plan is SuccessfulSingleTransactionPlanResult {
+    return plan.kind === 'single' && plan.status.kind === 'successful';
+}
+
+/**
+ * Asserts that the given transaction plan result is a successful {@link SingleTransactionPlanResult}.
+ *
+ * @param plan - The transaction plan result to assert.
+ * @throws Throws a {@link SolanaError} with code
+ * `SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN_RESULT` if the result is not a successful single transaction plan result.
+ *
+ * @example
+ * ```ts
+ * const result: TransactionPlanResult = successfulSingleTransactionPlanResult(message, transaction);
+ *
+ * assertIsSuccessfulSingleTransactionPlanResult(result);
+ * console.log(result.status.signature); // TypeScript knows this is a successful result.
+ * ```
+ *
+ * @see {@link SuccessfulSingleTransactionPlanResult}
+ * @see {@link isSuccessfulSingleTransactionPlanResult}
+ */
+export function assertIsSuccessfulSingleTransactionPlanResult(
+    plan: TransactionPlanResult,
+): asserts plan is SuccessfulSingleTransactionPlanResult {
+    if (!isSuccessfulSingleTransactionPlanResult(plan)) {
+        throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN_RESULT, {
+            actualKind: plan.kind === 'single' ? `${plan.status.kind} single` : plan.kind,
+            expectedKind: 'successful single',
+            transactionPlanResult: plan,
+        });
+    }
+}
+
+/**
+ * Checks if the given transaction plan result is a failed {@link SingleTransactionPlanResult}.
+ *
+ * @param plan - The transaction plan result to check.
+ * @return `true` if the result is a failed single transaction plan result, `false` otherwise.
+ *
+ * @example
+ * ```ts
+ * const result: TransactionPlanResult = failedSingleTransactionPlanResult(message, error);
+ *
+ * if (isFailedSingleTransactionPlanResult(result)) {
+ *   console.log(result.status.error); // TypeScript knows this is a failed result.
+ * }
+ * ```
+ *
+ * @see {@link FailedSingleTransactionPlanResult}
+ * @see {@link assertIsFailedSingleTransactionPlanResult}
+ */
+export function isFailedSingleTransactionPlanResult(
+    plan: TransactionPlanResult,
+): plan is FailedSingleTransactionPlanResult {
+    return plan.kind === 'single' && plan.status.kind === 'failed';
+}
+
+/**
+ * Asserts that the given transaction plan result is a failed {@link SingleTransactionPlanResult}.
+ *
+ * @param plan - The transaction plan result to assert.
+ * @throws Throws a {@link SolanaError} with code
+ * `SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN_RESULT` if the result is not a failed single transaction plan result.
+ *
+ * @example
+ * ```ts
+ * const result: TransactionPlanResult = failedSingleTransactionPlanResult(message, error);
+ *
+ * assertIsFailedSingleTransactionPlanResult(result);
+ * console.log(result.status.error); // TypeScript knows this is a failed result.
+ * ```
+ *
+ * @see {@link FailedSingleTransactionPlanResult}
+ * @see {@link isFailedSingleTransactionPlanResult}
+ */
+export function assertIsFailedSingleTransactionPlanResult(
+    plan: TransactionPlanResult,
+): asserts plan is FailedSingleTransactionPlanResult {
+    if (!isFailedSingleTransactionPlanResult(plan)) {
+        throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN_RESULT, {
+            actualKind: plan.kind === 'single' ? `${plan.status.kind} single` : plan.kind,
+            expectedKind: 'failed single',
+            transactionPlanResult: plan,
+        });
+    }
+}
+
+/**
+ * Checks if the given transaction plan result is a canceled {@link SingleTransactionPlanResult}.
+ *
+ * @param plan - The transaction plan result to check.
+ * @return `true` if the result is a canceled single transaction plan result, `false` otherwise.
+ *
+ * @example
+ * ```ts
+ * const result: TransactionPlanResult = canceledSingleTransactionPlanResult(message);
+ *
+ * if (isCanceledSingleTransactionPlanResult(result)) {
+ *   console.log('Transaction was canceled'); // TypeScript knows this is a canceled result.
+ * }
+ * ```
+ *
+ * @see {@link CanceledSingleTransactionPlanResult}
+ * @see {@link assertIsCanceledSingleTransactionPlanResult}
+ */
+export function isCanceledSingleTransactionPlanResult(
+    plan: TransactionPlanResult,
+): plan is CanceledSingleTransactionPlanResult {
+    return plan.kind === 'single' && plan.status.kind === 'canceled';
+}
+
+/**
+ * Asserts that the given transaction plan result is a canceled {@link SingleTransactionPlanResult}.
+ *
+ * @param plan - The transaction plan result to assert.
+ * @throws Throws a {@link SolanaError} with code
+ * `SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN_RESULT` if the result is not a canceled single transaction plan result.
+ *
+ * @example
+ * ```ts
+ * const result: TransactionPlanResult = canceledSingleTransactionPlanResult(message);
+ *
+ * assertIsCanceledSingleTransactionPlanResult(result);
+ * console.log('Transaction was canceled'); // TypeScript knows this is a canceled result.
+ * ```
+ *
+ * @see {@link CanceledSingleTransactionPlanResult}
+ * @see {@link isCanceledSingleTransactionPlanResult}
+ */
+export function assertIsCanceledSingleTransactionPlanResult(
+    plan: TransactionPlanResult,
+): asserts plan is CanceledSingleTransactionPlanResult {
+    if (!isCanceledSingleTransactionPlanResult(plan)) {
+        throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN_RESULT, {
+            actualKind: plan.kind === 'single' ? `${plan.status.kind} single` : plan.kind,
+            expectedKind: 'canceled single',
+            transactionPlanResult: plan,
+        });
+    }
+}
+
+/**
+ * Checks if the given transaction plan result is a {@link SequentialTransactionPlanResult}.
+ *
+ * @param plan - The transaction plan result to check.
+ * @return `true` if the result is a sequential transaction plan result, `false` otherwise.
+ *
+ * @example
+ * ```ts
+ * const result: TransactionPlanResult = sequentialTransactionPlanResult([resultA, resultB]);
+ *
+ * if (isSequentialTransactionPlanResult(result)) {
+ *   console.log(result.divisible); // TypeScript knows this is a SequentialTransactionPlanResult.
+ * }
+ * ```
+ *
+ * @see {@link SequentialTransactionPlanResult}
+ * @see {@link assertIsSequentialTransactionPlanResult}
+ */
+export function isSequentialTransactionPlanResult(
+    plan: TransactionPlanResult,
+): plan is SequentialTransactionPlanResult {
+    return plan.kind === 'sequential';
+}
+
+/**
+ * Asserts that the given transaction plan result is a {@link SequentialTransactionPlanResult}.
+ *
+ * @param plan - The transaction plan result to assert.
+ * @throws Throws a {@link SolanaError} with code
+ * `SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN_RESULT` if the result is not a sequential transaction plan result.
+ *
+ * @example
+ * ```ts
+ * const result: TransactionPlanResult = sequentialTransactionPlanResult([resultA, resultB]);
+ *
+ * assertIsSequentialTransactionPlanResult(result);
+ * console.log(result.divisible); // TypeScript knows this is a SequentialTransactionPlanResult.
+ * ```
+ *
+ * @see {@link SequentialTransactionPlanResult}
+ * @see {@link isSequentialTransactionPlanResult}
+ */
+export function assertIsSequentialTransactionPlanResult(
+    plan: TransactionPlanResult,
+): asserts plan is SequentialTransactionPlanResult {
+    if (!isSequentialTransactionPlanResult(plan)) {
+        throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN_RESULT, {
+            actualKind: plan.kind,
+            expectedKind: 'sequential',
+            transactionPlanResult: plan,
+        });
+    }
+}
+
+/**
+ * Checks if the given transaction plan result is a non-divisible {@link SequentialTransactionPlanResult}.
+ *
+ * A non-divisible sequential result indicates that the transactions were executed
+ * atomically — usually in a transaction bundle.
+ *
+ * @param plan - The transaction plan result to check.
+ * @return `true` if the result is a non-divisible sequential transaction plan result, `false` otherwise.
+ *
+ * @example
+ * ```ts
+ * const result: TransactionPlanResult = nonDivisibleSequentialTransactionPlanResult([resultA, resultB]);
+ *
+ * if (isNonDivisibleSequentialTransactionPlanResult(result)) {
+ *   // Transactions were executed atomically.
+ * }
+ * ```
+ *
+ * @see {@link SequentialTransactionPlanResult}
+ * @see {@link assertIsNonDivisibleSequentialTransactionPlanResult}
+ */
+export function isNonDivisibleSequentialTransactionPlanResult(
+    plan: TransactionPlanResult,
+): plan is SequentialTransactionPlanResult & { divisible: false } {
+    return plan.kind === 'sequential' && plan.divisible === false;
+}
+
+/**
+ * Asserts that the given transaction plan result is a non-divisible {@link SequentialTransactionPlanResult}.
+ *
+ * A non-divisible sequential result indicates that the transactions were executed
+ * atomically — usually in a transaction bundle.
+ *
+ * @param plan - The transaction plan result to assert.
+ * @throws Throws a {@link SolanaError} with code
+ * `SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN_RESULT` if the result is not a non-divisible sequential transaction plan result.
+ *
+ * @example
+ * ```ts
+ * const result: TransactionPlanResult = nonDivisibleSequentialTransactionPlanResult([resultA, resultB]);
+ *
+ * assertIsNonDivisibleSequentialTransactionPlanResult(result);
+ * // Transactions were executed atomically.
+ * ```
+ *
+ * @see {@link SequentialTransactionPlanResult}
+ * @see {@link isNonDivisibleSequentialTransactionPlanResult}
+ */
+export function assertIsNonDivisibleSequentialTransactionPlanResult(
+    plan: TransactionPlanResult,
+): asserts plan is SequentialTransactionPlanResult & { divisible: false } {
+    if (!isNonDivisibleSequentialTransactionPlanResult(plan)) {
+        throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN_RESULT, {
+            actualKind: plan.kind === 'sequential' ? 'divisible sequential' : plan.kind,
+            expectedKind: 'non-divisible sequential',
+            transactionPlanResult: plan,
+        });
+    }
+}
+
+/**
+ * Checks if the given transaction plan result is a {@link ParallelTransactionPlanResult}.
+ *
+ * @param plan - The transaction plan result to check.
+ * @return `true` if the result is a parallel transaction plan result, `false` otherwise.
+ *
+ * @example
+ * ```ts
+ * const result: TransactionPlanResult = parallelTransactionPlanResult([resultA, resultB]);
+ *
+ * if (isParallelTransactionPlanResult(result)) {
+ *   console.log(result.plans.length); // TypeScript knows this is a ParallelTransactionPlanResult.
+ * }
+ * ```
+ *
+ * @see {@link ParallelTransactionPlanResult}
+ * @see {@link assertIsParallelTransactionPlanResult}
+ */
+export function isParallelTransactionPlanResult(plan: TransactionPlanResult): plan is ParallelTransactionPlanResult {
+    return plan.kind === 'parallel';
+}
+
+/**
+ * Asserts that the given transaction plan result is a {@link ParallelTransactionPlanResult}.
+ *
+ * @param plan - The transaction plan result to assert.
+ * @throws Throws a {@link SolanaError} with code
+ * `SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN_RESULT` if the result is not a parallel transaction plan result.
+ *
+ * @example
+ * ```ts
+ * const result: TransactionPlanResult = parallelTransactionPlanResult([resultA, resultB]);
+ *
+ * assertIsParallelTransactionPlanResult(result);
+ * console.log(result.plans.length); // TypeScript knows this is a ParallelTransactionPlanResult.
+ * ```
+ *
+ * @see {@link ParallelTransactionPlanResult}
+ * @see {@link isParallelTransactionPlanResult}
+ */
+export function assertIsParallelTransactionPlanResult(
+    plan: TransactionPlanResult,
+): asserts plan is ParallelTransactionPlanResult {
+    if (!isParallelTransactionPlanResult(plan)) {
+        throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN_RESULT, {
+            actualKind: plan.kind,
+            expectedKind: 'parallel',
+            transactionPlanResult: plan,
+        });
+    }
 }
 
 /**

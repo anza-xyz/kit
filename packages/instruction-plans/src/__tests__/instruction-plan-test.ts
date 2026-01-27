@@ -18,12 +18,22 @@ import {
 import { getTransactionMessageSize, TRANSACTION_SIZE_LIMIT } from '@solana/transactions';
 
 import {
+    assertIsMessagePackerInstructionPlan,
+    assertIsNonDivisibleSequentialInstructionPlan,
+    assertIsParallelInstructionPlan,
+    assertIsSequentialInstructionPlan,
+    assertIsSingleInstructionPlan,
     everyInstructionPlan,
     findInstructionPlan,
     flattenInstructionPlan,
     getLinearMessagePackerInstructionPlan,
     getMessagePackerInstructionPlanFromInstructions,
     getReallocMessagePackerInstructionPlan,
+    isMessagePackerInstructionPlan,
+    isNonDivisibleSequentialInstructionPlan,
+    isParallelInstructionPlan,
+    isSequentialInstructionPlan,
+    isSingleInstructionPlan,
     MessagePackerInstructionPlan,
     nonDivisibleSequentialInstructionPlan,
     parallelInstructionPlan,
@@ -359,6 +369,174 @@ describe('getReallocMessagePackerInstructionPlan', () => {
             totalSize: 15_000,
         });
         expect(plan.getMessagePacker()).toBeFrozenObject();
+    });
+});
+
+describe('isSingleInstructionPlan', () => {
+    it('returns true for SingleInstructionPlan', () => {
+        expect(isSingleInstructionPlan(singleInstructionPlan(createInstruction('A')))).toBe(true);
+    });
+    it('returns false for other plans', () => {
+        expect(isSingleInstructionPlan(getMessagePackerInstructionPlanFromInstructions([]))).toBe(false);
+        expect(isSingleInstructionPlan(sequentialInstructionPlan([]))).toBe(false);
+        expect(isSingleInstructionPlan(nonDivisibleSequentialInstructionPlan([]))).toBe(false);
+        expect(isSingleInstructionPlan(parallelInstructionPlan([]))).toBe(false);
+    });
+});
+
+describe('assertIsSingleInstructionPlan', () => {
+    it('does nothing for SingleInstructionPlan', () => {
+        expect(() => assertIsSingleInstructionPlan(singleInstructionPlan(createInstruction('A')))).not.toThrow();
+    });
+    it('throws for other plans', () => {
+        expect(() => assertIsSingleInstructionPlan(getMessagePackerInstructionPlanFromInstructions([]))).toThrow(
+            'Unexpected instruction plan. Expected single plan, got messagePacker plan.',
+        );
+        expect(() => assertIsSingleInstructionPlan(sequentialInstructionPlan([]))).toThrow(
+            'Unexpected instruction plan. Expected single plan, got sequential plan.',
+        );
+        expect(() => assertIsSingleInstructionPlan(nonDivisibleSequentialInstructionPlan([]))).toThrow(
+            'Unexpected instruction plan. Expected single plan, got sequential plan.',
+        );
+        expect(() => assertIsSingleInstructionPlan(parallelInstructionPlan([]))).toThrow(
+            'Unexpected instruction plan. Expected single plan, got parallel plan.',
+        );
+    });
+});
+
+describe('isMessagePackerInstructionPlan', () => {
+    it('returns true for MessagePackerInstructionPlan', () => {
+        expect(
+            isMessagePackerInstructionPlan(getMessagePackerInstructionPlanFromInstructions([createInstruction('A')])),
+        ).toBe(true);
+    });
+    it('returns false for other plans', () => {
+        expect(isMessagePackerInstructionPlan(singleInstructionPlan(createInstruction('A')))).toBe(false);
+        expect(isMessagePackerInstructionPlan(sequentialInstructionPlan([]))).toBe(false);
+        expect(isMessagePackerInstructionPlan(nonDivisibleSequentialInstructionPlan([]))).toBe(false);
+        expect(isMessagePackerInstructionPlan(parallelInstructionPlan([]))).toBe(false);
+    });
+});
+
+describe('assertIsMessagePackerInstructionPlan', () => {
+    it('does nothing for MessagePackerInstructionPlan', () => {
+        expect(() =>
+            assertIsMessagePackerInstructionPlan(
+                getMessagePackerInstructionPlanFromInstructions([createInstruction('A')]),
+            ),
+        ).not.toThrow();
+    });
+    it('throws for other plans', () => {
+        expect(() => assertIsMessagePackerInstructionPlan(singleInstructionPlan(createInstruction('A')))).toThrow(
+            'Unexpected instruction plan. Expected messagePacker plan, got single plan.',
+        );
+        expect(() => assertIsMessagePackerInstructionPlan(sequentialInstructionPlan([]))).toThrow(
+            'Unexpected instruction plan. Expected messagePacker plan, got sequential plan.',
+        );
+        expect(() => assertIsMessagePackerInstructionPlan(nonDivisibleSequentialInstructionPlan([]))).toThrow(
+            'Unexpected instruction plan. Expected messagePacker plan, got sequential plan.',
+        );
+        expect(() => assertIsMessagePackerInstructionPlan(parallelInstructionPlan([]))).toThrow(
+            'Unexpected instruction plan. Expected messagePacker plan, got parallel plan.',
+        );
+    });
+});
+
+describe('isSequentialInstructionPlan', () => {
+    it('returns true for SequentialInstructionPlan (divisible or not)', () => {
+        expect(isSequentialInstructionPlan(sequentialInstructionPlan([]))).toBe(true);
+        expect(isSequentialInstructionPlan(nonDivisibleSequentialInstructionPlan([]))).toBe(true);
+    });
+    it('returns false for other plans', () => {
+        expect(isSequentialInstructionPlan(singleInstructionPlan(createInstruction('A')))).toBe(false);
+        expect(isSequentialInstructionPlan(getMessagePackerInstructionPlanFromInstructions([]))).toBe(false);
+        expect(isSequentialInstructionPlan(parallelInstructionPlan([]))).toBe(false);
+    });
+});
+
+describe('assertIsSequentialInstructionPlan', () => {
+    it('does nothing for SequentialInstructionPlan', () => {
+        expect(() => assertIsSequentialInstructionPlan(sequentialInstructionPlan([]))).not.toThrow();
+        expect(() => assertIsSequentialInstructionPlan(nonDivisibleSequentialInstructionPlan([]))).not.toThrow();
+    });
+    it('throws for other plans', () => {
+        expect(() => assertIsSequentialInstructionPlan(singleInstructionPlan(createInstruction('A')))).toThrow(
+            'Unexpected instruction plan. Expected sequential plan, got single plan.',
+        );
+        expect(() => assertIsSequentialInstructionPlan(getMessagePackerInstructionPlanFromInstructions([]))).toThrow(
+            'Unexpected instruction plan. Expected sequential plan, got messagePacker plan.',
+        );
+        expect(() => assertIsSequentialInstructionPlan(parallelInstructionPlan([]))).toThrow(
+            'Unexpected instruction plan. Expected sequential plan, got parallel plan.',
+        );
+    });
+});
+
+describe('isNonDivisibleSequentialInstructionPlan', () => {
+    it('returns true for non-divisible SequentialInstructionPlan', () => {
+        expect(isNonDivisibleSequentialInstructionPlan(nonDivisibleSequentialInstructionPlan([]))).toBe(true);
+    });
+    it('returns false for other plans', () => {
+        expect(isNonDivisibleSequentialInstructionPlan(singleInstructionPlan(createInstruction('A')))).toBe(false);
+        expect(isNonDivisibleSequentialInstructionPlan(getMessagePackerInstructionPlanFromInstructions([]))).toBe(
+            false,
+        );
+        expect(isNonDivisibleSequentialInstructionPlan(sequentialInstructionPlan([]))).toBe(false);
+        expect(isNonDivisibleSequentialInstructionPlan(parallelInstructionPlan([]))).toBe(false);
+    });
+});
+
+describe('assertIsNonDivisibleSequentialInstructionPlan', () => {
+    it('does nothing for non-divisible SequentialInstructionPlan', () => {
+        expect(() =>
+            assertIsNonDivisibleSequentialInstructionPlan(nonDivisibleSequentialInstructionPlan([])),
+        ).not.toThrow();
+    });
+    it('throws for other plans', () => {
+        expect(() =>
+            assertIsNonDivisibleSequentialInstructionPlan(singleInstructionPlan(createInstruction('A'))),
+        ).toThrow('Unexpected instruction plan. Expected non-divisible sequential plan, got single plan.');
+        expect(() =>
+            assertIsNonDivisibleSequentialInstructionPlan(getMessagePackerInstructionPlanFromInstructions([])),
+        ).toThrow('Unexpected instruction plan. Expected non-divisible sequential plan, got messagePacker plan.');
+        expect(() => assertIsNonDivisibleSequentialInstructionPlan(sequentialInstructionPlan([]))).toThrow(
+            'Unexpected instruction plan. Expected non-divisible sequential plan, got divisible sequential plan.',
+        );
+        expect(() => assertIsNonDivisibleSequentialInstructionPlan(parallelInstructionPlan([]))).toThrow(
+            'Unexpected instruction plan. Expected non-divisible sequential plan, got parallel plan.',
+        );
+    });
+});
+
+describe('isParallelInstructionPlan', () => {
+    it('returns true for ParallelInstructionPlan', () => {
+        expect(isParallelInstructionPlan(parallelInstructionPlan([]))).toBe(true);
+    });
+    it('returns false for other plans', () => {
+        expect(isParallelInstructionPlan(singleInstructionPlan(createInstruction('A')))).toBe(false);
+        expect(isParallelInstructionPlan(getMessagePackerInstructionPlanFromInstructions([]))).toBe(false);
+        expect(isParallelInstructionPlan(sequentialInstructionPlan([]))).toBe(false);
+        expect(isParallelInstructionPlan(nonDivisibleSequentialInstructionPlan([]))).toBe(false);
+    });
+});
+
+describe('assertIsParallelInstructionPlan', () => {
+    it('does nothing for ParallelInstructionPlan', () => {
+        expect(() => assertIsParallelInstructionPlan(parallelInstructionPlan([]))).not.toThrow();
+    });
+    it('throws for other plans', () => {
+        expect(() => assertIsParallelInstructionPlan(singleInstructionPlan(createInstruction('A')))).toThrow(
+            'Unexpected instruction plan. Expected parallel plan, got single plan.',
+        );
+        expect(() => assertIsParallelInstructionPlan(getMessagePackerInstructionPlanFromInstructions([]))).toThrow(
+            'Unexpected instruction plan. Expected parallel plan, got messagePacker plan.',
+        );
+        expect(() => assertIsParallelInstructionPlan(sequentialInstructionPlan([]))).toThrow(
+            'Unexpected instruction plan. Expected parallel plan, got sequential plan.',
+        );
+        expect(() => assertIsParallelInstructionPlan(nonDivisibleSequentialInstructionPlan([]))).toThrow(
+            'Unexpected instruction plan. Expected parallel plan, got sequential plan.',
+        );
     });
 });
 

@@ -1,3 +1,4 @@
+import { SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN, SolanaError } from '@solana/errors';
 import { TransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
 
 /**
@@ -244,6 +245,216 @@ function parseSingleTransactionPlans(
     plans: (TransactionPlan | (TransactionMessage & TransactionMessageWithFeePayer))[],
 ): TransactionPlan[] {
     return plans.map(plan => ('kind' in plan ? plan : singleTransactionPlan(plan)));
+}
+
+/**
+ * Checks if the given transaction plan is a {@link SingleTransactionPlan}.
+ *
+ * @param plan - The transaction plan to check.
+ * @return `true` if the plan is a single transaction plan, `false` otherwise.
+ *
+ * @example
+ * ```ts
+ * const plan: TransactionPlan = singleTransactionPlan(transactionMessage);
+ *
+ * if (isSingleTransactionPlan(plan)) {
+ *   console.log(plan.message); // TypeScript knows this is a SingleTransactionPlan.
+ * }
+ * ```
+ *
+ * @see {@link SingleTransactionPlan}
+ * @see {@link assertIsSingleTransactionPlan}
+ */
+export function isSingleTransactionPlan(plan: TransactionPlan): plan is SingleTransactionPlan {
+    return plan.kind === 'single';
+}
+
+/**
+ * Asserts that the given transaction plan is a {@link SingleTransactionPlan}.
+ *
+ * @param plan - The transaction plan to assert.
+ * @throws Throws a {@link SolanaError} with code
+ * `SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN` if the plan is not a single transaction plan.
+ *
+ * @example
+ * ```ts
+ * const plan: TransactionPlan = singleTransactionPlan(transactionMessage);
+ *
+ * assertIsSingleTransactionPlan(plan);
+ * console.log(plan.message); // TypeScript knows this is a SingleTransactionPlan.
+ * ```
+ *
+ * @see {@link SingleTransactionPlan}
+ * @see {@link isSingleTransactionPlan}
+ */
+export function assertIsSingleTransactionPlan(plan: TransactionPlan): asserts plan is SingleTransactionPlan {
+    if (!isSingleTransactionPlan(plan)) {
+        throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN, {
+            actualKind: plan.kind,
+            expectedKind: 'single',
+            transactionPlan: plan,
+        });
+    }
+}
+
+/**
+ * Checks if the given transaction plan is a {@link SequentialTransactionPlan}.
+ *
+ * @param plan - The transaction plan to check.
+ * @return `true` if the plan is a sequential transaction plan, `false` otherwise.
+ *
+ * @example
+ * ```ts
+ * const plan: TransactionPlan = sequentialTransactionPlan([messageA, messageB]);
+ *
+ * if (isSequentialTransactionPlan(plan)) {
+ *   console.log(plan.divisible); // TypeScript knows this is a SequentialTransactionPlan.
+ * }
+ * ```
+ *
+ * @see {@link SequentialTransactionPlan}
+ * @see {@link assertIsSequentialTransactionPlan}
+ */
+export function isSequentialTransactionPlan(plan: TransactionPlan): plan is SequentialTransactionPlan {
+    return plan.kind === 'sequential';
+}
+
+/**
+ * Asserts that the given transaction plan is a {@link SequentialTransactionPlan}.
+ *
+ * @param plan - The transaction plan to assert.
+ * @throws Throws a {@link SolanaError} with code
+ * `SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN` if the plan is not a sequential transaction plan.
+ *
+ * @example
+ * ```ts
+ * const plan: TransactionPlan = sequentialTransactionPlan([messageA, messageB]);
+ *
+ * assertIsSequentialTransactionPlan(plan);
+ * console.log(plan.divisible); // TypeScript knows this is a SequentialTransactionPlan.
+ * ```
+ *
+ * @see {@link SequentialTransactionPlan}
+ * @see {@link isSequentialTransactionPlan}
+ */
+export function assertIsSequentialTransactionPlan(plan: TransactionPlan): asserts plan is SequentialTransactionPlan {
+    if (!isSequentialTransactionPlan(plan)) {
+        throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN, {
+            actualKind: plan.kind,
+            expectedKind: 'sequential',
+            transactionPlan: plan,
+        });
+    }
+}
+
+/**
+ * Checks if the given transaction plan is a non-divisible {@link SequentialTransactionPlan}.
+ *
+ * A non-divisible sequential plan requires all its transaction messages to be executed
+ * atomically — usually in a transaction bundle.
+ *
+ * @param plan - The transaction plan to check.
+ * @return `true` if the plan is a non-divisible sequential transaction plan, `false` otherwise.
+ *
+ * @example
+ * ```ts
+ * const plan: TransactionPlan = nonDivisibleSequentialTransactionPlan([messageA, messageB]);
+ *
+ * if (isNonDivisibleSequentialTransactionPlan(plan)) {
+ *   // All transaction messages must be executed atomically.
+ * }
+ * ```
+ *
+ * @see {@link SequentialTransactionPlan}
+ * @see {@link assertIsNonDivisibleSequentialTransactionPlan}
+ */
+export function isNonDivisibleSequentialTransactionPlan(
+    plan: TransactionPlan,
+): plan is SequentialTransactionPlan & { divisible: false } {
+    return plan.kind === 'sequential' && plan.divisible === false;
+}
+
+/**
+ * Asserts that the given transaction plan is a non-divisible {@link SequentialTransactionPlan}.
+ *
+ * A non-divisible sequential plan requires all its transaction messages to be executed
+ * atomically — usually in a transaction bundle.
+ *
+ * @param plan - The transaction plan to assert.
+ * @throws Throws a {@link SolanaError} with code
+ * `SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN` if the plan is not a non-divisible sequential transaction plan.
+ *
+ * @example
+ * ```ts
+ * const plan: TransactionPlan = nonDivisibleSequentialTransactionPlan([messageA, messageB]);
+ *
+ * assertIsNonDivisibleSequentialTransactionPlan(plan);
+ * // All transaction messages must be executed atomically.
+ * ```
+ *
+ * @see {@link SequentialTransactionPlan}
+ * @see {@link isNonDivisibleSequentialTransactionPlan}
+ */
+export function assertIsNonDivisibleSequentialTransactionPlan(
+    plan: TransactionPlan,
+): asserts plan is SequentialTransactionPlan & { divisible: false } {
+    if (!isNonDivisibleSequentialTransactionPlan(plan)) {
+        throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN, {
+            actualKind: plan.kind === 'sequential' ? 'divisible sequential' : plan.kind,
+            expectedKind: 'non-divisible sequential',
+            transactionPlan: plan,
+        });
+    }
+}
+
+/**
+ * Checks if the given transaction plan is a {@link ParallelTransactionPlan}.
+ *
+ * @param plan - The transaction plan to check.
+ * @return `true` if the plan is a parallel transaction plan, `false` otherwise.
+ *
+ * @example
+ * ```ts
+ * const plan: TransactionPlan = parallelTransactionPlan([messageA, messageB]);
+ *
+ * if (isParallelTransactionPlan(plan)) {
+ *   console.log(plan.plans.length); // TypeScript knows this is a ParallelTransactionPlan.
+ * }
+ * ```
+ *
+ * @see {@link ParallelTransactionPlan}
+ * @see {@link assertIsParallelTransactionPlan}
+ */
+export function isParallelTransactionPlan(plan: TransactionPlan): plan is ParallelTransactionPlan {
+    return plan.kind === 'parallel';
+}
+
+/**
+ * Asserts that the given transaction plan is a {@link ParallelTransactionPlan}.
+ *
+ * @param plan - The transaction plan to assert.
+ * @throws Throws a {@link SolanaError} with code
+ * `SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN` if the plan is not a parallel transaction plan.
+ *
+ * @example
+ * ```ts
+ * const plan: TransactionPlan = parallelTransactionPlan([messageA, messageB]);
+ *
+ * assertIsParallelTransactionPlan(plan);
+ * console.log(plan.plans.length); // TypeScript knows this is a ParallelTransactionPlan.
+ * ```
+ *
+ * @see {@link ParallelTransactionPlan}
+ * @see {@link isParallelTransactionPlan}
+ */
+export function assertIsParallelTransactionPlan(plan: TransactionPlan): asserts plan is ParallelTransactionPlan {
+    if (!isParallelTransactionPlan(plan)) {
+        throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN, {
+            actualKind: plan.kind,
+            expectedKind: 'parallel',
+            transactionPlan: plan,
+        });
+    }
 }
 
 /**

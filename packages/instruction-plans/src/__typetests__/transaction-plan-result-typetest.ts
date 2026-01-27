@@ -2,15 +2,32 @@ import type { TransactionMessage, TransactionMessageWithFeePayer } from '@solana
 import type { Transaction } from '@solana/transactions';
 
 import {
+    assertIsCanceledSingleTransactionPlanResult,
+    assertIsFailedSingleTransactionPlanResult,
+    assertIsNonDivisibleSequentialTransactionPlanResult,
+    assertIsParallelTransactionPlanResult,
+    assertIsSequentialTransactionPlanResult,
+    assertIsSingleTransactionPlanResult,
+    assertIsSuccessfulSingleTransactionPlanResult,
+    CanceledSingleTransactionPlanResult,
     canceledSingleTransactionPlanResult,
+    FailedSingleTransactionPlanResult,
     failedSingleTransactionPlanResult,
     flattenTransactionPlanResult,
+    isCanceledSingleTransactionPlanResult,
+    isFailedSingleTransactionPlanResult,
+    isNonDivisibleSequentialTransactionPlanResult,
+    isParallelTransactionPlanResult,
+    isSequentialTransactionPlanResult,
+    isSingleTransactionPlanResult,
+    isSuccessfulSingleTransactionPlanResult,
     nonDivisibleSequentialTransactionPlanResult,
     ParallelTransactionPlanResult,
     parallelTransactionPlanResult,
     SequentialTransactionPlanResult,
     sequentialTransactionPlanResult,
     SingleTransactionPlanResult,
+    SuccessfulSingleTransactionPlanResult,
     successfulSingleTransactionPlanResult,
     TransactionPlanResult,
     TransactionPlanResultContext,
@@ -189,5 +206,152 @@ type CustomContext = { customData: string };
         ]);
         const results = flattenTransactionPlanResult(result);
         results satisfies SingleTransactionPlanResult[];
+    }
+}
+
+// [DESCRIBE] isSingleTransactionPlanResult
+{
+    // It narrows SingleTransactionPlanResult.
+    {
+        const plan = null as unknown as TransactionPlanResult;
+        if (isSingleTransactionPlanResult(plan)) {
+            plan satisfies SingleTransactionPlanResult;
+        }
+    }
+}
+
+// [DESCRIBE] assertIsSingleTransactionPlanResult
+{
+    // It narrows SingleTransactionPlanResult.
+    {
+        const plan = null as unknown as TransactionPlanResult;
+        assertIsSingleTransactionPlanResult(plan);
+        plan satisfies SingleTransactionPlanResult;
+    }
+}
+
+// [DESCRIBE] isSuccessfulSingleTransactionPlanResult
+{
+    // It narrows SuccessfulSingleTransactionPlanResult.
+    {
+        const plan = null as unknown as TransactionPlanResult;
+        if (isSuccessfulSingleTransactionPlanResult(plan)) {
+            plan satisfies SuccessfulSingleTransactionPlanResult;
+        }
+    }
+}
+
+// [DESCRIBE] assertIsSuccessfulSingleTransactionPlanResult
+{
+    // It narrows SuccessfulSingleTransactionPlanResult.
+    {
+        const plan = null as unknown as TransactionPlanResult;
+        assertIsSuccessfulSingleTransactionPlanResult(plan);
+        plan satisfies SuccessfulSingleTransactionPlanResult;
+    }
+}
+
+// [DESCRIBE] isFailedSingleTransactionPlanResult
+{
+    // It narrows FailedSingleTransactionPlanResult.
+    {
+        const plan = null as unknown as TransactionPlanResult;
+        if (isFailedSingleTransactionPlanResult(plan)) {
+            plan satisfies FailedSingleTransactionPlanResult;
+        }
+    }
+}
+
+// [DESCRIBE] assertIsFailedSingleTransactionPlanResult
+{
+    // It narrows FailedSingleTransactionPlanResult.
+    {
+        const plan = null as unknown as TransactionPlanResult;
+        assertIsFailedSingleTransactionPlanResult(plan);
+        plan satisfies FailedSingleTransactionPlanResult;
+    }
+}
+
+// [DESCRIBE] isCanceledSingleTransactionPlanResult
+{
+    // It narrows CanceledSingleTransactionPlanResult.
+    {
+        const plan = null as unknown as TransactionPlanResult;
+        if (isCanceledSingleTransactionPlanResult(plan)) {
+            plan satisfies CanceledSingleTransactionPlanResult;
+        }
+    }
+}
+
+// [DESCRIBE] assertIsCanceledSingleTransactionPlanResult
+{
+    // It narrows CanceledSingleTransactionPlanResult.
+    {
+        const plan = null as unknown as TransactionPlanResult;
+        assertIsCanceledSingleTransactionPlanResult(plan);
+        plan satisfies CanceledSingleTransactionPlanResult;
+    }
+}
+
+// [DESCRIBE] isSequentialTransactionPlanResult
+{
+    // It narrows SequentialTransactionPlanResult.
+    {
+        const plan = null as unknown as TransactionPlanResult;
+        if (isSequentialTransactionPlanResult(plan)) {
+            plan satisfies SequentialTransactionPlanResult;
+        }
+    }
+}
+
+// [DESCRIBE] assertIsSequentialTransactionPlanResult
+{
+    // It narrows SequentialTransactionPlanResult.
+    {
+        const plan = null as unknown as TransactionPlanResult;
+        assertIsSequentialTransactionPlanResult(plan);
+        plan satisfies SequentialTransactionPlanResult;
+    }
+}
+
+// [DESCRIBE] isNonDivisibleTransactionPlanResult
+{
+    // It narrows non-divisible SequentialTransactionPlanResult.
+    {
+        const plan = null as unknown as TransactionPlanResult;
+        if (isNonDivisibleSequentialTransactionPlanResult(plan)) {
+            plan satisfies SequentialTransactionPlanResult & { divisible: false };
+        }
+    }
+}
+
+// [DESCRIBE] assertIsNonDivisibleSequentialTransactionPlanResult
+{
+    // It narrows non-divisible SequentialTransactionPlanResult.
+    {
+        const plan = null as unknown as TransactionPlanResult;
+        assertIsNonDivisibleSequentialTransactionPlanResult(plan);
+        plan satisfies SequentialTransactionPlanResult & { divisible: false };
+    }
+}
+
+// [DESCRIBE] isParallelTransactionPlanResult
+{
+    // It narrows ParallelTransactionPlanResult.
+    {
+        const plan = null as unknown as TransactionPlanResult;
+        if (isParallelTransactionPlanResult(plan)) {
+            plan satisfies ParallelTransactionPlanResult;
+        }
+    }
+}
+
+// [DESCRIBE] assertIsParallelTransactionPlanResult
+{
+    // It narrows ParallelTransactionPlanResult.
+    {
+        const plan = null as unknown as TransactionPlanResult;
+        assertIsParallelTransactionPlanResult(plan);
+        plan satisfies ParallelTransactionPlanResult;
     }
 }

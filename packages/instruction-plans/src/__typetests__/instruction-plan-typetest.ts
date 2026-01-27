@@ -1,10 +1,21 @@
 import type { Instruction } from '@solana/instructions';
 
 import {
+    assertIsMessagePackerInstructionPlan,
+    assertIsNonDivisibleSequentialInstructionPlan,
+    assertIsParallelInstructionPlan,
+    assertIsSequentialInstructionPlan,
+    assertIsSingleInstructionPlan,
     flattenInstructionPlan,
     getLinearMessagePackerInstructionPlan,
     getMessagePackerInstructionPlanFromInstructions,
     getReallocMessagePackerInstructionPlan,
+    InstructionPlan,
+    isMessagePackerInstructionPlan,
+    isNonDivisibleSequentialInstructionPlan,
+    isParallelInstructionPlan,
+    isSequentialInstructionPlan,
+    isSingleInstructionPlan,
     MessagePackerInstructionPlan,
     nonDivisibleSequentialInstructionPlan,
     ParallelInstructionPlan,
@@ -128,5 +139,110 @@ const instructionC = null as unknown as Instruction & { id: 'C' };
         ]);
         const leafPlans = flattenInstructionPlan(plan);
         leafPlans satisfies (MessagePackerInstructionPlan | SingleInstructionPlan)[];
+    }
+}
+
+// [DESCRIBE] isSingleInstructionPlan
+{
+    // It narrows SingleInstructionPlan.
+    {
+        const plan = null as unknown as InstructionPlan;
+        if (isSingleInstructionPlan(plan)) {
+            plan satisfies SingleInstructionPlan;
+        }
+    }
+}
+
+// [DESCRIBE] assertIsSingleInstructionPlan
+{
+    // It narrows SingleInstructionPlan.
+    {
+        const plan = null as unknown as InstructionPlan;
+        assertIsSingleInstructionPlan(plan);
+        plan satisfies SingleInstructionPlan;
+    }
+}
+
+// [DESCRIBE] isMessagePackerInstructionPlan
+{
+    // It narrows MessagePackerInstructionPlan.
+    {
+        const plan = null as unknown as InstructionPlan;
+        if (isMessagePackerInstructionPlan(plan)) {
+            plan satisfies MessagePackerInstructionPlan;
+        }
+    }
+}
+
+// [DESCRIBE] assertIsMessagePackerInstructionPlan
+{
+    // It narrows MessagePackerInstructionPlan.
+    {
+        const plan = null as unknown as InstructionPlan;
+        assertIsMessagePackerInstructionPlan(plan);
+        plan satisfies MessagePackerInstructionPlan;
+    }
+}
+
+// [DESCRIBE] isSequentialInstructionPlan
+{
+    // It narrows SequentialInstructionPlan.
+    {
+        const plan = null as unknown as InstructionPlan;
+        if (isSequentialInstructionPlan(plan)) {
+            plan satisfies SequentialInstructionPlan;
+        }
+    }
+}
+
+// [DESCRIBE] assertIsSequentialInstructionPlan
+{
+    // It narrows SequentialInstructionPlan.
+    {
+        const plan = null as unknown as InstructionPlan;
+        assertIsSequentialInstructionPlan(plan);
+        plan satisfies SequentialInstructionPlan;
+    }
+}
+
+// [DESCRIBE] isNonDivisibleInstructionPlan
+{
+    // It narrows non-divisible SequentialInstructionPlan.
+    {
+        const plan = null as unknown as InstructionPlan;
+        if (isNonDivisibleSequentialInstructionPlan(plan)) {
+            plan satisfies SequentialInstructionPlan & { divisible: false };
+        }
+    }
+}
+
+// [DESCRIBE] assertIsNonDivisibleSequentialInstructionPlan
+{
+    // It narrows non-divisible SequentialInstructionPlan.
+    {
+        const plan = null as unknown as InstructionPlan;
+        assertIsNonDivisibleSequentialInstructionPlan(plan);
+        plan satisfies SequentialInstructionPlan & { divisible: false };
+    }
+}
+
+// [DESCRIBE] isParallelInstructionPlan
+{
+    // It narrows ParallelInstructionPlan.
+    {
+        const plan = null as unknown as InstructionPlan;
+        if (isParallelInstructionPlan(plan)) {
+            plan satisfies ParallelInstructionPlan;
+        }
+    }
+}
+
+// [DESCRIBE] assertIsParallelInstructionPlan
+{
+    // It narrows ParallelInstructionPlan.
+    {
+        const plan = null as unknown as InstructionPlan;
+        assertIsParallelInstructionPlan(plan);
+        plan satisfies ParallelInstructionPlan;
     }
 }

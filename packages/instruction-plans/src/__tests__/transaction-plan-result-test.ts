@@ -8,12 +8,26 @@ import {
 import { Signature } from '@solana/keys';
 
 import {
+    assertIsCanceledSingleTransactionPlanResult,
+    assertIsFailedSingleTransactionPlanResult,
+    assertIsNonDivisibleSequentialTransactionPlanResult,
+    assertIsParallelTransactionPlanResult,
+    assertIsSequentialTransactionPlanResult,
+    assertIsSingleTransactionPlanResult,
+    assertIsSuccessfulSingleTransactionPlanResult,
     canceledSingleTransactionPlanResult,
     everyTransactionPlanResult,
     failedSingleTransactionPlanResult,
     findTransactionPlanResult,
     flattenTransactionPlanResult,
     getFirstFailedSingleTransactionPlanResult,
+    isCanceledSingleTransactionPlanResult,
+    isFailedSingleTransactionPlanResult,
+    isNonDivisibleSequentialTransactionPlanResult,
+    isParallelTransactionPlanResult,
+    isSequentialTransactionPlanResult,
+    isSingleTransactionPlanResult,
+    isSuccessfulSingleTransactionPlanResult,
     nonDivisibleSequentialTransactionPlanResult,
     parallelTransactionPlanResult,
     sequentialTransactionPlanResult,
@@ -231,6 +245,426 @@ describe('nonDivisibleSequentialTransactionPlanResult', () => {
         const planB = canceledSingleTransactionPlanResult(createMessage('B'));
         const result = nonDivisibleSequentialTransactionPlanResult([planA, planB]);
         expect(result).toBeFrozenObject();
+    });
+});
+
+describe('isSingleTransactionPlanResult', () => {
+    it('returns true for any SingleTransactionPlanResult', () => {
+        expect(
+            isSingleTransactionPlanResult(
+                successfulSingleTransactionPlanResult(createMessage('A'), createTransaction('A')),
+            ),
+        ).toBe(true);
+        expect(
+            isSingleTransactionPlanResult(
+                successfulSingleTransactionPlanResultFromSignature(createMessage('A'), 'A' as Signature),
+            ),
+        ).toBe(true);
+        expect(
+            isSingleTransactionPlanResult(
+                failedSingleTransactionPlanResult(
+                    createMessage('A'),
+                    new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
+                ),
+            ),
+        ).toBe(true);
+        expect(isSingleTransactionPlanResult(canceledSingleTransactionPlanResult(createMessage('A')))).toBe(true);
+    });
+    it('returns false for other plans', () => {
+        expect(isSingleTransactionPlanResult(sequentialTransactionPlanResult([]))).toBe(false);
+        expect(isSingleTransactionPlanResult(nonDivisibleSequentialTransactionPlanResult([]))).toBe(false);
+        expect(isSingleTransactionPlanResult(parallelTransactionPlanResult([]))).toBe(false);
+    });
+});
+
+describe('assertIsSingleTransactionPlanResult', () => {
+    it('does nothing for any SingleTransactionPlanResult', () => {
+        expect(() =>
+            assertIsSingleTransactionPlanResult(
+                successfulSingleTransactionPlanResult(createMessage('A'), createTransaction('A')),
+            ),
+        ).not.toThrow();
+        expect(() =>
+            assertIsSingleTransactionPlanResult(
+                successfulSingleTransactionPlanResultFromSignature(createMessage('A'), 'A' as Signature),
+            ),
+        ).not.toThrow();
+        expect(() =>
+            assertIsSingleTransactionPlanResult(
+                failedSingleTransactionPlanResult(
+                    createMessage('A'),
+                    new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
+                ),
+            ),
+        ).not.toThrow();
+        expect(() =>
+            assertIsSingleTransactionPlanResult(canceledSingleTransactionPlanResult(createMessage('A'))),
+        ).not.toThrow();
+    });
+    it('throws for other plans', () => {
+        expect(() => assertIsSingleTransactionPlanResult(sequentialTransactionPlanResult([]))).toThrow(
+            'Unexpected transaction plan result. Expected single plan, got sequential plan.',
+        );
+        expect(() => assertIsSingleTransactionPlanResult(nonDivisibleSequentialTransactionPlanResult([]))).toThrow(
+            'Unexpected transaction plan result. Expected single plan, got sequential plan.',
+        );
+        expect(() => assertIsSingleTransactionPlanResult(parallelTransactionPlanResult([]))).toThrow(
+            'Unexpected transaction plan result. Expected single plan, got parallel plan.',
+        );
+    });
+});
+
+describe('isSuccessfulSingleTransactionPlanResult', () => {
+    it('returns true for successful SingleTransactionPlanResult', () => {
+        expect(
+            isSuccessfulSingleTransactionPlanResult(
+                successfulSingleTransactionPlanResult(createMessage('A'), createTransaction('A')),
+            ),
+        ).toBe(true);
+        expect(
+            isSuccessfulSingleTransactionPlanResult(
+                successfulSingleTransactionPlanResultFromSignature(createMessage('A'), 'A' as Signature),
+            ),
+        ).toBe(true);
+    });
+    it('returns false for other plans', () => {
+        expect(
+            isSuccessfulSingleTransactionPlanResult(
+                failedSingleTransactionPlanResult(
+                    createMessage('A'),
+                    new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
+                ),
+            ),
+        ).toBe(false);
+        expect(isSuccessfulSingleTransactionPlanResult(canceledSingleTransactionPlanResult(createMessage('A')))).toBe(
+            false,
+        );
+        expect(isSuccessfulSingleTransactionPlanResult(sequentialTransactionPlanResult([]))).toBe(false);
+        expect(isSuccessfulSingleTransactionPlanResult(nonDivisibleSequentialTransactionPlanResult([]))).toBe(false);
+        expect(isSuccessfulSingleTransactionPlanResult(parallelTransactionPlanResult([]))).toBe(false);
+    });
+});
+
+describe('assertIsSuccessfulSingleTransactionPlanResult', () => {
+    it('does nothing for successful SingleTransactionPlanResult', () => {
+        expect(() =>
+            assertIsSuccessfulSingleTransactionPlanResult(
+                successfulSingleTransactionPlanResult(createMessage('A'), createTransaction('A')),
+            ),
+        ).not.toThrow();
+        expect(() =>
+            assertIsSuccessfulSingleTransactionPlanResult(
+                successfulSingleTransactionPlanResultFromSignature(createMessage('A'), 'A' as Signature),
+            ),
+        ).not.toThrow();
+    });
+    it('throws for other plans', () => {
+        expect(() =>
+            assertIsSuccessfulSingleTransactionPlanResult(
+                failedSingleTransactionPlanResult(
+                    createMessage('A'),
+                    new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
+                ),
+            ),
+        ).toThrow('Unexpected transaction plan result. Expected successful single plan, got failed single plan.');
+        expect(() =>
+            assertIsSuccessfulSingleTransactionPlanResult(canceledSingleTransactionPlanResult(createMessage('A'))),
+        ).toThrow('Unexpected transaction plan result. Expected successful single plan, got canceled single plan.');
+        expect(() => assertIsSuccessfulSingleTransactionPlanResult(sequentialTransactionPlanResult([]))).toThrow(
+            'Unexpected transaction plan result. Expected successful single plan, got sequential plan.',
+        );
+        expect(() =>
+            assertIsSuccessfulSingleTransactionPlanResult(nonDivisibleSequentialTransactionPlanResult([])),
+        ).toThrow('Unexpected transaction plan result. Expected successful single plan, got sequential plan.');
+        expect(() => assertIsSuccessfulSingleTransactionPlanResult(parallelTransactionPlanResult([]))).toThrow(
+            'Unexpected transaction plan result. Expected successful single plan, got parallel plan.',
+        );
+    });
+});
+
+describe('isFailedSingleTransactionPlanResult', () => {
+    it('returns true for failed SingleTransactionPlanResult', () => {
+        expect(
+            isFailedSingleTransactionPlanResult(
+                failedSingleTransactionPlanResult(
+                    createMessage('A'),
+                    new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
+                ),
+            ),
+        ).toBe(true);
+    });
+    it('returns false for other plans', () => {
+        expect(
+            isFailedSingleTransactionPlanResult(
+                successfulSingleTransactionPlanResult(createMessage('A'), createTransaction('A')),
+            ),
+        ).toBe(false);
+        expect(isFailedSingleTransactionPlanResult(canceledSingleTransactionPlanResult(createMessage('A')))).toBe(
+            false,
+        );
+        expect(isFailedSingleTransactionPlanResult(sequentialTransactionPlanResult([]))).toBe(false);
+        expect(isFailedSingleTransactionPlanResult(nonDivisibleSequentialTransactionPlanResult([]))).toBe(false);
+        expect(isFailedSingleTransactionPlanResult(parallelTransactionPlanResult([]))).toBe(false);
+    });
+});
+
+describe('assertIsFailedSingleTransactionPlanResult', () => {
+    it('does nothing for failed SingleTransactionPlanResult', () => {
+        expect(() =>
+            assertIsFailedSingleTransactionPlanResult(
+                failedSingleTransactionPlanResult(
+                    createMessage('A'),
+                    new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
+                ),
+            ),
+        ).not.toThrow();
+    });
+    it('throws for other plans', () => {
+        expect(() =>
+            assertIsFailedSingleTransactionPlanResult(
+                successfulSingleTransactionPlanResult(createMessage('A'), createTransaction('A')),
+            ),
+        ).toThrow('Unexpected transaction plan result. Expected failed single plan, got successful single plan.');
+        expect(() =>
+            assertIsFailedSingleTransactionPlanResult(canceledSingleTransactionPlanResult(createMessage('A'))),
+        ).toThrow('Unexpected transaction plan result. Expected failed single plan, got canceled single plan.');
+        expect(() => assertIsFailedSingleTransactionPlanResult(sequentialTransactionPlanResult([]))).toThrow(
+            'Unexpected transaction plan result. Expected failed single plan, got sequential plan.',
+        );
+        expect(() =>
+            assertIsFailedSingleTransactionPlanResult(nonDivisibleSequentialTransactionPlanResult([])),
+        ).toThrow('Unexpected transaction plan result. Expected failed single plan, got sequential plan.');
+        expect(() => assertIsFailedSingleTransactionPlanResult(parallelTransactionPlanResult([]))).toThrow(
+            'Unexpected transaction plan result. Expected failed single plan, got parallel plan.',
+        );
+    });
+});
+
+describe('isCanceledSingleTransactionPlanResult', () => {
+    it('returns true for canceled SingleTransactionPlanResult', () => {
+        expect(isCanceledSingleTransactionPlanResult(canceledSingleTransactionPlanResult(createMessage('A')))).toBe(
+            true,
+        );
+    });
+    it('returns false for other plans', () => {
+        expect(
+            isCanceledSingleTransactionPlanResult(
+                successfulSingleTransactionPlanResult(createMessage('A'), createTransaction('A')),
+            ),
+        ).toBe(false);
+        expect(
+            isCanceledSingleTransactionPlanResult(
+                failedSingleTransactionPlanResult(
+                    createMessage('A'),
+                    new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
+                ),
+            ),
+        ).toBe(false);
+        expect(isCanceledSingleTransactionPlanResult(sequentialTransactionPlanResult([]))).toBe(false);
+        expect(isCanceledSingleTransactionPlanResult(nonDivisibleSequentialTransactionPlanResult([]))).toBe(false);
+        expect(isCanceledSingleTransactionPlanResult(parallelTransactionPlanResult([]))).toBe(false);
+    });
+});
+
+describe('assertIsCanceledSingleTransactionPlanResult', () => {
+    it('does nothing for canceled SingleTransactionPlanResult', () => {
+        expect(() =>
+            assertIsCanceledSingleTransactionPlanResult(canceledSingleTransactionPlanResult(createMessage('A'))),
+        ).not.toThrow();
+    });
+    it('throws for other plans', () => {
+        expect(() =>
+            assertIsCanceledSingleTransactionPlanResult(
+                successfulSingleTransactionPlanResult(createMessage('A'), createTransaction('A')),
+            ),
+        ).toThrow('Unexpected transaction plan result. Expected canceled single plan, got successful single plan.');
+        expect(() =>
+            assertIsCanceledSingleTransactionPlanResult(
+                failedSingleTransactionPlanResult(
+                    createMessage('A'),
+                    new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
+                ),
+            ),
+        ).toThrow('Unexpected transaction plan result. Expected canceled single plan, got failed single plan.');
+        expect(() => assertIsCanceledSingleTransactionPlanResult(sequentialTransactionPlanResult([]))).toThrow(
+            'Unexpected transaction plan result. Expected canceled single plan, got sequential plan.',
+        );
+        expect(() =>
+            assertIsCanceledSingleTransactionPlanResult(nonDivisibleSequentialTransactionPlanResult([])),
+        ).toThrow('Unexpected transaction plan result. Expected canceled single plan, got sequential plan.');
+        expect(() => assertIsCanceledSingleTransactionPlanResult(parallelTransactionPlanResult([]))).toThrow(
+            'Unexpected transaction plan result. Expected canceled single plan, got parallel plan.',
+        );
+    });
+});
+
+describe('isSequentialTransactionPlanResult', () => {
+    it('returns true for SequentialTransactionPlanResult (divisible or not)', () => {
+        expect(isSequentialTransactionPlanResult(sequentialTransactionPlanResult([]))).toBe(true);
+        expect(isSequentialTransactionPlanResult(nonDivisibleSequentialTransactionPlanResult([]))).toBe(true);
+    });
+    it('returns false for other plans', () => {
+        expect(
+            isSequentialTransactionPlanResult(
+                successfulSingleTransactionPlanResult(createMessage('A'), createTransaction('A')),
+            ),
+        ).toBe(false);
+        expect(
+            isSequentialTransactionPlanResult(
+                failedSingleTransactionPlanResult(
+                    createMessage('A'),
+                    new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
+                ),
+            ),
+        ).toBe(false);
+        expect(isSequentialTransactionPlanResult(canceledSingleTransactionPlanResult(createMessage('A')))).toBe(false);
+        expect(isSequentialTransactionPlanResult(parallelTransactionPlanResult([]))).toBe(false);
+    });
+});
+
+describe('assertIsSequentialTransactionPlanResult', () => {
+    it('does nothing for SequentialTransactionPlanResult', () => {
+        expect(() => assertIsSequentialTransactionPlanResult(sequentialTransactionPlanResult([]))).not.toThrow();
+        expect(() =>
+            assertIsSequentialTransactionPlanResult(nonDivisibleSequentialTransactionPlanResult([])),
+        ).not.toThrow();
+    });
+    it('throws for other plans', () => {
+        expect(() =>
+            assertIsSequentialTransactionPlanResult(
+                successfulSingleTransactionPlanResult(createMessage('A'), createTransaction('A')),
+            ),
+        ).toThrow('Unexpected transaction plan result. Expected sequential plan, got single plan.');
+        expect(() =>
+            assertIsSequentialTransactionPlanResult(
+                failedSingleTransactionPlanResult(
+                    createMessage('A'),
+                    new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
+                ),
+            ),
+        ).toThrow('Unexpected transaction plan result. Expected sequential plan, got single plan.');
+        expect(() =>
+            assertIsSequentialTransactionPlanResult(canceledSingleTransactionPlanResult(createMessage('A'))),
+        ).toThrow('Unexpected transaction plan result. Expected sequential plan, got single plan.');
+        expect(() => assertIsSequentialTransactionPlanResult(parallelTransactionPlanResult([]))).toThrow(
+            'Unexpected transaction plan result. Expected sequential plan, got parallel plan.',
+        );
+    });
+});
+
+describe('isNonDivisibleSequentialTransactionPlanResult', () => {
+    it('returns true for non-divisible SequentialTransactionPlanResult', () => {
+        expect(isNonDivisibleSequentialTransactionPlanResult(nonDivisibleSequentialTransactionPlanResult([]))).toBe(
+            true,
+        );
+    });
+    it('returns false for other plans', () => {
+        expect(
+            isNonDivisibleSequentialTransactionPlanResult(
+                successfulSingleTransactionPlanResult(createMessage('A'), createTransaction('A')),
+            ),
+        ).toBe(false);
+        expect(
+            isNonDivisibleSequentialTransactionPlanResult(
+                failedSingleTransactionPlanResult(
+                    createMessage('A'),
+                    new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
+                ),
+            ),
+        ).toBe(false);
+        expect(
+            isNonDivisibleSequentialTransactionPlanResult(canceledSingleTransactionPlanResult(createMessage('A'))),
+        ).toBe(false);
+        expect(isNonDivisibleSequentialTransactionPlanResult(sequentialTransactionPlanResult([]))).toBe(false);
+        expect(isNonDivisibleSequentialTransactionPlanResult(parallelTransactionPlanResult([]))).toBe(false);
+    });
+});
+
+describe('assertIsNonDivisibleSequentialTransactionPlanResult', () => {
+    it('does nothing for non-divisible SequentialTransactionPlanResult', () => {
+        expect(() =>
+            assertIsNonDivisibleSequentialTransactionPlanResult(nonDivisibleSequentialTransactionPlanResult([])),
+        ).not.toThrow();
+    });
+    it('throws for other plans', () => {
+        expect(() =>
+            assertIsNonDivisibleSequentialTransactionPlanResult(
+                successfulSingleTransactionPlanResult(createMessage('A'), createTransaction('A')),
+            ),
+        ).toThrow('Unexpected transaction plan result. Expected non-divisible sequential plan, got single plan.');
+        expect(() =>
+            assertIsNonDivisibleSequentialTransactionPlanResult(
+                failedSingleTransactionPlanResult(
+                    createMessage('A'),
+                    new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
+                ),
+            ),
+        ).toThrow('Unexpected transaction plan result. Expected non-divisible sequential plan, got single plan.');
+        expect(() =>
+            assertIsNonDivisibleSequentialTransactionPlanResult(
+                canceledSingleTransactionPlanResult(createMessage('A')),
+            ),
+        ).toThrow('Unexpected transaction plan result. Expected non-divisible sequential plan, got single plan.');
+        expect(() => assertIsNonDivisibleSequentialTransactionPlanResult(sequentialTransactionPlanResult([]))).toThrow(
+            'Unexpected transaction plan result. Expected non-divisible sequential plan, got divisible sequential plan.',
+        );
+        expect(() => assertIsNonDivisibleSequentialTransactionPlanResult(parallelTransactionPlanResult([]))).toThrow(
+            'Unexpected transaction plan result. Expected non-divisible sequential plan, got parallel plan.',
+        );
+    });
+});
+
+describe('isParallelTransactionPlanResult', () => {
+    it('returns true for ParallelTransactionPlanResult', () => {
+        expect(isParallelTransactionPlanResult(parallelTransactionPlanResult([]))).toBe(true);
+    });
+    it('returns false for other plans', () => {
+        expect(
+            isParallelTransactionPlanResult(
+                successfulSingleTransactionPlanResult(createMessage('A'), createTransaction('A')),
+            ),
+        ).toBe(false);
+        expect(
+            isParallelTransactionPlanResult(
+                failedSingleTransactionPlanResult(
+                    createMessage('A'),
+                    new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
+                ),
+            ),
+        ).toBe(false);
+        expect(isParallelTransactionPlanResult(canceledSingleTransactionPlanResult(createMessage('A')))).toBe(false);
+        expect(isParallelTransactionPlanResult(sequentialTransactionPlanResult([]))).toBe(false);
+        expect(isParallelTransactionPlanResult(nonDivisibleSequentialTransactionPlanResult([]))).toBe(false);
+    });
+});
+
+describe('assertIsParallelTransactionPlanResult', () => {
+    it('does nothing for ParallelTransactionPlanResult', () => {
+        expect(() => assertIsParallelTransactionPlanResult(parallelTransactionPlanResult([]))).not.toThrow();
+    });
+    it('throws for other plans', () => {
+        expect(() =>
+            assertIsParallelTransactionPlanResult(
+                successfulSingleTransactionPlanResult(createMessage('A'), createTransaction('A')),
+            ),
+        ).toThrow('Unexpected transaction plan result. Expected parallel plan, got single plan.');
+        expect(() =>
+            assertIsParallelTransactionPlanResult(
+                failedSingleTransactionPlanResult(
+                    createMessage('A'),
+                    new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
+                ),
+            ),
+        ).toThrow('Unexpected transaction plan result. Expected parallel plan, got single plan.');
+        expect(() =>
+            assertIsParallelTransactionPlanResult(canceledSingleTransactionPlanResult(createMessage('A'))),
+        ).toThrow('Unexpected transaction plan result. Expected parallel plan, got single plan.');
+        expect(() => assertIsParallelTransactionPlanResult(sequentialTransactionPlanResult([]))).toThrow(
+            'Unexpected transaction plan result. Expected parallel plan, got sequential plan.',
+        );
+        expect(() => assertIsParallelTransactionPlanResult(nonDivisibleSequentialTransactionPlanResult([]))).toThrow(
+            'Unexpected transaction plan result. Expected parallel plan, got sequential plan.',
+        );
     });
 });
 

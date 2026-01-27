@@ -1,6 +1,7 @@
 import {
     SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN,
     SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_PACKER_ALREADY_COMPLETE,
+    SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_INSTRUCTION_PLAN,
     SolanaError,
 } from '@solana/errors';
 import { Instruction } from '@solana/instructions';
@@ -357,6 +358,268 @@ export function singleInstructionPlan(instruction: Instruction): SingleInstructi
 
 function parseSingleInstructionPlans(plans: (Instruction | InstructionPlan)[]): InstructionPlan[] {
     return plans.map(plan => ('kind' in plan ? plan : singleInstructionPlan(plan)));
+}
+
+/**
+ * Checks if the given instruction plan is a {@link SingleInstructionPlan}.
+ *
+ * @param plan - The instruction plan to check.
+ * @return `true` if the plan is a single instruction plan, `false` otherwise.
+ *
+ * @example
+ * ```ts
+ * const plan: InstructionPlan = singleInstructionPlan(myInstruction);
+ *
+ * if (isSingleInstructionPlan(plan)) {
+ *   console.log(plan.instruction); // TypeScript knows this is a SingleInstructionPlan.
+ * }
+ * ```
+ *
+ * @see {@link SingleInstructionPlan}
+ * @see {@link assertIsSingleInstructionPlan}
+ */
+export function isSingleInstructionPlan(plan: InstructionPlan): plan is SingleInstructionPlan {
+    return plan.kind === 'single';
+}
+
+/**
+ * Asserts that the given instruction plan is a {@link SingleInstructionPlan}.
+ *
+ * @param plan - The instruction plan to assert.
+ * @throws Throws a {@link SolanaError} with code
+ * `SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_INSTRUCTION_PLAN` if the plan is not a single instruction plan.
+ *
+ * @example
+ * ```ts
+ * const plan: InstructionPlan = singleInstructionPlan(myInstruction);
+ *
+ * assertIsSingleInstructionPlan(plan);
+ * console.log(plan.instruction); // TypeScript knows this is a SingleInstructionPlan.
+ * ```
+ *
+ * @see {@link SingleInstructionPlan}
+ * @see {@link isSingleInstructionPlan}
+ */
+export function assertIsSingleInstructionPlan(plan: InstructionPlan): asserts plan is SingleInstructionPlan {
+    if (!isSingleInstructionPlan(plan)) {
+        throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_INSTRUCTION_PLAN, {
+            actualKind: plan.kind,
+            expectedKind: 'single',
+            instructionPlan: plan,
+        });
+    }
+}
+
+/**
+ * Checks if the given instruction plan is a {@link MessagePackerInstructionPlan}.
+ *
+ * @param plan - The instruction plan to check.
+ * @return `true` if the plan is a message packer instruction plan, `false` otherwise.
+ *
+ * @example
+ * ```ts
+ * const plan: InstructionPlan = getLinearMessagePackerInstructionPlan({ /* ... *\/ });
+ *
+ * if (isMessagePackerInstructionPlan(plan)) {
+ *   const packer = plan.getMessagePacker(); // TypeScript knows this is a MessagePackerInstructionPlan.
+ * }
+ * ```
+ *
+ * @see {@link MessagePackerInstructionPlan}
+ * @see {@link assertIsMessagePackerInstructionPlan}
+ */
+export function isMessagePackerInstructionPlan(plan: InstructionPlan): plan is MessagePackerInstructionPlan {
+    return plan.kind === 'messagePacker';
+}
+
+/**
+ * Asserts that the given instruction plan is a {@link MessagePackerInstructionPlan}.
+ *
+ * @param plan - The instruction plan to assert.
+ * @throws Throws a {@link SolanaError} with code
+ * `SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_INSTRUCTION_PLAN` if the plan is not a message packer instruction plan.
+ *
+ * @example
+ * ```ts
+ * const plan: InstructionPlan = getLinearMessagePackerInstructionPlan({ /* ... *\/ });
+ *
+ * assertIsMessagePackerInstructionPlan(plan);
+ * const packer = plan.getMessagePacker(); // TypeScript knows this is a MessagePackerInstructionPlan.
+ * ```
+ *
+ * @see {@link MessagePackerInstructionPlan}
+ * @see {@link isMessagePackerInstructionPlan}
+ */
+export function assertIsMessagePackerInstructionPlan(
+    plan: InstructionPlan,
+): asserts plan is MessagePackerInstructionPlan {
+    if (!isMessagePackerInstructionPlan(plan)) {
+        throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_INSTRUCTION_PLAN, {
+            actualKind: plan.kind,
+            expectedKind: 'messagePacker',
+            instructionPlan: plan,
+        });
+    }
+}
+
+/**
+ * Checks if the given instruction plan is a {@link SequentialInstructionPlan}.
+ *
+ * @param plan - The instruction plan to check.
+ * @return `true` if the plan is a sequential instruction plan, `false` otherwise.
+ *
+ * @example
+ * ```ts
+ * const plan: InstructionPlan = sequentialInstructionPlan([instructionA, instructionB]);
+ *
+ * if (isSequentialInstructionPlan(plan)) {
+ *   console.log(plan.divisible); // TypeScript knows this is a SequentialInstructionPlan.
+ * }
+ * ```
+ *
+ * @see {@link SequentialInstructionPlan}
+ * @see {@link assertIsSequentialInstructionPlan}
+ */
+export function isSequentialInstructionPlan(plan: InstructionPlan): plan is SequentialInstructionPlan {
+    return plan.kind === 'sequential';
+}
+
+/**
+ * Asserts that the given instruction plan is a {@link SequentialInstructionPlan}.
+ *
+ * @param plan - The instruction plan to assert.
+ * @throws Throws a {@link SolanaError} with code
+ * `SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_INSTRUCTION_PLAN` if the plan is not a sequential instruction plan.
+ *
+ * @example
+ * ```ts
+ * const plan: InstructionPlan = sequentialInstructionPlan([instructionA, instructionB]);
+ *
+ * assertIsSequentialInstructionPlan(plan);
+ * console.log(plan.divisible); // TypeScript knows this is a SequentialInstructionPlan.
+ * ```
+ *
+ * @see {@link SequentialInstructionPlan}
+ * @see {@link isSequentialInstructionPlan}
+ */
+export function assertIsSequentialInstructionPlan(plan: InstructionPlan): asserts plan is SequentialInstructionPlan {
+    if (!isSequentialInstructionPlan(plan)) {
+        throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_INSTRUCTION_PLAN, {
+            actualKind: plan.kind,
+            expectedKind: 'sequential',
+            instructionPlan: plan,
+        });
+    }
+}
+
+/**
+ * Checks if the given instruction plan is a non-divisible {@link SequentialInstructionPlan}.
+ *
+ * A non-divisible sequential plan requires all its instructions to be executed
+ * atomically — either in a single transaction or in a transaction bundle.
+ *
+ * @param plan - The instruction plan to check.
+ * @return `true` if the plan is a non-divisible sequential instruction plan, `false` otherwise.
+ *
+ * @example
+ * ```ts
+ * const plan: InstructionPlan = nonDivisibleSequentialInstructionPlan([instructionA, instructionB]);
+ *
+ * if (isNonDivisibleSequentialInstructionPlan(plan)) {
+ *   // All instructions must be executed atomically.
+ * }
+ * ```
+ *
+ * @see {@link SequentialInstructionPlan}
+ * @see {@link assertIsNonDivisibleSequentialInstructionPlan}
+ */
+export function isNonDivisibleSequentialInstructionPlan(
+    plan: InstructionPlan,
+): plan is SequentialInstructionPlan & { divisible: false } {
+    return plan.kind === 'sequential' && plan.divisible === false;
+}
+
+/**
+ * Asserts that the given instruction plan is a non-divisible {@link SequentialInstructionPlan}.
+ *
+ * A non-divisible sequential plan requires all its instructions to be executed
+ * atomically — either in a single transaction or in a transaction bundle.
+ *
+ * @param plan - The instruction plan to assert.
+ * @throws Throws a {@link SolanaError} with code
+ * `SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_INSTRUCTION_PLAN` if the plan is not a non-divisible sequential instruction plan.
+ *
+ * @example
+ * ```ts
+ * const plan: InstructionPlan = nonDivisibleSequentialInstructionPlan([instructionA, instructionB]);
+ *
+ * assertIsNonDivisibleSequentialInstructionPlan(plan);
+ * // All instructions must be executed atomically.
+ * ```
+ *
+ * @see {@link SequentialInstructionPlan}
+ * @see {@link isNonDivisibleSequentialInstructionPlan}
+ */
+export function assertIsNonDivisibleSequentialInstructionPlan(
+    plan: InstructionPlan,
+): asserts plan is SequentialInstructionPlan & { divisible: false } {
+    if (!isNonDivisibleSequentialInstructionPlan(plan)) {
+        throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_INSTRUCTION_PLAN, {
+            actualKind: plan.kind === 'sequential' ? 'divisible sequential' : plan.kind,
+            expectedKind: 'non-divisible sequential',
+            instructionPlan: plan,
+        });
+    }
+}
+
+/**
+ * Checks if the given instruction plan is a {@link ParallelInstructionPlan}.
+ *
+ * @param plan - The instruction plan to check.
+ * @return `true` if the plan is a parallel instruction plan, `false` otherwise.
+ *
+ * @example
+ * ```ts
+ * const plan: InstructionPlan = parallelInstructionPlan([instructionA, instructionB]);
+ *
+ * if (isParallelInstructionPlan(plan)) {
+ *   console.log(plan.plans.length); // TypeScript knows this is a ParallelInstructionPlan.
+ * }
+ * ```
+ *
+ * @see {@link ParallelInstructionPlan}
+ * @see {@link assertIsParallelInstructionPlan}
+ */
+export function isParallelInstructionPlan(plan: InstructionPlan): plan is ParallelInstructionPlan {
+    return plan.kind === 'parallel';
+}
+
+/**
+ * Asserts that the given instruction plan is a {@link ParallelInstructionPlan}.
+ *
+ * @param plan - The instruction plan to assert.
+ * @throws Throws a {@link SolanaError} with code
+ * `SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_INSTRUCTION_PLAN` if the plan is not a parallel instruction plan.
+ *
+ * @example
+ * ```ts
+ * const plan: InstructionPlan = parallelInstructionPlan([instructionA, instructionB]);
+ *
+ * assertIsParallelInstructionPlan(plan);
+ * console.log(plan.plans.length); // TypeScript knows this is a ParallelInstructionPlan.
+ * ```
+ *
+ * @see {@link ParallelInstructionPlan}
+ * @see {@link isParallelInstructionPlan}
+ */
+export function assertIsParallelInstructionPlan(plan: InstructionPlan): asserts plan is ParallelInstructionPlan {
+    if (!isParallelInstructionPlan(plan)) {
+        throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_INSTRUCTION_PLAN, {
+            actualKind: plan.kind,
+            expectedKind: 'parallel',
+            instructionPlan: plan,
+        });
+    }
 }
 
 /**
