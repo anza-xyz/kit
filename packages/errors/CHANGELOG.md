@@ -1,5 +1,19 @@
 # @solana/errors
 
+## 5.5.0
+
+### Minor Changes
+
+- [#1253](https://github.com/anza-xyz/kit/pull/1253) [`b4f5897`](https://github.com/anza-xyz/kit/commit/b4f5897cab50a92f50b6b390ae76d743173c26dd) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add `isX` and `assertIsX` type guard helpers for instruction plans, transaction plans, and transaction plan results
+
+- [#1260](https://github.com/anza-xyz/kit/pull/1260) [`08c9062`](https://github.com/anza-xyz/kit/commit/08c906299409e82a5941e1044fc6d47d633df784) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Mark the `cause` deprecated for `SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN` error
+
+- [#1254](https://github.com/anza-xyz/kit/pull/1254) [`ba3f186`](https://github.com/anza-xyz/kit/commit/ba3f1861a9cb53b4c0e7c6d1b92791d8983e001b) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add `SuccessfulTransactionPlanResult` type with `isSuccessfulTransactionPlanResult` and `assertIsSuccessfulTransactionPlanResult` type guards
+
+- [#1236](https://github.com/anza-xyz/kit/pull/1236) [`1cc0a31`](https://github.com/anza-xyz/kit/commit/1cc0a3163cf884a715aef5ba336adfd980dabfa6) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `getFirstFailedSingleTransactionPlanResult`, which you can use to get the first failed transaction plan result from a transaction plan result, or throw if none failed
+
+- [#1230](https://github.com/anza-xyz/kit/pull/1230) [`6af7c15`](https://github.com/anza-xyz/kit/commit/6af7c156a9cd196d0d5ecb374fe696ec659756bf) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add a function `unwrapSimulationError`, which will return the cause of an error if it is a simulation error. Otherwise it is returned unchanged.
+
 ## 5.4.0
 
 ### Patch Changes

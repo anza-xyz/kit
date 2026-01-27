@@ -1,5 +1,39 @@
 # @solana/instruction-plans
 
+## 5.5.0
+
+### Minor Changes
+
+- [#1245](https://github.com/anza-xyz/kit/pull/1245) [`f731129`](https://github.com/anza-xyz/kit/commit/f731129939bac8b2574ecbbcd6afe0a0a6b00e5f) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `flattenInstructionPlan` and `flattenTransactionPlan` functions, that can be used to remove the sequential/parallel structure from these plans. Deprecate `getAllSingleTransactionPlans` which is superseded by `flattenTransactionPlan`.
+
+- [#1233](https://github.com/anza-xyz/kit/pull/1233) [`b174ed5`](https://github.com/anza-xyz/kit/commit/b174ed531c15d34e354657d3945e4ea5b38932bc) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add `everyInstructionPlan`, `everyTransactionPlan` and `everyTransactionPlanResult` functions that can be used to ensure a given predicate holds for all nodes inside their respective plan structures.
+
+- [#1247](https://github.com/anza-xyz/kit/pull/1247) [`ea97d43`](https://github.com/anza-xyz/kit/commit/ea97d43f588c6b5bf3d4bd96464f3c927967ae28) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add a new function `appendTransactionMessageInstructionPlan` that can be used to add the instructions from an instruction plan to a transaction message
+
+- [#1253](https://github.com/anza-xyz/kit/pull/1253) [`b4f5897`](https://github.com/anza-xyz/kit/commit/b4f5897cab50a92f50b6b390ae76d743173c26dd) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add `isX` and `assertIsX` type guard helpers for instruction plans, transaction plans, and transaction plan results
+
+- [#1243](https://github.com/anza-xyz/kit/pull/1243) [`60e8c45`](https://github.com/anza-xyz/kit/commit/60e8c456356d52fb93637a6323cac9d9b2fc6816) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add `transformInstructionPlan`, `transformTransactionPlan` and `transformTransactionPlanResult` helpers for bottom-up transformation of instruction plan trees.
+
+- [#1235](https://github.com/anza-xyz/kit/pull/1235) [`a47e441`](https://github.com/anza-xyz/kit/commit/a47e44109e90ddb03193d4e1e207f9e68118679d) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add `passthroughFailedTransactionPlanExecution` helper function that wraps a transaction plan execution promise to return a `TransactionPlanResult` even on execution failure. This allows handling execution results in a unified way without try/catch.
+
+- [#1254](https://github.com/anza-xyz/kit/pull/1254) [`ba3f186`](https://github.com/anza-xyz/kit/commit/ba3f1861a9cb53b4c0e7c6d1b92791d8983e001b) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add `SuccessfulTransactionPlanResult` type with `isSuccessfulTransactionPlanResult` and `assertIsSuccessfulTransactionPlanResult` type guards
+
+- [#1236](https://github.com/anza-xyz/kit/pull/1236) [`1cc0a31`](https://github.com/anza-xyz/kit/commit/1cc0a3163cf884a715aef5ba336adfd980dabfa6) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `getFirstFailedSingleTransactionPlanResult`, which you can use to get the first failed transaction plan result from a transaction plan result, or throw if none failed
+
+- [#1232](https://github.com/anza-xyz/kit/pull/1232) [`589d761`](https://github.com/anza-xyz/kit/commit/589d761483a8feaf46b4cda7a97ec7abd5e7ab90) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `findInstructionPlan`, `findTransactionPlan` and `findTransactionPlanResult` functions that can be used to find the plan matching a given predicate
+
+### Patch Changes
+
+- [#1256](https://github.com/anza-xyz/kit/pull/1256) [`cccea6f`](https://github.com/anza-xyz/kit/commit/cccea6fc266e71bb2f1b4b843c3a815e3032f208) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Fix a bug where a message packer that requires multiple iterations is not correctly added when forced to fit in a single transaction, even if it can fit
+
+- Updated dependencies [[`b4f5897`](https://github.com/anza-xyz/kit/commit/b4f5897cab50a92f50b6b390ae76d743173c26dd), [`08c9062`](https://github.com/anza-xyz/kit/commit/08c906299409e82a5941e1044fc6d47d633df784), [`ba3f186`](https://github.com/anza-xyz/kit/commit/ba3f1861a9cb53b4c0e7c6d1b92791d8983e001b), [`1cc0a31`](https://github.com/anza-xyz/kit/commit/1cc0a3163cf884a715aef5ba336adfd980dabfa6), [`6af7c15`](https://github.com/anza-xyz/kit/commit/6af7c156a9cd196d0d5ecb374fe696ec659756bf)]:
+    - @solana/errors@5.5.0
+    - @solana/instructions@5.5.0
+    - @solana/keys@5.5.0
+    - @solana/transaction-messages@5.5.0
+    - @solana/transactions@5.5.0
+    - @solana/promises@5.5.0
+
 ## 5.4.0
 
 ### Patch Changes
