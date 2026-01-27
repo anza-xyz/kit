@@ -9,6 +9,7 @@ import {
     assertIsSequentialTransactionPlanResult,
     assertIsSingleTransactionPlanResult,
     assertIsSuccessfulSingleTransactionPlanResult,
+    assertIsSuccessfulTransactionPlanResult,
     CanceledSingleTransactionPlanResult,
     canceledSingleTransactionPlanResult,
     FailedSingleTransactionPlanResult,
@@ -21,6 +22,7 @@ import {
     isSequentialTransactionPlanResult,
     isSingleTransactionPlanResult,
     isSuccessfulSingleTransactionPlanResult,
+    isSuccessfulTransactionPlanResult,
     nonDivisibleSequentialTransactionPlanResult,
     ParallelTransactionPlanResult,
     parallelTransactionPlanResult,
@@ -29,6 +31,7 @@ import {
     SingleTransactionPlanResult,
     SuccessfulSingleTransactionPlanResult,
     successfulSingleTransactionPlanResult,
+    SuccessfulTransactionPlanResult,
     TransactionPlanResult,
     TransactionPlanResultContext,
 } from '../transaction-plan-result';
@@ -353,5 +356,26 @@ type CustomContext = { customData: string };
         const plan = null as unknown as TransactionPlanResult;
         assertIsParallelTransactionPlanResult(plan);
         plan satisfies ParallelTransactionPlanResult;
+    }
+}
+
+// [DESCRIBE] isSuccessfulTransactionPlanResult
+{
+    // It narrows SuccessfulTransactionPlanResult.
+    {
+        const plan = null as unknown as TransactionPlanResult;
+        if (isSuccessfulTransactionPlanResult(plan)) {
+            plan satisfies SuccessfulTransactionPlanResult;
+        }
+    }
+}
+
+// [DESCRIBE] assertIsSuccessfulTransactionPlanResult
+{
+    // It narrows SuccessfulTransactionPlanResult.
+    {
+        const plan = null as unknown as TransactionPlanResult;
+        assertIsSuccessfulTransactionPlanResult(plan);
+        plan satisfies SuccessfulTransactionPlanResult;
     }
 }

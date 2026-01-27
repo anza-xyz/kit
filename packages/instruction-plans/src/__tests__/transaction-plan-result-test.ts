@@ -1,6 +1,7 @@
 import '@solana/test-matchers/toBeFrozenObject';
 
 import {
+    SOLANA_ERROR__INSTRUCTION_PLANS__EXPECTED_SUCCESSFUL_TRANSACTION_PLAN_RESULT,
     SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_SINGLE_TRANSACTION_PLAN_RESULT_NOT_FOUND,
     SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE,
     SolanaError,
@@ -15,6 +16,7 @@ import {
     assertIsSequentialTransactionPlanResult,
     assertIsSingleTransactionPlanResult,
     assertIsSuccessfulSingleTransactionPlanResult,
+    assertIsSuccessfulTransactionPlanResult,
     canceledSingleTransactionPlanResult,
     everyTransactionPlanResult,
     failedSingleTransactionPlanResult,
@@ -28,6 +30,7 @@ import {
     isSequentialTransactionPlanResult,
     isSingleTransactionPlanResult,
     isSuccessfulSingleTransactionPlanResult,
+    isSuccessfulTransactionPlanResult,
     nonDivisibleSequentialTransactionPlanResult,
     parallelTransactionPlanResult,
     sequentialTransactionPlanResult,
@@ -664,6 +667,146 @@ describe('assertIsParallelTransactionPlanResult', () => {
         );
         expect(() => assertIsParallelTransactionPlanResult(nonDivisibleSequentialTransactionPlanResult([]))).toThrow(
             'Unexpected transaction plan result. Expected parallel plan, got sequential plan.',
+        );
+    });
+});
+
+describe('isSuccessfulTransactionPlanResult', () => {
+    it('returns true for a single successful result', () => {
+        expect(
+            isSuccessfulTransactionPlanResult(
+                successfulSingleTransactionPlanResult(createMessage('A'), createTransaction('A')),
+            ),
+        ).toBe(true);
+    });
+    it('returns true for nested results that are all successful', () => {
+        const result = parallelTransactionPlanResult([
+            successfulSingleTransactionPlanResult(createMessage('A'), createTransaction('A')),
+            sequentialTransactionPlanResult([
+                successfulSingleTransactionPlanResult(createMessage('B'), createTransaction('B')),
+                successfulSingleTransactionPlanResult(createMessage('C'), createTransaction('C')),
+            ]),
+        ]);
+        expect(isSuccessfulTransactionPlanResult(result)).toBe(true);
+    });
+    it('returns true for empty parallel result', () => {
+        expect(isSuccessfulTransactionPlanResult(parallelTransactionPlanResult([]))).toBe(true);
+    });
+    it('returns true for empty sequential result', () => {
+        expect(isSuccessfulTransactionPlanResult(sequentialTransactionPlanResult([]))).toBe(true);
+    });
+    it('returns false when any single result is failed', () => {
+        const result = parallelTransactionPlanResult([
+            successfulSingleTransactionPlanResult(createMessage('A'), createTransaction('A')),
+            failedSingleTransactionPlanResult(
+                createMessage('B'),
+                new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
+            ),
+        ]);
+        expect(isSuccessfulTransactionPlanResult(result)).toBe(false);
+    });
+    it('returns false when any single result is canceled', () => {
+        const result = sequentialTransactionPlanResult([
+            successfulSingleTransactionPlanResult(createMessage('A'), createTransaction('A')),
+            canceledSingleTransactionPlanResult(createMessage('B')),
+        ]);
+        expect(isSuccessfulTransactionPlanResult(result)).toBe(false);
+    });
+    it('returns false for a single failed result', () => {
+        expect(
+            isSuccessfulTransactionPlanResult(
+                failedSingleTransactionPlanResult(
+                    createMessage('A'),
+                    new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
+                ),
+            ),
+        ).toBe(false);
+    });
+    it('returns false for a single canceled result', () => {
+        expect(isSuccessfulTransactionPlanResult(canceledSingleTransactionPlanResult(createMessage('A')))).toBe(false);
+    });
+    it('returns false when a deeply nested result is not successful', () => {
+        const result = parallelTransactionPlanResult([
+            sequentialTransactionPlanResult([
+                parallelTransactionPlanResult([
+                    successfulSingleTransactionPlanResult(createMessage('A'), createTransaction('A')),
+                    failedSingleTransactionPlanResult(
+                        createMessage('B'),
+                        new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
+                    ),
+                ]),
+            ]),
+        ]);
+        expect(isSuccessfulTransactionPlanResult(result)).toBe(false);
+    });
+});
+
+describe('assertIsSuccessfulTransactionPlanResult', () => {
+    it('does nothing for a single successful result', () => {
+        expect(() =>
+            assertIsSuccessfulTransactionPlanResult(
+                successfulSingleTransactionPlanResult(createMessage('A'), createTransaction('A')),
+            ),
+        ).not.toThrow();
+    });
+    it('does nothing for nested results that are all successful', () => {
+        const result = parallelTransactionPlanResult([
+            successfulSingleTransactionPlanResult(createMessage('A'), createTransaction('A')),
+            sequentialTransactionPlanResult([
+                successfulSingleTransactionPlanResult(createMessage('B'), createTransaction('B')),
+                successfulSingleTransactionPlanResult(createMessage('C'), createTransaction('C')),
+            ]),
+        ]);
+        expect(() => assertIsSuccessfulTransactionPlanResult(result)).not.toThrow();
+    });
+    it('does nothing for empty parallel result', () => {
+        expect(() => assertIsSuccessfulTransactionPlanResult(parallelTransactionPlanResult([]))).not.toThrow();
+    });
+    it('does nothing for empty sequential result', () => {
+        expect(() => assertIsSuccessfulTransactionPlanResult(sequentialTransactionPlanResult([]))).not.toThrow();
+    });
+    it('throws when any single result is failed', () => {
+        const result = parallelTransactionPlanResult([
+            successfulSingleTransactionPlanResult(createMessage('A'), createTransaction('A')),
+            failedSingleTransactionPlanResult(
+                createMessage('B'),
+                new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
+            ),
+        ]);
+        expect(() => assertIsSuccessfulTransactionPlanResult(result)).toThrow(
+            new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__EXPECTED_SUCCESSFUL_TRANSACTION_PLAN_RESULT, {
+                transactionPlanResult: result,
+            }),
+        );
+    });
+    it('throws when any single result is canceled', () => {
+        const result = sequentialTransactionPlanResult([
+            successfulSingleTransactionPlanResult(createMessage('A'), createTransaction('A')),
+            canceledSingleTransactionPlanResult(createMessage('B')),
+        ]);
+        expect(() => assertIsSuccessfulTransactionPlanResult(result)).toThrow(
+            new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__EXPECTED_SUCCESSFUL_TRANSACTION_PLAN_RESULT, {
+                transactionPlanResult: result,
+            }),
+        );
+    });
+    it('throws for a single failed result', () => {
+        const result = failedSingleTransactionPlanResult(
+            createMessage('A'),
+            new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
+        );
+        expect(() => assertIsSuccessfulTransactionPlanResult(result)).toThrow(
+            new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__EXPECTED_SUCCESSFUL_TRANSACTION_PLAN_RESULT, {
+                transactionPlanResult: result,
+            }),
+        );
+    });
+    it('throws for a single canceled result', () => {
+        const result = canceledSingleTransactionPlanResult(createMessage('A'));
+        expect(() => assertIsSuccessfulTransactionPlanResult(result)).toThrow(
+            new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__EXPECTED_SUCCESSFUL_TRANSACTION_PLAN_RESULT, {
+                transactionPlanResult: result,
+            }),
         );
     });
 });

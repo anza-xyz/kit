@@ -110,6 +110,7 @@ import {
     SOLANA_ERROR__INSTRUCTION_ERROR__UNSUPPORTED_PROGRAM_ID,
     SOLANA_ERROR__INSTRUCTION_ERROR__UNSUPPORTED_SYSVAR,
     SOLANA_ERROR__INSTRUCTION_PLANS__EMPTY_INSTRUCTION_PLAN,
+    SOLANA_ERROR__INSTRUCTION_PLANS__EXPECTED_SUCCESSFUL_TRANSACTION_PLAN_RESULT,
     SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_SINGLE_TRANSACTION_PLAN_RESULT_NOT_FOUND,
     SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN,
     SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN,
@@ -448,6 +449,8 @@ export const SolanaErrorMessages: Readonly<{
         'Unexpected transaction plan. Expected $expectedKind plan, got $actualKind plan.',
     [SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN_RESULT]:
         'Unexpected transaction plan result. Expected $expectedKind plan, got $actualKind plan.',
+    [SOLANA_ERROR__INSTRUCTION_PLANS__EXPECTED_SUCCESSFUL_TRANSACTION_PLAN_RESULT]:
+        'Expected a successful transaction plan result. I.e. there is at least one failed or cancelled transaction in the plan.',
     [SOLANA_ERROR__INSTRUCTION__EXPECTED_TO_HAVE_ACCOUNTS]: 'The instruction does not have any accounts.',
     [SOLANA_ERROR__INSTRUCTION__EXPECTED_TO_HAVE_DATA]: 'The instruction does not have any data.',
     [SOLANA_ERROR__INSTRUCTION__PROGRAM_ID_MISMATCH]:

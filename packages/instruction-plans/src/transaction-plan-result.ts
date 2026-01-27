@@ -1,4 +1,5 @@
 import {
+    SOLANA_ERROR__INSTRUCTION_PLANS__EXPECTED_SUCCESSFUL_TRANSACTION_PLAN_RESULT,
     SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_SINGLE_TRANSACTION_PLAN_RESULT_NOT_FOUND,
     SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN_RESULT,
     SolanaError,
@@ -23,16 +24,39 @@ import { getSignatureFromTransaction, Transaction } from '@solana/transactions';
  *   original plan.
  *
  * @template TContext - The type of the context object that may be passed along with successful results
+ * @template TSingle - The type of single transaction plan results in this tree
  *
  * @see {@link SingleTransactionPlanResult}
  * @see {@link ParallelTransactionPlanResult}
  * @see {@link SequentialTransactionPlanResult}
  * @see {@link TransactionPlanResultStatus}
  */
-export type TransactionPlanResult<TContext extends TransactionPlanResultContext = TransactionPlanResultContext> =
-    | ParallelTransactionPlanResult<TContext>
-    | SequentialTransactionPlanResult<TContext>
-    | SingleTransactionPlanResult<TContext>;
+export type TransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TSingle extends SingleTransactionPlanResult<TContext> = SingleTransactionPlanResult<TContext>,
+> = ParallelTransactionPlanResult<TContext, TSingle> | SequentialTransactionPlanResult<TContext, TSingle> | TSingle;
+
+/**
+ * A {@link TransactionPlanResult} where all single transaction results are successful.
+ *
+ * This type represents a transaction plan result tree where every
+ * {@link SingleTransactionPlanResult} has a 'successful' status. It can be used
+ * to ensure that an entire execution completed without any failures or cancellations.
+ *
+ * Note: This is different from {@link SuccessfulSingleTransactionPlanResult} which
+ * represents a single successful transaction, whereas this type represents an entire
+ * plan result tree (which may contain parallel/sequential structures) where all
+ * leaf nodes are successful.
+ *
+ * @template TContext - The type of the context object that may be passed along with successful results
+ *
+ * @see {@link isSuccessfulTransactionPlanResult}
+ * @see {@link assertIsSuccessfulTransactionPlanResult}
+ * @see {@link SuccessfulSingleTransactionPlanResult}
+ */
+export type SuccessfulTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+> = TransactionPlanResult<TContext, SuccessfulSingleTransactionPlanResult<TContext>>;
 
 /** A context object that may be passed along with successful results. */
 export type TransactionPlanResultContext = Record<number | string | symbol, unknown>;
@@ -48,6 +72,7 @@ export type TransactionPlanResultContext = Record<number | string | symbol, unkn
  * {@link nonDivisibleSequentialTransactionPlanResult} helpers to create objects of this type.
  *
  * @template TContext - The type of the context object that may be passed along with successful results
+ * @template TSingle - The type of single transaction plan results in this tree
  *
  * @example
  * ```ts
@@ -73,10 +98,11 @@ export type TransactionPlanResultContext = Record<number | string | symbol, unkn
  */
 export type SequentialTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TSingle extends SingleTransactionPlanResult<TContext> = SingleTransactionPlanResult<TContext>,
 > = Readonly<{
     divisible: boolean;
     kind: 'sequential';
-    plans: TransactionPlanResult<TContext>[];
+    plans: TransactionPlanResult<TContext, TSingle>[];
 }>;
 
 /**
@@ -88,6 +114,7 @@ export type SequentialTransactionPlanResult<
  * You may use the {@link parallelTransactionPlanResult} helper to create objects of this type.
  *
  * @template TContext - The type of the context object that may be passed along with successful results
+ * @template TSingle - The type of single transaction plan results in this tree
  *
  * @example
  * ```ts
@@ -102,9 +129,10 @@ export type SequentialTransactionPlanResult<
  */
 export type ParallelTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TSingle extends SingleTransactionPlanResult<TContext> = SingleTransactionPlanResult<TContext>,
 > = Readonly<{
     kind: 'parallel';
-    plans: TransactionPlanResult<TContext>[];
+    plans: TransactionPlanResult<TContext, TSingle>[];
 }>;
 
 /**
@@ -785,6 +813,90 @@ export function assertIsParallelTransactionPlanResult(
         throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN_RESULT, {
             actualKind: plan.kind,
             expectedKind: 'parallel',
+            transactionPlanResult: plan,
+        });
+    }
+}
+
+/**
+ * Checks if the given transaction plan result is a {@link SuccessfulTransactionPlanResult}.
+ *
+ * This function verifies that the entire transaction plan result tree contains only
+ * successful single transaction results. It recursively checks all nested results
+ * to ensure every {@link SingleTransactionPlanResult} has a 'successful' status.
+ *
+ * Note: This is different from {@link isSuccessfulSingleTransactionPlanResult} which
+ * checks if a single result is successful. This function checks that the entire
+ * plan result tree (including all nested parallel/sequential structures) contains
+ * only successful transactions.
+ *
+ * @param plan - The transaction plan result to check.
+ * @return `true` if all single transaction results in the tree are successful, `false` otherwise.
+ *
+ * @example
+ * ```ts
+ * const result: TransactionPlanResult = parallelTransactionPlanResult([
+ *   successfulSingleTransactionPlanResult(messageA, transactionA),
+ *   successfulSingleTransactionPlanResult(messageB, transactionB),
+ * ]);
+ *
+ * if (isSuccessfulTransactionPlanResult(result)) {
+ *   // All transactions were successful.
+ *   result satisfies SuccessfulTransactionPlanResult;
+ * }
+ * ```
+ *
+ * @see {@link SuccessfulTransactionPlanResult}
+ * @see {@link assertIsSuccessfulTransactionPlanResult}
+ * @see {@link isSuccessfulSingleTransactionPlanResult}
+ */
+export function isSuccessfulTransactionPlanResult(
+    plan: TransactionPlanResult,
+): plan is SuccessfulTransactionPlanResult {
+    return everyTransactionPlanResult(
+        plan,
+        r => !isSingleTransactionPlanResult(r) || isSuccessfulSingleTransactionPlanResult(r),
+    );
+}
+
+/**
+ * Asserts that the given transaction plan result is a {@link SuccessfulTransactionPlanResult}.
+ *
+ * This function verifies that the entire transaction plan result tree contains only
+ * successful single transaction results. It throws if any {@link SingleTransactionPlanResult}
+ * in the tree has a 'failed' or 'canceled' status.
+ *
+ * Note: This is different from {@link assertIsSuccessfulSingleTransactionPlanResult} which
+ * asserts that a single result is successful. This function asserts that the entire
+ * plan result tree (including all nested parallel/sequential structures) contains
+ * only successful transactions.
+ *
+ * @param plan - The transaction plan result to assert.
+ * @throws Throws a {@link SolanaError} with code
+ * `SOLANA_ERROR__INSTRUCTION_PLANS__EXPECTED_SUCCESSFUL_TRANSACTION_PLAN_RESULT` if
+ * any single transaction result in the tree is not successful.
+ *
+ * @example
+ * ```ts
+ * const result: TransactionPlanResult = parallelTransactionPlanResult([
+ *   successfulSingleTransactionPlanResult(messageA, transactionA),
+ *   successfulSingleTransactionPlanResult(messageB, transactionB),
+ * ]);
+ *
+ * assertIsSuccessfulTransactionPlanResult(result);
+ * // All transactions were successful.
+ * result satisfies SuccessfulTransactionPlanResult;
+ * ```
+ *
+ * @see {@link SuccessfulTransactionPlanResult}
+ * @see {@link isSuccessfulTransactionPlanResult}
+ * @see {@link assertIsSuccessfulSingleTransactionPlanResult}
+ */
+export function assertIsSuccessfulTransactionPlanResult(
+    plan: TransactionPlanResult,
+): asserts plan is SuccessfulTransactionPlanResult {
+    if (!isSuccessfulTransactionPlanResult(plan)) {
+        throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__EXPECTED_SUCCESSFUL_TRANSACTION_PLAN_RESULT, {
             transactionPlanResult: plan,
         });
     }
