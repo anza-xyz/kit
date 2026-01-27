@@ -304,6 +304,7 @@ function getAllowedNumericKeypaths(): AllowedNumericKeypaths<RpcApi<SolanaRpcApi
                 [KEYPATH_WILDCARD, 'account', ...c],
             ]),
             getRecentPerformanceSamples: [[KEYPATH_WILDCARD, 'samplePeriodSecs']],
+            getSignaturesForAddress: [[KEYPATH_WILDCARD, 'index']],
             getTokenAccountBalance: [
                 ['value', 'decimals'],
                 ['value', 'uiAmount'],
