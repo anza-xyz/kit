@@ -368,7 +368,7 @@ type CustomContext = { customData: string };
             plan satisfies SuccessfulTransactionPlanResult;
         }
     }
-    // It narrows a single play to SuccessfulSingleTransactionPlanResult.
+    // It narrows a single plan to SuccessfulSingleTransactionPlanResult.
     {
         const plan = null as unknown as SingleTransactionPlanResult;
         if (isSuccessfulTransactionPlanResult(plan)) {
@@ -386,7 +386,7 @@ type CustomContext = { customData: string };
         assertIsSuccessfulTransactionPlanResult(plan);
         plan satisfies SuccessfulTransactionPlanResult;
     }
-    // It narrows a single play to SuccessfulSingleTransactionPlanResult.
+    // It narrows a single plan to SuccessfulSingleTransactionPlanResult.
     {
         const plan = null as unknown as SingleTransactionPlanResult;
         assertIsSuccessfulTransactionPlanResult(plan);
