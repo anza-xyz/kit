@@ -368,6 +368,14 @@ type CustomContext = { customData: string };
             plan satisfies SuccessfulTransactionPlanResult;
         }
     }
+    // It narrows a single play to SuccessfulSingleTransactionPlanResult.
+    {
+        const plan = null as unknown as SingleTransactionPlanResult;
+        if (isSuccessfulTransactionPlanResult(plan)) {
+            plan satisfies SuccessfulSingleTransactionPlanResult;
+            plan satisfies SuccessfulTransactionPlanResult;
+        }
+    }
 }
 
 // [DESCRIBE] assertIsSuccessfulTransactionPlanResult
@@ -376,6 +384,13 @@ type CustomContext = { customData: string };
     {
         const plan = null as unknown as TransactionPlanResult;
         assertIsSuccessfulTransactionPlanResult(plan);
+        plan satisfies SuccessfulTransactionPlanResult;
+    }
+    // It narrows a single play to SuccessfulSingleTransactionPlanResult.
+    {
+        const plan = null as unknown as SingleTransactionPlanResult;
+        assertIsSuccessfulTransactionPlanResult(plan);
+        plan satisfies SuccessfulSingleTransactionPlanResult;
         plan satisfies SuccessfulTransactionPlanResult;
     }
 }
