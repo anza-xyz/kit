@@ -1,5 +1,18 @@
 # @solana/rpc-subscriptions-api
 
+## 5.5.1
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/addresses@5.5.1
+    - @solana/keys@5.5.1
+    - @solana/rpc-subscriptions-spec@5.5.1
+    - @solana/rpc-transformers@5.5.1
+    - @solana/rpc-types@5.5.1
+    - @solana/transaction-messages@5.5.1
+    - @solana/transactions@5.5.1
+
 ## 5.5.0
 
 ### Patch Changes

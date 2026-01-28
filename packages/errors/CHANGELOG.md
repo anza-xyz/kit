@@ -1,5 +1,11 @@
 # @solana/errors
 
+## 5.5.1
+
+### Patch Changes
+
+- [#1264](https://github.com/anza-xyz/kit/pull/1264) [`d957526`](https://github.com/anza-xyz/kit/commit/d9575263c3e563c6951cd35bbc6e65e70a0e6a10) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Exports missing helpers in errors and instruction-plans
+
 ## 5.5.0
 
 ### Minor Changes

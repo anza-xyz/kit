@@ -1,5 +1,17 @@
 # @solana/compat
 
+## 5.5.1
+
+### Patch Changes
+
+- Updated dependencies [[`d957526`](https://github.com/anza-xyz/kit/commit/d9575263c3e563c6951cd35bbc6e65e70a0e6a10)]:
+    - @solana/errors@5.5.1
+    - @solana/addresses@5.5.1
+    - @solana/codecs-core@5.5.1
+    - @solana/instructions@5.5.1
+    - @solana/keys@5.5.1
+    - @solana/transactions@5.5.1
+
 ## 5.5.0
 
 ### Patch Changes

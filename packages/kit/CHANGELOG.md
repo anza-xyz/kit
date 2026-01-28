@@ -1,5 +1,33 @@
 # @solana/kit
 
+## 5.5.1
+
+### Patch Changes
+
+- Updated dependencies [[`d957526`](https://github.com/anza-xyz/kit/commit/d9575263c3e563c6951cd35bbc6e65e70a0e6a10)]:
+    - @solana/instruction-plans@5.5.1
+    - @solana/errors@5.5.1
+    - @solana/accounts@5.5.1
+    - @solana/addresses@5.5.1
+    - @solana/instructions@5.5.1
+    - @solana/keys@5.5.1
+    - @solana/offchain-messages@5.5.1
+    - @solana/programs@5.5.1
+    - @solana/rpc@5.5.1
+    - @solana/rpc-api@5.5.1
+    - @solana/rpc-subscriptions@5.5.1
+    - @solana/rpc-types@5.5.1
+    - @solana/signers@5.5.1
+    - @solana/sysvars@5.5.1
+    - @solana/transaction-confirmation@5.5.1
+    - @solana/transaction-messages@5.5.1
+    - @solana/transactions@5.5.1
+    - @solana/rpc-parsed-types@5.5.1
+    - @solana/codecs@5.5.1
+    - @solana/functional@5.5.1
+    - @solana/plugin-core@5.5.1
+    - @solana/rpc-spec-types@5.5.1
+
 ## 5.5.0
 
 ### Patch Changes

@@ -1,5 +1,16 @@
 # @solana/addresses
 
+## 5.5.1
+
+### Patch Changes
+
+- Updated dependencies [[`d957526`](https://github.com/anza-xyz/kit/commit/d9575263c3e563c6951cd35bbc6e65e70a0e6a10)]:
+    - @solana/errors@5.5.1
+    - @solana/assertions@5.5.1
+    - @solana/codecs-core@5.5.1
+    - @solana/codecs-strings@5.5.1
+    - @solana/nominal-types@5.5.1
+
 ## 5.5.0
 
 ### Patch Changes
