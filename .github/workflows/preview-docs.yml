@@ -21,7 +21,6 @@ env:
 
 jobs:
   preview-docs:
-    if: github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'
     permissions:
       pull-requests: write
     runs-on: ubuntu-latest
@@ -42,6 +41,7 @@ jobs:
         run: pnpm install -g vercel
 
       - name: Deploy to Vercel
+        if: github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'
         shell: bash
         id: vercel_deploy
         env:
@@ -64,6 +64,7 @@ jobs:
           echo "preview_url=$DEPLOY_URL" >> $GITHUB_OUTPUT
 
       - name: Comment on PR with Preview URL
+        if: steps.vercel_deploy.outcome == 'success'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
