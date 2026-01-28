@@ -24,7 +24,7 @@ import {
     sequentialInstructionPlan,
     SingleInstructionPlan,
     singleInstructionPlan,
-} from '../instruction-plan';
+} from '../index';
 
 const instructionA = null as unknown as Instruction & { id: 'A' };
 const instructionB = null as unknown as Instruction & { id: 'B' };

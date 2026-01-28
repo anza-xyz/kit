@@ -18,7 +18,7 @@ import {
     sequentialTransactionPlan,
     singleTransactionPlan,
     transformTransactionPlan,
-} from '../transaction-plan';
+} from '../index';
 import { createMessage } from './__setup__';
 
 describe('singleTransactionPlan', () => {

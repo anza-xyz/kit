@@ -5,8 +5,7 @@ import {
     TransactionMessageWithinSizeLimit,
 } from '@solana/transaction-messages';
 
-import { appendTransactionMessageInstructionPlan } from '../append-instruction-plan';
-import { InstructionPlan } from '../instruction-plan';
+import { appendTransactionMessageInstructionPlan, InstructionPlan } from '../index';
 
 // [DESCRIBE] appendTransactionMessageInstructionPlan
 {

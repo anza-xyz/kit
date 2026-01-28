@@ -40,7 +40,7 @@ import {
     sequentialInstructionPlan,
     singleInstructionPlan,
     transformInstructionPlan,
-} from '../instruction-plan';
+} from '../index';
 
 jest.mock('@solana/transactions', () => ({
     ...jest.requireActual('@solana/transactions'),

@@ -4,8 +4,7 @@ import {
     SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT,
 } from '../codes';
 import { SolanaError } from '../error';
-import { RpcSimulateTransactionResult } from '../json-rpc-error';
-import { unwrapSimulationError } from '../simulation-errors';
+import { RpcSimulateTransactionResult, unwrapSimulationError } from '../index';
 
 const rpcSimulationError: Omit<RpcSimulateTransactionResult, 'err'> = {
     accounts: null,

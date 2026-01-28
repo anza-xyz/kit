@@ -34,7 +34,7 @@ import {
     SuccessfulTransactionPlanResult,
     TransactionPlanResult,
     TransactionPlanResultContext,
-} from '../transaction-plan-result';
+} from '../index';
 
 const messageA = null as unknown as TransactionMessage & TransactionMessageWithFeePayer & { id: 'A' };
 const messageB = null as unknown as TransactionMessage & TransactionMessageWithFeePayer & { id: 'B' };

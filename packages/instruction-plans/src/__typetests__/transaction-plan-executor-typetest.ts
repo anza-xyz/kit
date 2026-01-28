@@ -8,19 +8,17 @@ import {
 } from '@solana/transaction-messages';
 import { compileTransaction, Transaction, TransactionWithBlockhashLifetime } from '@solana/transactions';
 
-import type { TransactionPlan } from '../transaction-plan';
-import {
-    createTransactionPlanExecutor,
-    passthroughFailedTransactionPlanExecution,
-    type TransactionPlanExecutor,
-} from '../transaction-plan-executor';
 import {
     CanceledSingleTransactionPlanResult,
+    createTransactionPlanExecutor,
     FailedSingleTransactionPlanResult,
+    passthroughFailedTransactionPlanExecution,
     SingleTransactionPlanResult,
     SuccessfulSingleTransactionPlanResult,
+    type TransactionPlan,
+    type TransactionPlanExecutor,
     type TransactionPlanResult,
-} from '../transaction-plan-result';
+} from '../index';
 
 // [DESCRIBE] TransactionPlanExecutor
 {

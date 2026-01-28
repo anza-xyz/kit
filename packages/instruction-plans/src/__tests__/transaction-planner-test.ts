@@ -10,23 +10,22 @@ import {
 import { getTransactionMessageSize, TRANSACTION_SIZE_LIMIT } from '@solana/transactions';
 
 import {
+    createTransactionPlanner,
     InstructionPlan,
     nonDivisibleSequentialInstructionPlan,
-    parallelInstructionPlan,
-    sequentialInstructionPlan,
-    singleInstructionPlan,
-} from '../instruction-plan';
-import {
     nonDivisibleSequentialTransactionPlan,
+    parallelInstructionPlan,
     ParallelTransactionPlan,
     parallelTransactionPlan,
+    sequentialInstructionPlan,
     SequentialTransactionPlan,
     sequentialTransactionPlan,
+    singleInstructionPlan,
     SingleTransactionPlan,
     singleTransactionPlan,
     TransactionPlan,
-} from '../transaction-plan';
-import { createTransactionPlanner, TransactionPlanner } from '../transaction-planner';
+    TransactionPlanner,
+} from '../index';
 import {
     createMessage,
     createMessagePackerInstructionPlan,

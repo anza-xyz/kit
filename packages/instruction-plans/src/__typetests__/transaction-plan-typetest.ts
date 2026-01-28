@@ -19,7 +19,7 @@ import {
     SingleTransactionPlan,
     singleTransactionPlan,
     TransactionPlan,
-} from '../transaction-plan';
+} from '../index';
 
 const messageA = null as unknown as TransactionMessage & TransactionMessageWithFeePayer & { id: 'A' };
 const messageB = null as unknown as TransactionMessage & TransactionMessageWithFeePayer & { id: 'B' };

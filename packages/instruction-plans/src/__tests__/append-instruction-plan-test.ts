@@ -8,13 +8,13 @@ import {
     setTransactionMessageFeePayer,
 } from '@solana/transaction-messages';
 
-import { appendTransactionMessageInstructionPlan } from '../append-instruction-plan';
 import {
+    appendTransactionMessageInstructionPlan,
     getMessagePackerInstructionPlanFromInstructions,
     parallelInstructionPlan,
     sequentialInstructionPlan,
     singleInstructionPlan,
-} from '../instruction-plan';
+} from '../index';
 
 function createInstruction<TId extends string>(id: TId): Instruction & { id: TId } {
     return { id, programAddress: '1'.repeat(32) as Address };

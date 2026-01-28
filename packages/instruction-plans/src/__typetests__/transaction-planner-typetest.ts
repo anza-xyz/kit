@@ -7,9 +7,12 @@ import {
     TransactionMessageWithFeePayer,
 } from '@solana/transaction-messages';
 
-import type { InstructionPlan } from '../instruction-plan';
-import type { TransactionPlan } from '../transaction-plan';
-import { createTransactionPlanner, type TransactionPlanner } from '../transaction-planner';
+import {
+    createTransactionPlanner,
+    type InstructionPlan,
+    type TransactionPlan,
+    type TransactionPlanner,
+} from '../index';
 
 // [DESCRIBE] TransactionPlanner
 {

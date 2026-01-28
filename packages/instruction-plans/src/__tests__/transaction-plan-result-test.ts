@@ -38,7 +38,7 @@ import {
     successfulSingleTransactionPlanResultFromSignature,
     summarizeTransactionPlanResult,
     transformTransactionPlanResult,
-} from '../transaction-plan-result';
+} from '../index';
 import { createMessage, createTransaction } from './__setup__';
 
 describe('successfulSingleTransactionPlanResult', () => {

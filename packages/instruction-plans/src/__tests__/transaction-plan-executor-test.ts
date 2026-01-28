@@ -9,20 +9,19 @@ import {
 } from '@solana/errors';
 
 import {
+    canceledSingleTransactionPlanResult,
+    createTransactionPlanExecutor,
+    failedSingleTransactionPlanResult,
     nonDivisibleSequentialTransactionPlan,
     parallelTransactionPlan,
-    sequentialTransactionPlan,
-    singleTransactionPlan,
-} from '../transaction-plan';
-import { createTransactionPlanExecutor, passthroughFailedTransactionPlanExecution } from '../transaction-plan-executor';
-import {
-    canceledSingleTransactionPlanResult,
-    failedSingleTransactionPlanResult,
     parallelTransactionPlanResult,
+    passthroughFailedTransactionPlanExecution,
+    sequentialTransactionPlan,
     sequentialTransactionPlanResult,
+    singleTransactionPlan,
     successfulSingleTransactionPlanResult,
     TransactionPlanResult,
-} from '../transaction-plan-result';
+} from '../index';
 import { createMessage, createTransaction, FOREVER_PROMISE } from './__setup__';
 
 jest.useFakeTimers();

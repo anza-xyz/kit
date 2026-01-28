@@ -13,7 +13,7 @@ import {
 } from '@solana/transaction-messages';
 import { getTransactionMessageSize, SignaturesMap, Transaction, TRANSACTION_SIZE_LIMIT } from '@solana/transactions';
 
-import { MessagePackerInstructionPlan } from '../instruction-plan';
+import { MessagePackerInstructionPlan } from '../index';
 
 const MINIMUM_INSTRUCTION_SIZE = 35;
 
