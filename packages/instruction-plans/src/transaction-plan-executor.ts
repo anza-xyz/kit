@@ -34,7 +34,7 @@ import {
  * This function traverses the transaction plan tree, executing each transaction
  * message and collecting results that mirror the structure of the original plan.
  *
- * @typeParam TContext - The type of the context object that may be passed along with successful results.
+ * @typeParam TContext - The type of the context object that may be passed along with results.
  * @param transactionPlan - The transaction plan to execute.
  * @param config - Optional configuration object that can include an `AbortSignal` to cancel execution.
  * @return A promise that resolves to the execution results.
@@ -219,7 +219,7 @@ async function traverseSingle(
 
 function findErrorFromTransactionPlanResult(result: TransactionPlanResult): Error | undefined {
     if (result.kind === 'single') {
-        return result.status.kind === 'failed' ? result.status.error : undefined;
+        return result.status === 'failed' ? result.error : undefined;
     }
     for (const plan of result.plans) {
         const error = findErrorFromTransactionPlanResult(plan);

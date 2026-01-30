@@ -47,9 +47,10 @@ describe('successfulSingleTransactionPlanResult', () => {
         const transactionA = createTransaction('A');
         const result = successfulSingleTransactionPlanResult(messageA, transactionA);
         expect(result).toEqual({
+            context: { signature: 'A', transaction: transactionA },
             kind: 'single',
-            message: messageA,
-            status: { context: {}, kind: 'successful', signature: 'A', transaction: transactionA },
+            plannedMessage: messageA,
+            status: 'successful',
         });
     });
     it('accepts an optional context object', () => {
@@ -58,9 +59,10 @@ describe('successfulSingleTransactionPlanResult', () => {
         const context = { foo: 'bar' };
         const result = successfulSingleTransactionPlanResult(messageA, transactionA, context);
         expect(result).toEqual({
+            context: { ...context, signature: 'A', transaction: transactionA },
             kind: 'single',
-            message: messageA,
-            status: { context, kind: 'successful', signature: 'A', transaction: transactionA },
+            plannedMessage: messageA,
+            status: 'successful',
         });
     });
     it('freezes created SingleTransactionPlanResult objects', () => {
@@ -83,9 +85,10 @@ describe('successfulSingleTransactionPlanResultFromSignature', () => {
         const signature = 'A' as Signature;
         const result = successfulSingleTransactionPlanResultFromSignature(messageA, signature);
         expect(result).toEqual({
+            context: { signature: 'A' },
             kind: 'single',
-            message: messageA,
-            status: { context: {}, kind: 'successful', signature: 'A' },
+            plannedMessage: messageA,
+            status: 'successful',
         });
     });
     it('accepts an optional context object', () => {
@@ -94,9 +97,10 @@ describe('successfulSingleTransactionPlanResultFromSignature', () => {
         const context = { foo: 'bar' };
         const result = successfulSingleTransactionPlanResultFromSignature(messageA, signature, context);
         expect(result).toEqual({
+            context: { ...context, signature: 'A' },
             kind: 'single',
-            message: messageA,
-            status: { context, kind: 'successful', signature: 'A' },
+            plannedMessage: messageA,
+            status: 'successful',
         });
     });
     it('freezes created SingleTransactionPlanResult objects', () => {
@@ -119,9 +123,11 @@ describe('failedSingleTransactionPlanResult', () => {
         const error = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
         const result = failedSingleTransactionPlanResult(messageA, error);
         expect(result).toEqual({
+            context: {},
+            error,
             kind: 'single',
-            message: messageA,
-            status: { error, kind: 'failed' },
+            plannedMessage: messageA,
+            status: 'failed',
         });
     });
     it('freezes created SingleTransactionPlanResult objects', () => {
@@ -143,9 +149,10 @@ describe('canceledSingleTransactionPlanResult', () => {
         const messageA = createMessage('A');
         const result = canceledSingleTransactionPlanResult(messageA);
         expect(result).toEqual({
+            context: {},
             kind: 'single',
-            message: messageA,
-            status: { kind: 'canceled' },
+            plannedMessage: messageA,
+            status: 'canceled',
         });
     });
     it('freezes created SingleTransactionPlanResult objects', () => {
@@ -917,7 +924,7 @@ describe('findTransactionPlanResult', () => {
         const found = findTransactionPlanResult(
             result,
             // eslint-disable-next-line jest/no-conditional-in-test
-            r => r.kind === 'single' && r.status.kind === 'failed',
+            r => r.kind === 'single' && r.status === 'failed',
         );
         expect(found).toBe(failedResult);
     });
@@ -932,7 +939,7 @@ describe('findTransactionPlanResult', () => {
         const found = findTransactionPlanResult(
             result,
             // eslint-disable-next-line jest/no-conditional-in-test
-            r => r.kind === 'single' && r.status.kind === 'successful',
+            r => r.kind === 'single' && r.status === 'successful',
         );
         expect(found).toBe(successfulResult);
     });
@@ -958,7 +965,7 @@ describe('everyTransactionPlanResult', () => {
     it('matches successful single transaction plans', () => {
         const plan = successfulSingleTransactionPlanResult(createMessage('A'), createTransaction('A'));
         // eslint-disable-next-line jest/no-conditional-in-test
-        const result = everyTransactionPlanResult(plan, p => p.kind === 'single' && p.status.kind === 'successful');
+        const result = everyTransactionPlanResult(plan, p => p.kind === 'single' && p.status === 'successful');
         expect(result).toBe(true);
     });
     it('matches failed single transaction plans', () => {
@@ -967,13 +974,13 @@ describe('everyTransactionPlanResult', () => {
             new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
         );
         // eslint-disable-next-line jest/no-conditional-in-test
-        const result = everyTransactionPlanResult(plan, p => p.kind === 'single' && p.status.kind === 'failed');
+        const result = everyTransactionPlanResult(plan, p => p.kind === 'single' && p.status === 'failed');
         expect(result).toBe(true);
     });
     it('matches canceled single transaction plans', () => {
         const plan = canceledSingleTransactionPlanResult(createMessage('A'));
         // eslint-disable-next-line jest/no-conditional-in-test
-        const result = everyTransactionPlanResult(plan, p => p.kind === 'single' && p.status.kind === 'canceled');
+        const result = everyTransactionPlanResult(plan, p => p.kind === 'single' && p.status === 'canceled');
         expect(result).toBe(true);
     });
     it('matches sequential transaction plans', () => {
@@ -1006,7 +1013,7 @@ describe('everyTransactionPlanResult', () => {
         const result = everyTransactionPlanResult(plan, p => {
             // eslint-disable-next-line jest/no-conditional-in-test
             if (p.kind !== 'single') return true;
-            const message = p.message as ReturnType<typeof createMessage>;
+            const message = p.plannedMessage as ReturnType<typeof createMessage>;
             return ['A', 'B', 'C'].includes(message.id);
         });
         expect(result).toBe(true);
@@ -1023,7 +1030,7 @@ describe('everyTransactionPlanResult', () => {
             nonDivisibleSequentialTransactionPlanResult([resultA, resultC]),
         ]);
         // eslint-disable-next-line jest/no-conditional-in-test
-        const result = everyTransactionPlanResult(plan, p => p.kind !== 'single' || p.status.kind === 'successful');
+        const result = everyTransactionPlanResult(plan, p => p.kind !== 'single' || p.status === 'successful');
         expect(result).toBe(false);
     });
     it('fails fast before evaluating children', () => {
@@ -1057,7 +1064,7 @@ describe('transformTransactionPlanResult', () => {
         const plan = successfulSingleTransactionPlanResult(createMessage('A'), createTransaction('A'));
         const transformedPlan = transformTransactionPlanResult(plan, p =>
             // eslint-disable-next-line jest/no-conditional-in-test
-            p.kind === 'single' ? { ...p, message: { ...p.message, id: 'New A' } } : p,
+            p.kind === 'single' ? { ...p, plannedMessage: { ...p.plannedMessage, id: 'New A' } } : p,
         );
         expect(transformedPlan).toStrictEqual(
             successfulSingleTransactionPlanResult(createMessage('New A'), createTransaction('A')),
@@ -1068,7 +1075,7 @@ describe('transformTransactionPlanResult', () => {
         const plan = failedSingleTransactionPlanResult(createMessage('A'), error);
         const transformedPlan = transformTransactionPlanResult(plan, p =>
             // eslint-disable-next-line jest/no-conditional-in-test
-            p.kind === 'single' ? { ...p, message: { ...p.message, id: 'New A' } } : p,
+            p.kind === 'single' ? { ...p, plannedMessage: { ...p.plannedMessage, id: 'New A' } } : p,
         );
         expect(transformedPlan).toStrictEqual(failedSingleTransactionPlanResult(createMessage('New A'), error));
     });
@@ -1076,7 +1083,7 @@ describe('transformTransactionPlanResult', () => {
         const plan = canceledSingleTransactionPlanResult(createMessage('A'));
         const transformedPlan = transformTransactionPlanResult(plan, p =>
             // eslint-disable-next-line jest/no-conditional-in-test
-            p.kind === 'single' ? { ...p, message: { ...p.message, id: 'New A' } } : p,
+            p.kind === 'single' ? { ...p, plannedMessage: { ...p.plannedMessage, id: 'New A' } } : p,
         );
         expect(transformedPlan).toStrictEqual(canceledSingleTransactionPlanResult(createMessage('New A')));
     });
@@ -1146,15 +1153,15 @@ describe('transformTransactionPlanResult', () => {
         transformTransactionPlanResult(plan, p => {
             // eslint-disable-next-line jest/no-conditional-in-test
             if (p.kind === 'single') {
-                const message = p.message as ReturnType<typeof createMessage>;
-                return { ...p, message: { ...message, id: `New ${message.id}` } };
+                const plannedMessage = p.plannedMessage as ReturnType<typeof createMessage>;
+                return { ...p, plannedMessage: { ...plannedMessage, id: `New ${plannedMessage.id}` } };
             }
             // eslint-disable-next-line jest/no-conditional-in-test
             if (p.kind === 'sequential') {
-                const seenMessages = p.plans
+                const seenPlannedMessages = p.plans
                     .filter(subPlan => subPlan.kind === 'single')
-                    .map(subPlan => subPlan.message as ReturnType<typeof createMessage>);
-                seenTransactionMessageIds.push(...seenMessages.map(message => message.id));
+                    .map(subPlan => subPlan.plannedMessage as ReturnType<typeof createMessage>);
+                seenTransactionMessageIds.push(...seenPlannedMessages.map(m => m.id));
             }
             return p;
         });
