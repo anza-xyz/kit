@@ -3,7 +3,7 @@ import { AccountLookupMeta, AccountMeta, AccountRole, Instruction } from '@solan
 import { TransactionMessageWithBlockhashLifetime } from '../blockhash';
 import { compressTransactionMessageUsingAddressLookupTables } from '../compress-transaction-message';
 import { TransactionMessageWithFeePayer } from '../fee-payer';
-import { BaseTransactionMessage, TransactionMessage } from '../transaction-message';
+import { TransactionMessage } from '../transaction-message';
 
 type v0TransactionMessage = TransactionMessage & { version: 0 };
 
@@ -53,7 +53,7 @@ const addressesByLookupTableAddress = null as unknown as AddressesByLookupTableA
             '1111',
             readonly [AccountMeta<'aaaa'> & { readonly role: AccountRole.WRITABLE }]
         >;
-        const message = null as unknown as BaseTransactionMessage<0, MyInstruction>;
+        const message = null as unknown as { readonly instructions: readonly MyInstruction[]; readonly version: 0 };
         const result = compressTransactionMessageUsingAddressLookupTables(message, addressesByLookupTableAddress);
         const accounts = result.instructions[0].accounts!;
         accounts[0] satisfies AccountLookupMeta<'aaaa'> | AccountMeta<'aaaa'>;

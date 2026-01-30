@@ -2,7 +2,7 @@ import { Address } from '@solana/addresses';
 import { AccountLookupMeta, AccountMeta, AccountRole, Instruction, isSignerRole } from '@solana/instructions';
 
 import { AddressesByLookupTableAddress } from './addresses-by-lookup-table-address';
-import { BaseTransactionMessage, TransactionMessage } from './transaction-message';
+import { TransactionMessage } from './transaction-message';
 
 type Mutable<T> = {
     -readonly [P in keyof T]: T[P];
@@ -43,16 +43,13 @@ type WidenInstructionAccounts<TInstruction extends Instruction> =
           >
         : TInstruction;
 
-type ExtractAdditionalProps<T, U> = Omit<T, keyof U>;
-
-type WidenTransactionMessageInstructions<TTransactionMessage extends TransactionMessage> =
-    TTransactionMessage extends BaseTransactionMessage<infer TVersion, infer TInstruction>
-        ? BaseTransactionMessage<TVersion, WidenInstructionAccounts<TInstruction>> &
-              ExtractAdditionalProps<
-                  TTransactionMessage,
-                  BaseTransactionMessage<TVersion, WidenInstructionAccounts<TInstruction>>
-              >
-        : TTransactionMessage;
+type WidenTransactionMessageInstructions<TTransactionMessage extends TransactionMessage> = TTransactionMessage extends {
+    readonly instructions: readonly (infer TInstruction extends Instruction)[];
+}
+    ? Omit<TTransactionMessage, 'instructions'> & {
+          readonly instructions: readonly WidenInstructionAccounts<TInstruction>[];
+      }
+    : TTransactionMessage;
 
 /**
  * Given a transaction message and a mapping of lookup tables to the addresses stored in them, this
