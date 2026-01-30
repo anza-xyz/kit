@@ -23,14 +23,13 @@ import { getSignatureFromTransaction, Transaction } from '@solana/transactions';
  *   were executed sequentially. It also retains the divisibility property from the
  *   original plan.
  *
- * @template TContext - The type of the context object that may be passed along with successful results
+ * @template TContext - The type of the context object that may be passed along with results
  * @template TTransactionMessage - The type of the transaction message
  * @template TSingle - The type of single transaction plan results in this tree
  *
  * @see {@link SingleTransactionPlanResult}
  * @see {@link ParallelTransactionPlanResult}
  * @see {@link SequentialTransactionPlanResult}
- * @see {@link TransactionPlanResultStatus}
  */
 export type TransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
@@ -57,7 +56,7 @@ export type TransactionPlanResult<
  * plan result tree (which may contain parallel/sequential structures) where all
  * leaf nodes are successful.
  *
- * @template TContext - The type of the context object that may be passed along with successful results
+ * @template TContext - The type of the context object that may be passed along with results
  * @template TTransactionMessage - The type of the transaction message
  *
  * @see {@link isSuccessfulTransactionPlanResult}
@@ -74,8 +73,25 @@ export type SuccessfulTransactionPlanResult<
     SuccessfulSingleTransactionPlanResult<TContext, TTransactionMessage>
 >;
 
-/** A context object that may be passed along with successful results. */
-export type TransactionPlanResultContext = Record<number | string | symbol, unknown>;
+/**
+ * The context object associated with a {@link SingleTransactionPlanResult}.
+ *
+ * This type defines the shape of the context that can be attached to transaction
+ * plan results. It always allows arbitrary additional properties and optionally
+ * includes the transaction message, the transaction signature, and the full
+ * transaction object.
+ *
+ * @see {@link SingleTransactionPlanResult}
+ * @see {@link SuccessfulSingleTransactionPlanResult}
+ * @see {@link FailedSingleTransactionPlanResult}
+ * @see {@link CanceledSingleTransactionPlanResult}
+ */
+export type TransactionPlanResultContext = {
+    [key: number | string | symbol]: unknown;
+    message?: TransactionMessage & TransactionMessageWithFeePayer;
+    signature?: Signature;
+    transaction?: Transaction;
+};
 
 /**
  * A result for a sequential transaction plan.
@@ -87,7 +103,7 @@ export type TransactionPlanResultContext = Record<number | string | symbol, unkn
  * You may use the {@link sequentialTransactionPlanResult} and
  * {@link nonDivisibleSequentialTransactionPlanResult} helpers to create objects of this type.
  *
- * @template TContext - The type of the context object that may be passed along with successful results
+ * @template TContext - The type of the context object that may be passed along with results
  * @template TTransactionMessage - The type of the transaction message
  * @template TSingle - The type of single transaction plan results in this tree
  *
@@ -135,7 +151,7 @@ export type SequentialTransactionPlanResult<
  *
  * You may use the {@link parallelTransactionPlanResult} helper to create objects of this type.
  *
- * @template TContext - The type of the context object that may be passed along with successful results
+ * @template TContext - The type of the context object that may be passed along with results
  * @template TTransactionMessage - The type of the transaction message
  * @template TSingle - The type of single transaction plan results in this tree
  *
@@ -173,7 +189,7 @@ export type ParallelTransactionPlanResult<
  * {@link failedSingleTransactionPlanResult}, or {@link canceledSingleTransactionPlanResult}
  * helpers to create objects of this type.
  *
- * @template TContext - The type of the context object that may be passed along with successful results
+ * @template TContext - The type of the context object that may be passed along with results
  * @template TTransactionMessage - The type of the transaction message
  *
  * @example
@@ -211,27 +227,127 @@ export type SingleTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
-> = Readonly<{
-    kind: 'single';
-    message: TTransactionMessage;
-    status: TransactionPlanResultStatus<TContext>;
-}>;
+> =
+    | CanceledSingleTransactionPlanResult<TContext, TTransactionMessage>
+    | FailedSingleTransactionPlanResult<TContext, TTransactionMessage>
+    | SuccessfulSingleTransactionPlanResult<TContext, TTransactionMessage>;
 
 /**
- * The status of a single transaction plan execution.
+ * A {@link SingleTransactionPlanResult} with a 'successful' status.
  *
- * This represents the outcome of executing a single transaction message and can be one of:
- * - `successful` - The transaction was successfully executed. Contains the transaction
- *   and an optional context object.
- * - `failed` - The transaction execution failed. Contains the error that caused the failure.
- * - `canceled` - The transaction execution was canceled.
+ * This type represents a single transaction that was successfully executed.
+ * It includes the original planned message, a context object containing at
+ * least the transaction {@link Signature}, and optionally the full
+ * {@link Transaction} object.
  *
- * @template TContext - The type of the context object that may be passed along with successful results
+ * You may use the {@link successfulSingleTransactionPlanResult} or
+ * {@link successfulSingleTransactionPlanResultFromSignature} helpers to
+ * create objects of this type.
+ *
+ * @template TContext - The type of the context object that may be passed along with the result.
+ * @template TTransactionMessage - The type of the transaction message.
+ *
+ * @example
+ * Creating a successful result from a transaction.
+ * ```ts
+ * const result = successfulSingleTransactionPlanResult(
+ *   transactionMessage,
+ *   transaction,
+ * );
+ * result satisfies SuccessfulSingleTransactionPlanResult;
+ * result.context.signature; // The transaction signature.
+ * ```
+ *
+ * @see {@link successfulSingleTransactionPlanResult}
+ * @see {@link successfulSingleTransactionPlanResultFromSignature}
+ * @see {@link isSuccessfulSingleTransactionPlanResult}
+ * @see {@link assertIsSuccessfulSingleTransactionPlanResult}
  */
-export type TransactionPlanResultStatus<TContext extends TransactionPlanResultContext = TransactionPlanResultContext> =
-    | Readonly<{ context: TContext; kind: 'successful'; signature: Signature; transaction?: Transaction }>
-    | Readonly<{ error: Error; kind: 'failed' }>
-    | Readonly<{ kind: 'canceled' }>;
+export type SuccessfulSingleTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+> = {
+    context: Readonly<TContext & { signature: Signature }>;
+    kind: 'single';
+    plannedMessage: TTransactionMessage;
+    status: 'successful';
+};
+
+/**
+ * A {@link SingleTransactionPlanResult} with a 'failed' status.
+ *
+ * This type represents a single transaction that failed during execution.
+ * It includes the original planned message, a context object, and the
+ * {@link Error} that caused the failure.
+ *
+ * You may use the {@link failedSingleTransactionPlanResult} helper to
+ * create objects of this type.
+ *
+ * @template TContext - The type of the context object that may be passed along with the result.
+ * @template TTransactionMessage - The type of the transaction message.
+ *
+ * @example
+ * Creating a failed result from a transaction message and error.
+ * ```ts
+ * const result = failedSingleTransactionPlanResult(
+ *   transactionMessage,
+ *   new Error('Transaction simulation failed'),
+ * );
+ * result satisfies FailedSingleTransactionPlanResult;
+ * result.error; // The error that caused the failure.
+ * ```
+ *
+ * @see {@link failedSingleTransactionPlanResult}
+ * @see {@link isFailedSingleTransactionPlanResult}
+ * @see {@link assertIsFailedSingleTransactionPlanResult}
+ */
+export type FailedSingleTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+> = {
+    context: Readonly<TContext>;
+    error: Error;
+    kind: 'single';
+    plannedMessage: TTransactionMessage;
+    status: 'failed';
+};
+
+/**
+ * A {@link SingleTransactionPlanResult} with a 'canceled' status.
+ *
+ * This type represents a single transaction whose execution was canceled
+ * before it could complete. It includes the original planned message and
+ * a context object.
+ *
+ * You may use the {@link canceledSingleTransactionPlanResult} helper to
+ * create objects of this type.
+ *
+ * @template TContext - The type of the context object that may be passed along with the result.
+ * @template TTransactionMessage - The type of the transaction message.
+ *
+ * @example
+ * Creating a canceled result from a transaction message.
+ * ```ts
+ * const result = canceledSingleTransactionPlanResult(transactionMessage);
+ * result satisfies CanceledSingleTransactionPlanResult;
+ * ```
+ *
+ * @see {@link canceledSingleTransactionPlanResult}
+ * @see {@link isCanceledSingleTransactionPlanResult}
+ * @see {@link assertIsCanceledSingleTransactionPlanResult}
+ */
+export type CanceledSingleTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+> = {
+    context: Readonly<TContext>;
+    kind: 'single';
+    plannedMessage: TTransactionMessage;
+    status: 'canceled';
+};
 
 /**
  * Creates a divisible {@link SequentialTransactionPlanResult} from an array of nested results.
@@ -240,7 +356,7 @@ export type TransactionPlanResultStatus<TContext extends TransactionPlanResultCo
  * indicating that the nested plans were executed sequentially but could have been
  * split into separate transactions or batches.
  *
- * @template TContext - The type of the context object that may be passed along with successful results
+ * @template TContext - The type of the context object that may be passed along with results
  * @param plans - The child results that were executed sequentially
  *
  * @example
@@ -267,7 +383,7 @@ export function sequentialTransactionPlanResult<
  * indicating that the nested plans were executed sequentially and could not have been
  * split into separate transactions or batches (e.g., they were executed as a transaction bundle).
  *
- * @template TContext - The type of the context object that may be passed along with successful results
+ * @template TContext - The type of the context object that may be passed along with results
  * @param plans - The child results that were executed sequentially
  *
  * @example
@@ -293,7 +409,7 @@ export function nonDivisibleSequentialTransactionPlanResult<
  * This function creates a parallel result indicating that the nested plans
  * were executed in parallel.
  *
- * @template TContext - The type of the context object that may be passed along with successful results
+ * @template TContext - The type of the context object that may be passed along with results
  * @param plans - The child results that were executed in parallel
  *
  * @example
@@ -322,7 +438,7 @@ export function parallelTransactionPlanResult<
  *
  * @template TContext - The type of the context object
  * @template TTransactionMessage - The type of the transaction message
- * @param transactionMessage - The original transaction message
+ * @param plannedMessage - The original transaction message
  * @param transaction - The successfully executed transaction
  * @param context - Optional context object to be included with the result
  *
@@ -342,19 +458,16 @@ export function successfulSingleTransactionPlanResult<
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
 >(
-    transactionMessage: TTransactionMessage,
+    plannedMessage: TTransactionMessage,
     transaction: Transaction,
     context?: TContext,
 ): SuccessfulSingleTransactionPlanResult<TContext, TTransactionMessage> {
+    const signature = getSignatureFromTransaction(transaction);
     return Object.freeze({
+        context: Object.freeze({ ...((context ?? {}) as TContext), signature, transaction }),
         kind: 'single',
-        message: transactionMessage,
-        status: Object.freeze({
-            context: context ?? ({} as TContext),
-            kind: 'successful',
-            signature: getSignatureFromTransaction(transaction),
-            transaction,
-        }),
+        plannedMessage,
+        status: 'successful',
     });
 }
 
@@ -367,7 +480,7 @@ export function successfulSingleTransactionPlanResult<
  *
  * @template TContext - The type of the context object
  * @template TTransactionMessage - The type of the transaction message
- * @param transactionMessage - The original transaction message
+ * @param plannedMessage - The original transaction message
  * @param signature - The signature of the successfully executed transaction
  * @param context - Optional context object to be included with the result
  *
@@ -387,14 +500,15 @@ export function successfulSingleTransactionPlanResultFromSignature<
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
 >(
-    transactionMessage: TTransactionMessage,
+    plannedMessage: TTransactionMessage,
     signature: Signature,
     context?: TContext,
 ): SuccessfulSingleTransactionPlanResult<TContext, TTransactionMessage> {
     return Object.freeze({
+        context: Object.freeze({ ...((context ?? {}) as TContext), signature }),
         kind: 'single',
-        message: transactionMessage,
-        status: Object.freeze({ context: context ?? ({} as TContext), kind: 'successful', signature }),
+        plannedMessage,
+        status: 'successful',
     });
 }
 
@@ -405,9 +519,9 @@ export function successfulSingleTransactionPlanResultFromSignature<
  * the transaction execution failed. It includes the original transaction message
  * and the error that caused the failure.
  *
- * @template TContext - The type of the context object (not used in failed results)
+ * @template TContext - The type of the context object
  * @template TTransactionMessage - The type of the transaction message
- * @param transactionMessage - The original transaction message
+ * @param plannedMessage - The original transaction message
  * @param error - The error that caused the transaction to fail
  *
  * @example
@@ -429,13 +543,16 @@ export function failedSingleTransactionPlanResult<
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
 >(
-    transactionMessage: TTransactionMessage,
+    plannedMessage: TTransactionMessage,
     error: Error,
+    context?: TContext,
 ): FailedSingleTransactionPlanResult<TContext, TTransactionMessage> {
     return Object.freeze({
+        context: Object.freeze({ ...((context ?? {}) as TContext) }),
+        error,
         kind: 'single',
-        message: transactionMessage,
-        status: Object.freeze({ error, kind: 'failed' }),
+        plannedMessage,
+        status: 'failed',
     });
 }
 
@@ -445,9 +562,9 @@ export function failedSingleTransactionPlanResult<
  * This function creates a single result with a 'canceled' status, indicating that
  * the transaction execution was canceled. It includes the original transaction message.
  *
- * @template TContext - The type of the context object (not used in canceled results)
+ * @template TContext - The type of the context object
  * @template TTransactionMessage - The type of the transaction message
- * @param transactionMessage - The original transaction message
+ * @param plannedMessage - The original transaction message
  *
  * @example
  * ```ts
@@ -461,11 +578,15 @@ export function canceledSingleTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
->(transactionMessage: TTransactionMessage): CanceledSingleTransactionPlanResult<TContext, TTransactionMessage> {
+>(
+    plannedMessage: TTransactionMessage,
+    context?: TContext,
+): CanceledSingleTransactionPlanResult<TContext, TTransactionMessage> {
     return Object.freeze({
+        context: Object.freeze({ ...((context ?? {}) as TContext) }),
         kind: 'single',
-        message: transactionMessage,
-        status: Object.freeze({ kind: 'canceled' }),
+        plannedMessage,
+        status: 'canceled',
     });
 }
 
@@ -480,7 +601,7 @@ export function canceledSingleTransactionPlanResult<
  * const result: TransactionPlanResult = successfulSingleTransactionPlanResult(message, transaction);
  *
  * if (isSingleTransactionPlanResult(result)) {
- *   console.log(result.status.kind); // TypeScript knows this is a SingleTransactionPlanResult.
+ *   console.log(result.status); // TypeScript knows this is a SingleTransactionPlanResult.
  * }
  * ```
  *
@@ -511,7 +632,7 @@ export function isSingleTransactionPlanResult<
  * const result: TransactionPlanResult = successfulSingleTransactionPlanResult(message, transaction);
  *
  * assertIsSingleTransactionPlanResult(result);
- * console.log(result.status.kind); // TypeScript knows this is a SingleTransactionPlanResult.
+ * console.log(result.status); // TypeScript knows this is a SingleTransactionPlanResult.
  * ```
  *
  * @see {@link SingleTransactionPlanResult}
@@ -546,7 +667,7 @@ export function assertIsSingleTransactionPlanResult<
  * const result: TransactionPlanResult = successfulSingleTransactionPlanResult(message, transaction);
  *
  * if (isSuccessfulSingleTransactionPlanResult(result)) {
- *   console.log(result.status.signature); // TypeScript knows this is a successful result.
+ *   console.log(result.context.signature); // TypeScript knows this is a successful result.
  * }
  * ```
  *
@@ -560,7 +681,7 @@ export function isSuccessfulSingleTransactionPlanResult<
 >(
     plan: TransactionPlanResult<TContext, TTransactionMessage>,
 ): plan is SuccessfulSingleTransactionPlanResult<TContext, TTransactionMessage> {
-    return plan.kind === 'single' && plan.status.kind === 'successful';
+    return plan.kind === 'single' && plan.status === 'successful';
 }
 
 /**
@@ -575,7 +696,7 @@ export function isSuccessfulSingleTransactionPlanResult<
  * const result: TransactionPlanResult = successfulSingleTransactionPlanResult(message, transaction);
  *
  * assertIsSuccessfulSingleTransactionPlanResult(result);
- * console.log(result.status.signature); // TypeScript knows this is a successful result.
+ * console.log(result.context.signature); // TypeScript knows this is a successful result.
  * ```
  *
  * @see {@link SuccessfulSingleTransactionPlanResult}
@@ -590,7 +711,7 @@ export function assertIsSuccessfulSingleTransactionPlanResult<
 ): asserts plan is SuccessfulSingleTransactionPlanResult<TContext, TTransactionMessage> {
     if (!isSuccessfulSingleTransactionPlanResult(plan)) {
         throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN_RESULT, {
-            actualKind: plan.kind === 'single' ? `${plan.status.kind} single` : plan.kind,
+            actualKind: plan.kind === 'single' ? `${plan.status} single` : plan.kind,
             expectedKind: 'successful single',
             transactionPlanResult: plan,
         });
@@ -608,7 +729,7 @@ export function assertIsSuccessfulSingleTransactionPlanResult<
  * const result: TransactionPlanResult = failedSingleTransactionPlanResult(message, error);
  *
  * if (isFailedSingleTransactionPlanResult(result)) {
- *   console.log(result.status.error); // TypeScript knows this is a failed result.
+ *   console.log(result.error); // TypeScript knows this is a failed result.
  * }
  * ```
  *
@@ -622,7 +743,7 @@ export function isFailedSingleTransactionPlanResult<
 >(
     plan: TransactionPlanResult<TContext, TTransactionMessage>,
 ): plan is FailedSingleTransactionPlanResult<TContext, TTransactionMessage> {
-    return plan.kind === 'single' && plan.status.kind === 'failed';
+    return plan.kind === 'single' && plan.status === 'failed';
 }
 
 /**
@@ -637,7 +758,7 @@ export function isFailedSingleTransactionPlanResult<
  * const result: TransactionPlanResult = failedSingleTransactionPlanResult(message, error);
  *
  * assertIsFailedSingleTransactionPlanResult(result);
- * console.log(result.status.error); // TypeScript knows this is a failed result.
+ * console.log(result.error); // TypeScript knows this is a failed result.
  * ```
  *
  * @see {@link FailedSingleTransactionPlanResult}
@@ -652,7 +773,7 @@ export function assertIsFailedSingleTransactionPlanResult<
 ): asserts plan is FailedSingleTransactionPlanResult<TContext, TTransactionMessage> {
     if (!isFailedSingleTransactionPlanResult(plan)) {
         throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN_RESULT, {
-            actualKind: plan.kind === 'single' ? `${plan.status.kind} single` : plan.kind,
+            actualKind: plan.kind === 'single' ? `${plan.status} single` : plan.kind,
             expectedKind: 'failed single',
             transactionPlanResult: plan,
         });
@@ -684,7 +805,7 @@ export function isCanceledSingleTransactionPlanResult<
 >(
     plan: TransactionPlanResult<TContext, TTransactionMessage>,
 ): plan is CanceledSingleTransactionPlanResult<TContext, TTransactionMessage> {
-    return plan.kind === 'single' && plan.status.kind === 'canceled';
+    return plan.kind === 'single' && plan.status === 'canceled';
 }
 
 /**
@@ -714,7 +835,7 @@ export function assertIsCanceledSingleTransactionPlanResult<
 ): asserts plan is CanceledSingleTransactionPlanResult<TContext, TTransactionMessage> {
     if (!isCanceledSingleTransactionPlanResult(plan)) {
         throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN_RESULT, {
-            actualKind: plan.kind === 'single' ? `${plan.status.kind} single` : plan.kind,
+            actualKind: plan.kind === 'single' ? `${plan.status} single` : plan.kind,
             expectedKind: 'canceled single',
             transactionPlanResult: plan,
         });
@@ -1036,7 +1157,7 @@ export function assertIsSuccessfulTransactionPlanResult<
  * returning the first result that satisfies the predicate. It checks the root result
  * first, then recursively searches through nested results.
  *
- * @template TContext - The type of the context object that may be passed along with successful results
+ * @template TContext - The type of the context object that may be passed along with results
  * @template TTransactionMessage - The type of the transaction message
  * @template TSingle - The type of single transaction plan results in this tree
  * @param transactionPlanResult - The transaction plan result tree to search.
@@ -1053,7 +1174,7 @@ export function assertIsSuccessfulTransactionPlanResult<
  *
  * const failed = findTransactionPlanResult(
  *   result,
- *   (r) => r.kind === 'single' && r.status.kind === 'failed',
+ *   (r) => r.kind === 'single' && r.status === 'failed',
  * );
  * // Returns the failed single transaction plan result for messageB.
  * ```
@@ -1097,7 +1218,7 @@ export function findTransactionPlanResult<
  * and returns the first single transaction result with a 'failed' status. If no failed
  * result is found, it throws a {@link SolanaError}.
  *
- * @template TContext - The type of the context object that may be passed along with successful results
+ * @template TContext - The type of the context object that may be passed along with results
  * @template TTransactionMessage - The type of the transaction message
  * @param transactionPlanResult - The transaction plan result tree to search.
  * @return The first failed single transaction plan result.
@@ -1129,10 +1250,7 @@ export function getFirstFailedSingleTransactionPlanResult<
 >(
     transactionPlanResult: TransactionPlanResult<TContext, TTransactionMessage>,
 ): FailedSingleTransactionPlanResult<TContext, TTransactionMessage> {
-    const result = findTransactionPlanResult(
-        transactionPlanResult,
-        r => r.kind === 'single' && r.status.kind === 'failed',
-    );
+    const result = findTransactionPlanResult(transactionPlanResult, r => r.kind === 'single' && r.status === 'failed');
 
     if (!result) {
         // Here we want the `transactionPlanResult` to be available in the error context
@@ -1161,7 +1279,7 @@ export function getFirstFailedSingleTransactionPlanResult<
  * returning `true` only if the predicate returns `true` for every result in the tree
  * (including the root result and all nested results).
  *
- * @template TContext - The type of the context object that may be passed along with successful results
+ * @template TContext - The type of the context object that may be passed along with results
  * @template TTransactionMessage - The type of the transaction message
  * @template TSingle - The type of single transaction plan results in this tree
  * @param transactionPlanResult - The transaction plan result tree to check.
@@ -1178,7 +1296,7 @@ export function getFirstFailedSingleTransactionPlanResult<
  *
  * const allSuccessful = everyTransactionPlanResult(
  *   result,
- *   (r) => r.kind !== 'single' || r.status.kind === 'successful',
+ *   (r) => r.kind !== 'single' || r.status === 'successful',
  * );
  * // Returns true because all single results are successful.
  * ```
@@ -1190,7 +1308,7 @@ export function getFirstFailedSingleTransactionPlanResult<
  *
  * const noCanceled = everyTransactionPlanResult(
  *   result,
- *   (r) => r.kind !== 'single' || r.status.kind !== 'canceled',
+ *   (r) => r.kind !== 'single' || r.status !== 'canceled',
  * );
  * ```
  *
@@ -1243,8 +1361,8 @@ export function everyTransactionPlanResult<
  * ]);
  *
  * const transformed = transformTransactionPlanResult(result, (r) => {
- *   if (r.kind === 'single' && r.status.kind === 'canceled') {
- *     return failedSingleTransactionPlanResult(r.message, new Error('Execution canceled'));
+ *   if (r.kind === 'single' && r.status === 'canceled') {
+ *     return failedSingleTransactionPlanResult(r.plannedMessage, new Error('Execution canceled'));
  *   }
  *   return r;
  * });
@@ -1279,7 +1397,7 @@ export function transformTransactionPlanResult(
  * all the single results they contain. It's useful when you need to access all the individual
  * transaction results, regardless of their organization in the result tree (parallel or sequential).
  *
- * @template TContext - The type of the context object that may be passed along with successful results
+ * @template TContext - The type of the context object that may be passed along with results
  * @template TTransactionMessage - The type of the transaction message
  * @template TSingle - The type of single transaction plan results in this tree
  * @param result - The transaction plan result to extract single results from
@@ -1319,33 +1437,6 @@ export function flattenTransactionPlanResult<
 }
 
 /**
- * A {@link SingleTransactionPlanResult} with 'successful' status.
- */
-export type SuccessfulSingleTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
-    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
-        TransactionMessageWithFeePayer,
-> = SingleTransactionPlanResult<TContext, TTransactionMessage> & { status: { kind: 'successful' } };
-
-/**
- * A {@link SingleTransactionPlanResult} with 'failed' status.
- */
-export type FailedSingleTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
-    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
-        TransactionMessageWithFeePayer,
-> = SingleTransactionPlanResult<TContext, TTransactionMessage> & { status: { kind: 'failed' } };
-
-/**
- * A {@link SingleTransactionPlanResult} with 'canceled' status.
- */
-export type CanceledSingleTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
-    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
-        TransactionMessageWithFeePayer,
-> = SingleTransactionPlanResult<TContext, TTransactionMessage> & { status: { kind: 'canceled' } };
-
-/**
  * A summary of a {@link TransactionPlanResult}, categorizing transactions by their execution status.
  * - `successful`: Indicates whether all transactions were successful (i.e., no failed or canceled transactions).
  * - `successfulTransactions`: An array of successful transactions, each including its signature.
@@ -1366,7 +1457,7 @@ export type TransactionPlanResultSummary<
 /**
  * Summarize a {@link TransactionPlanResult} into a {@link TransactionPlanResultSummary}.
  *
- * @template TContext - The type of the context object that may be passed along with successful results
+ * @template TContext - The type of the context object that may be passed along with results
  * @template TTransactionMessage - The type of the transaction message
  * @param result The transaction plan result to summarize
  * @returns A summary of the transaction plan result
@@ -1386,17 +1477,17 @@ export function summarizeTransactionPlanResult<
     const flattenedResults = flattenTransactionPlanResult(result);
 
     for (const singleResult of flattenedResults) {
-        switch (singleResult.status.kind) {
+        switch (singleResult.status) {
             case 'successful': {
-                successfulTransactions.push(singleResult as Out['successfulTransactions'][number]);
+                successfulTransactions.push(singleResult);
                 break;
             }
             case 'failed': {
-                failedTransactions.push(singleResult as Out['failedTransactions'][number]);
+                failedTransactions.push(singleResult);
                 break;
             }
             case 'canceled': {
-                canceledTransactions.push(singleResult as Out['canceledTransactions'][number]);
+                canceledTransactions.push(singleResult);
                 break;
             }
         }
