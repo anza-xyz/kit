@@ -2,7 +2,7 @@ import type { Address } from '@solana/addresses';
 import type { ReadonlyUint8Array } from '@solana/codecs-core';
 import type { SignatureBytes } from '@solana/keys';
 import type { Brand, EncodedString } from '@solana/nominal-types';
-import type { BaseTransactionMessage } from '@solana/transaction-messages';
+import type { TransactionMessage } from '@solana/transaction-messages';
 
 import type { SetTransactionLifetimeFromTransactionMessage } from './lifetime';
 import type { SetTransactionWithinSizeLimitFromTransactionMessage } from './transaction-size';
@@ -25,9 +25,9 @@ export type Transaction = Readonly<{
 
 /**
  * Helper type that creates a `Transaction` type as narrow as possible
- * from the provided `BaseTransactionMessage` type.
+ * from the provided `TransactionMessage` type.
  */
-export type TransactionFromTransactionMessage<TTransactionMessage extends BaseTransactionMessage> =
+export type TransactionFromTransactionMessage<TTransactionMessage extends TransactionMessage> =
     SetTransactionWithinSizeLimitFromTransactionMessage<
         SetTransactionLifetimeFromTransactionMessage<Transaction, TTransactionMessage>,
         TTransactionMessage

@@ -1,6 +1,6 @@
 import { Address } from '@solana/addresses';
 import { Instruction, isSignerRole } from '@solana/instructions';
-import { BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
+import { TransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
 
 import { AccountSignerMeta, InstructionWithSigners, TransactionMessageWithSigners } from './account-signer-meta';
 import { deduplicateSigners } from './deduplicate-signers';
@@ -77,7 +77,7 @@ export function addSignersToInstruction<TInstruction extends Instruction>(
  * @example
  * ```ts
  * import { AccountRole, Instruction } from '@solana/instructions';
- * import { BaseTransactionMessage } from '@solana/transaction-messages';
+ * import { TransactionMessage } from '@solana/transaction-messages';
  * import { addSignersToTransactionMessage, TransactionSigner } from '@solana/signers';
  *
  * const instructionA: Instruction = {
@@ -88,7 +88,7 @@ export function addSignersToInstruction<TInstruction extends Instruction>(
  *     accounts: [{ address: '2222' as Address, role: AccountRole.WRITABLE_SIGNER }],
  *     // ...
  * };
- * const transactionMessage: BaseTransactionMessage = {
+ * const transactionMessage: TransactionMessage = {
  *     instructions: [instructionA, instructionB],
  *     // ...
  * }
@@ -104,7 +104,7 @@ export function addSignersToInstruction<TInstruction extends Instruction>(
  * // transactionMessageWithSigners.instructions[1].accounts[0].signer === signerB
  * ```
  */
-export function addSignersToTransactionMessage<TTransactionMessage extends BaseTransactionMessage>(
+export function addSignersToTransactionMessage<TTransactionMessage extends TransactionMessage>(
     signers: TransactionSigner[],
     transactionMessage: TTransactionMessage | (TransactionMessageWithSigners & TTransactionMessage),
 ): TransactionMessageWithSigners & TTransactionMessage {
@@ -124,8 +124,8 @@ export function addSignersToTransactionMessage<TTransactionMessage extends BaseT
 }
 
 function hasAddressOnlyFeePayer(
-    message: BaseTransactionMessage & Partial<TransactionMessageWithFeePayer>,
-): message is BaseTransactionMessage & { feePayer: { address: Address } } {
+    message: Partial<TransactionMessageWithFeePayer> & TransactionMessage,
+): message is TransactionMessage & { feePayer: { address: Address } } {
     return (
         !!message &&
         'feePayer' in message &&

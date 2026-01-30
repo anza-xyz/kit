@@ -1,6 +1,6 @@
 import { SOLANA_ERROR__TRANSACTION__EXCEEDS_SIZE_LIMIT, SolanaError } from '@solana/errors';
 import type {
-    BaseTransactionMessage,
+    TransactionMessage,
     TransactionMessageWithFeePayer,
     TransactionMessageWithinSizeLimit,
 } from '@solana/transaction-messages';
@@ -17,7 +17,7 @@ import { getTransactionSize, TRANSACTION_SIZE_LIMIT } from './transaction-size';
  * ```
  */
 export function getTransactionMessageSize(
-    transactionMessage: BaseTransactionMessage & TransactionMessageWithFeePayer,
+    transactionMessage: TransactionMessage & TransactionMessageWithFeePayer,
 ): number {
     return getTransactionSize(compileTransaction(transactionMessage));
 }
@@ -36,7 +36,7 @@ export function getTransactionMessageSize(
  * ```
  */
 export function isTransactionMessageWithinSizeLimit<
-    TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer,
 >(
     transactionMessage: TTransactionMessage,
 ): transactionMessage is TransactionMessageWithinSizeLimit & TTransactionMessage {
@@ -59,7 +59,7 @@ export function isTransactionMessageWithinSizeLimit<
  * ```
  */
 export function assertIsTransactionMessageWithinSizeLimit<
-    TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer,
 >(
     transactionMessage: TTransactionMessage,
 ): asserts transactionMessage is TransactionMessageWithinSizeLimit & TTransactionMessage {

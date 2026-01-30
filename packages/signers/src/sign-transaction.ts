@@ -1,6 +1,6 @@
 import { SOLANA_ERROR__SIGNER__TRANSACTION_SENDING_SIGNER_MISSING, SolanaError } from '@solana/errors';
 import { SignatureBytes } from '@solana/keys';
-import { BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
+import { TransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
 import {
     assertIsFullySignedTransaction,
     compileTransaction,
@@ -63,7 +63,7 @@ import { assertIsTransactionMessageWithSingleSendingSigner } from './transaction
  * @see {@link signAndSendTransactionMessageWithSigners}
  */
 export async function partiallySignTransactionMessageWithSigners(
-    transactionMessage: BaseTransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithSigners,
+    transactionMessage: TransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithSigners,
     config?: TransactionPartialSignerConfig,
 ): Promise<Transaction & TransactionWithinSizeLimit & TransactionWithLifetime> {
     const { partialSigners, modifyingSigners } = categorizeTransactionSigners(
@@ -104,7 +104,7 @@ export async function partiallySignTransactionMessageWithSigners(
  * @see {@link signAndSendTransactionMessageWithSigners}
  */
 export async function signTransactionMessageWithSigners(
-    transactionMessage: BaseTransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithSigners,
+    transactionMessage: TransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithSigners,
     config?: TransactionPartialSignerConfig,
 ): Promise<SendableTransaction & Transaction & TransactionWithLifetime> {
     const signedTransaction = await partiallySignTransactionMessageWithSigners(transactionMessage, config);
@@ -161,7 +161,7 @@ export async function signTransactionMessageWithSigners(
  *
  */
 export async function signAndSendTransactionMessageWithSigners(
-    transaction: BaseTransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithSigners,
+    transaction: TransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithSigners,
     config?: TransactionSendingSignerConfig,
 ): Promise<SignatureBytes> {
     assertIsTransactionMessageWithSingleSendingSigner(transaction);
@@ -268,7 +268,7 @@ function identifyTransactionModifyingSigners(
  * sequentially followed by the TransactionPartialSigners in parallel.
  */
 async function signModifyingAndPartialTransactionSigners(
-    transactionMessage: BaseTransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithSigners,
+    transactionMessage: TransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithSigners,
     modifyingSigners: readonly TransactionModifyingSigner[] = [],
     partialSigners: readonly TransactionPartialSigner[] = [],
     config?: TransactionModifyingSignerConfig,

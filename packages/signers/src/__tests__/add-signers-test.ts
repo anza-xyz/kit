@@ -3,7 +3,7 @@ import '@solana/test-matchers/toBeFrozenObject';
 import { Address } from '@solana/addresses';
 import { SOLANA_ERROR__SIGNER__ADDRESS_CANNOT_HAVE_MULTIPLE_SIGNERS, SolanaError } from '@solana/errors';
 import { AccountRole, Instruction } from '@solana/instructions';
-import { BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
+import { TransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
 
 import { AccountSignerMeta, InstructionWithSigners } from '../account-signer-meta';
 import { addSignersToInstruction, addSignersToTransactionMessage } from '../add-signers';
@@ -170,7 +170,7 @@ describe('addSignersToTransactionMessage', () => {
             data: new Uint8Array([]),
             programAddress: '9999' as Address,
         };
-        const transaction: BaseTransactionMessage = {
+        const transaction: TransactionMessage = {
             instructions: [instructionA, instructionB],
             version: 0,
         };
@@ -193,7 +193,7 @@ describe('addSignersToTransactionMessage', () => {
 
     it('updates the fee payer if a matching signer is provided', () => {
         // Given a transaction with a fee payer address.
-        const transaction: BaseTransactionMessage & TransactionMessageWithFeePayer = {
+        const transaction: TransactionMessage & TransactionMessageWithFeePayer = {
             feePayer: { address: '1111' as Address },
             instructions: [],
             version: 0,
@@ -215,7 +215,7 @@ describe('addSignersToTransactionMessage', () => {
         const signerB = createMockTransactionModifyingSigner('1111' as Address);
 
         // And a transaction using fee payer signer A.
-        const transaction: BaseTransactionMessage & TransactionMessageWithFeePayerSigner = {
+        const transaction: TransactionMessage & TransactionMessageWithFeePayerSigner = {
             feePayer: signerA,
             instructions: [],
             version: 0,
@@ -230,7 +230,7 @@ describe('addSignersToTransactionMessage', () => {
 
     it('freezes the returned transaction', () => {
         // Given a one-instruction transaction with signer account metas.
-        const transaction: BaseTransactionMessage = {
+        const transaction: TransactionMessage = {
             instructions: [
                 {
                     accounts: [{ address: '1111' as Address, role: AccountRole.READONLY_SIGNER }],
@@ -253,7 +253,7 @@ describe('addSignersToTransactionMessage', () => {
 
     it('returns the transaction as-is if it has no instructions or fee payer to update', () => {
         // Given transaction with no instructions or fee payer.
-        const transaction: BaseTransactionMessage = { instructions: [], version: 0 };
+        const transaction: TransactionMessage = { instructions: [], version: 0 };
 
         // When we try to add signers to the transaction.
         const signer = createMockTransactionPartialSigner('1111' as Address);
