@@ -24,6 +24,7 @@ import { getSignatureFromTransaction, Transaction } from '@solana/transactions';
  *   original plan.
  *
  * @template TContext - The type of the context object that may be passed along with successful results
+ * @template TTransactionMessage - The type of the transaction message
  * @template TSingle - The type of single transaction plan results in this tree
  *
  * @see {@link SingleTransactionPlanResult}
@@ -33,8 +34,16 @@ import { getSignatureFromTransaction, Transaction } from '@solana/transactions';
  */
 export type TransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
-    TSingle extends SingleTransactionPlanResult<TContext> = SingleTransactionPlanResult<TContext>,
-> = ParallelTransactionPlanResult<TContext, TSingle> | SequentialTransactionPlanResult<TContext, TSingle> | TSingle;
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+    TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
+        TContext,
+        TTransactionMessage
+    >,
+> =
+    | ParallelTransactionPlanResult<TContext, TTransactionMessage, TSingle>
+    | SequentialTransactionPlanResult<TContext, TTransactionMessage, TSingle>
+    | TSingle;
 
 /**
  * A {@link TransactionPlanResult} where all single transaction results are successful.
@@ -49,6 +58,7 @@ export type TransactionPlanResult<
  * leaf nodes are successful.
  *
  * @template TContext - The type of the context object that may be passed along with successful results
+ * @template TTransactionMessage - The type of the transaction message
  *
  * @see {@link isSuccessfulTransactionPlanResult}
  * @see {@link assertIsSuccessfulTransactionPlanResult}
@@ -56,7 +66,13 @@ export type TransactionPlanResult<
  */
 export type SuccessfulTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
-> = TransactionPlanResult<TContext, SuccessfulSingleTransactionPlanResult<TContext>>;
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+> = TransactionPlanResult<
+    TContext,
+    TTransactionMessage,
+    SuccessfulSingleTransactionPlanResult<TContext, TTransactionMessage>
+>;
 
 /** A context object that may be passed along with successful results. */
 export type TransactionPlanResultContext = Record<number | string | symbol, unknown>;
@@ -72,6 +88,7 @@ export type TransactionPlanResultContext = Record<number | string | symbol, unkn
  * {@link nonDivisibleSequentialTransactionPlanResult} helpers to create objects of this type.
  *
  * @template TContext - The type of the context object that may be passed along with successful results
+ * @template TTransactionMessage - The type of the transaction message
  * @template TSingle - The type of single transaction plan results in this tree
  *
  * @example
@@ -98,11 +115,16 @@ export type TransactionPlanResultContext = Record<number | string | symbol, unkn
  */
 export type SequentialTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
-    TSingle extends SingleTransactionPlanResult<TContext> = SingleTransactionPlanResult<TContext>,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+    TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
+        TContext,
+        TTransactionMessage
+    >,
 > = Readonly<{
     divisible: boolean;
     kind: 'sequential';
-    plans: TransactionPlanResult<TContext, TSingle>[];
+    plans: TransactionPlanResult<TContext, TTransactionMessage, TSingle>[];
 }>;
 
 /**
@@ -114,6 +136,7 @@ export type SequentialTransactionPlanResult<
  * You may use the {@link parallelTransactionPlanResult} helper to create objects of this type.
  *
  * @template TContext - The type of the context object that may be passed along with successful results
+ * @template TTransactionMessage - The type of the transaction message
  * @template TSingle - The type of single transaction plan results in this tree
  *
  * @example
@@ -129,10 +152,15 @@ export type SequentialTransactionPlanResult<
  */
 export type ParallelTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
-    TSingle extends SingleTransactionPlanResult<TContext> = SingleTransactionPlanResult<TContext>,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+    TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
+        TContext,
+        TTransactionMessage
+    >,
 > = Readonly<{
     kind: 'parallel';
-    plans: TransactionPlanResult<TContext, TSingle>[];
+    plans: TransactionPlanResult<TContext, TTransactionMessage, TSingle>[];
 }>;
 
 /**
@@ -317,7 +345,7 @@ export function successfulSingleTransactionPlanResult<
     transactionMessage: TTransactionMessage,
     transaction: Transaction,
     context?: TContext,
-): SingleTransactionPlanResult<TContext, TTransactionMessage> {
+): SuccessfulSingleTransactionPlanResult<TContext, TTransactionMessage> {
     return Object.freeze({
         kind: 'single',
         message: transactionMessage,
@@ -362,7 +390,7 @@ export function successfulSingleTransactionPlanResultFromSignature<
     transactionMessage: TTransactionMessage,
     signature: Signature,
     context?: TContext,
-): SingleTransactionPlanResult<TContext, TTransactionMessage> {
+): SuccessfulSingleTransactionPlanResult<TContext, TTransactionMessage> {
     return Object.freeze({
         kind: 'single',
         message: transactionMessage,
@@ -400,7 +428,10 @@ export function failedSingleTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
->(transactionMessage: TTransactionMessage, error: Error): SingleTransactionPlanResult<TContext, TTransactionMessage> {
+>(
+    transactionMessage: TTransactionMessage,
+    error: Error,
+): FailedSingleTransactionPlanResult<TContext, TTransactionMessage> {
     return Object.freeze({
         kind: 'single',
         message: transactionMessage,
@@ -430,7 +461,7 @@ export function canceledSingleTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
->(transactionMessage: TTransactionMessage): SingleTransactionPlanResult<TContext, TTransactionMessage> {
+>(transactionMessage: TTransactionMessage): CanceledSingleTransactionPlanResult<TContext, TTransactionMessage> {
     return Object.freeze({
         kind: 'single',
         message: transactionMessage,
@@ -456,7 +487,15 @@ export function canceledSingleTransactionPlanResult<
  * @see {@link SingleTransactionPlanResult}
  * @see {@link assertIsSingleTransactionPlanResult}
  */
-export function isSingleTransactionPlanResult(plan: TransactionPlanResult): plan is SingleTransactionPlanResult {
+export function isSingleTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+    TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
+        TContext,
+        TTransactionMessage
+    >,
+>(plan: TransactionPlanResult<TContext, TTransactionMessage, TSingle>): plan is TSingle {
     return plan.kind === 'single';
 }
 
@@ -478,9 +517,15 @@ export function isSingleTransactionPlanResult(plan: TransactionPlanResult): plan
  * @see {@link SingleTransactionPlanResult}
  * @see {@link isSingleTransactionPlanResult}
  */
-export function assertIsSingleTransactionPlanResult(
-    plan: TransactionPlanResult,
-): asserts plan is SingleTransactionPlanResult {
+export function assertIsSingleTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+    TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
+        TContext,
+        TTransactionMessage
+    >,
+>(plan: TransactionPlanResult<TContext, TTransactionMessage, TSingle>): asserts plan is TSingle {
     if (!isSingleTransactionPlanResult(plan)) {
         throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN_RESULT, {
             actualKind: plan.kind,
@@ -508,9 +553,13 @@ export function assertIsSingleTransactionPlanResult(
  * @see {@link SuccessfulSingleTransactionPlanResult}
  * @see {@link assertIsSuccessfulSingleTransactionPlanResult}
  */
-export function isSuccessfulSingleTransactionPlanResult(
-    plan: TransactionPlanResult,
-): plan is SuccessfulSingleTransactionPlanResult {
+export function isSuccessfulSingleTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+>(
+    plan: TransactionPlanResult<TContext, TTransactionMessage>,
+): plan is SuccessfulSingleTransactionPlanResult<TContext, TTransactionMessage> {
     return plan.kind === 'single' && plan.status.kind === 'successful';
 }
 
@@ -532,9 +581,13 @@ export function isSuccessfulSingleTransactionPlanResult(
  * @see {@link SuccessfulSingleTransactionPlanResult}
  * @see {@link isSuccessfulSingleTransactionPlanResult}
  */
-export function assertIsSuccessfulSingleTransactionPlanResult(
-    plan: TransactionPlanResult,
-): asserts plan is SuccessfulSingleTransactionPlanResult {
+export function assertIsSuccessfulSingleTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+>(
+    plan: TransactionPlanResult<TContext, TTransactionMessage>,
+): asserts plan is SuccessfulSingleTransactionPlanResult<TContext, TTransactionMessage> {
     if (!isSuccessfulSingleTransactionPlanResult(plan)) {
         throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN_RESULT, {
             actualKind: plan.kind === 'single' ? `${plan.status.kind} single` : plan.kind,
@@ -562,9 +615,13 @@ export function assertIsSuccessfulSingleTransactionPlanResult(
  * @see {@link FailedSingleTransactionPlanResult}
  * @see {@link assertIsFailedSingleTransactionPlanResult}
  */
-export function isFailedSingleTransactionPlanResult(
-    plan: TransactionPlanResult,
-): plan is FailedSingleTransactionPlanResult {
+export function isFailedSingleTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+>(
+    plan: TransactionPlanResult<TContext, TTransactionMessage>,
+): plan is FailedSingleTransactionPlanResult<TContext, TTransactionMessage> {
     return plan.kind === 'single' && plan.status.kind === 'failed';
 }
 
@@ -586,9 +643,13 @@ export function isFailedSingleTransactionPlanResult(
  * @see {@link FailedSingleTransactionPlanResult}
  * @see {@link isFailedSingleTransactionPlanResult}
  */
-export function assertIsFailedSingleTransactionPlanResult(
-    plan: TransactionPlanResult,
-): asserts plan is FailedSingleTransactionPlanResult {
+export function assertIsFailedSingleTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+>(
+    plan: TransactionPlanResult<TContext, TTransactionMessage>,
+): asserts plan is FailedSingleTransactionPlanResult<TContext, TTransactionMessage> {
     if (!isFailedSingleTransactionPlanResult(plan)) {
         throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN_RESULT, {
             actualKind: plan.kind === 'single' ? `${plan.status.kind} single` : plan.kind,
@@ -616,9 +677,13 @@ export function assertIsFailedSingleTransactionPlanResult(
  * @see {@link CanceledSingleTransactionPlanResult}
  * @see {@link assertIsCanceledSingleTransactionPlanResult}
  */
-export function isCanceledSingleTransactionPlanResult(
-    plan: TransactionPlanResult,
-): plan is CanceledSingleTransactionPlanResult {
+export function isCanceledSingleTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+>(
+    plan: TransactionPlanResult<TContext, TTransactionMessage>,
+): plan is CanceledSingleTransactionPlanResult<TContext, TTransactionMessage> {
     return plan.kind === 'single' && plan.status.kind === 'canceled';
 }
 
@@ -640,9 +705,13 @@ export function isCanceledSingleTransactionPlanResult(
  * @see {@link CanceledSingleTransactionPlanResult}
  * @see {@link isCanceledSingleTransactionPlanResult}
  */
-export function assertIsCanceledSingleTransactionPlanResult(
-    plan: TransactionPlanResult,
-): asserts plan is CanceledSingleTransactionPlanResult {
+export function assertIsCanceledSingleTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+>(
+    plan: TransactionPlanResult<TContext, TTransactionMessage>,
+): asserts plan is CanceledSingleTransactionPlanResult<TContext, TTransactionMessage> {
     if (!isCanceledSingleTransactionPlanResult(plan)) {
         throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN_RESULT, {
             actualKind: plan.kind === 'single' ? `${plan.status.kind} single` : plan.kind,
@@ -670,9 +739,17 @@ export function assertIsCanceledSingleTransactionPlanResult(
  * @see {@link SequentialTransactionPlanResult}
  * @see {@link assertIsSequentialTransactionPlanResult}
  */
-export function isSequentialTransactionPlanResult(
-    plan: TransactionPlanResult,
-): plan is SequentialTransactionPlanResult {
+export function isSequentialTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+    TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
+        TContext,
+        TTransactionMessage
+    >,
+>(
+    plan: TransactionPlanResult<TContext, TTransactionMessage, TSingle>,
+): plan is SequentialTransactionPlanResult<TContext, TTransactionMessage, TSingle> {
     return plan.kind === 'sequential';
 }
 
@@ -694,9 +771,17 @@ export function isSequentialTransactionPlanResult(
  * @see {@link SequentialTransactionPlanResult}
  * @see {@link isSequentialTransactionPlanResult}
  */
-export function assertIsSequentialTransactionPlanResult(
-    plan: TransactionPlanResult,
-): asserts plan is SequentialTransactionPlanResult {
+export function assertIsSequentialTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+    TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
+        TContext,
+        TTransactionMessage
+    >,
+>(
+    plan: TransactionPlanResult<TContext, TTransactionMessage, TSingle>,
+): asserts plan is SequentialTransactionPlanResult<TContext, TTransactionMessage, TSingle> {
     if (!isSequentialTransactionPlanResult(plan)) {
         throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN_RESULT, {
             actualKind: plan.kind,
@@ -727,9 +812,17 @@ export function assertIsSequentialTransactionPlanResult(
  * @see {@link SequentialTransactionPlanResult}
  * @see {@link assertIsNonDivisibleSequentialTransactionPlanResult}
  */
-export function isNonDivisibleSequentialTransactionPlanResult(
-    plan: TransactionPlanResult,
-): plan is SequentialTransactionPlanResult & { divisible: false } {
+export function isNonDivisibleSequentialTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+    TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
+        TContext,
+        TTransactionMessage
+    >,
+>(
+    plan: TransactionPlanResult<TContext, TTransactionMessage, TSingle>,
+): plan is SequentialTransactionPlanResult<TContext, TTransactionMessage, TSingle> & { divisible: false } {
     return plan.kind === 'sequential' && plan.divisible === false;
 }
 
@@ -754,9 +847,17 @@ export function isNonDivisibleSequentialTransactionPlanResult(
  * @see {@link SequentialTransactionPlanResult}
  * @see {@link isNonDivisibleSequentialTransactionPlanResult}
  */
-export function assertIsNonDivisibleSequentialTransactionPlanResult(
-    plan: TransactionPlanResult,
-): asserts plan is SequentialTransactionPlanResult & { divisible: false } {
+export function assertIsNonDivisibleSequentialTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+    TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
+        TContext,
+        TTransactionMessage
+    >,
+>(
+    plan: TransactionPlanResult<TContext, TTransactionMessage, TSingle>,
+): asserts plan is SequentialTransactionPlanResult<TContext, TTransactionMessage, TSingle> & { divisible: false } {
     if (!isNonDivisibleSequentialTransactionPlanResult(plan)) {
         throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN_RESULT, {
             actualKind: plan.kind === 'sequential' ? 'divisible sequential' : plan.kind,
@@ -784,7 +885,17 @@ export function assertIsNonDivisibleSequentialTransactionPlanResult(
  * @see {@link ParallelTransactionPlanResult}
  * @see {@link assertIsParallelTransactionPlanResult}
  */
-export function isParallelTransactionPlanResult(plan: TransactionPlanResult): plan is ParallelTransactionPlanResult {
+export function isParallelTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+    TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
+        TContext,
+        TTransactionMessage
+    >,
+>(
+    plan: TransactionPlanResult<TContext, TTransactionMessage, TSingle>,
+): plan is ParallelTransactionPlanResult<TContext, TTransactionMessage, TSingle> {
     return plan.kind === 'parallel';
 }
 
@@ -806,9 +917,17 @@ export function isParallelTransactionPlanResult(plan: TransactionPlanResult): pl
  * @see {@link ParallelTransactionPlanResult}
  * @see {@link isParallelTransactionPlanResult}
  */
-export function assertIsParallelTransactionPlanResult(
-    plan: TransactionPlanResult,
-): asserts plan is ParallelTransactionPlanResult {
+export function assertIsParallelTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+    TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
+        TContext,
+        TTransactionMessage
+    >,
+>(
+    plan: TransactionPlanResult<TContext, TTransactionMessage, TSingle>,
+): asserts plan is ParallelTransactionPlanResult<TContext, TTransactionMessage, TSingle> {
     if (!isParallelTransactionPlanResult(plan)) {
         throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN_RESULT, {
             actualKind: plan.kind,
@@ -850,9 +969,13 @@ export function assertIsParallelTransactionPlanResult(
  * @see {@link assertIsSuccessfulTransactionPlanResult}
  * @see {@link isSuccessfulSingleTransactionPlanResult}
  */
-export function isSuccessfulTransactionPlanResult(
-    plan: TransactionPlanResult,
-): plan is SuccessfulTransactionPlanResult {
+export function isSuccessfulTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+>(
+    plan: TransactionPlanResult<TContext, TTransactionMessage>,
+): plan is SuccessfulTransactionPlanResult<TContext, TTransactionMessage> {
     return everyTransactionPlanResult(
         plan,
         r => !isSingleTransactionPlanResult(r) || isSuccessfulSingleTransactionPlanResult(r),
@@ -892,9 +1015,13 @@ export function isSuccessfulTransactionPlanResult(
  * @see {@link isSuccessfulTransactionPlanResult}
  * @see {@link assertIsSuccessfulSingleTransactionPlanResult}
  */
-export function assertIsSuccessfulTransactionPlanResult(
-    plan: TransactionPlanResult,
-): asserts plan is SuccessfulTransactionPlanResult {
+export function assertIsSuccessfulTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+>(
+    plan: TransactionPlanResult<TContext, TTransactionMessage>,
+): asserts plan is SuccessfulTransactionPlanResult<TContext, TTransactionMessage> {
     if (!isSuccessfulTransactionPlanResult(plan)) {
         throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__EXPECTED_SUCCESSFUL_TRANSACTION_PLAN_RESULT, {
             transactionPlanResult: plan,
@@ -909,6 +1036,9 @@ export function assertIsSuccessfulTransactionPlanResult(
  * returning the first result that satisfies the predicate. It checks the root result
  * first, then recursively searches through nested results.
  *
+ * @template TContext - The type of the context object that may be passed along with successful results
+ * @template TTransactionMessage - The type of the transaction message
+ * @template TSingle - The type of single transaction plan results in this tree
  * @param transactionPlanResult - The transaction plan result tree to search.
  * @param predicate - A function that returns `true` for the result to find.
  * @returns The first matching transaction plan result, or `undefined` if no match is found.
@@ -933,10 +1063,18 @@ export function assertIsSuccessfulTransactionPlanResult(
  * @see {@link transformTransactionPlanResult}
  * @see {@link flattenTransactionPlanResult}
  */
-export function findTransactionPlanResult<TContext extends TransactionPlanResultContext = TransactionPlanResultContext>(
-    transactionPlanResult: TransactionPlanResult<TContext>,
-    predicate: (result: TransactionPlanResult<TContext>) => boolean,
-): TransactionPlanResult<TContext> | undefined {
+export function findTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+    TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
+        TContext,
+        TTransactionMessage
+    >,
+>(
+    transactionPlanResult: TransactionPlanResult<TContext, TTransactionMessage, TSingle>,
+    predicate: (result: TransactionPlanResult<TContext, TTransactionMessage, TSingle>) => boolean,
+): TransactionPlanResult<TContext, TTransactionMessage, TSingle> | undefined {
     if (predicate(transactionPlanResult)) {
         return transactionPlanResult;
     }
@@ -959,6 +1097,8 @@ export function findTransactionPlanResult<TContext extends TransactionPlanResult
  * and returns the first single transaction result with a 'failed' status. If no failed
  * result is found, it throws a {@link SolanaError}.
  *
+ * @template TContext - The type of the context object that may be passed along with successful results
+ * @template TTransactionMessage - The type of the transaction message
  * @param transactionPlanResult - The transaction plan result tree to search.
  * @return The first failed single transaction plan result.
  * @throws Throws a {@link SolanaError} with code
@@ -982,9 +1122,13 @@ export function findTransactionPlanResult<TContext extends TransactionPlanResult
  * @see {@link FailedSingleTransactionPlanResult}
  * @see {@link findTransactionPlanResult}
  */
-export function getFirstFailedSingleTransactionPlanResult(
-    transactionPlanResult: TransactionPlanResult,
-): FailedSingleTransactionPlanResult {
+export function getFirstFailedSingleTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+>(
+    transactionPlanResult: TransactionPlanResult<TContext, TTransactionMessage>,
+): FailedSingleTransactionPlanResult<TContext, TTransactionMessage> {
     const result = findTransactionPlanResult(
         transactionPlanResult,
         r => r.kind === 'single' && r.status.kind === 'failed',
@@ -1007,7 +1151,7 @@ export function getFirstFailedSingleTransactionPlanResult(
         );
     }
 
-    return result as FailedSingleTransactionPlanResult;
+    return result as FailedSingleTransactionPlanResult<TContext, TTransactionMessage>;
 }
 
 /**
@@ -1017,6 +1161,9 @@ export function getFirstFailedSingleTransactionPlanResult(
  * returning `true` only if the predicate returns `true` for every result in the tree
  * (including the root result and all nested results).
  *
+ * @template TContext - The type of the context object that may be passed along with successful results
+ * @template TTransactionMessage - The type of the transaction message
+ * @template TSingle - The type of single transaction plan results in this tree
  * @param transactionPlanResult - The transaction plan result tree to check.
  * @param predicate - A function that returns `true` if the result satisfies the condition.
  * @return `true` if every result in the tree satisfies the predicate, `false` otherwise.
@@ -1052,9 +1199,17 @@ export function getFirstFailedSingleTransactionPlanResult(
  * @see {@link transformTransactionPlanResult}
  * @see {@link flattenTransactionPlanResult}
  */
-export function everyTransactionPlanResult(
-    transactionPlanResult: TransactionPlanResult,
-    predicate: (plan: TransactionPlanResult) => boolean,
+export function everyTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+    TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
+        TContext,
+        TTransactionMessage
+    >,
+>(
+    transactionPlanResult: TransactionPlanResult<TContext, TTransactionMessage, TSingle>,
+    predicate: (plan: TransactionPlanResult<TContext, TTransactionMessage, TSingle>) => boolean,
 ): boolean {
     if (!predicate(transactionPlanResult)) {
         return false;
@@ -1124,6 +1279,9 @@ export function transformTransactionPlanResult(
  * all the single results they contain. It's useful when you need to access all the individual
  * transaction results, regardless of their organization in the result tree (parallel or sequential).
  *
+ * @template TContext - The type of the context object that may be passed along with successful results
+ * @template TTransactionMessage - The type of the transaction message
+ * @template TSingle - The type of single transaction plan results in this tree
  * @param result - The transaction plan result to extract single results from
  * @returns An array of all single transaction plan results contained in the tree
  *
@@ -1145,7 +1303,15 @@ export function transformTransactionPlanResult(
  * @see {@link everyTransactionPlanResult}
  * @see {@link transformTransactionPlanResult}
  */
-export function flattenTransactionPlanResult(result: TransactionPlanResult): SingleTransactionPlanResult[] {
+export function flattenTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+    TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
+        TContext,
+        TTransactionMessage
+    >,
+>(result: TransactionPlanResult<TContext, TTransactionMessage, TSingle>): TSingle[] {
     if (result.kind === 'single') {
         return [result];
     }
@@ -1157,17 +1323,27 @@ export function flattenTransactionPlanResult(result: TransactionPlanResult): Sin
  */
 export type SuccessfulSingleTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
-> = SingleTransactionPlanResult<TContext> & { status: { kind: 'successful' } };
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+> = SingleTransactionPlanResult<TContext, TTransactionMessage> & { status: { kind: 'successful' } };
 
 /**
  * A {@link SingleTransactionPlanResult} with 'failed' status.
  */
-export type FailedSingleTransactionPlanResult = SingleTransactionPlanResult & { status: { kind: 'failed' } };
+export type FailedSingleTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+> = SingleTransactionPlanResult<TContext, TTransactionMessage> & { status: { kind: 'failed' } };
 
 /**
  * A {@link SingleTransactionPlanResult} with 'canceled' status.
  */
-export type CanceledSingleTransactionPlanResult = SingleTransactionPlanResult & { status: { kind: 'canceled' } };
+export type CanceledSingleTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+> = SingleTransactionPlanResult<TContext, TTransactionMessage> & { status: { kind: 'canceled' } };
 
 /**
  * A summary of a {@link TransactionPlanResult}, categorizing transactions by their execution status.
@@ -1176,37 +1352,51 @@ export type CanceledSingleTransactionPlanResult = SingleTransactionPlanResult & 
  * - `failedTransactions`: An array of failed transactions, each including the error that caused the failure.
  * - `canceledTransactions`: An array of canceled transactions.
  */
-export type TransactionPlanResultSummary = Readonly<{
-    canceledTransactions: CanceledSingleTransactionPlanResult[];
-    failedTransactions: FailedSingleTransactionPlanResult[];
+export type TransactionPlanResultSummary<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+> = Readonly<{
+    canceledTransactions: CanceledSingleTransactionPlanResult<TContext, TTransactionMessage>[];
+    failedTransactions: FailedSingleTransactionPlanResult<TContext, TTransactionMessage>[];
     successful: boolean;
-    successfulTransactions: SuccessfulSingleTransactionPlanResult[];
+    successfulTransactions: SuccessfulSingleTransactionPlanResult<TContext, TTransactionMessage>[];
 }>;
 
 /**
  * Summarize a {@link TransactionPlanResult} into a {@link TransactionPlanResultSummary}.
+ *
+ * @template TContext - The type of the context object that may be passed along with successful results
+ * @template TTransactionMessage - The type of the transaction message
  * @param result The transaction plan result to summarize
  * @returns A summary of the transaction plan result
  */
-export function summarizeTransactionPlanResult(result: TransactionPlanResult): TransactionPlanResultSummary {
-    const successfulTransactions: TransactionPlanResultSummary['successfulTransactions'] = [];
-    const failedTransactions: TransactionPlanResultSummary['failedTransactions'] = [];
-    const canceledTransactions: TransactionPlanResultSummary['canceledTransactions'] = [];
+export function summarizeTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+>(
+    result: TransactionPlanResult<TContext, TTransactionMessage>,
+): TransactionPlanResultSummary<TContext, TTransactionMessage> {
+    type Out = TransactionPlanResultSummary<TContext, TTransactionMessage>;
+    const successfulTransactions: Out['successfulTransactions'] = [];
+    const failedTransactions: Out['failedTransactions'] = [];
+    const canceledTransactions: Out['canceledTransactions'] = [];
 
     const flattenedResults = flattenTransactionPlanResult(result);
 
     for (const singleResult of flattenedResults) {
         switch (singleResult.status.kind) {
             case 'successful': {
-                successfulTransactions.push(singleResult as SuccessfulSingleTransactionPlanResult);
+                successfulTransactions.push(singleResult as Out['successfulTransactions'][number]);
                 break;
             }
             case 'failed': {
-                failedTransactions.push(singleResult as FailedSingleTransactionPlanResult);
+                failedTransactions.push(singleResult as Out['failedTransactions'][number]);
                 break;
             }
             case 'canceled': {
-                canceledTransactions.push(singleResult as CanceledSingleTransactionPlanResult);
+                canceledTransactions.push(singleResult as Out['canceledTransactions'][number]);
                 break;
             }
         }

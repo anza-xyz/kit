@@ -221,6 +221,15 @@ type CustomContext = { customData: string };
             plan satisfies SingleTransactionPlanResult;
         }
     }
+
+    // It keeps TSingle information.
+    {
+        const plan = null as unknown as SuccessfulTransactionPlanResult;
+        if (isSingleTransactionPlanResult(plan)) {
+            plan satisfies SingleTransactionPlanResult;
+            plan satisfies SuccessfulSingleTransactionPlanResult;
+        }
+    }
 }
 
 // [DESCRIBE] assertIsSingleTransactionPlanResult
@@ -230,6 +239,14 @@ type CustomContext = { customData: string };
         const plan = null as unknown as TransactionPlanResult;
         assertIsSingleTransactionPlanResult(plan);
         plan satisfies SingleTransactionPlanResult;
+    }
+
+    // It keeps TSingle information.
+    {
+        const plan = null as unknown as SuccessfulTransactionPlanResult;
+        assertIsSingleTransactionPlanResult(plan);
+        plan satisfies SingleTransactionPlanResult;
+        plan satisfies SuccessfulSingleTransactionPlanResult;
     }
 }
 
@@ -305,6 +322,19 @@ type CustomContext = { customData: string };
             plan satisfies SequentialTransactionPlanResult;
         }
     }
+
+    // It keeps TSingle information.
+    {
+        const plan = null as unknown as SuccessfulTransactionPlanResult;
+        if (isSequentialTransactionPlanResult(plan)) {
+            plan satisfies SequentialTransactionPlanResult;
+            plan satisfies SequentialTransactionPlanResult<
+                TransactionPlanResultContext,
+                TransactionMessage & TransactionMessageWithFeePayer,
+                SuccessfulSingleTransactionPlanResult
+            >;
+        }
+    }
 }
 
 // [DESCRIBE] assertIsSequentialTransactionPlanResult
@@ -314,6 +344,18 @@ type CustomContext = { customData: string };
         const plan = null as unknown as TransactionPlanResult;
         assertIsSequentialTransactionPlanResult(plan);
         plan satisfies SequentialTransactionPlanResult;
+    }
+
+    // It keeps TSingle information.
+    {
+        const plan = null as unknown as SuccessfulTransactionPlanResult;
+        assertIsSequentialTransactionPlanResult(plan);
+        plan satisfies SequentialTransactionPlanResult;
+        plan satisfies SequentialTransactionPlanResult<
+            TransactionPlanResultContext,
+            TransactionMessage & TransactionMessageWithFeePayer,
+            SuccessfulSingleTransactionPlanResult
+        >;
     }
 }
 
@@ -326,6 +368,19 @@ type CustomContext = { customData: string };
             plan satisfies SequentialTransactionPlanResult & { divisible: false };
         }
     }
+
+    // It keeps TSingle information.
+    {
+        const plan = null as unknown as SuccessfulTransactionPlanResult;
+        if (isNonDivisibleSequentialTransactionPlanResult(plan)) {
+            plan satisfies SequentialTransactionPlanResult & { divisible: false };
+            plan satisfies SequentialTransactionPlanResult<
+                TransactionPlanResultContext,
+                TransactionMessage & TransactionMessageWithFeePayer,
+                SuccessfulSingleTransactionPlanResult
+            > & { divisible: false };
+        }
+    }
 }
 
 // [DESCRIBE] assertIsNonDivisibleSequentialTransactionPlanResult
@@ -335,6 +390,18 @@ type CustomContext = { customData: string };
         const plan = null as unknown as TransactionPlanResult;
         assertIsNonDivisibleSequentialTransactionPlanResult(plan);
         plan satisfies SequentialTransactionPlanResult & { divisible: false };
+    }
+
+    // It keeps TSingle information.
+    {
+        const plan = null as unknown as SuccessfulTransactionPlanResult;
+        assertIsNonDivisibleSequentialTransactionPlanResult(plan);
+        plan satisfies SequentialTransactionPlanResult & { divisible: false };
+        plan satisfies SequentialTransactionPlanResult<
+            TransactionPlanResultContext,
+            TransactionMessage & TransactionMessageWithFeePayer,
+            SuccessfulSingleTransactionPlanResult
+        > & { divisible: false };
     }
 }
 
@@ -347,6 +414,19 @@ type CustomContext = { customData: string };
             plan satisfies ParallelTransactionPlanResult;
         }
     }
+
+    // It keeps TSingle information.
+    {
+        const plan = null as unknown as SuccessfulTransactionPlanResult;
+        if (isParallelTransactionPlanResult(plan)) {
+            plan satisfies ParallelTransactionPlanResult;
+            plan satisfies ParallelTransactionPlanResult<
+                TransactionPlanResultContext,
+                TransactionMessage & TransactionMessageWithFeePayer,
+                SuccessfulSingleTransactionPlanResult
+            >;
+        }
+    }
 }
 
 // [DESCRIBE] assertIsParallelTransactionPlanResult
@@ -356,6 +436,18 @@ type CustomContext = { customData: string };
         const plan = null as unknown as TransactionPlanResult;
         assertIsParallelTransactionPlanResult(plan);
         plan satisfies ParallelTransactionPlanResult;
+    }
+
+    // It keeps TSingle information.
+    {
+        const plan = null as unknown as SuccessfulTransactionPlanResult;
+        assertIsParallelTransactionPlanResult(plan);
+        plan satisfies ParallelTransactionPlanResult;
+        plan satisfies ParallelTransactionPlanResult<
+            TransactionPlanResultContext,
+            TransactionMessage & TransactionMessageWithFeePayer,
+            SuccessfulSingleTransactionPlanResult
+        >;
     }
 }
 
