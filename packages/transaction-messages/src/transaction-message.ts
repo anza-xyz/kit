@@ -1,10 +1,6 @@
 import { AccountMeta, Instruction } from '@solana/instructions';
 
-/**
- * @deprecated Use `TransactionMessage` instead.
- */
-// TODO(#1147) Stop exporting this in a future major version.
-export type BaseTransactionMessage<
+type BaseTransactionMessage<
     TVersion extends TransactionVersion = TransactionVersion,
     TInstruction extends Instruction = Instruction,
 > = Readonly<{
