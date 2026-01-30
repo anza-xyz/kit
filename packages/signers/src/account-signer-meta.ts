@@ -1,9 +1,5 @@
 import { AccountLookupMeta, AccountMeta, AccountRole, Instruction } from '@solana/instructions';
-import {
-    BaseTransactionMessage,
-    TransactionMessageWithFeePayer,
-    TransactionVersion,
-} from '@solana/transaction-messages';
+import { TransactionMessage, TransactionMessageWithFeePayer, TransactionVersion } from '@solana/transaction-messages';
 
 import { deduplicateSigners } from './deduplicate-signers';
 import { TransactionMessageWithFeePayerSigner } from './fee-payer-signer';
@@ -88,7 +84,7 @@ export type InstructionWithSigners<
 > = Pick<Instruction<string, TAccounts>, 'accounts'>;
 
 /**
- * A {@link BaseTransactionMessage} type extension that accept {@link TransactionSigner | TransactionSigners}.
+ * A {@link TransactionMessage} type extension that accept {@link TransactionSigner | TransactionSigners}.
  *
  * Namely, it allows:
  * - a {@link TransactionSigner} to be used as the fee payer and
@@ -102,13 +98,13 @@ export type InstructionWithSigners<
  * @example
  * ```ts
  * import { Instruction } from '@solana/instructions';
- * import { BaseTransactionMessage } from '@solana/transaction-messages';
+ * import { TransactionMessage } from '@solana/transaction-messages';
  * import { generateKeyPairSigner, InstructionWithSigners, TransactionMessageWithSigners } from '@solana/signers';
  *
  * const signer = await generateKeyPairSigner();
  * const firstInstruction: Instruction = { ... };
  * const secondInstruction: InstructionWithSigners = { ... };
- * const transactionMessage: BaseTransactionMessage & TransactionMessageWithSigners = {
+ * const transactionMessage: TransactionMessage & TransactionMessageWithSigners = {
  *     feePayer: signer,
  *     instructions: [firstInstruction, secondInstruction],
  * }
@@ -120,7 +116,7 @@ export type TransactionMessageWithSigners<
     TAccounts extends readonly AccountMetaWithSigner<TSigner>[] = readonly AccountMetaWithSigner<TSigner>[],
 > = Partial<TransactionMessageWithFeePayer<TAddress> | TransactionMessageWithFeePayerSigner<TAddress, TSigner>> &
     Pick<
-        BaseTransactionMessage<TransactionVersion, Instruction & InstructionWithSigners<TSigner, TAccounts>>,
+        TransactionMessage<TransactionVersion, Instruction & InstructionWithSigners<TSigner, TAccounts>>,
         'instructions'
     >;
 
