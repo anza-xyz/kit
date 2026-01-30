@@ -23,7 +23,7 @@ import {
     sequentialTransactionPlanResult,
     SingleTransactionPlanResult,
     successfulSingleTransactionPlanResult,
-    successfulSingleTransactionPlanResultFromSignature,
+    successfulSingleTransactionPlanResultFromTransaction,
     type TransactionPlanResult,
     type TransactionPlanResultContext,
 } from './transaction-plan-result';
@@ -203,13 +203,16 @@ async function traverseSingle(
             context.abortSignal,
         );
         if ('transaction' in result) {
-            return successfulSingleTransactionPlanResult(transactionPlan.message, result.transaction, result.context);
-        } else {
-            return successfulSingleTransactionPlanResultFromSignature(
+            return successfulSingleTransactionPlanResultFromTransaction(
                 transactionPlan.message,
-                result.signature,
+                result.transaction,
                 result.context,
             );
+        } else {
+            return successfulSingleTransactionPlanResult(transactionPlan.message, {
+                ...result.context,
+                signature: result.signature,
+            });
         }
     } catch (error) {
         context.canceled = true;

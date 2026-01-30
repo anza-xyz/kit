@@ -19,7 +19,7 @@ import {
     sequentialTransactionPlan,
     sequentialTransactionPlanResult,
     singleTransactionPlan,
-    successfulSingleTransactionPlanResult,
+    successfulSingleTransactionPlanResultFromTransaction,
     TransactionPlanResult,
 } from '../index';
 import { createMessage, createTransaction, FOREVER_PROMISE } from './__setup__';
@@ -60,7 +60,9 @@ describe('createTransactionPlanExecutor', () => {
             const executor = createTransactionPlanExecutor({ executeTransactionMessage });
 
             const promise = executor(singleTransactionPlan(messageA));
-            await expect(promise).resolves.toStrictEqual(successfulSingleTransactionPlanResult(messageA, transactionA));
+            await expect(promise).resolves.toStrictEqual(
+                successfulSingleTransactionPlanResultFromTransaction(messageA, transactionA),
+            );
             expect(executeTransactionMessage).toHaveBeenNthCalledWith(1, messageA, { abortSignal: undefined });
         });
 
@@ -88,7 +90,7 @@ describe('createTransactionPlanExecutor', () => {
 
             const promise = executor(singleTransactionPlan(messageA));
             await expect(promise).resolves.toStrictEqual(
-                successfulSingleTransactionPlanResult(messageA, transactionA, { custom: 'context' }),
+                successfulSingleTransactionPlanResultFromTransaction(messageA, transactionA, { custom: 'context' }),
             );
         });
 
@@ -192,8 +194,8 @@ describe('createTransactionPlanExecutor', () => {
             const promise = executor(sequentialTransactionPlan([messageA, messageB]));
             await expect(promise).resolves.toStrictEqual(
                 sequentialTransactionPlanResult([
-                    successfulSingleTransactionPlanResult(messageA, createTransaction('A')),
-                    successfulSingleTransactionPlanResult(messageB, createTransaction('B')),
+                    successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A')),
+                    successfulSingleTransactionPlanResultFromTransaction(messageB, createTransaction('B')),
                 ]),
             );
 
@@ -258,8 +260,12 @@ describe('createTransactionPlanExecutor', () => {
             const promise = executor(sequentialTransactionPlan([messageA, messageB]));
             await expect(promise).resolves.toStrictEqual(
                 sequentialTransactionPlanResult([
-                    successfulSingleTransactionPlanResult(messageA, createTransaction('A'), { custom: 'context' }),
-                    successfulSingleTransactionPlanResult(messageB, createTransaction('B'), { custom: 'context' }),
+                    successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A'), {
+                        custom: 'context',
+                    }),
+                    successfulSingleTransactionPlanResultFromTransaction(messageB, createTransaction('B'), {
+                        custom: 'context',
+                    }),
                 ]),
             );
         });
@@ -278,7 +284,7 @@ describe('createTransactionPlanExecutor', () => {
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
                     cause,
                     transactionPlanResult: sequentialTransactionPlanResult([
-                        successfulSingleTransactionPlanResult(messageA, createTransaction('A')),
+                        successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A')),
                         failedSingleTransactionPlanResult(messageB, cause),
                     ]),
                 }),
@@ -343,7 +349,7 @@ describe('createTransactionPlanExecutor', () => {
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
                     cause,
                     transactionPlanResult: sequentialTransactionPlanResult([
-                        successfulSingleTransactionPlanResult(messageA, createTransaction('A')),
+                        successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A')),
                         failedSingleTransactionPlanResult(messageB, cause),
                         canceledSingleTransactionPlanResult(messageC),
                     ]),
@@ -404,8 +410,8 @@ describe('createTransactionPlanExecutor', () => {
             const promise = executor(parallelTransactionPlan([messageA, messageB]));
             await expect(promise).resolves.toStrictEqual(
                 parallelTransactionPlanResult([
-                    successfulSingleTransactionPlanResult(messageA, createTransaction('A')),
-                    successfulSingleTransactionPlanResult(messageB, createTransaction('B')),
+                    successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A')),
+                    successfulSingleTransactionPlanResultFromTransaction(messageB, createTransaction('B')),
                 ]),
             );
 
@@ -443,8 +449,12 @@ describe('createTransactionPlanExecutor', () => {
             const promise = executor(parallelTransactionPlan([messageA, messageB]));
             await expect(promise).resolves.toStrictEqual(
                 parallelTransactionPlanResult([
-                    successfulSingleTransactionPlanResult(messageA, createTransaction('A'), { custom: 'context' }),
-                    successfulSingleTransactionPlanResult(messageB, createTransaction('B'), { custom: 'context' }),
+                    successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A'), {
+                        custom: 'context',
+                    }),
+                    successfulSingleTransactionPlanResultFromTransaction(messageB, createTransaction('B'), {
+                        custom: 'context',
+                    }),
                 ]),
             );
         });
@@ -467,9 +477,9 @@ describe('createTransactionPlanExecutor', () => {
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
                     cause,
                     transactionPlanResult: parallelTransactionPlanResult([
-                        successfulSingleTransactionPlanResult(messageA, createTransaction('A')),
+                        successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A')),
                         failedSingleTransactionPlanResult(messageB, cause),
-                        successfulSingleTransactionPlanResult(messageC, createTransaction('C')),
+                        successfulSingleTransactionPlanResultFromTransaction(messageC, createTransaction('C')),
                     ]),
                 }),
             );
@@ -500,9 +510,9 @@ describe('createTransactionPlanExecutor', () => {
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
                     cause,
                     transactionPlanResult: parallelTransactionPlanResult([
-                        successfulSingleTransactionPlanResult(messageA, createTransaction('A')),
+                        successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A')),
                         failedSingleTransactionPlanResult(messageB, cause),
-                        successfulSingleTransactionPlanResult(messageC, createTransaction('C')),
+                        successfulSingleTransactionPlanResultFromTransaction(messageC, createTransaction('C')),
                     ]),
                 }),
             );
@@ -569,17 +579,17 @@ describe('createTransactionPlanExecutor', () => {
             await expect(promise).resolves.toStrictEqual(
                 parallelTransactionPlanResult([
                     sequentialTransactionPlanResult([
-                        successfulSingleTransactionPlanResult(messageA, createTransaction('A')),
+                        successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A')),
                         parallelTransactionPlanResult([
-                            successfulSingleTransactionPlanResult(messageB, createTransaction('B')),
-                            successfulSingleTransactionPlanResult(messageC, createTransaction('C')),
+                            successfulSingleTransactionPlanResultFromTransaction(messageB, createTransaction('B')),
+                            successfulSingleTransactionPlanResultFromTransaction(messageC, createTransaction('C')),
                         ]),
-                        successfulSingleTransactionPlanResult(messageD, createTransaction('D')),
+                        successfulSingleTransactionPlanResultFromTransaction(messageD, createTransaction('D')),
                     ]),
-                    successfulSingleTransactionPlanResult(messageE, createTransaction('E')),
+                    successfulSingleTransactionPlanResultFromTransaction(messageE, createTransaction('E')),
                     sequentialTransactionPlanResult([
-                        successfulSingleTransactionPlanResult(messageF, createTransaction('F')),
-                        successfulSingleTransactionPlanResult(messageG, createTransaction('G')),
+                        successfulSingleTransactionPlanResultFromTransaction(messageF, createTransaction('F')),
+                        successfulSingleTransactionPlanResultFromTransaction(messageG, createTransaction('G')),
                     ]),
                 ]),
             );
@@ -617,17 +627,17 @@ describe('createTransactionPlanExecutor', () => {
                     cause,
                     transactionPlanResult: parallelTransactionPlanResult([
                         sequentialTransactionPlanResult([
-                            successfulSingleTransactionPlanResult(messageA, createTransaction('A')),
+                            successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A')),
                             parallelTransactionPlanResult([
-                                successfulSingleTransactionPlanResult(messageB, createTransaction('B')),
+                                successfulSingleTransactionPlanResultFromTransaction(messageB, createTransaction('B')),
                                 failedSingleTransactionPlanResult(messageC, cause),
                             ]),
                             canceledSingleTransactionPlanResult(messageD),
                         ]),
-                        successfulSingleTransactionPlanResult(messageE, createTransaction('E')),
+                        successfulSingleTransactionPlanResultFromTransaction(messageE, createTransaction('E')),
                         sequentialTransactionPlanResult([
-                            successfulSingleTransactionPlanResult(messageF, createTransaction('F')),
-                            successfulSingleTransactionPlanResult(messageG, createTransaction('G')),
+                            successfulSingleTransactionPlanResultFromTransaction(messageF, createTransaction('F')),
+                            successfulSingleTransactionPlanResultFromTransaction(messageG, createTransaction('G')),
                         ]),
                     ]),
                 }),
@@ -672,17 +682,17 @@ describe('createTransactionPlanExecutor', () => {
                     cause,
                     transactionPlanResult: parallelTransactionPlanResult([
                         sequentialTransactionPlanResult([
-                            successfulSingleTransactionPlanResult(messageA, createTransaction('A')),
+                            successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A')),
                             parallelTransactionPlanResult([
-                                successfulSingleTransactionPlanResult(messageB, createTransaction('B')),
+                                successfulSingleTransactionPlanResultFromTransaction(messageB, createTransaction('B')),
                                 failedSingleTransactionPlanResult(messageC, cause),
                             ]),
                             canceledSingleTransactionPlanResult(messageD),
                         ]),
-                        successfulSingleTransactionPlanResult(messageE, createTransaction('E')),
+                        successfulSingleTransactionPlanResultFromTransaction(messageE, createTransaction('E')),
                         sequentialTransactionPlanResult([
-                            successfulSingleTransactionPlanResult(messageF, createTransaction('F')),
-                            successfulSingleTransactionPlanResult(messageG, createTransaction('G')),
+                            successfulSingleTransactionPlanResultFromTransaction(messageF, createTransaction('F')),
+                            successfulSingleTransactionPlanResultFromTransaction(messageG, createTransaction('G')),
                         ]),
                     ]),
                 }),
@@ -742,7 +752,7 @@ describe('createTransactionPlanExecutor', () => {
 describe('passthroughFailedTransactionPlanExecution', () => {
     it('returns the resolved result as-is', async () => {
         expect.assertions(1);
-        const result = successfulSingleTransactionPlanResult(createMessage('A'), createTransaction('A'));
+        const result = successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A'));
         const promise = Promise.resolve(result);
         await expect(passthroughFailedTransactionPlanExecution(promise)).resolves.toBe(result);
     });
