@@ -1,6 +1,6 @@
 import type { NominalType } from '@solana/nominal-types';
 
-import type { BaseTransactionMessage } from './transaction-message';
+import type { TransactionMessage } from './transaction-message';
 
 /**
  * A type guard that checks if a transaction message is within the size limit
@@ -12,7 +12,7 @@ export type TransactionMessageWithinSizeLimit = NominalType<'transactionSize', '
  * Helper type that removes the `TransactionMessageWithinSizeLimit` flag
  * from a transaction message.
  */
-export type ExcludeTransactionMessageWithinSizeLimit<TTransactionMessage extends BaseTransactionMessage> = Omit<
+export type ExcludeTransactionMessageWithinSizeLimit<TTransactionMessage extends TransactionMessage> = Omit<
     TTransactionMessage,
     '__transactionSize:@solana/kit'
 >;

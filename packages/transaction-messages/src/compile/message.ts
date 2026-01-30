@@ -1,6 +1,6 @@
 import { TransactionMessageWithFeePayer } from '../fee-payer';
 import { TransactionMessageWithLifetime } from '../lifetime';
-import { BaseTransactionMessage } from '../transaction-message';
+import { TransactionMessage } from '../transaction-message';
 import { getAddressMapFromInstructions, getOrderedAccountsFromAddressMap } from './accounts';
 import { getCompiledAddressTableLookups } from './address-table-lookups';
 import { getCompiledMessageHeader } from './header';
@@ -63,7 +63,7 @@ type VersionedCompiledTransactionMessage = BaseCompiledTransactionMessage &
  * @see {@link decompileTransactionMessage}
  */
 export function compileTransactionMessage<
-    TTransactionMessage extends BaseTransactionMessage & TransactionMessageWithFeePayer,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer,
 >(transactionMessage: TTransactionMessage): CompiledTransactionMessageFromTransactionMessage<TTransactionMessage> {
     type ReturnType = CompiledTransactionMessageFromTransactionMessage<TTransactionMessage>;
 
@@ -86,17 +86,17 @@ export function compileTransactionMessage<
     } as ReturnType;
 }
 
-type CompiledTransactionMessageFromTransactionMessage<TTransactionMessage extends BaseTransactionMessage> =
+type CompiledTransactionMessageFromTransactionMessage<TTransactionMessage extends TransactionMessage> =
     ForwardTransactionMessageLifetime<ForwardTransactionMessageVersion<TTransactionMessage>, TTransactionMessage>;
 
-type ForwardTransactionMessageVersion<TTransactionMessage extends BaseTransactionMessage> =
+type ForwardTransactionMessageVersion<TTransactionMessage extends TransactionMessage> =
     TTransactionMessage extends Readonly<{ version: 'legacy' }>
         ? LegacyCompiledTransactionMessage
         : VersionedCompiledTransactionMessage;
 
 type ForwardTransactionMessageLifetime<
     TCompiledTransactionMessage extends CompiledTransactionMessage,
-    TTransactionMessage extends BaseTransactionMessage,
+    TTransactionMessage extends TransactionMessage,
 > = TTransactionMessage extends TransactionMessageWithLifetime
     ? CompiledTransactionMessageWithLifetime & TCompiledTransactionMessage
     : TCompiledTransactionMessage;

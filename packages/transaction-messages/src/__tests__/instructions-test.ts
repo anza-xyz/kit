@@ -9,7 +9,7 @@ import {
     prependTransactionMessageInstruction,
     prependTransactionMessageInstructions,
 } from '../instructions';
-import { BaseTransactionMessage } from '../transaction-message';
+import { TransactionMessage } from '../transaction-message';
 
 const PROGRAM_A =
     'AALQD2dt1k43Acrkp4SvdhZaN4S115Ff2Bi7rHPti3sL' as Address<'AALQD2dt1k43Acrkp4SvdhZaN4S115Ff2Bi7rHPti3sL'>;
@@ -19,7 +19,7 @@ const PROGRAM_C =
     '6Bkt4j67rxzFF6s9DaMRyfitftRrGxe4oYHPRHuFChzi' as Address<'6Bkt4j67rxzFF6s9DaMRyfitftRrGxe4oYHPRHuFChzi'>;
 
 describe('Transaction instruction helpers', () => {
-    let baseTx: BaseTransactionMessage;
+    let baseTx: TransactionMessage;
     let exampleInstruction: Instruction<string>;
     let secondExampleInstruction: Instruction<string>;
     beforeEach(() => {

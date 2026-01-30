@@ -15,10 +15,10 @@ import {
     prependTransactionMessageInstruction,
     prependTransactionMessageInstructions,
 } from '../instructions';
-import { BaseTransactionMessage, TransactionMessage } from '../transaction-message';
+import { TransactionMessage } from '../transaction-message';
 import { TransactionMessageWithinSizeLimit } from '../transaction-message-size';
 
-type Instruction = BaseTransactionMessage['instructions'][number];
+type Instruction = TransactionMessage['instructions'][number];
 type InstructionA = Instruction & { identifier: 'A' };
 type InstructionB = Instruction & { identifier: 'B' };
 type InstructionC = Instruction & { identifier: 'C' };
@@ -29,9 +29,9 @@ type TransactionMessageNotLegacy = Exclude<TransactionMessage, { version: 'legac
 {
     // It returns the same TransactionMessage type
     {
-        const message = null as unknown as BaseTransactionMessage & { some: 1 };
+        const message = null as unknown as TransactionMessage & { some: 1 };
         const newMessage = appendTransactionMessageInstruction(null as unknown as Instruction, message);
-        newMessage satisfies BaseTransactionMessage & { some: 1 };
+        newMessage satisfies TransactionMessage & { some: 1 };
     }
 
     // It concatenates the instruction types
@@ -47,7 +47,7 @@ type TransactionMessageNotLegacy = Exclude<TransactionMessage, { version: 'legac
 
     // It adds instruction types to base transaction messages
     {
-        const message = null as unknown as BaseTransactionMessage;
+        const message = null as unknown as TransactionMessage;
         const newMessage = appendTransactionMessageInstruction(null as unknown as InstructionA, message);
         newMessage.instructions satisfies readonly [...Instruction[], InstructionA];
     }
@@ -63,9 +63,7 @@ type TransactionMessageNotLegacy = Exclude<TransactionMessage, { version: 'legac
             m => appendTransactionMessageInstruction(null as unknown as InstructionA, m),
         );
 
-        message satisfies BaseTransactionMessage &
-            TransactionMessageWithBlockhashLifetime &
-            TransactionMessageWithFeePayer;
+        message satisfies TransactionMessage & TransactionMessageWithBlockhashLifetime & TransactionMessageWithFeePayer;
         message.instructions satisfies readonly [InstructionA];
     }
 
@@ -80,7 +78,7 @@ type TransactionMessageNotLegacy = Exclude<TransactionMessage, { version: 'legac
             m => appendTransactionMessageInstruction(null as unknown as InstructionA, m),
         );
 
-        message satisfies BaseTransactionMessage &
+        message satisfies TransactionMessage &
             TransactionMessageWithDurableNonceLifetime &
             TransactionMessageWithFeePayer;
         message.instructions satisfies readonly [AdvanceNonceAccountInstruction, InstructionA];
@@ -88,7 +86,7 @@ type TransactionMessageNotLegacy = Exclude<TransactionMessage, { version: 'legac
 
     // It removes the size limit type safety.
     {
-        const message = null as unknown as BaseTransactionMessage & TransactionMessageWithinSizeLimit;
+        const message = null as unknown as TransactionMessage & TransactionMessageWithinSizeLimit;
         const newMessage = appendTransactionMessageInstruction(null as unknown as Instruction, message);
         // @ts-expect-error Potentially no longer within size limit.
         newMessage satisfies TransactionMessageWithinSizeLimit;
@@ -110,9 +108,9 @@ type TransactionMessageNotLegacy = Exclude<TransactionMessage, { version: 'legac
 {
     // It returns the same TransactionMessage type
     {
-        const message = null as unknown as BaseTransactionMessage & { some: 1 };
+        const message = null as unknown as TransactionMessage & { some: 1 };
         const newMessage = appendTransactionMessageInstructions(null as unknown as Instruction[], message);
-        newMessage satisfies BaseTransactionMessage & { some: 1 };
+        newMessage satisfies TransactionMessage & { some: 1 };
     }
 
     // It concatenates the instruction types
@@ -131,7 +129,7 @@ type TransactionMessageNotLegacy = Exclude<TransactionMessage, { version: 'legac
 
     // It adds instruction types to base transaction messages
     {
-        const message = null as unknown as BaseTransactionMessage;
+        const message = null as unknown as TransactionMessage;
         const newMessage = appendTransactionMessageInstructions(
             [null as unknown as InstructionA, null as unknown as InstructionB],
             message,
@@ -141,7 +139,7 @@ type TransactionMessageNotLegacy = Exclude<TransactionMessage, { version: 'legac
 
     // It removes the size limit type safety.
     {
-        const message = null as unknown as BaseTransactionMessage & TransactionMessageWithinSizeLimit;
+        const message = null as unknown as TransactionMessage & TransactionMessageWithinSizeLimit;
         const newMessage = appendTransactionMessageInstructions([null as unknown as Instruction], message);
         // @ts-expect-error Potentially no longer within size limit.
         newMessage satisfies TransactionMessageWithinSizeLimit;
@@ -163,27 +161,26 @@ type TransactionMessageNotLegacy = Exclude<TransactionMessage, { version: 'legac
 {
     // It returns the same TransactionMessage type
     {
-        const message = null as unknown as BaseTransactionMessage & { some: 1 };
+        const message = null as unknown as TransactionMessage & { some: 1 };
         const newMessage = prependTransactionMessageInstruction(null as unknown as Instruction, message);
-        newMessage satisfies BaseTransactionMessage & { some: 1 };
+        newMessage satisfies TransactionMessage & { some: 1 };
     }
 
     // It strips the durable nonce transaction message type
     {
-        const message = null as unknown as BaseTransactionMessage &
+        const message = null as unknown as TransactionMessage &
             TransactionMessageWithDurableNonceLifetime & { some: 1 };
         const newMessage = prependTransactionMessageInstruction(null as unknown as Instruction, message);
-        newMessage satisfies BaseTransactionMessage & { some: 1 };
+        newMessage satisfies TransactionMessage & { some: 1 };
         // @ts-expect-error The durable nonce transaction message type should be stripped.
         newMessage satisfies TransactionMessageWithDurableNonceLifetime;
     }
 
     // It does not remove blockhash lifetimes.
     {
-        const message = null as unknown as BaseTransactionMessage &
-            TransactionMessageWithBlockhashLifetime & { some: 1 };
+        const message = null as unknown as TransactionMessage & TransactionMessageWithBlockhashLifetime & { some: 1 };
         const newMessage = prependTransactionMessageInstruction(null as unknown as Instruction, message);
-        newMessage satisfies BaseTransactionMessage & TransactionMessageWithBlockhashLifetime & { some: 1 };
+        newMessage satisfies TransactionMessage & TransactionMessageWithBlockhashLifetime & { some: 1 };
     }
 
     // It concatenates the instruction types
@@ -199,7 +196,7 @@ type TransactionMessageNotLegacy = Exclude<TransactionMessage, { version: 'legac
 
     // It adds instruction types to base transaction messages
     {
-        const message = null as unknown as BaseTransactionMessage;
+        const message = null as unknown as TransactionMessage;
         const newMessage = prependTransactionMessageInstruction(null as unknown as InstructionA, message);
         newMessage.instructions satisfies readonly [InstructionA, ...Instruction[]];
     }
@@ -215,9 +212,7 @@ type TransactionMessageNotLegacy = Exclude<TransactionMessage, { version: 'legac
             m => prependTransactionMessageInstruction(null as unknown as InstructionA, m),
         );
 
-        message satisfies BaseTransactionMessage &
-            TransactionMessageWithBlockhashLifetime &
-            TransactionMessageWithFeePayer;
+        message satisfies TransactionMessage & TransactionMessageWithBlockhashLifetime & TransactionMessageWithFeePayer;
         message.instructions satisfies readonly [InstructionA];
     }
 
@@ -233,14 +228,14 @@ type TransactionMessageNotLegacy = Exclude<TransactionMessage, { version: 'legac
         );
 
         message.instructions satisfies readonly [InstructionA, AdvanceNonceAccountInstruction];
-        message satisfies BaseTransactionMessage & TransactionMessageWithFeePayer;
+        message satisfies TransactionMessage & TransactionMessageWithFeePayer;
         // @ts-expect-error No longer a durable nonce lifetime.
         message satisfies TransactionMessageWithDurableNonceLifetime;
     }
 
     // It removes the size limit type safety.
     {
-        const message = null as unknown as BaseTransactionMessage & TransactionMessageWithinSizeLimit;
+        const message = null as unknown as TransactionMessage & TransactionMessageWithinSizeLimit;
         const newMessage = prependTransactionMessageInstruction(null as unknown as Instruction, message);
         // @ts-expect-error Potentially no longer within size limit.
         newMessage satisfies TransactionMessageWithinSizeLimit;
@@ -262,17 +257,17 @@ type TransactionMessageNotLegacy = Exclude<TransactionMessage, { version: 'legac
 {
     // It returns the same TransactionMessage type
     {
-        const message = null as unknown as BaseTransactionMessage & { some: 1 };
+        const message = null as unknown as TransactionMessage & { some: 1 };
         const newMessage = prependTransactionMessageInstructions(null as unknown as Instruction[], message);
-        newMessage satisfies BaseTransactionMessage & { some: 1 };
+        newMessage satisfies TransactionMessage & { some: 1 };
     }
 
     // It strips the durable nonce transaction message type
     {
-        const message = null as unknown as BaseTransactionMessage &
+        const message = null as unknown as TransactionMessage &
             TransactionMessageWithDurableNonceLifetime & { some: 1 };
         const newMessage = prependTransactionMessageInstructions(null as unknown as Instruction[], message);
-        newMessage satisfies BaseTransactionMessage & { some: 1 };
+        newMessage satisfies TransactionMessage & { some: 1 };
         // @ts-expect-error The durable nonce transaction message type should be stripped.
         newMessage satisfies TransactionMessageWithDurableNonceLifetime;
     }
@@ -293,7 +288,7 @@ type TransactionMessageNotLegacy = Exclude<TransactionMessage, { version: 'legac
 
     // It adds instruction types to base transaction messages
     {
-        const message = null as unknown as BaseTransactionMessage;
+        const message = null as unknown as TransactionMessage;
         const newMessage = prependTransactionMessageInstructions(
             [null as unknown as InstructionA, null as unknown as InstructionB],
             message,
@@ -303,7 +298,7 @@ type TransactionMessageNotLegacy = Exclude<TransactionMessage, { version: 'legac
 
     // It removes the size limit type safety.
     {
-        const message = null as unknown as BaseTransactionMessage & TransactionMessageWithinSizeLimit;
+        const message = null as unknown as TransactionMessage & TransactionMessageWithinSizeLimit;
         const newMessage = prependTransactionMessageInstructions([null as unknown as Instruction], message);
         // @ts-expect-error Potentially no longer within size limit.
         newMessage satisfies TransactionMessageWithinSizeLimit;

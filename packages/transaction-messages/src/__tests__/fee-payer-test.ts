@@ -3,7 +3,7 @@ import '@solana/test-matchers/toBeFrozenObject';
 import { Address } from '@solana/addresses';
 
 import { setTransactionMessageFeePayer, TransactionMessageWithFeePayer } from '../fee-payer';
-import { BaseTransactionMessage } from '../transaction-message';
+import { TransactionMessage } from '../transaction-message';
 
 const EXAMPLE_FEE_PAYER_A =
     '7mvYAxeCui21xYkAyQSjh6iBVZPpgVyt7PYv9km8V5mE' as Address<'7mvYAxeCui21xYkAyQSjh6iBVZPpgVyt7PYv9km8V5mE'>;
@@ -11,7 +11,7 @@ const EXAMPLE_FEE_PAYER_B =
     '5LHng8dLBxCYyR3jdDbobLiRQ6pR74pYtxKohY93RbZN' as Address<'5LHng8dLBxCYyR3jdDbobLiRQ6pR74pYtxKohY93RbZN'>;
 
 describe('setTransactionMessageFeePayer', () => {
-    let baseTx: BaseTransactionMessage;
+    let baseTx: TransactionMessage;
     beforeEach(() => {
         baseTx = {
             instructions: [],
@@ -23,7 +23,7 @@ describe('setTransactionMessageFeePayer', () => {
         expect(txWithFeePayerA).toHaveProperty('feePayer', { address: EXAMPLE_FEE_PAYER_A });
     });
     describe('given a transaction with a fee payer already set', () => {
-        let txWithFeePayerA: BaseTransactionMessage & TransactionMessageWithFeePayer;
+        let txWithFeePayerA: TransactionMessage & TransactionMessageWithFeePayer;
         beforeEach(() => {
             txWithFeePayerA = {
                 ...baseTx,
@@ -40,7 +40,7 @@ describe('setTransactionMessageFeePayer', () => {
         });
     });
     describe('given a transaction with a fee payer with extra properties set', () => {
-        let txWithFeePayerA: BaseTransactionMessage & {
+        let txWithFeePayerA: TransactionMessage & {
             readonly feePayer: Readonly<{ address: Address; extra: 'extra' }>;
         };
         beforeEach(() => {
