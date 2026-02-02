@@ -1,0 +1,38 @@
+name: Update Docs Lockfile
+
+on:
+  pull_request_target:
+    paths:
+      - 'docs/package.json'
+
+permissions:
+  contents: write
+
+jobs:
+  update-lockfile:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: Install Dependencies
+        uses: ./.github/workflows/actions/install-dependencies
+
+      - name: Update Docs Lockfile
+        working-directory: ./docs/
+        run: pnpm install --ignore-workspace --no-frozen-lockfile --ignore-scripts
+
+      - name: Commit and Push
+        run: |
+          git add docs/pnpm-lock.yaml
+          if git diff --cached --quiet; then
+            echo "No lockfile changes to commit"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git commit -m "Update docs lockfile"
+            git push
+          fi
