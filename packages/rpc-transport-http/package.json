@@ -81,7 +81,7 @@
     },
     "devDependencies": {
         "tinybench": "^6.0.0",
-        "undici": "^7.19.2",
+        "undici": "^7.20.0",
         "zx": "^8.8.5"
     },
     "peerDependencies": {
