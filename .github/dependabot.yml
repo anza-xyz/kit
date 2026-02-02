@@ -26,6 +26,10 @@ updates:
         patterns:
           - 'react'
           - 'react-dom'
+      undici:
+        patterns:
+          - 'undici'
+          - 'undici-types'
   - package-ecosystem: 'npm'
     directory: '/docs'
     schedule:
@@ -47,3 +51,7 @@ updates:
         patterns:
           - 'react'
           - 'react-dom'
+      undici:
+        patterns:
+          - 'undici'
+          - 'undici-types'
