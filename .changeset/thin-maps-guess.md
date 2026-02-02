@@ -2,15 +2,15 @@
 '@solana/instruction-plans': major
 ---
 
-Reshape `SingleTransactionPlanResult` from a single object type with a `status` discriminated union into three distinct types: `SuccessfulSingleTransactionPlanResult`, `FailedSingleTransactionPlanResult`, and `CanceledSingleTransactionPlanResult`. This flattens the result structure so that `status` is now a string literal (`'successful'`, `'failed'`, or `'canceled'`) and properties like `context`, `error`, and `signature` live at the top level of each variant.
+Reshape `SingleTransactionPlanResult` from a single object type with a `status` discriminated union into three distinct types: `SuccessfulSingleTransactionPlanResult`, `FailedSingleTransactionPlanResult`, and `CanceledSingleTransactionPlanResult`. This flattens the result structure so that `status` is now a string literal (`'successful'`, `'failed'`, or `'canceled'`) and properties like `context`, `error`, and `plannedMessage` live at the top level of each variant.
 
 Other changes include:
 
 - Rename the `message` property to `plannedMessage` on all single transaction plan result types. This makes it clearer that this original planned message from the `TransactionPlan`, not the final message that was sent to the network.
 - Move the `context` object from inside the `status` field to the top level of each result variant. All variants now carry a `context` — not just successful ones.
-- Expand `TransactionPlanResultContext` to optionally include `message`, `signature`, and `transaction` properties.
+- Expand `context` attribute to optionally include `message`, `signature`, and `transaction` properties. These properties are meant to hold the actual `TransactionMessage`, `Signature`, and `Transaction` used when the transaction was sent to the network — which may differ from the originally `plannedMessage`.
 - Remove the now-unused `TransactionPlanResultStatus` type.
-- `failedSingleTransactionPlanResult` and `canceledSingleTransactionPlanResult` now accept an optional `context` parameter.
+- `failedSingleTransactionPlanResult` and `canceledSingleTransactionPlanResult` now accept an optional `context` parameter too.
 
 **BREAKING CHANGES**
 

@@ -76,22 +76,52 @@ export type SuccessfulTransactionPlanResult<
 /**
  * The context object associated with a {@link SingleTransactionPlanResult}.
  *
- * This type defines the shape of the context that can be attached to transaction
- * plan results. It always allows arbitrary additional properties and optionally
- * includes the transaction message, the transaction signature, and the full
- * transaction object.
+ * This type defines the shape of custom context that can be attached to
+ * transaction plan results. It allows arbitrary additional properties that
+ * consumers can use to pass along extra data with their results.
+ *
+ * Note that base context fields such as `message`, `signature`, and
+ * `transaction` are provided separately by {@link BaseTransactionPlanResultContext}
+ * and {@link SuccessfulBaseTransactionPlanResultContext}, which are intersected
+ * with this type in each {@link SingleTransactionPlanResult} variant.
  *
  * @see {@link SingleTransactionPlanResult}
  * @see {@link SuccessfulSingleTransactionPlanResult}
  * @see {@link FailedSingleTransactionPlanResult}
  * @see {@link CanceledSingleTransactionPlanResult}
  */
-export type TransactionPlanResultContext = {
-    [key: number | string | symbol]: unknown;
+export type TransactionPlanResultContext = { [key: number | string | symbol]: unknown };
+
+/**
+ * The base context fields that are common to all {@link SingleTransactionPlanResult} variants.
+ *
+ * This type provides optional fields for the transaction message, signature, and
+ * full transaction object. These fields may or may not be populated depending on
+ * how far execution progressed before the result was produced.
+ *
+ * @see {@link FailedSingleTransactionPlanResult}
+ * @see {@link CanceledSingleTransactionPlanResult}
+ * @see {@link SuccessfulBaseTransactionPlanResultContext}
+ */
+export interface BaseTransactionPlanResultContext {
     message?: TransactionMessage & TransactionMessageWithFeePayer;
     signature?: Signature;
     transaction?: Transaction;
-};
+}
+
+/**
+ * The base context fields for a {@link SuccessfulSingleTransactionPlanResult}.
+ *
+ * This extends the base context by requiring a {@link Signature}, since a
+ * successful transaction always produces one. The transaction message and full
+ * transaction object remain optional.
+ *
+ * @see {@link SuccessfulSingleTransactionPlanResult}
+ * @see {@link BaseTransactionPlanResultContext}
+ */
+export interface SuccessfulBaseTransactionPlanResultContext extends BaseTransactionPlanResultContext {
+    signature: Signature;
+}
 
 /**
  * A result for a sequential transaction plan.
@@ -236,9 +266,10 @@ export type SingleTransactionPlanResult<
  * A {@link SingleTransactionPlanResult} with a 'successful' status.
  *
  * This type represents a single transaction that was successfully executed.
- * It includes the original planned message, a context object containing at
- * least the transaction {@link Signature}, and optionally the full
- * {@link Transaction} object.
+ * It includes the original planned message and a context object containing
+ * the fields from {@link SuccessfulBaseTransactionPlanResultContext} — namely
+ * a required transaction {@link Signature}, and optionally the
+ * {@link TransactionMessage} and the full {@link Transaction} object.
  *
  * You may use the {@link successfulSingleTransactionPlanResult} or
  * {@link successfulSingleTransactionPlanResultFromSignature} helpers to
@@ -268,7 +299,7 @@ export type SuccessfulSingleTransactionPlanResult<
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
 > = {
-    context: Readonly<TContext & { signature: Signature }>;
+    context: Readonly<SuccessfulBaseTransactionPlanResultContext & TContext>;
     kind: 'single';
     plannedMessage: TTransactionMessage;
     status: 'successful';
@@ -278,8 +309,12 @@ export type SuccessfulSingleTransactionPlanResult<
  * A {@link SingleTransactionPlanResult} with a 'failed' status.
  *
  * This type represents a single transaction that failed during execution.
- * It includes the original planned message, a context object, and the
- * {@link Error} that caused the failure.
+ * It includes the original planned message, the {@link Error} that caused
+ * the failure, and a context object containing the fields from
+ * {@link BaseTransactionPlanResultContext} — namely optional
+ * {@link TransactionMessage}, {@link Signature}, and {@link Transaction}
+ * fields that may or may not be populated depending on how far execution
+ * progressed before the failure.
  *
  * You may use the {@link failedSingleTransactionPlanResult} helper to
  * create objects of this type.
@@ -307,7 +342,7 @@ export type FailedSingleTransactionPlanResult<
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
 > = {
-    context: Readonly<TContext>;
+    context: Readonly<BaseTransactionPlanResultContext & TContext>;
     error: Error;
     kind: 'single';
     plannedMessage: TTransactionMessage;
@@ -319,7 +354,11 @@ export type FailedSingleTransactionPlanResult<
  *
  * This type represents a single transaction whose execution was canceled
  * before it could complete. It includes the original planned message and
- * a context object.
+ * a context object containing the fields from
+ * {@link BaseTransactionPlanResultContext} — namely optional
+ * {@link TransactionMessage}, {@link Signature}, and {@link Transaction}
+ * fields that may or may not be populated depending on how far execution
+ * progressed before cancellation.
  *
  * You may use the {@link canceledSingleTransactionPlanResult} helper to
  * create objects of this type.
@@ -343,7 +382,7 @@ export type CanceledSingleTransactionPlanResult<
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
 > = {
-    context: Readonly<TContext>;
+    context: Readonly<BaseTransactionPlanResultContext & TContext>;
     kind: 'single';
     plannedMessage: TTransactionMessage;
     status: 'canceled';
