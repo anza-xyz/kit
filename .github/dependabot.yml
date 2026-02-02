@@ -26,3 +26,24 @@ updates:
         patterns:
           - 'react'
           - 'react-dom'
+  - package-ecosystem: 'npm'
+    directory: '/docs'
+    schedule:
+      interval: daily
+      time: '01:00'
+      timezone: America/Los_Angeles
+    groups:
+      eslint:
+        patterns:
+          - 'eslint*'
+          - 'typescript'
+      solana:
+        patterns:
+          - '@solana/*'
+      solana-program-clients:
+        patterns:
+          - '@solana-program/*'
+      react:
+        patterns:
+          - 'react'
+          - 'react-dom'
