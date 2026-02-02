@@ -598,8 +598,8 @@ importers:
         specifier: ^6.0.0
         version: 6.0.0
       undici:
-        specifier: ^7.19.2
-        version: 7.19.2
+        specifier: ^7.20.0
+        version: 7.20.0
 
   packages/functional:
     dependencies:
@@ -1232,15 +1232,15 @@ importers:
         specifier: ^5.0.0
         version: 5.9.3
       undici-types:
-        specifier: ^7.19.2
-        version: 7.19.2
+        specifier: ^7.20.0
+        version: 7.20.0
     devDependencies:
       tinybench:
         specifier: ^6.0.0
         version: 6.0.0
       undici:
-        specifier: ^7.19.2
-        version: 7.19.2
+        specifier: ^7.20.0
+        version: 7.20.0
       zx:
         specifier: ^8.8.5
         version: 8.8.5
@@ -1366,8 +1366,8 @@ importers:
         specifier: ^29.6.3
         version: 29.6.3
       undici:
-        specifier: ^7.19.2
-        version: 7.19.2
+        specifier: ^7.20.0
+        version: 7.20.0
       whatwg-fetch:
         specifier: ^3.6.20
         version: 3.6.20
@@ -8345,11 +8345,11 @@ packages:
   undici-types@7.16.0:
     resolution: {integrity: sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw==}
 
-  undici-types@7.19.2:
-    resolution: {integrity: sha512-qYVnV5OEm2AW8cJMCpdV20CDyaN3g0AjDlOGf1OW4iaDEx8MwdtChUp4zu4H0VP3nDRF/8RKWH+IPp9uW0YGZg==}
+  undici-types@7.20.0:
+    resolution: {integrity: sha512-PZDAAlMkNw5ZzN/ebfyrwzrMWfIf7Jbn9iM/I6SF456OKrb2wnfqVowaxEY/cMAM8MjFu1zhdpJyA0L+rTYwNw==}
 
-  undici@7.19.2:
-    resolution: {integrity: sha512-4VQSpGEGsWzk0VYxyB/wVX/Q7qf9t5znLRgs0dzszr9w9Fej/8RVNQ+S20vdXSAyra/bJ7ZQfGv6ZMj7UEbzSg==}
+  undici@7.20.0:
+    resolution: {integrity: sha512-MJZrkjyd7DeC+uPZh+5/YaMDxFiiEEaDgbUSVMXayofAkDWF1088CDo+2RPg7B1BuS1qf1vgNE7xqwPxE0DuSQ==}
     engines: {node: '>=20.18.1'}
 
   unicode-canonical-property-names-ecmascript@2.0.1:
@@ -16905,9 +16905,9 @@ snapshots:
 
   undici-types@7.16.0: {}
 
-  undici-types@7.19.2: {}
+  undici-types@7.20.0: {}
 
-  undici@7.19.2: {}
+  undici@7.20.0: {}
 
   unicode-canonical-property-names-ecmascript@2.0.1:
     optional: true
