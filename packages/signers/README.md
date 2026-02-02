@@ -440,7 +440,7 @@ const myInstructionWithSigners: Instruction & InstructionWithSigners = {
 Composable type that allows `AccountSignerMetas` to be used inside all of the transaction message's account metas.
 
 ```ts
-const myTransactionMessageWithSigners: BaseTransactionMessage & TransactionMessageWithSigners = {
+const myTransactionMessageWithSigners: TransactionMessage & TransactionMessageWithSigners = {
     instructions: [
         myInstructionA as Instruction & InstructionWithSigners,
         myInstructionB as Instruction & InstructionWithSigners,

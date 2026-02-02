@@ -27,4 +27,19 @@ const message = null as unknown as TransactionMessage;
         const messageWithSigners = addSignersToTransactionMessage([aliceSigner, bobSigner], message);
         messageWithSigners satisfies TransactionMessageWithSigners;
     }
+
+    // It preserves the instruction type of the transaction message
+    {
+        type InstructionA = Instruction & { id: 'A' };
+        type InstructionB = Instruction & { id: 'B' };
+
+        const message = null as unknown as TransactionMessage & {
+            instructions: [InstructionA, InstructionB];
+        };
+
+        message.instructions satisfies [InstructionA, InstructionB];
+        const messageWithSigners = addSignersToTransactionMessage([aliceSigner, bobSigner], message);
+        messageWithSigners satisfies TransactionMessageWithSigners;
+        messageWithSigners.instructions satisfies [InstructionA, InstructionB];
+    }
 }
