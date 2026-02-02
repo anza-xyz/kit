@@ -1,4 +1,4 @@
-import type { BaseTransactionMessage, TransactionMessageWithinSizeLimit } from '@solana/transaction-messages';
+import type { TransactionMessage, TransactionMessageWithinSizeLimit } from '@solana/transaction-messages';
 
 import { Transaction } from '../transaction';
 import {
@@ -50,7 +50,7 @@ import {
     {
         type Result = SetTransactionWithinSizeLimitFromTransactionMessage<
             Transaction,
-            BaseTransactionMessage & TransactionMessageWithinSizeLimit
+            TransactionMessage & TransactionMessageWithinSizeLimit
         >;
         null as unknown as Result satisfies Transaction & TransactionWithinSizeLimit;
     }
@@ -59,7 +59,7 @@ import {
     {
         type Result = SetTransactionWithinSizeLimitFromTransactionMessage<
             Transaction & { _from_transaction: 1 },
-            BaseTransactionMessage & TransactionMessageWithinSizeLimit & { _from_transaction_message: 1 }
+            TransactionMessage & TransactionMessageWithinSizeLimit & { _from_transaction_message: 1 }
         >;
         null as unknown as Result satisfies { _from_transaction: 1 };
         // @ts-expect-error Does not keep extra properties from transaction messages.
@@ -70,7 +70,7 @@ import {
     {
         type Result = SetTransactionWithinSizeLimitFromTransactionMessage<
             Transaction & { some: 1 },
-            BaseTransactionMessage
+            TransactionMessage
         >;
         null as unknown as Result satisfies Transaction & { some: 1 };
     }

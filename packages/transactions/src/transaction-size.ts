@@ -1,6 +1,6 @@
 import { SOLANA_ERROR__TRANSACTION__EXCEEDS_SIZE_LIMIT, SolanaError } from '@solana/errors';
 import type { NominalType } from '@solana/nominal-types';
-import type { BaseTransactionMessage, TransactionMessageWithinSizeLimit } from '@solana/transaction-messages';
+import type { TransactionMessage, TransactionMessageWithinSizeLimit } from '@solana/transaction-messages';
 
 import { getTransactionEncoder } from './codecs';
 import { Transaction } from './transaction';
@@ -49,7 +49,7 @@ export type TransactionWithinSizeLimit = NominalType<'transactionSize', 'withinL
  */
 export type SetTransactionWithinSizeLimitFromTransactionMessage<
     TTransaction extends Transaction,
-    TTransactionMessage extends BaseTransactionMessage,
+    TTransactionMessage extends TransactionMessage,
 > = TTransactionMessage extends TransactionMessageWithinSizeLimit
     ? TransactionWithinSizeLimit & TTransaction
     : TTransaction;
