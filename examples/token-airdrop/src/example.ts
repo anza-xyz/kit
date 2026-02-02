@@ -177,7 +177,7 @@ const transactionExecutor = createTransactionPlanExecutor({
      * It is responsible for signing, sending, and confirming the transaction message.
      * It only needs to deal with one transaction message.
      */
-    async executeTransactionMessage(message, config) {
+    async executeTransactionMessage(context, message, config) {
         const abortSignal = config ? config.abortSignal : undefined;
 
         /**
@@ -197,11 +197,18 @@ const transactionExecutor = createTransactionPlanExecutor({
             tx => estimateAndSetCULimit(tx, { abortSignal }),
         );
 
+        // Store the updated message in the context for potential error handling.
+        context.message = updatedMessage;
+
         // Sign this updated transaction message with any signers included in its instructions
         const signedTransaction = await signTransactionMessageWithSigners(updatedMessage, { abortSignal });
 
         const signature = getSignatureFromTransaction(signedTransaction);
         log.info({ signature }, `[transaction executor] Sending transaction`);
+
+        // Store the signed transaction and its signature in the context for potential error handling.
+        context.transaction = signedTransaction;
+        context.signature = signature;
 
         // Send and confirm the transaction using the helper we created earlier
         assertIsTransactionWithBlockhashLifetime(signedTransaction);
@@ -210,7 +217,7 @@ const transactionExecutor = createTransactionPlanExecutor({
             { signature },
             `[transaction executor] Transaction confirmed: https://explorer.solana.com/tx/${signature}?cluster=custom&customUrl=127.0.0.1:8899`,
         );
-        return { transaction: signedTransaction };
+        return signedTransaction;
     },
 });
 

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 
+import { Signature } from '@solana/keys';
 import {
     setTransactionMessageLifetimeUsingBlockhash,
     TransactionMessage,
@@ -42,20 +43,81 @@ import {
 
 // [DESCRIBE] createTransactionPlanExecutor
 {
+    // It can return a signature or a full transaction.
+    {
+        createTransactionPlanExecutor({
+            executeTransactionMessage: () => Promise.resolve({} as Signature),
+        });
+        createTransactionPlanExecutor({
+            executeTransactionMessage: () => Promise.resolve({} as Transaction),
+        });
+    }
+
     // It always receives a transaction message with fee payer.
     {
         createTransactionPlanExecutor({
-            executeTransactionMessage: message => {
+            executeTransactionMessage: (_, message) => {
                 message satisfies TransactionMessage & TransactionMessageWithFeePayer;
-                return Promise.resolve({ transaction: {} as Transaction });
+                return Promise.resolve({} as Transaction);
             },
         });
+    }
+
+    // It receives a base context by default.
+    {
+        createTransactionPlanExecutor({
+            executeTransactionMessage: context => {
+                context.message satisfies (TransactionMessage & TransactionMessageWithFeePayer) | undefined;
+                context.transaction satisfies Transaction | undefined;
+                context.signature satisfies Signature | undefined;
+                return Promise.resolve({} as Signature);
+            },
+        });
+    }
+
+    // It removes undefined after assignment in the context.
+    {
+        createTransactionPlanExecutor({
+            executeTransactionMessage: context => {
+                // @ts-expect-error Initially, the context transaction may be undefined.
+                context.transaction satisfies Transaction;
+                context.transaction satisfies Transaction | undefined;
+                const mySignedTransaction = {} as unknown as Transaction;
+                context.transaction = mySignedTransaction;
+                context.transaction satisfies Transaction;
+                return Promise.resolve(context.transaction);
+            },
+        });
+    }
+
+    // It can use a custom context which is then assigned to the created TransactionPlanExecutor.
+    {
+        const executor = createTransactionPlanExecutor({
+            executeTransactionMessage: (_: { custom: string }) => {
+                return Promise.resolve({} as Signature);
+            },
+        });
+        executor satisfies TransactionPlanExecutor<{ custom: string }>;
+    }
+
+    // It can use a custom context with the base context.
+    {
+        const executor = createTransactionPlanExecutor<{ custom: string }>({
+            executeTransactionMessage: context => {
+                context.custom satisfies string;
+                context.message satisfies (TransactionMessage & TransactionMessageWithFeePayer) | undefined;
+                context.transaction satisfies Transaction | undefined;
+                context.signature satisfies Signature | undefined;
+                return Promise.resolve({} as Signature);
+            },
+        });
+        executor satisfies TransactionPlanExecutor<{ custom: string }>;
     }
 
     // It transfers the lifetime to the compiled transaction.
     {
         createTransactionPlanExecutor({
-            executeTransactionMessage: message => {
+            executeTransactionMessage: (_, message) => {
                 const latestBlockhash = {} as unknown as Parameters<
                     typeof setTransactionMessageLifetimeUsingBlockhash
                 >[0];
@@ -63,7 +125,7 @@ import {
                 messageWithBlockhash satisfies TransactionMessageWithBlockhashLifetime;
                 const transaction = compileTransaction(messageWithBlockhash);
                 transaction satisfies TransactionWithBlockhashLifetime;
-                return Promise.resolve({ transaction });
+                return Promise.resolve(transaction);
             },
         });
     }

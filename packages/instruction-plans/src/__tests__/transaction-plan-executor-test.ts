@@ -7,6 +7,8 @@ import {
     SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE,
     SolanaError,
 } from '@solana/errors';
+import { Signature } from '@solana/keys';
+import { TransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
 
 import {
     canceledSingleTransactionPlanResult,
@@ -19,6 +21,7 @@ import {
     sequentialTransactionPlan,
     sequentialTransactionPlanResult,
     singleTransactionPlan,
+    successfulSingleTransactionPlanResult,
     successfulSingleTransactionPlanResultFromTransaction,
     TransactionPlanResult,
 } from '../index';
@@ -46,8 +49,10 @@ async function expectFailedToExecute(
     );
 }
 
-function forwardId(message: { id: string }) {
-    return Promise.resolve({ transaction: createTransaction(message.id) });
+function forwardId(_: unknown, message: TransactionMessage & TransactionMessageWithFeePayer) {
+    return Promise.resolve(
+        createTransaction((message as TransactionMessage & TransactionMessageWithFeePayer & { id: string }).id),
+    );
 }
 
 describe('createTransactionPlanExecutor', () => {
@@ -56,14 +61,16 @@ describe('createTransactionPlanExecutor', () => {
             expect.assertions(2);
             const messageA = createMessage('A');
             const transactionA = createTransaction('A');
-            const executeTransactionMessage = jest.fn().mockResolvedValue({ transaction: transactionA });
+            const executeTransactionMessage = jest.fn().mockResolvedValue(transactionA);
             const executor = createTransactionPlanExecutor({ executeTransactionMessage });
 
             const promise = executor(singleTransactionPlan(messageA));
             await expect(promise).resolves.toStrictEqual(
                 successfulSingleTransactionPlanResultFromTransaction(messageA, transactionA),
             );
-            expect(executeTransactionMessage).toHaveBeenNthCalledWith(1, messageA, { abortSignal: undefined });
+            expect(executeTransactionMessage).toHaveBeenNthCalledWith(1, expect.any(Object), messageA, {
+                abortSignal: undefined,
+            });
         });
 
         it('passes the abort signal to the `executeTransactionMessage` function', async () => {
@@ -71,26 +78,141 @@ describe('createTransactionPlanExecutor', () => {
             const messageA = createMessage('A');
             const abortController = new AbortController();
             const abortSignal = abortController.signal;
-            const executeTransactionMessage = jest.fn().mockResolvedValue({ transaction: createTransaction('A') });
+            const executeTransactionMessage = jest.fn().mockResolvedValue(createTransaction('A'));
             const executor = createTransactionPlanExecutor({ executeTransactionMessage });
 
             await executor(singleTransactionPlan(messageA), { abortSignal });
-            expect(executeTransactionMessage).toHaveBeenNthCalledWith(1, messageA, { abortSignal });
+            expect(executeTransactionMessage).toHaveBeenNthCalledWith(1, expect.any(Object), messageA, { abortSignal });
         });
 
-        it('executes a single transaction message with custom context', async () => {
+        it('uses the returned signature for the successful context', async () => {
             expect.assertions(1);
             const messageA = createMessage('A');
-            const transactionA = createTransaction('A');
-            const executeTransactionMessage = jest.fn().mockResolvedValue({
-                context: { custom: 'context' },
-                transaction: transactionA,
+            const executor = createTransactionPlanExecutor({
+                executeTransactionMessage: () => Promise.resolve('A' as Signature),
             });
-            const executor = createTransactionPlanExecutor({ executeTransactionMessage });
 
             const promise = executor(singleTransactionPlan(messageA));
             await expect(promise).resolves.toStrictEqual(
-                successfulSingleTransactionPlanResultFromTransaction(messageA, transactionA, { custom: 'context' }),
+                successfulSingleTransactionPlanResult(messageA, { signature: 'A' as Signature }),
+            );
+        });
+
+        it('uses the signature from the returned transaction for the successful context', async () => {
+            expect.assertions(1);
+            const messageA = createMessage('A');
+            const transactionA = createTransaction('A');
+            const executor = createTransactionPlanExecutor({
+                executeTransactionMessage: () => Promise.resolve(transactionA),
+            });
+
+            const promise = executor(singleTransactionPlan(messageA));
+            await expect(promise).resolves.toStrictEqual(
+                successfulSingleTransactionPlanResult(messageA, {
+                    signature: 'A' as Signature,
+                    transaction: transactionA,
+                }),
+            );
+        });
+
+        it('override any set signature with the returned signature', async () => {
+            expect.assertions(1);
+            const messageA = createMessage('A');
+            const executor = createTransactionPlanExecutor({
+                executeTransactionMessage: context => {
+                    context.signature = 'CONTEXT_SIGNATURE' as Signature;
+                    return Promise.resolve('RETURNED_SIGNATURE' as Signature);
+                },
+            });
+
+            const promise = executor(singleTransactionPlan(messageA));
+            await expect(promise).resolves.toStrictEqual(
+                successfulSingleTransactionPlanResult(messageA, { signature: 'RETURNED_SIGNATURE' as Signature }),
+            );
+        });
+
+        it('override any set signature with the signature of the returned transaction', async () => {
+            expect.assertions(1);
+            const messageA = createMessage('A');
+            const transactionA = createTransaction('A');
+            const executor = createTransactionPlanExecutor({
+                executeTransactionMessage: context => {
+                    context.signature = 'CONTEXT_SIGNATURE' as Signature;
+                    return Promise.resolve(transactionA);
+                },
+            });
+
+            const promise = executor(singleTransactionPlan(messageA));
+            await expect(promise).resolves.toStrictEqual(
+                successfulSingleTransactionPlanResult(messageA, {
+                    signature: 'A' as Signature,
+                    transaction: transactionA,
+                }),
+            );
+        });
+
+        it('override any set transaction with the returned transaction', async () => {
+            expect.assertions(1);
+            const messageA = createMessage('A');
+            const transactionA = createTransaction('A');
+            const executor = createTransactionPlanExecutor({
+                executeTransactionMessage: context => {
+                    context.transaction = createTransaction('B');
+                    return Promise.resolve(transactionA);
+                },
+            });
+
+            const promise = executor(singleTransactionPlan(messageA));
+            await expect(promise).resolves.toStrictEqual(
+                successfulSingleTransactionPlanResult(messageA, {
+                    signature: 'A' as Signature,
+                    transaction: transactionA,
+                }),
+            );
+        });
+
+        it('stores the base context', async () => {
+            expect.assertions(1);
+            const messageA = createMessage('A');
+            const transactionA = createTransaction('A');
+            const executor = createTransactionPlanExecutor({
+                executeTransactionMessage: (context, _) => {
+                    context.message = createMessage('NEW A');
+                    context.transaction = transactionA;
+                    context.signature = 'A' as Signature;
+                    return Promise.resolve(transactionA);
+                },
+            });
+
+            const promise = executor(singleTransactionPlan(messageA));
+            await expect(promise).resolves.toStrictEqual(
+                successfulSingleTransactionPlanResult(messageA, {
+                    message: createMessage('NEW A'),
+                    signature: 'A' as Signature,
+                    transaction: transactionA,
+                }),
+            );
+        });
+
+        it('stores custom context properties', async () => {
+            expect.assertions(1);
+            const messageA = createMessage('A');
+            const messageB = createMessage('B');
+            const executor = createTransactionPlanExecutor<{ custom: string }>({
+                executeTransactionMessage: context => {
+                    context.custom = 'custom value';
+                    context.message = messageB;
+                    return Promise.resolve('A' as Signature);
+                },
+            });
+
+            const promise = executor(singleTransactionPlan(messageA));
+            await expect(promise).resolves.toStrictEqual(
+                successfulSingleTransactionPlanResult(messageA, {
+                    custom: 'custom value',
+                    message: messageB,
+                    signature: 'A' as Signature,
+                }),
             );
         });
 
@@ -98,8 +220,9 @@ describe('createTransactionPlanExecutor', () => {
             expect.assertions(2);
             const messageA = createMessage('A');
             const cause = new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__INVALID_ARGUMENT, { index: 0 });
-            const executeTransactionMessage = jest.fn().mockRejectedValue(cause);
-            const executor = createTransactionPlanExecutor({ executeTransactionMessage });
+            const executor = createTransactionPlanExecutor({
+                executeTransactionMessage: () => Promise.reject(cause),
+            });
 
             const promise = executor(singleTransactionPlan(messageA));
             await expectFailedToExecute(
@@ -111,12 +234,78 @@ describe('createTransactionPlanExecutor', () => {
             );
         });
 
+        it('keeps all information provided to the context before failure', async () => {
+            expect.assertions(2);
+            const messageA = createMessage('A');
+            const messageB = createMessage('B');
+            const transactionA = createTransaction('A');
+            const cause = new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__INVALID_ARGUMENT, { index: 0 });
+            const throwCause = (): void => {
+                throw cause;
+            };
+            const executor = createTransactionPlanExecutor<{ afterFailure: string; beforeFailure: string }>({
+                executeTransactionMessage: async context => {
+                    context.beforeFailure = 'before failure';
+                    context.message = messageB;
+                    context.transaction = transactionA;
+                    context.signature = 'B' as Signature;
+                    throwCause();
+                    context.afterFailure = 'after failure';
+                    return await Promise.resolve('C' as Signature);
+                },
+            });
+
+            const promise = executor(singleTransactionPlan(messageA));
+            await expectFailedToExecute(
+                promise,
+                new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
+                    cause,
+                    transactionPlanResult: failedSingleTransactionPlanResult(messageA, cause, {
+                        beforeFailure: 'before failure',
+                        message: messageB,
+                        signature: 'B' as Signature,
+                        transaction: transactionA,
+                    }),
+                }),
+            );
+        });
+
+        it('adds the signature to a failed context if a transaction is present', async () => {
+            expect.assertions(2);
+            const messageA = createMessage('A');
+            const transactionA = createTransaction('A');
+            const cause = new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__INVALID_ARGUMENT, { index: 0 });
+            const throwCause = (): void => {
+                throw cause;
+            };
+            const executor = createTransactionPlanExecutor({
+                executeTransactionMessage: async context => {
+                    context.transaction = transactionA;
+                    throwCause();
+                    return await Promise.resolve(transactionA);
+                },
+            });
+
+            const promise = executor(singleTransactionPlan(messageA));
+            await expectFailedToExecute(
+                promise,
+                new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
+                    cause,
+                    transactionPlanResult: failedSingleTransactionPlanResult(messageA, cause, {
+                        signature: 'A' as Signature,
+                        transaction: transactionA,
+                    }),
+                }),
+            );
+        });
+
         it('can use any error object as a failure cause', async () => {
             expect.assertions(2);
             const messageA = createMessage('A');
             const cause = new Error('Custom error message');
-            const executeTransactionMessage = jest.fn().mockRejectedValue(cause);
-            const executor = createTransactionPlanExecutor({ executeTransactionMessage });
+            const executor = createTransactionPlanExecutor({
+                executeTransactionMessage: () => Promise.reject(cause),
+            });
 
             const promise = executor(singleTransactionPlan(messageA));
             await expectFailedToExecute(
@@ -200,8 +389,12 @@ describe('createTransactionPlanExecutor', () => {
             );
 
             expect(executeTransactionMessage).toHaveBeenCalledTimes(2);
-            expect(executeTransactionMessage).toHaveBeenNthCalledWith(1, messageA, { abortSignal: undefined });
-            expect(executeTransactionMessage).toHaveBeenNthCalledWith(2, messageB, { abortSignal: undefined });
+            expect(executeTransactionMessage).toHaveBeenNthCalledWith(1, expect.any(Object), messageA, {
+                abortSignal: undefined,
+            });
+            expect(executeTransactionMessage).toHaveBeenNthCalledWith(2, expect.any(Object), messageB, {
+                abortSignal: undefined,
+            });
         });
 
         it('throws when encountering a non-divisible sequential transaction plan', async () => {
@@ -241,30 +434,30 @@ describe('createTransactionPlanExecutor', () => {
             const executor = createTransactionPlanExecutor({ executeTransactionMessage });
 
             await executor(sequentialTransactionPlan([messageA, messageB]), { abortSignal });
-            expect(executeTransactionMessage).toHaveBeenNthCalledWith(1, messageA, { abortSignal });
-            expect(executeTransactionMessage).toHaveBeenNthCalledWith(2, messageB, { abortSignal });
+            expect(executeTransactionMessage).toHaveBeenNthCalledWith(1, expect.any(Object), messageA, { abortSignal });
+            expect(executeTransactionMessage).toHaveBeenNthCalledWith(2, expect.any(Object), messageB, { abortSignal });
         });
 
         it('executes a sequential transaction plan with custom context', async () => {
             expect.assertions(1);
             const messageA = createMessage('A');
             const messageB = createMessage('B');
-            const executeTransactionMessage = jest.fn().mockImplementation((message: { id: string }) => {
-                return Promise.resolve({
-                    context: { custom: 'context' },
-                    transaction: createTransaction(message.id),
-                });
+            const executor = createTransactionPlanExecutor<{ custom: string }>({
+                executeTransactionMessage: (context, message) => {
+                    const id = (message as TransactionMessage & TransactionMessageWithFeePayer & { id: string }).id;
+                    context.custom = 'Message ' + id;
+                    return forwardId(context, message);
+                },
             });
-            const executor = createTransactionPlanExecutor({ executeTransactionMessage });
 
             const promise = executor(sequentialTransactionPlan([messageA, messageB]));
             await expect(promise).resolves.toStrictEqual(
                 sequentialTransactionPlanResult([
                     successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A'), {
-                        custom: 'context',
+                        custom: 'Message A',
                     }),
                     successfulSingleTransactionPlanResultFromTransaction(messageB, createTransaction('B'), {
-                        custom: 'context',
+                        custom: 'Message B',
                     }),
                 ]),
             );
@@ -322,7 +515,9 @@ describe('createTransactionPlanExecutor', () => {
 
             await executor(sequentialTransactionPlan([messageA, messageB])).catch(() => {});
             expect(executeTransactionMessage).toHaveBeenCalledTimes(1);
-            expect(executeTransactionMessage).toHaveBeenNthCalledWith(1, messageA, { abortSignal: undefined });
+            expect(executeTransactionMessage).toHaveBeenNthCalledWith(1, expect.any(Object), messageA, {
+                abortSignal: undefined,
+            });
         });
 
         it('can abort sequential transaction plans', async () => {
@@ -357,9 +552,9 @@ describe('createTransactionPlanExecutor', () => {
             );
 
             expect(executeTransactionMessage).toHaveBeenCalledTimes(2);
-            expect(executeTransactionMessage).toHaveBeenNthCalledWith(1, messageA, { abortSignal });
-            expect(executeTransactionMessage).toHaveBeenNthCalledWith(2, messageB, { abortSignal });
-            expect(executeTransactionMessage).not.toHaveBeenCalledWith(messageC, { abortSignal });
+            expect(executeTransactionMessage).toHaveBeenNthCalledWith(1, expect.any(Object), messageA, { abortSignal });
+            expect(executeTransactionMessage).toHaveBeenNthCalledWith(2, expect.any(Object), messageB, { abortSignal });
+            expect(executeTransactionMessage).not.toHaveBeenCalledWith(expect.any(Object), messageC, { abortSignal });
         });
 
         it('can abort sequential transaction plans before execution', async () => {
@@ -416,8 +611,12 @@ describe('createTransactionPlanExecutor', () => {
             );
 
             expect(executeTransactionMessage).toHaveBeenCalledTimes(2);
-            expect(executeTransactionMessage).toHaveBeenCalledWith(messageA, { abortSignal: undefined });
-            expect(executeTransactionMessage).toHaveBeenCalledWith(messageB, { abortSignal: undefined });
+            expect(executeTransactionMessage).toHaveBeenCalledWith(expect.any(Object), messageA, {
+                abortSignal: undefined,
+            });
+            expect(executeTransactionMessage).toHaveBeenCalledWith(expect.any(Object), messageB, {
+                abortSignal: undefined,
+            });
         });
 
         it('passes the abort signal to the `executeTransactionMessage` function', async () => {
@@ -430,30 +629,30 @@ describe('createTransactionPlanExecutor', () => {
             const executor = createTransactionPlanExecutor({ executeTransactionMessage });
 
             await executor(parallelTransactionPlan([messageA, messageB]), { abortSignal });
-            expect(executeTransactionMessage).toHaveBeenCalledWith(messageA, { abortSignal });
-            expect(executeTransactionMessage).toHaveBeenCalledWith(messageB, { abortSignal });
+            expect(executeTransactionMessage).toHaveBeenCalledWith(expect.any(Object), messageA, { abortSignal });
+            expect(executeTransactionMessage).toHaveBeenCalledWith(expect.any(Object), messageB, { abortSignal });
         });
 
         it('executes a parallel transaction plan with custom context', async () => {
             expect.assertions(1);
             const messageA = createMessage('A');
             const messageB = createMessage('B');
-            const executeTransactionMessage = jest.fn().mockImplementation((message: { id: string }) => {
-                return Promise.resolve({
-                    context: { custom: 'context' },
-                    transaction: createTransaction(message.id),
-                });
+            const executor = createTransactionPlanExecutor<{ custom: string }>({
+                executeTransactionMessage: (context, message) => {
+                    const id = (message as TransactionMessage & TransactionMessageWithFeePayer & { id: string }).id;
+                    context.custom = 'Message ' + id;
+                    return forwardId(context, message);
+                },
             });
-            const executor = createTransactionPlanExecutor({ executeTransactionMessage });
 
             const promise = executor(parallelTransactionPlan([messageA, messageB]));
             await expect(promise).resolves.toStrictEqual(
                 parallelTransactionPlanResult([
                     successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A'), {
-                        custom: 'context',
+                        custom: 'Message A',
                     }),
                     successfulSingleTransactionPlanResultFromTransaction(messageB, createTransaction('B'), {
-                        custom: 'context',
+                        custom: 'Message B',
                     }),
                 ]),
             );
@@ -465,10 +664,14 @@ describe('createTransactionPlanExecutor', () => {
             const messageB = createMessage('B');
             const messageC = createMessage('C');
             const cause = new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__INVALID_ARGUMENT, { index: 0 });
-            const executeTransactionMessage = jest.fn().mockImplementation((message: { id: string }) => {
-                // eslint-disable-next-line jest/no-conditional-in-test
-                return message.id === 'B' ? Promise.reject(cause) : forwardId(message);
-            });
+            const executeTransactionMessage = jest
+                .fn()
+                .mockImplementation(
+                    (context, message: TransactionMessage & TransactionMessageWithFeePayer & { id: string }) => {
+                        // eslint-disable-next-line jest/no-conditional-in-test
+                        return message.id === 'B' ? Promise.reject(cause) : forwardId(context, message);
+                    },
+                );
             const executor = createTransactionPlanExecutor({ executeTransactionMessage });
 
             const promise = executor(parallelTransactionPlan([messageA, messageB, messageC]));
@@ -495,10 +698,14 @@ describe('createTransactionPlanExecutor', () => {
             const abortController = new AbortController();
             const abortSignal = abortController.signal;
             const cause = new Error('Aborted during execution');
-            const executeTransactionMessage = jest.fn().mockImplementation((message: { id: string }) => {
-                // eslint-disable-next-line jest/no-conditional-in-test
-                return message.id === 'B' ? FOREVER_PROMISE : forwardId(message);
-            });
+            const executeTransactionMessage = jest
+                .fn()
+                .mockImplementation(
+                    (context, message: TransactionMessage & TransactionMessageWithFeePayer & { id: string }) => {
+                        // eslint-disable-next-line jest/no-conditional-in-test
+                        return message.id === 'B' ? FOREVER_PROMISE : forwardId(context, message);
+                    },
+                );
             const executor = createTransactionPlanExecutor({ executeTransactionMessage });
 
             const promise = executor(parallelTransactionPlan([messageA, messageB, messageC]), { abortSignal });
@@ -607,10 +814,14 @@ describe('createTransactionPlanExecutor', () => {
             const messageF = createMessage('F');
             const messageG = createMessage('G');
             const cause = new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__INVALID_ARGUMENT, { index: 0 });
-            const executeTransactionMessage = jest.fn().mockImplementation((message: { id: string }) => {
-                // eslint-disable-next-line jest/no-conditional-in-test
-                return message.id === 'C' ? Promise.reject(cause) : forwardId(message);
-            });
+            const executeTransactionMessage = jest
+                .fn()
+                .mockImplementation(
+                    (context, message: TransactionMessage & TransactionMessageWithFeePayer & { id: string }) => {
+                        // eslint-disable-next-line jest/no-conditional-in-test
+                        return message.id === 'C' ? Promise.reject(cause) : forwardId(context, message);
+                    },
+                );
             const executor = createTransactionPlanExecutor({ executeTransactionMessage });
 
             const promise = executor(
@@ -658,10 +869,14 @@ describe('createTransactionPlanExecutor', () => {
             const abortController = new AbortController();
             const abortSignal = abortController.signal;
             const cause = new Error('Aborted during execution');
-            const executeTransactionMessage = jest.fn().mockImplementation((message: { id: string }) => {
-                // eslint-disable-next-line jest/no-conditional-in-test
-                return message.id === 'C' ? FOREVER_PROMISE : forwardId(message);
-            });
+            const executeTransactionMessage = jest
+                .fn()
+                .mockImplementation(
+                    (context, message: TransactionMessage & TransactionMessageWithFeePayer & { id: string }) => {
+                        // eslint-disable-next-line jest/no-conditional-in-test
+                        return message.id === 'C' ? FOREVER_PROMISE : forwardId(context, message);
+                    },
+                );
             const executor = createTransactionPlanExecutor({ executeTransactionMessage });
 
             const promise = executor(
