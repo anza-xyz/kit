@@ -1,6 +1,6 @@
 {
     "name": "@solana/codecs-strings",
-    "version": "5.5.1",
+    "version": "6.0.0",
     "description": "Codecs for strings of different sizes and encodings",
     "homepage": "https://www.solanakit.com/api#solanacodecs-strings",
     "exports": {

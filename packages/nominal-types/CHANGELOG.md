@@ -1,5 +1,7 @@
 # @solana/nominal-types
 
+## 6.0.0
+
 ## 5.5.1
 
 ## 5.5.0

@@ -1,5 +1,22 @@
 # @solana/rpc-subscriptions
 
+## 6.0.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/rpc-subscriptions-api@6.0.0
+    - @solana/errors@6.0.0
+    - @solana/fast-stable-stringify@6.0.0
+    - @solana/functional@6.0.0
+    - @solana/promises@6.0.0
+    - @solana/rpc-spec-types@6.0.0
+    - @solana/rpc-subscriptions-channel-websocket@6.0.0
+    - @solana/rpc-subscriptions-spec@6.0.0
+    - @solana/rpc-transformers@6.0.0
+    - @solana/rpc-types@6.0.0
+    - @solana/subscribable@6.0.0
+
 ## 5.5.1
 
 ### Patch Changes

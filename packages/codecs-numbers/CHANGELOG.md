@@ -1,5 +1,13 @@
 # @solana/codecs-numbers
 
+## 6.0.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/codecs-core@6.0.0
+    - @solana/errors@6.0.0
+
 ## 5.5.1
 
 ### Patch Changes

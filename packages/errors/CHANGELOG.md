@@ -1,5 +1,7 @@
 # @solana/errors
 
+## 6.0.0
+
 ## 5.5.1
 
 ### Patch Changes

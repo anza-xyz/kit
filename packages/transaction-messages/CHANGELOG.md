@@ -1,5 +1,28 @@
 # @solana/transaction-messages
 
+## 6.0.0
+
+### Major Changes
+
+- [#1289](https://github.com/anza-xyz/kit/pull/1289) [`b82df4c`](https://github.com/anza-xyz/kit/commit/b82df4c98a9f157c030f62735f4427ba095bee6a) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Remove the export of BaseTransactionMessage, which was previously deprecated. Use TransactionMessage instead.
+
+### Patch Changes
+
+- [#1287](https://github.com/anza-xyz/kit/pull/1287) [`f80b6de`](https://github.com/anza-xyz/kit/commit/f80b6de0649ed2df3aa64fdd01215322bb8cc926) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Refactor compressTransactionMessageUsingAddressLookupTables to not use BaseTransactionMessage
+
+- [#1288](https://github.com/anza-xyz/kit/pull/1288) [`986a09c`](https://github.com/anza-xyz/kit/commit/986a09c56c38c2a91752972ec258fe790f8620db) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Refactor transaction-messages package to stop using BaseTransactionMessage
+
+- Updated dependencies []:
+    - @solana/addresses@6.0.0
+    - @solana/codecs-core@6.0.0
+    - @solana/codecs-data-structures@6.0.0
+    - @solana/codecs-numbers@6.0.0
+    - @solana/errors@6.0.0
+    - @solana/functional@6.0.0
+    - @solana/instructions@6.0.0
+    - @solana/nominal-types@6.0.0
+    - @solana/rpc-types@6.0.0
+
 ## 5.5.1
 
 ### Patch Changes

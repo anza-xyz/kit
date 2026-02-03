@@ -1,5 +1,12 @@
 # @solana/assertions
 
+## 6.0.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/errors@6.0.0
+
 ## 5.5.1
 
 ### Patch Changes
