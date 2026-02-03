@@ -208,7 +208,7 @@ Since some of its data is optional, we'll use the `unwrapOption` helper to conve
 ```ts twoslash title="src/index.ts"
 // @filename: client.ts
 import {
-    BaseTransactionMessage,
+    TransactionMessage,
     TransactionMessageWithFeePayer,
     MessageSigner,
     Rpc,
@@ -219,7 +219,7 @@ import {
     sendAndConfirmTransactionFactory,
 } from '@solana/kit';
 const estimateAndSetComputeUnitLimitFactory = {} as unknown as () => <
-    T extends BaseTransactionMessage & TransactionMessageWithFeePayer,
+    T extends TransactionMessage & TransactionMessageWithFeePayer,
 >(
     transactionMessage: T,
 ) => Promise<T>;

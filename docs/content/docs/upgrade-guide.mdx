@@ -364,11 +364,11 @@ transaction.sign([payer, authority]);
 import { compileTransaction, generateKeyPair, signTransaction } from '@solana/kit';
 // ---cut-start---
 import {
-    BaseTransactionMessage,
+    TransactionMessage,
     TransactionMessageWithBlockhashLifetime,
     TransactionMessageWithFeePayer,
 } from '@solana/kit';
-const transactionMessage = null as unknown as BaseTransactionMessage &
+const transactionMessage = null as unknown as TransactionMessage &
     TransactionMessageWithFeePayer &
     TransactionMessageWithBlockhashLifetime;
 // ---cut-end---

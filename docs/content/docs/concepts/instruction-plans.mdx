@@ -177,7 +177,7 @@ const instructionPlan = getReallocMessagePackerInstructionPlan({
 Whilst these helpers are fairly situational, you can create any custom message packer as long as you implement the following interfaces.
 
 ```ts twoslash
-import { BaseTransactionMessage, TransactionMessageWithFeePayer } from '@solana/kit';
+import { TransactionMessage, TransactionMessageWithFeePayer } from '@solana/kit';
 // ---cut-before---
 type MessagePackerInstructionPlan = {
     getMessagePacker: () => MessagePacker;
@@ -187,8 +187,8 @@ type MessagePackerInstructionPlan = {
 type MessagePacker = {
     done: () => boolean;
     packMessageToCapacity: (
-        transactionMessage: BaseTransactionMessage & TransactionMessageWithFeePayer,
-    ) => BaseTransactionMessage & TransactionMessageWithFeePayer;
+        transactionMessage: TransactionMessage & TransactionMessageWithFeePayer,
+    ) => TransactionMessage & TransactionMessageWithFeePayer;
 };
 ```
 
@@ -326,12 +326,12 @@ import {
     singleTransactionPlan,
     sequentialTransactionPlan,
     parallelTransactionPlan,
-    BaseTransactionMessage,
+    TransactionMessage,
     TransactionMessageWithFeePayer,
 } from '@solana/kit';
-const messageA = {} as unknown as BaseTransactionMessage & TransactionMessageWithFeePayer;
-const messageB = {} as unknown as BaseTransactionMessage & TransactionMessageWithFeePayer;
-const messageC = {} as unknown as BaseTransactionMessage & TransactionMessageWithFeePayer;
+const messageA = {} as unknown as TransactionMessage & TransactionMessageWithFeePayer;
+const messageB = {} as unknown as TransactionMessage & TransactionMessageWithFeePayer;
+const messageC = {} as unknown as TransactionMessage & TransactionMessageWithFeePayer;
 // ---cut-before---
 const transactionPlan = parallelTransactionPlan([
     sequentialTransactionPlan([singleTransactionPlan(messageA), singleTransactionPlan(messageB)]),
@@ -373,7 +373,13 @@ const transactionPlanResult = await transactionPlanExecutor(transactionPlan, { a
 
 To spin up a transaction plan executor, you may use the `createTransactionPlanExecutor` helper. This helper requires an `executeTransactionMessage` function that tells us how each transaction message should be executed when encountered during the execution process.
 
-This function accepts a transaction message and must return an object containing the successfully executed transaction, along with an optional context object that can be used to pass additional information about the execution.
+The `executeTransactionMessage` callback receives the following arguments:
+
+- **`context`**: A mutable object for storing data during execution — see the [next section](#the-execution-context) for details.
+- **`message`**: The transaction message to execute.
+- **`config`**: An optional configuration object that may include an `abortSignal`.
+
+The callback must return either a `Signature` or a full `Transaction` object directly.
 
 For instance, in the example below we create a new executor such that each transaction message will be assigned the latest blockhash lifetime before being signed and sent to the network using the provided RPC client.
 
@@ -389,7 +395,7 @@ import {
     signTransactionMessageWithSigners,
     assertIsSendableTransaction,
     assertIsTransactionWithBlockhashLifetime,
-    BaseTransactionMessage,
+    TransactionMessage,
     TransactionMessageWithFeePayer,
 } from '@solana/kit';
 const rpc = {} as unknown as Rpc<SolanaRpcApi>;
@@ -398,21 +404,107 @@ const rpcSubscriptions = {} as unknown as RpcSubscriptions<SolanaRpcSubscription
 const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
 
 const transactionPlanExecutor = createTransactionPlanExecutor({
-    executeTransactionMessage: async (
-        message: BaseTransactionMessage & TransactionMessageWithFeePayer,
-    ) => {
+    executeTransactionMessage: async (context, message) => {
         const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
         const messageWithBlockhash = setTransactionMessageLifetimeUsingBlockhash(
             latestBlockhash,
             message,
         );
+        context.message = messageWithBlockhash;
         const transaction = await signTransactionMessageWithSigners(messageWithBlockhash);
+        context.transaction = transaction;
         assertIsSendableTransaction(transaction);
         assertIsTransactionWithBlockhashLifetime(transaction);
         await sendAndConfirmTransaction(transaction, { commitment: 'confirmed' });
-        return { transaction };
+        return transaction;
     },
 });
+```
+
+### The execution context
+
+The `context` object passed to the `executeTransactionMessage` callback is a mutable object that you can populate incrementally as execution progresses. This context is preserved in the resulting `SingleTransactionPlanResult` regardless of the outcome — successful, failed, or canceled.
+
+This is particularly useful for debugging failures or building recovery plans. If an error is thrown at any point in the callback, any attributes you've already saved to the context will still be available in the `FailedSingleTransactionPlanResult`.
+
+The context object supports three optional base properties that have semantic meaning:
+
+- **`message`**: The transaction message after any modifications (e.g., after setting a lifetime).
+- **`transaction`**: The signed transaction ready to be sent.
+- **`signature`**: The transaction signature. Note that this is automatically populated when you set the `transaction` property on the context and/or return a `Transaction`.
+
+You can also add any custom properties you need:
+
+```ts twoslash
+import {
+    createTransactionPlanExecutor,
+    setTransactionMessageLifetimeUsingBlockhash,
+    signTransactionMessageWithSigners,
+    sendAndConfirmTransactionFactory,
+    assertIsSendableTransaction,
+    assertIsTransactionWithBlockhashLifetime,
+    Rpc,
+    SolanaRpcApi,
+    RpcSubscriptions,
+    SolanaRpcSubscriptionsApi,
+} from '@solana/kit';
+const rpc = {} as unknown as Rpc<SolanaRpcApi>;
+const rpcSubscriptions = {} as unknown as RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
+// ---cut-before---
+const transactionPlanExecutor = createTransactionPlanExecutor({
+    executeTransactionMessage: async (context, message) => {
+        // Store the start time (custom context).
+        context.startedAt = Date.now();
+
+        const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
+        const messageWithBlockhash = setTransactionMessageLifetimeUsingBlockhash(
+            latestBlockhash,
+            message,
+        );
+
+        // Store the message about to be signed.
+        context.message = messageWithBlockhash;
+
+        const transaction = await signTransactionMessageWithSigners(messageWithBlockhash);
+
+        // Store the transaction about to be sent.
+        context.transaction = transaction;
+
+        assertIsSendableTransaction(transaction);
+        assertIsTransactionWithBlockhashLifetime(transaction);
+        await sendAndConfirmTransaction(transaction, { commitment: 'confirmed' });
+
+        // Store the confirmation time (custom context).
+        context.confirmedAt = Date.now();
+
+        return transaction;
+    },
+});
+```
+
+When accessing the context from a result, you can retrieve both the base properties and your custom properties:
+
+```ts twoslash
+import {
+    SingleTransactionPlanResult,
+    isSuccessfulSingleTransactionPlanResult,
+    isFailedSingleTransactionPlanResult,
+} from '@solana/kit';
+const result = {} as unknown as SingleTransactionPlanResult<{ startedAt: number }>;
+// ---cut-before---
+if (isSuccessfulSingleTransactionPlanResult(result)) {
+    console.log(result.context.signature); // Always available for successful results.
+    console.log(result.context.transaction); // Available if you stored it.
+    console.log(result.context.startedAt); // Custom context property.
+}
+
+if (isFailedSingleTransactionPlanResult(result)) {
+    console.log(result.error); // The error that caused the failure.
+    console.log(result.context.message); // Available if stored before the failure.
+    console.log(result.context.transaction); // Available if stored before the failure.
+    console.log(result.context.startedAt); // Custom context property.
+}
 ```
 
 Check out the [Recipes section](#recipes) at this end of this guide for ideas of what can be achieved with this API.
@@ -423,30 +515,34 @@ When you execute a transaction plan, you get back a `TransactionPlanResult` that
 
 Each transaction message in your plan can have one of three execution outcomes:
 
-- **Successful** - The transaction was sent and confirmed. You get the original transaction message, the executed `Transaction` object and any context data.
-- **Failed** - The transaction encountered an error. You get the original transaction message and the error that caused the failure.
-- **Canceled** - The transaction was skipped because an earlier transaction failed or the operation was aborted. You only get the original transaction message.
+- **Successful** - The transaction was sent and confirmed. You get the original planned message, a context object containing the signature (and optionally the transaction), plus any custom context data.
+- **Failed** - The transaction encountered an error. You get the original planned message, the error that caused the failure, and a context object with any data accumulated before the failure.
+- **Canceled** - The transaction was skipped because an earlier transaction failed or the operation was aborted. You get the original planned message with any context data accumulated before cancellation.
 
 The result structure mirrors your transaction plan structure:
 
-- Single transaction messages become `SingleTransactionPlanResult` with the original message plus execution status
+- Single transaction messages become `SingleTransactionPlanResult` with the original `plannedMessage` plus execution status
 - Sequential plans become `SequentialTransactionPlanResult` containing child results
 - Parallel plans become `ParallelTransactionPlanResult` containing child results
+
+Each `SingleTransactionPlanResult` has a `status` property that is a string literal (`'successful'`, `'failed'`, or `'canceled'`), and properties like `context`, `error` live at the top level of each variant.
 
 ```ts twoslash
 import {
     parallelTransactionPlan,
     singleTransactionPlan,
     parallelTransactionPlanResult,
-    successfulSingleTransactionPlanResult,
+    successfulSingleTransactionPlanResultFromTransaction,
     failedSingleTransactionPlanResult,
+    isSuccessfulSingleTransactionPlanResult,
+    isFailedSingleTransactionPlanResult,
     SolanaError,
-    BaseTransactionMessage,
+    TransactionMessage,
     TransactionMessageWithFeePayer,
     Transaction,
 } from '@solana/kit';
-const messageA = {} as unknown as BaseTransactionMessage & TransactionMessageWithFeePayer;
-const messageB = {} as unknown as BaseTransactionMessage & TransactionMessageWithFeePayer;
+const messageA = {} as unknown as TransactionMessage & TransactionMessageWithFeePayer;
+const messageB = {} as unknown as TransactionMessage & TransactionMessageWithFeePayer;
 const transactionA = {} as unknown as Transaction;
 const error = {} as unknown as SolanaError;
 // ---cut-before---
@@ -458,9 +554,22 @@ const plan = parallelTransactionPlan([
 
 // Your result may look like this:
 const result = parallelTransactionPlanResult([
-    successfulSingleTransactionPlanResult(messageA, transactionA),
+    successfulSingleTransactionPlanResultFromTransaction(messageA, transactionA),
     failedSingleTransactionPlanResult(messageB, error),
 ]);
+
+// Access the signature from a successful result:
+if (isSuccessfulSingleTransactionPlanResult(result.plans[0])) {
+    console.log(result.plans[0].context.signature);
+    console.log(result.plans[0].context.transaction); // If available
+}
+
+// Access the error from a failed result:
+if (isFailedSingleTransactionPlanResult(result.plans[1])) {
+    console.log(result.plans[1].error);
+    console.log(result.plans[1].context.signature); // If available
+    console.log(result.plans[1].context.transaction); // If available
+}
 ```
 
 ### Failed transaction executions
@@ -582,7 +691,7 @@ import {
     signTransactionMessageWithSigners,
     assertIsSendableTransaction,
     assertIsTransactionWithBlockhashLifetime,
-    BaseTransactionMessage,
+    TransactionMessage,
     TransactionMessageWithFeePayer,
 } from '@solana/kit';
 const rpc = {} as unknown as Rpc<SolanaRpcApi>;
@@ -600,20 +709,21 @@ const estimateCULimit = estimateComputeUnitLimitFactory({ rpc });
 const estimateAndSetCULimit = estimateAndUpdateProvisoryComputeUnitLimitFactory(estimateCULimit);
 
 const transactionPlanExecutor = createTransactionPlanExecutor({
-    executeTransactionMessage: async (
-        message: BaseTransactionMessage & TransactionMessageWithFeePayer,
-    ) => {
+    executeTransactionMessage: async (context, message) => {
         const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
         const messageWithBlockhash = setTransactionMessageLifetimeUsingBlockhash(
             latestBlockhash,
             message,
         );
+        context.message = messageWithBlockhash;
         const estimatedMessage = await estimateAndSetCULimit(messageWithBlockhash); // [!code ++]
+        context.message = estimatedMessage; // [!code ++]
         const transaction = await signTransactionMessageWithSigners(estimatedMessage);
+        context.transaction = transaction;
         assertIsSendableTransaction(transaction);
         assertIsTransactionWithBlockhashLifetime(transaction);
         await sendAndConfirmTransaction(transaction, { commitment: 'confirmed' });
-        return { transaction };
+        return transaction;
     },
 });
 ```
@@ -667,7 +777,7 @@ import {
     SolanaRpcSubscriptionsApi,
     signTransactionMessageWithSigners,
     assertIsSendableTransaction,
-    BaseTransactionMessage,
+    TransactionMessage,
     TransactionMessageWithFeePayer,
     assertIsTransactionWithDurableNonceLifetime,
 } from '@solana/kit';
@@ -687,15 +797,15 @@ const sendAndConfirmDurableNonceTransaction = sendAndConfirmDurableNonceTransact
 });
 
 const transactionPlanExecutor = createTransactionPlanExecutor({
-    executeTransactionMessage: async (
-        message: BaseTransactionMessage & TransactionMessageWithFeePayer,
-    ) => {
+    executeTransactionMessage: async (context, message) => {
         assertIsTransactionMessageWithDurableNonceLifetime(message); // [!code ++]
+        context.message = message;
         const transaction = await signTransactionMessageWithSigners(message);
+        context.transaction = transaction;
         assertIsSendableTransaction(transaction);
         assertIsTransactionWithDurableNonceLifetime(transaction);
         await sendAndConfirmDurableNonceTransaction(transaction, { commitment: 'confirmed' }); // [!code ++]
-        return { transaction };
+        return transaction;
     },
 });
 ```
