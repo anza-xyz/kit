@@ -29,6 +29,7 @@ import {
     getLinearMessagePackerInstructionPlan,
     getMessagePackerInstructionPlanFromInstructions,
     getReallocMessagePackerInstructionPlan,
+    isInstructionPlan,
     isMessagePackerInstructionPlan,
     isNonDivisibleSequentialInstructionPlan,
     isParallelInstructionPlan,
@@ -55,7 +56,7 @@ describe('singleInstructionPlan', () => {
     it('creates SingleInstructionPlan objects', () => {
         const instruction = createInstruction('A');
         const plan = singleInstructionPlan(instruction);
-        expect(plan).toStrictEqual({ instruction, kind: 'single' });
+        expect(plan).toStrictEqual({ instruction, kind: 'single', planType: 'instructionPlan' });
     });
     it('freezes created SingleInstructionPlan objects', () => {
         const instruction = createInstruction('A');
@@ -74,6 +75,7 @@ describe('parallelInstructionPlan', () => {
         ]);
         expect(plan).toStrictEqual({
             kind: 'parallel',
+            planType: 'instructionPlan',
             plans: [singleInstructionPlan(instructionA), singleInstructionPlan(instructionB)],
         });
     });
@@ -83,6 +85,7 @@ describe('parallelInstructionPlan', () => {
         const plan = parallelInstructionPlan([instructionA, instructionB]);
         expect(plan).toStrictEqual({
             kind: 'parallel',
+            planType: 'instructionPlan',
             plans: [singleInstructionPlan(instructionA), singleInstructionPlan(instructionB)],
         });
     });
@@ -93,9 +96,14 @@ describe('parallelInstructionPlan', () => {
         const plan = parallelInstructionPlan([instructionA, parallelInstructionPlan([instructionB, instructionC])]);
         expect(plan).toStrictEqual({
             kind: 'parallel',
+            planType: 'instructionPlan',
             plans: [
                 singleInstructionPlan(instructionA),
-                { kind: 'parallel', plans: [singleInstructionPlan(instructionB), singleInstructionPlan(instructionC)] },
+                {
+                    kind: 'parallel',
+                    planType: 'instructionPlan',
+                    plans: [singleInstructionPlan(instructionB), singleInstructionPlan(instructionC)],
+                },
             ],
         });
     });
@@ -118,6 +126,7 @@ describe('sequentialInstructionPlan', () => {
         expect(plan).toStrictEqual({
             divisible: true,
             kind: 'sequential',
+            planType: 'instructionPlan',
             plans: [singleInstructionPlan(instructionA), singleInstructionPlan(instructionB)],
         });
     });
@@ -128,6 +137,7 @@ describe('sequentialInstructionPlan', () => {
         expect(plan).toStrictEqual({
             divisible: true,
             kind: 'sequential',
+            planType: 'instructionPlan',
             plans: [singleInstructionPlan(instructionA), singleInstructionPlan(instructionB)],
         });
     });
@@ -139,11 +149,13 @@ describe('sequentialInstructionPlan', () => {
         expect(plan).toStrictEqual({
             divisible: true,
             kind: 'sequential',
+            planType: 'instructionPlan',
             plans: [
                 singleInstructionPlan(instructionA),
                 {
                     divisible: true,
                     kind: 'sequential',
+                    planType: 'instructionPlan',
                     plans: [singleInstructionPlan(instructionB), singleInstructionPlan(instructionC)],
                 },
             ],
@@ -168,6 +180,7 @@ describe('nonDivisibleSequentialInstructionPlan', () => {
         expect(plan).toStrictEqual({
             divisible: false,
             kind: 'sequential',
+            planType: 'instructionPlan',
             plans: [singleInstructionPlan(instructionA), singleInstructionPlan(instructionB)],
         });
     });
@@ -178,6 +191,7 @@ describe('nonDivisibleSequentialInstructionPlan', () => {
         expect(plan).toStrictEqual({
             divisible: false,
             kind: 'sequential',
+            planType: 'instructionPlan',
             plans: [singleInstructionPlan(instructionA), singleInstructionPlan(instructionB)],
         });
     });
@@ -192,11 +206,13 @@ describe('nonDivisibleSequentialInstructionPlan', () => {
         expect(plan).toStrictEqual({
             divisible: false,
             kind: 'sequential',
+            planType: 'instructionPlan',
             plans: [
                 singleInstructionPlan(instructionA),
                 {
                     divisible: false,
                     kind: 'sequential',
+                    planType: 'instructionPlan',
                     plans: [singleInstructionPlan(instructionB), singleInstructionPlan(instructionC)],
                 },
             ],
@@ -923,5 +939,39 @@ describe('flattenInstructionPlan', () => {
             singleInstructionPlan(instructionE),
             messagePackerPlan,
         ]);
+    });
+});
+
+describe('isInstructionPlan', () => {
+    it('returns true for SingleInstructionPlan', () => {
+        expect(isInstructionPlan(singleInstructionPlan(createInstruction('A')))).toBe(true);
+    });
+    it('returns true for ParallelInstructionPlan', () => {
+        expect(isInstructionPlan(parallelInstructionPlan([]))).toBe(true);
+    });
+    it('returns true for SequentialInstructionPlan', () => {
+        expect(isInstructionPlan(sequentialInstructionPlan([]))).toBe(true);
+    });
+    it('returns true for non-divisible SequentialInstructionPlan', () => {
+        expect(isInstructionPlan(nonDivisibleSequentialInstructionPlan([]))).toBe(true);
+    });
+    it('returns true for MessagePackerInstructionPlan', () => {
+        expect(isInstructionPlan(getMessagePackerInstructionPlanFromInstructions([]))).toBe(true);
+    });
+    it('returns false for non-objects', () => {
+        expect(isInstructionPlan(null)).toBe(false);
+        expect(isInstructionPlan(undefined)).toBe(false);
+        expect(isInstructionPlan('string')).toBe(false);
+        expect(isInstructionPlan(123)).toBe(false);
+        expect(isInstructionPlan(true)).toBe(false);
+    });
+    it('returns false for objects without planType', () => {
+        expect(isInstructionPlan({ kind: 'single' })).toBe(false);
+    });
+    it('returns false for objects with wrong planType', () => {
+        expect(isInstructionPlan({ planType: 123 })).toBe(false);
+        expect(isInstructionPlan({ planType: null })).toBe(false);
+        expect(isInstructionPlan({ planType: 'transactionPlan' })).toBe(false);
+        expect(isInstructionPlan({ planType: 'transactionPlanResult' })).toBe(false);
     });
 });

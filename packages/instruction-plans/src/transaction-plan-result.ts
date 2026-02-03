@@ -170,6 +170,7 @@ export type SequentialTransactionPlanResult<
 > = Readonly<{
     divisible: boolean;
     kind: 'sequential';
+    planType: 'transactionPlanResult';
     plans: TransactionPlanResult<TContext, TTransactionMessage, TSingle>[];
 }>;
 
@@ -206,6 +207,7 @@ export type ParallelTransactionPlanResult<
     >,
 > = Readonly<{
     kind: 'parallel';
+    planType: 'transactionPlanResult';
     plans: TransactionPlanResult<TContext, TTransactionMessage, TSingle>[];
 }>;
 
@@ -301,6 +303,7 @@ export type SuccessfulSingleTransactionPlanResult<
 > = {
     context: Readonly<SuccessfulBaseTransactionPlanResultContext & TContext>;
     kind: 'single';
+    planType: 'transactionPlanResult';
     plannedMessage: TTransactionMessage;
     status: 'successful';
 };
@@ -345,6 +348,7 @@ export type FailedSingleTransactionPlanResult<
     context: Readonly<BaseTransactionPlanResultContext & TContext>;
     error: Error;
     kind: 'single';
+    planType: 'transactionPlanResult';
     plannedMessage: TTransactionMessage;
     status: 'failed';
 };
@@ -384,6 +388,7 @@ export type CanceledSingleTransactionPlanResult<
 > = {
     context: Readonly<BaseTransactionPlanResultContext & TContext>;
     kind: 'single';
+    planType: 'transactionPlanResult';
     plannedMessage: TTransactionMessage;
     status: 'canceled';
 };
@@ -412,7 +417,7 @@ export type CanceledSingleTransactionPlanResult<
 export function sequentialTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
 >(plans: TransactionPlanResult<TContext>[]): SequentialTransactionPlanResult<TContext> & { divisible: true } {
-    return Object.freeze({ divisible: true, kind: 'sequential', plans });
+    return Object.freeze({ divisible: true, kind: 'sequential', planType: 'transactionPlanResult', plans });
 }
 
 /**
@@ -439,7 +444,7 @@ export function sequentialTransactionPlanResult<
 export function nonDivisibleSequentialTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
 >(plans: TransactionPlanResult<TContext>[]): SequentialTransactionPlanResult<TContext> & { divisible: false } {
-    return Object.freeze({ divisible: false, kind: 'sequential', plans });
+    return Object.freeze({ divisible: false, kind: 'sequential', planType: 'transactionPlanResult', plans });
 }
 
 /**
@@ -465,7 +470,7 @@ export function nonDivisibleSequentialTransactionPlanResult<
 export function parallelTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
 >(plans: TransactionPlanResult<TContext>[]): ParallelTransactionPlanResult<TContext> {
-    return Object.freeze({ kind: 'parallel', plans });
+    return Object.freeze({ kind: 'parallel', planType: 'transactionPlanResult', plans });
 }
 
 /**
@@ -505,6 +510,7 @@ export function successfulSingleTransactionPlanResultFromTransaction<
     return Object.freeze({
         context: Object.freeze({ ...((context ?? {}) as TContext), signature, transaction }),
         kind: 'single',
+        planType: 'transactionPlanResult',
         plannedMessage,
         status: 'successful',
     });
@@ -544,6 +550,7 @@ export function successfulSingleTransactionPlanResult<
     return Object.freeze({
         context: Object.freeze({ ...context }),
         kind: 'single',
+        planType: 'transactionPlanResult',
         plannedMessage,
         status: 'successful',
     });
@@ -588,6 +595,7 @@ export function failedSingleTransactionPlanResult<
         context: Object.freeze({ ...((context ?? {}) as TContext) }),
         error,
         kind: 'single',
+        planType: 'transactionPlanResult',
         plannedMessage,
         status: 'failed',
     });
@@ -622,9 +630,45 @@ export function canceledSingleTransactionPlanResult<
     return Object.freeze({
         context: Object.freeze({ ...((context ?? {}) as TContext) }),
         kind: 'single',
+        planType: 'transactionPlanResult',
         plannedMessage,
         status: 'canceled',
     });
+}
+
+/**
+ * Checks if the given value is a {@link TransactionPlanResult}.
+ *
+ * This type guard checks the `planType` property to determine if the value
+ * is a transaction plan result. This is useful when you have a value that could be
+ * an {@link InstructionPlan}, {@link TransactionPlan}, or {@link TransactionPlanResult}
+ * and need to narrow the type.
+ *
+ * @param value - The value to check.
+ * @return `true` if the value is a transaction plan result, `false` otherwise.
+ *
+ * @example
+ * ```ts
+ * function processItem(item: InstructionPlan | TransactionPlan | TransactionPlanResult) {
+ *   if (isTransactionPlanResult(item)) {
+ *     // item is narrowed to TransactionPlanResult
+ *     console.log(item.kind);
+ *   }
+ * }
+ * ```
+ *
+ * @see {@link TransactionPlanResult}
+ * @see {@link isInstructionPlan}
+ * @see {@link isTransactionPlan}
+ */
+export function isTransactionPlanResult(value: unknown): value is TransactionPlanResult {
+    return (
+        typeof value === 'object' &&
+        value !== null &&
+        'planType' in value &&
+        typeof value.planType === 'string' &&
+        value.planType === 'transactionPlanResult'
+    );
 }
 
 /**

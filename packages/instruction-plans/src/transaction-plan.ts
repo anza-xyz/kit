@@ -74,6 +74,7 @@ export type TransactionPlan = ParallelTransactionPlan | SequentialTransactionPla
 export type SequentialTransactionPlan = Readonly<{
     divisible: boolean;
     kind: 'sequential';
+    planType: 'transactionPlan';
     plans: TransactionPlan[];
 }>;
 
@@ -110,6 +111,7 @@ export type SequentialTransactionPlan = Readonly<{
  */
 export type ParallelTransactionPlan = Readonly<{
     kind: 'parallel';
+    planType: 'transactionPlan';
     plans: TransactionPlan[];
 }>;
 
@@ -134,6 +136,7 @@ export type SingleTransactionPlan<
 > = Readonly<{
     kind: 'single';
     message: TTransactionMessage;
+    planType: 'transactionPlan';
 }>;
 
 /**
@@ -162,7 +165,7 @@ export type SingleTransactionPlan<
 export function parallelTransactionPlan(
     plans: (TransactionPlan | (TransactionMessage & TransactionMessageWithFeePayer))[],
 ): ParallelTransactionPlan {
-    return Object.freeze({ kind: 'parallel', plans: parseSingleTransactionPlans(plans) });
+    return Object.freeze({ kind: 'parallel', planType: 'transactionPlan', plans: parseSingleTransactionPlans(plans) });
 }
 
 /**
@@ -191,7 +194,12 @@ export function parallelTransactionPlan(
 export function sequentialTransactionPlan(
     plans: (TransactionPlan | (TransactionMessage & TransactionMessageWithFeePayer))[],
 ): SequentialTransactionPlan & { divisible: true } {
-    return Object.freeze({ divisible: true, kind: 'sequential', plans: parseSingleTransactionPlans(plans) });
+    return Object.freeze({
+        divisible: true,
+        kind: 'sequential',
+        planType: 'transactionPlan',
+        plans: parseSingleTransactionPlans(plans),
+    });
 }
 
 /**
@@ -220,7 +228,12 @@ export function sequentialTransactionPlan(
 export function nonDivisibleSequentialTransactionPlan(
     plans: (TransactionPlan | (TransactionMessage & TransactionMessageWithFeePayer))[],
 ): SequentialTransactionPlan & { divisible: false } {
-    return Object.freeze({ divisible: false, kind: 'sequential', plans: parseSingleTransactionPlans(plans) });
+    return Object.freeze({
+        divisible: false,
+        kind: 'sequential',
+        planType: 'transactionPlan',
+        plans: parseSingleTransactionPlans(plans),
+    });
 }
 
 /**
@@ -238,13 +251,48 @@ export function singleTransactionPlan<
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
 >(transactionMessage: TTransactionMessage): SingleTransactionPlan<TTransactionMessage> {
-    return Object.freeze({ kind: 'single', message: transactionMessage });
+    return Object.freeze({ kind: 'single', message: transactionMessage, planType: 'transactionPlan' });
 }
 
 function parseSingleTransactionPlans(
     plans: (TransactionPlan | (TransactionMessage & TransactionMessageWithFeePayer))[],
 ): TransactionPlan[] {
     return plans.map(plan => ('kind' in plan ? plan : singleTransactionPlan(plan)));
+}
+
+/**
+ * Checks if the given value is a {@link TransactionPlan}.
+ *
+ * This type guard checks the `planType` property to determine if the value
+ * is a transaction plan. This is useful when you have a value that could be
+ * an {@link InstructionPlan}, {@link TransactionPlan}, or {@link TransactionPlanResult}
+ * and need to narrow the type.
+ *
+ * @param value - The value to check.
+ * @return `true` if the value is a transaction plan, `false` otherwise.
+ *
+ * @example
+ * ```ts
+ * function processItem(item: InstructionPlan | TransactionPlan | TransactionPlanResult) {
+ *   if (isTransactionPlan(item)) {
+ *     // item is narrowed to TransactionPlan
+ *     console.log(item.kind);
+ *   }
+ * }
+ * ```
+ *
+ * @see {@link TransactionPlan}
+ * @see {@link isInstructionPlan}
+ * @see {@link isTransactionPlanResult}
+ */
+export function isTransactionPlan(value: unknown): value is TransactionPlan {
+    return (
+        typeof value === 'object' &&
+        value !== null &&
+        'planType' in value &&
+        typeof value.planType === 'string' &&
+        value.planType === 'transactionPlan'
+    );
 }
 
 /**

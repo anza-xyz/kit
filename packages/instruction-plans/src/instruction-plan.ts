@@ -92,6 +92,7 @@ export type InstructionPlan =
 export type SequentialInstructionPlan = Readonly<{
     divisible: boolean;
     kind: 'sequential';
+    planType: 'instructionPlan';
     plans: InstructionPlan[];
 }>;
 
@@ -126,6 +127,7 @@ export type SequentialInstructionPlan = Readonly<{
  */
 export type ParallelInstructionPlan = Readonly<{
     kind: 'parallel';
+    planType: 'instructionPlan';
     plans: InstructionPlan[];
 }>;
 
@@ -147,6 +149,7 @@ export type ParallelInstructionPlan = Readonly<{
 export type SingleInstructionPlan<TInstruction extends Instruction = Instruction> = Readonly<{
     instruction: TInstruction;
     kind: 'single';
+    planType: 'instructionPlan';
 }>;
 
 /**
@@ -206,6 +209,7 @@ export type SingleInstructionPlan<TInstruction extends Instruction = Instruction
 export type MessagePackerInstructionPlan = Readonly<{
     getMessagePacker: () => MessagePacker;
     kind: 'messagePacker';
+    planType: 'instructionPlan';
 }>;
 
 /**
@@ -276,6 +280,7 @@ export type MessagePacker = Readonly<{
 export function parallelInstructionPlan(plans: (Instruction | InstructionPlan)[]): ParallelInstructionPlan {
     return Object.freeze({
         kind: 'parallel',
+        planType: 'instructionPlan',
         plans: parseSingleInstructionPlans(plans),
     });
 }
@@ -307,6 +312,7 @@ export function sequentialInstructionPlan(
     return Object.freeze({
         divisible: true,
         kind: 'sequential',
+        planType: 'instructionPlan',
         plans: parseSingleInstructionPlans(plans),
     });
 }
@@ -338,6 +344,7 @@ export function nonDivisibleSequentialInstructionPlan(
     return Object.freeze({
         divisible: false,
         kind: 'sequential',
+        planType: 'instructionPlan',
         plans: parseSingleInstructionPlans(plans),
     });
 }
@@ -353,11 +360,46 @@ export function nonDivisibleSequentialInstructionPlan(
  * @see {@link SingleInstructionPlan}
  */
 export function singleInstructionPlan(instruction: Instruction): SingleInstructionPlan {
-    return Object.freeze({ instruction, kind: 'single' });
+    return Object.freeze({ instruction, kind: 'single', planType: 'instructionPlan' });
 }
 
 function parseSingleInstructionPlans(plans: (Instruction | InstructionPlan)[]): InstructionPlan[] {
     return plans.map(plan => ('kind' in plan ? plan : singleInstructionPlan(plan)));
+}
+
+/**
+ * Checks if the given value is an {@link InstructionPlan}.
+ *
+ * This type guard checks the `planType` property to determine if the value
+ * is an instruction plan. This is useful when you have a value that could be
+ * an {@link InstructionPlan}, {@link TransactionPlan}, or {@link TransactionPlanResult}
+ * and need to narrow the type.
+ *
+ * @param value - The value to check.
+ * @return `true` if the value is an instruction plan, `false` otherwise.
+ *
+ * @example
+ * ```ts
+ * function processItem(item: InstructionPlan | TransactionPlan | TransactionPlanResult) {
+ *   if (isInstructionPlan(item)) {
+ *     // item is narrowed to InstructionPlan
+ *     console.log(item.kind);
+ *   }
+ * }
+ * ```
+ *
+ * @see {@link InstructionPlan}
+ * @see {@link isTransactionPlan}
+ * @see {@link isTransactionPlanResult}
+ */
+export function isInstructionPlan(value: unknown): value is InstructionPlan {
+    return (
+        typeof value === 'object' &&
+        value !== null &&
+        'planType' in value &&
+        typeof value.planType === 'string' &&
+        value.planType === 'instructionPlan'
+    );
 }
 
 /**
@@ -915,6 +957,7 @@ export function getLinearMessagePackerInstructionPlan({
             });
         },
         kind: 'messagePacker',
+        planType: 'instructionPlan',
     });
 }
 
@@ -984,6 +1027,7 @@ export function getMessagePackerInstructionPlanFromInstructions<TInstruction ext
             });
         },
         kind: 'messagePacker',
+        planType: 'instructionPlan',
     });
 }
 

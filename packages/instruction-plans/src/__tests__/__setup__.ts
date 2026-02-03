@@ -42,6 +42,7 @@ export function createSingleInstructionAtATimeMessagePackerInstructionPlan(
             };
         },
         kind: 'messagePacker',
+        planType: 'instructionPlan',
     });
 }
 
@@ -139,5 +140,6 @@ export function createMessagePackerInstructionPlan(
             };
         },
         kind: 'messagePacker',
+        planType: 'instructionPlan',
     });
 }

@@ -24,6 +24,7 @@ import {
     isSingleTransactionPlanResult,
     isSuccessfulSingleTransactionPlanResult,
     isSuccessfulTransactionPlanResult,
+    isTransactionPlanResult,
     nonDivisibleSequentialTransactionPlanResult,
     ParallelTransactionPlanResult,
     parallelTransactionPlanResult,
@@ -522,5 +523,16 @@ type CustomContext = { customData: string };
         assertIsSuccessfulTransactionPlanResult(plan);
         plan satisfies SuccessfulSingleTransactionPlanResult;
         plan satisfies SuccessfulTransactionPlanResult;
+    }
+}
+
+// [DESCRIBE] isTransactionPlanResult
+{
+    // It narrows to any TransactionPlanResult.
+    {
+        const plan = null as unknown;
+        if (isTransactionPlanResult(plan)) {
+            plan satisfies TransactionPlanResult;
+        }
     }
 }

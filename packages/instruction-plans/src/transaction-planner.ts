@@ -203,6 +203,7 @@ async function traverseSequential(
     return {
         divisible: instructionPlan.divisible,
         kind: 'sequential',
+        planType: 'transactionPlan',
         plans: transactionPlans,
     };
 }
@@ -239,7 +240,7 @@ async function traverseParallel(
     if (transactionPlans.length === 0) {
         return null;
     }
-    return { kind: 'parallel', plans: transactionPlans };
+    return { kind: 'parallel', planType: 'transactionPlan', plans: transactionPlans };
 }
 
 async function traverseSingle(
@@ -253,7 +254,7 @@ async function traverseSingle(
         return null;
     }
     const message = await createNewMessage(context, predicate);
-    return { kind: 'single', message };
+    return { kind: 'single', message, planType: 'transactionPlan' };
 }
 
 async function traverseMessagePacker(
@@ -268,7 +269,7 @@ async function traverseMessagePacker(
         const candidate = await selectAndMutateCandidate(context, candidates, messagePacker.packMessageToCapacity);
         if (!candidate) {
             const message = await createNewMessage(context, messagePacker.packMessageToCapacity);
-            const newPlan: MutableSingleTransactionPlan = { kind: 'single', message };
+            const newPlan: MutableSingleTransactionPlan = { kind: 'single', message, planType: 'transactionPlan' };
             transactionPlans.push(newPlan);
         }
     }
@@ -280,11 +281,12 @@ async function traverseMessagePacker(
         return null;
     }
     if (context.parent?.kind === 'parallel') {
-        return { kind: 'parallel', plans: transactionPlans };
+        return { kind: 'parallel', planType: 'transactionPlan', plans: transactionPlans };
     }
     return {
         divisible: context.parent?.kind === 'sequential' ? context.parent.divisible : true,
         kind: 'sequential',
+        planType: 'transactionPlan',
         plans: transactionPlans,
     };
 }

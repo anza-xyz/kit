@@ -10,6 +10,7 @@ import {
     isParallelTransactionPlan,
     isSequentialTransactionPlan,
     isSingleTransactionPlan,
+    isTransactionPlan,
     nonDivisibleSequentialTransactionPlan,
     ParallelTransactionPlan,
     parallelTransactionPlan,
@@ -182,5 +183,16 @@ const messageC = null as unknown as TransactionMessage & TransactionMessageWithF
         const plan = null as unknown as TransactionPlan;
         assertIsParallelTransactionPlan(plan);
         plan satisfies ParallelTransactionPlan;
+    }
+}
+
+// [DESCRIBE] isTransactionPlan
+{
+    // It narrows to any TransactionPlan.
+    {
+        const plan = null as unknown;
+        if (isTransactionPlan(plan)) {
+            plan satisfies TransactionPlan;
+        }
     }
 }

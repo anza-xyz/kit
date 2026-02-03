@@ -12,6 +12,7 @@ import {
     isParallelTransactionPlan,
     isSequentialTransactionPlan,
     isSingleTransactionPlan,
+    isTransactionPlan,
     nonDivisibleSequentialTransactionPlan,
     parallelTransactionPlan,
     sequentialTransactionPlan,
@@ -24,7 +25,7 @@ describe('singleTransactionPlan', () => {
     it('creates SingleTransactionPlan objects', () => {
         const messageA = createMessage('A');
         const plan = singleTransactionPlan(messageA);
-        expect(plan).toEqual({ kind: 'single', message: messageA });
+        expect(plan).toEqual({ kind: 'single', message: messageA, planType: 'transactionPlan' });
     });
     it('freezes created SingleTransactionPlan objects', () => {
         const messageA = createMessage('A');
@@ -40,6 +41,7 @@ describe('parallelTransactionPlan', () => {
         const plan = parallelTransactionPlan([singleTransactionPlan(messageA), singleTransactionPlan(messageB)]);
         expect(plan).toEqual({
             kind: 'parallel',
+            planType: 'transactionPlan',
             plans: [singleTransactionPlan(messageA), singleTransactionPlan(messageB)],
         });
     });
@@ -49,6 +51,7 @@ describe('parallelTransactionPlan', () => {
         const plan = parallelTransactionPlan([messageA, messageB]);
         expect(plan).toEqual({
             kind: 'parallel',
+            planType: 'transactionPlan',
             plans: [singleTransactionPlan(messageA), singleTransactionPlan(messageB)],
         });
     });
@@ -59,9 +62,14 @@ describe('parallelTransactionPlan', () => {
         const plan = parallelTransactionPlan([messageA, parallelTransactionPlan([messageB, messageC])]);
         expect(plan).toEqual({
             kind: 'parallel',
+            planType: 'transactionPlan',
             plans: [
                 singleTransactionPlan(messageA),
-                { kind: 'parallel', plans: [singleTransactionPlan(messageB), singleTransactionPlan(messageC)] },
+                {
+                    kind: 'parallel',
+                    planType: 'transactionPlan',
+                    plans: [singleTransactionPlan(messageB), singleTransactionPlan(messageC)],
+                },
             ],
         });
     });
@@ -81,6 +89,7 @@ describe('sequentialTransactionPlan', () => {
         expect(plan).toEqual({
             divisible: true,
             kind: 'sequential',
+            planType: 'transactionPlan',
             plans: [singleTransactionPlan(messageA), singleTransactionPlan(messageB)],
         });
     });
@@ -91,6 +100,7 @@ describe('sequentialTransactionPlan', () => {
         expect(plan).toEqual({
             divisible: true,
             kind: 'sequential',
+            planType: 'transactionPlan',
             plans: [singleTransactionPlan(messageA), singleTransactionPlan(messageB)],
         });
     });
@@ -102,11 +112,13 @@ describe('sequentialTransactionPlan', () => {
         expect(plan).toEqual({
             divisible: true,
             kind: 'sequential',
+            planType: 'transactionPlan',
             plans: [
                 singleTransactionPlan(messageA),
                 {
                     divisible: true,
                     kind: 'sequential',
+                    planType: 'transactionPlan',
                     plans: [singleTransactionPlan(messageB), singleTransactionPlan(messageC)],
                 },
             ],
@@ -131,6 +143,7 @@ describe('nonDivisibleSequentialTransactionPlan', () => {
         expect(plan).toEqual({
             divisible: false,
             kind: 'sequential',
+            planType: 'transactionPlan',
             plans: [singleTransactionPlan(messageA), singleTransactionPlan(messageB)],
         });
     });
@@ -141,6 +154,7 @@ describe('nonDivisibleSequentialTransactionPlan', () => {
         expect(plan).toEqual({
             divisible: false,
             kind: 'sequential',
+            planType: 'transactionPlan',
             plans: [singleTransactionPlan(messageA), singleTransactionPlan(messageB)],
         });
     });
@@ -155,11 +169,13 @@ describe('nonDivisibleSequentialTransactionPlan', () => {
         expect(plan).toEqual({
             divisible: false,
             kind: 'sequential',
+            planType: 'transactionPlan',
             plans: [
                 singleTransactionPlan(messageA),
                 {
                     divisible: false,
                     kind: 'sequential',
+                    planType: 'transactionPlan',
                     plans: [singleTransactionPlan(messageB), singleTransactionPlan(messageC)],
                 },
             ],
@@ -617,5 +633,36 @@ describe('transformTransactionPlan', () => {
         const plan = parallelTransactionPlan([createMessage('A')]);
         const transformedPlan = transformTransactionPlan(plan, p => ({ ...p }));
         expect(transformedPlan).toBeFrozenObject();
+    });
+});
+
+describe('isTransactionPlan', () => {
+    it('returns true for SingleTransactionPlan', () => {
+        expect(isTransactionPlan(singleTransactionPlan(createMessage('A')))).toBe(true);
+    });
+    it('returns true for ParallelTransactionPlan', () => {
+        expect(isTransactionPlan(parallelTransactionPlan([]))).toBe(true);
+    });
+    it('returns true for SequentialTransactionPlan', () => {
+        expect(isTransactionPlan(sequentialTransactionPlan([]))).toBe(true);
+    });
+    it('returns true for non-divisible SequentialTransactionPlan', () => {
+        expect(isTransactionPlan(nonDivisibleSequentialTransactionPlan([]))).toBe(true);
+    });
+    it('returns false for non-objects', () => {
+        expect(isTransactionPlan(null)).toBe(false);
+        expect(isTransactionPlan(undefined)).toBe(false);
+        expect(isTransactionPlan('string')).toBe(false);
+        expect(isTransactionPlan(123)).toBe(false);
+        expect(isTransactionPlan(true)).toBe(false);
+    });
+    it('returns false for objects without planType', () => {
+        expect(isTransactionPlan({ kind: 'single' })).toBe(false);
+    });
+    it('returns false for objects with wrong planType', () => {
+        expect(isTransactionPlan({ planType: 123 })).toBe(false);
+        expect(isTransactionPlan({ planType: null })).toBe(false);
+        expect(isTransactionPlan({ planType: 'instructionPlan' })).toBe(false);
+        expect(isTransactionPlan({ planType: 'transactionPlanResult' })).toBe(false);
     });
 });

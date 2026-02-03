@@ -11,6 +11,7 @@ import {
     getMessagePackerInstructionPlanFromInstructions,
     getReallocMessagePackerInstructionPlan,
     InstructionPlan,
+    isInstructionPlan,
     isMessagePackerInstructionPlan,
     isNonDivisibleSequentialInstructionPlan,
     isParallelInstructionPlan,
@@ -244,5 +245,16 @@ const instructionC = null as unknown as Instruction & { id: 'C' };
         const plan = null as unknown as InstructionPlan;
         assertIsParallelInstructionPlan(plan);
         plan satisfies ParallelInstructionPlan;
+    }
+}
+
+// [DESCRIBE] isInstructionPlan
+{
+    // It narrows to any InstructionPlan.
+    {
+        const plan = null as unknown;
+        if (isInstructionPlan(plan)) {
+            plan satisfies InstructionPlan;
+        }
     }
 }

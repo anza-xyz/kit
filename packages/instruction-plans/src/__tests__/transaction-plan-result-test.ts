@@ -31,6 +31,7 @@ import {
     isSingleTransactionPlanResult,
     isSuccessfulSingleTransactionPlanResult,
     isSuccessfulTransactionPlanResult,
+    isTransactionPlanResult,
     nonDivisibleSequentialTransactionPlanResult,
     parallelTransactionPlanResult,
     sequentialTransactionPlanResult,
@@ -49,6 +50,7 @@ describe('successfulSingleTransactionPlanResultFromTransaction', () => {
         expect(result).toEqual({
             context: { signature: 'A', transaction: transactionA },
             kind: 'single',
+            planType: 'transactionPlanResult',
             plannedMessage: messageA,
             status: 'successful',
         });
@@ -61,6 +63,7 @@ describe('successfulSingleTransactionPlanResultFromTransaction', () => {
         expect(result).toEqual({
             context: { ...context, signature: 'A', transaction: transactionA },
             kind: 'single',
+            planType: 'transactionPlanResult',
             plannedMessage: messageA,
             status: 'successful',
         });
@@ -87,6 +90,7 @@ describe('successfulSingleTransactionPlanResult', () => {
         expect(result).toEqual({
             context: { signature: 'A' },
             kind: 'single',
+            planType: 'transactionPlanResult',
             plannedMessage: messageA,
             status: 'successful',
         });
@@ -99,6 +103,7 @@ describe('successfulSingleTransactionPlanResult', () => {
         expect(result).toEqual({
             context: { ...context, signature: 'A' },
             kind: 'single',
+            planType: 'transactionPlanResult',
             plannedMessage: messageA,
             status: 'successful',
         });
@@ -126,6 +131,7 @@ describe('failedSingleTransactionPlanResult', () => {
             context: {},
             error,
             kind: 'single',
+            planType: 'transactionPlanResult',
             plannedMessage: messageA,
             status: 'failed',
         });
@@ -151,6 +157,7 @@ describe('canceledSingleTransactionPlanResult', () => {
         expect(result).toEqual({
             context: {},
             kind: 'single',
+            planType: 'transactionPlanResult',
             plannedMessage: messageA,
             status: 'canceled',
         });
@@ -174,6 +181,7 @@ describe('parallelTransactionPlanResult', () => {
         const result = parallelTransactionPlanResult([planA, planB]);
         expect(result).toEqual({
             kind: 'parallel',
+            planType: 'transactionPlanResult',
             plans: [planA, planB],
         });
     });
@@ -184,7 +192,8 @@ describe('parallelTransactionPlanResult', () => {
         const result = parallelTransactionPlanResult([planA, parallelTransactionPlanResult([planB, planC])]);
         expect(result).toEqual({
             kind: 'parallel',
-            plans: [planA, { kind: 'parallel', plans: [planB, planC] }],
+            planType: 'transactionPlanResult',
+            plans: [planA, { kind: 'parallel', planType: 'transactionPlanResult', plans: [planB, planC] }],
         });
     });
     it('freezes created ParallelTransactionPlanResult objects', () => {
@@ -203,6 +212,7 @@ describe('sequentialTransactionPlanResult', () => {
         expect(result).toEqual({
             divisible: true,
             kind: 'sequential',
+            planType: 'transactionPlanResult',
             plans: [planA, planB],
         });
     });
@@ -214,7 +224,11 @@ describe('sequentialTransactionPlanResult', () => {
         expect(result).toEqual({
             divisible: true,
             kind: 'sequential',
-            plans: [planA, { divisible: true, kind: 'sequential', plans: [planB, planC] }],
+            planType: 'transactionPlanResult',
+            plans: [
+                planA,
+                { divisible: true, kind: 'sequential', planType: 'transactionPlanResult', plans: [planB, planC] },
+            ],
         });
     });
     it('freezes created SequentialTransactionPlanResult objects', () => {
@@ -233,6 +247,7 @@ describe('nonDivisibleSequentialTransactionPlanResult', () => {
         expect(result).toEqual({
             divisible: false,
             kind: 'sequential',
+            planType: 'transactionPlanResult',
             plans: [planA, planB],
         });
     });
@@ -247,7 +262,11 @@ describe('nonDivisibleSequentialTransactionPlanResult', () => {
         expect(result).toEqual({
             divisible: false,
             kind: 'sequential',
-            plans: [planA, { divisible: false, kind: 'sequential', plans: [planB, planC] }],
+            planType: 'transactionPlanResult',
+            plans: [
+                planA,
+                { divisible: false, kind: 'sequential', planType: 'transactionPlanResult', plans: [planB, planC] },
+            ],
         });
     });
     it('freezes created SequentialTransactionPlanResult objects', () => {
@@ -1586,5 +1605,45 @@ describe('getFirstFailedSingleTransactionPlanResult', () => {
         // But it should not be enumerable (won't appear in Object.keys or JSON.stringify)
         expect(Object.keys(caughtError!.context)).not.toContain('transactionPlanResult');
         expect(Object.prototype.propertyIsEnumerable.call(caughtError!.context, 'transactionPlanResult')).toBe(false);
+    });
+});
+
+describe('isTransactionPlanResult', () => {
+    it('returns true for SuccessfulSingleTransactionPlanResult', () => {
+        const signature = 'A' as Signature;
+        expect(isTransactionPlanResult(successfulSingleTransactionPlanResult(createMessage('A'), { signature }))).toBe(
+            true,
+        );
+    });
+    it('returns true for FailedSingleTransactionPlanResult', () => {
+        expect(isTransactionPlanResult(failedSingleTransactionPlanResult(createMessage('A'), new Error()))).toBe(true);
+    });
+    it('returns true for CanceledSingleTransactionPlanResult', () => {
+        expect(isTransactionPlanResult(canceledSingleTransactionPlanResult(createMessage('A')))).toBe(true);
+    });
+    it('returns true for ParallelTransactionPlanResult', () => {
+        expect(isTransactionPlanResult(parallelTransactionPlanResult([]))).toBe(true);
+    });
+    it('returns true for SequentialTransactionPlanResult', () => {
+        expect(isTransactionPlanResult(sequentialTransactionPlanResult([]))).toBe(true);
+    });
+    it('returns true for non-divisible SequentialTransactionPlanResult', () => {
+        expect(isTransactionPlanResult(nonDivisibleSequentialTransactionPlanResult([]))).toBe(true);
+    });
+    it('returns false for non-objects', () => {
+        expect(isTransactionPlanResult(null)).toBe(false);
+        expect(isTransactionPlanResult(undefined)).toBe(false);
+        expect(isTransactionPlanResult('string')).toBe(false);
+        expect(isTransactionPlanResult(123)).toBe(false);
+        expect(isTransactionPlanResult(true)).toBe(false);
+    });
+    it('returns false for objects without planType', () => {
+        expect(isTransactionPlanResult({ kind: 'single', status: 'successful' })).toBe(false);
+    });
+    it('returns false for objects with wrong planType', () => {
+        expect(isTransactionPlanResult({ planType: 123 })).toBe(false);
+        expect(isTransactionPlanResult({ planType: null })).toBe(false);
+        expect(isTransactionPlanResult({ planType: 'instructionPlan' })).toBe(false);
+        expect(isTransactionPlanResult({ planType: 'transactionPlan' })).toBe(false);
     });
 });
