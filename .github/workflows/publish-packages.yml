@@ -93,8 +93,8 @@ jobs:
         id: start-test-validator
         uses: ./.github/workflows/actions/setup-validator
 
-      - name: Run Build Step (force)
-        run: pnpm turbo build --force=true
+      - name: Run Build Step
+        run: pnpm build
 
       - name: Publish Canary Releases
         run: |
