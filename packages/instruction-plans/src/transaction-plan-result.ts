@@ -23,9 +23,9 @@ import { getSignatureFromTransaction, Transaction } from '@solana/transactions';
  *   were executed sequentially. It also retains the divisibility property from the
  *   original plan.
  *
- * @template TContext - The type of the context object that may be passed along with results
- * @template TTransactionMessage - The type of the transaction message
- * @template TSingle - The type of single transaction plan results in this tree
+ * @typeParam TContext - The type of the context object that may be passed along with results
+ * @typeParam TTransactionMessage - The type of the transaction message
+ * @typeParam TSingle - The type of single transaction plan results in this tree
  *
  * @see {@link SingleTransactionPlanResult}
  * @see {@link ParallelTransactionPlanResult}
@@ -56,8 +56,8 @@ export type TransactionPlanResult<
  * plan result tree (which may contain parallel/sequential structures) where all
  * leaf nodes are successful.
  *
- * @template TContext - The type of the context object that may be passed along with results
- * @template TTransactionMessage - The type of the transaction message
+ * @typeParam TContext - The type of the context object that may be passed along with results
+ * @typeParam TTransactionMessage - The type of the transaction message
  *
  * @see {@link isSuccessfulTransactionPlanResult}
  * @see {@link assertIsSuccessfulTransactionPlanResult}
@@ -133,9 +133,9 @@ export interface SuccessfulBaseTransactionPlanResultContext extends BaseTransact
  * You may use the {@link sequentialTransactionPlanResult} and
  * {@link nonDivisibleSequentialTransactionPlanResult} helpers to create objects of this type.
  *
- * @template TContext - The type of the context object that may be passed along with results
- * @template TTransactionMessage - The type of the transaction message
- * @template TSingle - The type of single transaction plan results in this tree
+ * @typeParam TContext - The type of the context object that may be passed along with results
+ * @typeParam TTransactionMessage - The type of the transaction message
+ * @typeParam TSingle - The type of single transaction plan results in this tree
  *
  * @example
  * ```ts
@@ -181,9 +181,9 @@ export type SequentialTransactionPlanResult<
  *
  * You may use the {@link parallelTransactionPlanResult} helper to create objects of this type.
  *
- * @template TContext - The type of the context object that may be passed along with results
- * @template TTransactionMessage - The type of the transaction message
- * @template TSingle - The type of single transaction plan results in this tree
+ * @typeParam TContext - The type of the context object that may be passed along with results
+ * @typeParam TTransactionMessage - The type of the transaction message
+ * @typeParam TSingle - The type of single transaction plan results in this tree
  *
  * @example
  * ```ts
@@ -219,8 +219,8 @@ export type ParallelTransactionPlanResult<
  * {@link failedSingleTransactionPlanResult}, or {@link canceledSingleTransactionPlanResult}
  * helpers to create objects of this type.
  *
- * @template TContext - The type of the context object that may be passed along with results
- * @template TTransactionMessage - The type of the transaction message
+ * @typeParam TContext - The type of the context object that may be passed along with results
+ * @typeParam TTransactionMessage - The type of the transaction message
  *
  * @example
  * Successful result with a transaction and context.
@@ -275,8 +275,8 @@ export type SingleTransactionPlanResult<
  * {@link successfulSingleTransactionPlanResult} helpers to
  * create objects of this type.
  *
- * @template TContext - The type of the context object that may be passed along with the result.
- * @template TTransactionMessage - The type of the transaction message.
+ * @typeParam TContext - The type of the context object that may be passed along with the result.
+ * @typeParam TTransactionMessage - The type of the transaction message.
  *
  * @example
  * Creating a successful result from a transaction.
@@ -319,8 +319,8 @@ export type SuccessfulSingleTransactionPlanResult<
  * You may use the {@link failedSingleTransactionPlanResult} helper to
  * create objects of this type.
  *
- * @template TContext - The type of the context object that may be passed along with the result.
- * @template TTransactionMessage - The type of the transaction message.
+ * @typeParam TContext - The type of the context object that may be passed along with the result.
+ * @typeParam TTransactionMessage - The type of the transaction message.
  *
  * @example
  * Creating a failed result from a transaction message and error.
@@ -363,8 +363,8 @@ export type FailedSingleTransactionPlanResult<
  * You may use the {@link canceledSingleTransactionPlanResult} helper to
  * create objects of this type.
  *
- * @template TContext - The type of the context object that may be passed along with the result.
- * @template TTransactionMessage - The type of the transaction message.
+ * @typeParam TContext - The type of the context object that may be passed along with the result.
+ * @typeParam TTransactionMessage - The type of the transaction message.
  *
  * @example
  * Creating a canceled result from a transaction message.
@@ -395,7 +395,7 @@ export type CanceledSingleTransactionPlanResult<
  * indicating that the nested plans were executed sequentially but could have been
  * split into separate transactions or batches.
  *
- * @template TContext - The type of the context object that may be passed along with results
+ * @typeParam TContext - The type of the context object that may be passed along with results
  * @param plans - The child results that were executed sequentially
  *
  * @example
@@ -422,7 +422,7 @@ export function sequentialTransactionPlanResult<
  * indicating that the nested plans were executed sequentially and could not have been
  * split into separate transactions or batches (e.g., they were executed as a transaction bundle).
  *
- * @template TContext - The type of the context object that may be passed along with results
+ * @typeParam TContext - The type of the context object that may be passed along with results
  * @param plans - The child results that were executed sequentially
  *
  * @example
@@ -448,7 +448,7 @@ export function nonDivisibleSequentialTransactionPlanResult<
  * This function creates a parallel result indicating that the nested plans
  * were executed in parallel.
  *
- * @template TContext - The type of the context object that may be passed along with results
+ * @typeParam TContext - The type of the context object that may be passed along with results
  * @param plans - The child results that were executed in parallel
  *
  * @example
@@ -475,8 +475,8 @@ export function parallelTransactionPlanResult<
  * the transaction was successfully executed. It also includes the original transaction
  * message, the executed transaction, and an optional context object.
  *
- * @template TContext - The type of the context object
- * @template TTransactionMessage - The type of the transaction message
+ * @typeParam TContext - The type of the context object
+ * @typeParam TTransactionMessage - The type of the transaction message
  * @param plannedMessage - The original transaction message
  * @param transaction - The successfully executed transaction
  * @param context - Optional context object to be included with the result
@@ -517,8 +517,8 @@ export function successfulSingleTransactionPlanResultFromTransaction<
  * the transaction was successfully executed. It also includes the original transaction
  * message and a context object that must contain at least a {@link Signature}.
  *
- * @template TContext - The type of the context object
- * @template TTransactionMessage - The type of the transaction message
+ * @typeParam TContext - The type of the context object
+ * @typeParam TTransactionMessage - The type of the transaction message
  * @param plannedMessage - The original transaction message
  * @param context - Context object to be included with the result, must include a `signature` property
  *
@@ -556,8 +556,8 @@ export function successfulSingleTransactionPlanResult<
  * the transaction execution failed. It includes the original transaction message
  * and the error that caused the failure.
  *
- * @template TContext - The type of the context object
- * @template TTransactionMessage - The type of the transaction message
+ * @typeParam TContext - The type of the context object
+ * @typeParam TTransactionMessage - The type of the transaction message
  * @param plannedMessage - The original transaction message
  * @param error - The error that caused the transaction to fail
  *
@@ -599,8 +599,8 @@ export function failedSingleTransactionPlanResult<
  * This function creates a single result with a 'canceled' status, indicating that
  * the transaction execution was canceled. It includes the original transaction message.
  *
- * @template TContext - The type of the context object
- * @template TTransactionMessage - The type of the transaction message
+ * @typeParam TContext - The type of the context object
+ * @typeParam TTransactionMessage - The type of the transaction message
  * @param plannedMessage - The original transaction message
  *
  * @example
@@ -1194,9 +1194,9 @@ export function assertIsSuccessfulTransactionPlanResult<
  * returning the first result that satisfies the predicate. It checks the root result
  * first, then recursively searches through nested results.
  *
- * @template TContext - The type of the context object that may be passed along with results
- * @template TTransactionMessage - The type of the transaction message
- * @template TSingle - The type of single transaction plan results in this tree
+ * @typeParam TContext - The type of the context object that may be passed along with results
+ * @typeParam TTransactionMessage - The type of the transaction message
+ * @typeParam TSingle - The type of single transaction plan results in this tree
  * @param transactionPlanResult - The transaction plan result tree to search.
  * @param predicate - A function that returns `true` for the result to find.
  * @returns The first matching transaction plan result, or `undefined` if no match is found.
@@ -1255,8 +1255,8 @@ export function findTransactionPlanResult<
  * and returns the first single transaction result with a 'failed' status. If no failed
  * result is found, it throws a {@link SolanaError}.
  *
- * @template TContext - The type of the context object that may be passed along with results
- * @template TTransactionMessage - The type of the transaction message
+ * @typeParam TContext - The type of the context object that may be passed along with results
+ * @typeParam TTransactionMessage - The type of the transaction message
  * @param transactionPlanResult - The transaction plan result tree to search.
  * @return The first failed single transaction plan result.
  * @throws Throws a {@link SolanaError} with code
@@ -1316,9 +1316,9 @@ export function getFirstFailedSingleTransactionPlanResult<
  * returning `true` only if the predicate returns `true` for every result in the tree
  * (including the root result and all nested results).
  *
- * @template TContext - The type of the context object that may be passed along with results
- * @template TTransactionMessage - The type of the transaction message
- * @template TSingle - The type of single transaction plan results in this tree
+ * @typeParam TContext - The type of the context object that may be passed along with results
+ * @typeParam TTransactionMessage - The type of the transaction message
+ * @typeParam TSingle - The type of single transaction plan results in this tree
  * @param transactionPlanResult - The transaction plan result tree to check.
  * @param predicate - A function that returns `true` if the result satisfies the condition.
  * @return `true` if every result in the tree satisfies the predicate, `false` otherwise.
@@ -1434,9 +1434,9 @@ export function transformTransactionPlanResult(
  * all the single results they contain. It's useful when you need to access all the individual
  * transaction results, regardless of their organization in the result tree (parallel or sequential).
  *
- * @template TContext - The type of the context object that may be passed along with results
- * @template TTransactionMessage - The type of the transaction message
- * @template TSingle - The type of single transaction plan results in this tree
+ * @typeParam TContext - The type of the context object that may be passed along with results
+ * @typeParam TTransactionMessage - The type of the transaction message
+ * @typeParam TSingle - The type of single transaction plan results in this tree
  * @param result - The transaction plan result to extract single results from
  * @returns An array of all single transaction plan results contained in the tree
  *
@@ -1494,8 +1494,8 @@ export type TransactionPlanResultSummary<
 /**
  * Summarize a {@link TransactionPlanResult} into a {@link TransactionPlanResultSummary}.
  *
- * @template TContext - The type of the context object that may be passed along with results
- * @template TTransactionMessage - The type of the transaction message
+ * @typeParam TContext - The type of the context object that may be passed along with results
+ * @typeParam TTransactionMessage - The type of the transaction message
  * @param result The transaction plan result to summarize
  * @returns A summary of the transaction plan result
  */
