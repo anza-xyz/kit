@@ -13,4 +13,4 @@
 
 This package contains types and functions for planning transaction from multiple instructions. It can be used standalone, but it is also exported as part of Kit [`@solana/kit`](https://github.com/anza-xyz/kit/tree/main/packages/kit).
 
-TODO
+You can read more about instruction plans in the [official Kit documentation](https://www.solanakit.com/docs/concepts/instruction-plans).
