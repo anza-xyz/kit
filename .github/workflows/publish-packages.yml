@@ -93,15 +93,22 @@ jobs:
         id: start-test-validator
         uses: ./.github/workflows/actions/setup-validator
 
+      - name: Clear devDependencies before publishing
+        run: |
+          if [ -n "$(find .changeset -name '*.md')" ]; then
+            find packages/* -maxdepth 0 -type d -print0 | \
+              xargs -t0 -n 1 -I {} \
+                sh -c 'cd {} && pnpm pkg delete devDependencies'
+          else
+            echo "No changesets found, skipping devDependencies cleanup"
+          fi
+
       - name: Run Build Step
         run: pnpm build
 
       - name: Publish Canary Releases
         run: |
           if [ -n "$(find .changeset -name '*.md')" ]; then
-            find packages/* -maxdepth 0 -type d -print0 | \
-              xargs -t0 -n 1 -I {} \
-                sh -c 'cd {} && pnpm pkg delete devDependencies'
             pnpm changeset version --snapshot canary
             pnpm turbo publish-packages --concurrency=${TURBO_CONCURRENCY:-1}
           else
