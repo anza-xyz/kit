@@ -6,7 +6,6 @@ import {
     assertIsSequentialTransactionPlan,
     assertIsSingleTransactionPlan,
     flattenTransactionPlan,
-    getAllSingleTransactionPlans,
     isNonDivisibleSequentialTransactionPlan,
     isParallelTransactionPlan,
     isSequentialTransactionPlan,
@@ -79,26 +78,6 @@ const messageC = null as unknown as TransactionMessage & TransactionMessageWithF
     {
         const plan = singleTransactionPlan(messageA);
         plan satisfies SingleTransactionPlan;
-    }
-}
-
-// [DESCRIBE] getAllSingleTransactionPlans
-{
-    // It extracts single transaction plans from a simple plan.
-    {
-        const plan = singleTransactionPlan(messageA);
-        const singlePlans = getAllSingleTransactionPlans(plan);
-        singlePlans satisfies SingleTransactionPlan[];
-    }
-
-    // It extracts single transaction plans from a nested plan.
-    {
-        const plan = parallelTransactionPlan([
-            sequentialTransactionPlan([messageA, messageB]),
-            nonDivisibleSequentialTransactionPlan([messageC]),
-        ]);
-        const singlePlans = getAllSingleTransactionPlans(plan);
-        singlePlans satisfies SingleTransactionPlan[];
     }
 }
 

@@ -458,11 +458,6 @@ export function assertIsParallelTransactionPlan(plan: TransactionPlan): asserts 
 }
 
 /**
- * @deprecated Use {@link flattenTransactionPlan} instead.
- */
-export const getAllSingleTransactionPlans = flattenTransactionPlan;
-
-/**
  * Retrieves all individual {@link SingleTransactionPlan} instances from a transaction plan tree.
  *
  * This function recursively traverses any nested structure of transaction plans and extracts
