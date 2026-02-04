@@ -29,9 +29,6 @@ import {
         const result = pipe(createTransactionMessage({ version: null as unknown as TransactionVersion }), m =>
             setTransactionMessageFeePayer(null as unknown as Address, m),
         );
-        result satisfies TransactionMessage & TransactionMessageWithFeePayer;
-        result satisfies TransactionMessageWithSigners;
-        // @ts-expect-error FIXME
         result satisfies TransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithSigners;
     }
 
@@ -66,9 +63,6 @@ import {
             m => setTransactionMessageFeePayer(null as unknown as Address, m),
             m => appendTransactionMessageInstructions(null as unknown as Instruction[], m),
         );
-        result satisfies TransactionMessage & TransactionMessageWithFeePayer;
-        result satisfies TransactionMessageWithSigners;
-        // @ts-expect-error FIXME
         result satisfies TransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithSigners;
     }
 
@@ -89,9 +83,6 @@ import {
             m => setTransactionMessageFeePayer(null as unknown as Address, m),
             m => appendTransactionMessageInstructions(null as unknown as (Instruction & InstructionWithSigners)[], m),
         );
-        result satisfies TransactionMessage & TransactionMessageWithFeePayer;
-        result satisfies TransactionMessageWithSigners;
-        // @ts-expect-error FIXME
         result satisfies TransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithSigners;
     }
 

@@ -114,7 +114,9 @@ export type TransactionMessageWithSigners<
     TAddress extends string = string,
     TSigner extends TransactionSigner<TAddress> = TransactionSigner<TAddress>,
     TAccounts extends readonly AccountMetaWithSigner<TSigner>[] = readonly AccountMetaWithSigner<TSigner>[],
-> = Partial<TransactionMessageWithFeePayer<TAddress> | TransactionMessageWithFeePayerSigner<TAddress, TSigner>> &
+> = Partial<
+    Pick<TransactionMessageWithFeePayer<TAddress> | TransactionMessageWithFeePayerSigner<TAddress, TSigner>, 'feePayer'>
+> &
     Readonly<{ instructions: readonly (Instruction & InstructionWithSigners<TSigner, TAccounts>)[] }>;
 
 /**
