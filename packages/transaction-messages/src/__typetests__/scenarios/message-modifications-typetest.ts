@@ -32,10 +32,8 @@ const instruction = null as unknown as Instruction;
 {
     // It sets the blockhash after `createTransactionMessage`
     {
-        const message = pipe(
-            createTransactionMessage({ version: null as unknown as TransactionVersion }),
-            // @ts-expect-error FIXME
-            m => setTransactionMessageLifetimeUsingBlockhash(blockhashLifetime, m),
+        const message = pipe(createTransactionMessage({ version: null as unknown as TransactionVersion }), m =>
+            setTransactionMessageLifetimeUsingBlockhash(blockhashLifetime, m),
         );
         message satisfies TransactionMessage & TransactionMessageWithBlockhashLifetime;
     }
@@ -45,10 +43,8 @@ const instruction = null as unknown as Instruction;
         const message = pipe(
             createTransactionMessage({ version: null as unknown as TransactionVersion }),
             m => setTransactionMessageFeePayer(null as unknown as Address, m),
-            // @ts-expect-error FIXME
             m => setTransactionMessageLifetimeUsingBlockhash(blockhashLifetime, m),
         );
-        // @ts-expect-error FIXME
         message satisfies TransactionMessage & TransactionMessageWithBlockhashLifetime & TransactionMessageWithFeePayer;
     }
 
@@ -62,7 +58,6 @@ const instruction = null as unknown as Instruction;
 
         const messageWithBlockhash = setTransactionMessageLifetimeUsingBlockhash(
             blockhashLifetime,
-            // @ts-expect-error FIXME
             messageWithDurableNonce,
         );
         messageWithBlockhash satisfies TransactionMessage & TransactionMessageWithBlockhashLifetime;
@@ -96,7 +91,6 @@ const instruction = null as unknown as Instruction;
             m => prependTransactionMessageInstruction(instruction, m),
             m => appendTransactionMessageInstructions([instruction], m),
             m => prependTransactionMessageInstructions([instruction], m),
-            // @ts-expect-error FIXME
             m => setTransactionMessageLifetimeUsingBlockhash(blockhashLifetime, m),
         );
         message satisfies TransactionMessage & TransactionMessageWithBlockhashLifetime;
@@ -106,7 +100,6 @@ const instruction = null as unknown as Instruction;
     {
         const message = pipe(
             createTransactionMessage({ version: null as unknown as TransactionVersion }),
-            // @ts-expect-error FIXME
             m => setTransactionMessageLifetimeUsingBlockhash(blockhashLifetime, m),
             m => setTransactionMessageLifetimeUsingBlockhash(blockhashLifetime, m),
             m => setTransactionMessageLifetimeUsingBlockhash(blockhashLifetime, m),
@@ -141,7 +134,6 @@ const instruction = null as unknown as Instruction;
     {
         const messageWithBlockhash = pipe(
             createTransactionMessage({ version: null as unknown as TransactionVersion }),
-            // @ts-expect-error FIXME
             m => setTransactionMessageLifetimeUsingBlockhash(blockhashLifetime, m),
         );
         messageWithBlockhash satisfies TransactionMessage & TransactionMessageWithBlockhashLifetime;
@@ -151,7 +143,7 @@ const instruction = null as unknown as Instruction;
             messageWithBlockhash,
         );
         messageWithDurableNonce satisfies TransactionMessage & TransactionMessageWithDurableNonceLifetime;
-        // FIXME should be @ts-expect-error It should strip the blockhash lifetime
+        // @ts-expect-error It should strip the blockhash lifetime
         messageWithDurableNonce satisfies TransactionMessageWithBlockhashLifetime;
     }
 
@@ -264,10 +256,8 @@ const instruction = null as unknown as Instruction;
 
     // It sets the fee payer after setting a blockhash lifetime
     {
-        const message = pipe(
-            createTransactionMessage({ version: null as unknown as TransactionVersion }),
-            // @ts-expect-error FIXME
-            m => setTransactionMessageLifetimeUsingBlockhash(blockhashLifetime, m),
+        const message = pipe(createTransactionMessage({ version: null as unknown as TransactionVersion }), m =>
+            setTransactionMessageLifetimeUsingBlockhash(blockhashLifetime, m),
         );
         const newMessage = setTransactionMessageFeePayer(feePayer, message);
         newMessage satisfies TransactionMessage &
@@ -316,7 +306,6 @@ const instruction = null as unknown as Instruction;
     {
         const message = pipe(
             createTransactionMessage({ version: null as unknown as TransactionVersion }),
-            // @ts-expect-error FIXME
             m => setTransactionMessageLifetimeUsingBlockhash(blockhashLifetime, m),
             m => appendTransactionMessageInstruction(instruction, m),
             m => prependTransactionMessageInstruction(instruction, m),

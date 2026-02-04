@@ -115,7 +115,8 @@ export function assertIsTransactionMessageWithBlockhashLifetime(
  * ```
  */
 export function setTransactionMessageLifetimeUsingBlockhash<
-    TTransactionMessage extends Partial<TransactionMessageWithLifetime> & TransactionMessage,
+    TTransactionMessage extends Partial<Pick<TransactionMessageWithLifetime, 'lifetimeConstraint'>> &
+        TransactionMessage,
 >(
     blockhashLifetimeConstraint: BlockhashLifetimeConstraint,
     transactionMessage: TTransactionMessage,

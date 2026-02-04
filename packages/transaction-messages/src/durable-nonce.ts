@@ -258,9 +258,11 @@ type SetTransactionMessageWithDurableNonceLifetime<
               ? TTransactionMessage
               : ExcludeTransactionMessageWithinSizeLimit<TTransactionMessage>,
           // 2. Remove the instructions array as we are going to replace it with a new one.
-          'instructions'
+          | 'instructions'
+          // 3. Remove the existing lifetime constraint as we are going to replace it with a new one.
+          | 'lifetimeConstraint'
       > & {
-          // 3. Replace or prepend the first instruction with the advance nonce account instruction.
+          // 4. Replace or prepend the first instruction with the advance nonce account instruction.
           readonly instructions: TTransactionMessage['instructions'] extends readonly [
               AdvanceNonceAccountInstruction,
               ...infer TTail extends readonly Instruction[],
@@ -270,7 +272,7 @@ type SetTransactionMessageWithDurableNonceLifetime<
                     AdvanceNonceAccountInstruction<TNonceAccountAddress, TNonceAuthorityAddress>,
                     ...TTransactionMessage['instructions'],
                 ];
-          // 4. Set the lifetime constraint to the nonce value.
+          // 5. Set the lifetime constraint to the nonce value.
           readonly lifetimeConstraint: NonceLifetimeConstraint<TNonceValue>;
       }
     : never;
