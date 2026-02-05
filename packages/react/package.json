@@ -92,7 +92,7 @@
         "@solana/eslint-config": "workspace:*",
         "@solana/rpc-types": "workspace:*",
         "@testing-library/react": "^16.3.2",
-        "@types/react": "^19.2.10",
+        "@types/react": "^19.2.11",
         "@types/react-test-renderer": "^19.1.0",
         "react": "^19.2.4",
         "react-dom": "^19.2.4",
