@@ -1,5 +1,35 @@
 # @solana/kit
 
+## 6.0.1
+
+### Patch Changes
+
+- [#1321](https://github.com/anza-xyz/kit/pull/1321) [`2d3296f`](https://github.com/anza-xyz/kit/commit/2d3296f1ea03184455197d0284be73ada999b492) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Fix a bug in the type of `TransactionMessageWithSigners`
+
+- Updated dependencies [[`2d3296f`](https://github.com/anza-xyz/kit/commit/2d3296f1ea03184455197d0284be73ada999b492), [`a8a57ce`](https://github.com/anza-xyz/kit/commit/a8a57cebc47caa24f6d105c346427baa244fa462)]:
+    - @solana/transaction-messages@6.0.1
+    - @solana/signers@6.0.1
+    - @solana/instruction-plans@6.0.1
+    - @solana/programs@6.0.1
+    - @solana/rpc-api@6.0.1
+    - @solana/transaction-confirmation@6.0.1
+    - @solana/transactions@6.0.1
+    - @solana/rpc@6.0.1
+    - @solana/sysvars@6.0.1
+    - @solana/rpc-subscriptions@6.0.1
+    - @solana/accounts@6.0.1
+    - @solana/addresses@6.0.1
+    - @solana/codecs@6.0.1
+    - @solana/errors@6.0.1
+    - @solana/functional@6.0.1
+    - @solana/instructions@6.0.1
+    - @solana/keys@6.0.1
+    - @solana/offchain-messages@6.0.1
+    - @solana/plugin-core@6.0.1
+    - @solana/rpc-parsed-types@6.0.1
+    - @solana/rpc-spec-types@6.0.1
+    - @solana/rpc-types@6.0.1
+
 ## 6.0.0
 
 ### Patch Changes

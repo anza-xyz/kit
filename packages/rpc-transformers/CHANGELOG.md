@@ -1,5 +1,16 @@
 # @solana/rpc-transformers
 
+## 6.0.1
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/errors@6.0.1
+    - @solana/functional@6.0.1
+    - @solana/nominal-types@6.0.1
+    - @solana/rpc-spec-types@6.0.1
+    - @solana/rpc-types@6.0.1
+
 ## 6.0.0
 
 ### Patch Changes

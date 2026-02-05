@@ -1,5 +1,24 @@
 # @solana/transaction-messages
 
+## 6.0.1
+
+### Patch Changes
+
+- [#1321](https://github.com/anza-xyz/kit/pull/1321) [`2d3296f`](https://github.com/anza-xyz/kit/commit/2d3296f1ea03184455197d0284be73ada999b492) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Fix a bug in the type of `TransactionMessageWithSigners`
+
+- [#1318](https://github.com/anza-xyz/kit/pull/1318) [`a8a57ce`](https://github.com/anza-xyz/kit/commit/a8a57cebc47caa24f6d105c346427baa244fa462) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Fix bugs in types of `setTransactionMessageLifetimeUsingBlockhash` and `setTransactionMessageLifetimeUsingDurableNonce`
+
+- Updated dependencies []:
+    - @solana/addresses@6.0.1
+    - @solana/codecs-core@6.0.1
+    - @solana/codecs-data-structures@6.0.1
+    - @solana/codecs-numbers@6.0.1
+    - @solana/errors@6.0.1
+    - @solana/functional@6.0.1
+    - @solana/instructions@6.0.1
+    - @solana/nominal-types@6.0.1
+    - @solana/rpc-types@6.0.1
+
 ## 6.0.0
 
 ### Major Changes

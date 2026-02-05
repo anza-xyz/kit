@@ -1,5 +1,19 @@
 # @solana/offchain-messages
 
+## 6.0.1
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/addresses@6.0.1
+    - @solana/codecs-core@6.0.1
+    - @solana/codecs-data-structures@6.0.1
+    - @solana/codecs-numbers@6.0.1
+    - @solana/codecs-strings@6.0.1
+    - @solana/errors@6.0.1
+    - @solana/keys@6.0.1
+    - @solana/nominal-types@6.0.1
+
 ## 6.0.0
 
 ### Patch Changes

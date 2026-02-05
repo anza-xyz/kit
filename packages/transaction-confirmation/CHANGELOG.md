@@ -1,5 +1,21 @@
 # @solana/transaction-confirmation
 
+## 6.0.1
+
+### Patch Changes
+
+- Updated dependencies [[`2d3296f`](https://github.com/anza-xyz/kit/commit/2d3296f1ea03184455197d0284be73ada999b492), [`a8a57ce`](https://github.com/anza-xyz/kit/commit/a8a57cebc47caa24f6d105c346427baa244fa462)]:
+    - @solana/transaction-messages@6.0.1
+    - @solana/transactions@6.0.1
+    - @solana/rpc@6.0.1
+    - @solana/rpc-subscriptions@6.0.1
+    - @solana/addresses@6.0.1
+    - @solana/codecs-strings@6.0.1
+    - @solana/errors@6.0.1
+    - @solana/keys@6.0.1
+    - @solana/promises@6.0.1
+    - @solana/rpc-types@6.0.1
+
 ## 6.0.0
 
 ### Patch Changes
