@@ -5,10 +5,15 @@ import { Instruction } from '@solana/instructions';
 
 import {
     parallelInstructionPlan,
+    parallelTransactionPlan,
     parseInstructionPlanInput,
+    parseTransactionPlanInput,
     sequentialInstructionPlan,
+    sequentialTransactionPlan,
     singleInstructionPlan,
+    singleTransactionPlan,
 } from '../index';
+import { createMessage } from './__setup__';
 
 function createInstruction<TId extends string>(id: TId): Instruction & { id: TId } {
     return { id, programAddress: '11111111111111111111111111111111' as Address };
@@ -83,6 +88,79 @@ describe('parseInstructionPlanInput', () => {
         expect(parseInstructionPlanInput([sequentialInstructionPlan([createInstruction('B')])])).toBeFrozenObject();
         expect(
             parseInstructionPlanInput([createInstruction('A'), sequentialInstructionPlan([createInstruction('B')])]),
+        ).toBeFrozenObject();
+    });
+});
+
+describe('parseTransactionPlanInput', () => {
+    it('returns an TransactionPlan from a single message', () => {
+        const plan = parseTransactionPlanInput(createMessage('A'));
+        expect(plan).toStrictEqual(singleTransactionPlan(createMessage('A')));
+    });
+    it('returns a provided TransactionPlan as-is', () => {
+        const input = sequentialTransactionPlan([
+            createMessage('A'),
+            parallelTransactionPlan([createMessage('B'), createMessage('C')]),
+        ]);
+        const plan = parseTransactionPlanInput(input);
+        expect(plan).toBe(input);
+    });
+    it('returns an empty SequentialTransactionPlan from an empty array', () => {
+        const plan = parseTransactionPlanInput([]);
+        expect(plan).toStrictEqual(sequentialTransactionPlan([]));
+    });
+    it('returns a SingleTransactionPlan from an array of only one TransactionMessage', () => {
+        const plan = parseTransactionPlanInput([createMessage('A')]);
+        expect(plan).toStrictEqual(singleTransactionPlan(createMessage('A')));
+    });
+    it('returns a provided TransactionPlan as-is when it is the only item in the provided array', () => {
+        const input = sequentialTransactionPlan([
+            createMessage('A'),
+            parallelTransactionPlan([createMessage('B'), createMessage('C')]),
+        ]);
+        const plan = parseTransactionPlanInput([input]);
+        expect(plan).toBe(input);
+    });
+    it('returns a SequentialTransactionPlan from an array of messages', () => {
+        const plan = parseTransactionPlanInput([createMessage('A'), createMessage('B')]);
+        expect(plan).toStrictEqual(sequentialTransactionPlan([createMessage('A'), createMessage('B')]));
+    });
+    it('returns a SequentialTransactionPlan from an array of TransactionPlans', () => {
+        const plan = parseTransactionPlanInput([
+            sequentialTransactionPlan([createMessage('A'), createMessage('B')]),
+            parallelTransactionPlan([createMessage('C'), createMessage('D')]),
+        ]);
+        expect(plan).toStrictEqual(
+            sequentialTransactionPlan([
+                sequentialTransactionPlan([createMessage('A'), createMessage('B')]),
+                parallelTransactionPlan([createMessage('C'), createMessage('D')]),
+            ]),
+        );
+    });
+    it('returns a SequentialTransactionPlan from a mixed array of TransactionPlans and TransactionMessages', () => {
+        const plan = parseTransactionPlanInput([
+            createMessage('A'),
+            sequentialTransactionPlan([createMessage('B'), createMessage('C')]),
+            createMessage('D'),
+            parallelTransactionPlan([createMessage('E'), createMessage('F')]),
+        ]);
+        expect(plan).toStrictEqual(
+            sequentialTransactionPlan([
+                createMessage('A'),
+                sequentialTransactionPlan([createMessage('B'), createMessage('C')]),
+                createMessage('D'),
+                parallelTransactionPlan([createMessage('E'), createMessage('F')]),
+            ]),
+        );
+    });
+    it('returns frozen objects', () => {
+        expect(parseTransactionPlanInput(createMessage('A'))).toBeFrozenObject();
+        expect(parseTransactionPlanInput(sequentialTransactionPlan([createMessage('A')]))).toBeFrozenObject();
+        expect(parseTransactionPlanInput([])).toBeFrozenObject();
+        expect(parseTransactionPlanInput([createMessage('A')])).toBeFrozenObject();
+        expect(parseTransactionPlanInput([sequentialTransactionPlan([createMessage('B')])])).toBeFrozenObject();
+        expect(
+            parseTransactionPlanInput([createMessage('A'), sequentialTransactionPlan([createMessage('B')])]),
         ).toBeFrozenObject();
     });
 });
