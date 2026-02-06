@@ -19,8 +19,8 @@
         "fumadocs-ui": "15.2.10",
         "lucide-react": "^0.484.0",
         "next": "^16.1.5",
-        "react": "^19.2.1",
-        "react-dom": "^19.2.1",
+        "react": "^19.2.4",
+        "react-dom": "^19.2.4",
         "twoslash": "^0.3.1"
     },
     "devDependencies": {
@@ -37,7 +37,7 @@
         "@tailwindcss/postcss": "^4.1.4",
         "@types/mdx": "^2.0.13",
         "@types/node": "22.13.8",
-        "@types/react": "^19.2.7",
+        "@types/react": "^19.2.13",
         "@types/react-dom": "^19.2.3",
         "eslint": "^8",
         "eslint-config-next": "^16.0.10",
