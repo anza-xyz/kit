@@ -1,12 +1,12 @@
 import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
 import { Button, Callout, DropdownMenu } from '@radix-ui/themes';
+import { useSelectedWalletAccount } from '@solana/react';
 import { StandardConnect, StandardDisconnect } from '@wallet-standard/core';
 import type { UiWallet } from '@wallet-standard/react';
-import { uiWalletAccountBelongsToUiWallet, useWallets } from '@wallet-standard/react';
-import { useContext, useRef, useState } from 'react';
+import { uiWalletAccountBelongsToUiWallet } from '@wallet-standard/react';
+import { useRef, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 
-import { SelectedWalletAccountContext } from '../context/SelectedWalletAccountContext';
 import { ConnectWalletMenuItem } from './ConnectWalletMenuItem';
 import { ErrorDialog } from './ErrorDialog';
 import { UnconnectableWalletMenuItem } from './UnconnectableWalletMenuItem';
@@ -18,8 +18,7 @@ type Props = Readonly<{
 
 export function ConnectWalletMenu({ children }: Props) {
     const { current: NO_ERROR } = useRef(Symbol());
-    const wallets = useWallets();
-    const [selectedWalletAccount, setSelectedWalletAccount] = useContext(SelectedWalletAccountContext);
+    const [selectedWalletAccount, setSelectedWalletAccount, wallets] = useSelectedWalletAccount();
     const [error, setError] = useState(NO_ERROR);
     const [forceClose, setForceClose] = useState(false);
     function renderItem(wallet: UiWallet) {

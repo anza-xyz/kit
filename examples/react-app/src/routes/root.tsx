@@ -1,4 +1,5 @@
 import { Box, Code, Container, DataList, Flex, Heading, Spinner, Text } from '@radix-ui/themes';
+import { useSelectedWalletAccount } from '@solana/react';
 import { getUiWalletAccountStorageKey } from '@wallet-standard/react';
 import { Suspense, useContext } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
@@ -12,11 +13,10 @@ import { SolanaSignMessageFeaturePanel } from '../components/SolanaSignMessageFe
 import { SolanaSignTransactionFeaturePanel } from '../components/SolanaSignTransactionFeaturePanel';
 import { WalletAccountIcon } from '../components/WalletAccountIcon';
 import { ChainContext } from '../context/ChainContext';
-import { SelectedWalletAccountContext } from '../context/SelectedWalletAccountContext';
 
 function Root() {
     const { chain } = useContext(ChainContext);
-    const [selectedWalletAccount] = useContext(SelectedWalletAccountContext);
+    const [selectedWalletAccount] = useSelectedWalletAccount();
     const errorBoundaryResetKeys = [
         chain,
         selectedWalletAccount && getUiWalletAccountStorageKey(selectedWalletAccount),

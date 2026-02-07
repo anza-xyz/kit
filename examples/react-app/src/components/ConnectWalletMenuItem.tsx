@@ -1,9 +1,9 @@
 import { DropdownMenu } from '@radix-ui/themes';
+import { useSelectedWalletAccount } from '@solana/react';
 import type { UiWallet, UiWalletAccount } from '@wallet-standard/react';
 import { uiWalletAccountsAreSame, useConnect, useDisconnect } from '@wallet-standard/react';
-import { useCallback, useContext } from 'react';
+import { useCallback } from 'react';
 
-import { SelectedWalletAccountContext } from '../context/SelectedWalletAccountContext';
 import { WalletMenuItemContent } from './WalletMenuItemContent';
 
 type Props = Readonly<{
@@ -18,7 +18,7 @@ export function ConnectWalletMenuItem({ onAccountSelect, onDisconnect, onError, 
     const [isDisconnecting, disconnect] = useDisconnect(wallet);
     const isPending = isConnecting || isDisconnecting;
     const isConnected = wallet.accounts.length > 0;
-    const [selectedWalletAccount] = useContext(SelectedWalletAccountContext);
+    const [selectedWalletAccount] = useSelectedWalletAccount();
     const handleConnectClick = useCallback(async () => {
         try {
             const existingAccounts = [...wallet.accounts];
