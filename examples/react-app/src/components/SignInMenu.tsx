@@ -1,12 +1,11 @@
 import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
 import { Button, Callout, DropdownMenu } from '@radix-ui/themes';
+import { useSelectedWalletAccount } from '@solana/react';
 import { SolanaSignIn } from '@solana/wallet-standard-features';
 import type { UiWallet } from '@wallet-standard/react';
-import { useWallets } from '@wallet-standard/react';
-import { useContext, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 
-import { SelectedWalletAccountContext } from '../context/SelectedWalletAccountContext';
 import { ErrorDialog } from './ErrorDialog';
 import { SignInMenuItem } from './SignInMenuItem';
 import { UnconnectableWalletMenuItem } from './UnconnectableWalletMenuItem';
@@ -17,8 +16,7 @@ type Props = Readonly<{
 
 export function SignInMenu({ children }: Props) {
     const { current: NO_ERROR } = useRef(Symbol());
-    const wallets = useWallets();
-    const [_, setSelectedWalletAccount] = useContext(SelectedWalletAccountContext);
+    const [, setSelectedWalletAccount, wallets] = useSelectedWalletAccount();
     const [error, setError] = useState(NO_ERROR);
     const [forceClose, setForceClose] = useState(false);
     function renderItem(wallet: UiWallet) {
