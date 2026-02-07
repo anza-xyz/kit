@@ -2,11 +2,15 @@ import {
     combineCodec,
     createDecoder,
     createEncoder,
+    ReadonlyUint8Array,
     VariableSizeCodec,
     VariableSizeDecoder,
     VariableSizeEncoder,
 } from '@solana/codecs-core';
 import { SOLANA_ERROR__CODECS__INVALID_STRING_FOR_BASE, SolanaError } from '@solana/errors';
+
+const uint8ArrayFromHex = (Uint8Array as unknown as { fromHex?: (value: string) => Uint8Array }).fromHex;
+const uint8ArrayToHex = (Uint8Array.prototype as unknown as { toHex?: () => string }).toHex;
 
 const enum HexC {
     ZERO = 48, // 0
@@ -26,6 +30,70 @@ function charCodeToBase16(char: number) {
     if (char >= HexC.ZERO && char <= HexC.NINE) return char - HexC.ZERO;
     if (char >= HexC.A_UP && char <= HexC.F_UP) return char - (HexC.A_UP - 10);
     if (char >= HexC.A_LO && char <= HexC.F_LO) return char - (HexC.A_LO - 10);
+}
+
+function getBase16Bytes(value: string): Uint8Array {
+    if (uint8ArrayFromHex) {
+        if (value.length === 1) {
+            try {
+                return uint8ArrayFromHex(`0${value}`);
+            } catch {
+                throw new SolanaError(SOLANA_ERROR__CODECS__INVALID_STRING_FOR_BASE, {
+                    ...INVALID_STRING_ERROR_BASE_CONFIG,
+                    value,
+                });
+            }
+        }
+
+        if (value.length % 2 === 0) {
+            try {
+                return uint8ArrayFromHex(value);
+            } catch {
+                throw new SolanaError(SOLANA_ERROR__CODECS__INVALID_STRING_FOR_BASE, {
+                    ...INVALID_STRING_ERROR_BASE_CONFIG,
+                    value,
+                });
+            }
+        }
+    }
+
+    const len = value.length;
+    const al = len / 2;
+    if (len === 1) {
+        const c = value.charCodeAt(0);
+        const n = charCodeToBase16(c);
+        if (n === undefined) {
+            throw new SolanaError(SOLANA_ERROR__CODECS__INVALID_STRING_FOR_BASE, {
+                ...INVALID_STRING_ERROR_BASE_CONFIG,
+                value,
+            });
+        }
+        return new Uint8Array([n]);
+    }
+    const hexBytes = new Uint8Array(al);
+    for (let i = 0, j = 0; i < al; i++) {
+        const c1 = value.charCodeAt(j++);
+        const c2 = value.charCodeAt(j++);
+
+        const n1 = charCodeToBase16(c1);
+        const n2 = charCodeToBase16(c2);
+        if (n1 === undefined || (n2 === undefined && !Number.isNaN(c2))) {
+            throw new SolanaError(SOLANA_ERROR__CODECS__INVALID_STRING_FOR_BASE, {
+                ...INVALID_STRING_ERROR_BASE_CONFIG,
+                value,
+            });
+        }
+        hexBytes[i] = !Number.isNaN(c2) ? (n1 << 4) | (n2 ?? 0) : n1;
+    }
+
+    return hexBytes;
+}
+
+function getBase16String(bytes: ReadonlyUint8Array): string {
+    if (uint8ArrayToHex) {
+        return uint8ArrayToHex.call(bytes);
+    }
+    return bytes.slice(0).reduce((str: string, byte: number) => str + byte.toString(16).padStart(2, '0'), '');
 }
 
 /**
@@ -51,36 +119,7 @@ export const getBase16Encoder = (): VariableSizeEncoder<string> =>
     createEncoder({
         getSizeFromValue: (value: string) => Math.ceil(value.length / 2),
         write(value: string, bytes, offset) {
-            const len = value.length;
-            const al = len / 2;
-            if (len === 1) {
-                const c = value.charCodeAt(0);
-                const n = charCodeToBase16(c);
-                if (n === undefined) {
-                    throw new SolanaError(SOLANA_ERROR__CODECS__INVALID_STRING_FOR_BASE, {
-                        ...INVALID_STRING_ERROR_BASE_CONFIG,
-                        value,
-                    });
-                }
-                bytes.set([n], offset);
-                return 1 + offset;
-            }
-            const hexBytes = new Uint8Array(al);
-            for (let i = 0, j = 0; i < al; i++) {
-                const c1 = value.charCodeAt(j++);
-                const c2 = value.charCodeAt(j++);
-
-                const n1 = charCodeToBase16(c1);
-                const n2 = charCodeToBase16(c2);
-                if (n1 === undefined || (n2 === undefined && !Number.isNaN(c2))) {
-                    throw new SolanaError(SOLANA_ERROR__CODECS__INVALID_STRING_FOR_BASE, {
-                        ...INVALID_STRING_ERROR_BASE_CONFIG,
-                        value,
-                    });
-                }
-                hexBytes[i] = !Number.isNaN(c2) ? (n1 << 4) | (n2 ?? 0) : n1;
-            }
-
+            const hexBytes = getBase16Bytes(value);
             bytes.set(hexBytes, offset);
             return hexBytes.length + offset;
         },
@@ -107,7 +146,7 @@ export const getBase16Encoder = (): VariableSizeEncoder<string> =>
 export const getBase16Decoder = (): VariableSizeDecoder<string> =>
     createDecoder({
         read(bytes, offset) {
-            const value = bytes.slice(offset).reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');
+            const value = getBase16String(bytes.slice(offset));
             return [value, bytes.length];
         },
     });
