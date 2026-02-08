@@ -194,3 +194,65 @@ export function parseTransactionPlanInput(input: TransactionPlanInput): Transact
     }
     return isTransactionPlan(input) ? input : singleTransactionPlan(input as SingleTransactionPlan['message']);
 }
+
+/**
+ * Parses an {@link InstructionPlanInput} or {@link TransactionPlanInput} and
+ * returns the appropriate plan type.
+ *
+ * This function automatically detects whether the input represents instructions
+ * or transactions and delegates to the appropriate parser:
+ * - If the input is a transaction message or transaction plan, it delegates
+ *   to {@link parseTransactionPlanInput}.
+ * - Otherwise, it delegates to {@link parseInstructionPlanInput}.
+ *
+ * @param input - The input to parse, which can be either an instruction-based
+ *   or transaction-based input.
+ * @returns The parsed plan, either an {@link InstructionPlan} or a {@link TransactionPlan}.
+ *
+ * @example
+ * Parsing an instruction input.
+ * ```ts
+ * const plan = parseInstructionOrTransactionPlanInput(myInstruction);
+ * // Returns an InstructionPlan
+ * ```
+ *
+ * @example
+ * Parsing a transaction message input.
+ * ```ts
+ * const plan = parseInstructionOrTransactionPlanInput(myTransactionMessage);
+ * // Returns a TransactionPlan
+ * ```
+ *
+ * @see {@link parseInstructionPlanInput}
+ * @see {@link parseTransactionPlanInput}
+ * @see {@link InstructionPlanInput}
+ * @see {@link TransactionPlanInput}
+ */
+export function parseInstructionOrTransactionPlanInput(
+    input: InstructionPlanInput | TransactionPlanInput,
+): InstructionPlan | TransactionPlan {
+    if (Array.isArray(input) && input.length === 0) {
+        return parseTransactionPlanInput(input);
+    }
+    if (Array.isArray(input) && isTransactionPlanInput(input[0])) {
+        return parseTransactionPlanInput(input as TransactionPlanInput);
+    }
+    if (isTransactionPlanInput(input)) {
+        return parseTransactionPlanInput(input as TransactionPlanInput);
+    }
+    return parseInstructionPlanInput(input as InstructionPlanInput);
+}
+
+function isTransactionPlanInput(value: unknown): value is SingleTransactionPlan['message'] | TransactionPlan {
+    return isTransactionPlan(value) || isTransactionMessage(value);
+}
+
+function isTransactionMessage(value: unknown): value is SingleTransactionPlan['message'] {
+    return (
+        typeof value === 'object' &&
+        value !== null &&
+        'instructions' in value &&
+        Array.isArray(value.instructions) &&
+        'version' in value
+    );
+}
