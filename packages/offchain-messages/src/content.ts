@@ -25,10 +25,27 @@ const MAX_BODY_BYTES_HARDWARE_WALLET_SIGNABLE =
  *
  * @remarks This only applies to v0 messages.
  */
-export enum OffchainMessageContentFormat {
-    RESTRICTED_ASCII_1232_BYTES_MAX = 0,
-    UTF8_1232_BYTES_MAX = 1,
-    UTF8_65535_BYTES_MAX = 2,
+export const OffchainMessageContentFormat = {
+    RESTRICTED_ASCII_1232_BYTES_MAX: 'RESTRICTED_ASCII_1232_BYTES_MAX',
+    UTF8_1232_BYTES_MAX: 'UTF8_1232_BYTES_MAX',
+    UTF8_65535_BYTES_MAX: 'UTF8_65535_BYTES_MAX',
+} as const;
+
+export type OffchainMessageContentFormat =
+    (typeof OffchainMessageContentFormat)[keyof typeof OffchainMessageContentFormat];
+
+export function encodeOffchainMessageContentFormat(format: OffchainMessageContentFormat): number {
+    switch (format) {
+        case OffchainMessageContentFormat.RESTRICTED_ASCII_1232_BYTES_MAX:
+            return 0;
+        case OffchainMessageContentFormat.UTF8_1232_BYTES_MAX:
+            return 1;
+        case OffchainMessageContentFormat.UTF8_65535_BYTES_MAX:
+            return 2;
+        default: {
+            throw new Error(`Unsupported OffchainMessageContentFormat`);
+        }
+    }
 }
 
 /**
@@ -39,7 +56,7 @@ export enum OffchainMessageContentFormat {
  * that can only display ASCII characters onscreen.
  */
 export type OffchainMessageContentRestrictedAsciiOf1232BytesMax<TContent extends string = string> = Readonly<{
-    format: OffchainMessageContentFormat.RESTRICTED_ASCII_1232_BYTES_MAX;
+    format: typeof OffchainMessageContentFormat.RESTRICTED_ASCII_1232_BYTES_MAX;
     text: Brand<TContent, 'offchainMessageContentRestrictedAsciiOf1232BytesMax'>;
 }>;
 
@@ -47,7 +64,7 @@ export type OffchainMessageContentRestrictedAsciiOf1232BytesMax<TContent extends
  * Describes message text that is no more than 1232 bytes long and mdae up of any UTF-8 characters.
  */
 export type OffchainMessageContentUtf8Of1232BytesMax<TContent extends string = string> = Readonly<{
-    format: OffchainMessageContentFormat.UTF8_1232_BYTES_MAX;
+    format: typeof OffchainMessageContentFormat.UTF8_1232_BYTES_MAX;
     text: Brand<TContent, 'offchainMessageContentUtf8Of1232BytesMax'>;
 }>;
 
@@ -55,7 +72,7 @@ export type OffchainMessageContentUtf8Of1232BytesMax<TContent extends string = s
  * Describes message text that is no more than 65535 bytes long and mdae up of any UTF-8 characters.
  */
 export type OffchainMessageContentUtf8Of65535BytesMax<TContent extends string = string> = Readonly<{
-    format: OffchainMessageContentFormat.UTF8_65535_BYTES_MAX;
+    format: typeof OffchainMessageContentFormat.UTF8_65535_BYTES_MAX;
     text: Brand<TContent, 'offchainMessageContentUtf8Of65535BytesMax'>;
 }>;
 
@@ -77,8 +94,10 @@ export function assertIsOffchainMessageContentRestrictedAsciiOf1232BytesMax(puta
 }): asserts putativeContent is OffchainMessageContentRestrictedAsciiOf1232BytesMax {
     if (putativeContent.format !== OffchainMessageContentFormat.RESTRICTED_ASCII_1232_BYTES_MAX) {
         throw new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__MESSAGE_FORMAT_MISMATCH, {
-            actualMessageFormat: putativeContent.format,
-            expectedMessageFormat: OffchainMessageContentFormat.RESTRICTED_ASCII_1232_BYTES_MAX,
+            actualMessageFormat: encodeOffchainMessageContentFormat(putativeContent.format),
+            expectedMessageFormat: encodeOffchainMessageContentFormat(
+                OffchainMessageContentFormat.RESTRICTED_ASCII_1232_BYTES_MAX,
+            ),
         });
     }
     if (putativeContent.text.length === 0) {
@@ -185,8 +204,8 @@ export function assertIsOffchainMessageContentUtf8Of1232BytesMax(putativeContent
     }
     if (putativeContent.format !== OffchainMessageContentFormat.UTF8_1232_BYTES_MAX) {
         throw new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__MESSAGE_FORMAT_MISMATCH, {
-            actualMessageFormat: putativeContent.format,
-            expectedMessageFormat: OffchainMessageContentFormat.UTF8_1232_BYTES_MAX,
+            actualMessageFormat: encodeOffchainMessageContentFormat(putativeContent.format),
+            expectedMessageFormat: encodeOffchainMessageContentFormat(OffchainMessageContentFormat.UTF8_1232_BYTES_MAX),
         });
     }
     const length = getUtf8Encoder().getSizeFromValue(putativeContent.text);
@@ -284,8 +303,10 @@ export function assertIsOffchainMessageContentUtf8Of65535BytesMax(putativeConten
 }): asserts putativeContent is OffchainMessageContentUtf8Of65535BytesMax {
     if (putativeContent.format !== OffchainMessageContentFormat.UTF8_65535_BYTES_MAX) {
         throw new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__MESSAGE_FORMAT_MISMATCH, {
-            actualMessageFormat: putativeContent.format,
-            expectedMessageFormat: OffchainMessageContentFormat.UTF8_65535_BYTES_MAX,
+            actualMessageFormat: encodeOffchainMessageContentFormat(putativeContent.format),
+            expectedMessageFormat: encodeOffchainMessageContentFormat(
+                OffchainMessageContentFormat.UTF8_65535_BYTES_MAX,
+            ),
         });
     }
     if (putativeContent.text.length === 0) {

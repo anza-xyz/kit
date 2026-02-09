@@ -11,6 +11,7 @@ import {
     assertIsOffchainMessageContentRestrictedAsciiOf1232BytesMax,
     assertIsOffchainMessageContentUtf8Of1232BytesMax,
     assertIsOffchainMessageContentUtf8Of65535BytesMax,
+    encodeOffchainMessageContentFormat,
     isOffchainMessageContentRestrictedAsciiOf1232BytesMax,
     isOffchainMessageContentUtf8Of1232BytesMax,
     isOffchainMessageContentUtf8Of65535BytesMax,
@@ -39,8 +40,10 @@ describe('assertIsOffchainMessageContentRestrictedAsciiOf1232BytesMax()', () => 
                 }),
             ).toThrow(
                 new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__MESSAGE_FORMAT_MISMATCH, {
-                    actualMessageFormat: format,
-                    expectedMessageFormat: OffchainMessageContentFormat.RESTRICTED_ASCII_1232_BYTES_MAX,
+                    actualMessageFormat: encodeOffchainMessageContentFormat(format),
+                    expectedMessageFormat: encodeOffchainMessageContentFormat(
+                        OffchainMessageContentFormat.RESTRICTED_ASCII_1232_BYTES_MAX,
+                    ),
                 }),
             );
         },
@@ -164,8 +167,10 @@ describe('assertIsOffchainMessageContentUtf8Of1232BytesMax()', () => {
             }),
         ).toThrow(
             new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__MESSAGE_FORMAT_MISMATCH, {
-                actualMessageFormat: format,
-                expectedMessageFormat: OffchainMessageContentFormat.UTF8_1232_BYTES_MAX,
+                actualMessageFormat: encodeOffchainMessageContentFormat(format),
+                expectedMessageFormat: encodeOffchainMessageContentFormat(
+                    OffchainMessageContentFormat.UTF8_1232_BYTES_MAX,
+                ),
             }),
         );
     });
@@ -250,8 +255,10 @@ describe('assertIsOffchainMessageContentUtf8Of65535BytesMax()', () => {
             }),
         ).toThrow(
             new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__MESSAGE_FORMAT_MISMATCH, {
-                actualMessageFormat: format,
-                expectedMessageFormat: OffchainMessageContentFormat.UTF8_65535_BYTES_MAX,
+                actualMessageFormat: encodeOffchainMessageContentFormat(format),
+                expectedMessageFormat: encodeOffchainMessageContentFormat(
+                    OffchainMessageContentFormat.UTF8_65535_BYTES_MAX,
+                ),
             }),
         );
     });
