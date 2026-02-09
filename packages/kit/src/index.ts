@@ -16,6 +16,7 @@ export * from '@solana/instruction-plans';
 export * from '@solana/keys';
 export * from '@solana/offchain-messages';
 export * from '@solana/plugin-core';
+export type * from '@solana/plugin-interfaces';
 export * from '@solana/programs';
 export * from '@solana/rpc';
 export * from '@solana/rpc-parsed-types';

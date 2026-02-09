@@ -714,6 +714,9 @@ importers:
       '@solana/plugin-core':
         specifier: workspace:*
         version: link:../plugin-core
+      '@solana/plugin-interfaces':
+        specifier: workspace:*
+        version: link:../plugin-interfaces
       '@solana/programs':
         specifier: workspace:*
         version: link:../programs
@@ -813,6 +816,33 @@ importers:
 
   packages/plugin-core:
     dependencies:
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+
+  packages/plugin-interfaces:
+    dependencies:
+      '@solana/addresses':
+        specifier: workspace:*
+        version: link:../addresses
+      '@solana/instruction-plans':
+        specifier: workspace:*
+        version: link:../instruction-plans
+      '@solana/keys':
+        specifier: workspace:*
+        version: link:../keys
+      '@solana/rpc-spec':
+        specifier: workspace:*
+        version: link:../rpc-spec
+      '@solana/rpc-subscriptions-spec':
+        specifier: workspace:*
+        version: link:../rpc-subscriptions-spec
+      '@solana/rpc-types':
+        specifier: workspace:*
+        version: link:../rpc-types
+      '@solana/signers':
+        specifier: workspace:*
+        version: link:../signers
       typescript:
         specifier: ^5.0.0
         version: 5.9.3

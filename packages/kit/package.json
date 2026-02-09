@@ -86,6 +86,7 @@
         "@solana/keys": "workspace:*",
         "@solana/offchain-messages": "workspace:*",
         "@solana/plugin-core": "workspace:*",
+        "@solana/plugin-interfaces": "workspace:*",
         "@solana/programs": "workspace:*",
         "@solana/rpc": "workspace:*",
         "@solana/rpc-api": "workspace:*",
