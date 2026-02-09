@@ -88,7 +88,9 @@ export type NumberCodecConfig = {
  * - `Little`: The least significant byte is stored first.
  * - `Big`: The most significant byte is stored first.
  */
-export enum Endian {
-    Little,
-    Big,
-}
+export const Endian = {
+    Big: 'Big',
+    Little: 'Little',
+} as const;
+
+export type Endian = (typeof Endian)[keyof typeof Endian];
