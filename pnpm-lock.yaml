@@ -849,6 +849,18 @@ importers:
 
   packages/program-client-core:
     dependencies:
+      '@solana/addresses':
+        specifier: workspace:*
+        version: link:../addresses
+      '@solana/errors':
+        specifier: workspace:*
+        version: link:../errors
+      '@solana/instructions':
+        specifier: workspace:*
+        version: link:../instructions
+      '@solana/signers':
+        specifier: workspace:*
+        version: link:../signers
       typescript:
         specifier: ^5.0.0
         version: 5.9.3

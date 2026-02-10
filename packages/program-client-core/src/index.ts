@@ -5,4 +5,5 @@
  *
  * @packageDocumentation
  */
-export {};
+export * from './instruction-input-resolution';
+export * from './instructions';
