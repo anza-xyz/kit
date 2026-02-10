@@ -12,9 +12,9 @@
         "test:typecheck": "tsc"
     },
     "dependencies": {
-        "@solana-program/compute-budget": "^0.12.0",
-        "@solana-program/system": "^0.10.0",
-        "@solana-program/token": "^0.9.0",
+        "@solana-program/compute-budget": "^0.13.0",
+        "@solana-program/system": "^0.11.0",
+        "@solana-program/token": "^0.10.0",
         "@solana/example-utils": "workspace:*",
         "@solana/kit": "workspace:*"
     },
