@@ -847,6 +847,12 @@ importers:
         specifier: ^5.0.0
         version: 5.9.3
 
+  packages/program-client-core:
+    dependencies:
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+
   packages/programs:
     dependencies:
       '@solana/addresses':
