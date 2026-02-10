@@ -855,9 +855,15 @@ importers:
       '@solana/errors':
         specifier: workspace:*
         version: link:../errors
+      '@solana/instruction-plans':
+        specifier: workspace:*
+        version: link:../instruction-plans
       '@solana/instructions':
         specifier: workspace:*
         version: link:../instructions
+      '@solana/plugin-interfaces':
+        specifier: workspace:*
+        version: link:../plugin-interfaces
       '@solana/signers':
         specifier: workspace:*
         version: link:../signers

@@ -76,6 +76,8 @@
         "@solana/addresses": "workspace:*",
         "@solana/errors": "workspace:*",
         "@solana/instructions": "workspace:*",
+        "@solana/instruction-plans": "workspace:*",
+        "@solana/plugin-interfaces": "workspace:*",
         "@solana/signers": "workspace:*"
     },
     "peerDependencies": {
