@@ -12,7 +12,7 @@ import { ExampleProvider } from './page/example-context';
 function getExamples(): Record<string, React.ReactElement> {
     const examples: Record<string, React.ReactElement> = {};
     home.docs.forEach(doc => {
-        const match = doc._file.path.match(/^example-(.*)\.mdx$/);
+        const match = doc.info.path.match(/^example-(.*)\.mdx$/);
         if (match) {
             const MDXContent = doc.body;
             examples[match[1]] = <MDXContent components={mdxComponents} />;

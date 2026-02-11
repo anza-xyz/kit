@@ -14,7 +14,7 @@
         "@inkeep/cxkit-react": "^0.5.107",
         "fumadocs-core": "15.2.10",
         "fumadocs-docgen": "^2.0.0",
-        "fumadocs-mdx": "11.6.1",
+        "fumadocs-mdx": "12.0.3",
         "fumadocs-twoslash": "^3.1.1",
         "fumadocs-ui": "15.2.10",
         "lucide-react": "^0.563.0",
