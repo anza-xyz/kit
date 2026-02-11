@@ -849,9 +849,15 @@ importers:
 
   packages/program-client-core:
     dependencies:
+      '@solana/accounts':
+        specifier: workspace:*
+        version: link:../accounts
       '@solana/addresses':
         specifier: workspace:*
         version: link:../addresses
+      '@solana/codecs-core':
+        specifier: workspace:*
+        version: link:../codecs-core
       '@solana/errors':
         specifier: workspace:*
         version: link:../errors
@@ -864,12 +870,22 @@ importers:
       '@solana/plugin-interfaces':
         specifier: workspace:*
         version: link:../plugin-interfaces
+      '@solana/rpc-api':
+        specifier: workspace:*
+        version: link:../rpc-api
       '@solana/signers':
         specifier: workspace:*
         version: link:../signers
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
+    devDependencies:
+      '@solana/codecs-data-structures':
+        specifier: workspace:*
+        version: link:../codecs-data-structures
+      '@solana/codecs-numbers':
+        specifier: workspace:*
+        version: link:../codecs-numbers
 
   packages/programs:
     dependencies:

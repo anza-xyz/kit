@@ -7,4 +7,5 @@
  */
 export * from './instruction-input-resolution';
 export * from './instructions';
+export * from './self-fetch-functions';
 export * from './self-plan-and-send-functions';
