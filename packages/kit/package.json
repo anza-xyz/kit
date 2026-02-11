@@ -4,28 +4,52 @@
     "description": "Solana Javascript API",
     "homepage": "https://www.solanakit.com",
     "exports": {
-        "edge-light": {
-            "import": "./dist/index.node.mjs",
-            "require": "./dist/index.node.cjs"
+        ".": {
+            "edge-light": {
+                "import": "./dist/index.node.mjs",
+                "require": "./dist/index.node.cjs"
+            },
+            "workerd": {
+                "import": "./dist/index.node.mjs",
+                "require": "./dist/index.node.cjs"
+            },
+            "browser": {
+                "import": "./dist/index.browser.mjs",
+                "require": "./dist/index.browser.cjs"
+            },
+            "node": {
+                "import": "./dist/index.node.mjs",
+                "require": "./dist/index.node.cjs"
+            },
+            "react-native": "./dist/index.native.mjs",
+            "types": "./dist/types/index.d.ts"
         },
-        "workerd": {
-            "import": "./dist/index.node.mjs",
-            "require": "./dist/index.node.cjs"
-        },
-        "browser": {
-            "import": "./dist/index.browser.mjs",
-            "require": "./dist/index.browser.cjs"
-        },
-        "node": {
-            "import": "./dist/index.node.mjs",
-            "require": "./dist/index.node.cjs"
-        },
-        "react-native": "./dist/index.native.mjs",
-        "types": "./dist/types/index.d.ts"
+        "./program-client-core": {
+            "edge-light": {
+                "import": "./dist/program-client-core.node.mjs",
+                "require": "./dist/program-client-core.node.cjs"
+            },
+            "workerd": {
+                "import": "./dist/program-client-core.node.mjs",
+                "require": "./dist/program-client-core.node.cjs"
+            },
+            "browser": {
+                "import": "./dist/program-client-core.browser.mjs",
+                "require": "./dist/program-client-core.browser.cjs"
+            },
+            "node": {
+                "import": "./dist/program-client-core.node.mjs",
+                "require": "./dist/program-client-core.node.cjs"
+            },
+            "react-native": "./dist/program-client-core.native.mjs",
+            "types": "./dist/types/program-client-core.d.ts"
+        }
     },
     "browser": {
         "./dist/index.node.cjs": "./dist/index.browser.cjs",
-        "./dist/index.node.mjs": "./dist/index.browser.mjs"
+        "./dist/index.node.mjs": "./dist/index.browser.mjs",
+        "./dist/program-client-core.node.cjs": "./dist/program-client-core.browser.cjs",
+        "./dist/program-client-core.node.mjs": "./dist/program-client-core.browser.mjs"
     },
     "jsdelivr": "./dist/index.production.min.js",
     "umd": "./dist/index.production.min.js",
@@ -87,6 +111,7 @@
         "@solana/offchain-messages": "workspace:*",
         "@solana/plugin-core": "workspace:*",
         "@solana/plugin-interfaces": "workspace:*",
+        "@solana/program-client-core": "workspace:*",
         "@solana/programs": "workspace:*",
         "@solana/rpc": "workspace:*",
         "@solana/rpc-api": "workspace:*",

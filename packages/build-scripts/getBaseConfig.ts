@@ -14,6 +14,12 @@ type Platform =
 const BROWSERSLIST_TARGETS = browsersListToEsBuild();
 
 export function getBaseConfig(platform: Platform, formats: Format[], _options: Options): Options[] {
+    // `@solana/kit` has an additional subpath entry point that should be published separately.
+    const moduleEntry =
+        env.npm_package_name === '@solana/kit'
+            ? ['./src/index.ts', './src/program-client-core.ts']
+            : ['./src/index.ts'];
+
     return [true, false]
         .flatMap<Options | null>(isDebugBuild =>
             formats.map(format =>
@@ -26,7 +32,8 @@ export function getBaseConfig(platform: Platform, formats: Format[], _options: O
                               __REACTNATIVE__: `${platform === 'native'}`,
                               __VERSION__: `"${env.npm_package_version}"`,
                           },
-                          entry: [`./src/index.ts`],
+                          // We don't need subpath exports for iife bundles.
+                          entry: format === 'iife' ? ['./src/index.ts'] : moduleEntry,
                           esbuildOptions(options, context) {
                               const { format } = context;
                               options.minify = format === 'iife' && !isDebugBuild;

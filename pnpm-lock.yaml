@@ -717,6 +717,9 @@ importers:
       '@solana/plugin-interfaces':
         specifier: workspace:*
         version: link:../plugin-interfaces
+      '@solana/program-client-core':
+        specifier: workspace:*
+        version: link:../program-client-core
       '@solana/programs':
         specifier: workspace:*
         version: link:../programs
