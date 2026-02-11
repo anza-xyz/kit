@@ -23,13 +23,8 @@ importers:
         specifier: ^2.0.0
         version: 2.0.0
       fumadocs-mdx:
-<<<<<<< HEAD
-        specifier: 11.6.1
-        version: 11.6.1(acorn@8.15.0)(fumadocs-core@15.2.10(@types/react@19.2.13)(next@16.1.6(@babel/core@7.28.5)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(next@16.1.6(@babel/core@7.28.5)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
-=======
         specifier: 12.0.3
         version: 12.0.3(fumadocs-core@15.2.10(@types/react@19.2.13)(next@16.1.6(@babel/core@7.28.5)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(next@16.1.6(@babel/core@7.28.5)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
->>>>>>> 56c301fe (Upgrade to fumadocs v12)
       fumadocs-twoslash:
         specifier: ^3.1.1
         version: 3.1.1(@types/react-dom@19.2.3(@types/react@19.2.13))(@types/react@19.2.13)(fumadocs-ui@15.2.10(@types/react-dom@19.2.3(@types/react@19.2.13))(@types/react@19.2.13)(next@16.1.6(@babel/core@7.28.5)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(tailwindcss@4.1.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(shiki@3.3.0)(typescript@5.9.3)
@@ -3048,13 +3043,8 @@ packages:
   arg@4.1.3:
     resolution: {integrity: sha512-58S9QDqG0Xx27YwPSt9fJxivjYl432YCwfDMfZ+71RAqUrZef7LrKQZ3LHLOwCS4FLNBplP533Zx895SeOCHvA==}
 
-<<<<<<< HEAD
-  argparse@1.0.10:
-    resolution: {integrity: sha512-o5Roy6tNG4SL/FOkCAN6RzjiakZS25RLYFrcMttJqbdd8BWrnA+fGz57iN5Pb06pvBGvl5gQ0B48dJlslXvoTg==}
-=======
   argparse@2.0.1:
     resolution: {integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==}
->>>>>>> 56c301fe (Upgrade to fumadocs v12)
 
   aria-hidden@1.2.4:
     resolution: {integrity: sha512-y+CcFFwelSXpLZk/7fMB2mUbGtX9lKycf1MWJ7CaTIERyitVlyQx6C+sxcROU2BAJ24OiZyK+8wj2i8AlBoS3A==}
@@ -3627,18 +3617,8 @@ packages:
     resolution: {integrity: sha512-WFWYhO1fV4iYkqOOvq8FbqIhr2pYfoDY0kCotMkDeNtGpiGGkZ1iov2u8ydjtgM8yF8rzK7oaTbw2NAzbAbehw==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
 
-<<<<<<< HEAD
-  esprima@4.0.1:
-    resolution: {integrity: sha512-eGuFFw7Upda+g4p+QHvnW0RyTX/SVeJBDM/gCtMARO0cLuT2HcEKnTPvhjV6aGeqrCB/sbNop0Kszm0jsaWU4A==}
-    engines: {node: '>=4'}
-    hasBin: true
-
   esquery@1.7.0:
     resolution: {integrity: sha512-Ap6G0WQwcU/LHsvLwON1fAQX9Zp0A2Y6Y/cJBl9r/JbW90Zyg4/zbG6zzKa2OTALELarYHmKu0GhpM5EO+7T0g==}
-=======
-  esquery@1.6.0:
-    resolution: {integrity: sha512-ca9pw9fomFcKPvFLXhBKUK90ZvGibiGOvRJNbjljY7s7uq/5YO4BOzcYtJqExdx99rF6aAcnRxHmcUHcz6sQsg==}
->>>>>>> 56c301fe (Upgrade to fumadocs v12)
     engines: {node: '>=0.10'}
 
   esrecurse@4.3.0:
@@ -4220,13 +4200,8 @@ packages:
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
 
-<<<<<<< HEAD
-  js-yaml@3.14.2:
-    resolution: {integrity: sha512-PMSmkqxr106Xa156c2M265Z+FTrPl+oxd/rgOQy2tijQeK5TxQ43psO1ZCwhVOSdnn+RzkzlRz/eY4BgJBYVpg==}
-=======
   js-yaml@4.1.1:
     resolution: {integrity: sha512-qQKT4zQxXl8lLwBtHMWwaTcGfFOZviOJet3Oy/xmGk2gZH677CJM9EvtfdSkgWcATZhj/55JZ0rmy3myCT5lsA==}
->>>>>>> 56c301fe (Upgrade to fumadocs v12)
     hasBin: true
 
   jsesc@3.1.0:
@@ -6344,11 +6319,7 @@ snapshots:
       - encoding
       - supports-color
 
-<<<<<<< HEAD
-  '@mdx-js/mdx@3.1.0(acorn@8.15.0)':
-=======
   '@mdx-js/mdx@3.1.1':
->>>>>>> 56c301fe (Upgrade to fumadocs v12)
     dependencies:
       '@types/estree': 1.0.7
       '@types/estree-jsx': 1.0.5
@@ -8719,11 +8690,7 @@ snapshots:
 
   acorn-import-attributes@1.9.5(acorn@8.15.0):
     dependencies:
-<<<<<<< HEAD
       acorn: 8.15.0
-=======
-      acorn: 8.14.1
->>>>>>> 56c301fe (Upgrade to fumadocs v12)
 
   acorn-jsx@5.3.2(acorn@8.15.0):
     dependencies:
@@ -8763,13 +8730,7 @@ snapshots:
 
   arg@4.1.3: {}
 
-<<<<<<< HEAD
-  argparse@1.0.10:
-    dependencies:
-      sprintf-js: 1.0.3
-=======
   argparse@2.0.1: {}
->>>>>>> 56c301fe (Upgrade to fumadocs v12)
 
   aria-hidden@1.2.4:
     dependencies:
@@ -9523,13 +9484,7 @@ snapshots:
       acorn-jsx: 5.3.2(acorn@8.15.0)
       eslint-visitor-keys: 5.0.0
 
-<<<<<<< HEAD
-  esprima@4.0.1: {}
-
   esquery@1.7.0:
-=======
-  esquery@1.6.0:
->>>>>>> 56c301fe (Upgrade to fumadocs v12)
     dependencies:
       estraverse: 5.3.0
 
@@ -9748,15 +9703,9 @@ snapshots:
       unist-util-visit: 5.0.0
       zod: 3.24.2
 
-<<<<<<< HEAD
-  fumadocs-mdx@11.6.1(acorn@8.15.0)(fumadocs-core@15.2.10(@types/react@19.2.13)(next@16.1.6(@babel/core@7.28.5)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(next@16.1.6(@babel/core@7.28.5)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)):
-    dependencies:
-      '@mdx-js/mdx': 3.1.0(acorn@8.15.0)
-=======
   fumadocs-mdx@12.0.3(fumadocs-core@15.2.10(@types/react@19.2.13)(next@16.1.6(@babel/core@7.28.5)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(next@16.1.6(@babel/core@7.28.5)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4):
     dependencies:
       '@mdx-js/mdx': 3.1.1
->>>>>>> 56c301fe (Upgrade to fumadocs v12)
       '@standard-schema/spec': 1.0.0
       chokidar: 4.0.3
       esbuild: 0.25.12
@@ -10273,16 +10222,9 @@ snapshots:
 
   js-tokens@4.0.0: {}
 
-<<<<<<< HEAD
-  js-yaml@3.14.2:
-    dependencies:
-      argparse: 1.0.10
-      esprima: 4.0.1
-=======
   js-yaml@4.1.1:
     dependencies:
       argparse: 2.0.1
->>>>>>> 56c301fe (Upgrade to fumadocs v12)
 
   jsesc@3.1.0: {}
 

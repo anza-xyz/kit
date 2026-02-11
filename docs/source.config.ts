@@ -5,10 +5,20 @@ import { transformerTwoslash } from 'fumadocs-twoslash';
 
 export const api = defineDocs({
     dir: 'content/api',
+    docs: {
+        postprocess: {
+            includeProcessedMarkdown: true,
+        }
+    }
 });
 
 export const docs = defineDocs({
     dir: 'content/docs',
+    docs: {
+        postprocess: {
+            includeProcessedMarkdown: true,
+        }
+    }
 });
 
 export const home = defineDocs({
