@@ -513,6 +513,7 @@ const getCipherCodec = () => combineCodec(getCipherEncoder(), getCipherDecoder()
 [getMapCodec](#get-map-codec) \
 [getNullableCodec](#get-nullable-codec) \
 [getOptionCodec](#get-option-codec) \
+[getPredicateCodec](#get-predicate-codec) \
 [getSetCodec](#get-set-codec) \
 [getStructCodec](#get-struct-codec) \
 [getTupleCodec](#get-tuple-codec) \
@@ -2553,6 +2554,38 @@ To recap, here are all the possible configurations of the `getOptionCodec` funct
 | No `prefix`                           | `0x2a00` / `0x`          | `0x2a00` / `0x0000`         | `0x2a00` / `0xff`           |
 
 `getOptionEncoder` and `getOptionDecoder` functions are also available.
+
+### getPredicateCodec [!toc] [#get-predicate-codec]
+
+The `getPredicateCodec` function returns a codec that switches between two different codecs, based on a predicate.
+
+It accepts the following arguments:
+
+- An encode predicate, that takes a value of a given type and returns a boolean
+- A decode predicate, that takes a `ReadOnlyUint8Array` and returns a boolean 
+- A codec, that will be used to encode if the encode predicate is true and will be used to decode if the decode predicate is true
+- A codec, that will be used to encode if the encode predicate is false and will be used to decode if the decode predicate is false
+
+```ts twoslash
+import { getPredicateCodec, getU8Codec, getU32Codec, Codec } from '@solana/kit';
+
+// ---cut-before---
+
+const codec: Codec<number> = getPredicateCodec(
+    (value: number) => value < 256,
+    bytes => bytes.length === 1,
+    getU8Codec(),
+    getU32Codec(),
+);
+
+const u8Bytes = codec.encode(42) // 0x2a, used u8 codec
+codec.decode(u8Bytes) // 42, used u8 codec
+
+const u32Bytes = codec.encode(1000) // 0xE8030000, used u32 codec
+codec.decode(u32Bytes) // 1000, used u32 codec
+```
+
+`getPredicateEncoder` and `getPredicateDecoder` functions are also available.
 
 ### getSetCodec [!toc] [#get-set-codec]
 
