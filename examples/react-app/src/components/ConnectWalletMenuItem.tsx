@@ -1,5 +1,4 @@
-import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
-import { DropdownMenu, ThickChevronRightIcon } from '@radix-ui/themes';
+import { DropdownMenu } from '@radix-ui/themes';
 import type { UiWallet, UiWalletAccount } from '@wallet-standard/react';
 import { uiWalletAccountsAreSame, useConnect, useDisconnect } from '@wallet-standard/react';
 import { useCallback, useContext } from 'react';
@@ -41,24 +40,9 @@ export function ConnectWalletMenuItem({ onAccountSelect, onDisconnect, onError, 
     }, [connect, onAccountSelect, onError, wallet.accounts]);
     return (
         <DropdownMenu.Sub open={!isConnected ? false : undefined}>
-            <DropdownMenuPrimitive.SubTrigger
-                asChild={false}
-                className={[
-                    'rt-BaseMenuItem',
-                    'rt-BaseMenuSubTrigger',
-                    'rt-DropdownMenuItem',
-                    'rt-DropdownMenuSubTrigger',
-                ].join(' ')}
-                disabled={isPending}
-                onClick={!isConnected ? handleConnectClick : undefined}
-            >
+            <DropdownMenu.SubTrigger disabled={isPending} onClick={!isConnected ? handleConnectClick : undefined}>
                 <WalletMenuItemContent loading={isPending} wallet={wallet} />
-                {isConnected ? (
-                    <div className="rt-BaseMenuShortcut rt-DropdownMenuShortcut">
-                        <ThickChevronRightIcon className="rt-BaseMenuSubTriggerIcon rt-DropdownMenuSubtriggerIcon" />
-                    </div>
-                ) : null}
-            </DropdownMenuPrimitive.SubTrigger>
+            </DropdownMenu.SubTrigger>
             <DropdownMenu.SubContent>
                 <DropdownMenu.Label>Accounts</DropdownMenu.Label>
                 <DropdownMenu.RadioGroup value={selectedWalletAccount?.address}>
