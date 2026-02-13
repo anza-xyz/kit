@@ -235,6 +235,7 @@ import {
     SOLANA_ERROR__TRANSACTION__INVALID_NONCE_TRANSACTION_INSTRUCTIONS_MISSING,
     SOLANA_ERROR__TRANSACTION__INVOKED_PROGRAMS_CANNOT_PAY_FEES,
     SOLANA_ERROR__TRANSACTION__INVOKED_PROGRAMS_MUST_NOT_BE_WRITABLE,
+    SOLANA_ERROR__TRANSACTION__MALFORMED_MESSAGE_BYTES,
     SOLANA_ERROR__TRANSACTION__MESSAGE_SIGNATURES_MISMATCH,
     SOLANA_ERROR__TRANSACTION__NONCE_ACCOUNT_CANNOT_BE_IN_LOOKUP_TABLE,
     SOLANA_ERROR__TRANSACTION__SIGNATURES_MISSING,
@@ -758,4 +759,5 @@ export const SolanaErrorMessages: Readonly<{
         'This version of Kit does not support decoding transactions with version $unsupportedVersion. The current max supported version is 0.',
     [SOLANA_ERROR__TRANSACTION__NONCE_ACCOUNT_CANNOT_BE_IN_LOOKUP_TABLE]:
         'The transaction has a durable nonce lifetime (with nonce `$nonce`), but the nonce account address is in a lookup table. The lifetime constraint cannot be constructed without fetching the lookup tables for the transaction.',
+    [SOLANA_ERROR__TRANSACTION__MALFORMED_MESSAGE_BYTES]: 'Transaction message bytes are malformed: $messageBytes',
 };

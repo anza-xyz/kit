@@ -21,6 +21,7 @@ export * from './hidden-suffix';
 export * from './literal-union';
 export * from './map';
 export * from './nullable';
+export * from './predicate';
 export * from './set';
 export * from './struct';
 export * from './tuple';

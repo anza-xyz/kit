@@ -1,6 +1,7 @@
 import { getAddressDecoder } from '@solana/addresses';
 import {
     combineCodec,
+    createEncoder,
     fixDecoderSize,
     padRightDecoder,
     ReadonlyUint8Array,
@@ -13,27 +14,99 @@ import {
     getArrayDecoder,
     getBytesDecoder,
     getBytesEncoder,
+    getPredicateEncoder,
     getStructDecoder,
     getStructEncoder,
     getTupleDecoder,
 } from '@solana/codecs-data-structures';
 import { getShortU16Decoder, getU8Decoder } from '@solana/codecs-numbers';
-import { SOLANA_ERROR__TRANSACTION__MESSAGE_SIGNATURES_MISMATCH, SolanaError } from '@solana/errors';
+import {
+    SOLANA_ERROR__TRANSACTION__MALFORMED_MESSAGE_BYTES,
+    SOLANA_ERROR__TRANSACTION__MESSAGE_SIGNATURES_MISMATCH,
+    SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED,
+    SolanaError,
+} from '@solana/errors';
 import { SignatureBytes } from '@solana/keys';
 import { getTransactionVersionDecoder } from '@solana/transaction-messages';
 
 import { SignaturesMap, Transaction, TransactionMessageBytes } from '../transaction';
-import { getSignaturesEncoderWithSizePrefix } from './signatures-encoder';
+import { getSignaturesEncoderWithLength, getSignaturesEncoderWithSizePrefix } from './signatures-encoder';
+
+type EnvelopeShape = 'messageFirst' | 'signaturesFirst';
+
+const LEGACY_VERSION_FLAG_MASK = 0b10000000;
+const VERSION_FLAG_MASK = 0b01111111;
+
+function getEncodeShapeForMessageBytes(messageBytes: ReadonlyUint8Array): EnvelopeShape {
+    const firstByte = messageBytes[0];
+    if ((firstByte & LEGACY_VERSION_FLAG_MASK) === 0) {
+        // Legacy transaction: encode with signatures first
+        return 'signaturesFirst';
+    }
+    const version = firstByte & VERSION_FLAG_MASK;
+    if (version === 0) {
+        // v0 transaction: encode with signatures first
+        return 'signaturesFirst';
+    }
+    if (version === 1) {
+        // v1 transaction: encode with message first
+        return 'messageFirst';
+    }
+    throw new SolanaError(SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED, {
+        unsupportedVersion: version,
+    });
+}
 
 /**
  * Returns an encoder that you can use to encode a {@link Transaction} to a byte array in a wire
  * format appropriate for sending to the Solana network for execution.
  */
 export function getTransactionEncoder(): VariableSizeEncoder<Transaction> {
+    return getPredicateEncoder(
+        (transaction: Transaction) => getEncodeShapeForMessageBytes(transaction.messageBytes) === 'signaturesFirst',
+        getTransactionEncoderWithSignaturesFirst(),
+        getTransactionEncoderWithMessageFirst(),
+    );
+}
+
+function getTransactionEncoderWithSignaturesFirst(): VariableSizeEncoder<Transaction> {
     return getStructEncoder([
         ['signatures', getSignaturesEncoderWithSizePrefix()],
         ['messageBytes', getBytesEncoder()],
     ]);
+}
+
+function getSignatureCountForVersionedOrThrow(messageBytes: ReadonlyUint8Array): number {
+    if (messageBytes.length < 2) {
+        throw new SolanaError(SOLANA_ERROR__TRANSACTION__MALFORMED_MESSAGE_BYTES, {
+            messageBytes,
+        });
+    }
+    return messageBytes[1]; // second byte
+}
+
+function getTransactionEncoderWithMessageFirst(): VariableSizeEncoder<Transaction> {
+    const bytesEncoder = getBytesEncoder();
+
+    return createEncoder({
+        getSizeFromValue: (transaction: Transaction) => {
+            const signatureCount = getSignatureCountForVersionedOrThrow(transaction.messageBytes);
+            return transaction.messageBytes.length + signatureCount * 64;
+        },
+        write: (transaction: Transaction, bytes: Uint8Array, offset: number) => {
+            // 1. Encode messageBytes first
+            offset = bytesEncoder.write(transaction.messageBytes, bytes, offset);
+
+            // 2. Extract signature count from second byte
+            const signatureCount = getSignatureCountForVersionedOrThrow(transaction.messageBytes);
+
+            // 3. Encode signatures with the extracted length
+            const signaturesEncoder = getSignaturesEncoderWithLength(signatureCount);
+            offset = signaturesEncoder.write(transaction.signatures, bytes, offset);
+
+            return offset;
+        },
+    });
 }
 
 /**

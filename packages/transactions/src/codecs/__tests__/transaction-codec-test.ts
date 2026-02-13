@@ -1,8 +1,9 @@
 import '@solana/test-matchers/toBeFrozenObject';
 
 import { Address } from '@solana/addresses';
-import { ReadonlyUint8Array, VariableSizeDecoder, VariableSizeEncoder } from '@solana/codecs-core';
+import { Encoder, ReadonlyUint8Array, VariableSizeDecoder } from '@solana/codecs-core';
 import {
+    SOLANA_ERROR__TRANSACTION__MALFORMED_MESSAGE_BYTES,
     SOLANA_ERROR__TRANSACTION__MESSAGE_SIGNATURES_MISMATCH,
     SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED,
     SolanaError,
@@ -10,14 +11,14 @@ import {
 import { SignatureBytes } from '@solana/keys';
 
 import { Transaction, TransactionMessageBytes } from '../../transaction';
-import { getSignaturesEncoderWithSizePrefix } from '../signatures-encoder';
+import { getSignaturesEncoderWithLength, getSignaturesEncoderWithSizePrefix } from '../signatures-encoder';
 import { getTransactionCodec, getTransactionDecoder, getTransactionEncoder } from '../transaction-codec';
 
 jest.mock('../signatures-encoder');
 
 describe.each([getTransactionEncoder, getTransactionCodec])('Transaction encoder %p', encoderFactory => {
     const mockEncodedSignatures = new Uint8Array([1, 2, 3]);
-    let encoder: VariableSizeEncoder<Transaction>;
+    let encoder: Encoder<Transaction>;
     beforeEach(() => {
         (getSignaturesEncoderWithSizePrefix as jest.Mock).mockReturnValue({
             getSizeFromValue: jest.fn().mockReturnValue(mockEncodedSignatures.length),
@@ -26,10 +27,12 @@ describe.each([getTransactionEncoder, getTransactionCodec])('Transaction encoder
                 return offset + mockEncodedSignatures.length;
             }),
         });
+
         encoder = encoderFactory();
     });
 
-    it('should encode the transaction correctly', () => {
+    it('should encode a legacy transaction correctly', () => {
+        // Legacy transactions have signature number as the first byte of the message
         const messageBytes = new Uint8Array([4, 5, 6]) as ReadonlyUint8Array as TransactionMessageBytes;
 
         const transaction: Transaction = {
@@ -44,6 +47,77 @@ describe.each([getTransactionEncoder, getTransactionCodec])('Transaction encoder
                 /* message bytes */
                 ...messageBytes,
             ]),
+        );
+    });
+
+    it('should encode a v0 transaction correctly', () => {
+        // v0 transactions have the first byte with the version bit set to 128
+        const messageBytes = new Uint8Array([128, 4, 5, 6]) as ReadonlyUint8Array as TransactionMessageBytes;
+
+        const transaction: Transaction = {
+            messageBytes,
+            signatures: {},
+        };
+
+        expect(encoder.encode(transaction)).toStrictEqual(
+            new Uint8Array([
+                /* signatures */
+                ...mockEncodedSignatures,
+                /* message bytes */
+                ...messageBytes,
+            ]),
+        );
+    });
+
+    it('should encode a v1 transaction correctly', () => {
+        // v1 transactions have the first byte with the version bit set to 129
+        const messageBytes = new Uint8Array([129, 1, 5, 6]) as ReadonlyUint8Array as TransactionMessageBytes;
+
+        const mockSignature = new Uint8Array(64).fill(1);
+
+        // In this case we have a VariableSizEncoder with size messageBytes + (signatures * 64)
+        // So we will mock the signature encoder with the size of a real signature
+        // The second byte of `messageBytes` is 1, so we encode to 1 signature
+        (getSignaturesEncoderWithLength as jest.Mock).mockReturnValue({
+            fixedSize: 64,
+            write: jest.fn().mockImplementation((_value, bytes: Uint8Array, offset: number) => {
+                bytes.set(mockSignature, offset);
+                return offset + mockSignature.length;
+            }),
+        });
+
+        const transaction: Transaction = {
+            messageBytes,
+            signatures: {},
+        };
+
+        expect(encoder.encode(transaction)).toStrictEqual(
+            new Uint8Array([
+                /* message bytes */
+                ...messageBytes,
+                /* signatures */
+                ...mockSignature,
+            ]),
+        );
+
+        expect(getSignaturesEncoderWithLength).toHaveBeenCalledTimes(1);
+        expect(getSignaturesEncoderWithLength).toHaveBeenCalledWith(1);
+    });
+
+    it('should throw for a v1 transaction if there are no other message bytes', () => {
+        // v1 transactions have the first byte with the version bit set to 129
+        // the following byte is signature count, but here the message bytes is malformed
+        const messageBytes = new Uint8Array([129]) as ReadonlyUint8Array as TransactionMessageBytes;
+
+        const transaction: Transaction = {
+            messageBytes,
+            signatures: {},
+        };
+
+        expect(() => encoder.encode(transaction)).toThrow(
+            new SolanaError(SOLANA_ERROR__TRANSACTION__MALFORMED_MESSAGE_BYTES, {
+                messageBytes,
+            }),
         );
     });
 });
