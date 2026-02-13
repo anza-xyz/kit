@@ -6,6 +6,9 @@ import {
     FixedSizeDecoder,
     FixedSizeEncoder,
     ReadonlyUint8Array,
+    VariableSizeCodec,
+    VariableSizeDecoder,
+    VariableSizeEncoder,
 } from '@solana/codecs-core';
 
 import { getUnionCodec, getUnionDecoder, getUnionEncoder } from './union';
@@ -54,6 +57,11 @@ export function getPredicateEncoder<TFrom>(
     ifTrue: FixedSizeEncoder<TFrom>,
     ifFalse: FixedSizeEncoder<TFrom>,
 ): FixedSizeEncoder<TFrom>;
+export function getPredicateEncoder<TFrom>(
+    predicate: (value: TFrom) => boolean,
+    ifTrue: VariableSizeEncoder<TFrom>,
+    ifFalse: VariableSizeEncoder<TFrom>,
+): VariableSizeEncoder<TFrom>;
 export function getPredicateEncoder<TFrom>(
     predicate: (value: TFrom) => boolean,
     ifTrue: Encoder<TFrom>,
@@ -109,6 +117,11 @@ export function getPredicateDecoder<TTo>(
     ifTrue: FixedSizeDecoder<TTo>,
     ifFalse: FixedSizeDecoder<TTo>,
 ): FixedSizeDecoder<TTo>;
+export function getPredicateDecoder<TTo>(
+    predicate: (value: ReadonlyUint8Array) => boolean,
+    ifTrue: VariableSizeDecoder<TTo>,
+    ifFalse: VariableSizeDecoder<TTo>,
+): VariableSizeDecoder<TTo>;
 export function getPredicateDecoder<TTo>(
     predicate: (value: ReadonlyUint8Array) => boolean,
     ifTrue: Decoder<TTo>,
@@ -175,6 +188,12 @@ export function getPredicateCodec<TFrom, TTo extends TFrom>(
     ifTrue: FixedSizeCodec<TFrom, TTo>,
     ifFalse: FixedSizeCodec<TFrom, TTo>,
 ): FixedSizeCodec<TFrom, TTo>;
+export function getPredicateCodec<TFrom, TTo extends TFrom>(
+    encodePredicate: (value: TFrom) => boolean,
+    decodePredicate: (value: ReadonlyUint8Array) => boolean,
+    ifTrue: VariableSizeCodec<TFrom, TTo>,
+    ifFalse: VariableSizeCodec<TFrom, TTo>,
+): VariableSizeCodec<TFrom, TTo>;
 export function getPredicateCodec<TFrom, TTo extends TFrom>(
     encodePredicate: (value: TFrom) => boolean,
     decodePredicate: (value: ReadonlyUint8Array) => boolean,

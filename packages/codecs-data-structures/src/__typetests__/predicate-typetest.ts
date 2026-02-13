@@ -33,6 +33,13 @@ const predicate = null as unknown as () => boolean;
         {} as FixedSizeEncoder<string, 4>,
     ) satisfies FixedSizeEncoder<string, 4>;
 
+    // It returns a VariableSizeEncoder if both encoders are VariableSizeEncoder
+    getPredicateEncoder(
+        predicate,
+        {} as VariableSizeEncoder<number>,
+        {} as VariableSizeEncoder<number>,
+    ) satisfies VariableSizeEncoder<number>;
+
     // It returns an Encoder if some input encoders are VariableSizeEncoder
     getPredicateEncoder(
         predicate,
@@ -77,6 +84,13 @@ const predicate = null as unknown as () => boolean;
         {} as FixedSizeDecoder<string, 4>,
         {} as FixedSizeDecoder<string, 4>,
     ) satisfies FixedSizeDecoder<string, 4>;
+
+    // It returns a VariableSizeDecoder if both decoders are VariableSizeDecoder
+    getPredicateDecoder(
+        predicate,
+        {} as VariableSizeDecoder<number>,
+        {} as VariableSizeDecoder<number>,
+    ) satisfies VariableSizeDecoder<number>;
 
     // It returns an Decoder if some input Decoders are VariableSizeDecoder
     getPredicateDecoder(
@@ -124,6 +138,14 @@ const predicate = null as unknown as () => boolean;
         {} as FixedSizeCodec<string, string, 4>,
         {} as FixedSizeCodec<string, string, 4>,
     ) satisfies FixedSizeCodec<string, string, 4>;
+
+    // It returns a VariableSizeCodec if both codecs are VariableSizeCodec
+    getPredicateCodec(
+        predicate,
+        predicate,
+        {} as VariableSizeCodec<number>,
+        {} as VariableSizeCodec<number>,
+    ) satisfies VariableSizeCodec<number>;
 
     // It returns a Codec if some input codecs are VariableSizeCodec
     getPredicateCodec(
