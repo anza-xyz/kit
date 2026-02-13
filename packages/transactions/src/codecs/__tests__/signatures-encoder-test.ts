@@ -3,10 +3,10 @@ import { SOLANA_ERROR__TRANSACTION__CANNOT_ENCODE_WITH_EMPTY_SIGNATURES, SolanaE
 import { SignatureBytes } from '@solana/keys';
 
 import { SignaturesMap } from '../../transaction';
-import { getSignaturesEncoder } from '../signatures-encoder';
+import { getSignaturesEncoderWithSizePrefix } from '../signatures-encoder';
 
 describe('getSignaturesEncoder', () => {
-    const encoder = getSignaturesEncoder();
+    const encoder = getSignaturesEncoderWithSizePrefix();
 
     it('should throw if the signatures map is empty', () => {
         const signatures: SignaturesMap = {};

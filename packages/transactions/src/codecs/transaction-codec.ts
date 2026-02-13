@@ -23,7 +23,7 @@ import { SignatureBytes } from '@solana/keys';
 import { getTransactionVersionDecoder } from '@solana/transaction-messages';
 
 import { SignaturesMap, Transaction, TransactionMessageBytes } from '../transaction';
-import { getSignaturesEncoder } from './signatures-encoder';
+import { getSignaturesEncoderWithSizePrefix } from './signatures-encoder';
 
 /**
  * Returns an encoder that you can use to encode a {@link Transaction} to a byte array in a wire
@@ -31,7 +31,7 @@ import { getSignaturesEncoder } from './signatures-encoder';
  */
 export function getTransactionEncoder(): VariableSizeEncoder<Transaction> {
     return getStructEncoder([
-        ['signatures', getSignaturesEncoder()],
+        ['signatures', getSignaturesEncoderWithSizePrefix()],
         ['messageBytes', getBytesEncoder()],
     ]);
 }

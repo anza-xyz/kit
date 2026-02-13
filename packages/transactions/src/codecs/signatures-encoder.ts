@@ -20,7 +20,13 @@ function getSignaturesToEncode(signaturesMap: SignaturesMap): SignatureBytes[] {
     });
 }
 
-export function getSignaturesEncoder(): VariableSizeEncoder<SignaturesMap> {
+/**
+ * Signatures encoder used for legacy and v0 transactions, which encode signatures
+ * as an array with a u16-short size prefix
+ * 
+ * @internal
+ */
+export function getSignaturesEncoderWithSizePrefix(): VariableSizeEncoder<SignaturesMap> {
     return transformEncoder(
         getArrayEncoder(fixEncoderSize(getBytesEncoder(), 64), { size: getShortU16Encoder() }),
         getSignaturesToEncode,

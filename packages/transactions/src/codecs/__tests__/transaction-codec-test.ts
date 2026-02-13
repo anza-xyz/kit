@@ -10,7 +10,7 @@ import {
 import { SignatureBytes } from '@solana/keys';
 
 import { Transaction, TransactionMessageBytes } from '../../transaction';
-import { getSignaturesEncoder } from '../signatures-encoder';
+import { getSignaturesEncoderWithSizePrefix } from '../signatures-encoder';
 import { getTransactionCodec, getTransactionDecoder, getTransactionEncoder } from '../transaction-codec';
 
 jest.mock('../signatures-encoder');
@@ -19,7 +19,7 @@ describe.each([getTransactionEncoder, getTransactionCodec])('Transaction encoder
     const mockEncodedSignatures = new Uint8Array([1, 2, 3]);
     let encoder: VariableSizeEncoder<Transaction>;
     beforeEach(() => {
-        (getSignaturesEncoder as jest.Mock).mockReturnValue({
+        (getSignaturesEncoderWithSizePrefix as jest.Mock).mockReturnValue({
             getSizeFromValue: jest.fn().mockReturnValue(mockEncodedSignatures.length),
             write: jest.fn().mockImplementation((_value, bytes: Uint8Array, offset: number) => {
                 bytes.set(mockEncodedSignatures, offset);
@@ -51,7 +51,7 @@ describe.each([getTransactionEncoder, getTransactionCodec])('Transaction encoder
 describe.each([getTransactionDecoder, getTransactionCodec])('Transaction decoder %p', decoderFactory => {
     let decoder: VariableSizeDecoder<Transaction>;
     beforeEach(() => {
-        (getSignaturesEncoder as jest.Mock).mockReturnValue({
+        (getSignaturesEncoderWithSizePrefix as jest.Mock).mockReturnValue({
             getSizeFromValue: jest.fn().mockReturnValue(0),
             write: jest.fn(),
         });
