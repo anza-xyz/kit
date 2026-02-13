@@ -44,6 +44,15 @@ describe('getTupleCodec', () => {
                 expected: 2,
             }),
         );
+
+        // @ts-expect-error Tuple should have the right number of items.
+        expect(() => tuple([u8(), u8()], { description: 'myDescription' }).encode([42])).toThrow(
+            new SolanaError(SOLANA_ERROR__CODECS__INVALID_NUMBER_OF_ITEMS, {
+                actual: 1,
+                codecDescription: 'myDescription',
+                expected: 2,
+            }),
+        );
     });
 
     it('has the right sizes', () => {

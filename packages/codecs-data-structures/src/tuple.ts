@@ -42,6 +42,16 @@ type GetDecoderTypeFromItems<TItems extends readonly Decoder<any>[]> = DrainOute
 }>;
 
 /**
+ * Defines the configuration options for tuple codecs.
+ */
+export type TupleCodecConfig = {
+    /**
+     * An optional description for the codec, that will be used in error messages.
+     */
+    description?: string;
+};
+
+/**
  * Returns an encoder for tuples.
  *
  * This encoder serializes a fixed-size array (tuple) by encoding its items
@@ -52,6 +62,7 @@ type GetDecoderTypeFromItems<TItems extends readonly Decoder<any>[]> = DrainOute
  * @typeParam TItems - An array of encoders, each corresponding to a tuple element.
  *
  * @param items - The encoders for each item in the tuple.
+ * @param config - Optional configuration for the description.
  * @returns A `FixedSizeEncoder` or `VariableSizeEncoder` for encoding tuples.
  *
  * @example
@@ -69,12 +80,15 @@ type GetDecoderTypeFromItems<TItems extends readonly Decoder<any>[]> = DrainOute
  */
 export function getTupleEncoder<const TItems extends readonly FixedSizeEncoder<any>[]>(
     items: TItems,
+    config?: TupleCodecConfig,
 ): FixedSizeEncoder<GetEncoderTypeFromItems<TItems>>;
 export function getTupleEncoder<const TItems extends readonly Encoder<any>[]>(
     items: TItems,
+    config?: TupleCodecConfig,
 ): VariableSizeEncoder<GetEncoderTypeFromItems<TItems>>;
 export function getTupleEncoder<const TItems extends readonly Encoder<any>[]>(
     items: TItems,
+    config?: TupleCodecConfig,
 ): Encoder<GetEncoderTypeFromItems<TItems>> {
     type TFrom = GetEncoderTypeFromItems<TItems>;
     const fixedSize = sumCodecSizes(items.map(getFixedSize));
@@ -89,7 +103,7 @@ export function getTupleEncoder<const TItems extends readonly Encoder<any>[]>(
               }
             : { fixedSize }),
         write: (value: TFrom, bytes, offset) => {
-            assertValidNumberOfItemsForCodec('tuple', items.length, value.length);
+            assertValidNumberOfItemsForCodec(config?.description ?? 'tuple', items.length, value.length);
             items.forEach((item, index) => {
                 offset = item.write(value[index], bytes, offset);
             });
@@ -194,18 +208,21 @@ export function getTupleDecoder<const TItems extends readonly Decoder<any>[]>(
  */
 export function getTupleCodec<const TItems extends readonly FixedSizeCodec<any>[]>(
     items: TItems,
+    config?: TupleCodecConfig,
 ): FixedSizeCodec<GetEncoderTypeFromItems<TItems>, GetDecoderTypeFromItems<TItems> & GetEncoderTypeFromItems<TItems>>;
 export function getTupleCodec<const TItems extends readonly Codec<any>[]>(
     items: TItems,
+    config?: TupleCodecConfig,
 ): VariableSizeCodec<
     GetEncoderTypeFromItems<TItems>,
     GetDecoderTypeFromItems<TItems> & GetEncoderTypeFromItems<TItems>
 >;
 export function getTupleCodec<const TItems extends readonly Codec<any>[]>(
     items: TItems,
+    config?: TupleCodecConfig,
 ): Codec<GetEncoderTypeFromItems<TItems>, GetDecoderTypeFromItems<TItems> & GetEncoderTypeFromItems<TItems>> {
     return combineCodec(
-        getTupleEncoder(items),
+        getTupleEncoder(items, config),
         getTupleDecoder(items) as Decoder<GetDecoderTypeFromItems<TItems> & GetEncoderTypeFromItems<TItems>>,
     );
 }

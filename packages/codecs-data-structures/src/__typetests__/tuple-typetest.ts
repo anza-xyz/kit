@@ -57,3 +57,10 @@ import { getTupleCodec, getTupleDecoder, getTupleEncoder } from '../tuple';
     // @ts-expect-error It does not combine all items into a single union type.
     getTupleCodec([getU8Codec(), getUtf8Codec()]) satisfies Codec<readonly (number | string)[]>;
 }
+
+{
+    // [getTupleCodec]: It allows passing a description in the config.
+    getTupleCodec([getU8Codec(), getUtf8Codec()], { description: 'myDescription' }) satisfies Codec<
+        readonly [number, string]
+    >;
+}
