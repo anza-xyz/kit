@@ -38,3 +38,10 @@ import { getArrayCodec, getArrayDecoder, getArrayEncoder } from '../array';
     getArrayCodec({} as FixedSizeCodec<string>, { size: 'remainder' }) satisfies VariableSizeCodec<string[]>;
     getArrayCodec({} as VariableSizeCodec<string>, { size: 'remainder' }) satisfies VariableSizeCodec<string[]>;
 }
+
+{
+    // [getArrayCodec]: It allows passing a description in the config.
+    getArrayCodec({} as FixedSizeCodec<string>, { description: 'myDescription', size: 42 }) satisfies FixedSizeCodec<
+        string[]
+    >;
+}

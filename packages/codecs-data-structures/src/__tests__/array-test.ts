@@ -74,6 +74,14 @@ describe('getArrayCodec', () => {
                 expected: 2,
             }),
         );
+
+        expect(() => array(u32String, { description: 'myDescription', size: 2 }).encode(['a', 'b', 'c'])).toThrow(
+            new SolanaError(SOLANA_ERROR__CODECS__INVALID_NUMBER_OF_ITEMS, {
+                actual: 3,
+                codecDescription: 'myDescription',
+                expected: 2,
+            }),
+        );
     });
 
     it('encodes remainder arrays', () => {

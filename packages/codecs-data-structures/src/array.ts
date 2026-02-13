@@ -42,6 +42,10 @@ export type ArrayLikeCodecSize<TPrefix extends NumberCodec | NumberDecoder | Num
  */
 export type ArrayCodecConfig<TPrefix extends NumberCodec | NumberDecoder | NumberEncoder> = {
     /**
+     * An optional description for the codec, that will be used in error messages.
+     */
+    description?: string;
+    /**
      * Specifies how the size of the array is determined.
      *
      * - A {@link NumberCodec}, {@link NumberDecoder}, or {@link NumberEncoder} stores a size prefix before encoding the array.
@@ -65,7 +69,7 @@ export type ArrayCodecConfig<TPrefix extends NumberCodec | NumberDecoder | Numbe
  * @typeParam TFrom - The type of the elements in the array.
  *
  * @param item - The encoder for each item in the array.
- * @param config - Optional configuration for the size encoding strategy.
+ * @param config - Optional configuration for the size encoding strategy and description.
  * @returns A `VariableSizeEncoder<TFrom[]>` for encoding arrays.
  *
  * @example
@@ -112,7 +116,7 @@ export function getArrayEncoder<TFrom>(
               }),
         write: (array: TFrom[], bytes, offset) => {
             if (typeof size === 'number') {
-                assertValidNumberOfItemsForCodec('array', size, array.length);
+                assertValidNumberOfItemsForCodec(config.description ?? 'array', size, array.length);
             }
             if (typeof size === 'object') {
                 offset = size.write(array.length, bytes, offset);
