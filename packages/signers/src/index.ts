@@ -92,3 +92,5 @@ export * from './transaction-sending-signer';
 export * from './transaction-signer';
 export * from './transaction-with-single-sending-signer';
 export * from './types';
+export * from './wallet-account-sending-signer';
+export * from './wallet-account-signer';
