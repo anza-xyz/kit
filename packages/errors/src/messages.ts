@@ -219,6 +219,8 @@ import {
     SOLANA_ERROR__TIMESTAMP_OUT_OF_RANGE,
     SOLANA_ERROR__TRANSACTION__ADDRESS_MISSING,
     SOLANA_ERROR__TRANSACTION__ADDRESSES_CANNOT_SIGN_TRANSACTION,
+    SOLANA_ERROR__TRANSACTION__CANNOT_DECODE_EMPTY_TRANSACTION_BYTES,
+    SOLANA_ERROR__TRANSACTION__CANNOT_ENCODE_WITH_EMPTY_MESSAGE_BYTES,
     SOLANA_ERROR__TRANSACTION__CANNOT_ENCODE_WITH_EMPTY_SIGNATURES,
     SOLANA_ERROR__TRANSACTION__EXCEEDS_SIZE_LIMIT,
     SOLANA_ERROR__TRANSACTION__EXPECTED_BLOCKHASH_LIFETIME,
@@ -238,9 +240,11 @@ import {
     SOLANA_ERROR__TRANSACTION__MALFORMED_MESSAGE_BYTES,
     SOLANA_ERROR__TRANSACTION__MESSAGE_SIGNATURES_MISMATCH,
     SOLANA_ERROR__TRANSACTION__NONCE_ACCOUNT_CANNOT_BE_IN_LOOKUP_TABLE,
+    SOLANA_ERROR__TRANSACTION__SIGNATURE_COUNT_TOO_HIGH_FOR_TRANSACTION_BYTES,
     SOLANA_ERROR__TRANSACTION__SIGNATURES_MISSING,
     SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED,
     SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_OUT_OF_RANGE,
+    SOLANA_ERROR__TRANSACTION__VERSION_ZERO_MUST_BE_ENCODED_WITH_SIGNATURES_FIRST,
     SOLANA_ERROR__TRANSACTION_ERROR__ACCOUNT_BORROW_OUTSTANDING,
     SOLANA_ERROR__TRANSACTION_ERROR__ACCOUNT_IN_USE,
     SOLANA_ERROR__TRANSACTION_ERROR__ACCOUNT_LOADED_TWICE,
@@ -760,4 +764,12 @@ export const SolanaErrorMessages: Readonly<{
     [SOLANA_ERROR__TRANSACTION__NONCE_ACCOUNT_CANNOT_BE_IN_LOOKUP_TABLE]:
         'The transaction has a durable nonce lifetime (with nonce `$nonce`), but the nonce account address is in a lookup table. The lifetime constraint cannot be constructed without fetching the lookup tables for the transaction.',
     [SOLANA_ERROR__TRANSACTION__MALFORMED_MESSAGE_BYTES]: 'Transaction message bytes are malformed: $messageBytes',
+    [SOLANA_ERROR__TRANSACTION__CANNOT_ENCODE_WITH_EMPTY_MESSAGE_BYTES]:
+        'Transaction message bytes are empty, so the transaction cannot be encoded',
+    [SOLANA_ERROR__TRANSACTION__CANNOT_DECODE_EMPTY_TRANSACTION_BYTES]:
+        'Transaction bytes are empty, so no transaction can be decoded',
+    [SOLANA_ERROR__TRANSACTION__VERSION_ZERO_MUST_BE_ENCODED_WITH_SIGNATURES_FIRST]:
+        'Transaction version 0 must be encoded with signatures first. This transaction was encoded with first byte $firstByte, which is expected to be a signature count for v0 transactions.',
+    [SOLANA_ERROR__TRANSACTION__SIGNATURE_COUNT_TOO_HIGH_FOR_TRANSACTION_BYTES]:
+        'The provided transaction bytes expect that there should be $numExpectedSignatures signatures, but the bytes are not long enough to contain a transaction message with this many signatures. The provided bytes are $transactionBytesLength bytes long.',
 };

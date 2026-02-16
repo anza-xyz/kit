@@ -132,122 +132,952 @@ describe.each([getTransactionDecoder, getTransactionCodec])('Transaction decoder
         decoder = decoderFactory();
     });
 
-    describe('for a transaction with a single signature', () => {
-        const addressBytes = new Uint8Array(64).fill(11);
-        const address = 'k7FaK87WHGVXzkaoHb7CdVPgkKDQhZ29VLDeBVbDfYn' as Address;
-
-        it('should decode the transaction correctly when the signature is defined', () => {
-            const signature = new Uint8Array(64).fill(1) as ReadonlyUint8Array as SignatureBytes;
-            const messageBytes = new Uint8Array([
-                /** VERSION HEADER */
-                128, // 0 + version mask
-
-                /** MESSAGE HEADER */
-                1, // numSignerAccounts
-                0, // numReadonlySignerAccount
-                1, // numReadonlyNonSignerAccounts
-
-                /** STATIC ADDRESSES */
-                2, // Number of static accounts
-                ...addressBytes,
-                ...new Uint8Array(64).fill(12),
-
-                /** REST OF TRANSACTION MESSAGE (arbitrary) */
-                ...new Uint8Array(100).fill(1),
-            ]) as ReadonlyUint8Array as TransactionMessageBytes;
-
-            const encodedTransaction = new Uint8Array([
-                /** SIGNATURES */
-                1, // num signatures
-                ...signature,
-
-                /** MESSAGE */
-                ...messageBytes,
-            ]);
-
-            const expectedTransaction: Transaction = {
-                messageBytes: messageBytes,
-                signatures: {
-                    [address]: signature,
-                },
-            };
-            expect(decoder.decode(encodedTransaction)).toStrictEqual(expectedTransaction);
-        });
-
-        it('should decode the transaction correctly when the signature is not defined', () => {
-            const signature = new Uint8Array(64).fill(0) as ReadonlyUint8Array as SignatureBytes;
-            const messageBytes = new Uint8Array([
-                /** VERSION HEADER */
-                128, // 0 + version mask
-
-                /** MESSAGE HEADER */
-                1, // numSignerAccounts
-                0, // numReadonlySignerAccount
-                1, // numReadonlyNonSignerAccounts
-
-                /** STATIC ADDRESSES */
-                2, // Number of static accounts
-                ...addressBytes,
-                ...new Uint8Array(64).fill(12),
-
-                /** REST OF TRANSACTION MESSAGE (arbitrary) */
-                ...new Uint8Array(100).fill(1),
-            ]) as ReadonlyUint8Array as TransactionMessageBytes;
-
-            const encodedTransaction = new Uint8Array([
-                /** SIGNATURES */
-                1, // num signatures
-                ...signature,
-
-                /** MESSAGE */
-                ...messageBytes,
-            ]);
-
+    describe('for a legacy transaction', () => {
+        describe('for a transaction with a single signature', () => {
+            const addressBytes = new Uint8Array(64).fill(11);
             const address = 'k7FaK87WHGVXzkaoHb7CdVPgkKDQhZ29VLDeBVbDfYn' as Address;
-            const expectedTransaction: Transaction = {
-                messageBytes: messageBytes,
-                signatures: {
-                    [address]: null,
-                },
-            };
-            expect(decoder.decode(encodedTransaction)).toStrictEqual(expectedTransaction);
+
+            it('should decode the transaction correctly when the signature is defined', () => {
+                const signature = new Uint8Array(64).fill(1) as ReadonlyUint8Array as SignatureBytes;
+                const messageBytes = new Uint8Array([
+                    /** NO VERSION BYTE */
+                    /** MESSAGE HEADER */
+                    1, // numSignerAccounts
+                    0, // numReadonlySignerAccount
+                    1, // numReadonlyNonSignerAccounts
+
+                    /** STATIC ADDRESSES */
+                    2, // Number of static accounts
+                    ...addressBytes,
+                    ...new Uint8Array(64).fill(12),
+
+                    /** REST OF TRANSACTION MESSAGE (arbitrary) */
+                    ...new Uint8Array(100).fill(1),
+                ]) as ReadonlyUint8Array as TransactionMessageBytes;
+
+                const encodedTransaction = new Uint8Array([
+                    /** SIGNATURES */
+                    1, // num signatures
+                    ...signature,
+
+                    /** MESSAGE */
+                    ...messageBytes,
+                ]);
+
+                const expectedTransaction: Transaction = {
+                    messageBytes: messageBytes,
+                    signatures: {
+                        [address]: signature,
+                    },
+                };
+                expect(decoder.decode(encodedTransaction)).toStrictEqual(expectedTransaction);
+            });
+
+            it('should decode the transaction correctly when the signature is not defined', () => {
+                const signature = new Uint8Array(64).fill(0) as ReadonlyUint8Array as SignatureBytes;
+                const messageBytes = new Uint8Array([
+                    /** NO VERSION BYTE */
+                    /** MESSAGE HEADER */
+                    1, // numSignerAccounts
+                    0, // numReadonlySignerAccount
+                    1, // numReadonlyNonSignerAccounts
+
+                    /** STATIC ADDRESSES */
+                    2, // Number of static accounts
+                    ...addressBytes,
+                    ...new Uint8Array(64).fill(12),
+
+                    /** REST OF TRANSACTION MESSAGE (arbitrary) */
+                    ...new Uint8Array(100).fill(1),
+                ]) as ReadonlyUint8Array as TransactionMessageBytes;
+
+                const encodedTransaction = new Uint8Array([
+                    /** SIGNATURES */
+                    1, // num signatures
+                    ...signature,
+
+                    /** MESSAGE */
+                    ...messageBytes,
+                ]);
+
+                const address = 'k7FaK87WHGVXzkaoHb7CdVPgkKDQhZ29VLDeBVbDfYn' as Address;
+                const expectedTransaction: Transaction = {
+                    messageBytes: messageBytes,
+                    signatures: {
+                        [address]: null,
+                    },
+                };
+                expect(decoder.decode(encodedTransaction)).toStrictEqual(expectedTransaction);
+            });
+
+            it('should freeze the signatures map', () => {
+                const signature = new Uint8Array(64).fill(0) as ReadonlyUint8Array as SignatureBytes;
+                const messageBytes = new Uint8Array([
+                    /** NO VERSION BYTE */
+                    /** MESSAGE HEADER */
+                    1, // numSignerAccounts
+                    0, // numReadonlySignerAccount
+                    1, // numReadonlyNonSignerAccounts
+
+                    /** STATIC ADDRESSES */
+                    2, // Number of static accounts
+                    ...addressBytes,
+                    ...new Uint8Array(64).fill(12),
+
+                    /** REST OF TRANSACTION MESSAGE (arbitrary) */
+                    ...new Uint8Array(100).fill(1),
+                ]) as ReadonlyUint8Array as TransactionMessageBytes;
+
+                const encodedTransaction = new Uint8Array([
+                    /** SIGNATURES */
+                    1, // num signatures
+                    ...signature,
+
+                    /** MESSAGE */
+                    ...messageBytes,
+                ]);
+
+                const decoded = decoder.decode(encodedTransaction);
+                expect(decoded.signatures).toBeFrozenObject();
+            });
         });
 
-        it('should freeze the signatures map', () => {
-            const signature = new Uint8Array(64).fill(0) as ReadonlyUint8Array as SignatureBytes;
-            const messageBytes = new Uint8Array([
-                /** VERSION HEADER */
-                128, // 0 + version mask
+        describe('for a transaction with multiple signatures', () => {
+            const address1Bytes = new Uint8Array(32).fill(11);
+            const address1 = 'k7FaK87WHGVXzkaoHb7CdVPgkKDQhZ29VLDeBVbDfYn' as Address;
 
-                /** MESSAGE HEADER */
-                1, // numSignerAccounts
-                0, // numReadonlySignerAccount
-                1, // numReadonlyNonSignerAccounts
+            const address2Bytes = new Uint8Array(32).fill(12);
+            const address2 = 'p2Yicb86aZig616Eav2VWG9vuXR5mEqhtzshZYBxzsV' as Address;
 
-                /** STATIC ADDRESSES */
-                2, // Number of static accounts
-                ...addressBytes,
-                ...new Uint8Array(64).fill(12),
+            const address3Bytes = new Uint8Array(32).fill(13);
+            const address3 = 'swqrv48gsrwpBFbftEwnP2vB4jckpvfGJfXkwaniLCC' as Address;
 
-                /** REST OF TRANSACTION MESSAGE (arbitrary) */
-                ...new Uint8Array(100).fill(1),
-            ]) as ReadonlyUint8Array as TransactionMessageBytes;
+            const signature1 = new Uint8Array(64).fill(1) as ReadonlyUint8Array as SignatureBytes;
+            const signature2 = new Uint8Array(64).fill(2) as ReadonlyUint8Array as SignatureBytes;
+            const signature3 = new Uint8Array(64).fill(3) as ReadonlyUint8Array as SignatureBytes;
 
-            const encodedTransaction = new Uint8Array([
-                /** SIGNATURES */
-                1, // num signatures
-                ...signature,
+            it('should decode the transaction correctly when all the signatures are defined', () => {
+                const messageBytes = new Uint8Array([
+                    /** NO VERSION BYTE */
+                    /** MESSAGE HEADER */
+                    3, // numSignerAccounts
+                    0, // numReadonlySignerAccount
+                    1, // numReadonlyNonSignerAccounts
 
-                /** MESSAGE */
-                ...messageBytes,
-            ]);
+                    /** STATIC ADDRESSES */
+                    4, // Number of static accounts
+                    ...address1Bytes,
+                    ...address2Bytes,
+                    ...address3Bytes,
+                    ...new Uint8Array(64).fill(21),
 
-            const decoded = decoder.decode(encodedTransaction);
-            expect(decoded.signatures).toBeFrozenObject();
+                    /** REST OF TRANSACTION MESSAGE (arbitrary) */
+                    ...new Uint8Array(100).fill(1),
+                ]) as ReadonlyUint8Array as TransactionMessageBytes;
+
+                const encodedTransaction = new Uint8Array([
+                    /** SIGNATURES */
+                    3, // num signatures
+                    ...signature1,
+                    ...signature2,
+                    ...signature3,
+
+                    /** MESSAGE */
+                    ...messageBytes,
+                ]);
+
+                const expectedTransaction: Transaction = {
+                    messageBytes: messageBytes,
+                    signatures: {
+                        [address1]: signature1,
+                        [address2]: signature2,
+                        [address3]: signature3,
+                    },
+                };
+                expect(decoder.decode(encodedTransaction)).toStrictEqual(expectedTransaction);
+            });
+
+            it('should decode the transaction correctly when none of the signatures are defined', () => {
+                const messageBytes = new Uint8Array([
+                    /** NO VERSION BYTE */
+                    /** MESSAGE HEADER */
+                    3, // numSignerAccounts
+                    0, // numReadonlySignerAccount
+                    1, // numReadonlyNonSignerAccounts
+
+                    /** STATIC ADDRESSES */
+                    4, // Number of static accounts
+                    ...address1Bytes,
+                    ...address2Bytes,
+                    ...address3Bytes,
+                    ...new Uint8Array(64).fill(21),
+
+                    /** REST OF TRANSACTION MESSAGE (arbitrary) */
+                    ...new Uint8Array(100).fill(1),
+                ]) as ReadonlyUint8Array as TransactionMessageBytes;
+
+                const encodedTransaction = new Uint8Array([
+                    /** SIGNATURES */
+                    3, // num signatures
+                    ...new Uint8Array(64).fill(0),
+                    ...new Uint8Array(64).fill(0),
+                    ...new Uint8Array(64).fill(0),
+
+                    /** MESSAGE */
+                    ...messageBytes,
+                ]);
+
+                const expectedTransaction: Transaction = {
+                    messageBytes: messageBytes,
+                    signatures: {
+                        [address1]: null,
+                        [address2]: null,
+                        [address3]: null,
+                    },
+                };
+                expect(decoder.decode(encodedTransaction)).toStrictEqual(expectedTransaction);
+            });
+
+            it('should decode the transaction correctly when some of the signatures are defined', () => {
+                const messageBytes = new Uint8Array([
+                    /** NO VERSION BYTE */
+                    /** MESSAGE HEADER */
+                    3, // numSignerAccounts
+                    0, // numReadonlySignerAccount
+                    1, // numReadonlyNonSignerAccounts
+
+                    /** STATIC ADDRESSES */
+                    4, // Number of static accounts
+                    ...address1Bytes,
+                    ...address2Bytes,
+                    ...address3Bytes,
+                    ...new Uint8Array(64).fill(21),
+
+                    /** REST OF TRANSACTION MESSAGE (arbitrary) */
+                    ...new Uint8Array(100).fill(1),
+                ]) as ReadonlyUint8Array as TransactionMessageBytes;
+
+                const encodedTransaction = new Uint8Array([
+                    /** SIGNATURES */
+                    3, // num signatures
+                    ...signature1,
+                    ...new Uint8Array(64).fill(0),
+                    ...signature3,
+
+                    /** MESSAGE */
+                    ...messageBytes,
+                ]);
+
+                const expectedTransaction: Transaction = {
+                    messageBytes: messageBytes,
+                    signatures: {
+                        [address1]: signature1,
+                        [address2]: null,
+                        [address3]: signature3,
+                    },
+                };
+                expect(decoder.decode(encodedTransaction)).toStrictEqual(expectedTransaction);
+            });
+
+            it('should throw when the number of signers in the header does not match the number of signatures', () => {
+                const messageBytes = new Uint8Array([
+                    /** NO VERSION BYTE */
+                    /** MESSAGE HEADER */
+                    3, // numSignerAccounts
+                    0, // numReadonlySignerAccount
+                    1, // numReadonlyNonSignerAccounts
+
+                    /** STATIC ADDRESSES */
+                    4, // Number of static accounts
+                    ...address1Bytes,
+                    ...address2Bytes,
+                    ...address3Bytes,
+                    ...new Uint8Array(64).fill(21),
+
+                    /** REST OF TRANSACTION MESSAGE (arbitrary) */
+                    ...new Uint8Array(100).fill(1),
+                ]) as ReadonlyUint8Array as TransactionMessageBytes;
+
+                const encodedTransaction = new Uint8Array([
+                    /** SIGNATURES */
+                    2, // num signatures
+                    ...signature1,
+                    ...signature2,
+
+                    /** MESSAGE */
+                    ...messageBytes,
+                ]);
+
+                expect(() => decoder.decode(encodedTransaction)).toThrow(
+                    new SolanaError(SOLANA_ERROR__TRANSACTION__MESSAGE_SIGNATURES_MISMATCH, {
+                        numRequiredSignatures: 3,
+                        signaturesLength: 2,
+                        signerAddresses: [address1, address2, address3],
+                    }),
+                );
+            });
+        });
+    });
+
+    describe('for a v0 transaction', () => {
+        describe('for a transaction with a single signature', () => {
+            const addressBytes = new Uint8Array(64).fill(11);
+            const address = 'k7FaK87WHGVXzkaoHb7CdVPgkKDQhZ29VLDeBVbDfYn' as Address;
+
+            it('should decode the transaction correctly when the signature is defined', () => {
+                const signature = new Uint8Array(64).fill(1) as ReadonlyUint8Array as SignatureBytes;
+                const messageBytes = new Uint8Array([
+                    /** VERSION HEADER */
+                    128, // 0 + version mask
+
+                    /** MESSAGE HEADER */
+                    1, // numSignerAccounts
+                    0, // numReadonlySignerAccount
+                    1, // numReadonlyNonSignerAccounts
+
+                    /** STATIC ADDRESSES */
+                    2, // Number of static accounts
+                    ...addressBytes,
+                    ...new Uint8Array(64).fill(12),
+
+                    /** REST OF TRANSACTION MESSAGE (arbitrary) */
+                    ...new Uint8Array(100).fill(1),
+                ]) as ReadonlyUint8Array as TransactionMessageBytes;
+
+                const encodedTransaction = new Uint8Array([
+                    /** SIGNATURES */
+                    1, // num signatures
+                    ...signature,
+
+                    /** MESSAGE */
+                    ...messageBytes,
+                ]);
+
+                const expectedTransaction: Transaction = {
+                    messageBytes: messageBytes,
+                    signatures: {
+                        [address]: signature,
+                    },
+                };
+                expect(decoder.decode(encodedTransaction)).toStrictEqual(expectedTransaction);
+            });
+
+            it('should decode the transaction correctly when the signature is not defined', () => {
+                const signature = new Uint8Array(64).fill(0) as ReadonlyUint8Array as SignatureBytes;
+                const messageBytes = new Uint8Array([
+                    /** VERSION HEADER */
+                    128, // 0 + version mask
+
+                    /** MESSAGE HEADER */
+                    1, // numSignerAccounts
+                    0, // numReadonlySignerAccount
+                    1, // numReadonlyNonSignerAccounts
+
+                    /** STATIC ADDRESSES */
+                    2, // Number of static accounts
+                    ...addressBytes,
+                    ...new Uint8Array(64).fill(12),
+
+                    /** REST OF TRANSACTION MESSAGE (arbitrary) */
+                    ...new Uint8Array(100).fill(1),
+                ]) as ReadonlyUint8Array as TransactionMessageBytes;
+
+                const encodedTransaction = new Uint8Array([
+                    /** SIGNATURES */
+                    1, // num signatures
+                    ...signature,
+
+                    /** MESSAGE */
+                    ...messageBytes,
+                ]);
+
+                const address = 'k7FaK87WHGVXzkaoHb7CdVPgkKDQhZ29VLDeBVbDfYn' as Address;
+                const expectedTransaction: Transaction = {
+                    messageBytes: messageBytes,
+                    signatures: {
+                        [address]: null,
+                    },
+                };
+                expect(decoder.decode(encodedTransaction)).toStrictEqual(expectedTransaction);
+            });
+
+            it('should freeze the signatures map', () => {
+                const signature = new Uint8Array(64).fill(0) as ReadonlyUint8Array as SignatureBytes;
+                const messageBytes = new Uint8Array([
+                    /** VERSION HEADER */
+                    128, // 0 + version mask
+
+                    /** MESSAGE HEADER */
+                    1, // numSignerAccounts
+                    0, // numReadonlySignerAccount
+                    1, // numReadonlyNonSignerAccounts
+
+                    /** STATIC ADDRESSES */
+                    2, // Number of static accounts
+                    ...addressBytes,
+                    ...new Uint8Array(64).fill(12),
+
+                    /** REST OF TRANSACTION MESSAGE (arbitrary) */
+                    ...new Uint8Array(100).fill(1),
+                ]) as ReadonlyUint8Array as TransactionMessageBytes;
+
+                const encodedTransaction = new Uint8Array([
+                    /** SIGNATURES */
+                    1, // num signatures
+                    ...signature,
+
+                    /** MESSAGE */
+                    ...messageBytes,
+                ]);
+
+                const decoded = decoder.decode(encodedTransaction);
+                expect(decoded.signatures).toBeFrozenObject();
+            });
         });
 
-        it('should fatal for unsupported transaction version 2', () => {
-            const signature = new Uint8Array(64).fill(0) as ReadonlyUint8Array as SignatureBytes;
+        describe('for a transaction with multiple signatures', () => {
+            const address1Bytes = new Uint8Array(32).fill(11);
+            const address1 = 'k7FaK87WHGVXzkaoHb7CdVPgkKDQhZ29VLDeBVbDfYn' as Address;
+
+            const address2Bytes = new Uint8Array(32).fill(12);
+            const address2 = 'p2Yicb86aZig616Eav2VWG9vuXR5mEqhtzshZYBxzsV' as Address;
+
+            const address3Bytes = new Uint8Array(32).fill(13);
+            const address3 = 'swqrv48gsrwpBFbftEwnP2vB4jckpvfGJfXkwaniLCC' as Address;
+
+            const signature1 = new Uint8Array(64).fill(1) as ReadonlyUint8Array as SignatureBytes;
+            const signature2 = new Uint8Array(64).fill(2) as ReadonlyUint8Array as SignatureBytes;
+            const signature3 = new Uint8Array(64).fill(3) as ReadonlyUint8Array as SignatureBytes;
+
+            it('should decode the transaction correctly when all the signatures are defined', () => {
+                const messageBytes = new Uint8Array([
+                    /** VERSION HEADER */
+                    128, // 0 + version mask
+
+                    /** MESSAGE HEADER */
+                    3, // numSignerAccounts
+                    0, // numReadonlySignerAccount
+                    1, // numReadonlyNonSignerAccounts
+
+                    /** STATIC ADDRESSES */
+                    4, // Number of static accounts
+                    ...address1Bytes,
+                    ...address2Bytes,
+                    ...address3Bytes,
+                    ...new Uint8Array(64).fill(21),
+
+                    /** REST OF TRANSACTION MESSAGE (arbitrary) */
+                    ...new Uint8Array(100).fill(1),
+                ]) as ReadonlyUint8Array as TransactionMessageBytes;
+
+                const encodedTransaction = new Uint8Array([
+                    /** SIGNATURES */
+                    3, // num signatures
+                    ...signature1,
+                    ...signature2,
+                    ...signature3,
+
+                    /** MESSAGE */
+                    ...messageBytes,
+                ]);
+
+                const expectedTransaction: Transaction = {
+                    messageBytes: messageBytes,
+                    signatures: {
+                        [address1]: signature1,
+                        [address2]: signature2,
+                        [address3]: signature3,
+                    },
+                };
+                expect(decoder.decode(encodedTransaction)).toStrictEqual(expectedTransaction);
+            });
+
+            it('should decode the transaction correctly when none of the signatures are defined', () => {
+                const messageBytes = new Uint8Array([
+                    /** VERSION HEADER */
+                    128, // 0 + version mask
+
+                    /** MESSAGE HEADER */
+                    3, // numSignerAccounts
+                    0, // numReadonlySignerAccount
+                    1, // numReadonlyNonSignerAccounts
+
+                    /** STATIC ADDRESSES */
+                    4, // Number of static accounts
+                    ...address1Bytes,
+                    ...address2Bytes,
+                    ...address3Bytes,
+                    ...new Uint8Array(64).fill(21),
+
+                    /** REST OF TRANSACTION MESSAGE (arbitrary) */
+                    ...new Uint8Array(100).fill(1),
+                ]) as ReadonlyUint8Array as TransactionMessageBytes;
+
+                const encodedTransaction = new Uint8Array([
+                    /** SIGNATURES */
+                    3, // num signatures
+                    ...new Uint8Array(64).fill(0),
+                    ...new Uint8Array(64).fill(0),
+                    ...new Uint8Array(64).fill(0),
+
+                    /** MESSAGE */
+                    ...messageBytes,
+                ]);
+
+                const expectedTransaction: Transaction = {
+                    messageBytes: messageBytes,
+                    signatures: {
+                        [address1]: null,
+                        [address2]: null,
+                        [address3]: null,
+                    },
+                };
+                expect(decoder.decode(encodedTransaction)).toStrictEqual(expectedTransaction);
+            });
+
+            it('should decode the transaction correctly when some of the signatures are defined', () => {
+                const messageBytes = new Uint8Array([
+                    /** VERSION HEADER */
+                    128, // 0 + version mask
+
+                    /** MESSAGE HEADER */
+                    3, // numSignerAccounts
+                    0, // numReadonlySignerAccount
+                    1, // numReadonlyNonSignerAccounts
+
+                    /** STATIC ADDRESSES */
+                    4, // Number of static accounts
+                    ...address1Bytes,
+                    ...address2Bytes,
+                    ...address3Bytes,
+                    ...new Uint8Array(64).fill(21),
+
+                    /** REST OF TRANSACTION MESSAGE (arbitrary) */
+                    ...new Uint8Array(100).fill(1),
+                ]) as ReadonlyUint8Array as TransactionMessageBytes;
+
+                const encodedTransaction = new Uint8Array([
+                    /** SIGNATURES */
+                    3, // num signatures
+                    ...signature1,
+                    ...new Uint8Array(64).fill(0),
+                    ...signature3,
+
+                    /** MESSAGE */
+                    ...messageBytes,
+                ]);
+
+                const expectedTransaction: Transaction = {
+                    messageBytes: messageBytes,
+                    signatures: {
+                        [address1]: signature1,
+                        [address2]: null,
+                        [address3]: signature3,
+                    },
+                };
+                expect(decoder.decode(encodedTransaction)).toStrictEqual(expectedTransaction);
+            });
+
+            it('should throw when the number of signers in the header does not match the number of signatures', () => {
+                const messageBytes = new Uint8Array([
+                    /** VERSION HEADER */
+                    128, // 0 + version mask
+
+                    /** MESSAGE HEADER */
+                    3, // numSignerAccounts
+                    0, // numReadonlySignerAccount
+                    1, // numReadonlyNonSignerAccounts
+
+                    /** STATIC ADDRESSES */
+                    4, // Number of static accounts
+                    ...address1Bytes,
+                    ...address2Bytes,
+                    ...address3Bytes,
+                    ...new Uint8Array(64).fill(21),
+
+                    /** REST OF TRANSACTION MESSAGE (arbitrary) */
+                    ...new Uint8Array(100).fill(1),
+                ]) as ReadonlyUint8Array as TransactionMessageBytes;
+
+                const encodedTransaction = new Uint8Array([
+                    /** SIGNATURES */
+                    2, // num signatures
+                    ...signature1,
+                    ...signature2,
+
+                    /** MESSAGE */
+                    ...messageBytes,
+                ]);
+
+                expect(() => decoder.decode(encodedTransaction)).toThrow(
+                    new SolanaError(SOLANA_ERROR__TRANSACTION__MESSAGE_SIGNATURES_MISMATCH, {
+                        numRequiredSignatures: 3,
+                        signaturesLength: 2,
+                        signerAddresses: [address1, address2, address3],
+                    }),
+                );
+            });
+        });
+    });
+
+    describe('for a v1 transaction', () => {
+        describe('for a transaction with a single signature', () => {
+            const addressBytes = new Uint8Array(64).fill(11);
+            const address = 'k7FaK87WHGVXzkaoHb7CdVPgkKDQhZ29VLDeBVbDfYn' as Address;
+
+            it('should decode the transaction correctly when the signature is defined', () => {
+                const signature = new Uint8Array(64).fill(1) as ReadonlyUint8Array as SignatureBytes;
+                const messageBytes = new Uint8Array([
+                    /** VERSION HEADER */
+                    129, // 1 + version mask
+
+                    /** MESSAGE HEADER */
+                    1, // numSignerAccounts
+                    0, // numReadonlySignerAccount
+                    1, // numReadonlyNonSignerAccounts
+
+                    /** TRANSACTION CONFIG MASK */
+                    0,
+                    0,
+                    0,
+                    0, // arbitrary
+
+                    /** LIFETIME SPECIFIER */
+                    0,
+                    0,
+                    0,
+                    0, // arbitrary
+
+                    /** NUM INSTRUCTIONS */
+                    1, // arbitrary
+
+                    /** NUM ACCOUNTS */
+                    2,
+
+                    /** STATIC ADDRESSES */
+                    ...addressBytes,
+                    ...new Uint8Array(64).fill(12),
+
+                    /** REST OF TRANSACTION MESSAGE (arbitrary) */
+                    ...new Uint8Array(100).fill(1),
+                ]) as ReadonlyUint8Array as TransactionMessageBytes;
+
+                const encodedTransaction = new Uint8Array([
+                    /** MESSAGE */
+                    ...messageBytes,
+
+                    /** SIGNATURES */
+                    ...signature,
+                ]);
+
+                const expectedTransaction: Transaction = {
+                    messageBytes: messageBytes,
+                    signatures: {
+                        [address]: signature,
+                    },
+                };
+                expect(decoder.decode(encodedTransaction)).toStrictEqual(expectedTransaction);
+            });
+
+            it('should decode the transaction correctly when the signature is not defined', () => {
+                const signature = new Uint8Array(64).fill(0) as ReadonlyUint8Array as SignatureBytes;
+                const messageBytes = new Uint8Array([
+                    /** VERSION HEADER */
+                    129, // 1 + version mask
+
+                    /** MESSAGE HEADER */
+                    1, // numSignerAccounts
+                    0, // numReadonlySignerAccount
+                    1, // numReadonlyNonSignerAccounts
+
+                    /** TRANSACTION CONFIG MASK */
+                    0,
+                    0,
+                    0,
+                    0, // arbitrary
+
+                    /** LIFETIME SPECIFIER */
+                    0,
+                    0,
+                    0,
+                    0, // arbitrary
+
+                    /** NUM INSTRUCTIONS */
+                    1, // arbitrary
+
+                    /** NUM ACCOUNTS */
+                    2,
+
+                    /** STATIC ADDRESSES */
+                    ...addressBytes,
+                    ...new Uint8Array(64).fill(12),
+
+                    /** REST OF TRANSACTION MESSAGE (arbitrary) */
+                    ...new Uint8Array(100).fill(1),
+                ]) as ReadonlyUint8Array as TransactionMessageBytes;
+
+                const encodedTransaction = new Uint8Array([
+                    /** MESSAGE */
+                    ...messageBytes,
+
+                    /** SIGNATURES */
+                    ...signature,
+                ]);
+
+                const expectedTransaction: Transaction = {
+                    messageBytes: messageBytes,
+                    signatures: {
+                        [address]: null,
+                    },
+                };
+                expect(decoder.decode(encodedTransaction)).toStrictEqual(expectedTransaction);
+            });
+
+            it('should freeze the signatures map', () => {
+                const signature = new Uint8Array(64).fill(0) as ReadonlyUint8Array as SignatureBytes;
+                const messageBytes = new Uint8Array([
+                    /** VERSION HEADER */
+                    129, // 1 + version mask
+
+                    /** MESSAGE HEADER */
+                    1, // numSignerAccounts
+                    0, // numReadonlySignerAccount
+                    1, // numReadonlyNonSignerAccounts
+
+                    /** TRANSACTION CONFIG MASK */
+                    0,
+                    0,
+                    0,
+                    0, // arbitrary
+
+                    /** LIFETIME SPECIFIER */
+                    0,
+                    0,
+                    0,
+                    0, // arbitrary
+
+                    /** NUM INSTRUCTIONS */
+                    1, // arbitrary
+
+                    /** NUM ACCOUNTS */
+                    2,
+
+                    /** STATIC ADDRESSES */
+                    ...addressBytes,
+                    ...new Uint8Array(64).fill(12),
+
+                    /** REST OF TRANSACTION MESSAGE (arbitrary) */
+                    ...new Uint8Array(100).fill(1),
+                ]) as ReadonlyUint8Array as TransactionMessageBytes;
+
+                const encodedTransaction = new Uint8Array([
+                    /** MESSAGE */
+                    ...messageBytes,
+
+                    /** SIGNATURES */
+                    ...signature,
+                ]);
+
+                const decoded = decoder.decode(encodedTransaction);
+                expect(decoded.signatures).toBeFrozenObject();
+            });
+        });
+
+        describe('for a transaction with multiple signatures', () => {
+            const address1Bytes = new Uint8Array(32).fill(11);
+            const address1 = 'k7FaK87WHGVXzkaoHb7CdVPgkKDQhZ29VLDeBVbDfYn' as Address;
+
+            const address2Bytes = new Uint8Array(32).fill(12);
+            const address2 = 'p2Yicb86aZig616Eav2VWG9vuXR5mEqhtzshZYBxzsV' as Address;
+
+            const address3Bytes = new Uint8Array(32).fill(13);
+            const address3 = 'swqrv48gsrwpBFbftEwnP2vB4jckpvfGJfXkwaniLCC' as Address;
+
+            const signature1 = new Uint8Array(64).fill(1) as ReadonlyUint8Array as SignatureBytes;
+            const signature2 = new Uint8Array(64).fill(2) as ReadonlyUint8Array as SignatureBytes;
+            const signature3 = new Uint8Array(64).fill(3) as ReadonlyUint8Array as SignatureBytes;
+
+            it('should decode the transaction correctly when all the signatures are defined', () => {
+                const messageBytes = new Uint8Array([
+                    /** VERSION HEADER */
+                    129, // 1 + version mask
+
+                    /** MESSAGE HEADER */
+                    3, // numSignerAccounts
+                    0, // numReadonlySignerAccount
+                    1, // numReadonlyNonSignerAccounts
+
+                    /** TRANSACTION CONFIG MASK */
+                    0,
+                    0,
+                    0,
+                    0, // arbitrary
+
+                    /** LIFETIME SPECIFIER */
+                    0,
+                    0,
+                    0,
+                    0, // arbitrary
+
+                    /** NUM INSTRUCTIONS */
+                    1, // arbitrary
+
+                    /** NUM ACCOUNTS */
+                    4,
+
+                    /** STATIC ADDRESSES */
+                    ...address1Bytes,
+                    ...address2Bytes,
+                    ...address3Bytes,
+                    ...new Uint8Array(64).fill(12),
+
+                    /** REST OF TRANSACTION MESSAGE (arbitrary) */
+                    ...new Uint8Array(100).fill(1),
+                ]) as ReadonlyUint8Array as TransactionMessageBytes;
+
+                const encodedTransaction = new Uint8Array([
+                    /** MESSAGE */
+                    ...messageBytes,
+
+                    /** SIGNATURES */
+                    ...signature1,
+                    ...signature2,
+                    ...signature3,
+                ]);
+
+                const expectedTransaction: Transaction = {
+                    messageBytes: messageBytes,
+                    signatures: {
+                        [address1]: signature1,
+                        [address2]: signature2,
+                        [address3]: signature3,
+                    },
+                };
+                expect(decoder.decode(encodedTransaction)).toStrictEqual(expectedTransaction);
+            });
+
+            it('should decode the transaction correctly when none of the signatures are defined', () => {
+                const messageBytes = new Uint8Array([
+                    /** VERSION HEADER */
+                    129, // 1 + version mask
+
+                    /** MESSAGE HEADER */
+                    3, // numSignerAccounts
+                    0, // numReadonlySignerAccount
+                    1, // numReadonlyNonSignerAccounts
+
+                    /** TRANSACTION CONFIG MASK */
+                    0,
+                    0,
+                    0,
+                    0, // arbitrary
+
+                    /** LIFETIME SPECIFIER */
+                    0,
+                    0,
+                    0,
+                    0, // arbitrary
+
+                    /** NUM INSTRUCTIONS */
+                    1, // arbitrary
+
+                    /** NUM ACCOUNTS */
+                    4,
+
+                    /** STATIC ADDRESSES */
+                    ...address1Bytes,
+                    ...address2Bytes,
+                    ...address3Bytes,
+                    ...new Uint8Array(64).fill(12),
+
+                    /** REST OF TRANSACTION MESSAGE (arbitrary) */
+                    ...new Uint8Array(100).fill(1),
+                ]) as ReadonlyUint8Array as TransactionMessageBytes;
+
+                const encodedTransaction = new Uint8Array([
+                    /** MESSAGE */
+                    ...messageBytes,
+
+                    /** SIGNATURES */
+                    ...new Uint8Array(64).fill(0),
+                    ...new Uint8Array(64).fill(0),
+                    ...new Uint8Array(64).fill(0),
+                ]);
+
+                const expectedTransaction: Transaction = {
+                    messageBytes: messageBytes,
+                    signatures: {
+                        [address1]: null,
+                        [address2]: null,
+                        [address3]: null,
+                    },
+                };
+                expect(decoder.decode(encodedTransaction)).toStrictEqual(expectedTransaction);
+            });
+
+            it('should decode the transaction correctly when some of the signatures are defined', () => {
+                const messageBytes = new Uint8Array([
+                    /** VERSION HEADER */
+                    129, // 1 + version mask
+
+                    /** MESSAGE HEADER */
+                    3, // numSignerAccounts
+                    0, // numReadonlySignerAccount
+                    1, // numReadonlyNonSignerAccounts
+
+                    /** TRANSACTION CONFIG MASK */
+                    0,
+                    0,
+                    0,
+                    0, // arbitrary
+
+                    /** LIFETIME SPECIFIER */
+                    0,
+                    0,
+                    0,
+                    0, // arbitrary
+
+                    /** NUM INSTRUCTIONS */
+                    1, // arbitrary
+
+                    /** NUM ACCOUNTS */
+                    4,
+
+                    /** STATIC ADDRESSES */
+                    ...address1Bytes,
+                    ...address2Bytes,
+                    ...address3Bytes,
+                    ...new Uint8Array(64).fill(12),
+
+                    /** REST OF TRANSACTION MESSAGE (arbitrary) */
+                    ...new Uint8Array(100).fill(1),
+                ]) as ReadonlyUint8Array as TransactionMessageBytes;
+
+                const encodedTransaction = new Uint8Array([
+                    /** MESSAGE */
+                    ...messageBytes,
+
+                    /** SIGNATURES */
+                    ...signature1,
+                    ...new Uint8Array(64).fill(0),
+                    ...signature3,
+                ]);
+
+                const expectedTransaction: Transaction = {
+                    messageBytes: messageBytes,
+                    signatures: {
+                        [address1]: signature1,
+                        [address2]: null,
+                        [address3]: signature3,
+                    },
+                };
+                expect(decoder.decode(encodedTransaction)).toStrictEqual(expectedTransaction);
+            });
+        });
+    });
+
+    describe('unsupported transaction versions', () => {
+        it('should throw for a v0-shaped transaction with a v2 version byte', () => {
             const messageBytes = new Uint8Array([
                 /** VERSION HEADER */
                 130, // 2 + version mask
@@ -255,11 +1085,10 @@ describe.each([getTransactionDecoder, getTransactionCodec])('Transaction decoder
                 /** MESSAGE HEADER */
                 1, // numSignerAccounts
                 0, // numReadonlySignerAccount
-                1, // numReadonlyNonSignerAccounts
+                0, // numReadonlyNonSignerAccounts
 
                 /** STATIC ADDRESSES */
-                2, // Number of static accounts
-                ...addressBytes,
+                1, // Number of static accounts
                 ...new Uint8Array(64).fill(12),
 
                 /** REST OF TRANSACTION MESSAGE (arbitrary) */
@@ -269,197 +1098,65 @@ describe.each([getTransactionDecoder, getTransactionCodec])('Transaction decoder
             const encodedTransaction = new Uint8Array([
                 /** SIGNATURES */
                 1, // num signatures
-                ...signature,
+                ...(new Uint8Array(64).fill(1) as ReadonlyUint8Array as SignatureBytes),
 
                 /** MESSAGE */
                 ...messageBytes,
             ]);
 
             expect(() => decoder.decode(encodedTransaction)).toThrow(
-                new SolanaError(SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED, { unsupportedVersion: 2 }),
+                new SolanaError(SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED, {
+                    unsupportedVersion: 2,
+                }),
             );
         });
-    });
 
-    describe('for a transaction with multiple signatures', () => {
-        const address1Bytes = new Uint8Array(32).fill(11);
-        const address1 = 'k7FaK87WHGVXzkaoHb7CdVPgkKDQhZ29VLDeBVbDfYn' as Address;
-
-        const address2Bytes = new Uint8Array(32).fill(12);
-        const address2 = 'p2Yicb86aZig616Eav2VWG9vuXR5mEqhtzshZYBxzsV' as Address;
-
-        const address3Bytes = new Uint8Array(32).fill(13);
-        const address3 = 'swqrv48gsrwpBFbftEwnP2vB4jckpvfGJfXkwaniLCC' as Address;
-
-        const signature1 = new Uint8Array(64).fill(1) as ReadonlyUint8Array as SignatureBytes;
-        const signature2 = new Uint8Array(64).fill(2) as ReadonlyUint8Array as SignatureBytes;
-        const signature3 = new Uint8Array(64).fill(3) as ReadonlyUint8Array as SignatureBytes;
-
-        it('should decode the transaction correctly when all the signatures are defined', () => {
+        it('should throw for a v1-shaped transaction with a v2 version byte', () => {
             const messageBytes = new Uint8Array([
                 /** VERSION HEADER */
-                128, // 0 + version mask
+                130, // 2 + version mask
 
                 /** MESSAGE HEADER */
-                3, // numSignerAccounts
+                1, // numSignerAccounts
                 0, // numReadonlySignerAccount
-                1, // numReadonlyNonSignerAccounts
+                0, // numReadonlyNonSignerAccounts
+
+                /** TRANSACTION CONFIG MASK */
+                0,
+                0,
+                0,
+                0, // arbitrary
+
+                /** LIFETIME SPECIFIER */
+                0,
+                0,
+                0,
+                0, // arbitrary
+
+                /** NUM INSTRUCTIONS */
+                1, // arbitrary
+
+                /** NUM ACCOUNTS */
+                1,
 
                 /** STATIC ADDRESSES */
-                4, // Number of static accounts
-                ...address1Bytes,
-                ...address2Bytes,
-                ...address3Bytes,
-                ...new Uint8Array(64).fill(21),
+                ...new Uint8Array(64).fill(12),
 
                 /** REST OF TRANSACTION MESSAGE (arbitrary) */
                 ...new Uint8Array(100).fill(1),
             ]) as ReadonlyUint8Array as TransactionMessageBytes;
 
             const encodedTransaction = new Uint8Array([
-                /** SIGNATURES */
-                3, // num signatures
-                ...signature1,
-                ...signature2,
-                ...signature3,
-
                 /** MESSAGE */
                 ...messageBytes,
-            ]);
 
-            const expectedTransaction: Transaction = {
-                messageBytes: messageBytes,
-                signatures: {
-                    [address1]: signature1,
-                    [address2]: signature2,
-                    [address3]: signature3,
-                },
-            };
-            expect(decoder.decode(encodedTransaction)).toStrictEqual(expectedTransaction);
-        });
-
-        it('should decode the transaction correctly when none of the signatures are defined', () => {
-            const messageBytes = new Uint8Array([
-                /** VERSION HEADER */
-                128, // 0 + version mask
-
-                /** MESSAGE HEADER */
-                3, // numSignerAccounts
-                0, // numReadonlySignerAccount
-                1, // numReadonlyNonSignerAccounts
-
-                /** STATIC ADDRESSES */
-                4, // Number of static accounts
-                ...address1Bytes,
-                ...address2Bytes,
-                ...address3Bytes,
-                ...new Uint8Array(64).fill(21),
-
-                /** REST OF TRANSACTION MESSAGE (arbitrary) */
-                ...new Uint8Array(100).fill(1),
-            ]) as ReadonlyUint8Array as TransactionMessageBytes;
-
-            const encodedTransaction = new Uint8Array([
                 /** SIGNATURES */
-                3, // num signatures
-                ...new Uint8Array(64).fill(0),
-                ...new Uint8Array(64).fill(0),
-                ...new Uint8Array(64).fill(0),
-
-                /** MESSAGE */
-                ...messageBytes,
-            ]);
-
-            const expectedTransaction: Transaction = {
-                messageBytes: messageBytes,
-                signatures: {
-                    [address1]: null,
-                    [address2]: null,
-                    [address3]: null,
-                },
-            };
-            expect(decoder.decode(encodedTransaction)).toStrictEqual(expectedTransaction);
-        });
-
-        it('should decode the transaction correctly when some of the signatures are defined', () => {
-            const messageBytes = new Uint8Array([
-                /** VERSION HEADER */
-                128, // 0 + version mask
-
-                /** MESSAGE HEADER */
-                3, // numSignerAccounts
-                0, // numReadonlySignerAccount
-                1, // numReadonlyNonSignerAccounts
-
-                /** STATIC ADDRESSES */
-                4, // Number of static accounts
-                ...address1Bytes,
-                ...address2Bytes,
-                ...address3Bytes,
-                ...new Uint8Array(64).fill(21),
-
-                /** REST OF TRANSACTION MESSAGE (arbitrary) */
-                ...new Uint8Array(100).fill(1),
-            ]) as ReadonlyUint8Array as TransactionMessageBytes;
-
-            const encodedTransaction = new Uint8Array([
-                /** SIGNATURES */
-                3, // num signatures
-                ...signature1,
-                ...new Uint8Array(64).fill(0),
-                ...signature3,
-
-                /** MESSAGE */
-                ...messageBytes,
-            ]);
-
-            const expectedTransaction: Transaction = {
-                messageBytes: messageBytes,
-                signatures: {
-                    [address1]: signature1,
-                    [address2]: null,
-                    [address3]: signature3,
-                },
-            };
-            expect(decoder.decode(encodedTransaction)).toStrictEqual(expectedTransaction);
-        });
-
-        it('should throw when the number of signers in the header does not match the number of signatures', () => {
-            const messageBytes = new Uint8Array([
-                /** VERSION HEADER */
-                128, // 0 + version mask
-
-                /** MESSAGE HEADER */
-                3, // numSignerAccounts
-                0, // numReadonlySignerAccount
-                1, // numReadonlyNonSignerAccounts
-
-                /** STATIC ADDRESSES */
-                4, // Number of static accounts
-                ...address1Bytes,
-                ...address2Bytes,
-                ...address3Bytes,
-                ...new Uint8Array(64).fill(21),
-
-                /** REST OF TRANSACTION MESSAGE (arbitrary) */
-                ...new Uint8Array(100).fill(1),
-            ]) as ReadonlyUint8Array as TransactionMessageBytes;
-
-            const encodedTransaction = new Uint8Array([
-                /** SIGNATURES */
-                2, // num signatures
-                ...signature1,
-                ...signature2,
-
-                /** MESSAGE */
-                ...messageBytes,
+                ...(new Uint8Array(64).fill(0) as ReadonlyUint8Array as SignatureBytes),
             ]);
 
             expect(() => decoder.decode(encodedTransaction)).toThrow(
-                new SolanaError(SOLANA_ERROR__TRANSACTION__MESSAGE_SIGNATURES_MISMATCH, {
-                    numRequiredSignatures: 3,
-                    signaturesLength: 2,
-                    signerAddresses: [address1, address2, address3],
+                new SolanaError(SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED, {
+                    unsupportedVersion: 2,
                 }),
             );
         });
