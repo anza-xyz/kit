@@ -1,11 +1,14 @@
 import { TransactionMessage, TransactionVersion } from './transaction-message';
 import { TransactionMessageWithinSizeLimit } from './transaction-message-size';
 
-type TransactionConfig<TVersion extends TransactionVersion> = Readonly<{
+// Note: v1 transactions are not yet supported by these functions
+type SupportedTransactionVersion = Exclude<TransactionVersion, 1>;
+
+type TransactionConfig<TVersion extends SupportedTransactionVersion> = Readonly<{
     version: TVersion;
 }>;
 
-type EmptyTransactionMessage<TVersion extends TransactionVersion> = Omit<
+type EmptyTransactionMessage<TVersion extends SupportedTransactionVersion> = Omit<
     Extract<TransactionMessage, { version: TVersion }>,
     'instructions'
 > &
@@ -22,7 +25,7 @@ type EmptyTransactionMessage<TVersion extends TransactionVersion> = Omit<
  * const message = createTransactionMessage({ version: 0 });
  * ```
  */
-export function createTransactionMessage<TVersion extends TransactionVersion>(
+export function createTransactionMessage<TVersion extends SupportedTransactionVersion>(
     config: TransactionConfig<TVersion>,
 ): EmptyTransactionMessage<TVersion> {
     return Object.freeze({

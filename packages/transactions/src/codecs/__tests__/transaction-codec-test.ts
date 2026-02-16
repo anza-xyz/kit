@@ -246,11 +246,11 @@ describe.each([getTransactionDecoder, getTransactionCodec])('Transaction decoder
             expect(decoded.signatures).toBeFrozenObject();
         });
 
-        it('should fatal for unsupported transaction version 1', () => {
+        it('should fatal for unsupported transaction version 2', () => {
             const signature = new Uint8Array(64).fill(0) as ReadonlyUint8Array as SignatureBytes;
             const messageBytes = new Uint8Array([
                 /** VERSION HEADER */
-                129, // 1 + version mask
+                130, // 2 + version mask
 
                 /** MESSAGE HEADER */
                 1, // numSignerAccounts
@@ -276,7 +276,7 @@ describe.each([getTransactionDecoder, getTransactionCodec])('Transaction decoder
             ]);
 
             expect(() => decoder.decode(encodedTransaction)).toThrow(
-                new SolanaError(SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED, { unsupportedVersion: 1 }),
+                new SolanaError(SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED, { unsupportedVersion: 2 }),
             );
         });
     });

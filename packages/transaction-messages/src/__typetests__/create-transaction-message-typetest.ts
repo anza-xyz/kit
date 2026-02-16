@@ -21,6 +21,12 @@ type V0TransactionMessage = Extract<TransactionMessage, { version: 0 }>;
     message satisfies LegacyTransactionMessage;
 }
 
+// It does not create v1 transaction messages.
+{
+    // @ts-expect-error Does not support version 1.
+    createTransactionMessage({ version: 1 });
+}
+
 // It returns an empty transaction message with size limit type safety.
 {
     createTransactionMessage({ version: 'legacy' }) satisfies TransactionMessageWithinSizeLimit;

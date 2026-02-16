@@ -20,7 +20,7 @@ import { isAdvanceNonceAccountInstruction } from './durable-nonce-instruction';
 import { setTransactionMessageFeePayer, TransactionMessageWithFeePayer } from './fee-payer';
 import { appendTransactionMessageInstruction } from './instructions';
 import { TransactionMessageWithLifetime } from './lifetime';
-import { TransactionMessage, TransactionVersion } from './transaction-message';
+import { TransactionMessage } from './transaction-message';
 
 function getAccountMetas(message: CompiledTransactionMessage): AccountMeta[] {
     const { header } = message;
@@ -237,7 +237,8 @@ export function decompileTransactionMessage(
     );
 
     return pipe(
-        createTransactionMessage({ version: compiledTransactionMessage.version as TransactionVersion }),
+        // We don't currently support v1 transactions
+        createTransactionMessage({ version: compiledTransactionMessage.version }),
         m => setTransactionMessageFeePayer(feePayer, m),
         m =>
             instructions.reduce(

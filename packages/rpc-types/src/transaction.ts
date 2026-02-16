@@ -7,7 +7,7 @@ import type { TokenBalance } from './token-balance';
 import type { TransactionError } from './transaction-error';
 import type { SignedLamports } from './typed-numbers';
 
-type TransactionVersion = 'legacy' | 0;
+type TransactionVersion = 'legacy' | 0 | 1;
 
 type AddressTableLookup = Readonly<{
     /** Address of the address lookup table account. */

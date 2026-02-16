@@ -8,11 +8,10 @@ type BaseTransactionMessage<
     version: TVersion;
 }>;
 
-export const MAX_SUPPORTED_TRANSACTION_VERSION = 0;
+export const MAX_SUPPORTED_TRANSACTION_VERSION = 1;
 
 type LegacyInstruction<TProgramAddress extends string = string> = Instruction<TProgramAddress, readonly AccountMeta[]>;
 type LegacyTransactionMessage = BaseTransactionMessage<'legacy', LegacyInstruction>;
 type V0TransactionMessage = BaseTransactionMessage<0, Instruction>;
-
 export type TransactionMessage = LegacyTransactionMessage | V0TransactionMessage;
-export type TransactionVersion = 'legacy' | 0;
+export type TransactionVersion = 'legacy' | 0 | 1;

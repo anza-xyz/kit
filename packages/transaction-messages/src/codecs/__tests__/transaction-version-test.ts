@@ -11,7 +11,7 @@ import {
 const VERSION_FLAG_MASK = 0x80;
 const VERSION_TEST_CASES = // Versions 0–127
     [...Array(128).keys()].map(version => [version | VERSION_FLAG_MASK, version as TransactionVersion] as const);
-const UNSUPPORTED_VERSION_TEST_CASES = VERSION_TEST_CASES.slice(1); // versions 1-127
+const UNSUPPORTED_VERSION_TEST_CASES = VERSION_TEST_CASES.slice(2); // versions 2-127
 
 describe.each([getTransactionVersionCodec, getTransactionVersionEncoder])(
     'Transaction version encoder',
@@ -25,6 +25,9 @@ describe.each([getTransactionVersionCodec, getTransactionVersionEncoder])(
         });
         it('serializes to `0x80` when the version is `0`', () => {
             expect(transactionVersion.encode(0)).toEqual(new Uint8Array([0x80]));
+        });
+        it('serializes to `0x81` when the version is `1`', () => {
+            expect(transactionVersion.encode(1)).toEqual(new Uint8Array([0x81]));
         });
         it.each(UNSUPPORTED_VERSION_TEST_CASES)('fatals for unsupported version `%s`', (_byte, version) => {
             expect(() => transactionVersion.encode(version)).toThrow(
@@ -63,6 +66,13 @@ describe.each([getTransactionVersionCodec, getTransactionVersionDecoder])(
                     new Uint8Array([0 | VERSION_FLAG_MASK]), // version 0 with the version flag
                 ),
             ).toBe(0);
+        });
+        it('deserializes to 1 for a version 1 transaction', () => {
+            expect(
+                transactionVersion.decode(
+                    new Uint8Array([1 | VERSION_FLAG_MASK]), // version 1 with the version flag
+                ),
+            ).toBe(1);
         });
         it.each(UNSUPPORTED_VERSION_TEST_CASES)('fatals for unsupported version `%s`', (byte, version) => {
             expect(() => transactionVersion.decode(new Uint8Array([byte]))).toThrow(
