@@ -1,5 +1,25 @@
 # @solana/codecs-data-structures
 
+## 6.1.0
+
+### Minor Changes
+
+- [#1363](https://github.com/anza-xyz/kit/pull/1363) [`70b1ed8`](https://github.com/anza-xyz/kit/commit/70b1ed83be4c5445f81c600a8ca70127dbdf3463) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Adds new functions `getPredicateEncoder`, `getPredicateDecoder` and `getPredicateCodec`.
+
+    These can be used to write an encoder that switches between two encoders based on the value being encoded, or a decoder that switches between two decoders based on the byte array being decoded.
+
+- [#1369](https://github.com/anza-xyz/kit/pull/1369) [`7ce7545`](https://github.com/anza-xyz/kit/commit/7ce75455659ace9776042def6774678a81c43a4a) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Allow passing a description to array and tuple encoders and codecs
+    - The `ArrayCodecConfig` is extended with an optional description
+    - The tuple encoder and codec now have an optional second argument, which is a new config object `TupleCodecConfig` with an optional description
+    - If either throws a `SOLANA_ERROR__CODECS__INVALID_NUMBER_OF_ITEMS` when encoding, the `codecDescription` field will be the description passed in the config. If no description is included then they will continue to default to `array` and `tuple` respectively.
+
+### Patch Changes
+
+- Updated dependencies [[`3f711e1`](https://github.com/anza-xyz/kit/commit/3f711e16bc38657d5d1ff71cf98e73897ff19ea5), [`215027c`](https://github.com/anza-xyz/kit/commit/215027c49845bd5cbd86d3da396f0c3895283d75)]:
+    - @solana/errors@6.1.0
+    - @solana/codecs-core@6.1.0
+    - @solana/codecs-numbers@6.1.0
+
 ## 6.0.1
 
 ### Patch Changes

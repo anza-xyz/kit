@@ -1,5 +1,16 @@
 # @solana/options
 
+## 6.1.0
+
+### Patch Changes
+
+- Updated dependencies [[`70b1ed8`](https://github.com/anza-xyz/kit/commit/70b1ed83be4c5445f81c600a8ca70127dbdf3463), [`3f711e1`](https://github.com/anza-xyz/kit/commit/3f711e16bc38657d5d1ff71cf98e73897ff19ea5), [`215027c`](https://github.com/anza-xyz/kit/commit/215027c49845bd5cbd86d3da396f0c3895283d75), [`7ce7545`](https://github.com/anza-xyz/kit/commit/7ce75455659ace9776042def6774678a81c43a4a)]:
+    - @solana/codecs-data-structures@6.1.0
+    - @solana/errors@6.1.0
+    - @solana/codecs-core@6.1.0
+    - @solana/codecs-numbers@6.1.0
+    - @solana/codecs-strings@6.1.0
+
 ## 6.0.1
 
 ### Patch Changes

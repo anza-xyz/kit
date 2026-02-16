@@ -1,6 +1,6 @@
 {
     "name": "@solana/rpc-spec-types",
-    "version": "6.0.1",
+    "version": "6.1.0",
     "description": "Shared generic JSON RPC specifications",
     "homepage": "https://www.solanakit.com/api#solanarpc-spec-types",
     "exports": {

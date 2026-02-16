@@ -1,6 +1,6 @@
 {
     "name": "@solana/plugin-interfaces",
-    "version": "6.0.1",
+    "version": "6.1.0",
     "description": "TypeScript interfaces for building pluggable Solana clients",
     "homepage": "https://www.solanakit.com/api#solanaplugin-interfaces",
     "types": "./dist/types/index.d.ts",

@@ -1,5 +1,13 @@
 # @solana/errors
 
+## 6.1.0
+
+### Patch Changes
+
+- [#1344](https://github.com/anza-xyz/kit/pull/1344) [`3f711e1`](https://github.com/anza-xyz/kit/commit/3f711e16bc38657d5d1ff71cf98e73897ff19ea5) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add new error codes for program clients: `SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS`, `SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE`, `SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION`, `SOLANA_ERROR__PROGRAM_CLIENTS__UNEXPECTED_RESOLVED_INSTRUCTION_INPUT_TYPE`, and `SOLANA_ERROR__PROGRAM_CLIENTS__RESOLVED_INSTRUCTION_INPUT_MUST_BE_NON_NULL`.
+
+- [#1366](https://github.com/anza-xyz/kit/pull/1366) [`215027c`](https://github.com/anza-xyz/kit/commit/215027c49845bd5cbd86d3da396f0c3895283d75) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add two new `SolanaError` codes for program clients: `SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_ACCOUNT_TYPE` and `SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_ACCOUNT`.
+
 ## 6.0.1
 
 ## 6.0.0

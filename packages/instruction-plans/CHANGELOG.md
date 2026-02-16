@@ -1,5 +1,25 @@
 # @solana/instruction-plans
 
+## 6.1.0
+
+### Minor Changes
+
+- [#1334](https://github.com/anza-xyz/kit/pull/1334) [`1f6cd4b`](https://github.com/anza-xyz/kit/commit/1f6cd4bc7f41e865ff81ecd819dd9f728c27af77) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add `parseInstructionOrTransactionPlanInput` helper that converts flexible inputs (instruction plan input or transaction plan input) into an `InstructionPlan` or `TransactionPlan`
+
+- [#1332](https://github.com/anza-xyz/kit/pull/1332) [`50010b5`](https://github.com/anza-xyz/kit/commit/50010b5b791ff0e6d8636ded3af33158f2380e4e) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add `parseInstructionPlanInput` helper that converts flexible inputs (single instruction, instruction plan, or array) into an `InstructionPlan`
+
+- [#1333](https://github.com/anza-xyz/kit/pull/1333) [`33234f5`](https://github.com/anza-xyz/kit/commit/33234f50760e34a21072304e6aaf1a31b7a410f1) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add `parseTransactionPlanInput` helper that converts flexible inputs (single transaction message, transaction plan, or array) into an `TransactionPlan`
+
+### Patch Changes
+
+- Updated dependencies [[`3f711e1`](https://github.com/anza-xyz/kit/commit/3f711e16bc38657d5d1ff71cf98e73897ff19ea5), [`215027c`](https://github.com/anza-xyz/kit/commit/215027c49845bd5cbd86d3da396f0c3895283d75)]:
+    - @solana/errors@6.1.0
+    - @solana/transaction-messages@6.1.0
+    - @solana/transactions@6.1.0
+    - @solana/instructions@6.1.0
+    - @solana/keys@6.1.0
+    - @solana/promises@6.1.0
+
 ## 6.0.1
 
 ### Patch Changes

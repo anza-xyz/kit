@@ -1,5 +1,13 @@
 # @solana/rpc-spec
 
+## 6.1.0
+
+### Patch Changes
+
+- Updated dependencies [[`3f711e1`](https://github.com/anza-xyz/kit/commit/3f711e16bc38657d5d1ff71cf98e73897ff19ea5), [`215027c`](https://github.com/anza-xyz/kit/commit/215027c49845bd5cbd86d3da396f0c3895283d75)]:
+    - @solana/errors@6.1.0
+    - @solana/rpc-spec-types@6.1.0
+
 ## 6.0.1
 
 ### Patch Changes
