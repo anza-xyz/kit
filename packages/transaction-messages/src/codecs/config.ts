@@ -1,7 +1,15 @@
-import { createEncoder, FixedSizeEncoder, transformEncoder, VariableSizeEncoder } from '@solana/codecs-core';
-import { getU32Encoder, getU64Encoder } from '@solana/codecs-numbers';
+import {
+    createDecoder,
+    createEncoder,
+    FixedSizeEncoder,
+    transformEncoder,
+    VariableSizeDecoder,
+    VariableSizeEncoder,
+} from '@solana/codecs-core';
+import { getU32Decoder, getU32Encoder, getU64Decoder, getU64Encoder } from '@solana/codecs-numbers';
+import { SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_MASK_PRIORITY_FEE_BITS, SolanaError } from '@solana/errors';
 
-import { TransactionConfig as TransactionConfig } from '../transaction-config';
+import { TransactionConfig } from '../transaction-config';
 
 const PRIORITY_FEE_LAMPORTS_BIT_MASK = 0b11;
 const COMPUTE_UNIT_LIMIT_BIT_MASK = 0b100;
@@ -57,6 +65,53 @@ export function getTransactionConfigValuesEncoder(): VariableSizeEncoder<Transac
                 nextOffset = getU32Encoder().write(BigInt(config.heapSize), bytes, nextOffset);
             }
             return nextOffset;
+        },
+    });
+}
+
+/**
+ * Decode a {@link TransactionMessageConfig} from a byte array of values, using the provided mask.
+ * @param mask A mask indicating which fields are set
+ * @returns A Decoder for {@link TransactionMessageConfig}
+ */
+export function getConfigValuesDecoder(mask: number): VariableSizeDecoder<TransactionConfig> {
+    // bits 0 and 1 must both be set or both be unset
+    const priorityFeeBits = mask & PRIORITY_FEE_LAMPORTS_BIT_MASK;
+    if (priorityFeeBits === 0b01 || priorityFeeBits === 0b10) {
+        throw new SolanaError(SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_MASK_PRIORITY_FEE_BITS, { mask });
+    }
+    const hasPriorityFee = priorityFeeBits === PRIORITY_FEE_LAMPORTS_BIT_MASK;
+
+    // the rest are just checking a single bit
+    const hasComputeUnitLimit = (mask & COMPUTE_UNIT_LIMIT_BIT_MASK) !== 0;
+    const hasLoadedAccountsDataSizeLimit = (mask & LOADED_ACCOUNTS_DATA_SIZE_LIMIT_BIT_MASK) !== 0;
+    const hasHeapSize = (mask & HEAP_SIZE_BIT_MASK) !== 0;
+
+    return createDecoder({
+        read(bytes, offset) {
+            let nextOffset = offset;
+            const config: TransactionConfig = {};
+
+            if (hasPriorityFee) {
+                [config.priorityFeeLamports, nextOffset] = getU64Decoder().read(bytes, nextOffset);
+            }
+            if (hasComputeUnitLimit) {
+                const [value, next] = getU32Decoder().read(bytes, nextOffset);
+                config.computeUnitLimit = Number(value);
+                nextOffset = next;
+            }
+            if (hasLoadedAccountsDataSizeLimit) {
+                const [value, next] = getU32Decoder().read(bytes, nextOffset);
+                config.loadedAccountsDataSizeLimit = Number(value);
+                nextOffset = next;
+            }
+            if (hasHeapSize) {
+                const [value, next] = getU32Decoder().read(bytes, nextOffset);
+                config.heapSize = Number(value);
+                nextOffset = next;
+            }
+
+            return [config, nextOffset];
         },
     });
 }

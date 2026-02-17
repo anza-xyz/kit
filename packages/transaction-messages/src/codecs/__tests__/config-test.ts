@@ -1,7 +1,10 @@
+import { SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_MASK_PRIORITY_FEE_BITS, SolanaError } from '@solana/errors';
+
 import { TransactionConfig } from '../../transaction-config';
 import { getTransactionConfigMaskEncoder, getTransactionConfigValuesEncoder } from '../config';
+import { getConfigValuesDecoder } from '../config';
 
-describe('getConfigMaskEncoder', () => {
+describe('getTransactionConfigMaskEncoder', () => {
     const encoder = getTransactionConfigMaskEncoder();
 
     it('should encode a mask with all values unset correctly', () => {
@@ -76,7 +79,7 @@ describe('getConfigMaskEncoder', () => {
         expect(encoded).toEqual(new Uint8Array([expectedFirstByte, 0, 0, 0]));
     });
 
-    it('should encode a mask with some values set correctly', () => {
+    it('should encode a mask with multiple values set correctly', () => {
         const config: TransactionConfig = {
             loadedAccountsDataSizeLimit: 100,
             priorityFeeLamports: 100n,
@@ -90,7 +93,7 @@ describe('getConfigMaskEncoder', () => {
     });
 });
 
-describe('getConfigValuesEncoder', () => {
+describe('getTransactionConfigValuesEncoder', () => {
     const encoder = getTransactionConfigValuesEncoder();
 
     it('should encode to an empty array when no values are set', () => {
@@ -192,7 +195,7 @@ describe('getConfigValuesEncoder', () => {
         );
     });
 
-    it('should encode to an array of some values correctly', () => {
+    it('should encode to an array of multiple values correctly', () => {
         const config: TransactionConfig = {
             loadedAccountsDataSizeLimit: 30,
             priorityFeeLamports: 10n,
@@ -209,7 +212,7 @@ describe('getConfigValuesEncoder', () => {
         );
     });
 
-    it('should encode a large priority fee value correctly with some other values', () => {
+    it('should encode a large priority fee value correctly with another value', () => {
         const config: TransactionConfig = {
             computeUnitLimit: 20,
             priorityFeeLamports: 2n ** 64n - 1n,
@@ -223,6 +226,167 @@ describe('getConfigValuesEncoder', () => {
                 // computeUnitLimit (4 bytes)
                 20, 0, 0, 0
             ]),
+        );
+    });
+});
+
+describe('getTransactionConfigValuesDecoder', () => {
+    it('should decode an empty array when no values are set', () => {
+        const mask = 0b00000000;
+        const decoder = getConfigValuesDecoder(mask);
+        const decoded = decoder.decode(new Uint8Array([]));
+        expect(decoded).toEqual({});
+    });
+
+    it('should decode all values correctly', () => {
+        // Mask with all 5 lowest bits set
+        const mask = 0b00011111;
+        const decoder = getConfigValuesDecoder(mask);
+        const decoded = decoder.decode(
+            // prettier-ignore
+            new Uint8Array([
+                // priorityFeeLamports (8 bytes)
+                10, 0, 0, 0, 0, 0, 0, 0,
+                // computeUnitLimit (4 bytes)
+                20, 0, 0, 0,
+                // loadedAccountsDataSizeLimit (4 bytes)
+                30, 0, 0, 0,
+                // heapSize (4 bytes)
+                40, 0, 0, 0
+            ]),
+        );
+        expect(decoded).toEqual({
+            computeUnitLimit: 20,
+            heapSize: 40,
+            loadedAccountsDataSizeLimit: 30,
+            priorityFeeLamports: 10n,
+        });
+    });
+
+    it('should decode just priority fee correctly', () => {
+        const mask = 0b00000011;
+        const decoder = getConfigValuesDecoder(mask);
+        const decoded = decoder.decode(
+            // prettier-ignore
+            new Uint8Array([
+                // priorityFeeLamports (8 bytes)
+                10, 0, 0, 0, 0, 0, 0, 0,
+            ]),
+        );
+        expect(decoded).toEqual({
+            priorityFeeLamports: 10n,
+        });
+    });
+
+    it('should decode a large priority fee value correctly', () => {
+        const mask = 0b00000011;
+        const decoder = getConfigValuesDecoder(mask);
+        const decoded = decoder.decode(
+            // prettier-ignore
+            new Uint8Array([
+                // priorityFeeLamports (8 bytes)
+                255, 255, 255, 255, 255, 255, 255, 255,
+            ]),
+        );
+        expect(decoded).toEqual({
+            priorityFeeLamports: 2n ** 64n - 1n,
+        });
+    });
+
+    it('should decode just compute unit limit correctly', () => {
+        const mask = 0b00000100;
+        const decoder = getConfigValuesDecoder(mask);
+        const decoded = decoder.decode(
+            // prettier-ignore
+            new Uint8Array([
+                // computeUnitLimit (4 bytes)
+                20, 0, 0, 0
+            ]),
+        );
+        expect(decoded).toEqual({
+            computeUnitLimit: 20,
+        });
+    });
+
+    it('should decode just loaded accounts data size limit correctly', () => {
+        const mask = 0b00001000;
+        const decoder = getConfigValuesDecoder(mask);
+        const decoded = decoder.decode(
+            // prettier-ignore
+            new Uint8Array([
+                // loadedAccountsDataSizeLimit (4 bytes)
+                30, 0, 0, 0
+            ]),
+        );
+        expect(decoded).toEqual({
+            loadedAccountsDataSizeLimit: 30,
+        });
+    });
+
+    it('should decode just heap size correctly', () => {
+        const mask = 0b00010000;
+        const decoder = getConfigValuesDecoder(mask);
+        const decoded = decoder.decode(
+            // prettier-ignore
+            new Uint8Array([
+                // heapSize (4 bytes)
+                40, 0, 0, 0
+            ]),
+        );
+        expect(decoded).toEqual({
+            heapSize: 40,
+        });
+    });
+
+    it('should decode multiple values correctly', () => {
+        const mask = 0b00001011;
+        const decoder = getConfigValuesDecoder(mask);
+        const decoded = decoder.decode(
+            // prettier-ignore
+            new Uint8Array([
+                // priorityFeeLamports (8 bytes)
+                10, 0, 0, 0, 0, 0, 0, 0,
+                // loadedAccountsDataSizeLimit (4 bytes)
+                30, 0, 0, 0
+            ]),
+        );
+        expect(decoded).toEqual({
+            loadedAccountsDataSizeLimit: 30,
+            priorityFeeLamports: 10n,
+        });
+    });
+
+    it('should decode a large priority fee value correctly with another value', () => {
+        const mask = 0b00000111;
+        const decoder = getConfigValuesDecoder(mask);
+        const decoded = decoder.decode(
+            // prettier-ignore
+            new Uint8Array([
+                // priorityFeeLamports (8 bytes)
+                255, 255, 255, 255, 255, 255, 255, 255,
+                // computeUnitLimit (4 bytes)
+                20, 0, 0, 0
+            ]),
+        );
+        expect(decoded).toEqual({
+            computeUnitLimit: 20,
+            priorityFeeLamports: 2n ** 64n - 1n,
+        });
+    });
+
+    it('should throw an error if only one priority fee bit is set (malformed)', () => {
+        // Only bit 0 set - malformed, bits 0 and 1 must match
+        const mask = 0b01;
+        expect(() => getConfigValuesDecoder(mask)).toThrow(
+            new SolanaError(SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_MASK_PRIORITY_FEE_BITS, { mask }),
+        );
+    });
+
+    it('should throw an error if only the other priority fee bit is set (malformed)', () => {
+        // Only bit 1 set - malformed, bits 0 and 1 must match
+        const mask = 0b10;
+        expect(() => getConfigValuesDecoder(mask)).toThrow(
+            new SolanaError(SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_MASK_PRIORITY_FEE_BITS, { mask }),
         );
     });
 });
