@@ -1,5 +1,4 @@
 import { address } from '@solana/addresses';
-import { SOLANA_ERROR__SIGNER__WALLET_MULTISIGN_UNIMPLEMENTED, SolanaError } from '@solana/errors';
 import { SignatureBytes } from '@solana/keys';
 import { getAbortablePromise } from '@solana/promises';
 import { getTransactionEncoder } from '@solana/transactions';
@@ -47,8 +46,8 @@ export function createSendingSignerFromWalletAccount<TWalletAccount extends UiWa
             address: uiWalletAccount.address,
             chain,
             featureName: SolanaSignAndSendTransaction,
-            supportedChains: [...uiWalletAccount.chains],
-            supportedFeatures: [...uiWalletAccount.features],
+            supportedChains: uiWalletAccount.chains,
+            supportedFeatures: uiWalletAccount.features,
         });
     }
 
@@ -67,33 +66,34 @@ export function createSendingSignerFromWalletAccount<TWalletAccount extends UiWa
         async signAndSendTransactions(transactions, config = {}) {
             const { abortSignal, ...options } = config;
             abortSignal?.throwIfAborted();
-            if (transactions.length > 1) {
-                throw new SolanaError(SOLANA_ERROR__SIGNER__WALLET_MULTISIGN_UNIMPLEMENTED);
-            }
             if (transactions.length === 0) {
                 return [];
             }
-            const [transaction] = transactions;
-            const wireTransactionBytes = transactionEncoder.encode(transaction);
-            const input = {
-                account: walletAccount,
-                chain,
-                transaction: wireTransactionBytes as Uint8Array,
-                ...(options?.minContextSlot != null
-                    ? {
-                          options: {
-                              minContextSlot: Number(options.minContextSlot),
-                          },
-                      }
-                    : null),
-            };
 
-            // Wallet Standard returns an array of results even for a single transaction, this signer enforces exactly one.
-            const outputs = await getAbortablePromise(feature.signAndSendTransaction(input), abortSignal);
-            if (outputs.length !== 1) {
-                throw new SolanaError(SOLANA_ERROR__SIGNER__WALLET_MULTISIGN_UNIMPLEMENTED);
+            const inputs = transactions.map(transaction => {
+                const wiredTransactionBytes = transactionEncoder.encode(transaction);
+
+                return {
+                    account: walletAccount,
+                    chain,
+                    transaction: wiredTransactionBytes as Uint8Array,
+                    ...(options?.minContextSlot != null
+                        ? {
+                              options: {
+                                  minContextSlot: Number(options.minContextSlot),
+                              },
+                          }
+                        : null),
+                };
+            });
+
+            const outputs = await getAbortablePromise(feature.signAndSendTransaction(...inputs), abortSignal);
+            // Wallet must return exactly one output per input transaction.
+            if (outputs.length !== inputs.length) {
+                throw new Error('signAndSendTransaction must return exactly one output per input');
             }
-            return Object.freeze([outputs[0].signature as SignatureBytes]);
+
+            return outputs.map(o => o.signature as SignatureBytes);
         },
     };
 }
