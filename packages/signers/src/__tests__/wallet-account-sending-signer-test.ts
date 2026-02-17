@@ -1,5 +1,4 @@
 import { address } from '@solana/addresses';
-import { SOLANA_ERROR__SIGNER__WALLET_MULTISIGN_UNIMPLEMENTED, SolanaError } from '@solana/errors';
 import { getTransactionEncoder } from '@solana/transactions';
 import { SolanaSignAndSendTransaction } from '@solana/wallet-standard-features';
 import { WalletStandardError } from '@wallet-standard/errors';
@@ -63,26 +62,48 @@ describe('createSendingSignerFromWalletAccount', () => {
         await expect(signer.signAndSendTransactions([])).resolves.toEqual([]);
     });
 
-    it('throws on multiple transactions', async () => {
-        expect.assertions(1);
+    it('handles multiple transactions', async () => {
+        expect.assertions(2);
 
         // Given a wallet account.
         const account = createMockAccount();
 
-        // When we create a sending signer and try to sign and send multiple transactions.
+        // And a mock transaction encoder.
+        const mockEncode = jest.fn().mockReturnValue(new Uint8Array([1, 2, 3]));
+
+        jest.mocked(getTransactionEncoder).mockReturnValue({
+            encode: mockEncode,
+        } as unknown as ReturnType<typeof getTransactionEncoder>);
+
+        // And a mock wallet feature that returns signatures for all transactions at once.
+        const mockFeature = {
+            signAndSendTransaction: jest
+                .fn()
+                .mockResolvedValue([{ signature: new Uint8Array([9]) }, { signature: new Uint8Array([10]) }]),
+        };
+
+        jest.mocked(getWalletAccountFeature).mockReturnValue(mockFeature);
+        jest.mocked(getWalletAccountForUiWalletAccount_DO_NOT_USE_OR_YOU_WILL_BE_FIRED).mockReturnValue(
+            {} as ReturnType<typeof getWalletAccountForUiWalletAccount_DO_NOT_USE_OR_YOU_WILL_BE_FIRED>,
+        );
+
+        // When we create a sending signer and call signAndSendTransactions with multiple transactions.
         const signer = createSendingSignerFromWalletAccount(account, 'solana:devnet');
 
-        // Then we expect an error to be thrown.
-        await expect(
-            signer.signAndSendTransactions([
-                {} as Parameters<typeof signer.signAndSendTransactions>[0][0],
-                {} as Parameters<typeof signer.signAndSendTransactions>[0][0],
-            ]),
-        ).rejects.toThrow(new SolanaError(SOLANA_ERROR__SIGNER__WALLET_MULTISIGN_UNIMPLEMENTED));
+        const tx1 = {} as Parameters<typeof signer.signAndSendTransactions>[0][0];
+        const tx2 = {} as Parameters<typeof signer.signAndSendTransactions>[0][0];
+
+        const result = await signer.signAndSendTransactions([tx1, tx2]);
+
+        // Then the wallet feature is called once with all transactions.
+        expect(mockFeature.signAndSendTransaction).toHaveBeenCalledTimes(1);
+
+        // And the result contains both signatures.
+        expect(result).toHaveLength(2);
     });
 
     it('encodes transaction and forwards to wallet feature', async () => {
-        expect.assertions(4);
+        expect.assertions(2);
 
         // Given a wallet account.
         const account = createMockAccount();
@@ -109,18 +130,12 @@ describe('createSendingSignerFromWalletAccount', () => {
 
         const tx = {} as Parameters<typeof signer.signAndSendTransactions>[0][0];
 
-        const result = await signer.signAndSendTransactions([tx]);
-
         // Then the transaction is encoded and forwarded to the wallet feature.
         expect(mockEncode).toHaveBeenCalledWith(tx);
         expect(mockFeature.signAndSendTransaction).toHaveBeenCalled();
-
-        // And the result is frozen.
-        expect(result).toHaveLength(1);
-        expect(Object.isFrozen(result)).toBe(true);
     });
 
-    it('throws if wallet returns unexpected number of outputs', async () => {
+    it('returns the correct signatures from wallet', async () => {
         expect.assertions(1);
 
         // Given a wallet account.
@@ -128,12 +143,13 @@ describe('createSendingSignerFromWalletAccount', () => {
 
         // And a mock transaction encoder.
         jest.mocked(getTransactionEncoder).mockReturnValue({
-            encode: jest.fn().mockReturnValue(new Uint8Array([1])),
+            encode: jest.fn().mockReturnValue(new Uint8Array([1, 2, 3])),
         } as unknown as ReturnType<typeof getTransactionEncoder>);
 
-        // And a mock wallet feature that returns an empty array.
+        // And a mock wallet feature that returns specific signatures.
+        const expectedSignature = new Uint8Array([1, 2, 3, 4, 5]);
         const mockFeature = {
-            signAndSendTransaction: jest.fn().mockResolvedValue([]),
+            signAndSendTransaction: jest.fn().mockResolvedValue([{ signature: expectedSignature }]),
         };
 
         jest.mocked(getWalletAccountFeature).mockReturnValue(mockFeature);
@@ -143,11 +159,12 @@ describe('createSendingSignerFromWalletAccount', () => {
 
         // When we create a sending signer and call signAndSendTransactions.
         const signer = createSendingSignerFromWalletAccount(account, 'solana:devnet');
+        const tx = {} as Parameters<typeof signer.signAndSendTransactions>[0][0];
 
-        // Then we expect an error to be thrown.
-        await expect(
-            signer.signAndSendTransactions([{} as Parameters<typeof signer.signAndSendTransactions>[0][0]]),
-        ).rejects.toThrow(new SolanaError(SOLANA_ERROR__SIGNER__WALLET_MULTISIGN_UNIMPLEMENTED));
+        const result = await signer.signAndSendTransactions([tx]);
+
+        // Then the returned signature matches what the wallet returned.
+        expect(result).toEqual([expectedSignature]);
     });
 
     it('propagates wallet errors', async () => {
