@@ -10,6 +10,7 @@ import {
     TransactionWithinSizeLimit,
     TransactionWithLifetime,
 } from '@solana/transactions';
+import { SolanaChain } from '@solana/wallet-standard-chains';
 import { SolanaSignTransaction, SolanaSignTransactionFeature } from '@solana/wallet-standard-features';
 import {
     WALLET_STANDARD_ERROR__FEATURES__WALLET_ACCOUNT_CHAIN_UNSUPPORTED,
@@ -46,7 +47,7 @@ import { TransactionModifyingSigner } from './transaction-modifying-signer';
  */
 export function createSignerFromWalletAccount<TWalletAccount extends UiWalletAccount>(
     uiWalletAccount: TWalletAccount,
-    chain: `solana:${string}`,
+    chain: SolanaChain,
 ): TransactionModifyingSigner<TWalletAccount['address']> {
     if (!uiWalletAccount.chains.includes(chain)) {
         throw new WalletStandardError(WALLET_STANDARD_ERROR__FEATURES__WALLET_ACCOUNT_CHAIN_UNSUPPORTED, {
