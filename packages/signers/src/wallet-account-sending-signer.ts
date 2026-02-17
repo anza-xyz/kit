@@ -3,6 +3,7 @@ import { SOLANA_ERROR__SIGNER__WALLET_MULTISIGN_UNIMPLEMENTED, SolanaError } fro
 import { SignatureBytes } from '@solana/keys';
 import { getAbortablePromise } from '@solana/promises';
 import { getTransactionEncoder } from '@solana/transactions';
+import { SolanaChain } from '@solana/wallet-standard-chains';
 import { SolanaSignAndSendTransaction, SolanaSignAndSendTransactionFeature } from '@solana/wallet-standard-features';
 import {
     WALLET_STANDARD_ERROR__FEATURES__WALLET_ACCOUNT_CHAIN_UNSUPPORTED,
@@ -39,7 +40,7 @@ import { TransactionSendingSigner } from './transaction-sending-signer';
  */
 export function createSendingSignerFromWalletAccount<TWalletAccount extends UiWalletAccount>(
     uiWalletAccount: TWalletAccount,
-    chain: `solana:${string}`,
+    chain: SolanaChain,
 ): TransactionSendingSigner<TWalletAccount['address']> {
     if (!uiWalletAccount.chains.includes(chain)) {
         throw new WalletStandardError(WALLET_STANDARD_ERROR__FEATURES__WALLET_ACCOUNT_CHAIN_UNSUPPORTED, {
