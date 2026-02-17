@@ -88,10 +88,6 @@ export function createSendingSignerFromWalletAccount<TWalletAccount extends UiWa
             });
 
             const outputs = await getAbortablePromise(feature.signAndSendTransaction(...inputs), abortSignal);
-            // Wallet must return exactly one output per input transaction.
-            if (outputs.length !== inputs.length) {
-                throw new Error('signAndSendTransaction must return exactly one output per input');
-            }
 
             return outputs.map(o => o.signature as SignatureBytes);
         },

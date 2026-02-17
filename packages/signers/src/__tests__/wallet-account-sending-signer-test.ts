@@ -130,6 +130,8 @@ describe('createSendingSignerFromWalletAccount', () => {
 
         const tx = {} as Parameters<typeof signer.signAndSendTransactions>[0][0];
 
+        await signer.signAndSendTransactions([tx]);
+
         // Then the transaction is encoded and forwarded to the wallet feature.
         expect(mockEncode).toHaveBeenCalledWith(tx);
         expect(mockFeature.signAndSendTransaction).toHaveBeenCalled();
@@ -194,5 +196,79 @@ describe('createSendingSignerFromWalletAccount', () => {
         await expect(
             signer.signAndSendTransactions([{} as Parameters<typeof signer.signAndSendTransactions>[0][0]]),
         ).rejects.toThrow('fail');
+    });
+
+    it('passes minContextSlot option to wallet feature', async () => {
+        expect.assertions(1);
+
+        // Given a wallet account.
+        const account = createMockAccount();
+
+        // And a mock transaction encoder.
+        jest.mocked(getTransactionEncoder).mockReturnValue({
+            encode: jest.fn().mockReturnValue(new Uint8Array([1, 2, 3])),
+        } as unknown as ReturnType<typeof getTransactionEncoder>);
+
+        // And a mock wallet feature.
+        const mockFeature = {
+            signAndSendTransaction: jest.fn().mockResolvedValue([{ signature: new Uint8Array([9]) }]),
+        };
+
+        jest.mocked(getWalletAccountFeature).mockReturnValue(mockFeature);
+        jest.mocked(getWalletAccountForUiWalletAccount_DO_NOT_USE_OR_YOU_WILL_BE_FIRED).mockReturnValue(
+            {} as ReturnType<typeof getWalletAccountForUiWalletAccount_DO_NOT_USE_OR_YOU_WILL_BE_FIRED>,
+        );
+
+        // When we create a sending signer and call signAndSendTransactions with options.
+        const signer = createSendingSignerFromWalletAccount(account, 'solana:devnet');
+        const tx = {} as Parameters<typeof signer.signAndSendTransactions>[0][0];
+
+        await signer.signAndSendTransactions([tx], {
+            abortSignal: AbortSignal.timeout(1_000_000),
+            minContextSlot: 123n,
+        });
+
+        // Then the minContextSlot is passed to the wallet feature (converted to number).
+        expect(mockFeature.signAndSendTransaction).toHaveBeenCalledWith(
+            expect.objectContaining({
+                options: { minContextSlot: 123 },
+            }),
+        );
+    });
+
+    it('rejects when aborted', async () => {
+        expect.assertions(1);
+
+        // Given a wallet account.
+        const account = createMockAccount();
+
+        // And a mock transaction encoder.
+        jest.mocked(getTransactionEncoder).mockReturnValue({
+            encode: jest.fn().mockReturnValue(new Uint8Array([1, 2, 3])),
+        } as unknown as ReturnType<typeof getTransactionEncoder>);
+
+        // And a mock wallet feature.
+        const mockFeature = {
+            signAndSendTransaction: jest.fn().mockResolvedValue([{ signature: new Uint8Array([9]) }]),
+        };
+
+        jest.mocked(getWalletAccountFeature).mockReturnValue(mockFeature);
+        jest.mocked(getWalletAccountForUiWalletAccount_DO_NOT_USE_OR_YOU_WILL_BE_FIRED).mockReturnValue(
+            {} as ReturnType<typeof getWalletAccountForUiWalletAccount_DO_NOT_USE_OR_YOU_WILL_BE_FIRED>,
+        );
+
+        // When we create a sending signer.
+        const signer = createSendingSignerFromWalletAccount(account, 'solana:devnet');
+        const tx = {} as Parameters<typeof signer.signAndSendTransactions>[0][0];
+
+        // And we call signAndSendTransactions with an already aborted signal.
+        const abortController = new AbortController();
+        abortController.abort(new Error('o no'));
+        const alreadyAbortedSignal = abortController.signal;
+
+        // Then it rejects with the abort error.
+        await expect(signer.signAndSendTransactions([tx], { abortSignal: alreadyAbortedSignal })).rejects.toThrow(
+            new Error('o no'),
+        );
     });
 });
