@@ -4,6 +4,7 @@ import {
     getInstructionDecoder,
     getInstructionEncoder,
     getInstructionHeaderEncoder,
+    getInstructionPayloadEncoder,
 } from '../instruction';
 
 type CompiledInstruction = ReturnType<typeof getCompiledInstructions>[number];
@@ -189,5 +190,60 @@ describe('getInstructionHeaderEncoder', () => {
                 0, // numInstructionDataBytes (2 bytes)
             ]),
         );
+    });
+});
+
+describe('getInstructionPayloadEncoder', () => {
+    const encoder = getInstructionPayloadEncoder();
+
+    it('encodes the instruction payload when all fields are defined', () => {
+        const instruction: CompiledInstruction = {
+            accountIndices: [2, 3],
+            data: new Uint8Array([1, 2, 3]),
+            programAddressIndex: 1,
+        };
+        expect(encoder.encode(instruction)).toEqual(
+            new Uint8Array([
+                2,
+                3, // account indices (2 bytes)
+                1,
+                2,
+                3, // data bytes (3 bytes)
+            ]),
+        );
+    });
+
+    it('encodes just the data when `accountIndices` is missing', () => {
+        const instruction: CompiledInstruction = {
+            data: new Uint8Array([1, 2, 3]),
+            programAddressIndex: 1,
+        };
+        expect(encoder.encode(instruction)).toEqual(
+            new Uint8Array([
+                1,
+                2,
+                3, // data bytes (3 bytes)
+            ]),
+        );
+    });
+
+    it('encodes just the account indices when `data` is missing', () => {
+        const instruction: CompiledInstruction = {
+            accountIndices: [2, 3],
+            programAddressIndex: 1,
+        };
+        expect(encoder.encode(instruction)).toEqual(
+            new Uint8Array([
+                2,
+                3, // account indices (2 bytes)
+            ]),
+        );
+    });
+
+    it('encodes an empty payload when both `accountIndices` and `data` are missing', () => {
+        const instruction: CompiledInstruction = {
+            programAddressIndex: 1,
+        };
+        expect(encoder.encode(instruction)).toEqual(new Uint8Array([]));
     });
 });
