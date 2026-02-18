@@ -127,8 +127,8 @@ importers:
         specifier: ^0.11.0
         version: 0.11.0(@solana/kit@packages+kit)
       '@solana-program/system':
-        specifier: ^0.11.0
-        version: 0.11.0(@solana/kit@packages+kit)
+        specifier: ^0.12.0
+        version: 0.12.0(@solana/kit@packages+kit)
       '@solana/example-utils':
         specifier: workspace:*
         version: link:../utils
@@ -155,8 +155,8 @@ importers:
         specifier: 3.3.0
         version: 3.3.0(@types/react-dom@19.2.3(@types/react@19.2.13))(@types/react@19.2.13)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@solana-program/system':
-        specifier: ^0.11.0
-        version: 0.11.0(@solana/kit@packages+kit)
+        specifier: ^0.12.0
+        version: 0.12.0(@solana/kit@packages+kit)
       '@solana/kit':
         specifier: workspace:*
         version: link:../../packages/kit
@@ -245,8 +245,8 @@ importers:
   examples/signers:
     dependencies:
       '@solana-program/system':
-        specifier: ^0.11.0
-        version: 0.11.0(@solana/kit@packages+kit)
+        specifier: ^0.12.0
+        version: 0.12.0(@solana/kit@packages+kit)
       '@solana/example-utils':
         specifier: workspace:*
         version: link:../utils
@@ -267,11 +267,11 @@ importers:
         specifier: ^0.13.0
         version: 0.13.0(@solana/kit@packages+kit)
       '@solana-program/system':
+        specifier: ^0.12.0
+        version: 0.12.0(@solana/kit@packages+kit)
+      '@solana-program/token':
         specifier: ^0.11.0
         version: 0.11.0(@solana/kit@packages+kit)
-      '@solana-program/token':
-        specifier: ^0.10.0
-        version: 0.10.0(@solana/kit@packages+kit)
       '@solana/example-utils':
         specifier: workspace:*
         version: link:../utils
@@ -289,8 +289,8 @@ importers:
   examples/transfer-lamports:
     dependencies:
       '@solana-program/system':
-        specifier: ^0.11.0
-        version: 0.11.0(@solana/kit@packages+kit)
+        specifier: ^0.12.0
+        version: 0.12.0(@solana/kit@packages+kit)
       '@solana/example-utils':
         specifier: workspace:*
         version: link:../utils
@@ -4938,15 +4938,15 @@ packages:
     peerDependencies:
       '@solana/kit': ^6.0.0
 
-  '@solana-program/system@0.11.0':
-    resolution: {integrity: sha512-SJeQVTkqGZzIXd7XHlCxnfpKpvPZghB1IFwddPPG04ydVXtDLRWp9wLoTR5Prkl9FIWRe/c5VgT4nxyzW1cAuQ==}
+  '@solana-program/system@0.12.0':
+    resolution: {integrity: sha512-ZnAAWeGVMWNtJhw3GdifI2HnhZ0A0H0qs8tBkcFvxp/8wIavvO+GOM4Jd0N22u2+Lni2zcwvcrxrsxj6Mjphng==}
     peerDependencies:
-      '@solana/kit': ^6.0.0
+      '@solana/kit': ^6.1.0
 
-  '@solana-program/token@0.10.0':
-    resolution: {integrity: sha512-6JhgF4tywgbzIBnbEFiSLpXe9ZimPzNheRQU7ksgD98Y4YCakcRI5VIAt2CUh/lTiLUOxGerW/oaK1QGF00FMw==}
+  '@solana-program/token@0.11.0':
+    resolution: {integrity: sha512-/lB72Pcmkn5kjUfP1Vd8F86HBlhN9RN4hJYgUG5csc23w9LCdYom2CiRdGsK25KkR9UFf6ndCCAMh83hMo+ftw==}
     peerDependencies:
-      '@solana/kit': ^6.0.0
+      '@solana/kit': ^6.1.0
 
   '@solana/buffer-layout@4.0.1':
     resolution: {integrity: sha512-E1ImOIAD1tBZFRdjeM4/pzTiTApC0AOBGwyAMS4fwIodCWArzJ3DWdoh8cKxeFM2fElkxBh2Aqts1BPC373rHA==}
@@ -12882,12 +12882,13 @@ snapshots:
     dependencies:
       '@solana/kit': link:packages/kit
 
-  '@solana-program/system@0.11.0(@solana/kit@packages+kit)':
+  '@solana-program/system@0.12.0(@solana/kit@packages+kit)':
     dependencies:
       '@solana/kit': link:packages/kit
 
-  '@solana-program/token@0.10.0(@solana/kit@packages+kit)':
+  '@solana-program/token@0.11.0(@solana/kit@packages+kit)':
     dependencies:
+      '@solana-program/system': 0.12.0(@solana/kit@packages+kit)
       '@solana/kit': link:packages/kit
 
   '@solana/buffer-layout@4.0.1':
@@ -13312,8 +13313,8 @@ snapshots:
 
   '@typescript-eslint/project-service@8.50.0(typescript@5.9.3)':
     dependencies:
-      '@typescript-eslint/tsconfig-utils': 8.50.0(typescript@5.9.3)
-      '@typescript-eslint/types': 8.50.0
+      '@typescript-eslint/tsconfig-utils': 8.54.0(typescript@5.9.3)
+      '@typescript-eslint/types': 8.54.0
       debug: 4.4.3
       typescript: 5.9.3
     transitivePeerDependencies:
