@@ -2,6 +2,7 @@ import {
     addDecoderSizePrefix,
     addEncoderSizePrefix,
     combineCodec,
+    FixedSizeEncoder,
     transformDecoder,
     transformEncoder,
     VariableSizeCodec,
@@ -16,31 +17,37 @@ import {
     getStructDecoder,
     getStructEncoder,
 } from '@solana/codecs-data-structures';
-import { getShortU16Decoder, getShortU16Encoder, getU8Decoder, getU8Encoder } from '@solana/codecs-numbers';
+import {
+    getShortU16Decoder,
+    getShortU16Encoder,
+    getU8Decoder,
+    getU8Encoder,
+    getU16Encoder,
+} from '@solana/codecs-numbers';
 
 import { getCompiledInstructions } from '../compile/instructions';
 
-type Instruction = ReturnType<typeof getCompiledInstructions>[number];
+type CompiledInstruction = ReturnType<typeof getCompiledInstructions>[number];
 
-let memoizedGetInstructionEncoder: VariableSizeEncoder<Instruction> | undefined;
-export function getInstructionEncoder(): VariableSizeEncoder<Instruction> {
+let memoizedGetInstructionEncoder: VariableSizeEncoder<CompiledInstruction> | undefined;
+export function getInstructionEncoder(): VariableSizeEncoder<CompiledInstruction> {
     if (!memoizedGetInstructionEncoder) {
-        memoizedGetInstructionEncoder = transformEncoder<Required<Instruction>, Instruction>(
+        memoizedGetInstructionEncoder = transformEncoder<Required<CompiledInstruction>, CompiledInstruction>(
             getStructEncoder([
                 ['programAddressIndex', getU8Encoder()],
                 ['accountIndices', getArrayEncoder(getU8Encoder(), { size: getShortU16Encoder() })],
                 ['data', addEncoderSizePrefix(getBytesEncoder(), getShortU16Encoder())],
             ]),
             // Convert an instruction to have all fields defined
-            (instruction: Instruction): Required<Instruction> => {
+            (instruction: CompiledInstruction): Required<CompiledInstruction> => {
                 if (instruction.accountIndices !== undefined && instruction.data !== undefined) {
-                    return instruction as Required<Instruction>;
+                    return instruction as Required<CompiledInstruction>;
                 }
                 return {
                     ...instruction,
                     accountIndices: instruction.accountIndices ?? [],
                     data: instruction.data ?? new Uint8Array(0),
-                } as Required<Instruction>;
+                } as Required<CompiledInstruction>;
             },
         );
     }
@@ -48,10 +55,10 @@ export function getInstructionEncoder(): VariableSizeEncoder<Instruction> {
     return memoizedGetInstructionEncoder;
 }
 
-let memoizedGetInstructionDecoder: VariableSizeDecoder<Instruction> | undefined;
-export function getInstructionDecoder(): VariableSizeDecoder<Instruction> {
+let memoizedGetInstructionDecoder: VariableSizeDecoder<CompiledInstruction> | undefined;
+export function getInstructionDecoder(): VariableSizeDecoder<CompiledInstruction> {
     if (!memoizedGetInstructionDecoder) {
-        memoizedGetInstructionDecoder = transformDecoder<Required<Instruction>, Instruction>(
+        memoizedGetInstructionDecoder = transformDecoder<Required<CompiledInstruction>, CompiledInstruction>(
             getStructDecoder([
                 ['programAddressIndex', getU8Decoder()],
                 ['accountIndices', getArrayDecoder(getU8Decoder(), { size: getShortU16Decoder() })],
@@ -61,7 +68,7 @@ export function getInstructionDecoder(): VariableSizeDecoder<Instruction> {
                 ],
             ]),
             // Convert an instruction to exclude optional fields if they are empty
-            (instruction: Required<Instruction>): Instruction => {
+            (instruction: Required<CompiledInstruction>): CompiledInstruction => {
                 if (instruction.accountIndices.length && instruction.data.byteLength) {
                     return instruction;
                 }
@@ -77,6 +84,29 @@ export function getInstructionDecoder(): VariableSizeDecoder<Instruction> {
     return memoizedGetInstructionDecoder;
 }
 
-export function getInstructionCodec(): VariableSizeCodec<Instruction> {
+export function getInstructionCodec(): VariableSizeCodec<CompiledInstruction> {
     return combineCodec(getInstructionEncoder(), getInstructionDecoder());
+}
+
+type InstructionHeader = {
+    numInstructionAccounts: number;
+    numInstructionDataBytes: number;
+    programAddressIndex: number;
+};
+
+export function getInstructionHeaderEncoder(): FixedSizeEncoder<CompiledInstruction> {
+    return transformEncoder(
+        getStructEncoder([
+            ['programAddressIndex', getU8Encoder()],
+            ['numInstructionAccounts', getU8Encoder()],
+            ['numInstructionDataBytes', getU16Encoder()],
+        ] as const),
+        (instruction: CompiledInstruction): InstructionHeader => {
+            return {
+                numInstructionAccounts: instruction.accountIndices?.length ?? 0,
+                numInstructionDataBytes: instruction.data?.byteLength ?? 0,
+                programAddressIndex: instruction.programAddressIndex,
+            };
+        },
+    );
 }
