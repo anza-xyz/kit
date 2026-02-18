@@ -4,6 +4,7 @@ import {
     getInstructionDecoder,
     getInstructionEncoder,
     getInstructionHeaderEncoder,
+    getInstructionPayloadDecoder,
     getInstructionPayloadEncoder,
 } from '../instruction';
 
@@ -245,5 +246,120 @@ describe('getInstructionPayloadEncoder', () => {
             programAddressIndex: 1,
         };
         expect(encoder.encode(instruction)).toEqual(new Uint8Array([]));
+    });
+});
+
+describe('getInstructionPayloadDecoder', () => {
+    it('decodes the instruction payload when all fields are defined', () => {
+        const decoder = getInstructionPayloadDecoder({
+            numInstructionAccounts: 2,
+            numInstructionDataBytes: 3,
+            programAddressIndex: 1,
+        });
+        expect(
+            decoder.decode(
+                new Uint8Array([
+                    2,
+                    3, // account indices (2 bytes)
+                    1,
+                    2,
+                    3, // data bytes (3 bytes)
+                ]),
+            ),
+        ).toEqual({
+            accountIndices: [2, 3],
+            data: new Uint8Array([1, 2, 3]),
+            programAddressIndex: 1,
+        });
+    });
+
+    it('omits `accountIndices` when `numInstructionAccounts` is 0', () => {
+        const decoder = getInstructionPayloadDecoder({
+            numInstructionAccounts: 0,
+            numInstructionDataBytes: 3,
+            programAddressIndex: 1,
+        });
+        expect(
+            decoder.decode(
+                new Uint8Array([
+                    1,
+                    2,
+                    3, // data bytes (3 bytes)
+                ]),
+            ),
+        ).toEqual({
+            data: new Uint8Array([1, 2, 3]),
+            programAddressIndex: 1,
+        });
+    });
+
+    it('omits `data` when `numInstructionDataBytes` is 0', () => {
+        const decoder = getInstructionPayloadDecoder({
+            numInstructionAccounts: 2,
+            numInstructionDataBytes: 0,
+            programAddressIndex: 1,
+        });
+        expect(
+            decoder.decode(
+                new Uint8Array([
+                    2,
+                    3, // account indices (2 bytes)
+                ]),
+            ),
+        ).toEqual({
+            accountIndices: [2, 3],
+            programAddressIndex: 1,
+        });
+    });
+
+    it('decodes an empty payload when both `numInstructionAccounts` and `numInstructionDataBytes` are 0', () => {
+        const decoder = getInstructionPayloadDecoder({
+            numInstructionAccounts: 0,
+            numInstructionDataBytes: 0,
+            programAddressIndex: 1,
+        });
+        expect(decoder.decode(new Uint8Array([]))).toEqual({
+            programAddressIndex: 1,
+        });
+    });
+
+    it('only reads the number of bytes specified by `numInstructionDataBytes`', () => {
+        const decoder = getInstructionPayloadDecoder({
+            numInstructionAccounts: 0,
+            numInstructionDataBytes: 2,
+            programAddressIndex: 1,
+        });
+        expect(
+            decoder.decode(
+                new Uint8Array([
+                    1,
+                    2, // data bytes (2 bytes)
+                    3, // additional byte that should not be read as data
+                ]),
+            ),
+        ).toEqual({
+            data: new Uint8Array([1, 2]),
+            programAddressIndex: 1,
+        });
+    });
+
+    it('only reads the number of account indices specified by `numInstructionAccounts`', () => {
+        const decoder = getInstructionPayloadDecoder({
+            numInstructionAccounts: 2,
+            numInstructionDataBytes: 0,
+            programAddressIndex: 1,
+        });
+        expect(
+            decoder.decode(
+                new Uint8Array([
+                    2,
+                    3, // account indices (2 bytes)
+                    4, // additional byte that should not be read as an account index
+                ]),
+            ),
+        ).toEqual({
+            accountIndices: [2, 3],
+            programAddressIndex: 1,
+        });
     });
 });

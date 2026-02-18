@@ -3,6 +3,7 @@ import {
     addEncoderSizePrefix,
     combineCodec,
     createEncoder,
+    fixDecoderSize,
     FixedSizeEncoder,
     transformDecoder,
     transformEncoder,
@@ -143,4 +144,28 @@ export function getInstructionPayloadEncoder(): VariableSizeEncoder<CompiledInst
             return nextOffset;
         },
     });
+}
+
+/**
+ * Decode a CompiledInstruction from a byte array, given the instruction header
+ * @param instructionHeader The header for the instruction
+ * @returns A decoder for CompiledInstruction
+ */
+export function getInstructionPayloadDecoder(
+    instructionHeader: InstructionHeader,
+): VariableSizeDecoder<CompiledInstruction> {
+    return transformDecoder(
+        getStructDecoder([
+            ['accountIndices', getArrayDecoder(getU8Decoder(), { size: instructionHeader.numInstructionAccounts })],
+            ['data', fixDecoderSize(getBytesDecoder(), instructionHeader.numInstructionDataBytes)],
+        ]),
+        ({ accountIndices, data }) => {
+            const compiledInstruction: CompiledInstruction = {
+                programAddressIndex: instructionHeader.programAddressIndex,
+                ...(accountIndices.length ? { accountIndices } : null),
+                ...(data.byteLength ? { data } : null),
+            };
+            return compiledInstruction;
+        },
+    );
 }
