@@ -11,7 +11,7 @@
         "predev": "./build-api-docs.sh"
     },
     "dependencies": {
-        "@inkeep/cxkit-react": "^0.5.107",
+        "@inkeep/cxkit-react": "^0.5.115",
         "@radix-ui/react-popover": "^1.1.15",
         "class-variance-authority": "^0.7.1",
         "fumadocs-core": "15.2.10",
