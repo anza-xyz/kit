@@ -1,4 +1,12 @@
-import { getInstructionCodec, getInstructionDecoder, getInstructionEncoder } from '../instruction';
+import { getCompiledInstructions } from '../../compile/instructions';
+import {
+    getInstructionCodec,
+    getInstructionDecoder,
+    getInstructionEncoder,
+    getInstructionHeaderEncoder,
+} from '../instruction';
+
+type CompiledInstruction = ReturnType<typeof getCompiledInstructions>[number];
 
 describe('Instruction codec', () => {
     describe.each([getInstructionEncoder, getInstructionCodec])('instruction encoder %p', encoderFactory => {
@@ -131,5 +139,55 @@ describe('Instruction codec', () => {
                 ),
             ).not.toHaveProperty('data');
         });
+    });
+});
+
+describe('getInstructionHeaderEncoder', () => {
+    const encoder = getInstructionHeaderEncoder();
+
+    it('encodes the instruction header when all fields are defined', () => {
+        const instruction: CompiledInstruction = {
+            accountIndices: [2, 3],
+            data: Uint8Array.from({ length: 2 ** 16 - 1 }, (_, i) => i),
+            programAddressIndex: 1,
+        };
+        expect(encoder.encode(instruction)).toEqual(
+            new Uint8Array([
+                1, // programAddressIndex (1 byte)
+                2, // numInstructionAccounts (1 byte)
+                255,
+                255, // numInstructionDataBytes (2 bytes)
+            ]),
+        );
+    });
+
+    it('encodes 0 accounts when accounts is missing', () => {
+        const instruction: CompiledInstruction = {
+            data: new Uint8Array([1, 2, 3]),
+            programAddressIndex: 1,
+        };
+        expect(encoder.encode(instruction)).toEqual(
+            new Uint8Array([
+                1, // programAddressIndex (1 byte)
+                0, // numInstructionAccounts (1 byte)
+                3,
+                0, // numInstructionDataBytes (2 bytes)
+            ]),
+        );
+    });
+
+    it('encodes 0 data bytes when data is missing', () => {
+        const instruction: CompiledInstruction = {
+            accountIndices: [2, 3],
+            programAddressIndex: 1,
+        };
+        expect(encoder.encode(instruction)).toEqual(
+            new Uint8Array([
+                1, // programAddressIndex (1 byte)
+                2, // numInstructionAccounts (1 byte)
+                0,
+                0, // numInstructionDataBytes (2 bytes)
+            ]),
+        );
     });
 });
