@@ -44,6 +44,8 @@ import {
     SOLANA_ERROR__CODECS__INVALID_ENUM_VARIANT,
     SOLANA_ERROR__CODECS__INVALID_LITERAL_UNION_VARIANT,
     SOLANA_ERROR__CODECS__INVALID_NUMBER_OF_ITEMS,
+    SOLANA_ERROR__CODECS__INVALID_PATTERN_MATCH_BYTES,
+    SOLANA_ERROR__CODECS__INVALID_PATTERN_MATCH_VALUE,
     SOLANA_ERROR__CODECS__INVALID_STRING_FOR_BASE,
     SOLANA_ERROR__CODECS__LITERAL_UNION_DISCRIMINATOR_OUT_OF_RANGE,
     SOLANA_ERROR__CODECS__NUMBER_OUT_OF_RANGE,
@@ -366,6 +368,10 @@ export const SolanaErrorMessages: Readonly<{
         'Union variant out of range. Expected an index between $minRange and $maxRange, got $variant.',
     [SOLANA_ERROR__CODECS__EXPECTED_DECODER_TO_CONSUME_ENTIRE_BYTE_ARRAY]:
         'This decoder expected a byte array of exactly $expectedLength bytes, but $numExcessBytes unexpected excess bytes remained after decoding. Are you sure that you have chosen the correct decoder for this data?',
+    [SOLANA_ERROR__CODECS__INVALID_PATTERN_MATCH_VALUE]:
+        'Invalid pattern match value. The provided value does not match any of the specified patterns.',
+    [SOLANA_ERROR__CODECS__INVALID_PATTERN_MATCH_BYTES]:
+        'Invalid pattern match bytes. The provided byte array does not match any of the specified patterns.',
     [SOLANA_ERROR__CRYPTO__RANDOM_VALUES_FUNCTION_UNIMPLEMENTED]: 'No random values implementation could be found.',
     [SOLANA_ERROR__INSTRUCTION_ERROR__ACCOUNT_ALREADY_INITIALIZED]: 'instruction requires an uninitialized account',
     [SOLANA_ERROR__INSTRUCTION_ERROR__ACCOUNT_BORROW_FAILED]:
