@@ -35,6 +35,7 @@ import {
     SOLANA_ERROR__CODECS__INVALID_ENUM_VARIANT,
     SOLANA_ERROR__CODECS__INVALID_LITERAL_UNION_VARIANT,
     SOLANA_ERROR__CODECS__INVALID_NUMBER_OF_ITEMS,
+    SOLANA_ERROR__CODECS__INVALID_PATTERN_MATCH_BYTES,
     SOLANA_ERROR__CODECS__INVALID_STRING_FOR_BASE,
     SOLANA_ERROR__CODECS__LITERAL_UNION_DISCRIMINATOR_OUT_OF_RANGE,
     SOLANA_ERROR__CODECS__NUMBER_OUT_OF_RANGE,
@@ -394,6 +395,9 @@ export type SolanaErrorContext = ReadonlyContextValue<
                 actual: bigint | number;
                 codecDescription: string;
                 expected: bigint | number;
+            };
+            [SOLANA_ERROR__CODECS__INVALID_PATTERN_MATCH_BYTES]: {
+                bytes: ReadonlyUint8Array;
             };
             [SOLANA_ERROR__CODECS__INVALID_STRING_FOR_BASE]: {
                 alphabet: string;
