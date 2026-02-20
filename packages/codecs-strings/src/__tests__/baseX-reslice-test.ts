@@ -52,4 +52,9 @@ describe('getBaseXResliceCodec', () => {
         expect(base8.encode('016')).toStrictEqual(b('07'));
         expect(base8.decode(b('07'))).toBe('016');
     });
+
+    it('produces the same result when offset equals negative byteLength', () => {
+        const bytes = b('ffffff');
+        expect(base8.read(bytes, -bytes.byteLength)).toStrictEqual(base8.read(bytes, 0));
+    });
 });
