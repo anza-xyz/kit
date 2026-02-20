@@ -1,2 +1,2 @@
 export * from './message';
-export * from './transaction-version';
+export * from './v0/transaction-version';

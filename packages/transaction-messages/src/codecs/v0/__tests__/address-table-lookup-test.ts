@@ -1,6 +1,6 @@
 import type { Address } from '@solana/addresses';
 
-import type { getCompiledAddressTableLookups } from '../../compile/address-table-lookups';
+import type { getCompiledAddressTableLookups } from '../../../compile/address-table-lookups';
 import {
     getAddressTableLookupCodec,
     getAddressTableLookupDecoder,
@@ -27,15 +27,15 @@ describe('Address table lookup codec', () => {
                 ).toEqual(
                     // prettier-ignore
                     new Uint8Array([
-                    // Lookup table account address
-                    11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, // k7FaK87WHGVXzkaoHb7CdVPgkKDQhZ29VLDeBVbDfYn
-                    // Compact array of writable indices
-                    1, // Compact-u16 length
-                    44, // Writable indicies
-                    // Compact array of read-only indices
-                    2, // Compact-u16 length
-                    33, 22, // Read-only indicies
-                ]),
+                        // Lookup table account address
+                        11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, // k7FaK87WHGVXzkaoHb7CdVPgkKDQhZ29VLDeBVbDfYn
+                        // Compact array of writable indices
+                        1, // Compact-u16 length
+                        44, // Writable indicies
+                        // Compact array of read-only indices
+                        2, // Compact-u16 length
+                        33, 22, // Read-only indicies
+                    ]),
                 );
             });
         },
@@ -53,15 +53,15 @@ describe('Address table lookup codec', () => {
                 const byteArray =
                     // prettier-ignore
                     new Uint8Array([
-                    // Lookup table account address
-                    11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, // k7FaK87WHGVXzkaoHb7CdVPgkKDQhZ29VLDeBVbDfYn
-                    // Compact array of writable indices
-                    1, // Compact-u16 length
-                    44, // Writable indicies
-                    // Compact array of read-only indices
-                    2, // Compact-u16 length
-                    33, 22, // Read-only indicies
-                ]);
+                        // Lookup table account address
+                        11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, // k7FaK87WHGVXzkaoHb7CdVPgkKDQhZ29VLDeBVbDfYn
+                        // Compact array of writable indices
+                        1, // Compact-u16 length
+                        44, // Writable indicies
+                        // Compact array of read-only indices
+                        2, // Compact-u16 length
+                        33, 22, // Read-only indicies
+                    ]);
                 const [lookup, offset] = addressTableLookup.read(byteArray, 0);
                 expect(lookup).toEqual({
                     lookupTableAddress: 'k7FaK87WHGVXzkaoHb7CdVPgkKDQhZ29VLDeBVbDfYn' as Address, // decodes to [11{32}]

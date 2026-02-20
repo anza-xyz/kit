@@ -9,7 +9,7 @@ import {
 import { getU32Decoder, getU32Encoder, getU64Decoder, getU64Encoder } from '@solana/codecs-numbers';
 import { SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_MASK_PRIORITY_FEE_BITS, SolanaError } from '@solana/errors';
 
-import { TransactionConfig } from '../transaction-config';
+import { TransactionConfig } from '../../transaction-config';
 
 const PRIORITY_FEE_LAMPORTS_BIT_MASK = 0b11;
 const COMPUTE_UNIT_LIMIT_BIT_MASK = 0b100;

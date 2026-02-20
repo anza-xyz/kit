@@ -1,6 +1,6 @@
 import { SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_MASK_PRIORITY_FEE_BITS, SolanaError } from '@solana/errors';
 
-import { TransactionConfig } from '../../transaction-config';
+import { TransactionConfig } from '../../../transaction-config';
 import { getTransactionConfigMaskEncoder, getTransactionConfigValuesEncoder } from '../config';
 import { getConfigValuesDecoder } from '../config';
 
