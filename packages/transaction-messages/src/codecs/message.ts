@@ -24,10 +24,10 @@ import { getBase58Decoder, getBase58Encoder } from '@solana/codecs-strings';
 
 import { getCompiledAddressTableLookups } from '../compile/address-table-lookups';
 import { CompiledTransactionMessage, CompiledTransactionMessageWithLifetime } from '../compile/message';
-import { getAddressTableLookupDecoder, getAddressTableLookupEncoder } from './address-table-lookup';
-import { getMessageHeaderDecoder, getMessageHeaderEncoder } from './header';
-import { getInstructionDecoder, getInstructionEncoder } from './instruction';
+import { getMessageHeaderDecoder, getMessageHeaderEncoder } from './legacy/header';
+import { getInstructionDecoder, getInstructionEncoder } from './legacy/instruction';
 import { getTransactionVersionDecoder, getTransactionVersionEncoder } from './transaction-version';
+import { getAddressTableLookupDecoder, getAddressTableLookupEncoder } from './v0/address-table-lookup';
 
 function getCompiledMessageLegacyEncoder(): VariableSizeEncoder<
     CompiledTransactionMessage | (CompiledTransactionMessage & CompiledTransactionMessageWithLifetime)
