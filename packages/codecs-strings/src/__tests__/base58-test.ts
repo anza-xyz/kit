@@ -80,4 +80,13 @@ describe('getBase58Codec', () => {
         // Addresses.
         expect(base58.getSizeFromValue('LorisCg1FTs89a32VSrFskYDgiRbNQzct1WxyZb7nuA')).toBe(32);
     });
+
+    it('produces the same result when offset equals negative byteLength', () => {
+        const base58 = getBase58Codec();
+        const bytes = new Uint8Array([
+            5, 19, 4, 94, 5, 47, 73, 25, 182, 8, 150, 61, 231, 60, 102, 110, 6, 114, 224, 110, 40, 20, 10, 184, 65, 191,
+            241, 204, 131, 161, 120, 181,
+        ]);
+        expect(base58.read(bytes, -bytes.byteLength)).toStrictEqual(base58.read(bytes, 0));
+    });
 });

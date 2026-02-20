@@ -90,7 +90,7 @@ export function addDecoderSentinel<TTo>(
 export function addDecoderSentinel<TTo>(decoder: Decoder<TTo>, sentinel: ReadonlyUint8Array): VariableSizeDecoder<TTo>;
 export function addDecoderSentinel<TTo>(decoder: Decoder<TTo>, sentinel: ReadonlyUint8Array): Decoder<TTo> {
     const read = ((bytes, offset) => {
-        const candidateBytes = offset === 0 ? bytes : bytes.slice(offset);
+        const candidateBytes = offset === 0 || offset === -bytes.byteLength ? bytes : bytes.slice(offset);
         const sentinelIndex = findSentinelIndex(candidateBytes, sentinel);
         if (sentinelIndex === -1) {
             throw new SolanaError(SOLANA_ERROR__CODECS__SENTINEL_MISSING_IN_DECODED_BYTES, {
