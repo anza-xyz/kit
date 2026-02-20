@@ -3,8 +3,7 @@ import {
     createDecoder,
     createEncoder,
     toArrayBuffer,
-    transformDecoder,
-    transformEncoder,
+    ReadonlyUint8Array,
     VariableSizeCodec,
     VariableSizeDecoder,
     VariableSizeEncoder,
@@ -15,6 +14,81 @@ import { assertValidBaseString } from './assertions';
 import { getBaseXResliceDecoder, getBaseXResliceEncoder } from './baseX-reslice';
 
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+const uint8ArrayFromBase64 = (Uint8Array as unknown as {
+    fromBase64?: (value: string, options?: { alphabet?: 'base64' | 'base64url'; lastChunkHandling?: string }) => Uint8Array;
+}).fromBase64;
+const uint8ArrayToBase64 = (Uint8Array.prototype as unknown as {
+    toBase64?: (options?: { alphabet?: 'base64' | 'base64url'; omitPadding?: boolean }) => string;
+}).toBase64;
+
+function getBase64Bytes(value: string, strictPadding: boolean): Uint8Array {
+    if (uint8ArrayFromBase64) {
+        if (strictPadding && value.length % 4 !== 0) {
+            throw new SolanaError(SOLANA_ERROR__CODECS__INVALID_STRING_FOR_BASE, {
+                alphabet,
+                base: 64,
+                value,
+            });
+        }
+        try {
+            return uint8ArrayFromBase64(value, {
+                alphabet: 'base64',
+                lastChunkHandling: strictPadding ? 'strict' : 'loose',
+            });
+        } catch {
+            if (__NODEJS__) {
+                assertValidBaseString(alphabet, value.replace(/=/g, ''));
+                return new Uint8Array(Buffer.from(value, 'base64'));
+            }
+            try {
+                return uint8ArrayFromBase64(value);
+            } catch {
+                throw new SolanaError(SOLANA_ERROR__CODECS__INVALID_STRING_FOR_BASE, {
+                    alphabet,
+                    base: 64,
+                    value,
+                });
+            }
+        }
+    }
+
+    if (__BROWSER__) {
+        try {
+            return Uint8Array.from((atob as Window['atob'])(value), c => c.charCodeAt(0));
+        } catch {
+            throw new SolanaError(SOLANA_ERROR__CODECS__INVALID_STRING_FOR_BASE, {
+                alphabet,
+                base: 64,
+                value,
+            });
+        }
+    }
+
+    if (__NODEJS__) {
+        assertValidBaseString(alphabet, value.replace(/=/g, ''));
+        return new Uint8Array(Buffer.from(value, 'base64'));
+    }
+
+    return new Uint8Array(getBaseXResliceEncoder(alphabet, 6).encode(value.replace(/=/g, '')));
+}
+
+function getBase64String(bytes: ReadonlyUint8Array): string {
+    if (uint8ArrayToBase64) {
+        return uint8ArrayToBase64.call(bytes);
+    }
+
+    if (__BROWSER__) {
+        return (btoa as Window['btoa'])(String.fromCharCode(...bytes));
+    }
+
+    if (__NODEJS__) {
+        return Buffer.from(toArrayBuffer(bytes)).toString('base64');
+    }
+
+    return getBaseXResliceDecoder(alphabet, 6)
+        .decode(bytes)
+        .padEnd(Math.ceil(bytes.length / 3) * 4, '=');
+}
 
 /**
  * Returns an encoder for base-64 strings.
@@ -36,50 +110,15 @@ const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789
  * @see {@link getBase64Codec}
  */
 export const getBase64Encoder = (): VariableSizeEncoder<string> => {
-    if (__BROWSER__) {
-        return createEncoder({
-            getSizeFromValue: (value: string) => {
-                try {
-                    return (atob as Window['atob'])(value).length;
-                } catch {
-                    throw new SolanaError(SOLANA_ERROR__CODECS__INVALID_STRING_FOR_BASE, {
-                        alphabet,
-                        base: 64,
-                        value,
-                    });
-                }
-            },
-            write(value: string, bytes, offset) {
-                try {
-                    const bytesToAdd = (atob as Window['atob'])(value)
-                        .split('')
-                        .map(c => c.charCodeAt(0));
-                    bytes.set(bytesToAdd, offset);
-                    return bytesToAdd.length + offset;
-                } catch {
-                    throw new SolanaError(SOLANA_ERROR__CODECS__INVALID_STRING_FOR_BASE, {
-                        alphabet,
-                        base: 64,
-                        value,
-                    });
-                }
-            },
-        });
-    }
-
-    if (__NODEJS__) {
-        return createEncoder({
-            getSizeFromValue: (value: string) => Buffer.from(value, 'base64').length,
-            write(value: string, bytes, offset) {
-                assertValidBaseString(alphabet, value.replace(/=/g, ''));
-                const buffer = Buffer.from(value, 'base64');
-                bytes.set(buffer, offset);
-                return buffer.length + offset;
-            },
-        });
-    }
-
-    return transformEncoder(getBaseXResliceEncoder(alphabet, 6), (value: string): string => value.replace(/=/g, ''));
+    const strictPadding = __BROWSER__;
+    return createEncoder({
+        getSizeFromValue: (value: string) => getBase64Bytes(value, strictPadding).length,
+        write(value: string, bytes, offset) {
+            const bytesToAdd = getBase64Bytes(value, strictPadding);
+            bytes.set(bytesToAdd, offset);
+            return bytesToAdd.length + offset;
+        },
+    });
 };
 
 /**
@@ -101,25 +140,13 @@ export const getBase64Encoder = (): VariableSizeEncoder<string> => {
  * @see {@link getBase64Codec}
  */
 export const getBase64Decoder = (): VariableSizeDecoder<string> => {
-    if (__BROWSER__) {
-        return createDecoder({
-            read(bytes, offset = 0) {
-                const slice = bytes.slice(offset);
-                const value = (btoa as Window['btoa'])(String.fromCharCode(...slice));
-                return [value, bytes.length];
-            },
-        });
-    }
-
-    if (__NODEJS__) {
-        return createDecoder({
-            read: (bytes, offset = 0) => [Buffer.from(toArrayBuffer(bytes), offset).toString('base64'), bytes.length],
-        });
-    }
-
-    return transformDecoder(getBaseXResliceDecoder(alphabet, 6), (value: string): string =>
-        value.padEnd(Math.ceil(value.length / 4) * 4, '='),
-    );
+    return createDecoder({
+        read(bytes, offset = 0) {
+            const slice = bytes.slice(offset);
+            const value = getBase64String(slice);
+            return [value, bytes.length];
+        },
+    });
 };
 
 /**
