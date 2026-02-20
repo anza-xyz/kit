@@ -3,29 +3,20 @@ import {
     combineCodec,
     createEncoder,
     Decoder,
-    fixDecoderSize,
-    fixEncoderSize,
     transformDecoder,
     transformEncoder,
     VariableSizeCodec,
     VariableSizeDecoder,
     VariableSizeEncoder,
 } from '@solana/codecs-core';
-import {
-    getArrayDecoder,
-    getArrayEncoder,
-    getConstantEncoder,
-    getStructDecoder,
-    getStructEncoder,
-    getUnionEncoder,
-} from '@solana/codecs-data-structures';
+import { getArrayDecoder, getArrayEncoder, getStructDecoder, getStructEncoder } from '@solana/codecs-data-structures';
 import { getShortU16Decoder, getShortU16Encoder } from '@solana/codecs-numbers';
-import { getBase58Decoder, getBase58Encoder } from '@solana/codecs-strings';
 
 import { getCompiledAddressTableLookups } from '../compile/address-table-lookups';
 import { CompiledTransactionMessage, CompiledTransactionMessageWithLifetime } from '../compile/message';
 import { getMessageHeaderDecoder, getMessageHeaderEncoder } from './legacy/header';
 import { getInstructionDecoder, getInstructionEncoder } from './legacy/instruction';
+import { getLifetimeTokenDecoder, getLifetimeTokenEncoder } from './legacy/lifetime-token';
 import { getTransactionVersionDecoder, getTransactionVersionEncoder } from './transaction-version';
 import { getAddressTableLookupDecoder, getAddressTableLookupEncoder } from './v0/address-table-lookup';
 
@@ -60,21 +51,11 @@ function getCompiledMessageVersionedEncoder(): VariableSizeEncoder<
 }
 
 function getPreludeStructEncoderTuple() {
-    const lifetimeTokenEncoder = getUnionEncoder(
-        [
-            // Use a 32-byte constant encoder for a missing lifetime token (index 0).
-            getConstantEncoder(new Uint8Array(32)),
-            // Use a 32-byte base58 encoder for a valid lifetime token (index 1).
-            fixEncoderSize(getBase58Encoder(), 32),
-        ],
-        value => (value === undefined ? 0 : 1),
-    );
-
     return [
         ['version', getTransactionVersionEncoder()],
         ['header', getMessageHeaderEncoder()],
         ['staticAccounts', getArrayEncoder(getAddressEncoder(), { size: getShortU16Encoder() })],
-        ['lifetimeToken', lifetimeTokenEncoder],
+        ['lifetimeToken', getLifetimeTokenEncoder()],
         ['instructions', getArrayEncoder(getInstructionEncoder(), { size: getShortU16Encoder() })],
     ] as const;
 }
@@ -84,7 +65,7 @@ function getPreludeStructDecoderTuple() {
         ['version', getTransactionVersionDecoder() as Decoder<number>],
         ['header', getMessageHeaderDecoder()],
         ['staticAccounts', getArrayDecoder(getAddressDecoder(), { size: getShortU16Decoder() })],
-        ['lifetimeToken', fixDecoderSize(getBase58Decoder(), 32)],
+        ['lifetimeToken', getLifetimeTokenDecoder()],
         ['instructions', getArrayDecoder(getInstructionDecoder(), { size: getShortU16Decoder() })],
         ['addressTableLookups', getAddressTableLookupArrayDecoder()],
     ] as const;
