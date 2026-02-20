@@ -12,7 +12,7 @@ import {
     SolanaError,
 } from '@solana/errors';
 
-import { MAX_SUPPORTED_TRANSACTION_VERSION, TransactionVersion } from '../transaction-message';
+import { MAX_SUPPORTED_TRANSACTION_VERSION, TransactionVersion } from '../../transaction-message';
 
 const VERSION_FLAG_MASK = 0x80;
 

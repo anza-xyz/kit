@@ -1,7 +1,7 @@
 import { Decoder, Encoder } from '@solana/codecs-core';
 import { SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED, SolanaError } from '@solana/errors';
 
-import { TransactionVersion } from '../../transaction-message';
+import { TransactionVersion } from '../../../transaction-message';
 import {
     getTransactionVersionCodec,
     getTransactionVersionDecoder,
