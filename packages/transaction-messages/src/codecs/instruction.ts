@@ -4,6 +4,7 @@ import {
     combineCodec,
     createEncoder,
     fixDecoderSize,
+    FixedSizeDecoder,
     FixedSizeEncoder,
     transformDecoder,
     transformEncoder,
@@ -24,6 +25,7 @@ import {
     getShortU16Encoder,
     getU8Decoder,
     getU8Encoder,
+    getU16Decoder,
     getU16Encoder,
 } from '@solana/codecs-numbers';
 
@@ -144,6 +146,18 @@ export function getInstructionPayloadEncoder(): VariableSizeEncoder<CompiledInst
             return nextOffset;
         },
     });
+}
+
+/**
+ * Decode an {@link InstructionHeader} from a byte array
+ * @returns A FixedSizeDecoder for the instruction header
+ */
+export function getInstructionHeaderDecoder(): FixedSizeDecoder<InstructionHeader> {
+    return getStructDecoder([
+        ['programAddressIndex', getU8Decoder()],
+        ['numInstructionAccounts', getU8Decoder()],
+        ['numInstructionDataBytes', getU16Decoder()],
+    ]);
 }
 
 /**

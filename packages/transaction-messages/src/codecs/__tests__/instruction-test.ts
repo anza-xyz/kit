@@ -3,6 +3,7 @@ import {
     getInstructionCodec,
     getInstructionDecoder,
     getInstructionEncoder,
+    getInstructionHeaderDecoder,
     getInstructionHeaderEncoder,
     getInstructionPayloadDecoder,
     getInstructionPayloadEncoder,
@@ -246,6 +247,36 @@ describe('getInstructionPayloadEncoder', () => {
             programAddressIndex: 1,
         };
         expect(encoder.encode(instruction)).toEqual(new Uint8Array([]));
+    });
+});
+
+describe('getInstructionHeaderDecoder', () => {
+    const decoder = getInstructionHeaderDecoder();
+
+    it('decodes the instruction header when all fields are defined', () => {
+        // pretter-ignore
+        const encoded = new Uint8Array([
+            // programAddressIndex (1 byte)
+            1,
+            // numInstructionAccounts (1 byte)
+            2,
+            // numInstructionDataBytes (2 bytes)
+            255, 255,
+        ]);
+        expect(decoder.decode(encoded)).toEqual({
+            numInstructionAccounts: 2,
+            numInstructionDataBytes: 2 ** 16 - 1,
+            programAddressIndex: 1,
+        });
+    });
+
+    it('decodes to all 0s when all fields are 0', () => {
+        const encoded = new Uint8Array(4); // all bytes are 0
+        expect(decoder.decode(encoded)).toEqual({
+            numInstructionAccounts: 0,
+            numInstructionDataBytes: 0,
+            programAddressIndex: 0,
+        });
     });
 });
 
