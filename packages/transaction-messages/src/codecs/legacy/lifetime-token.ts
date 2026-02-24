@@ -8,7 +8,7 @@ import {
 import { getNullableEncoder } from '@solana/codecs-data-structures';
 import { getBase58Decoder, getBase58Encoder } from '@solana/codecs-strings';
 
-import { getCompiledLifetimeToken } from '../../compile/lifetime-token';
+import { getCompiledLifetimeToken } from '../../compile/legacy/lifetime-token';
 
 type LifetimeToken = ReturnType<typeof getCompiledLifetimeToken>;
 

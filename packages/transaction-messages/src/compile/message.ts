@@ -3,21 +3,11 @@ import { TransactionMessageWithLifetime } from '../lifetime';
 import { TransactionMessage } from '../transaction-message';
 import { getAddressMapFromInstructions, getOrderedAccountsFromAddressMap } from './accounts';
 import { getCompiledAddressTableLookups } from './address-table-lookups';
-import { getCompiledMessageHeader } from './header';
 import { getCompiledInstructions } from './instructions';
-import { getCompiledLifetimeToken } from './lifetime-token';
+import { getCompiledMessageHeader } from './legacy/header';
+import { getCompiledLifetimeToken } from './legacy/lifetime-token';
+import { BaseCompiledTransactionMessage } from './message-types';
 import { getCompiledStaticAccounts } from './static-accounts';
-
-type BaseCompiledTransactionMessage = Readonly<{
-    /**
-     * Information about the version of the transaction message and the role of the accounts it
-     * loads.
-     */
-    header: ReturnType<typeof getCompiledMessageHeader>;
-    instructions: ReturnType<typeof getCompiledInstructions>;
-    /** A list of addresses indicating which accounts to load */
-    staticAccounts: ReturnType<typeof getCompiledStaticAccounts>;
-}>;
 
 /**
  * A transaction message in a form suitable for encoding for execution on the network.

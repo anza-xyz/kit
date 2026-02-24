@@ -1,59 +1,36 @@
 import { Address } from '@solana/addresses';
+import { AccountRole } from '@solana/instructions';
 
-import { TransactionMessageWithBlockhashLifetime } from '../../blockhash';
-import { TransactionMessageWithFeePayer } from '../../fee-payer';
-import { TransactionMessageWithLifetime } from '../../lifetime';
-import { TransactionMessage } from '../../transaction-message';
-import { getCompiledAddressTableLookups } from '../address-table-lookups';
+import { TransactionMessageWithBlockhashLifetime } from '../../../blockhash';
+import { TransactionMessageWithFeePayer } from '../../../fee-payer';
+import { TransactionMessageWithLifetime } from '../../../lifetime';
+import { TransactionMessage } from '../../../transaction-message';
+import { getOrderedAccountsFromAddressMap, OrderedAccounts } from '../accounts';
+import { getCompiledMessageHeader } from '../header';
 import { getCompiledInstructions } from '../instructions';
-import { getCompiledMessageHeader } from '../legacy/header';
-import { getCompiledLifetimeToken } from '../legacy/lifetime-token';
+import { getCompiledLifetimeToken } from '../lifetime-token';
 import { compileTransactionMessage } from '../message';
-import { getCompiledStaticAccounts } from '../static-accounts';
 
-jest.mock('../address-table-lookups');
-jest.mock('../legacy/header');
+jest.mock('../accounts');
+jest.mock('../header');
 jest.mock('../instructions');
-jest.mock('../legacy/lifetime-token');
-jest.mock('../static-accounts');
+jest.mock('../lifetime-token');
 
 const MOCK_LIFETIME_CONSTRAINT =
     'SOME_CONSTRAINT' as unknown as TransactionMessageWithBlockhashLifetime['lifetimeConstraint'];
 
 describe('compileTransactionMessage', () => {
-    let baseTx: TransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithLifetime;
+    let baseTx: TransactionMessage &
+        TransactionMessageWithFeePayer &
+        TransactionMessageWithLifetime & { version: 'legacy' };
     beforeEach(() => {
         baseTx = {
             feePayer: { address: 'abc' as Address<'abc'> },
             instructions: [],
             lifetimeConstraint: MOCK_LIFETIME_CONSTRAINT,
-            version: 0,
+            version: 'legacy',
         };
-    });
-    describe('address table lookups', () => {
-        const expectedAddressTableLookups = [] as ReturnType<typeof getCompiledAddressTableLookups>;
-        beforeEach(() => {
-            jest.mocked(getCompiledAddressTableLookups).mockReturnValue(expectedAddressTableLookups);
-        });
-        describe("when the transaction version is `'legacy'`", () => {
-            let legacyBaseTx: Readonly<{ version: 'legacy' }> & typeof baseTx;
-            beforeEach(() => {
-                legacyBaseTx = { ...baseTx, version: 'legacy' };
-            });
-            it('does not set `addressTableLookups`', () => {
-                const message = compileTransactionMessage(legacyBaseTx);
-                expect(message).not.toHaveProperty('addressTableLookups');
-            });
-            it('does not call `getCompiledAddressTableLookups`', () => {
-                compileTransactionMessage(legacyBaseTx);
-                expect(getCompiledAddressTableLookups).not.toHaveBeenCalled();
-            });
-        });
-        it('sets `addressTableLookups` to the return value of `getCompiledAddressTableLookups`', () => {
-            const message = compileTransactionMessage(baseTx as typeof baseTx & { version: 0 });
-            expect(getCompiledAddressTableLookups).toHaveBeenCalled();
-            expect(message.addressTableLookups).toBe(expectedAddressTableLookups);
-        });
+        jest.mocked(getOrderedAccountsFromAddressMap).mockReturnValue([] as unknown as OrderedAccounts);
     });
     describe('message header', () => {
         const expectedCompiledMessageHeader = {
@@ -96,20 +73,29 @@ describe('compileTransactionMessage', () => {
         });
     });
     describe('static accounts', () => {
-        const expectedStaticAccounts = [] as ReturnType<typeof getCompiledStaticAccounts>;
+        const expectedOrderedAccounts: ReturnType<typeof getOrderedAccountsFromAddressMap> = [
+            {
+                address: 'abc' as Address<'abc'>,
+                role: AccountRole.WRITABLE_SIGNER,
+            },
+            {
+                address: 'def' as Address<'def'>,
+                role: AccountRole.READONLY,
+            },
+        ] as ReturnType<typeof getOrderedAccountsFromAddressMap>;
         beforeEach(() => {
-            jest.mocked(getCompiledStaticAccounts).mockReturnValue(expectedStaticAccounts);
+            jest.mocked(getOrderedAccountsFromAddressMap).mockReturnValue(expectedOrderedAccounts);
         });
         it('sets `staticAccounts` to the return value of `getCompiledStaticAccounts`', () => {
             const message = compileTransactionMessage(baseTx);
-            expect(getCompiledStaticAccounts).toHaveBeenCalled();
-            expect(message.staticAccounts).toBe(expectedStaticAccounts);
+            expect(getOrderedAccountsFromAddressMap).toHaveBeenCalled();
+            expect(message.staticAccounts).toStrictEqual(['abc' as Address<'abc'>, 'def' as Address<'def'>]);
         });
     });
     describe('versions', () => {
         it('compiles the version', () => {
             const message = compileTransactionMessage(baseTx);
-            expect(message).toHaveProperty('version', 0);
+            expect(message).toHaveProperty('version', 'legacy');
         });
     });
 });

@@ -1,4 +1,4 @@
-import { TransactionMessageWithBlockhashLifetime, TransactionMessageWithDurableNonceLifetime } from '../index';
+import { TransactionMessageWithBlockhashLifetime, TransactionMessageWithDurableNonceLifetime } from '../../index';
 
 export function getCompiledLifetimeToken(
     lifetimeConstraint: (

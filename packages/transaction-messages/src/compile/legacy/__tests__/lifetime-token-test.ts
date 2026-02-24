@@ -1,7 +1,7 @@
 import type { Blockhash } from '@solana/rpc-types';
 
-import { getCompiledLifetimeToken } from '../../compile/lifetime-token';
-import { Nonce } from '../../durable-nonce';
+import { Nonce } from '../../../durable-nonce';
+import { getCompiledLifetimeToken } from '../lifetime-token';
 
 describe('getCompiledLifetimeToken', () => {
     it('compiles a recent blockhash lifetime constraint', () => {
