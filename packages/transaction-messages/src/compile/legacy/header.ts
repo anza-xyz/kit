@@ -1,6 +1,6 @@
 import { isSignerRole, isWritableRole } from '@solana/instructions';
 
-import { OrderedAccounts } from '../accounts';
+import { OrderedAccounts } from '../v0/accounts';
 
 type MessageHeader = Readonly<{
     /**

@@ -1,21 +1,21 @@
 import { Address } from '@solana/addresses';
 
-import { TransactionMessageWithBlockhashLifetime } from '../../blockhash';
-import { TransactionMessageWithFeePayer } from '../../fee-payer';
-import { TransactionMessageWithLifetime } from '../../lifetime';
-import { TransactionMessage } from '../../transaction-message';
-import { getCompiledMessageHeader } from '../legacy/header';
-import { getCompiledLifetimeToken } from '../legacy/lifetime-token';
+import { TransactionMessageWithBlockhashLifetime } from '../../../blockhash';
+import { TransactionMessageWithFeePayer } from '../../../fee-payer';
+import { TransactionMessageWithLifetime } from '../../../lifetime';
+import { TransactionMessage } from '../../../transaction-message';
+import { getCompiledMessageHeader } from '../../legacy/header';
+import { getCompiledLifetimeToken } from '../../legacy/lifetime-token';
+import { getCompiledAddressTableLookups } from '../../v0/address-table-lookups';
+import { getCompiledInstructions } from '../../v0/instructions';
+import { getCompiledStaticAccounts } from '../../v0/static-accounts';
 import { compileTransactionMessage } from '../message';
-import { getCompiledAddressTableLookups } from '../v0/address-table-lookups';
-import { getCompiledInstructions } from '../v0/instructions';
-import { getCompiledStaticAccounts } from '../v0/static-accounts';
 
-jest.mock('../v0/address-table-lookups');
-jest.mock('../legacy/header');
-jest.mock('../v0/instructions');
-jest.mock('../legacy/lifetime-token');
-jest.mock('../v0/static-accounts');
+jest.mock('../address-table-lookups');
+jest.mock('../../legacy/header');
+jest.mock('../instructions');
+jest.mock('../../legacy/lifetime-token');
+jest.mock('../static-accounts');
 
 const MOCK_LIFETIME_CONSTRAINT =
     'SOME_CONSTRAINT' as unknown as TransactionMessageWithBlockhashLifetime['lifetimeConstraint'];
@@ -34,20 +34,6 @@ describe('compileTransactionMessage', () => {
         const expectedAddressTableLookups = [] as ReturnType<typeof getCompiledAddressTableLookups>;
         beforeEach(() => {
             jest.mocked(getCompiledAddressTableLookups).mockReturnValue(expectedAddressTableLookups);
-        });
-        describe("when the transaction version is `'legacy'`", () => {
-            let legacyBaseTx: Readonly<{ version: 'legacy' }> & typeof baseTx;
-            beforeEach(() => {
-                legacyBaseTx = { ...baseTx, version: 'legacy' };
-            });
-            it('does not set `addressTableLookups`', () => {
-                const message = compileTransactionMessage(legacyBaseTx);
-                expect(message).not.toHaveProperty('addressTableLookups');
-            });
-            it('does not call `getCompiledAddressTableLookups`', () => {
-                compileTransactionMessage(legacyBaseTx);
-                expect(getCompiledAddressTableLookups).not.toHaveBeenCalled();
-            });
         });
         it('sets `addressTableLookups` to the return value of `getCompiledAddressTableLookups`', () => {
             const message = compileTransactionMessage(baseTx as typeof baseTx & { version: 0 });

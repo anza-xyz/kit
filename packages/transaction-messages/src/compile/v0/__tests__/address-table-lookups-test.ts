@@ -1,8 +1,8 @@
 import { Address, getAddressComparator } from '@solana/addresses';
 import { AccountRole } from '@solana/instructions';
 
-import { getCompiledAddressTableLookups } from '../../compile/address-table-lookups';
 import { OrderedAccounts } from '../accounts';
+import { getCompiledAddressTableLookups } from '../address-table-lookups';
 
 const MOCK_ADDRESSES: ReadonlyArray<Address> = [
     'BRwZRKsvKkG45g59269qZ5e8UaECFim5Qfxex44UKwDG',

@@ -12,8 +12,8 @@ import {
 import { getArrayDecoder, getArrayEncoder, getStructDecoder, getStructEncoder } from '@solana/codecs-data-structures';
 import { getShortU16Decoder, getShortU16Encoder } from '@solana/codecs-numbers';
 
-import { getCompiledAddressTableLookups } from '../compile/address-table-lookups';
 import { CompiledTransactionMessage, CompiledTransactionMessageWithLifetime } from '../compile/message';
+import { getCompiledAddressTableLookups } from '../compile/v0/address-table-lookups';
 import { getMessageHeaderDecoder, getMessageHeaderEncoder } from './legacy/header';
 import { getInstructionDecoder, getInstructionEncoder } from './legacy/instruction';
 import { getLifetimeTokenDecoder, getLifetimeTokenEncoder } from './legacy/lifetime-token';

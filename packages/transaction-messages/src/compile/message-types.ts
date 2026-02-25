@@ -6,9 +6,9 @@
 import { CompiledTransactionMessage, CompiledTransactionMessageWithLifetime } from '..';
 import { TransactionMessageWithLifetime } from '../lifetime';
 import { TransactionMessage } from '../transaction-message';
-import { getCompiledInstructions } from './instructions';
 import { getCompiledMessageHeader } from './legacy/header';
-import { getCompiledStaticAccounts } from './static-accounts';
+import { getCompiledInstructions } from './v0/instructions';
+import { getCompiledStaticAccounts } from './v0/static-accounts';
 
 export type BaseCompiledTransactionMessage = Readonly<{
     /**

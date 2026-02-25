@@ -18,7 +18,7 @@ import {
 } from '@solana/codecs-data-structures';
 import { getU8Decoder, getU8Encoder, getU16Decoder, getU16Encoder } from '@solana/codecs-numbers';
 
-import { getCompiledInstructions } from '../../compile/instructions';
+import { getCompiledInstructions } from '../../compile/v0/instructions';
 
 type CompiledInstruction = ReturnType<typeof getCompiledInstructions>[number];
 

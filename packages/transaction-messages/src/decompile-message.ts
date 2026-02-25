@@ -13,7 +13,7 @@ import type { Blockhash } from '@solana/rpc-types';
 import { AddressesByLookupTableAddress } from './addresses-by-lookup-table-address';
 import { BlockhashLifetimeConstraint, setTransactionMessageLifetimeUsingBlockhash } from './blockhash';
 import { CompiledTransactionMessage, CompiledTransactionMessageWithLifetime } from './compile';
-import type { getCompiledAddressTableLookups } from './compile/address-table-lookups';
+import type { getCompiledAddressTableLookups } from './compile/v0/address-table-lookups';
 import { createTransactionMessage } from './create-transaction-message';
 import { Nonce, setTransactionMessageLifetimeUsingDurableNonce } from './durable-nonce';
 import { isAdvanceNonceAccountInstruction } from './durable-nonce-instruction';

@@ -1,13 +1,13 @@
 import { TransactionMessageWithFeePayer } from '../fee-payer';
 import { TransactionMessageWithLifetime } from '../lifetime';
 import { TransactionMessage } from '../transaction-message';
-import { getAddressMapFromInstructions, getOrderedAccountsFromAddressMap } from './accounts';
-import { getCompiledAddressTableLookups } from './address-table-lookups';
-import { getCompiledInstructions } from './instructions';
 import { getCompiledMessageHeader } from './legacy/header';
 import { getCompiledLifetimeToken } from './legacy/lifetime-token';
 import { BaseCompiledTransactionMessage } from './message-types';
-import { getCompiledStaticAccounts } from './static-accounts';
+import { getAddressMapFromInstructions, getOrderedAccountsFromAddressMap } from './v0/accounts';
+import { getCompiledAddressTableLookups } from './v0/address-table-lookups';
+import { getCompiledInstructions } from './v0/instructions';
+import { getCompiledStaticAccounts } from './v0/static-accounts';
 
 /**
  * A transaction message in a form suitable for encoding for execution on the network.

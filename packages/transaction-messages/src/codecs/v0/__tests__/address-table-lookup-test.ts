@@ -1,6 +1,6 @@
 import type { Address } from '@solana/addresses';
 
-import type { getCompiledAddressTableLookups } from '../../../compile/address-table-lookups';
+import type { getCompiledAddressTableLookups } from '../../../compile/v0/address-table-lookups';
 import {
     getAddressTableLookupCodec,
     getAddressTableLookupDecoder,

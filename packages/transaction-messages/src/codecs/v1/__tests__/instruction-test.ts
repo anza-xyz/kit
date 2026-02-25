@@ -1,4 +1,4 @@
-import { getCompiledInstructions } from '../../../compile/instructions';
+import { getCompiledInstructions } from '../../../compile/v0/instructions';
 import {
     getInstructionHeaderDecoder,
     getInstructionHeaderEncoder,
