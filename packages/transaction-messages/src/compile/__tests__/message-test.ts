@@ -1,115 +1,70 @@
 import { Address } from '@solana/addresses';
+import { SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED, SolanaError } from '@solana/errors';
 
-import { TransactionMessageWithBlockhashLifetime } from '../../blockhash';
-import { TransactionMessageWithFeePayer } from '../../fee-payer';
-import { TransactionMessageWithLifetime } from '../../lifetime';
-import { TransactionMessage } from '../../transaction-message';
-import { getCompiledMessageHeader } from '../legacy/header';
-import { getCompiledLifetimeToken } from '../legacy/lifetime-token';
-import { compileTransactionMessage } from '../message';
-import { getCompiledAddressTableLookups } from '../v0/address-table-lookups';
-import { getCompiledInstructions } from '../v0/instructions';
-import { getCompiledStaticAccounts } from '../v0/static-accounts';
+import {
+    compileTransactionMessage,
+    TransactionMessage,
+    TransactionMessageWithBlockhashLifetime,
+    TransactionMessageWithFeePayer,
+    TransactionMessageWithLifetime,
+} from '../..';
+import { compileTransactionMessage as compileLegacyTransactionMessage } from '../legacy/message';
+import { compileTransactionMessage as compileV0TransactionMessage } from '../v0/message';
 
-jest.mock('../v0/address-table-lookups');
-jest.mock('../legacy/header');
-jest.mock('../v0/instructions');
-jest.mock('../legacy/lifetime-token');
-jest.mock('../v0/static-accounts');
+jest.mock('../legacy/message');
+jest.mock('../v0/message');
 
 const MOCK_LIFETIME_CONSTRAINT =
     'SOME_CONSTRAINT' as unknown as TransactionMessageWithBlockhashLifetime['lifetimeConstraint'];
 
 describe('compileTransactionMessage', () => {
-    let baseTx: TransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithLifetime;
-    beforeEach(() => {
-        baseTx = {
-            feePayer: { address: 'abc' as Address<'abc'> },
+    it('uses the legacy compiler for legacy messages', () => {
+        const mockCompiledMessage = { version: 'legacy' } as unknown as ReturnType<
+            typeof compileLegacyTransactionMessage
+        >;
+        jest.mocked(compileLegacyTransactionMessage).mockReturnValue(mockCompiledMessage);
+
+        const tx: TransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithLifetime = {
+            feePayer: { address: 'abc' as Address },
+            instructions: [],
+            lifetimeConstraint: MOCK_LIFETIME_CONSTRAINT,
+            version: 'legacy',
+        };
+
+        expect(compileTransactionMessage(tx)).toBe(mockCompiledMessage);
+        expect(compileLegacyTransactionMessage).toHaveBeenCalledTimes(1);
+        expect(compileLegacyTransactionMessage).toHaveBeenCalledWith(tx);
+    });
+
+    it('uses the v0 compiler for v0 messages', () => {
+        const mockCompiledMessage = { version: 0 } as unknown as ReturnType<typeof compileV0TransactionMessage>;
+        jest.mocked(compileV0TransactionMessage).mockReturnValue(mockCompiledMessage);
+
+        const tx: TransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithLifetime = {
+            feePayer: { address: 'abc' as Address },
             instructions: [],
             lifetimeConstraint: MOCK_LIFETIME_CONSTRAINT,
             version: 0,
         };
+
+        expect(compileTransactionMessage(tx)).toBe(mockCompiledMessage);
+        expect(compileV0TransactionMessage).toHaveBeenCalledTimes(1);
+        expect(compileV0TransactionMessage).toHaveBeenCalledWith(tx);
     });
-    describe('address table lookups', () => {
-        const expectedAddressTableLookups = [] as ReturnType<typeof getCompiledAddressTableLookups>;
-        beforeEach(() => {
-            jest.mocked(getCompiledAddressTableLookups).mockReturnValue(expectedAddressTableLookups);
-        });
-        describe("when the transaction version is `'legacy'`", () => {
-            let legacyBaseTx: Readonly<{ version: 'legacy' }> & typeof baseTx;
-            beforeEach(() => {
-                legacyBaseTx = { ...baseTx, version: 'legacy' };
-            });
-            it('does not set `addressTableLookups`', () => {
-                const message = compileTransactionMessage(legacyBaseTx);
-                expect(message).not.toHaveProperty('addressTableLookups');
-            });
-            it('does not call `getCompiledAddressTableLookups`', () => {
-                compileTransactionMessage(legacyBaseTx);
-                expect(getCompiledAddressTableLookups).not.toHaveBeenCalled();
-            });
-        });
-        it('sets `addressTableLookups` to the return value of `getCompiledAddressTableLookups`', () => {
-            const message = compileTransactionMessage(baseTx as typeof baseTx & { version: 0 });
-            expect(getCompiledAddressTableLookups).toHaveBeenCalled();
-            expect(message.addressTableLookups).toBe(expectedAddressTableLookups);
-        });
-    });
-    describe('message header', () => {
-        const expectedCompiledMessageHeader = {
-            numReadonlyNonSignerAccounts: 0,
-            numReadonlySignerAccounts: 0,
-            numSignerAccounts: 1,
-        } as const;
-        beforeEach(() => {
-            jest.mocked(getCompiledMessageHeader).mockReturnValue(expectedCompiledMessageHeader);
-        });
-        it('sets `header` to the return value of `getCompiledMessageHeader`', () => {
-            const message = compileTransactionMessage(baseTx);
-            expect(getCompiledMessageHeader).toHaveBeenCalled();
-            expect(message.header).toBe(expectedCompiledMessageHeader);
-        });
-    });
-    describe('instructions', () => {
-        const expectedInstructions = [] as ReturnType<typeof getCompiledInstructions>;
-        beforeEach(() => {
-            jest.mocked(getCompiledInstructions).mockReturnValue(expectedInstructions);
-        });
-        it('sets `instructions` to the return value of `getCompiledInstructions`', () => {
-            const message = compileTransactionMessage(baseTx);
-            console.log({ message });
-            expect(getCompiledInstructions).toHaveBeenCalledWith(
-                baseTx.instructions,
-                expect.any(Array) /* orderedAccounts */,
-            );
-            expect(message.instructions).toBe(expectedInstructions);
-        });
-    });
-    describe('lifetime constraints', () => {
-        beforeEach(() => {
-            jest.mocked(getCompiledLifetimeToken).mockReturnValue('abc');
-        });
-        it('sets `lifetimeToken` to the return value of `getCompiledLifetimeToken`', () => {
-            const message = compileTransactionMessage(baseTx);
-            expect(getCompiledLifetimeToken).toHaveBeenCalledWith('SOME_CONSTRAINT');
-            expect(message.lifetimeToken).toBe('abc');
-        });
-    });
-    describe('static accounts', () => {
-        const expectedStaticAccounts = [] as ReturnType<typeof getCompiledStaticAccounts>;
-        beforeEach(() => {
-            jest.mocked(getCompiledStaticAccounts).mockReturnValue(expectedStaticAccounts);
-        });
-        it('sets `staticAccounts` to the return value of `getCompiledStaticAccounts`', () => {
-            const message = compileTransactionMessage(baseTx);
-            expect(getCompiledStaticAccounts).toHaveBeenCalled();
-            expect(message.staticAccounts).toBe(expectedStaticAccounts);
-        });
-    });
-    describe('versions', () => {
-        it('compiles the version', () => {
-            const message = compileTransactionMessage(baseTx);
-            expect(message).toHaveProperty('version', 0);
-        });
+
+    it('throws for unsupported v1 transaction', () => {
+        const tx: TransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithLifetime = {
+            feePayer: { address: 'abc' as Address },
+            instructions: [],
+            lifetimeConstraint: MOCK_LIFETIME_CONSTRAINT,
+            version: 1 as unknown as TransactionMessage['version'],
+        } as unknown as TransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithLifetime;
+
+        // @ts-expect-error - we're intentionally testing an unsupported version, which should not type check
+        expect(() => compileTransactionMessage(tx)).toThrow(
+            new SolanaError(SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED, {
+                version: 1,
+            }),
+        );
     });
 });

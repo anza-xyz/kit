@@ -6,7 +6,7 @@ import { getCompiledMessageHeader } from './header';
 import { getCompiledInstructions } from './instructions';
 import { getCompiledLifetimeToken } from './lifetime-token';
 
-type LegacyCompiledTransactionMessage = BaseCompiledTransactionMessage &
+export type LegacyCompiledTransactionMessage = BaseCompiledTransactionMessage &
     Readonly<{
         version: 'legacy';
     }>;

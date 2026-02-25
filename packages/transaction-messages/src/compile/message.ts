@@ -1,13 +1,13 @@
+import { SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED, SolanaError } from '@solana/errors';
+
 import { TransactionMessageWithFeePayer } from '../fee-payer';
 import { TransactionMessageWithLifetime } from '../lifetime';
 import { TransactionMessage } from '../transaction-message';
-import { getCompiledMessageHeader } from './legacy/header';
 import { getCompiledLifetimeToken } from './legacy/lifetime-token';
-import { BaseCompiledTransactionMessage } from './message-types';
-import { getAddressMapFromInstructions, getOrderedAccountsFromAddressMap } from './v0/accounts';
-import { getCompiledAddressTableLookups } from './v0/address-table-lookups';
-import { getCompiledInstructions } from './v0/instructions';
-import { getCompiledStaticAccounts } from './v0/static-accounts';
+import { LegacyCompiledTransactionMessage } from './legacy/message';
+import { compileTransactionMessage as compileLegacyTransactionMessage } from './legacy/message';
+import { V0CompiledTransactionMessage } from './v0/message';
+import { compileTransactionMessage as compileV0TransactionMessage } from './v0/message';
 
 /**
  * A transaction message in a form suitable for encoding for execution on the network.
@@ -16,7 +16,7 @@ import { getCompiledStaticAccounts } from './v0/static-accounts';
  * In particular, supporting details about the lifetime constraint and the concrete addresses of
  * accounts sourced from account lookup tables are lost to compilation.
  */
-export type CompiledTransactionMessage = LegacyCompiledTransactionMessage | VersionedCompiledTransactionMessage;
+export type CompiledTransactionMessage = LegacyCompiledTransactionMessage | V0CompiledTransactionMessage;
 
 export type CompiledTransactionMessageWithLifetime = Readonly<{
     /**
@@ -28,18 +28,6 @@ export type CompiledTransactionMessageWithLifetime = Readonly<{
      */
     lifetimeToken: ReturnType<typeof getCompiledLifetimeToken>;
 }>;
-
-type LegacyCompiledTransactionMessage = BaseCompiledTransactionMessage &
-    Readonly<{
-        version: 'legacy';
-    }>;
-
-type VersionedCompiledTransactionMessage = BaseCompiledTransactionMessage &
-    Readonly<{
-        /** A list of address tables and the accounts that this transaction loads from them */
-        addressTableLookups?: ReturnType<typeof getCompiledAddressTableLookups>;
-        version: 0;
-    }>;
 
 /**
  * Converts the type of transaction message data structure that you create in your application to
@@ -53,36 +41,33 @@ type VersionedCompiledTransactionMessage = BaseCompiledTransactionMessage &
  * @see {@link decompileTransactionMessage}
  */
 export function compileTransactionMessage<
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer & { version: 'legacy' },
+>(
+    transactionMessage: TTransactionMessage,
+): ForwardTransactionMessageLifetime<LegacyCompiledTransactionMessage, TTransactionMessage>;
+export function compileTransactionMessage<
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer & { version: 0 },
+>(
+    transactionMessage: TTransactionMessage,
+): ForwardTransactionMessageLifetime<V0CompiledTransactionMessage, TTransactionMessage>;
+export function compileTransactionMessage<
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer,
->(transactionMessage: TTransactionMessage): CompiledTransactionMessageFromTransactionMessage<TTransactionMessage> {
-    type ReturnType = CompiledTransactionMessageFromTransactionMessage<TTransactionMessage>;
+>(
+    transactionMessage: TTransactionMessage,
+): ForwardTransactionMessageLifetime<CompiledTransactionMessage, TTransactionMessage> {
+    type ReturnType = ForwardTransactionMessageLifetime<CompiledTransactionMessage, TTransactionMessage>;
 
-    const addressMap = getAddressMapFromInstructions(
-        transactionMessage.feePayer.address,
-        transactionMessage.instructions,
-    );
-    const orderedAccounts = getOrderedAccountsFromAddressMap(addressMap);
-    const lifetimeConstraint = (transactionMessage as Partial<TransactionMessageWithLifetime>).lifetimeConstraint;
-
-    return {
-        ...(transactionMessage.version !== 'legacy'
-            ? { addressTableLookups: getCompiledAddressTableLookups(orderedAccounts) }
-            : null),
-        ...(lifetimeConstraint ? { lifetimeToken: getCompiledLifetimeToken(lifetimeConstraint) } : null),
-        header: getCompiledMessageHeader(orderedAccounts),
-        instructions: getCompiledInstructions(transactionMessage.instructions, orderedAccounts),
-        staticAccounts: getCompiledStaticAccounts(orderedAccounts),
-        version: transactionMessage.version,
-    } as ReturnType;
+    const version = transactionMessage.version;
+    if (version === 'legacy') {
+        return compileLegacyTransactionMessage(transactionMessage) as ReturnType;
+    } else if (version === 0) {
+        return compileV0TransactionMessage(transactionMessage) as ReturnType;
+    } else {
+        throw new SolanaError(SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED, {
+            version,
+        });
+    }
 }
-
-type CompiledTransactionMessageFromTransactionMessage<TTransactionMessage extends TransactionMessage> =
-    ForwardTransactionMessageLifetime<ForwardTransactionMessageVersion<TTransactionMessage>, TTransactionMessage>;
-
-type ForwardTransactionMessageVersion<TTransactionMessage extends TransactionMessage> =
-    TTransactionMessage extends Readonly<{ version: 'legacy' }>
-        ? LegacyCompiledTransactionMessage
-        : VersionedCompiledTransactionMessage;
 
 type ForwardTransactionMessageLifetime<
     TCompiledTransactionMessage extends CompiledTransactionMessage,

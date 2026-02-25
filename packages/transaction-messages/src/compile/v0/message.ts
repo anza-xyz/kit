@@ -9,7 +9,7 @@ import { getCompiledAddressTableLookups } from './address-table-lookups';
 import { getCompiledInstructions } from './instructions';
 import { getCompiledStaticAccounts } from './static-accounts';
 
-type V0CompiledTransactionMessage = BaseCompiledTransactionMessage &
+export type V0CompiledTransactionMessage = BaseCompiledTransactionMessage &
     Readonly<{
         /** A list of address tables and the accounts that this transaction loads from them */
         addressTableLookups?: ReturnType<typeof getCompiledAddressTableLookups>;
