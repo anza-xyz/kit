@@ -1584,6 +1584,12 @@ importers:
 
   packages/tsconfig: {}
 
+  packages/wallet-account-signer:
+    dependencies:
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+
   packages/webcrypto-ed25519-polyfill:
     dependencies:
       '@noble/ed25519':
