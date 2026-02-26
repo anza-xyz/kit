@@ -1,5 +1,20 @@
 # @solana/program-client-core
 
+## 6.2.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/instruction-plans@6.2.0
+    - @solana/signers@6.2.0
+    - @solana/rpc-api@6.2.0
+    - @solana/plugin-interfaces@6.2.0
+    - @solana/accounts@6.2.0
+    - @solana/addresses@6.2.0
+    - @solana/codecs-core@6.2.0
+    - @solana/errors@6.2.0
+    - @solana/instructions@6.2.0
+
 ## 6.1.0
 
 ### Minor Changes

@@ -1,6 +1,6 @@
 {
     "name": "@solana/rpc-transport-http",
-    "version": "6.1.0",
+    "version": "6.2.0",
     "description": "An RPC transport that uses HTTP requests",
     "homepage": "https://www.solanakit.com/api#solanarpc-transport-http",
     "exports": {

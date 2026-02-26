@@ -1,5 +1,20 @@
 # @solana/signers
 
+## 6.2.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/offchain-messages@6.2.0
+    - @solana/transaction-messages@6.2.0
+    - @solana/transactions@6.2.0
+    - @solana/addresses@6.2.0
+    - @solana/codecs-core@6.2.0
+    - @solana/errors@6.2.0
+    - @solana/instructions@6.2.0
+    - @solana/keys@6.2.0
+    - @solana/nominal-types@6.2.0
+
 ## 6.1.0
 
 ### Patch Changes

@@ -1,5 +1,18 @@
 # @solana/plugin-interfaces
 
+## 6.2.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/instruction-plans@6.2.0
+    - @solana/signers@6.2.0
+    - @solana/addresses@6.2.0
+    - @solana/keys@6.2.0
+    - @solana/rpc-spec@6.2.0
+    - @solana/rpc-subscriptions-spec@6.2.0
+    - @solana/rpc-types@6.2.0
+
 ## 6.1.0
 
 ### Minor Changes
