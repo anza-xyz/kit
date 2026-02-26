@@ -1,5 +1,17 @@
 # @solana/instruction-plans
 
+## 6.2.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/transaction-messages@6.2.0
+    - @solana/transactions@6.2.0
+    - @solana/errors@6.2.0
+    - @solana/instructions@6.2.0
+    - @solana/keys@6.2.0
+    - @solana/promises@6.2.0
+
 ## 6.1.0
 
 ### Minor Changes

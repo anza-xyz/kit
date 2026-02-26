@@ -1,5 +1,15 @@
 # @solana/sysvars
 
+## 6.2.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/codecs@6.2.0
+    - @solana/accounts@6.2.0
+    - @solana/errors@6.2.0
+    - @solana/rpc-types@6.2.0
+
 ## 6.1.0
 
 ### Patch Changes

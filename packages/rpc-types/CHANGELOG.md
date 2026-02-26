@@ -1,5 +1,17 @@
 # @solana/rpc-types
 
+## 6.2.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/addresses@6.2.0
+    - @solana/codecs-core@6.2.0
+    - @solana/codecs-numbers@6.2.0
+    - @solana/codecs-strings@6.2.0
+    - @solana/errors@6.2.0
+    - @solana/nominal-types@6.2.0
+
 ## 6.1.0
 
 ### Patch Changes

@@ -1,5 +1,22 @@
 # @solana/codecs-data-structures
 
+## 6.2.0
+
+### Minor Changes
+
+- [#1394](https://github.com/anza-xyz/kit/pull/1394) [`3f4c5f0`](https://github.com/anza-xyz/kit/commit/3f4c5f003e343c21a785e8f339f84c8d6bd3a3b1) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Adds new functions `getPatternMatchEncoder`, `getPatternMatchDecoder` and `getPatternMatchCodec`.
+
+    These can be used to write an encoder that switches between any number of encoders based on the value being encoded, or a decoder that switches between any number of decoders based on the byte array being decoded.
+
+    For example for the encoder, the input is a list of [predicate, encoder] pairs. Each predicate is a function from the value being encoded to true/false. The encoder used is the first one where its predicate is true.
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/codecs-core@6.2.0
+    - @solana/codecs-numbers@6.2.0
+    - @solana/errors@6.2.0
+
 ## 6.1.0
 
 ### Minor Changes
