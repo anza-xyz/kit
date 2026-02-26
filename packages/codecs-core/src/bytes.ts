@@ -123,7 +123,10 @@ export function containsBytes(
     bytes: ReadonlyUint8Array | Uint8Array,
     offset: number,
 ): boolean {
-    const slice = offset === 0 && data.length === bytes.length ? data : data.slice(offset, offset + bytes.length);
+    const slice =
+        (offset === 0 || offset === -data.byteLength) && data.length === bytes.length
+            ? data
+            : data.slice(offset, offset + bytes.length);
     return bytesEqual(slice, bytes);
 }
 

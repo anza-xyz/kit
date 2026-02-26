@@ -92,7 +92,7 @@ export const getBaseXEncoder = (alphabet: string): VariableSizeEncoder<string> =
 export const getBaseXDecoder = (alphabet: string): VariableSizeDecoder<string> => {
     return createDecoder({
         read(rawBytes, offset): [string, number] {
-            const bytes = offset === 0 ? rawBytes : rawBytes.slice(offset);
+            const bytes = offset === 0 || offset === -rawBytes.byteLength ? rawBytes : rawBytes.slice(offset);
             if (bytes.length === 0) return ['', 0];
 
             // Handle leading zeroes.

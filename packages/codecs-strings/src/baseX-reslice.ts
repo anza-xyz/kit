@@ -71,7 +71,7 @@ export const getBaseXResliceEncoder = (alphabet: string, bits: number): Variable
 export const getBaseXResliceDecoder = (alphabet: string, bits: number): VariableSizeDecoder<string> =>
     createDecoder({
         read(rawBytes, offset = 0): [string, number] {
-            const bytes = offset === 0 ? rawBytes : rawBytes.slice(offset);
+            const bytes = offset === 0 || offset === -rawBytes.byteLength ? rawBytes : rawBytes.slice(offset);
             if (bytes.length === 0) return ['', rawBytes.length];
             const charIndices = reslice([...bytes], 8, bits, true);
             return [charIndices.map(i => alphabet[i]).join(''), rawBytes.length];
