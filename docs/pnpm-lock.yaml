@@ -60,8 +60,8 @@ importers:
         specifier: ^0.11.0
         version: 0.11.0(@solana/kit@6.1.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))
       '@solana-program/compute-budget':
-        specifier: ^0.13.0
-        version: 0.13.0(@solana/kit@6.1.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))
+        specifier: ^0.14.0
+        version: 0.14.0(@solana/kit@6.1.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))
       '@solana-program/memo':
         specifier: ^0.11.0
         version: 0.11.0(@solana/kit@6.1.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))
@@ -2097,10 +2097,10 @@ packages:
     peerDependencies:
       '@solana/kit': ^6.0
 
-  '@solana-program/compute-budget@0.13.0':
-    resolution: {integrity: sha512-jdiiWaxFG3kEf6bYPNo2mwz2jNxaj7sF+gZIb8wHw9zK3ZILmpkg4sUeChb1BnH2UGf+HgYb9L/lMdqOTqUoWA==}
+  '@solana-program/compute-budget@0.14.0':
+    resolution: {integrity: sha512-tgvey/2bT35gUlb1lC84Hh2VqkOLoSa6KvaVz5DT037Mg8ECM+f2Q5Prv6V9yKQjRGGF2Y8BZgpOoUg6lTUl/Q==}
     peerDependencies:
-      '@solana/kit': ^6.0.0
+      '@solana/kit': ^6.1.0
 
   '@solana-program/memo@0.11.0':
     resolution: {integrity: sha512-/WVM2y76hL5zWJJwaHsbvMREeIUzhKDHU+ftMXTf4aLPJFDKG6am4X5RID3CHsI3oYNEMywgVvsFdnorwgEuwA==}
@@ -7542,7 +7542,7 @@ snapshots:
     dependencies:
       '@solana/kit': 6.1.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)
 
-  '@solana-program/compute-budget@0.13.0(@solana/kit@6.1.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))':
+  '@solana-program/compute-budget@0.14.0(@solana/kit@6.1.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))':
     dependencies:
       '@solana/kit': 6.1.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)
 
