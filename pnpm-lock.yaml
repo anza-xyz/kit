@@ -1365,12 +1365,30 @@ importers:
       '@solana/offchain-messages':
         specifier: workspace:*
         version: link:../offchain-messages
+      '@solana/promises':
+        specifier: workspace:*
+        version: link:../promises
       '@solana/transaction-messages':
         specifier: workspace:*
         version: link:../transaction-messages
       '@solana/transactions':
         specifier: workspace:*
         version: link:../transactions
+      '@solana/wallet-standard-chains':
+        specifier: ^1.1.1
+        version: 1.1.1
+      '@solana/wallet-standard-features':
+        specifier: ^1.3.0
+        version: 1.3.0
+      '@wallet-standard/errors':
+        specifier: ^0.1.1
+        version: 0.1.1
+      '@wallet-standard/ui':
+        specifier: ^1.0.1
+        version: 1.0.1
+      '@wallet-standard/ui-registry':
+        specifier: ^1.0.1
+        version: 1.0.1
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
@@ -4996,6 +5014,10 @@ packages:
     resolution: {integrity: sha512-/s55hDoAyh5QyltQh/jjNK3AgACEq885+DnC6lYhrmYZiV6I0iHITWYnKd8d23KRKs/RBjlaQH54MiafeoI9hw==}
     peerDependencies:
       prettier: ^3.7.4
+
+  '@solana/wallet-standard-chains@1.1.1':
+    resolution: {integrity: sha512-Us3TgL4eMVoVWhuC4UrePlYnpWN+lwteCBlhZDUhFZBJ5UMGh94mYPXno3Ho7+iHPYRtuCi/ePvPcYBqCGuBOw==}
+    engines: {node: '>=16'}
 
   '@solana/wallet-standard-features@1.3.0':
     resolution: {integrity: sha512-ZhpZtD+4VArf6RPitsVExvgkF+nGghd1rzPjd97GmBximpnt1rsUxMOEyoIEuH3XBxPyNB6Us7ha7RHWQR+abg==}
@@ -12948,6 +12970,10 @@ snapshots:
   '@solana/prettier-config-solana@0.0.6(prettier@3.8.1)':
     dependencies:
       prettier: 3.8.1
+
+  '@solana/wallet-standard-chains@1.1.1':
+    dependencies:
+      '@wallet-standard/base': 1.1.0
 
   '@solana/wallet-standard-features@1.3.0':
     dependencies:
