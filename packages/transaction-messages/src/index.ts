@@ -33,7 +33,7 @@ export * from './codecs';
 export * from './compile';
 export * from './compress-transaction-message';
 export * from './create-transaction-message';
-export * from './decompile-message';
+export * from './decompile';
 export * from './durable-nonce';
 export { isAdvanceNonceAccountInstruction } from './durable-nonce-instruction';
 export * from './fee-payer';
