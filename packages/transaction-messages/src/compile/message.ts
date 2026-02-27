@@ -54,6 +54,11 @@ export function compileTransactionMessage<
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer,
 >(
     transactionMessage: TTransactionMessage,
+): ForwardTransactionMessageLifetime<CompiledTransactionMessage, TTransactionMessage>;
+export function compileTransactionMessage<
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer,
+>(
+    transactionMessage: TTransactionMessage,
 ): ForwardTransactionMessageLifetime<CompiledTransactionMessage, TTransactionMessage> {
     type ReturnType = ForwardTransactionMessageLifetime<CompiledTransactionMessage, TTransactionMessage>;
 

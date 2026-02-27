@@ -31,9 +31,7 @@ export function compileTransaction<TTransactionMessage extends TransactionMessag
 ): Readonly<TransactionFromTransactionMessage<TTransactionMessage>> {
     type ReturnType = Readonly<TransactionFromTransactionMessage<TTransactionMessage>>;
 
-    const compiledMessage = compileTransactionMessage(
-        transactionMessage as Parameters<typeof compileTransactionMessage>[0],
-    );
+    const compiledMessage = compileTransactionMessage(transactionMessage);
     const messageBytes = getCompiledTransactionMessageEncoder().encode(compiledMessage) as TransactionMessageBytes;
 
     const transactionSigners = compiledMessage.staticAccounts.slice(0, compiledMessage.header.numSignerAccounts);
