@@ -19,7 +19,7 @@ type CompiledInstruction = Readonly<{
     programAddressIndex: number;
 }>;
 
-function getAccountIndex(orderedAccounts: OrderedAccounts) {
+export function getAccountIndex(orderedAccounts: OrderedAccounts) {
     const out: Record<Address, number> = {};
     for (const [index, account] of orderedAccounts.entries()) {
         out[account.address] = index;
