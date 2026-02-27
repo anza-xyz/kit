@@ -77,4 +77,16 @@ import { compileTransactionMessage } from '../message';
         const message = null as unknown as TransactionMessage & TransactionMessageWithFeePayer & { version: 0 };
         compileTransactionMessage(message) satisfies CompiledTransactionMessage & { version: 0 };
     }
+
+    // The version can be narrowed
+    {
+        const message = null as unknown as TransactionMessage & TransactionMessageWithFeePayer;
+        const compiled = compileTransactionMessage(message);
+        compiled satisfies CompiledTransactionMessage;
+        // @ts-expect-error Version could be different
+        compiled satisfies CompiledTransactionMessage & { version: 'legacy' };
+        if (compiled.version === 'legacy') {
+            compiled satisfies CompiledTransactionMessage & { version: 'legacy' };
+        }
+    }
 }

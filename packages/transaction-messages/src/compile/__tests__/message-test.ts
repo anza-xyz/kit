@@ -60,7 +60,6 @@ describe('compileTransactionMessage', () => {
             version: 1 as unknown as TransactionMessage['version'],
         } as unknown as TransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithLifetime;
 
-        // @ts-expect-error - we're intentionally testing an unsupported version, which should not type check
         expect(() => compileTransactionMessage(tx)).toThrow(
             new SolanaError(SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED, {
                 version: 1,
