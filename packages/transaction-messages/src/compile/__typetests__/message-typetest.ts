@@ -23,6 +23,12 @@ import { compileTransactionMessage } from '../message';
             const message = null as unknown as TransactionMessage & TransactionMessageWithFeePayer & { version: 0 };
             compileTransactionMessage(message) satisfies CompiledTransactionMessage;
         }
+
+        // For v1
+        {
+            const message = null as unknown as TransactionMessage & TransactionMessageWithFeePayer & { version: 1 };
+            compileTransactionMessage(message) satisfies CompiledTransactionMessage;
+        }
     }
 
     // It does not satisfy `CompiledTransactionMessageWithLifetime` if the source message does not have a lifetime constraint
@@ -39,6 +45,14 @@ import { compileTransactionMessage } from '../message';
         // For v0
         {
             const message = null as unknown as TransactionMessage & TransactionMessageWithFeePayer & { version: 0 };
+            const compiled = compileTransactionMessage(message);
+            // @ts-expect-error Should not have a lifetime token
+            compiled satisfies CompiledTransactionMessageWithLifetime;
+        }
+
+        // For v1
+        {
+            const message = null as unknown as TransactionMessage & TransactionMessageWithFeePayer & { version: 1 };
             const compiled = compileTransactionMessage(message);
             // @ts-expect-error Should not have a lifetime token
             compiled satisfies CompiledTransactionMessageWithLifetime;
@@ -64,6 +78,15 @@ import { compileTransactionMessage } from '../message';
             const compiled = compileTransactionMessage(message);
             compiled satisfies CompiledTransactionMessageWithLifetime;
         }
+
+        // For v1
+        {
+            const message = null as unknown as TransactionMessage &
+                TransactionMessageWithFeePayer &
+                TransactionMessageWithLifetime & { version: 1 };
+            const compiled = compileTransactionMessage(message);
+            compiled satisfies CompiledTransactionMessageWithLifetime;
+        }
     }
 
     // It forwards a legacy version from the source message to the compiled message
@@ -76,6 +99,12 @@ import { compileTransactionMessage } from '../message';
     {
         const message = null as unknown as TransactionMessage & TransactionMessageWithFeePayer & { version: 0 };
         compileTransactionMessage(message) satisfies CompiledTransactionMessage & { version: 0 };
+    }
+
+    // It forwards a v1 version from the source message to the compiled message
+    {
+        const message = null as unknown as TransactionMessage & TransactionMessageWithFeePayer & { version: 1 };
+        compileTransactionMessage(message) satisfies CompiledTransactionMessage & { version: 1 };
     }
 
     // The version can be narrowed

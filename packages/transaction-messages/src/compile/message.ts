@@ -4,10 +4,12 @@ import { TransactionMessageWithFeePayer } from '../fee-payer';
 import { TransactionMessageWithLifetime } from '../lifetime';
 import { TransactionMessage } from '../transaction-message';
 import { getCompiledLifetimeToken } from './legacy/lifetime-token';
-import { LegacyCompiledTransactionMessage } from './legacy/message';
-import { compileTransactionMessage as compileLegacyTransactionMessage } from './legacy/message';
-import { V0CompiledTransactionMessage } from './v0/message';
-import { compileTransactionMessage as compileV0TransactionMessage } from './v0/message';
+import {
+    compileTransactionMessage as compileLegacyTransactionMessage,
+    LegacyCompiledTransactionMessage,
+} from './legacy/message';
+import { compileTransactionMessage as compileV0TransactionMessage, V0CompiledTransactionMessage } from './v0/message';
+import { compileTransactionMessage as compileV1TransactionMessage, V1CompiledTransactionMessage } from './v1/message';
 
 /**
  * A transaction message in a form suitable for encoding for execution on the network.
@@ -16,7 +18,10 @@ import { compileTransactionMessage as compileV0TransactionMessage } from './v0/m
  * In particular, supporting details about the lifetime constraint and the concrete addresses of
  * accounts sourced from account lookup tables are lost to compilation.
  */
-export type CompiledTransactionMessage = LegacyCompiledTransactionMessage | V0CompiledTransactionMessage;
+export type CompiledTransactionMessage =
+    | LegacyCompiledTransactionMessage
+    | V0CompiledTransactionMessage
+    | V1CompiledTransactionMessage;
 
 export type CompiledTransactionMessageWithLifetime = Readonly<{
     /**
@@ -51,6 +56,11 @@ export function compileTransactionMessage<
     transactionMessage: TTransactionMessage,
 ): ForwardTransactionMessageLifetime<V0CompiledTransactionMessage, TTransactionMessage>;
 export function compileTransactionMessage<
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer & { version: 1 },
+>(
+    transactionMessage: TTransactionMessage,
+): ForwardTransactionMessageLifetime<V1CompiledTransactionMessage, TTransactionMessage>;
+export function compileTransactionMessage<
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer,
 >(
     transactionMessage: TTransactionMessage,
@@ -67,6 +77,8 @@ export function compileTransactionMessage<
         return compileLegacyTransactionMessage(transactionMessage) as ReturnType;
     } else if (version === 0) {
         return compileV0TransactionMessage(transactionMessage) as ReturnType;
+    } else if (version === 1) {
+        return compileV1TransactionMessage(transactionMessage) as ReturnType;
     } else {
         throw new SolanaError(SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED, {
             version,

@@ -8,6 +8,8 @@ import { getCompiledLifetimeToken } from './lifetime-token';
 
 export type LegacyCompiledTransactionMessage = BaseCompiledTransactionMessage &
     Readonly<{
+        /** A list of instructions that this transaction will execute */
+        instructions: ReturnType<typeof getCompiledInstructions>;
         version: 'legacy';
     }>;
 

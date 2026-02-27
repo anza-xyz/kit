@@ -7,7 +7,6 @@ import { CompiledTransactionMessage, CompiledTransactionMessageWithLifetime } fr
 import { TransactionMessageWithLifetime } from '../lifetime';
 import { TransactionMessage } from '../transaction-message';
 import { getCompiledMessageHeader } from './legacy/header';
-import { getCompiledInstructions } from './v0/instructions';
 import { getCompiledStaticAccounts } from './v0/static-accounts';
 
 export type BaseCompiledTransactionMessage = Readonly<{
@@ -16,7 +15,6 @@ export type BaseCompiledTransactionMessage = Readonly<{
      * loads.
      */
     header: ReturnType<typeof getCompiledMessageHeader>;
-    instructions: ReturnType<typeof getCompiledInstructions>;
     /** A list of addresses indicating which accounts to load */
     staticAccounts: ReturnType<typeof getCompiledStaticAccounts>;
 }>;

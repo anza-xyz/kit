@@ -13,6 +13,8 @@ export type V0CompiledTransactionMessage = BaseCompiledTransactionMessage &
     Readonly<{
         /** A list of address tables and the accounts that this transaction loads from them */
         addressTableLookups?: ReturnType<typeof getCompiledAddressTableLookups>;
+        /** A list of instructions that this transaction will execute */
+        instructions: ReturnType<typeof getCompiledInstructions>;
         version: 0;
     }>;
 
