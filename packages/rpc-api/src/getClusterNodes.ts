@@ -1,6 +1,8 @@
 import { Address } from '@solana/addresses';
 
 type ClusterNode = Readonly<{
+    /** The Client Id of the node, or `null` if the Client Id is not available */
+    clientId: number | null;
     /**
      * The unique identifier of the node's feature set.
      *
