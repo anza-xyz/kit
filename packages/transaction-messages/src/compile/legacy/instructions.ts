@@ -4,7 +4,7 @@ import { Instruction } from '@solana/instructions';
 
 import { OrderedAccounts } from './accounts';
 
-type CompiledInstruction = Readonly<{
+export type CompiledInstruction = Readonly<{
     /**
      * An ordered list of indices that indicate which accounts in the transaction message's
      * accounts list are loaded by this instruction.

@@ -4,10 +4,10 @@ import {
 } from '@solana/errors';
 import { AccountMeta, Instruction } from '@solana/instructions';
 
-import { CompiledTransactionMessage } from '../..';
+import { LegacyCompiledTransactionMessage } from '../../compile/legacy/message';
 
 function convertInstruction(
-    instruction: CompiledTransactionMessage['instructions'][number],
+    instruction: LegacyCompiledTransactionMessage['instructions'][number],
     accountMetas: AccountMeta[],
 ): Instruction {
     const programAddress = accountMetas[instruction.programAddressIndex]?.address;
@@ -28,7 +28,7 @@ function convertInstruction(
 }
 
 export function convertInstructions(
-    instructions: CompiledTransactionMessage['instructions'],
+    instructions: LegacyCompiledTransactionMessage['instructions'],
     accountMetas: AccountMeta[],
 ): Instruction[] {
     return instructions.map(instruction => convertInstruction(instruction, accountMetas));
