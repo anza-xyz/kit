@@ -19,6 +19,31 @@ import {
 
 import { getUnionDecoder, getUnionEncoder } from './union';
 
+type PatternMatchEncoderEntry<TNarrowed, TFrom = TNarrowed> = TNarrowed extends TFrom
+    ? // Boolean predicate with original encoder
+          | readonly [(value: TFrom) => boolean, Encoder<TFrom>]
+          // Type predicate with narrowed encoder
+          | readonly [(value: TFrom) => value is TNarrowed, Encoder<TNarrowed>]
+    : never;
+
+type FixedSizePatternMatchEncoderEntry<
+    TNarrowed,
+    TFrom = TNarrowed,
+    TSize extends number = number,
+> = TNarrowed extends TFrom
+    ? // Boolean predicate with original encoder
+          | readonly [(value: TFrom) => boolean, FixedSizeEncoder<TFrom, TSize>]
+          // Type predicate with narrowed encoder
+          | readonly [(value: TFrom) => value is TNarrowed, FixedSizeEncoder<TNarrowed, TSize>]
+    : never;
+
+type VariableSizePatternMatchEncoderEntry<TNarrowed, TFrom = TNarrowed> = TNarrowed extends TFrom
+    ? // Boolean predicate with original encoder
+          | readonly [(value: TFrom) => boolean, VariableSizeEncoder<TFrom>]
+          // Type predicate with narrowed encoder
+          | readonly [(value: TFrom) => value is TNarrowed, VariableSizeEncoder<TNarrowed>]
+    : never;
+
 /**
  * Returns an encoder that selects which variant encoder to use based on pattern matching.
  *
@@ -28,7 +53,9 @@ import { getUnionDecoder, getUnionEncoder } from './union';
  * @typeParam TFrom - The type of the value to encode.
  *
  * @param patterns - An array of `[predicate, encoder]` pairs. Predicates are tested in order
- * and the first matching encoder is used to encode the value.
+ * and the first matching encoder is used to encode the value. Note that predicates can be either
+ * type predicates that narrow the type of the value, or boolean predicates. If using type predicates,
+ * the encoder can be for the narrowed type.
  * @returns An encoder that selects the appropriate variant based on the matched pattern.
  *
  * @throws Throws a {@link SOLANA_ERROR__CODECS__INVALID_PATTERN_MATCH_VALUE} error
@@ -63,16 +90,16 @@ import { getUnionDecoder, getUnionEncoder } from './union';
  * @see {@link getPatternMatchCodec}
  */
 export function getPatternMatchEncoder<TFrom, TSize extends number>(
-    patterns: [(value: TFrom) => boolean, FixedSizeEncoder<TFrom, TSize>][],
+    patterns: FixedSizePatternMatchEncoderEntry<TFrom, TFrom, TSize>[],
 ): FixedSizeEncoder<TFrom, TSize>;
 export function getPatternMatchEncoder<TFrom>(
-    patterns: [(value: TFrom) => boolean, FixedSizeEncoder<TFrom>][],
+    patterns: FixedSizePatternMatchEncoderEntry<TFrom>[],
 ): FixedSizeEncoder<TFrom>;
 export function getPatternMatchEncoder<TFrom>(
-    patterns: [(value: TFrom) => boolean, VariableSizeEncoder<TFrom>][],
+    patterns: VariableSizePatternMatchEncoderEntry<TFrom>[],
 ): VariableSizeEncoder<TFrom>;
-export function getPatternMatchEncoder<TFrom>(patterns: [(value: TFrom) => boolean, Encoder<TFrom>][]): Encoder<TFrom>;
-export function getPatternMatchEncoder<TFrom>(patterns: [(value: TFrom) => boolean, Encoder<TFrom>][]): Encoder<TFrom> {
+export function getPatternMatchEncoder<TFrom>(patterns: PatternMatchEncoderEntry<TFrom>[]): Encoder<TFrom>;
+export function getPatternMatchEncoder<TFrom>(patterns: PatternMatchEncoderEntry<TFrom>[]): Encoder<TFrom> {
     return getUnionEncoder(
         patterns.map(([, encoder]) => encoder),
         (value: TFrom) => {
@@ -148,6 +175,59 @@ export function getPatternMatchDecoder<TTo>(
     );
 }
 
+type PatternMatchCodecEntry<TNarrowedFrom, TFrom = TNarrowedFrom, TTo = TNarrowedFrom> = TNarrowedFrom extends TFrom
+    ? TTo extends TNarrowedFrom
+        ?
+              | readonly [
+                    (value: TFrom) => value is TNarrowedFrom,
+                    (bytes: ReadonlyUint8Array) => boolean,
+                    Codec<TNarrowedFrom, TTo>,
+                ]
+              | readonly [(value: TFrom) => boolean, (bytes: ReadonlyUint8Array) => boolean, Codec<TFrom, TTo>]
+        : never
+    : never;
+
+type FixedSizePatternMatchCodecEntry<
+    TNarrowedFrom,
+    TFrom = TNarrowedFrom,
+    TTo = TNarrowedFrom,
+    TSize extends number = number,
+> = TNarrowedFrom extends TFrom
+    ? TTo extends TNarrowedFrom
+        ?
+              | readonly [
+                    (value: TFrom) => boolean,
+                    (bytes: ReadonlyUint8Array) => boolean,
+                    FixedSizeCodec<TFrom, TTo, TSize>,
+                ]
+              | readonly [
+                    (value: TFrom) => value is TNarrowedFrom,
+                    (bytes: ReadonlyUint8Array) => boolean,
+                    FixedSizeCodec<TNarrowedFrom, TTo, TSize>,
+                ]
+        : never
+    : never;
+
+type VariableSizePatternMatchCodecEntry<
+    TNarrowedFrom,
+    TFrom = TNarrowedFrom,
+    TTo = TNarrowedFrom,
+> = TNarrowedFrom extends TFrom
+    ? TTo extends TNarrowedFrom
+        ?
+              | readonly [
+                    (value: TFrom) => boolean,
+                    (bytes: ReadonlyUint8Array) => boolean,
+                    VariableSizeCodec<TFrom, TTo>,
+                ]
+              | readonly [
+                    (value: TFrom) => value is TNarrowedFrom,
+                    (bytes: ReadonlyUint8Array) => boolean,
+                    VariableSizeCodec<TNarrowedFrom, TTo>,
+                ]
+        : never
+    : never;
+
 /**
  * Returns a codec that selects which variant codec to use based on pattern matching.
  *
@@ -208,23 +288,25 @@ export function getPatternMatchDecoder<TTo>(
  * @see {@link getPatternMatchDecoder}
  * @see {@link getUnionCodec}
  */
-export function getPatternMatchCodec<TFrom, TTo extends TFrom, TSize extends number>(
-    patterns: [(value: TFrom) => boolean, (bytes: ReadonlyUint8Array) => boolean, FixedSizeCodec<TFrom, TTo, TSize>][],
+export function getPatternMatchCodec<TFrom, TTo extends TFrom = TFrom, TSize extends number = number>(
+    patterns: FixedSizePatternMatchCodecEntry<TFrom, TFrom, TTo, TSize>[],
 ): FixedSizeCodec<TFrom, TTo, TSize>;
-export function getPatternMatchCodec<TFrom, TTo extends TFrom>(
-    patterns: [(value: TFrom) => boolean, (bytes: ReadonlyUint8Array) => boolean, FixedSizeCodec<TFrom, TTo>][],
+export function getPatternMatchCodec<TFrom, TTo extends TFrom = TFrom>(
+    patterns: FixedSizePatternMatchCodecEntry<TFrom, TFrom, TTo>[],
 ): FixedSizeCodec<TFrom, TTo>;
-export function getPatternMatchCodec<TFrom, TTo extends TFrom>(
-    patterns: [(value: TFrom) => boolean, (bytes: ReadonlyUint8Array) => boolean, VariableSizeCodec<TFrom, TTo>][],
+export function getPatternMatchCodec<TFrom, TTo extends TFrom = TFrom>(
+    patterns: VariableSizePatternMatchCodecEntry<TFrom, TFrom, TTo>[],
 ): VariableSizeCodec<TFrom, TTo>;
-export function getPatternMatchCodec<TFrom, TTo extends TFrom>(
-    patterns: [(value: TFrom) => boolean, (bytes: ReadonlyUint8Array) => boolean, Codec<TFrom, TTo>][],
+export function getPatternMatchCodec<TFrom, TTo extends TFrom = TFrom>(
+    patterns: PatternMatchCodecEntry<TFrom, TFrom, TTo>[],
 ): Codec<TFrom, TTo>;
-export function getPatternMatchCodec<TFrom, TTo extends TFrom>(
-    patterns: [(value: TFrom) => boolean, (bytes: ReadonlyUint8Array) => boolean, Codec<TFrom, TTo>][],
+export function getPatternMatchCodec<TFrom, TTo extends TFrom = TFrom>(
+    patterns: PatternMatchCodecEntry<TFrom, TFrom, TTo>[],
 ): Codec<TFrom, TTo> {
     return combineCodec(
-        getPatternMatchEncoder(patterns.map(([valuePredicate, , codec]) => [valuePredicate, codec])),
-        getPatternMatchDecoder(patterns.map(([, bytesPredicate, codec]) => [bytesPredicate, codec])),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        getPatternMatchEncoder(patterns.map(([valuePredicate, , codec]) => [valuePredicate, codec]) as any),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        getPatternMatchDecoder(patterns.map(([, bytesPredicate, codec]) => [bytesPredicate, codec]) as any),
     );
 }
