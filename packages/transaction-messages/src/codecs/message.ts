@@ -1,83 +1,19 @@
-import { getAddressDecoder, getAddressEncoder } from '@solana/addresses';
 import {
     combineCodec,
-    createEncoder,
-    Decoder,
-    transformDecoder,
-    transformEncoder,
+    createDecoder,
     VariableSizeCodec,
     VariableSizeDecoder,
     VariableSizeEncoder,
 } from '@solana/codecs-core';
-import { getArrayDecoder, getArrayEncoder, getStructDecoder, getStructEncoder } from '@solana/codecs-data-structures';
-import { getShortU16Decoder, getShortU16Encoder } from '@solana/codecs-numbers';
+import { getPatternMatchDecoder, getPatternMatchEncoder } from '@solana/codecs-data-structures';
 
 import { CompiledTransactionMessage, CompiledTransactionMessageWithLifetime } from '../compile/message';
-import { getCompiledAddressTableLookups } from '../compile/v0/address-table-lookups';
-import { getMessageHeaderDecoder, getMessageHeaderEncoder } from './legacy/header';
-import { getInstructionDecoder, getInstructionEncoder } from './legacy/instruction';
-import { getLifetimeTokenDecoder, getLifetimeTokenEncoder } from './legacy/lifetime-token';
-import { getTransactionVersionDecoder, getTransactionVersionEncoder } from './transaction-version';
-import { getAddressTableLookupDecoder, getAddressTableLookupEncoder } from './v0/address-table-lookup';
-
-function getCompiledMessageLegacyEncoder(): VariableSizeEncoder<
-    CompiledTransactionMessage | (CompiledTransactionMessage & CompiledTransactionMessageWithLifetime)
-> {
-    return getStructEncoder(getPreludeStructEncoderTuple()) as VariableSizeEncoder<
-        CompiledTransactionMessage | (CompiledTransactionMessage & CompiledTransactionMessageWithLifetime)
-    >;
-}
-
-function getCompiledMessageVersionedEncoder(): VariableSizeEncoder<
-    CompiledTransactionMessage | (CompiledTransactionMessage & CompiledTransactionMessageWithLifetime)
-> {
-    return transformEncoder(
-        getStructEncoder([
-            ...getPreludeStructEncoderTuple(),
-            ['addressTableLookups', getAddressTableLookupArrayEncoder()],
-        ]) as VariableSizeEncoder<
-            CompiledTransactionMessage | (CompiledTransactionMessage & CompiledTransactionMessageWithLifetime)
-        >,
-        value => {
-            if (value.version === 'legacy') {
-                return value;
-            }
-            return {
-                ...value,
-                addressTableLookups: value.addressTableLookups ?? [],
-            };
-        },
-    );
-}
-
-function getPreludeStructEncoderTuple() {
-    return [
-        ['version', getTransactionVersionEncoder()],
-        ['header', getMessageHeaderEncoder()],
-        ['staticAccounts', getArrayEncoder(getAddressEncoder(), { size: getShortU16Encoder() })],
-        ['lifetimeToken', getLifetimeTokenEncoder()],
-        ['instructions', getArrayEncoder(getInstructionEncoder(), { size: getShortU16Encoder() })],
-    ] as const;
-}
-
-function getPreludeStructDecoderTuple() {
-    return [
-        ['version', getTransactionVersionDecoder() as Decoder<number>],
-        ['header', getMessageHeaderDecoder()],
-        ['staticAccounts', getArrayDecoder(getAddressDecoder(), { size: getShortU16Decoder() })],
-        ['lifetimeToken', getLifetimeTokenDecoder()],
-        ['instructions', getArrayDecoder(getInstructionDecoder(), { size: getShortU16Decoder() })],
-        ['addressTableLookups', getAddressTableLookupArrayDecoder()],
-    ] as const;
-}
-
-function getAddressTableLookupArrayEncoder() {
-    return getArrayEncoder(getAddressTableLookupEncoder(), { size: getShortU16Encoder() });
-}
-
-function getAddressTableLookupArrayDecoder() {
-    return getArrayDecoder(getAddressTableLookupDecoder(), { size: getShortU16Decoder() });
-}
+import {
+    getMessageDecoder as getLegacyMessageDecoder,
+    getMessageEncoder as getLegacyMessageEncoder,
+} from './legacy/message';
+import { getTransactionVersionDecoder } from './transaction-version';
+import { getMessageDecoder as getV0MessageDecoder, getMessageEncoder as getV0MessageEncoder } from './v0/message';
 
 /**
  * Returns an encoder that you can use to encode a {@link CompiledTransactionMessage} to a byte
@@ -89,22 +25,12 @@ function getAddressTableLookupArrayDecoder() {
 export function getCompiledTransactionMessageEncoder(): VariableSizeEncoder<
     CompiledTransactionMessage | (CompiledTransactionMessage & CompiledTransactionMessageWithLifetime)
 > {
-    return createEncoder({
-        getSizeFromValue: compiledMessage => {
-            if (compiledMessage.version === 'legacy') {
-                return getCompiledMessageLegacyEncoder().getSizeFromValue(compiledMessage);
-            } else {
-                return getCompiledMessageVersionedEncoder().getSizeFromValue(compiledMessage);
-            }
-        },
-        write: (compiledMessage, bytes, offset) => {
-            if (compiledMessage.version === 'legacy') {
-                return getCompiledMessageLegacyEncoder().write(compiledMessage, bytes, offset);
-            } else {
-                return getCompiledMessageVersionedEncoder().write(compiledMessage, bytes, offset);
-            }
-        },
-    });
+    return getPatternMatchEncoder<
+        CompiledTransactionMessage | (CompiledTransactionMessage & CompiledTransactionMessageWithLifetime)
+    >([
+        [m => m.version === 'legacy', getLegacyMessageEncoder()],
+        [m => m.version === 0, getV0MessageEncoder()],
+    ]);
 }
 
 /**
@@ -117,20 +43,26 @@ export function getCompiledTransactionMessageEncoder(): VariableSizeEncoder<
 export function getCompiledTransactionMessageDecoder(): VariableSizeDecoder<
     CompiledTransactionMessage & CompiledTransactionMessageWithLifetime
 > {
-    return transformDecoder(
-        getStructDecoder(getPreludeStructDecoderTuple()) as VariableSizeDecoder<
-            CompiledTransactionMessage &
-                CompiledTransactionMessageWithLifetime & {
-                    addressTableLookups?: ReturnType<typeof getCompiledAddressTableLookups>;
-                }
-        >,
-        ({ addressTableLookups, ...restOfMessage }) => {
-            if (restOfMessage.version === 'legacy' || !addressTableLookups?.length) {
-                return restOfMessage;
-            }
-            return { ...restOfMessage, addressTableLookups };
+    return createDecoder({
+        read(bytes, offset) {
+            const [version] = getTransactionVersionDecoder().read(bytes, offset);
+
+            return getPatternMatchDecoder([
+                [
+                    () => version === 'legacy',
+                    getLegacyMessageDecoder() as VariableSizeDecoder<
+                        CompiledTransactionMessage & CompiledTransactionMessageWithLifetime
+                    >,
+                ],
+                [
+                    () => version === 0,
+                    getV0MessageDecoder() as VariableSizeDecoder<
+                        CompiledTransactionMessage & CompiledTransactionMessageWithLifetime
+                    >,
+                ],
+            ]).read(bytes, offset);
         },
-    );
+    });
 }
 
 /**
