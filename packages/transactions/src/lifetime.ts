@@ -3,17 +3,21 @@ import { ReadonlyUint8Array } from '@solana/codecs-core';
 import {
     SOLANA_ERROR__TRANSACTION__EXPECTED_BLOCKHASH_LIFETIME,
     SOLANA_ERROR__TRANSACTION__EXPECTED_NONCE_LIFETIME,
+    SOLANA_ERROR__TRANSACTION__INVALID_NONCE_ACCOUNT_INDEX,
     SOLANA_ERROR__TRANSACTION__NONCE_ACCOUNT_CANNOT_BE_IN_LOOKUP_TABLE,
+    SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED,
     SolanaError,
 } from '@solana/errors';
 import { type Blockhash, isBlockhash, type Slot } from '@solana/rpc-types';
 import type {
     CompiledTransactionMessage,
     CompiledTransactionMessageWithLifetime,
+    LegacyCompiledTransactionMessage,
     Nonce,
     TransactionMessage,
     TransactionMessageWithBlockhashLifetime,
     TransactionMessageWithDurableNonceLifetime,
+    V1CompiledTransactionMessage,
 } from '@solana/transaction-messages';
 
 import type { Transaction } from './transaction';
@@ -114,8 +118,22 @@ export type SetTransactionLifetimeFromTransactionMessage<
 
 const SYSTEM_PROGRAM_ADDRESS = '11111111111111111111111111111111' as Address;
 
-function compiledInstructionIsAdvanceNonceInstruction(
-    instruction: CompiledTransactionMessage['instructions'][number],
+function compiledV1InstructionIsAdvanceNonceInstruction(
+    instructionHeader: V1CompiledTransactionMessage['instructionHeaders'][number],
+    instructionPayload: V1CompiledTransactionMessage['instructionPayloads'][number],
+    staticAddresses: Address[],
+): instructionHeader is typeof instructionHeader & { programAccountIndex: number } {
+    return (
+        staticAddresses[instructionHeader.programAccountIndex] === SYSTEM_PROGRAM_ADDRESS &&
+        // Test for `AdvanceNonceAccount` instruction data
+        isAdvanceNonceAccountInstructionData(instructionPayload.instructionData) &&
+        // Test for exactly 3 accounts
+        instructionHeader.numInstructionAccounts === 3
+    );
+}
+
+function compiledLegacyInstructionIsAdvanceNonceInstruction(
+    instruction: LegacyCompiledTransactionMessage['instructions'][number],
     staticAddresses: Address[],
 ): instruction is typeof instruction & { accountIndices: [number, number, number] } {
     return (
@@ -148,28 +166,71 @@ function isAdvanceNonceAccountInstructionData(data: ReadonlyUint8Array): boolean
 export async function getTransactionLifetimeConstraintFromCompiledTransactionMessage(
     compiledTransactionMessage: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime,
 ): Promise<TransactionBlockhashLifetime | TransactionDurableNonceLifetime> {
-    const firstInstruction = compiledTransactionMessage.instructions[0];
-    const { staticAccounts } = compiledTransactionMessage;
-
     // We need to check if the first instruction is an AdvanceNonceAccount instruction
-    if (firstInstruction && compiledInstructionIsAdvanceNonceInstruction(firstInstruction, staticAccounts)) {
-        const nonceAccountAddress = staticAccounts[firstInstruction.accountIndices[0]];
-        if (!nonceAccountAddress) {
-            throw new SolanaError(SOLANA_ERROR__TRANSACTION__NONCE_ACCOUNT_CANNOT_BE_IN_LOOKUP_TABLE, {
-                nonce: compiledTransactionMessage.lifetimeToken,
-            });
+    const { version } = compiledTransactionMessage;
+
+    if (version === 'legacy' || version === 0) {
+        const firstInstruction = compiledTransactionMessage.instructions[0];
+        const { staticAccounts } = compiledTransactionMessage;
+
+        if (firstInstruction && compiledLegacyInstructionIsAdvanceNonceInstruction(firstInstruction, staticAccounts)) {
+            const nonceAccountAddress = staticAccounts[firstInstruction.accountIndices[0]];
+            if (!nonceAccountAddress) {
+                throw new SolanaError(SOLANA_ERROR__TRANSACTION__NONCE_ACCOUNT_CANNOT_BE_IN_LOOKUP_TABLE, {
+                    nonce: compiledTransactionMessage.lifetimeToken,
+                });
+            }
+            return {
+                nonce: compiledTransactionMessage.lifetimeToken as Nonce,
+                nonceAccountAddress,
+            };
+        } else {
+            return {
+                blockhash: compiledTransactionMessage.lifetimeToken as Blockhash,
+                // This is not known from the compiled message, so we set it to the maximum possible value
+                lastValidBlockHeight: 0xffffffffffffffffn,
+            };
         }
-        return {
-            nonce: compiledTransactionMessage.lifetimeToken as Nonce,
-            nonceAccountAddress,
-        };
-    } else {
-        return {
-            blockhash: compiledTransactionMessage.lifetimeToken as Blockhash,
-            // This is not known from the compiled message, so we set it to the maximum possible value
-            lastValidBlockHeight: 0xffffffffffffffffn,
-        };
     }
+
+    if (version === 1) {
+        const firstInstructionHeader = compiledTransactionMessage.instructionHeaders[0];
+        const firstInstructionPayload = compiledTransactionMessage.instructionPayloads[0];
+        const { staticAccounts } = compiledTransactionMessage;
+
+        if (
+            firstInstructionHeader &&
+            firstInstructionPayload &&
+            compiledV1InstructionIsAdvanceNonceInstruction(
+                firstInstructionHeader,
+                firstInstructionPayload,
+                staticAccounts,
+            )
+        ) {
+            const nonceAccountAddress = staticAccounts[firstInstructionPayload.instructionAccountIndices[0]];
+            if (!nonceAccountAddress) {
+                throw new SolanaError(SOLANA_ERROR__TRANSACTION__INVALID_NONCE_ACCOUNT_INDEX, {
+                    nonce: compiledTransactionMessage.lifetimeToken,
+                    nonceAccountIndex: firstInstructionPayload.instructionAccountIndices[0],
+                    numberOfStaticAccounts: staticAccounts.length,
+                });
+            }
+            return {
+                nonce: compiledTransactionMessage.lifetimeToken as Nonce,
+                nonceAccountAddress,
+            };
+        } else {
+            return {
+                blockhash: compiledTransactionMessage.lifetimeToken as Blockhash,
+                // This is not known from the compiled message, so we set it to the maximum possible value
+                lastValidBlockHeight: 0xffffffffffffffffn,
+            };
+        }
+    }
+
+    throw new SolanaError(SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED, {
+        unsupportedVersion: version,
+    });
 }
 
 /**

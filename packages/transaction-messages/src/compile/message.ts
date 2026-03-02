@@ -4,10 +4,15 @@ import { TransactionMessageWithFeePayer } from '../fee-payer';
 import { TransactionMessageWithLifetime } from '../lifetime';
 import { TransactionMessage } from '../transaction-message';
 import { getCompiledLifetimeToken } from './legacy/lifetime-token';
-import { LegacyCompiledTransactionMessage } from './legacy/message';
-import { compileTransactionMessage as compileLegacyTransactionMessage } from './legacy/message';
-import { V0CompiledTransactionMessage } from './v0/message';
-import { compileTransactionMessage as compileV0TransactionMessage } from './v0/message';
+import {
+    compileTransactionMessage as compileLegacyTransactionMessage,
+    type LegacyCompiledTransactionMessage,
+} from './legacy/message';
+import {
+    compileTransactionMessage as compileV0TransactionMessage,
+    type V0CompiledTransactionMessage,
+} from './v0/message';
+import { type V1CompiledTransactionMessage } from './v1/message';
 
 /**
  * A transaction message in a form suitable for encoding for execution on the network.
@@ -16,7 +21,14 @@ import { compileTransactionMessage as compileV0TransactionMessage } from './v0/m
  * In particular, supporting details about the lifetime constraint and the concrete addresses of
  * accounts sourced from account lookup tables are lost to compilation.
  */
-export type CompiledTransactionMessage = LegacyCompiledTransactionMessage | V0CompiledTransactionMessage;
+export type CompiledTransactionMessage =
+    | LegacyCompiledTransactionMessage
+    | V0CompiledTransactionMessage
+    | V1CompiledTransactionMessage;
+
+export type { LegacyCompiledTransactionMessage } from './legacy/message';
+export type { V0CompiledTransactionMessage } from './v0/message';
+export type { V1CompiledTransactionMessage } from './v1/message';
 
 export type CompiledTransactionMessageWithLifetime = Readonly<{
     /**
