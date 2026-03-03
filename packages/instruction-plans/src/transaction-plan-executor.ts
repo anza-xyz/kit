@@ -1,5 +1,6 @@
 import {
     isSolanaError,
+    SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_SINGLE_TRANSACTION_PLAN,
     SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN,
     SOLANA_ERROR__INSTRUCTION_PLANS__NON_DIVISIBLE_TRANSACTION_PLANS_NOT_SUPPORTED,
     SOLANA_ERROR__INVARIANT_VIOLATION__INVALID_TRANSACTION_PLAN_KIND,
@@ -118,6 +119,57 @@ export function createFailedToExecuteTransactionPlanError(
         writable: false,
     });
     return new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, context);
+}
+
+/**
+ * Creates a {@link SolanaError} with the
+ * {@link SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_SINGLE_TRANSACTION_PLAN} error code
+ * from a {@link TransactionPlanResult}.
+ *
+ * This is intended for use by `client.sendTransaction` (singular) to provide a
+ * more specific error when a single transaction fails. Unlike the plural variant,
+ * this error sets the underlying error as its `cause` (since there is at most one
+ * error) and includes the cause's message in its own message for immediate visibility.
+ *
+ * @param transactionPlanResult - The result of the transaction plan execution.
+ * @param abortReason - An optional abort reason if the execution was aborted.
+ * @returns A {@link SolanaError} with the appropriate error code, context, and cause.
+ *
+ * @example
+ * ```ts
+ * try {
+ *     assertIsSingleTransactionPlan(plan);
+ *     await client.sendTransactions(plan);
+ * } catch (e) {
+ *     if (isSolanaError(e, SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN)) {
+ *         throw createFailedToExecuteSingleTransactionPlanError(
+ *             e.context.transactionPlanResult as TransactionPlanResult,
+ *         );
+ *     }
+ *     throw e;
+ * }
+ * ```
+ *
+ * @see {@link createFailedToExecuteTransactionPlanError}
+ */
+export function createFailedToExecuteSingleTransactionPlanError(
+    transactionPlanResult: TransactionPlanResult,
+    abortReason?: unknown,
+): SolanaError<typeof SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_SINGLE_TRANSACTION_PLAN> {
+    const firstError = findFirstErrorFromTransactionPlanResult(transactionPlanResult);
+    const cause = firstError ?? abortReason;
+    const causeMessage = cause instanceof Error ? cause.message : String(cause ?? 'Unknown error');
+    const context = {
+        cause,
+        causeMessage,
+    };
+    Object.defineProperty(context, 'transactionPlanResult', {
+        configurable: false,
+        enumerable: false,
+        value: transactionPlanResult,
+        writable: false,
+    });
+    return new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_SINGLE_TRANSACTION_PLAN, context);
 }
 
 /**

@@ -2,6 +2,7 @@ import '@solana/test-matchers/toBeFrozenObject';
 
 import {
     SOLANA_ERROR__INSTRUCTION_ERROR__INVALID_ARGUMENT,
+    SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_SINGLE_TRANSACTION_PLAN,
     SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN,
     SOLANA_ERROR__INSTRUCTION_PLANS__NON_DIVISIBLE_TRANSACTION_PLANS_NOT_SUPPORTED,
     SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE,
@@ -12,6 +13,7 @@ import { TransactionMessage, TransactionMessageWithFeePayer } from '@solana/tran
 
 import {
     canceledSingleTransactionPlanResult,
+    createFailedToExecuteSingleTransactionPlanError,
     createFailedToExecuteTransactionPlanError,
     createTransactionPlanExecutor,
     failedSingleTransactionPlanResult,
@@ -1080,6 +1082,61 @@ describe('createFailedToExecuteTransactionPlanError', () => {
         const error = createFailedToExecuteTransactionPlanError(result);
         expect(error.context.errors).toStrictEqual([]);
         expect(error.context.errorsList).toBe('');
+    });
+});
+
+describe('createFailedToExecuteSingleTransactionPlanError', () => {
+    it('creates an error with the correct error code', () => {
+        const cause = new Error('tx failed');
+        const result = failedSingleTransactionPlanResult(createMessage('A'), cause);
+        const error = createFailedToExecuteSingleTransactionPlanError(result);
+        expect(error.context.__code).toBe(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_SINGLE_TRANSACTION_PLAN);
+    });
+
+    it('includes the cause message in the error message', () => {
+        const cause = new Error('custom program error: #6002');
+        const result = failedSingleTransactionPlanResult(createMessage('A'), cause);
+        const error = createFailedToExecuteSingleTransactionPlanError(result);
+        expect(error.context.causeMessage).toBe('custom program error: #6002');
+        expect(error.message).toBe('The transaction failed to execute: custom program error: #6002');
+    });
+
+    it('sets the underlying error as cause', () => {
+        const cause = new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__INVALID_ARGUMENT, { index: 0 });
+        const result = failedSingleTransactionPlanResult(createMessage('A'), cause);
+        const error = createFailedToExecuteSingleTransactionPlanError(result);
+        expect(error.cause).toBe(cause);
+    });
+
+    it('uses the abort reason as cause when no errors are present in results', () => {
+        const abortReason = new Error('Aborted');
+        const result = canceledSingleTransactionPlanResult(createMessage('A'));
+        const error = createFailedToExecuteSingleTransactionPlanError(result, abortReason);
+        expect(error.cause).toBe(abortReason);
+        expect(error.context.causeMessage).toBe('Aborted');
+    });
+
+    it('prefers the first error over the abort reason as cause', () => {
+        const cause = new Error('tx failed');
+        const abortReason = new Error('Aborted');
+        const result = failedSingleTransactionPlanResult(createMessage('A'), cause);
+        const error = createFailedToExecuteSingleTransactionPlanError(result, abortReason);
+        expect(error.cause).toBe(cause);
+    });
+
+    it('sets transactionPlanResult as a non-enumerable property', () => {
+        const cause = new Error('tx failed');
+        const result = failedSingleTransactionPlanResult(createMessage('A'), cause);
+        const error = createFailedToExecuteSingleTransactionPlanError(result);
+        expect(error.context.transactionPlanResult).toBe(result);
+        const descriptor = Object.getOwnPropertyDescriptor(error.context, 'transactionPlanResult');
+        expect(descriptor?.enumerable).toBe(false);
+    });
+
+    it('uses a fallback causeMessage when cause is not an Error', () => {
+        const result = canceledSingleTransactionPlanResult(createMessage('A'));
+        const error = createFailedToExecuteSingleTransactionPlanError(result);
+        expect(error.context.causeMessage).toBe('Unknown error');
     });
 });
 
