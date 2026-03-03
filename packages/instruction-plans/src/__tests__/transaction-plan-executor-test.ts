@@ -12,6 +12,7 @@ import { TransactionMessage, TransactionMessageWithFeePayer } from '@solana/tran
 
 import {
     canceledSingleTransactionPlanResult,
+    createFailedToExecuteTransactionPlanError,
     createTransactionPlanExecutor,
     failedSingleTransactionPlanResult,
     nonDivisibleSequentialTransactionPlan,
@@ -33,12 +34,14 @@ async function expectFailedToExecute(
     promise: Promise<TransactionPlanResult>,
     error: SolanaError<typeof SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN>,
 ): Promise<void> {
-    const transactionPlanResult = error.context.transactionPlanResult;
-    // Check for the error code and message (but not the full context since transactionPlanResult is non-enumerable)
+    const { errors, errorsList, transactionPlanResult } = error.context;
+    // Check for the error code, errors, and errorsList (but not the full context since transactionPlanResult is non-enumerable)
     await expect(promise).rejects.toThrow(
         expect.objectContaining({
             context: expect.objectContaining({
                 __code: SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN,
+                errors,
+                errorsList,
             }),
             name: 'SolanaError',
         }),
@@ -229,6 +232,8 @@ describe('createTransactionPlanExecutor', () => {
                 promise,
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
                     cause,
+                    errors: [cause],
+                    errorsList: `\n[Tx #1] ${cause.message}`,
                     transactionPlanResult: failedSingleTransactionPlanResult(messageA, cause),
                 }),
             );
@@ -260,6 +265,8 @@ describe('createTransactionPlanExecutor', () => {
                 promise,
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
                     cause,
+                    errors: [cause],
+                    errorsList: `\n[Tx #1] ${cause.message}`,
                     transactionPlanResult: failedSingleTransactionPlanResult(messageA, cause, {
                         beforeFailure: 'before failure',
                         message: messageB,
@@ -291,6 +298,8 @@ describe('createTransactionPlanExecutor', () => {
                 promise,
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
                     cause,
+                    errors: [cause],
+                    errorsList: `\n[Tx #1] ${cause.message}`,
                     transactionPlanResult: failedSingleTransactionPlanResult(messageA, cause, {
                         signature: 'A' as Signature,
                         transaction: transactionA,
@@ -312,6 +321,8 @@ describe('createTransactionPlanExecutor', () => {
                 promise,
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
                     cause,
+                    errors: [cause],
+                    errorsList: `\n[Tx #1] ${cause.message}`,
                     transactionPlanResult: failedSingleTransactionPlanResult(messageA, cause),
                 }),
             );
@@ -334,6 +345,8 @@ describe('createTransactionPlanExecutor', () => {
                 promise,
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
                     cause,
+                    errors: [cause],
+                    errorsList: `\n[Tx #1] ${cause.message}`,
                     transactionPlanResult: failedSingleTransactionPlanResult(messageA, cause),
                 }),
             );
@@ -355,6 +368,8 @@ describe('createTransactionPlanExecutor', () => {
                 promise,
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
                     cause,
+                    errors: [],
+                    errorsList: '',
                     transactionPlanResult: canceledSingleTransactionPlanResult(messageA),
                 }),
             );
@@ -476,6 +491,8 @@ describe('createTransactionPlanExecutor', () => {
                 promise,
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
                     cause,
+                    errors: [cause],
+                    errorsList: `\n[Tx #2] ${cause.message}`,
                     transactionPlanResult: sequentialTransactionPlanResult([
                         successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A')),
                         failedSingleTransactionPlanResult(messageB, cause),
@@ -497,6 +514,8 @@ describe('createTransactionPlanExecutor', () => {
                 promise,
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
                     cause,
+                    errors: [cause],
+                    errorsList: `\n[Tx #1] ${cause.message}`,
                     transactionPlanResult: sequentialTransactionPlanResult([
                         failedSingleTransactionPlanResult(messageA, cause),
                         canceledSingleTransactionPlanResult(messageB),
@@ -543,6 +562,8 @@ describe('createTransactionPlanExecutor', () => {
                 promise,
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
                     cause,
+                    errors: [cause],
+                    errorsList: `\n[Tx #2] ${cause.message}`,
                     transactionPlanResult: sequentialTransactionPlanResult([
                         successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A')),
                         failedSingleTransactionPlanResult(messageB, cause),
@@ -574,6 +595,8 @@ describe('createTransactionPlanExecutor', () => {
                 promise,
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
                     cause,
+                    errors: [],
+                    errorsList: '',
                     transactionPlanResult: sequentialTransactionPlanResult([
                         canceledSingleTransactionPlanResult(messageA),
                         canceledSingleTransactionPlanResult(messageB),
@@ -679,6 +702,8 @@ describe('createTransactionPlanExecutor', () => {
                 promise,
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
                     cause,
+                    errors: [cause],
+                    errorsList: `\n[Tx #2] ${cause.message}`,
                     transactionPlanResult: parallelTransactionPlanResult([
                         successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A')),
                         failedSingleTransactionPlanResult(messageB, cause),
@@ -716,6 +741,8 @@ describe('createTransactionPlanExecutor', () => {
                 promise,
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
                     cause,
+                    errors: [cause],
+                    errorsList: `\n[Tx #2] ${cause.message}`,
                     transactionPlanResult: parallelTransactionPlanResult([
                         successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A')),
                         failedSingleTransactionPlanResult(messageB, cause),
@@ -743,6 +770,8 @@ describe('createTransactionPlanExecutor', () => {
                 promise,
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
                     cause,
+                    errors: [],
+                    errorsList: '',
                     transactionPlanResult: parallelTransactionPlanResult([
                         canceledSingleTransactionPlanResult(messageA),
                         canceledSingleTransactionPlanResult(messageB),
@@ -836,6 +865,8 @@ describe('createTransactionPlanExecutor', () => {
                 promise,
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
                     cause,
+                    errors: [cause],
+                    errorsList: `\n[Tx #3] ${cause.message}`,
                     transactionPlanResult: parallelTransactionPlanResult([
                         sequentialTransactionPlanResult([
                             successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A')),
@@ -895,6 +926,8 @@ describe('createTransactionPlanExecutor', () => {
                 promise,
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
                     cause,
+                    errors: [cause],
+                    errorsList: `\n[Tx #3] ${cause.message}`,
                     transactionPlanResult: parallelTransactionPlanResult([
                         sequentialTransactionPlanResult([
                             successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A')),
@@ -943,6 +976,8 @@ describe('createTransactionPlanExecutor', () => {
                 promise,
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
                     cause,
+                    errors: [],
+                    errorsList: '',
                     transactionPlanResult: parallelTransactionPlanResult([
                         sequentialTransactionPlanResult([
                             canceledSingleTransactionPlanResult(messageA),
@@ -964,6 +999,90 @@ describe('createTransactionPlanExecutor', () => {
     });
 });
 
+describe('createFailedToExecuteTransactionPlanError', () => {
+    it('creates an error with the correct error code', () => {
+        const cause = new Error('tx failed');
+        const result = failedSingleTransactionPlanResult(createMessage('A'), cause);
+        const error = createFailedToExecuteTransactionPlanError(result);
+        expect(error.context.__code).toBe(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN);
+    });
+
+    it('includes all errors from a complex plan result', () => {
+        const causeB = new Error('B failed');
+        const causeD = new Error('D failed');
+        const result = parallelTransactionPlanResult([
+            sequentialTransactionPlanResult([
+                successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
+                failedSingleTransactionPlanResult(createMessage('B'), causeB),
+            ]),
+            sequentialTransactionPlanResult([
+                successfulSingleTransactionPlanResultFromTransaction(createMessage('C'), createTransaction('C')),
+                failedSingleTransactionPlanResult(createMessage('D'), causeD),
+            ]),
+        ]);
+        const error = createFailedToExecuteTransactionPlanError(result);
+        expect(error.context.errors).toStrictEqual([causeB, causeD]);
+    });
+
+    it('formats errorsList with correct transaction indices based on flattened position', () => {
+        const causeB = new Error('B failed');
+        const causeD = new Error('D failed');
+        const result = parallelTransactionPlanResult([
+            sequentialTransactionPlanResult([
+                successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
+                failedSingleTransactionPlanResult(createMessage('B'), causeB),
+            ]),
+            sequentialTransactionPlanResult([
+                successfulSingleTransactionPlanResultFromTransaction(createMessage('C'), createTransaction('C')),
+                failedSingleTransactionPlanResult(createMessage('D'), causeD),
+            ]),
+        ]);
+        const error = createFailedToExecuteTransactionPlanError(result);
+        expect(error.context.errorsList).toBe('\n[Tx #2] B failed\n[Tx #4] D failed');
+    });
+
+    it('uses the first error found in the results as cause', () => {
+        const cause = new Error('tx failed');
+        const result = failedSingleTransactionPlanResult(createMessage('A'), cause);
+        const error = createFailedToExecuteTransactionPlanError(result);
+        expect(error.cause).toBe(cause);
+    });
+
+    it('uses the abort reason as cause when no errors are present in results', () => {
+        const abortReason = new Error('Aborted');
+        const result = canceledSingleTransactionPlanResult(createMessage('A'));
+        const error = createFailedToExecuteTransactionPlanError(result, abortReason);
+        expect(error.cause).toBe(abortReason);
+    });
+
+    it('prefers the first error over the abort reason as cause', () => {
+        const cause = new Error('tx failed');
+        const abortReason = new Error('Aborted');
+        const result = failedSingleTransactionPlanResult(createMessage('A'), cause);
+        const error = createFailedToExecuteTransactionPlanError(result, abortReason);
+        expect(error.cause).toBe(cause);
+    });
+
+    it('sets transactionPlanResult as a non-enumerable property', () => {
+        const cause = new Error('tx failed');
+        const result = failedSingleTransactionPlanResult(createMessage('A'), cause);
+        const error = createFailedToExecuteTransactionPlanError(result);
+        expect(error.context.transactionPlanResult).toBe(result);
+        const descriptor = Object.getOwnPropertyDescriptor(error.context, 'transactionPlanResult');
+        expect(descriptor?.enumerable).toBe(false);
+    });
+
+    it('produces empty errors and errorsList when all transactions are canceled', () => {
+        const result = parallelTransactionPlanResult([
+            canceledSingleTransactionPlanResult(createMessage('A')),
+            canceledSingleTransactionPlanResult(createMessage('B')),
+        ]);
+        const error = createFailedToExecuteTransactionPlanError(result);
+        expect(error.context.errors).toStrictEqual([]);
+        expect(error.context.errorsList).toBe('');
+    });
+});
+
 describe('passthroughFailedTransactionPlanExecution', () => {
     it('returns the resolved result as-is', async () => {
         expect.assertions(1);
@@ -973,12 +1092,12 @@ describe('passthroughFailedTransactionPlanExecution', () => {
     });
     it('returns the result inside the rejected execution error', async () => {
         expect.assertions(1);
-        const result = failedSingleTransactionPlanResult(
-            createMessage('A'),
-            new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
-        );
+        const cause = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
+        const result = failedSingleTransactionPlanResult(createMessage('A'), cause);
         const promise = Promise.reject(
             new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
+                errors: [cause],
+                errorsList: `\n[Tx #1] ${cause.message}`,
                 transactionPlanResult: result,
             }),
         );

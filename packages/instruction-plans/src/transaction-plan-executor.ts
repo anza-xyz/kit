@@ -20,6 +20,7 @@ import {
     BaseTransactionPlanResultContext,
     canceledSingleTransactionPlanResult,
     failedSingleTransactionPlanResult,
+    flattenTransactionPlanResult,
     parallelTransactionPlanResult,
     sequentialTransactionPlanResult,
     SingleTransactionPlanResult,
@@ -66,6 +67,58 @@ export type TransactionPlanExecutorConfig<
     /** Called whenever a transaction message must be sent to the blockchain. */
     executeTransactionMessage: ExecuteTransactionMessage<TContext>;
 };
+
+/**
+ * Creates a {@link SolanaError} with the
+ * {@link SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN} error code
+ * from a {@link TransactionPlanResult}.
+ *
+ * This is useful for custom transaction plan executors that need to throw the
+ * same error as the one thrown by {@link createTransactionPlanExecutor} when a
+ * transaction plan fails to execute.
+ *
+ * @param transactionPlanResult - The result of the transaction plan execution.
+ * @param abortReason - An optional abort reason if the execution was aborted.
+ * @returns A {@link SolanaError} with the appropriate error code, context, and cause.
+ *
+ * @example
+ * ```ts
+ * const result = await myCustomExecutor(plan);
+ * if (hasFailed(result)) {
+ *     throw createFailedToExecuteTransactionPlanError(result);
+ * }
+ * ```
+ *
+ * @see {@link createTransactionPlanExecutor}
+ */
+export function createFailedToExecuteTransactionPlanError(
+    transactionPlanResult: TransactionPlanResult,
+    abortReason?: unknown,
+): SolanaError<typeof SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN> {
+    const flattenedResults = flattenTransactionPlanResult(transactionPlanResult);
+    const errors = flattenedResults
+        .filter((result): result is typeof result & { status: 'failed' } => result.status === 'failed')
+        .map(result => result.error);
+    const errorsList = flattenedResults
+        .map((result, index) => (result.status === 'failed' ? `\n[Tx #${index + 1}] ${result.error.message}` : null))
+        .filter((line): line is string => line !== null)
+        .join('');
+    const context = {
+        cause: findFirstErrorFromTransactionPlanResult(transactionPlanResult) ?? abortReason,
+        errors,
+        errorsList,
+    };
+    // Here we want the `transactionPlanResult` to be available in the error context
+    // so applications can create recovery plans but we don't want this object to be
+    // serialized with the error. This is why we set it as a non-enumerable property.
+    Object.defineProperty(context, 'transactionPlanResult', {
+        configurable: false,
+        enumerable: false,
+        value: transactionPlanResult,
+        writable: false,
+    });
+    return new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, context);
+}
 
 /**
  * Creates a new transaction plan executor based on the provided configuration.
@@ -140,17 +193,7 @@ export function createTransactionPlanExecutor<
 
         if (traverseConfig.canceled) {
             const abortReason = abortSignal?.aborted ? abortSignal.reason : undefined;
-            const context = { cause: findErrorFromTransactionPlanResult(transactionPlanResult) ?? abortReason };
-            // Here we want the `transactionPlanResult` to be available in the error context
-            // so applications can create recovery plans but we don't want this object to be
-            // serialized with the error. This is why we set it as a non-enumerable property.
-            Object.defineProperty(context, 'transactionPlanResult', {
-                configurable: false,
-                enumerable: false,
-                value: transactionPlanResult,
-                writable: false,
-            });
-            throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, context);
+            throw createFailedToExecuteTransactionPlanError(transactionPlanResult, abortReason);
         }
 
         return transactionPlanResult;
@@ -235,12 +278,12 @@ async function traverseSingle<TContext extends TransactionPlanResultContext>(
     }
 }
 
-function findErrorFromTransactionPlanResult(result: TransactionPlanResult): Error | undefined {
+function findFirstErrorFromTransactionPlanResult(result: TransactionPlanResult): Error | undefined {
     if (result.kind === 'single') {
         return result.status === 'failed' ? result.error : undefined;
     }
     for (const plan of result.plans) {
-        const error = findErrorFromTransactionPlanResult(plan);
+        const error = findFirstErrorFromTransactionPlanResult(plan);
         if (error) {
             return error;
         }

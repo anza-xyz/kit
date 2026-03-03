@@ -450,6 +450,8 @@ export type SolanaErrorContext = ReadonlyContextValue<
                 transactionPlanResult: unknown;
             };
             [SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN]: {
+                errors: readonly Error[];
+                errorsList: string;
                 transactionPlanResult: unknown;
             };
             [SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN]: {
