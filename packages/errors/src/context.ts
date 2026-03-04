@@ -42,6 +42,8 @@ import {
     SOLANA_ERROR__CODECS__OFFSET_OUT_OF_RANGE,
     SOLANA_ERROR__CODECS__SENTINEL_MISSING_IN_DECODED_BYTES,
     SOLANA_ERROR__CODECS__UNION_VARIANT_OUT_OF_RANGE,
+    SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION,
+    SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS,
     SOLANA_ERROR__INSTRUCTION__EXPECTED_TO_HAVE_ACCOUNTS,
     SOLANA_ERROR__INSTRUCTION__EXPECTED_TO_HAVE_DATA,
     SOLANA_ERROR__INSTRUCTION__PROGRAM_ID_MISMATCH,
@@ -430,6 +432,22 @@ export type SolanaErrorContext = ReadonlyContextValue<
                 maxRange: number;
                 minRange: number;
                 variant: number;
+            };
+            [SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION]: {
+                causeMessage: string;
+                logs?: readonly string[];
+                preflightData?: Omit<RpcSimulateTransactionResult, 'err'>;
+                transactionPlanResult: unknown;
+            };
+            [SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS]: {
+                causeMessages: string;
+                failedTransactions: ReadonlyArray<{
+                    error: Error;
+                    index: number;
+                    logs?: readonly string[];
+                    preflightData?: Omit<RpcSimulateTransactionResult, 'err'>;
+                }>;
+                transactionPlanResult: unknown;
             };
             [SOLANA_ERROR__INSTRUCTION_ERROR__BORSH_IO_ERROR]: {
                 index: number;

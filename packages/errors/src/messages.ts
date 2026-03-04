@@ -53,6 +53,8 @@ import {
     SOLANA_ERROR__CODECS__SENTINEL_MISSING_IN_DECODED_BYTES,
     SOLANA_ERROR__CODECS__UNION_VARIANT_OUT_OF_RANGE,
     SOLANA_ERROR__CRYPTO__RANDOM_VALUES_FUNCTION_UNIMPLEMENTED,
+    SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION,
+    SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS,
     SOLANA_ERROR__INSTRUCTION__EXPECTED_TO_HAVE_ACCOUNTS,
     SOLANA_ERROR__INSTRUCTION__EXPECTED_TO_HAVE_DATA,
     SOLANA_ERROR__INSTRUCTION__PROGRAM_ID_MISMATCH,
@@ -377,6 +379,8 @@ export const SolanaErrorMessages: Readonly<{
     [SOLANA_ERROR__CODECS__INVALID_PATTERN_MATCH_BYTES]:
         'Invalid pattern match bytes. The provided byte array does not match any of the specified patterns.',
     [SOLANA_ERROR__CRYPTO__RANDOM_VALUES_FUNCTION_UNIMPLEMENTED]: 'No random values implementation could be found.',
+    [SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION]: 'Failed to send transaction$causeMessage',
+    [SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS]: 'Failed to send transactions$causeMessages',
     [SOLANA_ERROR__INSTRUCTION_ERROR__ACCOUNT_ALREADY_INITIALIZED]: 'instruction requires an uninitialized account',
     [SOLANA_ERROR__INSTRUCTION_ERROR__ACCOUNT_BORROW_FAILED]:
         'instruction tries to borrow reference for an account which is already borrowed',
