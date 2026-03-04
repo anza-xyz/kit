@@ -49,6 +49,7 @@ Four private "impl" packages (`@solana/crypto-impl`, `@solana/text-encoding-impl
 - **Type tests**: `src/__typetests__/` directories contain compile-time type tests using `satisfies` and `@ts-expect-error`.
 - **Lint/prettier**: Also run through Jest runners (`jest-runner-eslint`, `jest-runner-prettier`).
 - **Commands**: `pnpm test` runs all unit tests. `pnpm lint` runs lint checks. `pnpm style:fix` auto-fixes formatting.
+- **`expect.assertions`**: Only use `expect.assertions(n)` in **async** tests (where you need to guarantee the expected number of assertions ran). Synchronous tests do not need it.
 
 ## Error System
 
