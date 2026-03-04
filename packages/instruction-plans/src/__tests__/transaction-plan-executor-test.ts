@@ -362,6 +362,28 @@ describe('createTransactionPlanExecutor', () => {
             expect(executeTransactionMessage).not.toHaveBeenCalled();
         });
 
+        it('includes the abort reason in the error context', async () => {
+            expect.assertions(1);
+            const messageA = createMessage('A');
+            const abortController = new AbortController();
+            const abortSignal = abortController.signal;
+            const abortReason = new Error('User canceled');
+            const executeTransactionMessage = jest.fn().mockReturnValueOnce(FOREVER_PROMISE);
+            const executor = createTransactionPlanExecutor({ executeTransactionMessage });
+
+            const promise = executor(singleTransactionPlan(messageA), { abortSignal });
+            await jest.runAllTimersAsync();
+            abortController.abort(abortReason);
+
+            await expect(promise).rejects.toThrow(
+                expect.objectContaining({
+                    context: expect.objectContaining({
+                        abortReason,
+                    }),
+                }),
+            );
+        });
+
         it('freezes the returned single transaction plan result', async () => {
             expect.assertions(1);
             const executeTransactionMessage = jest.fn().mockImplementation(forwardId);
