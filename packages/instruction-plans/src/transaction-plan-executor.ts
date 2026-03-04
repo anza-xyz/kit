@@ -140,7 +140,10 @@ export function createTransactionPlanExecutor<
 
         if (traverseConfig.canceled) {
             const abortReason = abortSignal?.aborted ? abortSignal.reason : undefined;
-            const context = { cause: findErrorFromTransactionPlanResult(transactionPlanResult) ?? abortReason };
+            const context = {
+                abortReason,
+                cause: findErrorFromTransactionPlanResult(transactionPlanResult) ?? abortReason,
+            };
             // Here we want the `transactionPlanResult` to be available in the error context
             // so applications can create recovery plans but we don't want this object to be
             // serialized with the error. This is why we set it as a non-enumerable property.
