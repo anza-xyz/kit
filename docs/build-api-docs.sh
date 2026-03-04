@@ -20,3 +20,8 @@ done
 # Generate API index.
 echo "📝 Generating API index page from TypeDoc JSON..."
 node docs/build-api-index.js
+
+# Regenerate .source to pick up the new index.mdx
+echo "♻️  Regenerating .source files..."
+cd docs
+pnpm fumadocs-mdx
