@@ -6,12 +6,10 @@ import {
     type FixedSizeCodec,
     type FixedSizeDecoder,
     type FixedSizeEncoder,
-    getArrayCodec,
-    getU64Codec,
-    getU64Decoder,
-    getU64Encoder,
     ReadonlyUint8Array,
-} from '@solana/codecs';
+} from '@solana/codecs-core';
+import { getArrayCodec } from '@solana/codecs-data-structures';
+import { getU64Codec, getU64Decoder, getU64Encoder } from '@solana/codecs-numbers';
 import {
     SOLANA_ERROR__CODECS__ENUM_DISCRIMINATOR_OUT_OF_RANGE,
     SOLANA_ERROR__CODECS__INVALID_BYTE_LENGTH,

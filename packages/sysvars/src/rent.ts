@@ -1,16 +1,7 @@
 import { assertAccountExists, decodeAccount, type FetchAccountConfig } from '@solana/accounts';
-import {
-    combineCodec,
-    type FixedSizeCodec,
-    type FixedSizeDecoder,
-    type FixedSizeEncoder,
-    getF64Decoder,
-    getF64Encoder,
-    getStructDecoder,
-    getStructEncoder,
-    getU8Decoder,
-    getU8Encoder,
-} from '@solana/codecs';
+import { combineCodec, type FixedSizeCodec, type FixedSizeDecoder, type FixedSizeEncoder } from '@solana/codecs-core';
+import { getStructDecoder, getStructEncoder } from '@solana/codecs-data-structures';
+import { getF64Decoder, getF64Encoder, getU8Decoder, getU8Encoder } from '@solana/codecs-numbers';
 import type { GetAccountInfoApi } from '@solana/rpc-api';
 import type { Rpc } from '@solana/rpc-spec';
 import {

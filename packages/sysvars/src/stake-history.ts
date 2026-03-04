@@ -1,16 +1,12 @@
 import { assertAccountExists, decodeAccount, type FetchAccountConfig } from '@solana/accounts';
 import {
     combineCodec,
-    getArrayDecoder,
-    getArrayEncoder,
-    getStructDecoder,
-    getStructEncoder,
-    getU64Decoder,
-    getU64Encoder,
     type VariableSizeCodec,
     type VariableSizeDecoder,
     type VariableSizeEncoder,
-} from '@solana/codecs';
+} from '@solana/codecs-core';
+import { getArrayDecoder, getArrayEncoder, getStructDecoder, getStructEncoder } from '@solana/codecs-data-structures';
+import { getU64Decoder, getU64Encoder } from '@solana/codecs-numbers';
 import type { GetAccountInfoApi } from '@solana/rpc-api';
 import type { Rpc } from '@solana/rpc-spec';
 import { Epoch, getDefaultLamportsDecoder, getDefaultLamportsEncoder, type Lamports } from '@solana/rpc-types';
