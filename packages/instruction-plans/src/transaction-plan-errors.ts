@@ -3,6 +3,7 @@ import {
     type RpcSimulateTransactionResult,
     SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION,
     SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS,
+    SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN,
     SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE,
     SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT,
     SolanaError,
@@ -168,6 +169,49 @@ export function createFailedToSendTransactionsError(
     return new SolanaError(SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS, context);
 }
 
+/**
+ * Creates a {@link SolanaError} with the
+ * {@link SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN}
+ * error code from a {@link TransactionPlanResult}.
+ *
+ * This is a low-level error intended for custom transaction plan executor
+ * authors. It attaches the full `transactionPlanResult` as a non-enumerable
+ * property so that callers can inspect execution details without the result
+ * being serialized with the error.
+ *
+ * @param result - The full transaction plan result tree.
+ * @param abortReason - An optional abort reason if the plan was aborted.
+ * @return A {@link SolanaError} with the appropriate error code and context.
+ *
+ * @example
+ * Throwing a failed-to-execute error from a custom executor.
+ * ```ts
+ * import { createFailedToExecuteTransactionPlanError } from '@solana/instruction-plans';
+ *
+ * throw createFailedToExecuteTransactionPlanError(transactionPlanResult, abortSignal?.reason);
+ * ```
+ *
+ * @see {@link createFailedToSendTransactionError}
+ * @see {@link createFailedToSendTransactionsError}
+ */
+export function createFailedToExecuteTransactionPlanError(
+    result: TransactionPlanResult,
+    abortReason?: unknown,
+): SolanaError<typeof SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN> {
+    const context: Record<string, unknown> = {
+        abortReason,
+        // Deprecated: will be removed in a future version.
+        cause: findErrorFromTransactionPlanResult(result) ?? abortReason,
+    };
+    Object.defineProperty(context, 'transactionPlanResult', {
+        configurable: false,
+        enumerable: false,
+        value: result,
+        writable: false,
+    });
+    return new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, context);
+}
+
 function unwrapErrorWithPreflightData(error: Error): {
     logs: readonly string[] | undefined;
     preflightData: PreflightData | undefined;
@@ -190,6 +234,18 @@ function unwrapErrorWithPreflightData(error: Error): {
         };
     }
     return { logs: undefined, preflightData: undefined, unwrappedError: error };
+}
+
+function findErrorFromTransactionPlanResult(result: TransactionPlanResult): Error | undefined {
+    if (result.kind === 'single') {
+        return result.status === 'failed' ? result.error : undefined;
+    }
+    for (const plan of result.plans) {
+        const error = findErrorFromTransactionPlanResult(plan);
+        if (error) {
+            return error;
+        }
+    }
 }
 
 function getFailedIndicator(isPreflight: boolean, signature: string | undefined): string {

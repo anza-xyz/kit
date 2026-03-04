@@ -16,6 +16,7 @@ import type {
     SingleTransactionPlan,
     TransactionPlan,
 } from './transaction-plan';
+import { createFailedToExecuteTransactionPlanError } from './transaction-plan-errors';
 import {
     BaseTransactionPlanResultContext,
     canceledSingleTransactionPlanResult,
@@ -140,20 +141,7 @@ export function createTransactionPlanExecutor<
 
         if (traverseConfig.canceled) {
             const abortReason = abortSignal?.aborted ? abortSignal.reason : undefined;
-            const context = {
-                abortReason,
-                cause: findErrorFromTransactionPlanResult(transactionPlanResult) ?? abortReason,
-            };
-            // Here we want the `transactionPlanResult` to be available in the error context
-            // so applications can create recovery plans but we don't want this object to be
-            // serialized with the error. This is why we set it as a non-enumerable property.
-            Object.defineProperty(context, 'transactionPlanResult', {
-                configurable: false,
-                enumerable: false,
-                value: transactionPlanResult,
-                writable: false,
-            });
-            throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, context);
+            throw createFailedToExecuteTransactionPlanError(transactionPlanResult, abortReason);
         }
 
         return transactionPlanResult;
@@ -235,18 +223,6 @@ async function traverseSingle<TContext extends TransactionPlanResultContext>(
                 ? { ...context, signature: getSignatureFromTransaction(context.transaction) }
                 : context;
         return failedSingleTransactionPlanResult(transactionPlan.message, error as Error, contextWithSignature);
-    }
-}
-
-function findErrorFromTransactionPlanResult(result: TransactionPlanResult): Error | undefined {
-    if (result.kind === 'single') {
-        return result.status === 'failed' ? result.error : undefined;
-    }
-    for (const plan of result.plans) {
-        const error = findErrorFromTransactionPlanResult(plan);
-        if (error) {
-            return error;
-        }
     }
 }
 

@@ -2,6 +2,7 @@ import {
     type RpcSimulateTransactionResult,
     SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION,
     SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS,
+    SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN,
     SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE,
     SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT,
     SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE,
@@ -11,6 +12,7 @@ import { Signature } from '@solana/keys';
 
 import {
     canceledSingleTransactionPlanResult,
+    createFailedToExecuteTransactionPlanError,
     createFailedToSendTransactionError,
     createFailedToSendTransactionsError,
     failedSingleTransactionPlanResult,
@@ -484,5 +486,39 @@ describe('createFailedToSendTransactionsError', () => {
         const result = sequentialTransactionPlanResult([failedSingleTransactionPlanResult(messageA, errorA)]);
         const error = createFailedToSendTransactionsError(result);
         expect(error.context.__code).toBe(SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS);
+    });
+});
+
+describe('createFailedToExecuteTransactionPlanError', () => {
+    it('has the correct error code', () => {
+        const result = sequentialTransactionPlanResult([
+            failedSingleTransactionPlanResult(createMessage('A'), new Error('A failed')),
+        ]);
+        const error = createFailedToExecuteTransactionPlanError(result);
+        expect(error.context.__code).toBe(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN);
+    });
+
+    it('sets transactionPlanResult as a non-enumerable property', () => {
+        const result = sequentialTransactionPlanResult([
+            failedSingleTransactionPlanResult(createMessage('A'), new Error('A failed')),
+        ]);
+        const error = createFailedToExecuteTransactionPlanError(result);
+        expect(error.context.transactionPlanResult).toBe(result);
+        expect(Object.keys(error.context)).not.toContain('transactionPlanResult');
+    });
+
+    it('sets abortReason in the context when provided', () => {
+        const abortReason = new Error('User canceled');
+        const result = sequentialTransactionPlanResult([canceledSingleTransactionPlanResult(createMessage('A'))]);
+        const error = createFailedToExecuteTransactionPlanError(result, abortReason);
+        expect(error.context.abortReason).toBe(abortReason);
+    });
+
+    it('sets abortReason to undefined when not provided', () => {
+        const result = sequentialTransactionPlanResult([
+            failedSingleTransactionPlanResult(createMessage('A'), new Error('A failed')),
+        ]);
+        const error = createFailedToExecuteTransactionPlanError(result);
+        expect(error.context.abortReason).toBeUndefined();
     });
 });
