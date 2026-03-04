@@ -1,11 +1,18 @@
 import {
     combineCodec,
     createDecoder,
+    createEncoder,
     VariableSizeCodec,
     VariableSizeDecoder,
     VariableSizeEncoder,
 } from '@solana/codecs-core';
 import { getPatternMatchDecoder, getPatternMatchEncoder } from '@solana/codecs-data-structures';
+import {
+    isSolanaError,
+    SOLANA_ERROR__CODECS__INVALID_PATTERN_MATCH_VALUE,
+    SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED,
+    SolanaError,
+} from '@solana/errors';
 
 import { CompiledTransactionMessage, CompiledTransactionMessageWithLifetime } from '../compile/message';
 import {
@@ -14,6 +21,7 @@ import {
 } from './legacy/message';
 import { getTransactionVersionDecoder } from './transaction-version';
 import { getMessageDecoder as getV0MessageDecoder, getMessageEncoder as getV0MessageEncoder } from './v0/message';
+import { getMessageDecoder as getV1MessageDecoder, getMessageEncoder as getV1MessageEncoder } from './v1/message';
 
 /**
  * Returns an encoder that you can use to encode a {@link CompiledTransactionMessage} to a byte
@@ -25,12 +33,41 @@ import { getMessageDecoder as getV0MessageDecoder, getMessageEncoder as getV0Mes
 export function getCompiledTransactionMessageEncoder(): VariableSizeEncoder<
     CompiledTransactionMessage | (CompiledTransactionMessage & CompiledTransactionMessageWithLifetime)
 > {
-    return getPatternMatchEncoder<
+    // check version is valid
+    const encoder = getPatternMatchEncoder<
         CompiledTransactionMessage | (CompiledTransactionMessage & CompiledTransactionMessageWithLifetime)
     >([
         [m => m.version === 'legacy', getLegacyMessageEncoder()],
         [m => m.version === 0, getV0MessageEncoder()],
+        [m => m.version === 1, getV1MessageEncoder()],
     ]);
+
+    return createEncoder({
+        getSizeFromValue(value) {
+            try {
+                return encoder.getSizeFromValue(value);
+            } catch (error) {
+                if (isSolanaError(error, SOLANA_ERROR__CODECS__INVALID_PATTERN_MATCH_VALUE)) {
+                    throw new SolanaError(SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED, {
+                        unsupportedVersion: value.version,
+                    });
+                }
+                throw error;
+            }
+        },
+        write(value, bytes, offset) {
+            try {
+                return encoder.write(value, bytes, offset);
+            } catch (error) {
+                if (isSolanaError(error, SOLANA_ERROR__CODECS__INVALID_PATTERN_MATCH_VALUE)) {
+                    throw new SolanaError(SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED, {
+                        unsupportedVersion: value.version,
+                    });
+                }
+                throw error;
+            }
+        },
+    });
 }
 
 /**
@@ -57,6 +94,12 @@ export function getCompiledTransactionMessageDecoder(): VariableSizeDecoder<
                 [
                     () => version === 0,
                     getV0MessageDecoder() as VariableSizeDecoder<
+                        CompiledTransactionMessage & CompiledTransactionMessageWithLifetime
+                    >,
+                ],
+                [
+                    () => version === 1,
+                    getV1MessageDecoder() as VariableSizeDecoder<
                         CompiledTransactionMessage & CompiledTransactionMessageWithLifetime
                     >,
                 ],
