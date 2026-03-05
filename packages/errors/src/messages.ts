@@ -393,7 +393,7 @@ export const SolanaErrorMessages: Readonly<{
     [SOLANA_ERROR__INSTRUCTION_ERROR__ACCOUNT_NOT_RENT_EXEMPT]:
         'An account does not have enough lamports to be rent-exempt',
     [SOLANA_ERROR__INSTRUCTION_ERROR__ARITHMETIC_OVERFLOW]: 'Program arithmetic overflowed',
-    [SOLANA_ERROR__INSTRUCTION_ERROR__BORSH_IO_ERROR]: 'Failed to serialize or deserialize account data: $encodedData',
+    [SOLANA_ERROR__INSTRUCTION_ERROR__BORSH_IO_ERROR]: 'Failed to serialize or deserialize account data',
     [SOLANA_ERROR__INSTRUCTION_ERROR__BUILTIN_PROGRAMS_MUST_CONSUME_COMPUTE_UNITS]:
         'Builtin programs must consume compute units',
     [SOLANA_ERROR__INSTRUCTION_ERROR__CALL_DEPTH]: 'Cross-program invocation call depth too deep',
