@@ -75,7 +75,6 @@ These packages handle accounts, addresses, and cryptographic signing:
 - `assertAccountExists`, `assertAccountsExist` for runtime validation
 - RPC API types: `GetAccountInfoApi`, `GetMultipleAccountsApi`
 
-
 **Keys** (`@solana/keys`) - Key material and signature handling:
 
 - `Signature` (base58 string) and `SignatureBytes` (Uint8Array) types
@@ -106,7 +105,7 @@ These packages handle accounts, addresses, and cryptographic signing:
 └── @solana/options
 ```
 
-Composable encoding/decoding for binary data. The `Codec<T>` interface provides `encode` and `decode` methods:
+Umbrella package for all codecs-related functionality only meant for end-users. Contributors should not import from this package. Composable encoding/decoding for binary data. The `Codec<T>` interface provides `encode` and `decode` methods:
 
 **Core Types:** `Codec`, `Encoder`, `Decoder`, `CodecError`, `addCodecSizePrefix`, `fixCodecSize`, `transformCodec`
 
@@ -323,10 +322,19 @@ Sysvars are special accounts that hold network state. The package includes the f
 
 **Fetching Methods:** Each sysvar has a `fetchSysvar{Type}` function and `getSysvar{Type}Codec` for encoding/decoding
 
+**Generic Helpers:**
+
+- `fetchEncodedSysvarAccount` - Fetch any sysvar as an encoded account
+- `fetchJsonParsedSysvarAccount` - Fetch any sysvar as a JSON-parsed account
+
 ```
 @solana/sysvars
 ├── @solana/accounts
-└── @solana/codecs
+├── @solana/codecs-core
+├── @solana/codecs-data-structures
+├── @solana/codecs-numbers
+├── @solana/errors
+└── @solana/rpc-types
 ```
 
 ### Transaction Stack
