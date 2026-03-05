@@ -1,6 +1,8 @@
-import { SolanaErrorCode } from './codes';
+import { SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN, SolanaErrorCode } from './codes';
 import { encodeContextObject } from './context';
 import { SolanaErrorMessages } from './messages';
+
+const INSTRUCTION_ERROR_RANGE_SIZE = 1000;
 
 const enum StateType {
     EscapeSequence,
@@ -81,7 +83,15 @@ export function getHumanReadableErrorMessage<TErrorCode extends SolanaErrorCode>
         }
     });
     commitStateUpTo();
-    return fragments.join('');
+    let message = fragments.join('');
+    if (
+        code >= SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN &&
+        code < SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN + INSTRUCTION_ERROR_RANGE_SIZE &&
+        'index' in context
+    ) {
+        message += ` (instruction #${(context as { index: number }).index + 1})`;
+    }
+    return message;
 }
 
 export function getErrorMessage<TErrorCode extends SolanaErrorCode>(

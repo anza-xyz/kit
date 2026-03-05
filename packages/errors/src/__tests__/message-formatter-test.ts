@@ -1,4 +1,4 @@
-import { SolanaErrorCode } from '../codes';
+import { SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN, SolanaErrorCode } from '../codes';
 import { encodeContextObject } from '../context';
 import { getErrorMessage } from '../message-formatter';
 import * as MessagesModule from '../messages';
@@ -171,6 +171,51 @@ describe('getErrorMessage', () => {
                 { variable: undefined },
             );
             expect(message).toBe('Here is a variable: undefined');
+        });
+        it('appends the instruction number to instruction error messages', () => {
+            const messagesSpy = jest.spyOn(MessagesModule, 'SolanaErrorMessages', 'get');
+            // @ts-expect-error Mock error config doesn't conform to exported config.
+            messagesSpy.mockReturnValue({
+                [SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN]: 'Some instruction error',
+            });
+            const message = getErrorMessage(SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN, { index: 0 });
+            expect(message).toBe('Some instruction error (instruction #1)');
+        });
+        it('uses one-based instruction numbering', () => {
+            const messagesSpy = jest.spyOn(MessagesModule, 'SolanaErrorMessages', 'get');
+            // @ts-expect-error Mock error config doesn't conform to exported config.
+            messagesSpy.mockReturnValue({
+                [SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN]: 'Some instruction error',
+            });
+            const message = getErrorMessage(SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN, { index: 5 });
+            expect(message).toBe('Some instruction error (instruction #6)');
+        });
+        it('appends the instruction number to error codes at the end of the instruction error range', () => {
+            const lastInstructionErrorCode = SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN + 999;
+            const messagesSpy = jest.spyOn(MessagesModule, 'SolanaErrorMessages', 'get');
+            // @ts-expect-error Mock error config doesn't conform to exported config.
+            messagesSpy.mockReturnValue({
+                [lastInstructionErrorCode]: 'Some instruction error',
+            });
+            const message = getErrorMessage(
+                // @ts-expect-error Mock error code doesn't conform to exported config.
+                lastInstructionErrorCode,
+                { index: 2 },
+            );
+            expect(message).toBe('Some instruction error (instruction #3)');
+        });
+        it('does not append the instruction number to non-instruction error messages', () => {
+            const messagesSpy = jest.spyOn(MessagesModule, 'SolanaErrorMessages', 'get');
+            messagesSpy.mockReturnValue({
+                // @ts-expect-error Mock error config doesn't conform to exported config.
+                123: 'some other error',
+            });
+            const message = getErrorMessage(
+                // @ts-expect-error Mock error context doesn't conform to exported context.
+                123,
+                { index: 0 },
+            );
+            expect(message).toBe('some other error');
         });
     });
 });

@@ -450,7 +450,7 @@ export const SolanaErrorMessages: Readonly<{
     [SOLANA_ERROR__INSTRUCTION_ERROR__UNBALANCED_INSTRUCTION]:
         'sum of account balances before and after instruction do not match',
     [SOLANA_ERROR__INSTRUCTION_ERROR__UNINITIALIZED_ACCOUNT]: 'instruction requires an initialized account',
-    [SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN]: '',
+    [SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN]: 'The instruction failed with the error: $errorName',
     [SOLANA_ERROR__INSTRUCTION_ERROR__UNSUPPORTED_PROGRAM_ID]: 'Unsupported program id',
     [SOLANA_ERROR__INSTRUCTION_ERROR__UNSUPPORTED_SYSVAR]: 'Unsupported sysvar',
     [SOLANA_ERROR__INVARIANT_VIOLATION__INVALID_INSTRUCTION_PLAN_KIND]: 'Invalid instruction plan kind: $kind.',
