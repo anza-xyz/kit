@@ -510,8 +510,8 @@ describe('createSignerFromWalletAccount', () => {
         const alreadyAbortedSignal = abortController.signal;
 
         // Then it rejects with the abort error.
-        await expect(
-            signer.modifyAndSignTransactions([tx], { abortSignal: alreadyAbortedSignal }),
-        ).rejects.toThrow(new Error('o no'));
+        await expect(signer.modifyAndSignTransactions([tx], { abortSignal: alreadyAbortedSignal })).rejects.toThrow(
+            new Error('o no'),
+        );
     });
 });

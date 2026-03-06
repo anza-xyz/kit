@@ -1365,30 +1365,12 @@ importers:
       '@solana/offchain-messages':
         specifier: workspace:*
         version: link:../offchain-messages
-      '@solana/promises':
-        specifier: workspace:*
-        version: link:../promises
       '@solana/transaction-messages':
         specifier: workspace:*
         version: link:../transaction-messages
       '@solana/transactions':
         specifier: workspace:*
         version: link:../transactions
-      '@solana/wallet-standard-chains':
-        specifier: ^1.1.1
-        version: 1.1.1
-      '@solana/wallet-standard-features':
-        specifier: ^1.3.0
-        version: 1.3.0
-      '@wallet-standard/errors':
-        specifier: ^0.1.1
-        version: 0.1.1
-      '@wallet-standard/ui':
-        specifier: ^1.0.1
-        version: 1.0.1
-      '@wallet-standard/ui-registry':
-        specifier: ^1.0.1
-        version: 1.0.1
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
@@ -1610,9 +1592,49 @@ importers:
 
   packages/wallet-account-signer:
     dependencies:
+      '@solana/addresses':
+        specifier: workspace:*
+        version: link:../addresses
+      '@solana/codecs-core':
+        specifier: workspace:*
+        version: link:../codecs-core
+      '@solana/keys':
+        specifier: workspace:*
+        version: link:../keys
+      '@solana/promises':
+        specifier: workspace:*
+        version: link:../promises
+      '@solana/signers':
+        specifier: workspace:*
+        version: link:../signers
+      '@solana/transaction-messages':
+        specifier: workspace:*
+        version: link:../transaction-messages
+      '@solana/transactions':
+        specifier: workspace:*
+        version: link:../transactions
+      '@solana/wallet-standard-chains':
+        specifier: ^1.1.1
+        version: 1.1.1
+      '@solana/wallet-standard-features':
+        specifier: ^1.3.0
+        version: 1.3.0
+      '@wallet-standard/errors':
+        specifier: ^0.1.1
+        version: 0.1.1
+      '@wallet-standard/ui':
+        specifier: ^1.0.1
+        version: 1.0.1
+      '@wallet-standard/ui-registry':
+        specifier: ^1.0.1
+        version: 1.0.1
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
+    devDependencies:
+      '@solana/errors':
+        specifier: workspace:*
+        version: link:../errors
 
   packages/webcrypto-ed25519-polyfill:
     dependencies:

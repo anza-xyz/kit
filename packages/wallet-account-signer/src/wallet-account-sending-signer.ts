@@ -1,6 +1,7 @@
 import { address } from '@solana/addresses';
 import { SignatureBytes } from '@solana/keys';
 import { getAbortablePromise } from '@solana/promises';
+import { TransactionSendingSigner } from '@solana/signers';
 import { getTransactionEncoder } from '@solana/transactions';
 import { SolanaChain } from '@solana/wallet-standard-chains';
 import { SolanaSignAndSendTransaction, SolanaSignAndSendTransactionFeature } from '@solana/wallet-standard-features';
@@ -10,8 +11,6 @@ import {
 } from '@wallet-standard/errors';
 import { getWalletAccountFeature, UiWalletAccount } from '@wallet-standard/ui';
 import { getWalletAccountForUiWalletAccount_DO_NOT_USE_OR_YOU_WILL_BE_FIRED } from '@wallet-standard/ui-registry';
-
-import { TransactionSendingSigner } from './transaction-sending-signer';
 
 /**
  * Creates a {@link TransactionSendingSigner} from a {@link UiWalletAccount}.
@@ -28,7 +27,7 @@ import { TransactionSendingSigner } from './transaction-sending-signer';
  *
  * @example
  * ```ts
- * import { createSendingSignerFromWalletAccount } from '@solana/signers';
+ * import { createSendingSignerFromWalletAccount } from '@solana/wallet-account-signer';
  *
  * const signer = createSendingSignerFromWalletAccount(walletAccount, 'solana:devnet');
  * const [signature] = await signer.signAndSendTransactions([transaction]);
@@ -46,8 +45,8 @@ export function createSendingSignerFromWalletAccount<TWalletAccount extends UiWa
             address: uiWalletAccount.address,
             chain,
             featureName: SolanaSignAndSendTransaction,
-            supportedChains: uiWalletAccount.chains,
-            supportedFeatures: uiWalletAccount.features,
+            supportedChains: uiWalletAccount.chains as string[],
+            supportedFeatures: uiWalletAccount.features as string[],
         });
     }
 

@@ -1,6 +1,6 @@
+import { TransactionSendingSigner } from '@solana/signers';
 import { UiWalletAccount } from '@wallet-standard/ui';
 
-import { TransactionSendingSigner } from '../transaction-sending-signer';
 import { createSendingSignerFromWalletAccount } from '../wallet-account-sending-signer';
 
 const mockAccount = {

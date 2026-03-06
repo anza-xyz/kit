@@ -1,6 +1,6 @@
+import { TransactionModifyingSigner } from '@solana/signers';
 import { UiWalletAccount } from '@wallet-standard/ui';
 
-import { TransactionModifyingSigner } from '../transaction-modifying-signer';
 import { createSignerFromWalletAccount } from '../wallet-account-signer';
 
 const mockAccount = {

@@ -1,5 +1,6 @@
 import { address } from '@solana/addresses';
 import { bytesEqual } from '@solana/codecs-core';
+import { TransactionModifyingSigner } from '@solana/signers';
 import { getCompiledTransactionMessageDecoder } from '@solana/transaction-messages';
 import {
     assertIsTransactionWithinSizeLimit,
@@ -18,8 +19,6 @@ import {
 import { getWalletAccountFeature, UiWalletAccount } from '@wallet-standard/ui';
 import { getWalletAccountForUiWalletAccount_DO_NOT_USE_OR_YOU_WILL_BE_FIRED } from '@wallet-standard/ui-registry';
 
-import { TransactionModifyingSigner } from './transaction-modifying-signer';
-
 /**
  * Creates a {@link TransactionModifyingSigner} from a {@link UiWalletAccount}.
  *
@@ -35,7 +34,7 @@ import { TransactionModifyingSigner } from './transaction-modifying-signer';
  *
  * @example
  * ```ts
- * import { createSignerFromWalletAccount } from '@solana/signers';
+ * import { createSignerFromWalletAccount } from '@solana/wallet-account-signer';
  *
  * const signer = createSignerFromWalletAccount(walletAccount, 'solana:devnet');
  * const [signedTransaction] = await signer.modifyAndSignTransactions([transaction]);
@@ -53,8 +52,8 @@ export function createSignerFromWalletAccount<TWalletAccount extends UiWalletAcc
             address: uiWalletAccount.address,
             chain,
             featureName: SolanaSignTransaction,
-            supportedChains: uiWalletAccount.chains,
-            supportedFeatures: uiWalletAccount.features,
+            supportedChains: uiWalletAccount.chains as string[],
+            supportedFeatures: uiWalletAccount.features as string[],
         });
     }
     const signTransactionFeature = getWalletAccountFeature(
@@ -136,7 +135,9 @@ export function createSignerFromWalletAccount<TWalletAccount extends UiWalletAcc
                         decodedSignedTransaction.messageBytes,
                     );
                     const lifetimeConstraint =
-                        await getTransactionLifetimeConstraintFromCompiledTransactionMessage(compiledTransactionMessage);
+                        await getTransactionLifetimeConstraintFromCompiledTransactionMessage(
+                            compiledTransactionMessage,
+                        );
                     return Object.freeze({
                         ...decodedSignedTransaction,
                         lifetimeConstraint,
