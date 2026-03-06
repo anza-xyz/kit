@@ -1,5 +1,17 @@
 # @solana/errors
 
+## 6.2.0
+
+### Patch Changes
+
+- [#1440](https://github.com/anza-xyz/kit/pull/1440) [`0d0be3e`](https://github.com/anza-xyz/kit/commit/0d0be3e18bfbb053b92c4b2d338c5bb0ed414bcc) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Append the instruction index to all instruction error messages (e.g. `(instruction #1)`) and add a human-readable message for unknown instruction errors.
+
+- [#1432](https://github.com/anza-xyz/kit/pull/1432) [`7568a12`](https://github.com/anza-xyz/kit/commit/7568a127e1d1197d2362be464117bc41c82b01ad) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add `SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION` and `SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS` error codes for high-level transaction sending wrappers.
+
+- [#1442](https://github.com/anza-xyz/kit/pull/1442) [`e33a65f`](https://github.com/anza-xyz/kit/commit/e33a65fd18d52bd2d7a0018ff9a152ff6f43a3b3) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Remove stale `$encodedData` interpolation from the `BORSH_IO_ERROR` message. The `encodedData` context property was removed in v5.0.0 but the message template was not updated, causing the literal `$encodedData` to appear in the rendered error message.
+
+- [#1433](https://github.com/anza-xyz/kit/pull/1433) [`49c1195`](https://github.com/anza-xyz/kit/commit/49c1195637a8d550b864918e96d9f9681f658bfe) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add `abortReason` to the `SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN` error context so consumers can access the abort reason when converting this error to higher-level error types.
+
 ## 6.1.0
 
 ### Patch Changes

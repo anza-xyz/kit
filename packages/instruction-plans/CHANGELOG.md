@@ -1,5 +1,23 @@
 # @solana/instruction-plans
 
+## 6.2.0
+
+### Patch Changes
+
+- [#1435](https://github.com/anza-xyz/kit/pull/1435) [`98a8869`](https://github.com/anza-xyz/kit/commit/98a8869d5a728a65b7a525d87ed481616112503c) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add `createFailedToExecuteTransactionPlanError` factory helper for custom transaction plan executor authors and refactor the built-in executor to use it.
+
+- [#1434](https://github.com/anza-xyz/kit/pull/1434) [`79db829`](https://github.com/anza-xyz/kit/commit/79db8292b2064145f615576589d8ecbf32196dc1) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add `createFailedToSendTransactionError` and `createFailedToSendTransactionsError` factory helpers that create high-level `SolanaError` instances from failed or canceled transaction plan results, with unwrapped simulation errors, preflight data, and logs in the error context.
+
+- [#1433](https://github.com/anza-xyz/kit/pull/1433) [`49c1195`](https://github.com/anza-xyz/kit/commit/49c1195637a8d550b864918e96d9f9681f658bfe) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add `abortReason` to the `SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN` error context so consumers can access the abort reason when converting this error to higher-level error types.
+
+- Updated dependencies [[`0d0be3e`](https://github.com/anza-xyz/kit/commit/0d0be3e18bfbb053b92c4b2d338c5bb0ed414bcc), [`7568a12`](https://github.com/anza-xyz/kit/commit/7568a127e1d1197d2362be464117bc41c82b01ad), [`e33a65f`](https://github.com/anza-xyz/kit/commit/e33a65fd18d52bd2d7a0018ff9a152ff6f43a3b3), [`49c1195`](https://github.com/anza-xyz/kit/commit/49c1195637a8d550b864918e96d9f9681f658bfe)]:
+    - @solana/errors@6.2.0
+    - @solana/instructions@6.2.0
+    - @solana/keys@6.2.0
+    - @solana/transaction-messages@6.2.0
+    - @solana/transactions@6.2.0
+    - @solana/promises@6.2.0
+
 ## 6.1.0
 
 ### Minor Changes
