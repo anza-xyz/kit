@@ -1,6 +1,6 @@
 {
     "name": "@solana/plugin-core",
-    "version": "6.1.0",
+    "version": "6.2.0",
     "description": "Core helpers for creating and extending Kit clients with plugins",
     "homepage": "https://www.solanakit.com/api#solanaplugin-core",
     "exports": {
