@@ -5,4 +5,5 @@
  *
  * @packageDocumentation
  */
-export {};
+export * from './wallet-account-sending-signer';
+export * from './wallet-account-signer';

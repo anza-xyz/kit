@@ -55,7 +55,9 @@
         "test:treeshakability:browser": "agadoo dist/index.browser.mjs",
         "test:treeshakability:native": "agadoo dist/index.native.mjs",
         "test:treeshakability:node": "agadoo dist/index.node.mjs",
-        "test:typecheck": "tsc --noEmit"
+        "test:typecheck": "tsc --noEmit",
+        "test:unit:browser": "NODE_OPTIONS=\"--no-experimental-webstorage\" TERM_OVERRIDE=\"${TURBO_HASH:+dumb}\" TERM=${TERM_OVERRIDE:-$TERM} jest -c ../../node_modules/@solana/test-config/jest-unit.config.browser.js --rootDir . --silent",
+        "test:unit:node": "NODE_OPTIONS=\"--no-experimental-webstorage\" TERM_OVERRIDE=\"${TURBO_HASH:+dumb}\" TERM=${TERM_OVERRIDE:-$TERM} jest -c ../../node_modules/@solana/test-config/jest-unit.config.node.js --rootDir . --silent"
     },
     "author": "Solana Labs Maintainers <maintainers@solanalabs.com>",
     "license": "MIT",
@@ -70,8 +72,23 @@
         "supports bigint and not dead",
         "maintained node versions"
     ],
-    "dependencies": {},
-    "devDependencies": {},
+    "dependencies": {
+        "@solana/addresses": "workspace:*",
+        "@solana/codecs-core": "workspace:*",
+        "@solana/keys": "workspace:*",
+        "@solana/promises": "workspace:*",
+        "@solana/signers": "workspace:*",
+        "@solana/transaction-messages": "workspace:*",
+        "@solana/transactions": "workspace:*",
+        "@solana/wallet-standard-chains": "^1.1.1",
+        "@solana/wallet-standard-features": "^1.3.0",
+        "@wallet-standard/errors": "^0.1.1",
+        "@wallet-standard/ui": "^1.0.1",
+        "@wallet-standard/ui-registry": "^1.0.1"
+    },
+    "devDependencies": {
+        "@solana/errors": "workspace:*"
+    },
     "peerDependencies": {
         "typescript": "^5.0.0"
     },
