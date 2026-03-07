@@ -1,4 +1,4 @@
-import { bytesEqual, fixBytes, mergeBytes, padBytes } from '../bytes';
+import { bytesEqual, containsBytes, fixBytes, mergeBytes, padBytes } from '../bytes';
 
 describe('mergeBytes', () => {
     it('can merge multiple arrays of bytes together', () => {
@@ -68,5 +68,39 @@ describe('bytesEqual', () => {
     it('returns false when byte arrays are different lengths', () => {
         expect(bytesEqual(new Uint8Array([1, 2, 3]), new Uint8Array([1, 2, 3, 4]))).toBe(false);
         expect(bytesEqual(new Uint8Array([1, 2, 3, 4]), new Uint8Array([1, 2, 3]))).toBe(false);
+    });
+});
+
+describe('containsBytes', () => {
+    it('returns true when the data contains the bytes at the given offset', () => {
+        const data = new Uint8Array([1, 2, 3, 4]);
+        expect(containsBytes(data, new Uint8Array([1, 2, 3, 4]), 0)).toBe(true);
+        expect(containsBytes(data, new Uint8Array([2, 3]), 1)).toBe(true);
+        expect(containsBytes(data, new Uint8Array([1, 2]), 2)).toBe(false);
+    });
+
+    it('does not slice the data when offset is 0', () => {
+        const data = new Uint8Array([1, 2, 3]);
+        // Spy on slice to confirm it is not called when offset === 0.
+        const sliceSpy = jest.spyOn(data, 'slice');
+        containsBytes(data, new Uint8Array([1, 2, 3]), 0);
+        expect(sliceSpy).not.toHaveBeenCalled();
+        sliceSpy.mockRestore();
+    });
+
+    it('does not slice the data when offset equals negative byteLength', () => {
+        const data = new Uint8Array([1, 2, 3]);
+        const sliceSpy = jest.spyOn(data, 'slice');
+        containsBytes(data, new Uint8Array([1, 2, 3]), -3);
+        expect(sliceSpy).not.toHaveBeenCalled();
+        sliceSpy.mockRestore();
+    });
+
+    it('slices the data when offset is a non-zero partial offset', () => {
+        const data = new Uint8Array([1, 2, 3]);
+        const sliceSpy = jest.spyOn(data, 'slice');
+        containsBytes(data, new Uint8Array([2, 3]), 1);
+        expect(sliceSpy).toHaveBeenCalled();
+        sliceSpy.mockRestore();
     });
 });
