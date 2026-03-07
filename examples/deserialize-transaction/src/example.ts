@@ -241,10 +241,10 @@ log.info(compiledTransactionMessage.staticAccounts, '[step 2] Static accounts of
 
 // Note that the destination address (F1Vc6AGoxXLwGB7QV8f4So3C5d8SXEk3KKGHxKGEJ8qn) is not here, as it comes from the lookup table
 
-// The `addressLookupTables` field is only included for non-legacy transactions
+// The `addressLookupTables` field is only included for v0 transactions
 // Here we tell Typescript to narrow the type to exclude legacy transactions
-if (compiledTransactionMessage.version === 'legacy') {
-    throw new Error('We used version: 0');
+if (compiledTransactionMessage.version !== 0) {
+    throw new Error('We compiled with version: 0');
 }
 
 // Now we can view address lookup tables:
