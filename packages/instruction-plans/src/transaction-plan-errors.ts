@@ -223,13 +223,10 @@ function unwrapErrorWithPreflightData(error: Error): {
     ];
     if (isSolanaError(error) && simulationCodes.includes(error.context.__code)) {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { __code, ...rest } = error.context;
-        // TODO(loris): Remove this cast once FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT
-        // is enriched with the full simulation result (logs, accounts, etc.).
-        const preflightData = rest as unknown as PreflightData;
+        const { __code, ...preflightData } = error.context;
         return {
-            logs: preflightData.logs ?? undefined,
-            preflightData,
+            logs: (preflightData as PreflightData).logs ?? undefined,
+            preflightData: preflightData as PreflightData,
             unwrappedError: error.cause ?? error,
         };
     }

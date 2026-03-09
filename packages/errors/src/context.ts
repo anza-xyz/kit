@@ -776,9 +776,10 @@ export type SolanaErrorContext = ReadonlyContextValue<
             [SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_PROGRAM_ADDRESS_NOT_FOUND]: {
                 index: number;
             };
-            [SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT]: {
-                unitsConsumed: number;
-            };
+            [SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT]: Omit<
+                RpcSimulateTransactionResult,
+                'err'
+            >;
             [SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_MASK_PRIORITY_FEE_BITS]: {
                 mask: number;
             };

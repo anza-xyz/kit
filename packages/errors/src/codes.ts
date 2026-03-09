@@ -668,7 +668,9 @@ export type SolanaErrorCode =
  * Errors of this type are understood to have an optional {@link SolanaError} nested inside as
  * `cause`.
  */
-export type SolanaErrorCodeWithCause = typeof SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE;
+export type SolanaErrorCodeWithCause =
+    | typeof SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE
+    | typeof SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT;
 
 /**
  * Errors of this type have a deprecated `cause` property. Consumers should use the error's

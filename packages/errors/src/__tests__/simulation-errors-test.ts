@@ -40,8 +40,8 @@ describe('unwrapSimulationError', () => {
         it('returns the cause of the error', () => {
             const cause = new Error('underlying error');
             const error = new SolanaError(SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT, {
+                ...rpcSimulationError,
                 cause,
-                unitsConsumed: 5000,
             });
             expect(unwrapSimulationError(error)).toBe(cause);
         });
@@ -50,7 +50,7 @@ describe('unwrapSimulationError', () => {
     describe('given a simulation compute limit estimation failure error without a cause', () => {
         it('returns the original error unchanged', () => {
             const error = new SolanaError(SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT, {
-                unitsConsumed: 5000,
+                ...rpcSimulationError,
             });
             expect(unwrapSimulationError(error)).toBe(error);
         });

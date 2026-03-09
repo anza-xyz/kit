@@ -148,36 +148,33 @@ describe('createFailedToSendTransactionError', () => {
             const innerError = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
             const simulationError = new SolanaError(
                 SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT,
-                { cause: innerError, unitsConsumed: 5000 },
+                { ...preflightContext, cause: innerError },
             );
             const result = failedSingleTransactionPlanResult(createMessage('A'), simulationError);
             const error = createFailedToSendTransactionError(result);
             expect(error.cause).toBe(innerError);
         });
 
-        // TODO(loris): The context of this error code currently only contains `{ unitsConsumed }`.
-        // Once we enrich it with the full simulation result, preflightData will be complete and
-        // logs will be available.
         it('sets preflightData from the simulation error context', () => {
             const innerError = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
             const simulationError = new SolanaError(
                 SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT,
-                { cause: innerError, unitsConsumed: 5000 },
+                { ...preflightContext, cause: innerError },
             );
             const result = failedSingleTransactionPlanResult(createMessage('A'), simulationError);
             const error = createFailedToSendTransactionError(result);
-            expect(error.context.preflightData).toEqual({ unitsConsumed: 5000 });
+            expect(error.context.preflightData).toEqual(preflightContext);
         });
 
-        it('sets logs to undefined', () => {
+        it('sets logs from the simulation error context', () => {
             const innerError = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
             const simulationError = new SolanaError(
                 SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT,
-                { cause: innerError, unitsConsumed: 5000 },
+                { ...preflightContext, cause: innerError },
             );
             const result = failedSingleTransactionPlanResult(createMessage('A'), simulationError);
             const error = createFailedToSendTransactionError(result);
-            expect(error.context.logs).toBeUndefined();
+            expect(error.context.logs).toEqual(preflightContext.logs);
         });
     });
 
