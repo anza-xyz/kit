@@ -7,6 +7,7 @@ import { TransactionMessageWithLifetime } from '../lifetime';
 import { TransactionMessage } from '../transaction-message';
 import { decompileTransactionMessage as decompileLegacyTransactionMessage } from './legacy/message';
 import { decompileTransactionMessage as decompileV0TransactionMessage } from './v0/message';
+import { decompileTransactionMessage as decompileV1TransactionMessage } from './v1/message';
 
 export type DecompileTransactionMessageConfig = {
     /**
@@ -46,6 +47,10 @@ export function decompileTransactionMessage(
     config?: DecompileTransactionMessageConfig,
 ): TransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithLifetime & { version: 0 };
 export function decompileTransactionMessage(
+    compiledTransactionMessage: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime & { version: 1 },
+    config?: DecompileTransactionMessageConfig,
+): TransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithLifetime & { version: 1 };
+export function decompileTransactionMessage(
     compiledTransactionMessage: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime,
     config?: DecompileTransactionMessageConfig,
 ): TransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithLifetime;
@@ -59,6 +64,8 @@ export function decompileTransactionMessage(
         return decompileLegacyTransactionMessage(compiledTransactionMessage, config);
     } else if (version === 0) {
         return decompileV0TransactionMessage(compiledTransactionMessage, config);
+    } else if (version === 1) {
+        return decompileV1TransactionMessage(compiledTransactionMessage, config);
     } else {
         throw new SolanaError(SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED, {
             version,

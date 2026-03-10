@@ -45,6 +45,13 @@ import { decompileTransactionMessage } from '../message';
                 CompiledTransactionMessageWithLifetime & { version: 0 };
             decompileTransactionMessage(compiledTransactionMessage) satisfies TransactionMessage & { version: 0 };
         }
+
+        // for v1
+        {
+            const compiledTransactionMessage = null as unknown as CompiledTransactionMessage &
+                CompiledTransactionMessageWithLifetime & { version: 1 };
+            decompileTransactionMessage(compiledTransactionMessage) satisfies TransactionMessage & { version: 1 };
+        }
     }
 
     // Lifetime can be narrowed
@@ -72,6 +79,8 @@ import { decompileTransactionMessage } from '../message';
             transactionMessage satisfies TransactionMessage & { version: 'legacy' };
         } else if (transactionMessage.version === 0) {
             transactionMessage satisfies TransactionMessage & { version: 0 };
+        } else if (transactionMessage.version === 1) {
+            transactionMessage satisfies TransactionMessage & { version: 1 };
         }
     }
 }
