@@ -1,9 +1,10 @@
 import { addCodecSentinel, addCodecSizePrefix, fixCodecSize, offsetCodec, resizeCodec } from '@solana/codecs-core';
-import { getU8Codec, getU32Codec, getU64Codec } from '@solana/codecs-numbers';
+import { getU8Codec, getU8Decoder, getU32Codec, getU32Decoder, getU64Codec } from '@solana/codecs-numbers';
 import { getUtf8Codec } from '@solana/codecs-strings';
 
+import { getArrayDecoder } from '../array';
 import { getNullableCodec } from '../nullable';
-import { getStructCodec } from '../struct';
+import { getStructCodec, structDecoderBuilder } from '../struct';
 import { b } from './__setup__';
 
 describe('getStructCodec', () => {
@@ -87,5 +88,82 @@ describe('getStructCodec', () => {
         const john = { age: 42, firstname: 'John', lastname: 'Doe' };
         expect(person.encode(john)).toStrictEqual(b('4a6f686eff446f65ff2a'));
         expect(person.decode(b('4a6f686eff446f65ff2a'))).toStrictEqual(john);
+    });
+});
+
+describe('structDecoderBuilder', () => {
+    it('decodes structs with static fields', () => {
+        const decoder = structDecoderBuilder().field('x', getU32Decoder()).field('y', getU32Decoder()).build();
+
+        const result = decoder.decode(b('0100000002000000'));
+        expect(result).toStrictEqual({ x: 1, y: 2 });
+    });
+
+    it('decodes structs with dependent fields', () => {
+        // Array whose length is determined by a previous field
+        const decoder = structDecoderBuilder()
+            .field('length', getU32Decoder())
+            .field('items', fields => getArrayDecoder(getU8Decoder(), { size: fields.length }))
+            .build();
+
+        const bytes = b('03000000' + '0a0b0c'); // length=3, items=[10, 11, 12]
+        const result = decoder.decode(bytes);
+
+        expect(result).toStrictEqual({
+            items: [10, 11, 12],
+            length: 3,
+        });
+    });
+
+    it('supports multiple dependent fields with version 1', () => {
+        const decoderV1 = structDecoderBuilder()
+            .field('version', getU8Decoder())
+            .field('count', getU32Decoder())
+            .field('data', fields => getArrayDecoder(getU8Decoder(), { size: fields.count }))
+            .field('checksum', () => getU8Decoder())
+            .build();
+
+        const bytes = b('01' + '02000000' + '0a0b' + 'ff');
+        const result = decoderV1.decode(bytes);
+        expect(result).toStrictEqual({
+            checksum: 255,
+            count: 2,
+            data: [10, 11],
+            version: 1,
+        });
+    });
+
+    it('supports multiple dependent fields with version 2', () => {
+        const decoderV2 = structDecoderBuilder()
+            .field('version', getU8Decoder())
+            .field('count', getU32Decoder())
+            .field('data', fields => getArrayDecoder(getU8Decoder(), { size: fields.count }))
+            .field('checksum', () => getU32Decoder())
+            .build();
+
+        const bytes = b('02' + '02000000' + '0a0b' + 'ff000000');
+        const result = decoderV2.decode(bytes);
+        expect(result).toStrictEqual({
+            checksum: 255,
+            count: 2,
+            data: [10, 11],
+            version: 2,
+        });
+    });
+
+    it('respects offset when reading', () => {
+        const decoder = structDecoderBuilder()
+            .field('length', getU32Decoder())
+            .field('items', fields => getArrayDecoder(getU8Decoder(), { size: fields.length }))
+            .build();
+
+        const bytes = b('ffff' + '02000000' + '0a0b'); // Offset by 2 bytes
+        const [result, newOffset] = decoder.read(bytes, 2);
+
+        expect(result).toStrictEqual({
+            items: [10, 11],
+            length: 2,
+        });
+        expect(newOffset).toBe(8); // 2 (initial offset) + 4 (u32) + 2 (2 u8s)
     });
 });

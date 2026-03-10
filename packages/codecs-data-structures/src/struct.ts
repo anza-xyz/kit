@@ -237,3 +237,176 @@ export function getStructCodec<const TFields extends Fields<Codec<any>>>(
         getStructDecoder(fields) as Decoder<GetDecoderTypeFromFields<TFields> & GetEncoderTypeFromFields<TFields>>,
     );
 }
+
+/**
+ * Represents a single field definition in the struct builder.
+ * Can be either a static decoder or a function that receives the partially decoded struct.
+ */
+type FieldDefinition = {
+    codec: Decoder<any> | ((partial: any) => Decoder<any>);
+    key: string;
+};
+
+/**
+ * A builder for creating struct decoders with dependent fields.
+ *
+ * This builder allows later fields to access previously decoded values, enabling
+ * use cases like variable-length arrays where the length is stored in an earlier field.
+ *
+ * @typeParam TPartial - The accumulated type of all fields defined so far.
+ */
+export interface StructDecoderBuilder<TPartial> {
+    /**
+     * Builds the final decoder from the accumulated field definitions.
+     *
+     * @returns A decoder that decodes all defined fields in sequence.
+     *          If any field is dynamic (depends on previous fields), the resulting decoder
+     *          will be a `VariableSizeDecoder`. Otherwise, size is determined by the static fields.
+     *
+     * @example
+     * Building and using a struct decoder.
+     * ```ts
+     * const decoder = structDecoderBuilder()
+     *   .field('x', getU32Decoder())
+     *   .field('y', getU32Decoder())
+     *   .build();
+     *
+     * const point = decoder.decode(bytes);
+     * // point: { x: number, y: number }
+     * ```
+     */
+    build(): Decoder<TPartial>;
+
+    /**
+     * Adds a field to the struct decoder.
+     *
+     * @typeParam K - The field name (string literal).
+     * @typeParam V - The type of the decoded value.
+     *
+     * @param key - The name of the field.
+     * @param codec - Either a `Decoder<V>` or a function that receives the partially decoded struct
+     *                and returns a `Decoder<V>`. This allows the decoder to depend on previously decoded fields.
+     * @returns A new builder with the field added to the accumulated type.
+     *
+     * @example
+     * Creating a struct where the array length depends on a previous field.
+     * ```ts
+     * const decoder = structDecoderBuilder()
+     *   .field('version', getU8Decoder())
+     *   .field('length', getU32Decoder())
+     *   .field('data', (fields) => getArrayDecoder(getU8Decoder(), { size: fields.length }))
+     *   .build();
+     *
+     * const result = decoder.decode(bytes);
+     * // result: { version: number, length: number, data: number[] }
+     * ```
+     */
+    field<K extends string, V>(
+        key: K,
+        codec: Decoder<V> | ((partial: TPartial) => Decoder<V>),
+    ): StructDecoderBuilder<Record<K, V> & TPartial>;
+}
+
+/**
+ * Internal implementation of the struct decoder builder.
+ */
+class StructDecoderBuilderImpl<TPartial> implements StructDecoderBuilder<TPartial> {
+    constructor(private readonly fields: readonly FieldDefinition[] = []) {}
+
+    field<K extends string, V>(
+        key: K,
+        codec: Decoder<V> | ((partial: TPartial) => Decoder<V>),
+    ): StructDecoderBuilder<Record<K, V> & TPartial> {
+        return new StructDecoderBuilderImpl<Record<K, V> & TPartial>([...this.fields, { codec, key }]);
+    }
+
+    build(): Decoder<TPartial> {
+        const fields = this.fields;
+
+        // Check if all fields are static decoders (not functions)
+        const hasDynamicFields = fields.some(f => typeof f.codec === 'function');
+
+        if (!hasDynamicFields) {
+            // All fields are static - we can compute fixed/variable size
+            const staticCodecs = fields.map(f => f.codec as Decoder<any>);
+            const fixedSize = sumCodecSizes(staticCodecs.map(getFixedSize));
+            const maxSize = sumCodecSizes(staticCodecs.map(getMaxSize)) ?? undefined;
+
+            return createDecoder({
+                ...(fixedSize === null ? { maxSize } : { fixedSize }),
+                read: (bytes: ReadonlyUint8Array | Uint8Array, offset) => {
+                    const struct = {} as TPartial;
+                    for (const { key, codec } of fields) {
+                        const [value, newOffset] = (codec as Decoder<any>).read(bytes, offset);
+                        offset = newOffset;
+                        (struct as any)[key] = value;
+                    }
+                    return [struct, offset];
+                },
+            });
+        } else {
+            // Has dynamic fields - treat as variable size
+            // We could be smarter about maxSize here, but it's complex
+            return createDecoder({
+                read: (bytes: ReadonlyUint8Array | Uint8Array, offset) => {
+                    const struct = {} as TPartial;
+                    for (const { key, codec } of fields) {
+                        const actualCodec = typeof codec === 'function' ? codec(struct) : codec;
+                        const [value, newOffset] = actualCodec.read(bytes, offset);
+                        offset = newOffset;
+                        (struct as any)[key] = value;
+                    }
+                    return [struct, offset];
+                },
+            });
+        }
+    }
+}
+
+/**
+ * Creates a new struct decoder builder.
+ *
+ * This builder enables creating struct decoders where later fields can depend on
+ * values decoded from earlier fields. This is particularly useful for variable-length
+ * structures where the length is stored as a prefix.
+ *
+ * @returns An empty builder ready to have fields added via `.field()`.
+ *
+ * @example
+ * Building a decoder for a length-prefixed array.
+ * ```ts
+ * const decoder = structDecoderBuilder()
+ *   .field('length', getU32Decoder())
+ *   .field('items', (fields) => getArrayDecoder(getU8Decoder(), { size: fields.length }))
+ *   .build();
+ *
+ * const bytes = new Uint8Array([
+ *   0x03, 0x00, 0x00, 0x00,  // length = 3
+ *   0x0a, 0x0b, 0x0c          // items = [10, 11, 12]
+ * ]);
+ *
+ * const result = decoder.decode(bytes);
+ * // { length: 3, items: [10, 11, 12] }
+ * ```
+ *
+ * @example
+ * Building a decoder with conditional structure based on a version field.
+ * ```ts
+ * const decoder = structDecoderBuilder()
+ *   .field('version', getU8Decoder())
+ *   .field('data', (fields) =>
+ *     fields.version === 1
+ *       ? getU32Decoder()  // v1: 32-bit data
+ *       : getU64Decoder()  // v2: 64-bit data
+ *   )
+ *   .build();
+ * ```
+ *
+ * @see {@link StructDecoderBuilder}
+ * @see {@link getStructDecoder}
+ */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export function structDecoderBuilder(): StructDecoderBuilder<{}> {
+    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+    return new StructDecoderBuilderImpl<{}>([]);
+}
