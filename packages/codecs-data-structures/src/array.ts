@@ -26,7 +26,6 @@ import { getFixedSize, getMaxSize } from './utils';
  * - A {@link NumberCodec}, {@link NumberDecoder}, or {@link NumberEncoder} to store a size prefix.
  * - A fixed `number` of items, enforcing an exact length.
  * - The string `"remainder"`, which infers the number of items by consuming the rest of the available bytes.
- *   This option is only available when encoding fixed-size items.
  *
  * @typeParam TPrefix - A number codec, decoder, or encoder used for size prefixing.
  */
