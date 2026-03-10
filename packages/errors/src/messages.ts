@@ -237,7 +237,9 @@ import {
     SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT,
     SOLANA_ERROR__TRANSACTION__FEE_PAYER_MISSING,
     SOLANA_ERROR__TRANSACTION__FEE_PAYER_SIGNATURE_MISSING,
+    SOLANA_ERROR__TRANSACTION__INSTRUCTION_HEADERS_PAYLOADS_MISMATCH,
     SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_MASK_PRIORITY_FEE_BITS,
+    SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_VALUE_KIND,
     SOLANA_ERROR__TRANSACTION__INVALID_NONCE_ACCOUNT_INDEX,
     SOLANA_ERROR__TRANSACTION__INVALID_NONCE_TRANSACTION_FIRST_INSTRUCTION_MUST_BE_ADVANCE_NONCE,
     SOLANA_ERROR__TRANSACTION__INVALID_NONCE_TRANSACTION_INSTRUCTIONS_MISSING,
@@ -788,4 +790,8 @@ export const SolanaErrorMessages: Readonly<{
         'The provided transaction bytes expect that there should be $numExpectedSignatures signatures, but the bytes are not long enough to contain a transaction message with this many signatures. The provided bytes are $transactionBytesLength bytes long.',
     [SOLANA_ERROR__TRANSACTION__INVALID_NONCE_ACCOUNT_INDEX]:
         'The transaction has a durable nonce lifetime, but the nonce account index is invalid. Expected a nonce account index less than $numberOfStaticAccounts, got $nonceAccountIndex.',
+    [SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_VALUE_KIND]:
+        'The transaction config value for $configName has the incorrect kind. Expected $expectedKind, got $actualKind.',
+    [SOLANA_ERROR__TRANSACTION__INSTRUCTION_HEADERS_PAYLOADS_MISMATCH]:
+        'The transaction does not have the same number of instruction headers and instruction payloads. Got $numInstructionHeaders instruction headers, and $numInstructionPayloads instruction payloads.',
 };

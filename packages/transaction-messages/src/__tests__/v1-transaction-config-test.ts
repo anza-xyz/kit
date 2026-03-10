@@ -1,7 +1,16 @@
 import '@solana/test-matchers/toBeFrozenObject';
 
+import { SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_MASK_PRIORITY_FEE_BITS, SolanaError } from '@solana/errors';
+
 import { TransactionMessage } from '../transaction-message';
-import { setTransactionMessageConfig, V1TransactionConfig } from '../v1-transaction-config';
+import {
+    setTransactionMessageConfig,
+    transactionConfigMaskHasComputeUnitLimit,
+    transactionConfigMaskHasHeapSize,
+    transactionConfigMaskHasLoadedAccountsDataSizeLimit,
+    transactionConfigMaskHasPriorityFee,
+    V1TransactionConfig,
+} from '../v1-transaction-config';
 
 const COMPUTE_UNIT_LIMIT_A = 200_000;
 const COMPUTE_UNIT_LIMIT_B = 400_000;
@@ -178,5 +187,107 @@ describe('setTransactionMessageConfig', () => {
             const txWithoutConfig = setTransactionMessageConfig({ computeUnitLimit: undefined }, txWithConfig);
             expect(txWithoutConfig).not.toHaveProperty('config');
         });
+    });
+});
+
+describe('transactionConfigMaskHasPriorityFee', () => {
+    it('returns true when both bits 0 and 1 are set', () => {
+        const mask = 0b11;
+        expect(transactionConfigMaskHasPriorityFee(mask)).toBe(true);
+    });
+
+    it('returns false when both bits 0 and 1 are unset', () => {
+        const mask = 0b00;
+        expect(transactionConfigMaskHasPriorityFee(mask)).toBe(false);
+    });
+
+    it('returns true when priority fee bits are set with other bits', () => {
+        const mask = 0b11111;
+        expect(transactionConfigMaskHasPriorityFee(mask)).toBe(true);
+    });
+
+    it('returns false when priority fee bits are unset but other bits are set', () => {
+        const mask = 0b11100;
+        expect(transactionConfigMaskHasPriorityFee(mask)).toBe(false);
+    });
+
+    it('throws when only bit 0 is set', () => {
+        const mask = 0b01;
+        expect(() => transactionConfigMaskHasPriorityFee(mask)).toThrow(
+            new SolanaError(SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_MASK_PRIORITY_FEE_BITS, { mask }),
+        );
+    });
+
+    it('throws when only bit 1 is set', () => {
+        const mask = 0b10;
+        expect(() => transactionConfigMaskHasPriorityFee(mask)).toThrow(
+            new SolanaError(SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_MASK_PRIORITY_FEE_BITS, { mask }),
+        );
+    });
+});
+
+describe('transactionConfigMaskHasComputeUnitLimit', () => {
+    it('returns true when bit 2 is set', () => {
+        const mask = 0b100;
+        expect(transactionConfigMaskHasComputeUnitLimit(mask)).toBe(true);
+    });
+
+    it('returns false when bit 2 is unset', () => {
+        const mask = 0b0;
+        expect(transactionConfigMaskHasComputeUnitLimit(mask)).toBe(false);
+    });
+
+    it('returns true when bit 2 is set with other bits', () => {
+        const mask = 0b111;
+        expect(transactionConfigMaskHasComputeUnitLimit(mask)).toBe(true);
+    });
+
+    it('returns false when bit 2 is unset but other bits are set', () => {
+        const mask = 0b11011;
+        expect(transactionConfigMaskHasComputeUnitLimit(mask)).toBe(false);
+    });
+});
+
+describe('transactionConfigMaskHasLoadedAccountsDataSizeLimit', () => {
+    it('returns true when bit 3 is set', () => {
+        const mask = 0b1000;
+        expect(transactionConfigMaskHasLoadedAccountsDataSizeLimit(mask)).toBe(true);
+    });
+
+    it('returns false when bit 3 is unset', () => {
+        const mask = 0b0;
+        expect(transactionConfigMaskHasLoadedAccountsDataSizeLimit(mask)).toBe(false);
+    });
+
+    it('returns true when bit 3 is set with other bits', () => {
+        const mask = 0b1111;
+        expect(transactionConfigMaskHasLoadedAccountsDataSizeLimit(mask)).toBe(true);
+    });
+
+    it('returns false when bit 3 is unset but other bits are set', () => {
+        const mask = 0b10111;
+        expect(transactionConfigMaskHasLoadedAccountsDataSizeLimit(mask)).toBe(false);
+    });
+});
+
+describe('transactionConfigMaskHasHeapSize', () => {
+    it('returns true when bit 4 is set', () => {
+        const mask = 0b10000;
+        expect(transactionConfigMaskHasHeapSize(mask)).toBe(true);
+    });
+
+    it('returns false when bit 4 is unset', () => {
+        const mask = 0b0;
+        expect(transactionConfigMaskHasHeapSize(mask)).toBe(false);
+    });
+
+    it('returns true when bit 4 is set with other bits', () => {
+        const mask = 0b11111;
+        expect(transactionConfigMaskHasHeapSize(mask)).toBe(true);
+    });
+
+    it('returns false when bit 4 is unset but other bits are set', () => {
+        const mask = 0b01111;
+        expect(transactionConfigMaskHasHeapSize(mask)).toBe(false);
     });
 });

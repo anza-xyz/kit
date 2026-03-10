@@ -1,3 +1,5 @@
+import { SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_MASK_PRIORITY_FEE_BITS, SolanaError } from '@solana/errors';
+
 import { TransactionMessage, TransactionVersion } from './transaction-message';
 
 /**
@@ -119,4 +121,91 @@ export function setTransactionMessageConfig<
         ...transactionMessage,
         config: Object.freeze(mergedConfig),
     }) as TTransactionMessage;
+}
+
+export const TRANSACTION_CONFIG_PRIORITY_FEE_LAMPORTS_BIT_MASK = 0b11;
+export const TRANSACTION_CONFIG_COMPUTE_UNIT_LIMIT_BIT_MASK = 0b100;
+export const TRANSACTION_CONFIG_LOADED_ACCOUNTS_DATA_SIZE_LIMIT_BIT_MASK = 0b1000;
+export const TRANSACTION_CONFIG_HEAP_SIZE_BIT_MASK = 0b10000;
+
+/**
+ * Checks whether the transaction config mask indicates a priority fee is present.
+ *
+ * The priority fee uses bits 0 and 1 of the mask. Both bits must be set or
+ * both must be unset — having only one bit set is invalid and will throw an error.
+ *
+ * @param mask - The transaction config mask to check.
+ * @return `true` if the mask indicates a priority fee is present, `false` otherwise.
+ *
+ * @throws {SolanaError} Throws `SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_MASK_PRIORITY_FEE_BITS`
+ * if only one of the two priority fee bits is set.
+ *
+ * @example
+ * Check if a mask has a priority fee.
+ * ```ts
+ * const hasPriorityFee = transactionConfigMaskHasPriorityFee(0b11);
+ * // true (both bits 0 and 1 are set)
+ * ```
+ */
+export function transactionConfigMaskHasPriorityFee(mask: number): boolean {
+    // bits 0 and 1 must both be set or both be unset
+    const priorityFeeBits = mask & TRANSACTION_CONFIG_PRIORITY_FEE_LAMPORTS_BIT_MASK;
+    if (priorityFeeBits === 0b01 || priorityFeeBits === 0b10) {
+        throw new SolanaError(SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_MASK_PRIORITY_FEE_BITS, { mask });
+    }
+    return priorityFeeBits === TRANSACTION_CONFIG_PRIORITY_FEE_LAMPORTS_BIT_MASK;
+}
+
+/**
+ * Checks whether the transaction config mask indicates a compute unit limit is present.
+ *
+ * The compute unit limit uses bit 2 of the mask.
+ *
+ * @param mask - The transaction config mask to check.
+ * @return `true` if the mask indicates a compute unit limit is present, `false` otherwise.
+ *
+ * @example
+ * ```ts
+ * const hasComputeUnitLimit = transactionConfigMaskHasComputeUnitLimit(0b100);
+ * // true (bit 2 is set)
+ * ```
+ */
+export function transactionConfigMaskHasComputeUnitLimit(mask: number): boolean {
+    return (mask & TRANSACTION_CONFIG_COMPUTE_UNIT_LIMIT_BIT_MASK) !== 0;
+}
+
+/**
+ * Checks whether the transaction config mask indicates a loaded accounts data size limit is present.
+ *
+ * The loaded accounts data size limit uses bit 3 of the mask.
+ *
+ * @param mask - The transaction config mask to check.
+ * @return `true` if the mask indicates a loaded accounts data size limit is present, `false` otherwise.
+ *
+ * @example
+ * ```ts
+ * const hasLimit = transactionConfigMaskHasLoadedAccountsDataSizeLimit(0b1000);
+ * // true (bit 3 is set)
+ * ```
+ */
+export function transactionConfigMaskHasLoadedAccountsDataSizeLimit(mask: number): boolean {
+    return (mask & TRANSACTION_CONFIG_LOADED_ACCOUNTS_DATA_SIZE_LIMIT_BIT_MASK) !== 0;
+}
+
+/**
+ * Checks whether the transaction config mask indicates a heap size is present.
+ *
+ * The heap size uses bit 4 of the mask.
+ *
+ * @param mask - The transaction config mask to check.
+ * @return `true` if the mask indicates a heap size is present, `false` otherwise.
+ *
+ * @example
+ * ```ts
+ * const hasHeapSize = transactionConfigMaskHasHeapSize(0b10000);
+ * // true (bit 4 is set)
+ * ```
+ */
+export function transactionConfigMaskHasHeapSize(mask: number): boolean {
+    return (mask & TRANSACTION_CONFIG_HEAP_SIZE_BIT_MASK) !== 0;
 }

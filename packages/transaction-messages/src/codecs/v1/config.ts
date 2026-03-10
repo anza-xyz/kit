@@ -7,9 +7,14 @@ import {
     getUnitDecoder,
 } from '@solana/codecs-data-structures';
 import { getU32Decoder, getU32Encoder, getU64Decoder, getU64Encoder } from '@solana/codecs-numbers';
-import { SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_MASK_PRIORITY_FEE_BITS, SolanaError } from '@solana/errors';
 
 import { CompiledTransactionConfigValue } from '../../compile/v1/config';
+import {
+    transactionConfigMaskHasComputeUnitLimit,
+    transactionConfigMaskHasHeapSize,
+    transactionConfigMaskHasLoadedAccountsDataSizeLimit,
+    transactionConfigMaskHasPriorityFee,
+} from '../../v1-transaction-config';
 
 /* TODO issue #1143 - we have a type error on `getPatternMatchEncoder` where it incorrectly
  * types the return as FixedSizeEncoder when used with differently sized FixedSizEencoder
@@ -31,11 +36,6 @@ export function getCompiledTransactionConfigValuesEncoder(): VariableSizeEncoder
     return getArrayEncoder(getCompiledTransactionConfigValueEncoder(), { size: 'remainder' });
 }
 
-const PRIORITY_FEE_LAMPORTS_BIT_MASK = 0b11;
-const COMPUTE_UNIT_LIMIT_BIT_MASK = 0b100;
-const LOADED_ACCOUNTS_DATA_SIZE_LIMIT_BIT_MASK = 0b1000;
-const HEAP_SIZE_BIT_MASK = 0b10000;
-
 /**
  * Decode a {@link TransactionMessageConfig} from a byte array of values, using the provided mask.
  * @param mask A mask indicating which fields are set
@@ -44,17 +44,10 @@ const HEAP_SIZE_BIT_MASK = 0b10000;
 export function getCompiledTransactionConfigValuesDecoder(
     mask: number,
 ): VariableSizeDecoder<CompiledTransactionConfigValue[]> {
-    // bits 0 and 1 must both be set or both be unset
-    const priorityFeeBits = mask & PRIORITY_FEE_LAMPORTS_BIT_MASK;
-    if (priorityFeeBits === 0b01 || priorityFeeBits === 0b10) {
-        throw new SolanaError(SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_MASK_PRIORITY_FEE_BITS, { mask });
-    }
-    const hasPriorityFee = priorityFeeBits === PRIORITY_FEE_LAMPORTS_BIT_MASK;
-
-    // the rest are just checking a single bit
-    const hasComputeUnitLimit = (mask & COMPUTE_UNIT_LIMIT_BIT_MASK) !== 0;
-    const hasLoadedAccountsDataSizeLimit = (mask & LOADED_ACCOUNTS_DATA_SIZE_LIMIT_BIT_MASK) !== 0;
-    const hasHeapSize = (mask & HEAP_SIZE_BIT_MASK) !== 0;
+    const hasPriorityFee = transactionConfigMaskHasPriorityFee(mask);
+    const hasComputeUnitLimit = transactionConfigMaskHasComputeUnitLimit(mask);
+    const hasLoadedAccountsDataSizeLimit = transactionConfigMaskHasLoadedAccountsDataSizeLimit(mask);
+    const hasHeapSize = transactionConfigMaskHasHeapSize(mask);
 
     const u32Decoder = transformDecoder(getU32Decoder(), value => ({ kind: 'u32', value }));
     const u64Decoder = transformDecoder(getU64Decoder(), value => ({ kind: 'u64', value }));
