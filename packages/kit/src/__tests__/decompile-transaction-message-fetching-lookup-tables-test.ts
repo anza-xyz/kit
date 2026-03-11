@@ -89,7 +89,7 @@ describe('decompileTransactionMessageFetchingLookupTables', () => {
         });
     });
 
-    describe('for a versioned transaction with no `addressTableLookups` field', () => {
+    describe('for a v0 transaction with no `addressTableLookups` field', () => {
         const compiledTransactionMessage: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
             // no `addressTableLookups` field
             header: {
@@ -158,7 +158,7 @@ describe('decompileTransactionMessageFetchingLookupTables', () => {
         });
     });
 
-    describe('for a versioned transaction with empty `addressTableLookups`', () => {
+    describe('for a v0 transaction with empty `addressTableLookups`', () => {
         const compiledTransactionMessage: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
             addressTableLookups: [],
             header: {
@@ -227,7 +227,7 @@ describe('decompileTransactionMessageFetchingLookupTables', () => {
         });
     });
 
-    describe('for a versioned transaction with non-empty `addressTableLookups`', () => {
+    describe('for a v0 transaction with non-empty `addressTableLookups`', () => {
         const lookupTableAddress1 = '1111' as Address;
         const lookupTableAddress2 = '2222' as Address;
 
@@ -343,6 +343,80 @@ describe('decompileTransactionMessageFetchingLookupTables', () => {
                         [lookupTableAddress1]: [addressInLookup1],
                         [lookupTableAddress2]: [addressInLookup2],
                     },
+                }),
+            );
+        });
+
+        it('should pass `lastValidBlockHeight` to `decompileTransactionMessage`', async () => {
+            expect.assertions(1);
+            await decompileTransactionMessageFetchingLookupTables(compiledTransactionMessage, rpc, {
+                lastValidBlockHeight: 100n,
+            });
+            expect(decompileTransactionMessage).toHaveBeenCalledWith(
+                expect.any(Object), // transaction
+                expect.objectContaining({
+                    lastValidBlockHeight: 100n,
+                }),
+            );
+        });
+    });
+
+    describe('for a v1 transaction', () => {
+        const compiledTransactionMessage: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime = {
+            // no `addressTableLookups` field
+            configMask: 0,
+            configValues: [],
+            header: {
+                numReadonlyNonSignerAccounts: 0,
+                numReadonlySignerAccounts: 0,
+                numSignerAccounts: 0,
+            },
+            instructionHeaders: [],
+            instructionPayloads: [],
+            lifetimeToken: blockhash,
+            numInstructions: 0,
+            numStaticAccounts: 0,
+            staticAccounts: [],
+            version: 1,
+        };
+
+        const transactionMessage = { version: 1 } as unknown as TransactionMessage;
+
+        beforeEach(() => {
+            (decompileTransactionMessage as jest.Mock).mockReturnValue(transactionMessage);
+            // reset mock calls
+            jest.clearAllMocks();
+        });
+
+        it('should return the result of `decompileTransactionMessage`', async () => {
+            expect.assertions(1);
+            await expect(
+                decompileTransactionMessageFetchingLookupTables(compiledTransactionMessage, rpc),
+            ).resolves.toStrictEqual(transactionMessage);
+        });
+
+        it('should not call the `fetchJsonParsedAccounts` function', async () => {
+            expect.assertions(1);
+            await decompileTransactionMessageFetchingLookupTables(compiledTransactionMessage, rpc);
+            expect(fetchJsonParsedAccounts).not.toHaveBeenCalled();
+        });
+
+        it('should call `decompileTransactionMessage` with the input transaction', async () => {
+            expect.assertions(1);
+            await decompileTransactionMessageFetchingLookupTables(compiledTransactionMessage, rpc);
+            expect(decompileTransactionMessage).toHaveBeenCalledWith(
+                compiledTransactionMessage,
+                expect.any(Object), // config
+            );
+        });
+
+        it('should call the `decompileTransactionMessage` with no lookup tables', async () => {
+            expect.assertions(1);
+            await decompileTransactionMessageFetchingLookupTables(compiledTransactionMessage, rpc);
+            expect(decompileTransactionMessage).toHaveBeenCalledWith(
+                expect.any(Object), // transaction
+                expect.objectContaining({
+                    addressesByLookupTableAddress: {},
                 }),
             );
         });
