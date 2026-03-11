@@ -1,5 +1,21 @@
 # @solana/instruction-plans
 
+## 6.3.0
+
+### Minor Changes
+
+- [#1444](https://github.com/anza-xyz/kit/pull/1444) [`f47d5cf`](https://github.com/anza-xyz/kit/commit/f47d5cf30512bbae3233f0ddccae45462af7f309) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Enrich the `SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT` error context with the full simulation result (`Omit<RpcSimulateTransactionResult, 'err'>`) and add it to `SolanaErrorCodeWithCause`, aligning it with the `SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE` error.
+
+### Patch Changes
+
+- Updated dependencies [[`f47d5cf`](https://github.com/anza-xyz/kit/commit/f47d5cf30512bbae3233f0ddccae45462af7f309)]:
+    - @solana/errors@6.3.0
+    - @solana/instructions@6.3.0
+    - @solana/keys@6.3.0
+    - @solana/transaction-messages@6.3.0
+    - @solana/transactions@6.3.0
+    - @solana/promises@6.3.0
+
 ## 6.2.0
 
 ### Patch Changes
