@@ -60,7 +60,8 @@
     "types": "./dist/types/index.d.ts",
     "type": "commonjs",
     "files": [
-        "./dist/"
+        "./dist/",
+        "./src/"
     ],
     "sideEffects": false,
     "keywords": [
