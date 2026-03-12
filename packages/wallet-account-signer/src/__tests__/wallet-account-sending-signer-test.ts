@@ -1,4 +1,5 @@
 import { address } from '@solana/addresses';
+import { TransactionSendingSigner } from '@solana/signers';
 import { getTransactionEncoder } from '@solana/transactions';
 import { SolanaSignAndSendTransaction } from '@solana/wallet-standard-features';
 import { WalletStandardError } from '@wallet-standard/errors';
@@ -10,6 +11,8 @@ import { createSendingSignerFromWalletAccount } from '../wallet-account-sending-
 jest.mock('@wallet-standard/ui');
 jest.mock('@wallet-standard/ui-registry');
 jest.mock('@solana/transactions');
+
+type InputTransaction = Parameters<TransactionSendingSigner['signAndSendTransactions']>[0][number];
 
 describe('createSendingSignerFromWalletAccount', () => {
     const mockAddress = address('Gp7YgHcJciP4px5FdFnywUiMG4UcfMZV9UagSAZzDxdy');
@@ -69,7 +72,12 @@ describe('createSendingSignerFromWalletAccount', () => {
         const account = createMockAccount();
 
         // And a mock transaction encoder.
-        const mockEncode = jest.fn().mockReturnValue(new Uint8Array([1, 2, 3]));
+        const mockEncodedTransaction1 = new Uint8Array([1, 2, 3]);
+        const mockEncodedTransaction2 = new Uint8Array([4, 5, 6]);
+        const mockEncode = jest
+            .fn()
+            .mockReturnValueOnce(mockEncodedTransaction1)
+            .mockReturnValueOnce(mockEncodedTransaction2);
 
         jest.mocked(getTransactionEncoder).mockReturnValue({
             encode: mockEncode,
@@ -83,20 +91,27 @@ describe('createSendingSignerFromWalletAccount', () => {
         };
 
         jest.mocked(getWalletAccountFeature).mockReturnValue(mockFeature);
+
+        const mockWalletAccount = { mockWallet: 1 } as unknown as ReturnType<
+            typeof getWalletAccountForUiWalletAccount_DO_NOT_USE_OR_YOU_WILL_BE_FIRED
+        >;
         jest.mocked(getWalletAccountForUiWalletAccount_DO_NOT_USE_OR_YOU_WILL_BE_FIRED).mockReturnValue(
-            {} as ReturnType<typeof getWalletAccountForUiWalletAccount_DO_NOT_USE_OR_YOU_WILL_BE_FIRED>,
+            mockWalletAccount,
         );
 
         // When we create a sending signer and call signAndSendTransactions with multiple transactions.
         const signer = createSendingSignerFromWalletAccount(account, 'solana:devnet');
 
-        const tx1 = {} as Parameters<typeof signer.signAndSendTransactions>[0][0];
-        const tx2 = {} as Parameters<typeof signer.signAndSendTransactions>[0][0];
+        const tx1 = {} as InputTransaction;
+        const tx2 = {} as InputTransaction;
 
         const result = await signer.signAndSendTransactions([tx1, tx2]);
 
         // Then the wallet feature is called once with all transactions.
-        expect(mockFeature.signAndSendTransaction).toHaveBeenCalledTimes(1);
+        expect(mockFeature.signAndSendTransaction).toHaveBeenCalledWith(
+            { account: mockWalletAccount, chain: 'solana:devnet', transaction: mockEncodedTransaction1 },
+            { account: mockWalletAccount, chain: 'solana:devnet', transaction: mockEncodedTransaction2 },
+        );
 
         // And the result contains both signatures.
         expect(result).toHaveLength(2);
@@ -128,7 +143,7 @@ describe('createSendingSignerFromWalletAccount', () => {
         // When we create a sending signer and call signAndSendTransactions.
         const signer = createSendingSignerFromWalletAccount(account, 'solana:devnet');
 
-        const tx = {} as Parameters<typeof signer.signAndSendTransactions>[0][0];
+        const tx = {} as InputTransaction;
 
         await signer.signAndSendTransactions([tx]);
 
@@ -161,7 +176,7 @@ describe('createSendingSignerFromWalletAccount', () => {
 
         // When we create a sending signer and call signAndSendTransactions.
         const signer = createSendingSignerFromWalletAccount(account, 'solana:devnet');
-        const tx = {} as Parameters<typeof signer.signAndSendTransactions>[0][0];
+        const tx = {} as InputTransaction;
 
         const result = await signer.signAndSendTransactions([tx]);
 
@@ -193,9 +208,7 @@ describe('createSendingSignerFromWalletAccount', () => {
         const signer = createSendingSignerFromWalletAccount(account, 'solana:devnet');
 
         // Then the wallet error is propagated.
-        await expect(
-            signer.signAndSendTransactions([{} as Parameters<typeof signer.signAndSendTransactions>[0][0]]),
-        ).rejects.toThrow('fail');
+        await expect(signer.signAndSendTransactions([{} as InputTransaction])).rejects.toThrow('fail');
     });
 
     it('passes minContextSlot option to wallet feature', async () => {
@@ -221,7 +234,7 @@ describe('createSendingSignerFromWalletAccount', () => {
 
         // When we create a sending signer and call signAndSendTransactions with options.
         const signer = createSendingSignerFromWalletAccount(account, 'solana:devnet');
-        const tx = {} as Parameters<typeof signer.signAndSendTransactions>[0][0];
+        const tx = {} as InputTransaction;
 
         await signer.signAndSendTransactions([tx], {
             abortSignal: AbortSignal.timeout(1_000_000),
@@ -259,7 +272,7 @@ describe('createSendingSignerFromWalletAccount', () => {
 
         // When we create a sending signer.
         const signer = createSendingSignerFromWalletAccount(account, 'solana:devnet');
-        const tx = {} as Parameters<typeof signer.signAndSendTransactions>[0][0];
+        const tx = {} as InputTransaction;
 
         // And we call signAndSendTransactions with an already aborted signal.
         const abortController = new AbortController();
