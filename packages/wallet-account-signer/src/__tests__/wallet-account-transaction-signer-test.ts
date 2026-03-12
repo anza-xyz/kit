@@ -18,7 +18,7 @@ import { getWalletAccountFeature, UiWalletAccount } from '@wallet-standard/ui';
 import { getWalletAccountForUiWalletAccount_DO_NOT_USE_OR_YOU_WILL_BE_FIRED } from '@wallet-standard/ui-registry';
 
 import { Blockhash } from '../../../rpc-types/dist/types';
-import { createSignerFromWalletAccount } from '../wallet-account-signer';
+import { createTransactionSignerFromWalletAccount } from '../wallet-account-transaction-signer';
 
 jest.mock('@solana/addresses');
 jest.mock('@wallet-standard/ui');
@@ -51,7 +51,7 @@ describe('createSignerFromWalletAccount', () => {
         const account = createMockAccount({ chains: ['solana:devnet'] });
 
         // When we try to create a signer for mainnet.
-        const fn = () => createSignerFromWalletAccount(account, 'solana:mainnet');
+        const fn = () => createTransactionSignerFromWalletAccount(account, 'solana:mainnet');
 
         // Then we expect an error to be thrown.
         expect(fn).toThrow(WalletStandardError);
@@ -62,7 +62,7 @@ describe('createSignerFromWalletAccount', () => {
         const account = createMockAccount({ address: mockAddress });
 
         // When we create a signer from the account.
-        const signer = createSignerFromWalletAccount(account, 'solana:devnet');
+        const signer = createTransactionSignerFromWalletAccount(account, 'solana:devnet');
 
         // Then the signer exposes the same address.
         expect(signer.address).toBe(mockAddress);
@@ -85,7 +85,7 @@ describe('createSignerFromWalletAccount', () => {
         );
 
         // When we create a signer and call modifyAndSignTransactions with an empty array.
-        const signer = createSignerFromWalletAccount(account, 'solana:devnet');
+        const signer = createTransactionSignerFromWalletAccount(account, 'solana:devnet');
 
         // Then it returns an empty array.
         await expect(signer.modifyAndSignTransactions([])).resolves.toEqual([]);
@@ -137,7 +137,7 @@ describe('createSignerFromWalletAccount', () => {
         );
 
         // When we create a signer and call modifyAndSignTransactions.
-        const signer = createSignerFromWalletAccount(account, 'solana:devnet');
+        const signer = createTransactionSignerFromWalletAccount(account, 'solana:devnet');
         const tx = {} as unknown as InputTransaction;
         await signer.modifyAndSignTransactions([tx]);
 
@@ -171,7 +171,7 @@ describe('createSignerFromWalletAccount', () => {
         );
 
         // When we create a signer and call modifyAndSignTransactions.
-        const signer = createSignerFromWalletAccount(account, 'solana:devnet');
+        const signer = createTransactionSignerFromWalletAccount(account, 'solana:devnet');
 
         // Then the wallet error is propagated.
         await expect(signer.modifyAndSignTransactions([{} as InputTransaction])).rejects.toThrow('fail');
@@ -209,7 +209,7 @@ describe('createSignerFromWalletAccount', () => {
         );
 
         // When we create a signer and call modifyAndSignTransactions with a lifetime constraint.
-        const signer = createSignerFromWalletAccount(account, 'solana:devnet');
+        const signer = createTransactionSignerFromWalletAccount(account, 'solana:devnet');
         const lifetimeConstraint = { blockhash: 'abc', lastValidBlockHeight: 123n } as TransactionBlockhashLifetime;
         const tx = {
             lifetimeConstraint,
@@ -260,7 +260,7 @@ describe('createSignerFromWalletAccount', () => {
         );
 
         // When we create a signer and call modifyAndSignTransactions with a lifetime constraint.
-        const signer = createSignerFromWalletAccount(account, 'solana:devnet');
+        const signer = createTransactionSignerFromWalletAccount(account, 'solana:devnet');
         const lifetimeConstraint = { blockhash: 'abc', lastValidBlockHeight: 123n } as TransactionBlockhashLifetime;
         const tx = {
             lifetimeConstraint,
@@ -313,7 +313,7 @@ describe('createSignerFromWalletAccount', () => {
         );
 
         // When we create a signer and call modifyAndSignTransactions without a lifetime constraint.
-        const signer = createSignerFromWalletAccount(account, 'solana:devnet');
+        const signer = createTransactionSignerFromWalletAccount(account, 'solana:devnet');
         const tx = {
             messageBytes: new Uint8Array([1, 2, 3]),
             signatures: {},
@@ -365,7 +365,7 @@ describe('createSignerFromWalletAccount', () => {
         );
 
         // When we create a signer and call modifyAndSignTransactions with a different lifetime token.
-        const signer = createSignerFromWalletAccount(account, 'solana:devnet');
+        const signer = createTransactionSignerFromWalletAccount(account, 'solana:devnet');
         const inputLifetimeConstraint = {
             blockhash: 'abc',
             lastValidBlockHeight: 123n,
@@ -422,7 +422,7 @@ describe('createSignerFromWalletAccount', () => {
         );
 
         // When we create a signer and call modifyAndSignTransactions.
-        const signer = createSignerFromWalletAccount(account, 'solana:devnet');
+        const signer = createTransactionSignerFromWalletAccount(account, 'solana:devnet');
         const tx = {
             messageBytes: new Uint8Array([1, 2, 3]),
             signatures: {},
@@ -467,7 +467,7 @@ describe('createSignerFromWalletAccount', () => {
         );
 
         // When we create a signer and call modifyAndSignTransactions with options.
-        const signer = createSignerFromWalletAccount(account, 'solana:devnet');
+        const signer = createTransactionSignerFromWalletAccount(account, 'solana:devnet');
         const lifetimeConstraint = { blockhash: 'abc', lastValidBlockHeight: 123n };
         const tx = {
             lifetimeConstraint,
@@ -511,7 +511,7 @@ describe('createSignerFromWalletAccount', () => {
         );
 
         // When we create a signer.
-        const signer = createSignerFromWalletAccount(account, 'solana:devnet');
+        const signer = createTransactionSignerFromWalletAccount(account, 'solana:devnet');
         const tx = {
             messageBytes: new Uint8Array([1, 2, 3]),
             signatures: {},
@@ -602,7 +602,7 @@ describe('createSignerFromWalletAccount', () => {
         );
 
         // When we create a signer and call modifyAndSignTransactions with 3 transactions.
-        const signer = createSignerFromWalletAccount(account, 'solana:devnet');
+        const signer = createTransactionSignerFromWalletAccount(account, 'solana:devnet');
 
         const tx1 = {
             lifetimeConstraint: tx1Lifetime,
@@ -695,7 +695,7 @@ describe('createSignerFromWalletAccount', () => {
         );
 
         // When we create a signer and call modifyAndSignTransactions with 4 transactions.
-        const signer = createSignerFromWalletAccount(account, 'solana:devnet');
+        const signer = createTransactionSignerFromWalletAccount(account, 'solana:devnet');
 
         const transactions = [
             {
@@ -791,7 +791,7 @@ describe('createSignerFromWalletAccount', () => {
         );
 
         // When we create a signer and call modifyAndSignTransactions with 3 transactions without lifetimes.
-        const signer = createSignerFromWalletAccount(account, 'solana:devnet');
+        const signer = createTransactionSignerFromWalletAccount(account, 'solana:devnet');
 
         const transactions = [
             { messageBytes: new Uint8Array([10, 11, 12]) as unknown as TransactionMessageBytes, signatures: {} },
@@ -876,7 +876,7 @@ describe('createSignerFromWalletAccount', () => {
         );
 
         // When we create a signer and call modifyAndSignTransactions with 2 transactions with existing but changed lifetimes.
-        const signer = createSignerFromWalletAccount(account, 'solana:devnet');
+        const signer = createTransactionSignerFromWalletAccount(account, 'solana:devnet');
 
         const transactions = [
             {
@@ -968,7 +968,7 @@ describe('createSignerFromWalletAccount', () => {
         );
 
         // When we create a signer and call modifyAndSignTransactions with 3 transactions.
-        const signer = createSignerFromWalletAccount(account, 'solana:devnet');
+        const signer = createTransactionSignerFromWalletAccount(account, 'solana:devnet');
 
         const transactions = [
             { messageBytes: new Uint8Array([70, 71]) as unknown as TransactionMessageBytes, signatures: {} },

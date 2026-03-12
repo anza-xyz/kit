@@ -6,7 +6,7 @@ import { WalletStandardError } from '@wallet-standard/errors';
 import { getWalletAccountFeature, UiWalletAccount } from '@wallet-standard/ui';
 import { getWalletAccountForUiWalletAccount_DO_NOT_USE_OR_YOU_WILL_BE_FIRED } from '@wallet-standard/ui-registry';
 
-import { createSendingSignerFromWalletAccount } from '../wallet-account-sending-signer';
+import { createTransactionSendingSignerFromWalletAccount } from '../wallet-account-transaction-sending-signer';
 
 jest.mock('@wallet-standard/ui');
 jest.mock('@wallet-standard/ui-registry');
@@ -35,7 +35,7 @@ describe('createSendingSignerFromWalletAccount', () => {
         const account = createMockAccount({ chains: ['solana:devnet'] });
 
         // When we try to create a sending signer for mainnet.
-        const fn = () => createSendingSignerFromWalletAccount(account, 'solana:mainnet');
+        const fn = () => createTransactionSendingSignerFromWalletAccount(account, 'solana:mainnet');
 
         // Then we expect an error to be thrown.
         expect(fn).toThrow(WalletStandardError);
@@ -46,7 +46,7 @@ describe('createSendingSignerFromWalletAccount', () => {
         const account = createMockAccount();
 
         // When we create a sending signer from the account.
-        const signer = createSendingSignerFromWalletAccount(account, 'solana:devnet');
+        const signer = createTransactionSendingSignerFromWalletAccount(account, 'solana:devnet');
 
         // Then the signer exposes the same address.
         expect(signer.address).toBe(mockAddress);
@@ -59,7 +59,7 @@ describe('createSendingSignerFromWalletAccount', () => {
         const account = createMockAccount();
 
         // When we create a sending signer and call signAndSendTransactions with an empty array.
-        const signer = createSendingSignerFromWalletAccount(account, 'solana:devnet');
+        const signer = createTransactionSendingSignerFromWalletAccount(account, 'solana:devnet');
 
         // Then it returns an empty array.
         await expect(signer.signAndSendTransactions([])).resolves.toEqual([]);
@@ -100,7 +100,7 @@ describe('createSendingSignerFromWalletAccount', () => {
         );
 
         // When we create a sending signer and call signAndSendTransactions with multiple transactions.
-        const signer = createSendingSignerFromWalletAccount(account, 'solana:devnet');
+        const signer = createTransactionSendingSignerFromWalletAccount(account, 'solana:devnet');
 
         const tx1 = {} as InputTransaction;
         const tx2 = {} as InputTransaction;
@@ -141,7 +141,7 @@ describe('createSendingSignerFromWalletAccount', () => {
         );
 
         // When we create a sending signer and call signAndSendTransactions.
-        const signer = createSendingSignerFromWalletAccount(account, 'solana:devnet');
+        const signer = createTransactionSendingSignerFromWalletAccount(account, 'solana:devnet');
 
         const tx = {} as InputTransaction;
 
@@ -175,7 +175,7 @@ describe('createSendingSignerFromWalletAccount', () => {
         );
 
         // When we create a sending signer and call signAndSendTransactions.
-        const signer = createSendingSignerFromWalletAccount(account, 'solana:devnet');
+        const signer = createTransactionSendingSignerFromWalletAccount(account, 'solana:devnet');
         const tx = {} as InputTransaction;
 
         const result = await signer.signAndSendTransactions([tx]);
@@ -205,7 +205,7 @@ describe('createSendingSignerFromWalletAccount', () => {
         );
 
         // When we create a sending signer and call signAndSendTransactions.
-        const signer = createSendingSignerFromWalletAccount(account, 'solana:devnet');
+        const signer = createTransactionSendingSignerFromWalletAccount(account, 'solana:devnet');
 
         // Then the wallet error is propagated.
         await expect(signer.signAndSendTransactions([{} as InputTransaction])).rejects.toThrow('fail');
@@ -233,7 +233,7 @@ describe('createSendingSignerFromWalletAccount', () => {
         );
 
         // When we create a sending signer and call signAndSendTransactions with options.
-        const signer = createSendingSignerFromWalletAccount(account, 'solana:devnet');
+        const signer = createTransactionSendingSignerFromWalletAccount(account, 'solana:devnet');
         const tx = {} as InputTransaction;
 
         await signer.signAndSendTransactions([tx], {
@@ -271,7 +271,7 @@ describe('createSendingSignerFromWalletAccount', () => {
         );
 
         // When we create a sending signer.
-        const signer = createSendingSignerFromWalletAccount(account, 'solana:devnet');
+        const signer = createTransactionSendingSignerFromWalletAccount(account, 'solana:devnet');
         const tx = {} as InputTransaction;
 
         // And we call signAndSendTransactions with an already aborted signal.

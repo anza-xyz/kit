@@ -1,7 +1,7 @@
 import { TransactionSendingSigner } from '@solana/signers';
 import { UiWalletAccount } from '@wallet-standard/ui';
 
-import { createSendingSignerFromWalletAccount } from '../wallet-account-sending-signer';
+import { createTransactionSendingSignerFromWalletAccount } from '../wallet-account-transaction-sending-signer';
 
 const mockAccount = {
     address: 'Gp7YgHcJciP4px5FdFnywUiMG4UcfMZV9UagSAZzDxdy',
@@ -11,19 +11,19 @@ const mockAccount = {
 
 {
     // [createSendingSignerFromWalletAccount]: It returns a TransactionSendingSigner with the correct address type.
-    const signer = createSendingSignerFromWalletAccount(mockAccount, 'solana:devnet');
+    const signer = createTransactionSendingSignerFromWalletAccount(mockAccount, 'solana:devnet');
     signer satisfies TransactionSendingSigner<typeof mockAccount.address>;
 }
 
 {
     // [createSendingSignerFromWalletAccount]: It exposes a signAndSendTransactions method.
-    const signer = createSendingSignerFromWalletAccount(mockAccount, 'solana:devnet');
+    const signer = createTransactionSendingSignerFromWalletAccount(mockAccount, 'solana:devnet');
     signer.signAndSendTransactions satisfies TransactionSendingSigner['signAndSendTransactions'];
 }
 
 {
     // [createSendingSignerFromWalletAccount]: It accepts any solana chain identifier.
-    createSendingSignerFromWalletAccount(mockAccount, 'solana:mainnet');
-    createSendingSignerFromWalletAccount(mockAccount, 'solana:devnet');
-    createSendingSignerFromWalletAccount(mockAccount, 'solana:testnet');
+    createTransactionSendingSignerFromWalletAccount(mockAccount, 'solana:mainnet');
+    createTransactionSendingSignerFromWalletAccount(mockAccount, 'solana:devnet');
+    createTransactionSendingSignerFromWalletAccount(mockAccount, 'solana:testnet');
 }

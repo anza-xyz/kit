@@ -27,16 +27,16 @@ import { getWalletAccountForUiWalletAccount_DO_NOT_USE_OR_YOU_WILL_BE_FIRED } fr
  *
  * @example
  * ```ts
- * import { createSendingSignerFromWalletAccount } from '@solana/wallet-account-signer';
+ * import { createTransactionSendingSignerFromWalletAccount } from '@solana/wallet-account-signer';
  *
- * const signer = createSendingSignerFromWalletAccount(walletAccount, 'solana:devnet');
+ * const signer = createTransactionSendingSignerFromWalletAccount(walletAccount, 'solana:devnet');
  * const [signature] = await signer.signAndSendTransactions([transaction]);
  * ```
  *
  * @see {@link TransactionSendingSigner}
- * @see {@link createSignerFromWalletAccount}
+ * @see {@link createTransactionSignerFromWalletAccount}
  */
-export function createSendingSignerFromWalletAccount<TWalletAccount extends UiWalletAccount>(
+export function createTransactionSendingSignerFromWalletAccount<TWalletAccount extends UiWalletAccount>(
     uiWalletAccount: TWalletAccount,
     chain: SolanaChain,
 ): TransactionSendingSigner<TWalletAccount['address']> {
