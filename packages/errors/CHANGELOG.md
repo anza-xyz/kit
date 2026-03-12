@@ -1,5 +1,7 @@
 # @solana/errors
 
+## 6.3.1
+
 ## 6.3.0
 
 ### Minor Changes

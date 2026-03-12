@@ -1,5 +1,19 @@
 # @solana/instruction-plans
 
+## 6.3.1
+
+### Patch Changes
+
+- [#1464](https://github.com/anza-xyz/kit/pull/1464) [`a557a62`](https://github.com/anza-xyz/kit/commit/a557a62e0f42d2d526f0b8fbdd0a9fcc08ac9ef7) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add the last 8 transaction log lines to the error message of `SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION` and `SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS` (when only one transaction failed).
+
+- Updated dependencies []:
+    - @solana/errors@6.3.1
+    - @solana/instructions@6.3.1
+    - @solana/keys@6.3.1
+    - @solana/promises@6.3.1
+    - @solana/transaction-messages@6.3.1
+    - @solana/transactions@6.3.1
+
 ## 6.3.0
 
 ### Minor Changes
