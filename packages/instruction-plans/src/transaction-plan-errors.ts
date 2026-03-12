@@ -67,7 +67,7 @@ export function createFailedToSendTransactionError(
         preflightData = unwrapped.preflightData;
         cause = unwrapped.unwrappedError;
         const indicator = getFailedIndicator(!!preflightData, result.context.signature);
-        causeMessage = `${indicator}: ${(cause as Error).message}`;
+        causeMessage = `${indicator}: ${(cause as Error).message}${formatLogSnippet(logs)}`;
     } else {
         cause = abortReason;
         causeMessage = abortReason != null ? `. Canceled with abort reason: ${String(abortReason)}` : ': Canceled';
@@ -149,7 +149,8 @@ export function createFailedToSendTransactionsError(
             const indicator = getFailedIndicator(!!preflightData, flattenedResults[index].context.signature);
             return `\n[Tx #${index + 1}${indicator}] ${error.message}`;
         });
-        causeMessages = `.${failureLines.join('')}`;
+        const logSnippet = failedTransactions.length === 1 ? formatLogSnippet(failedTransactions[0].logs) : '';
+        causeMessages = `.${failureLines.join('')}${logSnippet}`;
     } else {
         cause = abortReason;
         causeMessages = abortReason != null ? `. Canceled with abort reason: ${String(abortReason)}` : ': Canceled';
@@ -243,6 +244,14 @@ function findErrorFromTransactionPlanResult(result: TransactionPlanResult): Erro
             return error;
         }
     }
+}
+
+function formatLogSnippet(logs: readonly string[] | undefined): string {
+    if (!logs || logs.length === 0) return '';
+    const maxLines = 8;
+    const lastLines = logs.slice(-maxLines);
+    const header = logs.length > maxLines ? `\n\nLogs (last ${maxLines} of ${logs.length}):` : '\n\nLogs:';
+    return `${header}\n${lastLines.map(line => `  > ${line}`).join('\n')}`;
 }
 
 function getFailedIndicator(isPreflight: boolean, signature: string | undefined): string {

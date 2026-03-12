@@ -95,7 +95,7 @@ describe('createFailedToSendTransactionError', () => {
 
         it('produces the expected error message', () => {
             const innerError = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
-            const preflightError = createPreflightError(innerError, preflightContext);
+            const preflightError = createPreflightError(innerError, { ...preflightContext, logs: [] });
             const result = failedSingleTransactionPlanResult(createMessage('A'), preflightError);
             const error = createFailedToSendTransactionError(result);
             expect(error.message).toBe(`Failed to send transaction (preflight): ${innerError.message}`);
@@ -175,6 +175,66 @@ describe('createFailedToSendTransactionError', () => {
             const result = failedSingleTransactionPlanResult(createMessage('A'), simulationError);
             const error = createFailedToSendTransactionError(result);
             expect(error.context.logs).toEqual(preflightContext.logs);
+        });
+    });
+
+    describe('log snippet in error message', () => {
+        it('appends the last 8 log lines when there are more than 8 logs', () => {
+            const logs = Array.from({ length: 12 }, (_, i) => `Log line ${i + 1}`);
+            const innerError = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
+            const preflightError = createPreflightError(innerError, { ...preflightContext, logs });
+            const result = failedSingleTransactionPlanResult(createMessage('A'), preflightError);
+            const error = createFailedToSendTransactionError(result);
+            expect(error.message).toBe(
+                `Failed to send transaction (preflight): ${innerError.message}\n\n` +
+                    'Logs (last 8 of 12):\n' +
+                    '  > Log line 5\n' +
+                    '  > Log line 6\n' +
+                    '  > Log line 7\n' +
+                    '  > Log line 8\n' +
+                    '  > Log line 9\n' +
+                    '  > Log line 10\n' +
+                    '  > Log line 11\n' +
+                    '  > Log line 12',
+            );
+        });
+
+        it('appends all log lines when there are 8 or fewer logs', () => {
+            const logs = ['Log A', 'Log B', 'Log C'];
+            const innerError = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
+            const preflightError = createPreflightError(innerError, { ...preflightContext, logs });
+            const result = failedSingleTransactionPlanResult(createMessage('A'), preflightError);
+            const error = createFailedToSendTransactionError(result);
+            expect(error.message).toBe(
+                `Failed to send transaction (preflight): ${innerError.message}\n\n` +
+                    'Logs:\n' +
+                    '  > Log A\n' +
+                    '  > Log B\n' +
+                    '  > Log C',
+            );
+        });
+
+        it('does not append logs when logs are undefined', () => {
+            const plainError = new Error('Connection refused');
+            const result = failedSingleTransactionPlanResult(createMessage('A'), plainError);
+            const error = createFailedToSendTransactionError(result);
+            expect(error.message).toBe('Failed to send transaction: Connection refused');
+        });
+
+        it('does not append logs when preflight logs are null', () => {
+            const innerError = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
+            const preflightError = createPreflightError(innerError, preflightContextWithoutLogs);
+            const result = failedSingleTransactionPlanResult(createMessage('A'), preflightError);
+            const error = createFailedToSendTransactionError(result);
+            expect(error.message).toBe(`Failed to send transaction (preflight): ${innerError.message}`);
+        });
+
+        it('does not append logs when logs array is empty', () => {
+            const innerError = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
+            const preflightError = createPreflightError(innerError, { ...preflightContext, logs: [] });
+            const result = failedSingleTransactionPlanResult(createMessage('A'), preflightError);
+            const error = createFailedToSendTransactionError(result);
+            expect(error.message).toBe(`Failed to send transaction (preflight): ${innerError.message}`);
         });
     });
 
@@ -351,6 +411,77 @@ describe('createFailedToSendTransactionsError', () => {
             ]);
             const error = createFailedToSendTransactionsError(result);
             expect(error.message).toBe(`Failed to send transactions.\n[Tx #1 (${signature})] Transaction failed`);
+        });
+    });
+
+    describe('log snippet in error message', () => {
+        it('appends logs when there is exactly one failed transaction with logs', () => {
+            const messageA = createMessage('A');
+            const messageB = createMessage('B');
+            const innerError = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
+            const preflightError = createPreflightError(innerError, preflightContext);
+            const result = sequentialTransactionPlanResult([
+                successfulSingleTransactionPlanResult(messageA, {
+                    signature: '11111111111111111111111111111111111111111111' as Signature,
+                }),
+                failedSingleTransactionPlanResult(messageB, preflightError),
+            ]);
+            const error = createFailedToSendTransactionsError(result);
+            expect(error.message).toBe(
+                `Failed to send transactions.\n[Tx #2 (preflight)] ${innerError.message}\n\n` +
+                    'Logs:\n' +
+                    '  > Program log: Instruction: Transfer\n' +
+                    '  > Program failed: insufficient funds',
+            );
+        });
+
+        it('appends the last 8 log lines with truncation indicator when there are more than 8 logs', () => {
+            const logs = Array.from({ length: 10 }, (_, i) => `Log line ${i + 1}`);
+            const messageA = createMessage('A');
+            const innerError = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
+            const preflightError = createPreflightError(innerError, { ...preflightContext, logs });
+            const result = sequentialTransactionPlanResult([
+                failedSingleTransactionPlanResult(messageA, preflightError),
+            ]);
+            const error = createFailedToSendTransactionsError(result);
+            expect(error.message).toBe(
+                `Failed to send transactions.\n[Tx #1 (preflight)] ${innerError.message}\n\n` +
+                    'Logs (last 8 of 10):\n' +
+                    '  > Log line 3\n' +
+                    '  > Log line 4\n' +
+                    '  > Log line 5\n' +
+                    '  > Log line 6\n' +
+                    '  > Log line 7\n' +
+                    '  > Log line 8\n' +
+                    '  > Log line 9\n' +
+                    '  > Log line 10',
+            );
+        });
+
+        it('does not append logs when there are multiple failed transactions', () => {
+            const messageA = createMessage('A');
+            const messageB = createMessage('B');
+            const innerErrorA = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
+            const preflightErrorA = createPreflightError(innerErrorA, preflightContext);
+            const innerErrorB = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
+            const preflightErrorB = createPreflightError(innerErrorB, preflightContext);
+            const result = sequentialTransactionPlanResult([
+                failedSingleTransactionPlanResult(messageA, preflightErrorA),
+                failedSingleTransactionPlanResult(messageB, preflightErrorB),
+            ]);
+            const error = createFailedToSendTransactionsError(result);
+            expect(error.message).toBe(
+                `Failed to send transactions.\n[Tx #1 (preflight)] ${innerErrorA.message}\n` +
+                    `[Tx #2 (preflight)] ${innerErrorB.message}`,
+            );
+        });
+
+        it('does not append logs when the single failed transaction has no logs', () => {
+            const messageA = createMessage('A');
+            const plainError = new Error('Connection refused');
+            const result = sequentialTransactionPlanResult([failedSingleTransactionPlanResult(messageA, plainError)]);
+            const error = createFailedToSendTransactionsError(result);
+            expect(error.message).toBe('Failed to send transactions.\n[Tx #1] Connection refused');
         });
     });
 
