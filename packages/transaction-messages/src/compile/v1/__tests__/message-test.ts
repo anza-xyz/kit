@@ -3,8 +3,8 @@ import { AccountRole } from '@solana/instructions';
 
 import { TransactionMessageWithBlockhashLifetime } from '../../../blockhash';
 import { TransactionMessageWithFeePayer } from '../../../fee-payer';
-import { TransactionConfig } from '../../../transaction-config';
 import { TransactionMessage } from '../../../transaction-message';
+import { V1TransactionConfig } from '../../../v1-transaction-config';
 import {
     getAddressMapFromInstructions,
     getOrderedAccountsFromAddressMap,
@@ -76,7 +76,7 @@ describe('compileTransactionMessage', () => {
         });
 
         it('sets `configMask` to the return value of `getTransactionConfigMask`', () => {
-            const config: TransactionConfig = {
+            const config: V1TransactionConfig = {
                 computeUnitLimit: 10,
             };
             const tx = makeMockTransactionMessage({ config });
@@ -86,7 +86,7 @@ describe('compileTransactionMessage', () => {
         });
 
         it('sets `configValues` to the return value of `getTransactionConfigValues`', () => {
-            const config: TransactionConfig = {
+            const config: V1TransactionConfig = {
                 computeUnitLimit: 10,
             };
             const tx = makeMockTransactionMessage({ config });

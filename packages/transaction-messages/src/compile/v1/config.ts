@@ -1,11 +1,11 @@
-import { TransactionConfig } from '../../transaction-config';
+import { V1TransactionConfig } from '../../v1-transaction-config';
 
 const PRIORITY_FEE_LAMPORTS_BIT_MASK = 0b11;
 const COMPUTE_UNIT_LIMIT_BIT_MASK = 0b100;
 const LOADED_ACCOUNTS_DATA_SIZE_LIMIT_BIT_MASK = 0b1000;
 const HEAP_SIZE_BIT_MASK = 0b10000;
 
-export function getTransactionConfigMask(config: TransactionConfig): number {
+export function getTransactionConfigMask(config: V1TransactionConfig): number {
     let mask = 0;
     // Set the lowest 2 bits for priority fee lamports
     if (config.priorityFeeLamports !== undefined) mask |= PRIORITY_FEE_LAMPORTS_BIT_MASK;
@@ -28,7 +28,7 @@ export type CompiledTransactionConfigValue =
           value: bigint;
       };
 
-export function getTransactionConfigValues(config: TransactionConfig): CompiledTransactionConfigValue[] {
+export function getTransactionConfigValues(config: V1TransactionConfig): CompiledTransactionConfigValue[] {
     const values: CompiledTransactionConfigValue[] = [];
     if (config.priorityFeeLamports !== undefined) {
         values.push({ kind: 'u64', value: config.priorityFeeLamports });

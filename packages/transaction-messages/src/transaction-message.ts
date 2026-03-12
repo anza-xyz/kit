@@ -1,6 +1,6 @@
 import { AccountMeta, Instruction } from '@solana/instructions';
 
-import { TransactionConfig } from './transaction-config';
+import { V1TransactionConfig } from './v1-transaction-config';
 
 type BaseTransactionMessage<
     TVersion extends TransactionVersion = TransactionVersion,
@@ -21,7 +21,7 @@ type V0TransactionMessage = BaseTransactionMessage<0, Instruction>;
 type V1TransactionMessage = BaseTransactionMessage<1, InstructionWithoutLookupTables> &
     Readonly<{
         /** A set of optional configuration values for the transaction */
-        config?: TransactionConfig;
+        config?: V1TransactionConfig;
     }>;
 export type TransactionMessage = LegacyTransactionMessage | V0TransactionMessage | V1TransactionMessage;
 export type TransactionVersion = 'legacy' | 0 | 1;

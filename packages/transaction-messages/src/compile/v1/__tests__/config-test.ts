@@ -1,9 +1,9 @@
-import { TransactionConfig } from '../../../transaction-config';
+import { V1TransactionConfig } from '../../../v1-transaction-config';
 import { getTransactionConfigMask, getTransactionConfigValues } from '../config';
 
 describe('getTransactionConfigMask', () => {
     it('should return a mask with all values unset correctly', () => {
-        const config: TransactionConfig = {};
+        const config: V1TransactionConfig = {};
         const mask = getTransactionConfigMask(config);
 
         // All bits 0
@@ -11,7 +11,7 @@ describe('getTransactionConfigMask', () => {
     });
 
     it('should return a mask with all values set correctly', () => {
-        const config: TransactionConfig = {
+        const config: V1TransactionConfig = {
             computeUnitLimit: 100,
             heapSize: 100,
             loadedAccountsDataSizeLimit: 100,
@@ -24,7 +24,7 @@ describe('getTransactionConfigMask', () => {
     });
 
     it('should return a mask with just priority fee set correctly', () => {
-        const config: TransactionConfig = {
+        const config: V1TransactionConfig = {
             priorityFeeLamports: 100n,
         };
         const mask = getTransactionConfigMask(config);
@@ -34,7 +34,7 @@ describe('getTransactionConfigMask', () => {
     });
 
     it('should return a mask with just compute unit limit set correctly', () => {
-        const config: TransactionConfig = {
+        const config: V1TransactionConfig = {
             computeUnitLimit: 100,
         };
         const mask = getTransactionConfigMask(config);
@@ -44,7 +44,7 @@ describe('getTransactionConfigMask', () => {
     });
 
     it('should return a mask with just loaded accounts data size limit set correctly', () => {
-        const config: TransactionConfig = {
+        const config: V1TransactionConfig = {
             loadedAccountsDataSizeLimit: 100,
         };
         const mask = getTransactionConfigMask(config);
@@ -54,7 +54,7 @@ describe('getTransactionConfigMask', () => {
     });
 
     it('should return a mask with just heap size set correctly', () => {
-        const config: TransactionConfig = {
+        const config: V1TransactionConfig = {
             heapSize: 100,
         };
         const mask = getTransactionConfigMask(config);
@@ -64,7 +64,7 @@ describe('getTransactionConfigMask', () => {
     });
 
     it('should return a mask with multiple values set correctly', () => {
-        const config: TransactionConfig = {
+        const config: V1TransactionConfig = {
             loadedAccountsDataSizeLimit: 100,
             priorityFeeLamports: 100n,
         };
@@ -77,13 +77,13 @@ describe('getTransactionConfigMask', () => {
 
 describe('getTransactionConfigValues', () => {
     it('should return an empty array when no values are set', () => {
-        const config: TransactionConfig = {};
+        const config: V1TransactionConfig = {};
         const values = getTransactionConfigValues(config);
         expect(values).toEqual([]);
     });
 
     it('should return all values correctly', () => {
-        const config: TransactionConfig = {
+        const config: V1TransactionConfig = {
             computeUnitLimit: 20,
             heapSize: 40,
             loadedAccountsDataSizeLimit: 30,
@@ -99,7 +99,7 @@ describe('getTransactionConfigValues', () => {
     });
 
     it('should return just priority fee correctly', () => {
-        const config: TransactionConfig = {
+        const config: V1TransactionConfig = {
             priorityFeeLamports: 10n,
         };
         const values = getTransactionConfigValues(config);
@@ -107,7 +107,7 @@ describe('getTransactionConfigValues', () => {
     });
 
     it('should return a large priority fee value correctly', () => {
-        const config: TransactionConfig = {
+        const config: V1TransactionConfig = {
             priorityFeeLamports: 2n ** 64n - 1n,
         };
         const values = getTransactionConfigValues(config);
@@ -115,7 +115,7 @@ describe('getTransactionConfigValues', () => {
     });
 
     it('should return just compute unit limit correctly', () => {
-        const config: TransactionConfig = {
+        const config: V1TransactionConfig = {
             computeUnitLimit: 20,
         };
         const values = getTransactionConfigValues(config);
@@ -123,7 +123,7 @@ describe('getTransactionConfigValues', () => {
     });
 
     it('should return just loaded accounts data size limit correctly', () => {
-        const config: TransactionConfig = {
+        const config: V1TransactionConfig = {
             loadedAccountsDataSizeLimit: 30,
         };
         const values = getTransactionConfigValues(config);
@@ -131,7 +131,7 @@ describe('getTransactionConfigValues', () => {
     });
 
     it('should return just heap size correctly', () => {
-        const config: TransactionConfig = {
+        const config: V1TransactionConfig = {
             heapSize: 40,
         };
         const values = getTransactionConfigValues(config);
@@ -139,7 +139,7 @@ describe('getTransactionConfigValues', () => {
     });
 
     it('should return multiple values correctly', () => {
-        const config: TransactionConfig = {
+        const config: V1TransactionConfig = {
             loadedAccountsDataSizeLimit: 30,
             priorityFeeLamports: 10n,
         };
@@ -151,7 +151,7 @@ describe('getTransactionConfigValues', () => {
     });
 
     it('should return a large priority fee value correctly with another value', () => {
-        const config: TransactionConfig = {
+        const config: V1TransactionConfig = {
             computeUnitLimit: 20,
             priorityFeeLamports: 2n ** 64n - 1n,
         };
