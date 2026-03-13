@@ -195,7 +195,7 @@ describe('createFailedToSendTransactionError', () => {
                     '  > Log line 9\n' +
                     '  > Log line 10\n' +
                     '  > Log line 11\n' +
-                    '  > Log line 12',
+                    '  > Log line 12\n',
             );
         });
 
@@ -210,7 +210,7 @@ describe('createFailedToSendTransactionError', () => {
                     'Logs:\n' +
                     '  > Log A\n' +
                     '  > Log B\n' +
-                    '  > Log C',
+                    '  > Log C\n',
             );
         });
 
@@ -335,7 +335,7 @@ describe('createFailedToSendTransactionsError', () => {
                 failedSingleTransactionPlanResult(messageB, errorB),
             ]);
             const error = createFailedToSendTransactionsError(result);
-            expect(error.message).toBe('Failed to send transactions.\n[Tx #1] A failed\n[Tx #2] B failed');
+            expect(error.message).toBe('Failed to send transactions.\n[Tx #1] A failed\n[Tx #2] B failed\n');
         });
 
         it('sets the cause to the error when there is exactly one failure', () => {
@@ -410,7 +410,7 @@ describe('createFailedToSendTransactionsError', () => {
                 failedSingleTransactionPlanResult(messageA, plainError, { signature }),
             ]);
             const error = createFailedToSendTransactionsError(result);
-            expect(error.message).toBe(`Failed to send transactions.\n[Tx #1 (${signature})] Transaction failed`);
+            expect(error.message).toBe(`Failed to send transactions.\n[Tx #1 (${signature})] Transaction failed\n`);
         });
     });
 
@@ -431,7 +431,7 @@ describe('createFailedToSendTransactionsError', () => {
                 `Failed to send transactions.\n[Tx #2 (preflight)] ${innerError.message}\n\n` +
                     'Logs:\n' +
                     '  > Program log: Instruction: Transfer\n' +
-                    '  > Program failed: insufficient funds',
+                    '  > Program failed: insufficient funds\n',
             );
         });
 
@@ -454,7 +454,7 @@ describe('createFailedToSendTransactionsError', () => {
                     '  > Log line 7\n' +
                     '  > Log line 8\n' +
                     '  > Log line 9\n' +
-                    '  > Log line 10',
+                    '  > Log line 10\n',
             );
         });
 
@@ -472,7 +472,7 @@ describe('createFailedToSendTransactionsError', () => {
             const error = createFailedToSendTransactionsError(result);
             expect(error.message).toBe(
                 `Failed to send transactions.\n[Tx #1 (preflight)] ${innerErrorA.message}\n` +
-                    `[Tx #2 (preflight)] ${innerErrorB.message}`,
+                    `[Tx #2 (preflight)] ${innerErrorB.message}\n`,
             );
         });
 
@@ -481,7 +481,7 @@ describe('createFailedToSendTransactionsError', () => {
             const plainError = new Error('Connection refused');
             const result = sequentialTransactionPlanResult([failedSingleTransactionPlanResult(messageA, plainError)]);
             const error = createFailedToSendTransactionsError(result);
-            expect(error.message).toBe('Failed to send transactions.\n[Tx #1] Connection refused');
+            expect(error.message).toBe('Failed to send transactions.\n[Tx #1] Connection refused\n');
         });
     });
 
@@ -594,7 +594,7 @@ describe('createFailedToSendTransactionsError', () => {
                     '[Tx #2 (preflight)] B failed\n' +
                     `[Tx #4 (${sigD})] D failed\n` +
                     '[Tx #6 (preflight)] F failed\n' +
-                    '[Tx #7] G failed',
+                    '[Tx #7] G failed\n',
             );
         });
     });

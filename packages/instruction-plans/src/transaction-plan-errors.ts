@@ -150,7 +150,7 @@ export function createFailedToSendTransactionsError(
             return `\n[Tx #${index + 1}${indicator}] ${error.message}`;
         });
         const logSnippet = failedTransactions.length === 1 ? formatLogSnippet(failedTransactions[0].logs) : '';
-        causeMessages = `.${failureLines.join('')}${logSnippet}`;
+        causeMessages = `.${failureLines.join('')}${logSnippet}${logSnippet ? '' : '\n'}`;
     } else {
         cause = abortReason;
         causeMessages = abortReason != null ? `. Canceled with abort reason: ${String(abortReason)}` : ': Canceled';
@@ -251,7 +251,7 @@ function formatLogSnippet(logs: readonly string[] | undefined): string {
     const maxLines = 8;
     const lastLines = logs.slice(-maxLines);
     const header = logs.length > maxLines ? `\n\nLogs (last ${maxLines} of ${logs.length}):` : '\n\nLogs:';
-    return `${header}\n${lastLines.map(line => `  > ${line}`).join('\n')}`;
+    return `${header}\n${lastLines.map(line => `  > ${line}\n`).join('')}`;
 }
 
 function getFailedIndicator(isPreflight: boolean, signature: string | undefined): string {
