@@ -33,6 +33,7 @@ export * from './codecs';
 export * from './compile';
 export * from './compress-transaction-message';
 export * from './compute-unit-limit';
+export * from './compute-unit-price';
 export * from './create-transaction-message';
 export * from './decompile';
 export * from './durable-nonce';

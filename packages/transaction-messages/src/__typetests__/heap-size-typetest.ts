@@ -1,5 +1,5 @@
 import { TransactionMessage } from '..';
-import { setTransactionMessageHeapSize } from '../heap-size';
+import { getTransactionMessageHeapSize, setTransactionMessageHeapSize } from '../heap-size';
 
 type LegacyTransactionMessage = Extract<TransactionMessage, { version: 'legacy' }>;
 type V0TransactionMessage = Extract<TransactionMessage, { version: 0 }>;
@@ -10,15 +10,36 @@ type V1TransactionMessage = Extract<TransactionMessage, { version: 1 }>;
     // It accepts v1 messages
     {
         const message = null as unknown as V1TransactionMessage;
-        const result = setTransactionMessageHeapSize(32_768, message);
+        const result = setTransactionMessageHeapSize(256_000, message);
         result satisfies V1TransactionMessage;
     }
 
-    // It preserves input message type
+    // It accepts legacy messages
+    {
+        const message = null as unknown as LegacyTransactionMessage;
+        const result = setTransactionMessageHeapSize(256_000, message);
+        result satisfies LegacyTransactionMessage;
+    }
+
+    // It accepts v0 messages
+    {
+        const message = null as unknown as V0TransactionMessage;
+        const result = setTransactionMessageHeapSize(256_000, message);
+        result satisfies V0TransactionMessage;
+    }
+
+    // It preserves input type
     {
         const message = null as unknown as V1TransactionMessage & { some: 1 };
-        const result = setTransactionMessageHeapSize(32_768, message);
+        const result = setTransactionMessageHeapSize(256_000, message);
         result satisfies V1TransactionMessage & { some: 1 };
+    }
+
+    // It preserves input type for legacy
+    {
+        const message = null as unknown as LegacyTransactionMessage & { some: 1 };
+        const result = setTransactionMessageHeapSize(256_000, message);
+        result satisfies LegacyTransactionMessage & { some: 1 };
     }
 
     // It can set undefined value
@@ -28,17 +49,34 @@ type V1TransactionMessage = Extract<TransactionMessage, { version: 1 }>;
         result satisfies V1TransactionMessage & { some: 1 };
     }
 
-    // It rejects legacy messages
+    // It can set undefined value for legacy
     {
         const message = null as unknown as LegacyTransactionMessage;
-        // @ts-expect-error Legacy transactions are not supported
-        setTransactionMessageHeapSize(32_768, message);
+        const result = setTransactionMessageHeapSize(undefined, message);
+        result satisfies LegacyTransactionMessage;
+    }
+}
+
+// [DESCRIBE] getTransactionMessageHeapSize
+{
+    // It returns number | undefined for v1 messages
+    {
+        const message = null as unknown as V1TransactionMessage;
+        const result = getTransactionMessageHeapSize(message);
+        result satisfies number | undefined;
     }
 
-    // It rejects v0 messages
+    // It returns number | undefined for legacy messages
+    {
+        const message = null as unknown as LegacyTransactionMessage;
+        const result = getTransactionMessageHeapSize(message);
+        result satisfies number | undefined;
+    }
+
+    // It returns number | undefined for v0 messages
     {
         const message = null as unknown as V0TransactionMessage;
-        // @ts-expect-error V0 transactions are not supported
-        setTransactionMessageHeapSize(32_768, message);
+        const result = getTransactionMessageHeapSize(message);
+        result satisfies number | undefined;
     }
 }
