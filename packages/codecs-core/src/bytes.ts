@@ -124,7 +124,7 @@ export function containsBytes(
     offset: number,
 ): boolean {
     const slice =
-        (offset === 0 || offset === -data.byteLength) && data.length === bytes.length
+        (offset === 0 || offset <= -data.byteLength) && data.length === bytes.length
             ? data
             : data.slice(offset, offset + bytes.length);
     return bytesEqual(slice, bytes);

@@ -96,6 +96,14 @@ describe('containsBytes', () => {
         sliceSpy.mockRestore();
     });
 
+    it('does not slice the data when offset is negative greater than byteLength', () => {
+        const data = new Uint8Array([1, 2, 3]);
+        const sliceSpy = jest.spyOn(data, 'slice');
+        containsBytes(data, new Uint8Array([1, 2, 3]), -4);
+        expect(sliceSpy).not.toHaveBeenCalled();
+        sliceSpy.mockRestore();
+    });
+
     it('slices the data when offset is a non-zero partial offset', () => {
         const data = new Uint8Array([1, 2, 3]);
         const sliceSpy = jest.spyOn(data, 'slice');

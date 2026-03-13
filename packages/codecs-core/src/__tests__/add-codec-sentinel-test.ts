@@ -77,11 +77,19 @@ describe('addCodecSentinel', () => {
         expect(codec.getSizeFromValue('helloworld')).toBe(12);
     });
 
-    it('does not slice the byte array when offset equals negative byteLength', () => {
+    it('is correct when offset equals negative byteLength', () => {
         const mockCodec = getMockCodec();
         mockCodec.read.mockReturnValue(['helloworld', 10]);
         const codec = addCodecSentinel(mockCodec, b('ff'));
         const bytes = b('68656c6c6f776f726c64ff');
         expect(codec.read(bytes, -bytes.byteLength)[0]).toBe(codec.read(bytes, 0)[0]);
+    });
+
+    it('is correct when offset is negative greater than byteLength', () => {
+        const mockCodec = getMockCodec();
+        mockCodec.read.mockReturnValue(['helloworld', 10]);
+        const codec = addCodecSentinel(mockCodec, b('ff'));
+        const bytes = b('68656c6c6f776f726c64ff');
+        expect(codec.read(bytes, -(bytes.byteLength + 1))[0]).toBe(codec.read(bytes, 0)[0]);
     });
 });

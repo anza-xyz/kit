@@ -57,4 +57,9 @@ describe('getBaseXResliceCodec', () => {
         const bytes = b('ffffff');
         expect(base8.read(bytes, -bytes.byteLength)).toStrictEqual(base8.read(bytes, 0));
     });
+
+    it('produces the same result when offset is negative greater than byteLength', () => {
+        const bytes = b('ffffff');
+        expect(base8.read(bytes, -(bytes.byteLength + 1))).toStrictEqual(base8.read(bytes, 0));
+    });
 });
