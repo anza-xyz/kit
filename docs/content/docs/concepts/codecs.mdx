@@ -513,6 +513,7 @@ const getCipherCodec = () => combineCodec(getCipherEncoder(), getCipherDecoder()
 [getMapCodec](#get-map-codec) \
 [getNullableCodec](#get-nullable-codec) \
 [getOptionCodec](#get-option-codec) \
+[getPatternMatchCodec](#get-pattern-match-codec) \
 [getPredicateCodec](#get-predicate-codec) \
 [getSetCodec](#get-set-codec) \
 [getStructCodec](#get-struct-codec) \
@@ -2554,6 +2555,53 @@ To recap, here are all the possible configurations of the `getOptionCodec` funct
 | No `prefix`                           | `0x2a00` / `0x`          | `0x2a00` / `0x0000`         | `0x2a00` / `0xff`           |
 
 `getOptionEncoder` and `getOptionDecoder` functions are also available.
+
+### getPatternMatchCodec [!toc] [#get-pattern-match-codec]
+
+The `getPatternMatchCodec` function returns a codec that selects which variant codec to use based on pattern matching. It generalises [`getPredicateCodec`](#get-predicate-codec) from two variants to any number of variants.
+
+It accepts an array of `[encodePredicate, decodePredicate, codec]` triples, where:
+
+- An encode predicate, that takes the value to encode and returns a boolean
+- A decode predicate, that takes a `ReadonlyUint8Array` and returns a boolean
+- A codec, that will be used when the corresponding predicate returns `true`
+
+Predicates are tested in order and the first match is used. If no predicate matches, a `SolanaError` is thrown.
+
+```ts twoslash
+import { getPatternMatchCodec, getU8Codec, getU16Codec, getU32Codec, Codec } from '@solana/kit';
+
+// ---cut-before---
+
+const codec: Codec<number> = getPatternMatchCodec([
+    [
+        (value: number) => value < 256,
+        bytes => bytes.length === 1,
+        getU8Codec(),
+    ],
+    [
+        (value: number) => value < 2 ** 16,
+        bytes => bytes.length === 2,
+        getU16Codec(),
+    ],
+    [
+        (value: number) => value < 2 ** 32,
+        bytes => bytes.length <= 4,
+        getU32Codec(),
+    ],
+]);
+
+const u8Bytes = codec.encode(42) // 0x2a, encoded as u8
+codec.decode(u8Bytes) // 42, decoded as u8
+
+const u16Bytes = codec.encode(1000) // 0xe803, encoded as u16
+codec.decode(u16Bytes) // 1000, decoded as u16
+
+const u32Bytes = codec.encode(100_000) // 0xa0860100, encoded as u32
+codec.decode(u32Bytes) // 100_000, decoded as u32
+```
+
+`getPatternMatchEncoder` and `getPatternMatchDecoder` functions are also available.
 
 ### getPredicateCodec [!toc] [#get-predicate-codec]
 
