@@ -211,6 +211,7 @@ import {
     SOLANA_ERROR__SIGNER__EXPECTED_TRANSACTION_SIGNER,
     SOLANA_ERROR__SIGNER__TRANSACTION_CANNOT_HAVE_MULTIPLE_SENDING_SIGNERS,
     SOLANA_ERROR__SIGNER__TRANSACTION_SENDING_SIGNER_MISSING,
+    SOLANA_ERROR__SIGNER__WALLET_ACCOUNT_CANNOT_SIGN_TRANSACTION,
     SOLANA_ERROR__SIGNER__WALLET_MULTISIGN_UNIMPLEMENTED,
     SOLANA_ERROR__SUBTLE_CRYPTO__CANNOT_EXPORT_NON_EXTRACTABLE_KEY,
     SOLANA_ERROR__SUBTLE_CRYPTO__DIGEST_UNIMPLEMENTED,
@@ -646,6 +647,11 @@ export const SolanaErrorMessages: Readonly<{
     [SOLANA_ERROR__SIGNER__TRANSACTION_SENDING_SIGNER_MISSING]:
         'No `TransactionSendingSigner` was identified. Please provide a valid ' +
         '`TransactionWithSingleSendingSigner` transaction.',
+    [SOLANA_ERROR__SIGNER__WALLET_ACCOUNT_CANNOT_SIGN_TRANSACTION]:
+        'The wallet account $address cannot be used to create a transaction signer because it does not ' +
+        'implement either the `solana:signTransaction` or `solana:signAndSendTransaction` feature. ' +
+        'At least one of these features is required. ' +
+        'The account supports the following features: $supportedFeatures.',
     [SOLANA_ERROR__SIGNER__WALLET_MULTISIGN_UNIMPLEMENTED]:
         'Wallet account signers do not support signing multiple messages/transactions in a single operation',
     [SOLANA_ERROR__SUBTLE_CRYPTO__CANNOT_EXPORT_NON_EXTRACTABLE_KEY]: 'Cannot export a non-extractable key.',
