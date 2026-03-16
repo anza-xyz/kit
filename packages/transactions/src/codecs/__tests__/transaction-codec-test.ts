@@ -727,6 +727,7 @@ describe.each([getTransactionDecoder, getTransactionCodec])('Transaction decoder
 
             it('should decode the transaction correctly when the signature is defined', () => {
                 const signature = new Uint8Array(64).fill(1) as ReadonlyUint8Array as SignatureBytes;
+                // prettier-ignore
                 const messageBytes = new Uint8Array([
                     /** VERSION HEADER */
                     129, // 1 + version mask
@@ -737,16 +738,13 @@ describe.each([getTransactionDecoder, getTransactionCodec])('Transaction decoder
                     1, // numReadonlyNonSignerAccounts
 
                     /** TRANSACTION CONFIG MASK */
-                    0,
-                    0,
-                    0,
-                    0, // arbitrary
+                    0, 0, 0, 0, // arbitrary, 4 bytes
 
                     /** LIFETIME SPECIFIER */
-                    0,
-                    0,
-                    0,
-                    0, // arbitrary
+                    0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0, // arbitrary, 32 bytes
 
                     /** NUM INSTRUCTIONS */
                     1, // arbitrary
@@ -781,6 +779,7 @@ describe.each([getTransactionDecoder, getTransactionCodec])('Transaction decoder
 
             it('should decode the transaction correctly when the signature is not defined', () => {
                 const signature = new Uint8Array(64).fill(0) as ReadonlyUint8Array as SignatureBytes;
+                // prettier-ignore
                 const messageBytes = new Uint8Array([
                     /** VERSION HEADER */
                     129, // 1 + version mask
@@ -797,10 +796,10 @@ describe.each([getTransactionDecoder, getTransactionCodec])('Transaction decoder
                     0, // arbitrary
 
                     /** LIFETIME SPECIFIER */
-                    0,
-                    0,
-                    0,
-                    0, // arbitrary
+                    0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0, // arbitrary, 32 bytes
 
                     /** NUM INSTRUCTIONS */
                     1, // arbitrary
@@ -835,6 +834,7 @@ describe.each([getTransactionDecoder, getTransactionCodec])('Transaction decoder
 
             it('should freeze the signatures map', () => {
                 const signature = new Uint8Array(64).fill(0) as ReadonlyUint8Array as SignatureBytes;
+                // prettier-ignore
                 const messageBytes = new Uint8Array([
                     /** VERSION HEADER */
                     129, // 1 + version mask
@@ -851,10 +851,10 @@ describe.each([getTransactionDecoder, getTransactionCodec])('Transaction decoder
                     0, // arbitrary
 
                     /** LIFETIME SPECIFIER */
-                    0,
-                    0,
-                    0,
-                    0, // arbitrary
+                    0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0, // arbitrary, 32 bytes
 
                     /** NUM INSTRUCTIONS */
                     1, // arbitrary
@@ -898,6 +898,7 @@ describe.each([getTransactionDecoder, getTransactionCodec])('Transaction decoder
             const signature3 = new Uint8Array(64).fill(3) as ReadonlyUint8Array as SignatureBytes;
 
             it('should decode the transaction correctly when all the signatures are defined', () => {
+                // prettier-ignore
                 const messageBytes = new Uint8Array([
                     /** VERSION HEADER */
                     129, // 1 + version mask
@@ -914,10 +915,10 @@ describe.each([getTransactionDecoder, getTransactionCodec])('Transaction decoder
                     0, // arbitrary
 
                     /** LIFETIME SPECIFIER */
-                    0,
-                    0,
-                    0,
-                    0, // arbitrary
+                    0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0, // arbitrary, 32 bytes
 
                     /** NUM INSTRUCTIONS */
                     1, // arbitrary
@@ -957,6 +958,7 @@ describe.each([getTransactionDecoder, getTransactionCodec])('Transaction decoder
             });
 
             it('should decode the transaction correctly when none of the signatures are defined', () => {
+                // prettier-ignore
                 const messageBytes = new Uint8Array([
                     /** VERSION HEADER */
                     129, // 1 + version mask
@@ -973,10 +975,10 @@ describe.each([getTransactionDecoder, getTransactionCodec])('Transaction decoder
                     0, // arbitrary
 
                     /** LIFETIME SPECIFIER */
-                    0,
-                    0,
-                    0,
-                    0, // arbitrary
+                    0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0, // arbitrary, 32 bytes
 
                     /** NUM INSTRUCTIONS */
                     1, // arbitrary
@@ -1016,6 +1018,7 @@ describe.each([getTransactionDecoder, getTransactionCodec])('Transaction decoder
             });
 
             it('should decode the transaction correctly when some of the signatures are defined', () => {
+                // prettier-ignore
                 const messageBytes = new Uint8Array([
                     /** VERSION HEADER */
                     129, // 1 + version mask
@@ -1032,10 +1035,10 @@ describe.each([getTransactionDecoder, getTransactionCodec])('Transaction decoder
                     0, // arbitrary
 
                     /** LIFETIME SPECIFIER */
-                    0,
-                    0,
-                    0,
-                    0, // arbitrary
+                    0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0, // arbitrary, 32 bytes
 
                     /** NUM INSTRUCTIONS */
                     1, // arbitrary
@@ -1112,6 +1115,7 @@ describe.each([getTransactionDecoder, getTransactionCodec])('Transaction decoder
         });
 
         it('should throw for a v1-shaped transaction with a v2 version byte', () => {
+            // prettier-ignore
             const messageBytes = new Uint8Array([
                 /** VERSION HEADER */
                 130, // 2 + version mask
@@ -1128,10 +1132,10 @@ describe.each([getTransactionDecoder, getTransactionCodec])('Transaction decoder
                 0, // arbitrary
 
                 /** LIFETIME SPECIFIER */
-                0,
-                0,
-                0,
-                0, // arbitrary
+                0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, // arbitrary, 32 bytes
 
                 /** NUM INSTRUCTIONS */
                 1, // arbitrary

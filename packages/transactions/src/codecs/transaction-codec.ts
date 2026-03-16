@@ -291,11 +291,11 @@ function decodePartiallyDecodedV1Transaction(transaction: PartiallyDecodedTransa
      * - 1 byte transaction version
      * - 3 bytes for the header (`numRequiredSignatures`, `numReadOnlySignedAccounts`, and `numReadOnlyUnsignedAccounts`)
      * - 4 bytes for transaction config mask
-     * - 4 bytes for lifetime specifier
+     * - 32 bytes for lifetime specifier (a base58-encoded 32-byte blockhash or nonce)
      * - 1 byte for num instructions
      * - 1 byte for num addresses
      */
-    const staticAddressOffset = 1 + 3 + 4 + 4 + 1 + 1;
+    const staticAddressOffset = 1 + 3 + 4 + 32 + 1 + 1;
 
     const signerAddresses = getArrayDecoder(getAddressDecoder(), { size: numRequiredSignatures }).decode(
         messageBytes,
