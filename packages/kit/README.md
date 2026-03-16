@@ -62,39 +62,54 @@ const mintSize = 82n;
 const rentExemptLamports = getMinimumBalanceForRentExemption(mintSize);
 ```
 
-### `getComputeUnitEstimateForTransactionMessageFactory({rpc})`
+### Compute Unit Limit Estimation
 
 Correctly budgeting a compute unit limit for your transaction message can increase the probability that your transaction will be accepted for processing. If you don't declare a compute unit limit on your transaction, validators will assume an upper limit of 200K compute units (CU) per instruction.
 
 Since validators have an incentive to pack as many transactions into each block as possible, they may choose to include transactions that they know will fit into the remaining compute budget for the current block over transactions that might not. For this reason, you should set a compute unit limit on each of your transaction messages, whenever possible.
 
-Use this utility to estimate the actual compute unit cost of a given transaction message.
+#### `estimateComputeUnitLimitFactory({rpc})`
+
+Returns a function that estimates the compute units consumed by a transaction message by simulating it. The estimator temporarily sets the compute unit limit to the maximum (1,400,000) before simulating, so the simulation does not fail due to compute unit exhaustion.
 
 ```ts
-import { getSetComputeUnitLimitInstruction } from '@solana-program/compute-budget';
-import { createSolanaRpc, getComputeUnitEstimateForTransactionMessageFactory, pipe } from '@solana/kit';
+import { createSolanaRpc, estimateComputeUnitLimitFactory, setTransactionMessageComputeUnitLimit } from '@solana/kit';
 
-// Create an estimator function.
 const rpc = createSolanaRpc('http://127.0.0.1:8899');
-const getComputeUnitEstimateForTransactionMessage = getComputeUnitEstimateForTransactionMessageFactory({
-    rpc,
-});
+const estimateComputeUnitLimit = estimateComputeUnitLimitFactory({ rpc });
 
-// Create your transaction message.
-const transactionMessage = pipe(
-    createTransactionMessage({ version: 'legacy' }),
-    /* ... */
-);
+const computeUnitsEstimate = await estimateComputeUnitLimit(transactionMessage);
 
-// Request an estimate of the actual compute units this message will consume. This is done by
-// simulating the transaction and grabbing the estimated compute units from the result.
-const computeUnitsEstimate = await getComputeUnitEstimateForTransactionMessage(transactionMessage);
-
-// Set the transaction message's compute unit budget.
-const transactionMessageWithComputeUnitLimit = prependTransactionMessageInstruction(
-    getSetComputeUnitLimitInstruction({ units: computeUnitsEstimate }),
+const transactionMessageWithComputeUnitLimit = setTransactionMessageComputeUnitLimit(
+    computeUnitsEstimate,
     transactionMessage,
 );
+```
+
+> [!NOTE]
+> For legacy and v0 transactions, if the transaction message does not already have a `SetComputeUnitLimit` instruction, the estimator will add one before simulation. This ensures that the compute unit consumption of the instruction itself is included in the estimate.
+
+#### `estimateAndSetComputeUnitLimitFactory(estimator)`
+
+Returns a function that estimates the compute unit limit for a transaction message and sets it directly on the message. If the message already has an explicit compute unit limit (one that is not the provisory value of `0` or the maximum of `1,400,000`), the message is returned unchanged. This is designed to work with `fillTransactionMessageProvisoryComputeUnitLimit`.
+
+```ts
+import { estimateAndSetComputeUnitLimitFactory, estimateComputeUnitLimitFactory } from '@solana/kit';
+
+const estimator = estimateComputeUnitLimitFactory({ rpc });
+const estimateAndSetComputeUnitLimit = estimateAndSetComputeUnitLimitFactory(estimator);
+
+const updatedMessage = await estimateAndSetComputeUnitLimit(transactionMessage);
+```
+
+#### `fillTransactionMessageProvisoryComputeUnitLimit(transactionMessage)`
+
+Sets the compute unit limit to a provisory value of `0` if no compute unit limit is currently set on the transaction message. This is useful during transaction construction to reserve space for a compute unit limit that will later be replaced with an actual estimate.
+
+```ts
+import { fillTransactionMessageProvisoryComputeUnitLimit } from '@solana/kit';
+
+const messageWithProvisoryLimit = fillTransactionMessageProvisoryComputeUnitLimit(transactionMessage);
 ```
 
 > [!WARNING]
@@ -102,9 +117,6 @@ const transactionMessageWithComputeUnitLimit = prependTransactionMessageInstruct
 
 > [!NOTE]
 > If you are preparing an _unsigned_ transaction, destined to be signed and submitted to the network by a wallet, you might like to leave it up to the wallet to determine the compute unit limit. Consider that the wallet might have a more global view of how many compute units certain types of transactions consume, and might be able to make better estimates of an appropriate compute unit budget.
-
-> [!INFO]
-> In the event that a transaction message does not already have a `SetComputeUnitLimit` instruction, this function will add one before simulation. This ensures that the compute unit consumption of the `SetComputeUnitLimit` instruction itself is included in the estimate.
 
 ### `sendAndConfirmTransactionFactory({rpc, rpcSubscriptions})`
 

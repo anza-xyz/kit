@@ -10,7 +10,6 @@
 import { createLogger } from '@solana/example-utils/createLogger.js';
 import pressAnyKeyPrompt from '@solana/example-utils/pressAnyKeyPrompt.js';
 import {
-    appendTransactionMessageInstruction,
     assertIsTransactionWithBlockhashLifetime,
     createKeyPairSignerFromBytes,
     createSolanaRpc,
@@ -18,23 +17,21 @@ import {
     createTransactionMessage,
     createTransactionPlanExecutor,
     createTransactionPlanner,
+    estimateAndSetComputeUnitLimitFactory,
+    estimateComputeUnitLimitFactory,
+    fillTransactionMessageProvisoryComputeUnitLimit,
     generateKeyPairSigner,
     getSignatureFromTransaction,
     parallelInstructionPlan,
     pipe,
     sendAndConfirmTransactionFactory,
     sequentialInstructionPlan,
+    setTransactionMessageComputeUnitPrice,
     setTransactionMessageFeePayer,
     setTransactionMessageLifetimeUsingBlockhash,
     signTransactionMessageWithSigners,
     TransactionPlan,
 } from '@solana/kit';
-import {
-    estimateAndUpdateProvisoryComputeUnitLimitFactory,
-    estimateComputeUnitLimitFactory,
-    fillProvisorySetComputeUnitLimitInstruction,
-    getSetComputeUnitPriceInstruction,
-} from '@solana-program/compute-budget';
 import { getCreateMintInstructionPlan, getMintToATAInstructionPlanAsync } from '@solana-program/token';
 
 const log = createLogger('Token Airdrop');
@@ -109,23 +106,17 @@ const transactionPlanner = createTransactionPlanner({
              * Compute Program Instructions
              * In this example we are setting a fixed Compute Unit (CU) price of 100 microlamports/CU.
              */
-            tx =>
-                appendTransactionMessageInstruction(
-                    getSetComputeUnitPriceInstruction({
-                        microLamports: 100n,
-                    }),
-                    tx,
-                ),
+            tx => setTransactionMessageComputeUnitPrice(100n, tx),
             /**
-             * We are also adding a provisory CU limit instruction. This is simply the CU limit instruction,
-             * with a fixed CU limit. At this point we don't know what instructions will be  added to the
-             * transaction, so we don't know what the CU limit will be.
-             * The CU limit in this instruction will be updated later by the transaction executor.
-             * The transaction planner is going to add as many instructions as possible to each transaction,
-             * so we may not be able to add instructions later in the transaction executor.
-             * By using the provisory instruction, we ensure that there is always space for the CU limit instruction.
+             * We are also adding a provisory CU limit. At this point we don't know what
+             * instructions will be added to the transaction, so we don't know what the CU limit
+             * will be. The CU limit will be updated later by the transaction executor.
+             * The transaction planner is going to add as many instructions as possible to each
+             * transaction, so we may not be able to add instructions later in the transaction
+             * executor. By using the provisory limit, we ensure that there is always space for
+             * the CU limit.
              */
-            tx => fillProvisorySetComputeUnitLimitInstruction(tx),
+            tx => fillTransactionMessageProvisoryComputeUnitLimit(tx),
         );
     },
 });
@@ -161,10 +152,10 @@ async function estimateWithMultiplier(...args: Parameters<typeof estimateCULimit
     return Math.ceil(estimate * 1.1);
 }
 /**
- * This helper will take the estimate and use it to update the provisory CU limit instruction
+ * This helper will take the estimate and use it to update the provisory CU limit
  * that we included in the planner base transaction message.
  */
-const estimateAndSetCULimit = estimateAndUpdateProvisoryComputeUnitLimitFactory(estimateWithMultiplier);
+const estimateAndSetCULimit = estimateAndSetComputeUnitLimitFactory(estimateWithMultiplier);
 
 /**
  * TRANSACTION EXECUTOR
@@ -191,8 +182,7 @@ const transactionExecutor = createTransactionPlanExecutor({
             /**
              * We use the helper that we created to estimate and set the CU limit.
              * This returns an updated transaction message with the CU limit set.
-             * Recall that this updates the provisory CU limit instruction that was added in the planner.
-             * We don't add new instructions in the executor, but we can modify an existing one.
+             * Recall that this replaces the provisory CU limit that was added in the planner.
              */
             tx => estimateAndSetCULimit(tx, { abortSignal }),
         );

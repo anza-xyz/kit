@@ -26,6 +26,7 @@ export * from '@solana/signers';
 export * from '@solana/transaction-messages';
 export * from '@solana/transactions';
 export * from './airdrop';
+export * from './compute-unit-limit-estimation';
 export * from './decompile-transaction-message-fetching-lookup-tables';
 export * from './fetch-lookup-tables';
 export * from './get-minimum-balance-for-rent-exemption';

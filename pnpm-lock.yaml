@@ -263,9 +263,6 @@ importers:
 
   examples/token-airdrop:
     dependencies:
-      '@solana-program/compute-budget':
-        specifier: ^0.15.0
-        version: 0.15.0(@solana/kit@packages+kit)
       '@solana-program/system':
         specifier: ^0.12.0
         version: 0.12.0(@solana/kit@packages+kit)
@@ -5064,11 +5061,6 @@ packages:
     resolution: {integrity: sha512-loC6VTEhmhYSq2ElZrv+V9uHp/Te6A7rllLIArk9c3A5+5V7sRhVsxZvsPGcv/WMXLgqmXR+Vl7WF7QSV3tXNQ==}
     peerDependencies:
       '@solana/kit': ^6.0
-
-  '@solana-program/compute-budget@0.15.0':
-    resolution: {integrity: sha512-toejNdIkzpUTqLSIzP0Nofr/EFel8QpPWuTtIKzfCcjn+mXpkThHxPJaNesk251rSTiWaxDZ3WxG7RxYwTWTqA==}
-    peerDependencies:
-      '@solana/kit': ^6.3.0
 
   '@solana-program/memo@0.11.0':
     resolution: {integrity: sha512-/WVM2y76hL5zWJJwaHsbvMREeIUzhKDHU+ftMXTf4aLPJFDKG6am4X5RID3CHsI3oYNEMywgVvsFdnorwgEuwA==}
@@ -13380,10 +13372,6 @@ snapshots:
       '@sinonjs/commons': 1.8.6
 
   '@solana-program/address-lookup-table@0.11.0(@solana/kit@packages+kit)':
-    dependencies:
-      '@solana/kit': link:packages/kit
-
-  '@solana-program/compute-budget@0.15.0(@solana/kit@packages+kit)':
     dependencies:
       '@solana/kit': link:packages/kit
 
