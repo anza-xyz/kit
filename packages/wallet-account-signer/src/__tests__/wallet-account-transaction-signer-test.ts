@@ -843,10 +843,8 @@ describe('createSignerFromWalletAccount', () => {
         jest.mocked(getCompiledTransactionMessageDecoder).mockReturnValue({
             decode: jest
                 .fn()
-                .mockReturnValueOnce({ lifetimeToken: 'changed-1' }) // tx1 token check
-                .mockReturnValueOnce({ lifetimeToken: 'changed-1' }) // tx1 new lifetime fetch
-                .mockReturnValueOnce({ lifetimeToken: 'changed-2' }) // tx2 token check
-                .mockReturnValueOnce({ lifetimeToken: 'changed-2' }), // tx2 new lifetime fetch
+                .mockReturnValueOnce({ lifetimeToken: 'changed-1' }) // tx1 decode lifetime
+                .mockReturnValueOnce({ lifetimeToken: 'changed-2' }), // tx2 decode lifetime
         } as unknown as ReturnType<typeof getCompiledTransactionMessageDecoder>);
 
         // Mock new lifetimes.
@@ -899,8 +897,8 @@ describe('createSignerFromWalletAccount', () => {
         // Then bytesEqual is called twice.
         expect(bytesEqual).toHaveBeenCalledTimes(2);
 
-        // And the decoder is called 4 times (2 token checks + 2 new lifetime fetches).
-        expect(getCompiledTransactionMessageDecoder().decode).toHaveBeenCalledTimes(4);
+        // And the decoder is called 2 times (once per transaction.
+        expect(getCompiledTransactionMessageDecoder().decode).toHaveBeenCalledTimes(2);
 
         // And each transaction has the new lifetime.
         expect(result[0].lifetimeConstraint).toEqual(newLifetime1);

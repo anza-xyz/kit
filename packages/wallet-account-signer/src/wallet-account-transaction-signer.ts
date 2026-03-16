@@ -98,32 +98,32 @@ export function createTransactionSignerFromWalletAccount<TWalletAccount extends 
 
                         assertIsTransactionWithinSizeLimit(decodedSignedTransaction);
 
-                        // Use the input transaction at the same index if available for lifetime comparison
                         const inputTransaction = transactions[index];
                         const existingLifetime =
                             inputTransaction && 'lifetimeConstraint' in inputTransaction
                                 ? (inputTransaction as TransactionWithLifetime).lifetimeConstraint
                                 : undefined;
 
-                        if (existingLifetime) {
-                            if (
-                                inputTransaction &&
-                                bytesEqual(decodedSignedTransaction.messageBytes, inputTransaction.messageBytes)
-                            ) {
-                                // If the transaction has identical bytes, the lifetime won't have changed
-                                return Object.freeze({
-                                    ...decodedSignedTransaction,
-                                    lifetimeConstraint: existingLifetime,
-                                });
-                            }
+                        // Fast path: identical bytes means the lifetime hasn't changed
+                        if (
+                            existingLifetime &&
+                            bytesEqual(decodedSignedTransaction.messageBytes, inputTransaction.messageBytes)
+                        ) {
+                            return Object.freeze({
+                                ...decodedSignedTransaction,
+                                lifetimeConstraint: existingLifetime,
+                            });
+                        }
 
-                            // If the transaction has changed, check the lifetime constraint field
-                            const compiledTransactionMessage = getCompiledTransactionMessageDecoder().decode(
-                                decodedSignedTransaction.messageBytes,
-                            );
+                        // Decode once to inspect the lifetime token
+                        const compiledTransactionMessage = getCompiledTransactionMessageDecoder().decode(
+                            decodedSignedTransaction.messageBytes,
+                        );
+
+                        // If the token matches the existing lifetime, reuse it
+                        if (existingLifetime) {
                             const currentToken =
                                 'blockhash' in existingLifetime ? existingLifetime.blockhash : existingLifetime.nonce;
-
                             if (compiledTransactionMessage.lifetimeToken === currentToken) {
                                 return Object.freeze({
                                     ...decodedSignedTransaction,
@@ -132,10 +132,7 @@ export function createTransactionSignerFromWalletAccount<TWalletAccount extends 
                             }
                         }
 
-                        // If we get here then there is no existing lifetime, or the lifetime has changed. We need to attach a new lifetime
-                        const compiledTransactionMessage = getCompiledTransactionMessageDecoder().decode(
-                            decodedSignedTransaction.messageBytes,
-                        );
+                        // No existing lifetime or it has changed — fetch a new one
                         const lifetimeConstraint =
                             await getTransactionLifetimeConstraintFromCompiledTransactionMessage(
                                 compiledTransactionMessage,
