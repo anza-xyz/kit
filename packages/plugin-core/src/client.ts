@@ -209,3 +209,36 @@ function createAsyncClient<TSelf extends object>(promise: Promise<TSelf>): Async
         },
     } as AsyncClient<TSelf>);
 }
+
+/**
+ * Extends a client object with additional properties, preserving property descriptors
+ * (getters, symbol-keyed properties, and non-enumerable properties) from both objects.
+ *
+ * Use this inside plugins instead of plain object spread (`{...client, ...additions}`)
+ * when the client may carry getters or symbol-keyed properties that spread would flatten or lose.
+ * When the same key exists on both, `additions` wins.
+ *
+ * @typeParam TClient - The type of the original client.
+ * @typeParam TAdditions - The type of the properties being added.
+ * @param client - The original client object to extend.
+ * @param additions - The properties to add or override on the client.
+ * @returns A new object combining both, with `additions` taking precedence on conflicts.
+ *
+ * @example
+ * ```ts
+ * function rpcPlugin(endpoint: string) {
+ *     return <T extends object>(client: T) =>
+ *         extendClient(client, { rpc: createSolanaRpc(endpoint) });
+ * }
+ * ```
+ *
+ * @see {@link ClientPlugin}
+ */
+export function extendClient<TClient extends object, TAdditions extends object>(
+    client: TClient,
+    additions: TAdditions,
+): Omit<TClient, keyof TAdditions> & TAdditions {
+    const result = Object.defineProperties({}, Object.getOwnPropertyDescriptors(client));
+    Object.defineProperties(result, Object.getOwnPropertyDescriptors(additions));
+    return Object.freeze(result) as Omit<TClient, keyof TAdditions> & TAdditions;
+}

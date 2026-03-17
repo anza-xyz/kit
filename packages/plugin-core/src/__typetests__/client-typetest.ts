@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
-import { type AsyncClient, type Client, type ClientPlugin, createEmptyClient } from '../client';
+import { type AsyncClient, type Client, type ClientPlugin, createEmptyClient, extendClient } from '../client';
 
 const EMPTY_CLIENT = null as unknown as Client<object>;
 const EMPTY_ASYNC_CLIENT = null as unknown as AsyncClient<object>;
@@ -202,5 +202,34 @@ const EMPTY_ASYNC_CLIENT = null as unknown as AsyncClient<object>;
     // It returns an empty Client (See typetests above).
     {
         createEmptyClient() satisfies typeof EMPTY_CLIENT;
+    }
+}
+
+// [DESCRIBE] extendClient
+{
+    // It merges both types into the result.
+    {
+        const result = extendClient({ fruit: 'apple' as const }, { vegetable: 'carrot' as const });
+        result satisfies { fruit: 'apple'; vegetable: 'carrot' };
+    }
+
+    // It allows the second type to override the first.
+    {
+        const result = extendClient({ fruit: 'apple' as const }, { fruit: 'banana' as const });
+        result satisfies { fruit: 'banana' };
+        // @ts-expect-error - fruit is no longer an apple.
+        result satisfies { fruit: 'apple' };
+    }
+
+    // It rejects non-object clients.
+    {
+        // @ts-expect-error - client is not an object.
+        extendClient(42, {});
+    }
+
+    // It rejects non-object additions.
+    {
+        // @ts-expect-error - additions is not an object.
+        extendClient({}, 'hello');
     }
 }
