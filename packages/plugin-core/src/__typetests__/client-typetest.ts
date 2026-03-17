@@ -1,5 +1,12 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
-import { type AsyncClient, type Client, type ClientPlugin, createEmptyClient, extendClient } from '../client';
+import {
+    type AsyncClient,
+    type Client,
+    type ClientPlugin,
+    createEmptyClient,
+    extendClient,
+    withCleanup,
+} from '../client';
 
 const EMPTY_CLIENT = null as unknown as Client<object>;
 const EMPTY_ASYNC_CLIENT = null as unknown as AsyncClient<object>;
@@ -231,5 +238,20 @@ const EMPTY_ASYNC_CLIENT = null as unknown as AsyncClient<object>;
     {
         // @ts-expect-error - additions is not an object.
         extendClient({}, 'hello');
+    }
+}
+
+// [Describe] withCleanup
+{
+    // It returns a Disposable client
+    {
+        const client = null as unknown as Client<object>;
+        withCleanup(client, () => {}) satisfies Client<object> & Disposable;
+    }
+
+    // It accepts an already Disposable client
+    {
+        const client = null as unknown as Client<object> & Disposable;
+        withCleanup(client, () => {}) satisfies Client<object> & Disposable;
     }
 }
