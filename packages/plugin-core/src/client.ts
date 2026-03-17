@@ -174,13 +174,23 @@ export function createEmptyClient(): Client<object> {
 }
 
 function addUse<TSelf extends object>(value: TSelf): Client<TSelf> {
-    return Object.freeze({
-        ...value,
-        use<TOutput extends Promise<object> | object>(plugin: ClientPlugin<TSelf, TOutput>) {
-            const result = plugin(value);
-            return result instanceof Promise ? createAsyncClient(result) : addUse(result);
-        },
-    } as Client<TSelf>);
+    return Object.freeze(
+        Object.defineProperties(
+            {},
+            {
+                ...Object.getOwnPropertyDescriptors(value),
+                use: {
+                    configurable: false,
+                    enumerable: true,
+                    value: function <TOutput extends Promise<object> | object>(plugin: ClientPlugin<TSelf, TOutput>) {
+                        const result = plugin(value);
+                        return result instanceof Promise ? createAsyncClient(result) : addUse(result);
+                    },
+                    writable: false,
+                },
+            },
+        ),
+    ) as Client<TSelf>;
 }
 
 function createAsyncClient<TSelf extends object>(promise: Promise<TSelf>): AsyncClient<TSelf> {

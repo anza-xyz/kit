@@ -46,6 +46,43 @@ describe('createEmptyClient', () => {
         });
     });
 
+    it('preserves getter properties from plugins', () => {
+        const client = createEmptyClient()
+            // Make fruit a get() property
+            .use(c => {
+                const result = { ...c };
+                Object.defineProperty(result, 'fruit', { configurable: true, enumerable: true, get: () => 'apple' });
+                return result;
+            })
+            // Make dessert a normal property
+            .use(c => {
+                // Use Object.defineProperties to preserve the getter on fruit
+                const result: typeof c = Object.defineProperties({}, Object.getOwnPropertyDescriptors(c));
+                Object.defineProperty(result, 'dessert', { configurable: true, enumerable: true, value: 'apple cake' });
+                return result;
+            });
+        expect(Object.getOwnPropertyDescriptor(client, 'fruit')?.get).toBeInstanceOf(Function);
+        expect((client as unknown as { fruit: string }).fruit).toBe('apple');
+        expect((client as unknown as { dessert: string }).dessert).toBe('apple cake');
+    });
+
+    it('preserves symbol-keyed properties from plugins', () => {
+        const sym = Symbol('fruit');
+
+        const client = createEmptyClient()
+            // Add the fruit symbol property
+            .use(c => ({ ...c, [sym]: 'apple' }))
+            // Add dessert as a normal property
+            .use(c => {
+                // Use Object.defineProperties to preserve the symbol on fruit
+                const result = Object.defineProperties({}, Object.getOwnPropertyDescriptors(c)) as typeof c;
+                Object.defineProperty(result, 'dessert', { configurable: true, enumerable: true, value: 'apple cake' });
+                return result;
+            });
+        expect((client as Record<symbol, unknown>)[sym]).toBe('apple');
+        expect((client as unknown as { dessert: string }).dessert).toBe('apple cake');
+    });
+
     it('supports asynchronous plugins', async () => {
         expect.assertions(1);
         await expect(
