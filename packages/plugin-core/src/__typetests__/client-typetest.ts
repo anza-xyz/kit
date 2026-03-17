@@ -5,6 +5,7 @@ import {
     type ClientPlugin,
     createEmptyClient,
     extendClient,
+    withAsyncCleanup,
     withCleanup,
 } from '../client';
 
@@ -253,5 +254,26 @@ const EMPTY_ASYNC_CLIENT = null as unknown as AsyncClient<object>;
     {
         const client = null as unknown as Client<object> & Disposable;
         withCleanup(client, () => {}) satisfies Client<object> & Disposable;
+    }
+}
+
+// [Describe] withAsyncCleanup
+{
+    // It returns an AsyncDisposable client
+    {
+        const client = null as unknown as Client<object>;
+        withAsyncCleanup(client, async () => {}) satisfies AsyncDisposable & Client<object>;
+    }
+
+    // It accepts an already AsyncDisposable client
+    {
+        const client = null as unknown as AsyncDisposable & Client<object>;
+        withAsyncCleanup(client, async () => {}) satisfies AsyncDisposable & Client<object>;
+    }
+
+    // It accepts a Disposable (sync-only) client
+    {
+        const client = null as unknown as Client<object> & Disposable;
+        withAsyncCleanup(client, async () => {}) satisfies AsyncDisposable & Client<object> & Disposable;
     }
 }

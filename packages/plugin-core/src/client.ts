@@ -287,3 +287,59 @@ export function withCleanup<TClient extends object>(client: TClient, cleanup: ()
     };
     return extendClient(client, additions) as Disposable & TClient;
 }
+
+/**
+ * Wraps a client with an async cleanup function, making it {@link AsyncDisposable}.
+ *
+ * Plugin authors can use this to register asynchronous teardown logic (e.g.
+ * flushing buffers, closing connections) that runs when the client is disposed.
+ * If the client already implements `Symbol.asyncDispose`, it is awaited after
+ * the new cleanup. If only `Symbol.dispose` is present, it is called
+ * synchronously as a fallback.
+ *
+ * @typeParam TClient - The type of the original client.
+ * @param client - The client to wrap.
+ * @param cleanup - The async cleanup function to run when the client is disposed.
+ * @return A new client that extends `TClient` and implements `AsyncDisposable`.
+ *
+ * @example
+ * Register an async cleanup function in a plugin that opens a database connection.
+ * ```ts
+ * function myPlugin() {
+ *     return <T extends object>(client: T) => {
+ *         const db = await openDatabase();
+ *         return withAsyncCleanup(
+ *             extendClient(client, { db }),
+ *             () => db.close(),
+ *         );
+ *     };
+ * }
+ *
+ * // Later, when the client is no longer needed:
+ * await using client = createClient(myPlugin());
+ * // `db.close()` is awaited automatically when `client` goes out of scope.
+ * ```
+ *
+ * @see {@link withCleanup}
+ * @see {@link extendClient}
+ */
+export function withAsyncCleanup<TClient extends object>(
+    client: TClient,
+    cleanup: () => Promise<void>,
+): AsyncDisposable & TClient {
+    const parentDispose: (() => void) | undefined =
+        Symbol.dispose in client ? (client as Disposable)[Symbol.dispose] : undefined;
+    const parentAsyncDispose: (() => PromiseLike<void>) | undefined =
+        Symbol.asyncDispose in client ? (client as AsyncDisposable)[Symbol.asyncDispose] : undefined;
+    const additions: AsyncDisposable = {
+        async [Symbol.asyncDispose]() {
+            await cleanup();
+            if (parentAsyncDispose) {
+                await parentAsyncDispose.call(client);
+            } else {
+                parentDispose?.call(client);
+            }
+        },
+    };
+    return extendClient(client, additions) as AsyncDisposable & TClient;
+}
