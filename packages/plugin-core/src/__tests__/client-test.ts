@@ -1,6 +1,6 @@
 import '@solana/test-matchers/toBeFrozenObject';
 
-import { createEmptyClient, extendClient, withCleanup } from '../client';
+import { createEmptyClient, extendClient, withAsyncCleanup, withCleanup } from '../client';
 
 describe('createEmptyClient', () => {
     it('creates an empty object with a use function', () => {
@@ -346,5 +346,96 @@ describe('withCleanup', () => {
         const result = withCleanup(client, cleanup2);
         result[Symbol.dispose]();
         expect(callOrder).toStrictEqual(['cleanup2', 'cleanup1', 'parent']);
+    });
+
+    it('preserves async dispose when client already has Symbol.asyncDispose', () => {
+        const asyncDispose = jest.fn();
+        const client = { [Symbol.asyncDispose]: asyncDispose };
+        const result = withCleanup(client, () => {});
+        expect(result[Symbol.asyncDispose]).toBe(asyncDispose);
+    });
+});
+
+describe('withAsyncCleanup', () => {
+    it('calls the cleanup function when async-disposed', async () => {
+        expect.assertions(1);
+        const cleanup = jest.fn().mockResolvedValue(undefined);
+        const result = withAsyncCleanup({}, cleanup);
+        await result[Symbol.asyncDispose]();
+        expect(cleanup).toHaveBeenCalledTimes(1);
+    });
+
+    it('disposes using the `await using` syntax', async () => {
+        expect.assertions(1);
+        const cleanup = jest.fn().mockResolvedValue(undefined);
+        {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            await using _ = withAsyncCleanup({}, cleanup);
+        }
+        expect(cleanup).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not call the cleanup function before dispose is invoked', () => {
+        const cleanup = jest.fn().mockResolvedValue(undefined);
+        withAsyncCleanup({}, cleanup);
+        expect(cleanup).not.toHaveBeenCalled();
+    });
+
+    it('chains parent Symbol.asyncDispose when client already has one', async () => {
+        expect.assertions(3);
+        const callOrder: string[] = [];
+        // eslint-disable-next-line @typescript-eslint/require-await
+        const parentAsyncDispose = jest.fn().mockImplementation(async () => {
+            callOrder.push('parent');
+        });
+        // eslint-disable-next-line @typescript-eslint/require-await
+        const cleanup = jest.fn().mockImplementation(async () => {
+            callOrder.push('cleanup');
+        });
+        const client = { [Symbol.asyncDispose]: parentAsyncDispose };
+        const result = withAsyncCleanup(client, cleanup);
+        await result[Symbol.asyncDispose]();
+        expect(cleanup).toHaveBeenCalledTimes(1);
+        expect(parentAsyncDispose).toHaveBeenCalledTimes(1);
+        expect(callOrder).toStrictEqual(['cleanup', 'parent']);
+    });
+
+    it('falls back to parent Symbol.dispose when no Symbol.asyncDispose', async () => {
+        expect.assertions(3);
+        const callOrder: string[] = [];
+        const parentDispose = jest.fn(() => {
+            callOrder.push('parent');
+        });
+        // eslint-disable-next-line @typescript-eslint/require-await
+        const cleanup = jest.fn(async () => {
+            callOrder.push('cleanup');
+        });
+        const client = { [Symbol.dispose]: parentDispose };
+        const result = withAsyncCleanup(client, cleanup);
+        await result[Symbol.asyncDispose]();
+        expect(cleanup).toHaveBeenCalledTimes(1);
+        expect(parentDispose).toHaveBeenCalledTimes(1);
+        expect(callOrder).toStrictEqual(['cleanup', 'parent']);
+    });
+
+    it('does not throw when client has neither Symbol.dispose nor Symbol.asyncDispose', async () => {
+        expect.assertions(1);
+        const cleanup = jest.fn().mockResolvedValue(undefined);
+        const result = withAsyncCleanup({}, cleanup);
+        await expect(result[Symbol.asyncDispose]()).resolves.toBeUndefined();
+    });
+
+    it('preserves existing client properties', () => {
+        const result = withAsyncCleanup({ fruit: 'apple' as const }, async () => {});
+        expect(result.fruit).toBe('apple');
+    });
+
+    it('symbol.asyncDispose is a function on the result', () => {
+        const result = withAsyncCleanup({}, async () => {});
+        expect(typeof result[Symbol.asyncDispose]).toBe('function');
+    });
+
+    it('returns a frozen object', () => {
+        expect(withAsyncCleanup({ fruit: 'apple' as const }, async () => {})).toBeFrozenObject();
     });
 });
