@@ -1,5 +1,19 @@
 # @solana/instruction-plans
 
+## 6.4.0
+
+### Patch Changes
+
+- [#1470](https://github.com/anza-xyz/kit/pull/1470) [`896412d`](https://github.com/anza-xyz/kit/commit/896412da20ced2b81f9f529e9b5feef16b7e790f) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add trailing newline to multi-line error messages so that chained error causes render on their own line.
+
+- Updated dependencies [[`084e92e`](https://github.com/anza-xyz/kit/commit/084e92e668d41041c6424d616441557560873888)]:
+    - @solana/transaction-messages@6.4.0
+    - @solana/instructions@6.4.0
+    - @solana/keys@6.4.0
+    - @solana/transactions@6.4.0
+    - @solana/errors@6.4.0
+    - @solana/promises@6.4.0
+
 ## 6.3.1
 
 ### Patch Changes

@@ -1,5 +1,16 @@
 # @solana/codecs-strings
 
+## 6.4.0
+
+### Patch Changes
+
+- [#1391](https://github.com/anza-xyz/kit/pull/1391) [`27c3975`](https://github.com/anza-xyz/kit/commit/27c39755f5185e09a194c0b22eac4286f14c552c) Thanks [@holps-7](https://github.com/holps-7)! - Fix unnecessary array slicing/cloning when using negative offsets matching the array length.
+
+- Updated dependencies [[`27c3975`](https://github.com/anza-xyz/kit/commit/27c39755f5185e09a194c0b22eac4286f14c552c)]:
+    - @solana/codecs-core@6.4.0
+    - @solana/codecs-numbers@6.4.0
+    - @solana/errors@6.4.0
+
 ## 6.3.1
 
 ### Patch Changes

@@ -1,5 +1,18 @@
 # @solana/plugin-core
 
+## 6.4.0
+
+### Minor Changes
+
+- [#1479](https://github.com/anza-xyz/kit/pull/1479) [`abeca1b`](https://github.com/anza-xyz/kit/commit/abeca1b28725f675128f68e4e73d2f655e500eaa) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `extendClient` helper for plugin authors to merge client objects while preserving property descriptors (getters, symbol-keyed properties, and non-enumerable properties).
+
+    Plugin authors should migrate plugins to use this instead of spreading the input client.
+
+    ```diff
+    - return { ...client, rpc };
+    + return extendClient(client, { rpc });
+    ```
+
 ## 6.3.1
 
 ## 6.3.0

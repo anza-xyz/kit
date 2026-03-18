@@ -1,6 +1,6 @@
 {
     "name": "@solana/instruction-plans",
-    "version": "6.3.1",
+    "version": "6.4.0",
     "description": "Construct, plan and execute transactions from multiple instructions.",
     "homepage": "https://www.solanakit.com/api#solanainstruction-plans",
     "exports": {

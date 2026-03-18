@@ -1,5 +1,41 @@
 # @solana/kit
 
+## 6.4.0
+
+### Minor Changes
+
+- [#1476](https://github.com/anza-xyz/kit/pull/1476) [`3e9e0a2`](https://github.com/anza-xyz/kit/commit/3e9e0a207155b56e96b5ee556728b5afdb23d4fe) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add compute unit limit estimation utilities: `estimateComputeUnitLimitFactory`, `estimateAndSetComputeUnitLimitFactory`, and `fillTransactionMessageProvisoryComputeUnitLimit`. These replace the external `@solana-program/compute-budget` estimation functions with Kit-native equivalents that work across all transaction versions.
+
+### Patch Changes
+
+- [#1468](https://github.com/anza-xyz/kit/pull/1468) [`304436f`](https://github.com/anza-xyz/kit/commit/304436ffaad6812ee0cc2f67b5a881f7f918b3ae) Thanks [@amilz](https://github.com/amilz)! - Include source files in published packages so IDE "Go to Definition" navigates to TypeScript source instead of .d.ts type declarations
+
+- Updated dependencies [[`896412d`](https://github.com/anza-xyz/kit/commit/896412da20ced2b81f9f529e9b5feef16b7e790f), [`084e92e`](https://github.com/anza-xyz/kit/commit/084e92e668d41041c6424d616441557560873888), [`abeca1b`](https://github.com/anza-xyz/kit/commit/abeca1b28725f675128f68e4e73d2f655e500eaa)]:
+    - @solana/instruction-plans@6.4.0
+    - @solana/transaction-messages@6.4.0
+    - @solana/plugin-core@6.4.0
+    - @solana/accounts@6.4.0
+    - @solana/addresses@6.4.0
+    - @solana/codecs@6.4.0
+    - @solana/instructions@6.4.0
+    - @solana/keys@6.4.0
+    - @solana/offchain-messages@6.4.0
+    - @solana/program-client-core@6.4.0
+    - @solana/rpc-api@6.4.0
+    - @solana/rpc-types@6.4.0
+    - @solana/signers@6.4.0
+    - @solana/sysvars@6.4.0
+    - @solana/transaction-confirmation@6.4.0
+    - @solana/transactions@6.4.0
+    - @solana/plugin-interfaces@6.4.0
+    - @solana/programs@6.4.0
+    - @solana/rpc-parsed-types@6.4.0
+    - @solana/rpc-subscriptions@6.4.0
+    - @solana/rpc@6.4.0
+    - @solana/errors@6.4.0
+    - @solana/functional@6.4.0
+    - @solana/rpc-spec-types@6.4.0
+
 ## 6.3.1
 
 ### Patch Changes

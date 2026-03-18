@@ -1,6 +1,6 @@
 {
     "name": "@solana/react",
-    "version": "6.3.1",
+    "version": "6.4.0",
     "description": "React hooks for building Solana apps",
     "homepage": "https://www.solanakit.com/api#solanareact",
     "exports": {

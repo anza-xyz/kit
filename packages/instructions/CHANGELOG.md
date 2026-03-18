@@ -1,5 +1,13 @@
 # @solana/instructions
 
+## 6.4.0
+
+### Patch Changes
+
+- Updated dependencies [[`27c3975`](https://github.com/anza-xyz/kit/commit/27c39755f5185e09a194c0b22eac4286f14c552c)]:
+    - @solana/codecs-core@6.4.0
+    - @solana/errors@6.4.0
+
 ## 6.3.1
 
 ### Patch Changes

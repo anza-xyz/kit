@@ -1,5 +1,18 @@
 # @solana/plugin-interfaces
 
+## 6.4.0
+
+### Patch Changes
+
+- Updated dependencies [[`896412d`](https://github.com/anza-xyz/kit/commit/896412da20ced2b81f9f529e9b5feef16b7e790f)]:
+    - @solana/instruction-plans@6.4.0
+    - @solana/addresses@6.4.0
+    - @solana/keys@6.4.0
+    - @solana/rpc-types@6.4.0
+    - @solana/signers@6.4.0
+    - @solana/rpc-spec@6.4.0
+    - @solana/rpc-subscriptions-spec@6.4.0
+
 ## 6.3.1
 
 ### Patch Changes
