@@ -515,9 +515,16 @@ const myTransactionMessageWithSigners = addSignersToTransactionMessage(mySigners
 
 ## Signing transactions with signers
 
-As we've seen in the previous section, we can store and extract `TransactionSigners` from instructions and transaction messages. This allows us to provide helper methods that sign transaction messages using the signers stored inside them.
+As we've seen in the previous section, we can store and extract `TransactionSigners` from instructions and transaction messages. This allows us to provide helper methods that sign and send transactions.
 
-### Functions
+There are two sets of signing functions:
+
+- **Transaction message helpers** extract signers from a `TransactionMessage` with embedded `TransactionSigners` in its account metas, compile it to a `Transaction`, and sign it.
+- **Transaction helpers** take a set of signers and an already-compiled `Transaction` directly, giving you full control over compilation and signer selection.
+
+### Signing transaction messages
+
+These functions extract all `TransactionSigners` from the provided transaction message and use them to sign the compiled transaction.
 
 #### `partiallySignTransactionMessageWithSigners()`
 
@@ -597,3 +604,53 @@ if (isTransactionWithSingleSendingSigner(transactionMessage)) {
     transactionSignature = await rpc.sendTransaction(encodedTransaction).send();
 }
 ```
+
+### Signing compiled transactions
+
+These functions accept a set of signers and an already-compiled `Transaction` directly. Use them when you have already compiled a transaction (e.g. via `compileTransaction`) and want to sign it with a specific set of signers.
+
+#### `partiallySignTransactionWithSigners()`
+
+Signs a compiled transaction using the provided `TransactionModifyingSigners` and `TransactionPartialSigners`. It first uses all modifying signers sequentially before using all partial signers in parallel.
+
+If a composite signer implements both interfaces, it will be used as a modifying signer if no other signer implements that interface. Otherwise, it will be used as a partial signer.
+
+```ts
+import { partiallySignTransactionWithSigners } from '@solana/signers';
+
+const signedTransaction = await partiallySignTransactionWithSigners(mySigners, compiledTransaction);
+
+// With additional config.
+const signedTransaction = await partiallySignTransactionWithSigners(mySigners, compiledTransaction, {
+    abortSignal: myAbortController.signal,
+});
+```
+
+Note that only `TransactionModifyingSigner` and `TransactionPartialSigner` interfaces are accepted. If you need to use a `TransactionSendingSigner`, see `signAndSendTransactionWithSigners` below.
+
+#### `signTransactionWithSigners()`
+
+This function works the same as `partiallySignTransactionWithSigners` except that it also ensures the transaction is fully signed before returning it. An error will be thrown if that's not the case.
+
+```ts
+import { signTransactionWithSigners } from '@solana/signers';
+
+const signedTransaction = await signTransactionWithSigners(mySigners, compiledTransaction);
+
+// We now know the transaction is fully signed.
+signedTransaction satisfies FullySignedTransaction;
+```
+
+#### `signAndSendTransactionWithSigners()`
+
+Signs a compiled transaction using the provided signers and sends it immediately to the blockchain. It returns the signature of the sent transaction (i.e. its identifier) as bytes.
+
+```ts
+import { signAndSendTransactionWithSigners } from '@solana/signers';
+
+const transactionSignature = await signAndSendTransactionWithSigners(mySigners, compiledTransaction);
+```
+
+Similarly to `partiallySignTransactionWithSigners`, it first uses all modifying signers sequentially before using all partial signers in parallel. It then sends the transaction using the resolved `TransactionSendingSigner`.
+
+The provided signers must contain at least one `TransactionSendingSigner` that can be unambiguously resolved. This is checked internally and will throw an error if the condition is not met.

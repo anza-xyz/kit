@@ -28,7 +28,7 @@ import {
     TransactionSendingSignerConfig,
 } from './transaction-sending-signer';
 import { isTransactionSigner, TransactionSigner } from './transaction-signer';
-import { assertIsTransactionMessageWithSingleSendingSigner } from './transaction-with-single-sending-signer';
+import { assertContainsResolvableTransactionSendingSigner } from './transaction-with-single-sending-signer';
 
 /**
  * Extracts all {@link TransactionSigner | TransactionSigners} inside the provided
@@ -59,6 +59,7 @@ import { assertIsTransactionMessageWithSingleSendingSigner } from './transaction
  * as it does not send the transaction. Check out the {@link signAndSendTransactionMessageWithSigners}
  * function for more details on how to use sending signers.
  *
+ * @see {@link partiallySignTransactionWithSigners}
  * @see {@link signTransactionMessageWithSigners}
  * @see {@link signAndSendTransactionMessageWithSigners}
  */
@@ -66,15 +67,11 @@ export async function partiallySignTransactionMessageWithSigners(
     transactionMessage: TransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithSigners,
     config?: TransactionPartialSignerConfig,
 ): Promise<Transaction & TransactionWithinSizeLimit & TransactionWithLifetime> {
-    const { partialSigners, modifyingSigners } = categorizeTransactionSigners(
-        deduplicateSigners(getSignersFromTransactionMessage(transactionMessage).filter(isTransactionSigner)),
-        { identifySendingSigner: false },
-    );
-
-    return await signModifyingAndPartialTransactionSigners(
-        transactionMessage,
-        modifyingSigners,
-        partialSigners,
+    return await partiallySignTransactionWithSigners(
+        getSignersFromTransactionMessage(transactionMessage).filter(
+            signer => isTransactionModifyingSigner(signer) || isTransactionPartialSigner(signer),
+        ),
+        compileTransaction(transactionMessage),
         config,
     );
 }
@@ -100,6 +97,7 @@ export async function partiallySignTransactionMessageWithSigners(
  * mySignedTransaction satisfies FullySignedTransaction;
  * ```
  *
+ * @see {@link signTransactionWithSigners}
  * @see {@link partiallySignTransactionMessageWithSigners}
  * @see {@link signAndSendTransactionMessageWithSigners}
  */
@@ -154,6 +152,7 @@ export async function signTransactionMessageWithSigners(
  * Alternatively, you may use the {@link isTransactionMessageWithSingleSendingSigner} function to provide a
  * fallback in case the transaction does not contain any sending signer.
  *
+ * @see {@link signAndSendTransactionWithSigners}
  * @see {@link assertIsTransactionMessageWithSingleSendingSigner}
  * @see {@link isTransactionMessageWithSingleSendingSigner}
  * @see {@link partiallySignTransactionMessageWithSigners}
@@ -164,11 +163,153 @@ export async function signAndSendTransactionMessageWithSigners(
     transaction: TransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithSigners,
     config?: TransactionSendingSignerConfig,
 ): Promise<SignatureBytes> {
-    assertIsTransactionMessageWithSingleSendingSigner(transaction);
+    return await signAndSendTransactionWithSigners(
+        getSignersFromTransactionMessage(transaction).filter(isTransactionSigner),
+        compileTransaction(transaction),
+        config,
+    );
+}
+
+/**
+ * Signs a transaction using the provided {@link TransactionModifyingSigner | TransactionModifyingSigners}
+ * and {@link TransactionPartialSigner | TransactionPartialSigners}.
+ *
+ * It first uses all {@link TransactionModifyingSigner | TransactionModifyingSigners} sequentially before
+ * using all {@link TransactionPartialSigner | TransactionPartialSigners} in parallel.
+ *
+ * If a composite signer implements both interfaces, it will be used as a
+ * {@link TransactionModifyingSigner} if no other signer implements that interface.
+ * Otherwise, it will be used as a {@link TransactionPartialSigner}.
+ *
+ * @param signers - The signers to use. Only {@link TransactionModifyingSigner} and
+ * {@link TransactionPartialSigner} interfaces are accepted.
+ * @param transaction - The compiled transaction to sign.
+ * @param config - Optional configuration including an {@link AbortSignal}.
+ * @returns The signed transaction.
+ *
+ * @example
+ * ```ts
+ * const signedTransaction = await partiallySignTransactionWithSigners(mySigners, compiledTransaction);
+ * ```
+ *
+ * It also accepts an optional {@link AbortSignal} that will be propagated to all signers.
+ *
+ * ```ts
+ * const signedTransaction = await partiallySignTransactionWithSigners(mySigners, compiledTransaction, {
+ *     abortSignal: myAbortController.signal,
+ * });
+ * ```
+ *
+ * @see {@link signTransactionWithSigners}
+ * @see {@link signAndSendTransactionWithSigners}
+ * @see {@link partiallySignTransactionMessageWithSigners}
+ */
+export async function partiallySignTransactionWithSigners(
+    signers: readonly (TransactionModifyingSigner | TransactionPartialSigner)[],
+    transaction: Transaction,
+    config?: TransactionPartialSignerConfig,
+): Promise<Transaction & TransactionWithinSizeLimit & TransactionWithLifetime> {
+    const { partialSigners, modifyingSigners } = categorizeTransactionSigners(deduplicateSigners(signers), {
+        identifySendingSigner: false,
+    });
+
+    return await signModifyingAndPartialTransactionSigners(transaction, modifyingSigners, partialSigners, config);
+}
+
+/**
+ * Signs a transaction using the provided signers and asserts that all
+ * signatures required by the transaction are present.
+ *
+ * This function delegates to {@link partiallySignTransactionWithSigners} to sign
+ * the transaction, then asserts it is fully signed before returning.
+ *
+ * @param signers - The signers to use. Only {@link TransactionModifyingSigner} and
+ * {@link TransactionPartialSigner} interfaces are accepted.
+ * @param transaction - The compiled transaction to sign.
+ * @param config - Optional configuration including an {@link AbortSignal}.
+ * @returns The fully signed transaction.
+ *
+ * @example
+ * ```ts
+ * const mySignedTransaction = await signTransactionWithSigners(mySigners, compiledTransaction);
+ *
+ * // With additional config.
+ * const mySignedTransaction = await signTransactionWithSigners(mySigners, compiledTransaction, {
+ *     abortSignal: myAbortController.signal,
+ * });
+ *
+ * // We now know the transaction is fully signed.
+ * mySignedTransaction satisfies FullySignedTransaction;
+ * ```
+ *
+ * @see {@link partiallySignTransactionWithSigners}
+ * @see {@link signAndSendTransactionWithSigners}
+ * @see {@link signTransactionMessageWithSigners}
+ */
+export async function signTransactionWithSigners(
+    signers: readonly (TransactionModifyingSigner | TransactionPartialSigner)[],
+    transaction: Transaction,
+    config?: TransactionPartialSignerConfig,
+): Promise<SendableTransaction & Transaction & TransactionWithLifetime> {
+    const signedTransaction = await partiallySignTransactionWithSigners(signers, transaction, config);
+    assertIsFullySignedTransaction(signedTransaction);
+    return signedTransaction;
+}
+
+/**
+ * Signs a transaction using the provided signers and sends it immediately to the blockchain.
+ *
+ * It returns the signature of the sent transaction (i.e. its identifier) as bytes.
+ *
+ * Similarly to {@link partiallySignTransactionWithSigners}, it first uses all
+ * {@link TransactionModifyingSigner | TransactionModifyingSigners} sequentially before using all
+ * {@link TransactionPartialSigner | TransactionPartialSigners} in parallel.
+ * It then sends the transaction using the {@link TransactionSendingSigner} it identified.
+ *
+ * Composite transaction signers are treated such that at least one sending signer is used if any.
+ * When a {@link TransactionSigner} implements more than one interface, we use it as a:
+ *
+ * - {@link TransactionSendingSigner}, if no other {@link TransactionSendingSigner} exists.
+ * - {@link TransactionModifyingSigner}, if no other {@link TransactionModifyingSigner} exists.
+ * - {@link TransactionPartialSigner}, otherwise.
+ *
+ * The provided signers must contain exactly one {@link TransactionSendingSigner} that can be
+ * unambiguously resolved. If more than one composite signers implement the
+ * {@link TransactionSendingSigner} interface, one of them will be selected as the sending signer.
+ * Otherwise, if multiple {@link TransactionSendingSigner | TransactionSendingSigners} must be
+ * selected, the function will throw an error.
+ *
+ * @param signers - The signers to use. Must contain at least one resolvable
+ * {@link TransactionSendingSigner}.
+ * @param transaction - The compiled transaction to sign and send.
+ * @param config - Optional configuration including an {@link AbortSignal}.
+ * @returns The signature of the sent transaction as bytes.
+ *
+ * @example
+ * ```ts
+ * const transactionSignature = await signAndSendTransactionWithSigners(mySigners, compiledTransaction);
+ *
+ * // With additional config.
+ * const transactionSignature = await signAndSendTransactionWithSigners(mySigners, compiledTransaction, {
+ *     abortSignal: myAbortController.signal,
+ * });
+ * ```
+ *
+ * @see {@link assertContainsResolvableTransactionSendingSigner}
+ * @see {@link partiallySignTransactionWithSigners}
+ * @see {@link signTransactionWithSigners}
+ * @see {@link signAndSendTransactionMessageWithSigners}
+ */
+export async function signAndSendTransactionWithSigners(
+    signers: readonly TransactionSigner[],
+    transaction: Transaction,
+    config?: TransactionSendingSignerConfig,
+): Promise<SignatureBytes> {
+    assertContainsResolvableTransactionSendingSigner(signers);
 
     const abortSignal = config?.abortSignal;
     const { partialSigners, modifyingSigners, sendingSigner } = categorizeTransactionSigners(
-        deduplicateSigners(getSignersFromTransactionMessage(transaction).filter(isTransactionSigner)),
+        deduplicateSigners(signers),
     );
 
     abortSignal?.throwIfAborted();
@@ -268,14 +409,11 @@ function identifyTransactionModifyingSigners(
  * sequentially followed by the TransactionPartialSigners in parallel.
  */
 async function signModifyingAndPartialTransactionSigners(
-    transactionMessage: TransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithSigners,
+    transaction: Transaction,
     modifyingSigners: readonly TransactionModifyingSigner[] = [],
     partialSigners: readonly TransactionPartialSigner[] = [],
     config?: TransactionModifyingSignerConfig,
 ): Promise<Transaction & TransactionWithinSizeLimit & TransactionWithLifetime> {
-    // serialize the transaction
-    const transaction = compileTransaction(transactionMessage);
-
     // Handle modifying signers sequentially.
     const modifiedTransaction = (await modifyingSigners.reduce(
         async (transaction, modifyingSigner) => {

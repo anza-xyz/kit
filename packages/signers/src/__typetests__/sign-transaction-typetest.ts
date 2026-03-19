@@ -18,9 +18,16 @@ import {
 import { TransactionMessageWithSigners } from '../account-signer-meta';
 import {
     partiallySignTransactionMessageWithSigners,
+    partiallySignTransactionWithSigners,
     signAndSendTransactionMessageWithSigners,
+    signAndSendTransactionWithSigners,
     signTransactionMessageWithSigners,
+    signTransactionWithSigners,
 } from '../sign-transaction';
+import { TransactionModifyingSigner } from '../transaction-modifying-signer';
+import { TransactionPartialSigner } from '../transaction-partial-signer';
+import { TransactionSendingSigner } from '../transaction-sending-signer';
+import { TransactionSigner } from '../transaction-signer';
 import { TransactionMessageWithSingleSendingSigner } from '../transaction-with-single-sending-signer';
 
 {
@@ -143,4 +150,59 @@ import { TransactionMessageWithSingleSendingSigner } from '../transaction-with-s
         TransactionMessageWithSigners &
         TransactionMessageWithSingleSendingSigner;
     signAndSendTransactionMessageWithSigners(transactionMessage) satisfies Promise<SignatureBytes>;
+}
+
+{
+    // [partiallySignTransactionWithSigners]: returns a Transaction & TransactionWithinSizeLimit & TransactionWithLifetime
+    const signers = null as unknown as readonly (TransactionModifyingSigner | TransactionPartialSigner)[];
+    const transaction = null as unknown as Transaction;
+    partiallySignTransactionWithSigners(signers, transaction) satisfies Promise<
+        Readonly<Transaction & TransactionWithinSizeLimit & TransactionWithLifetime>
+    >;
+}
+
+{
+    // [partiallySignTransactionWithSigners]: accepts a composite signer that is both a TransactionSendingSigner and a TransactionPartialSigner
+    const signers = null as unknown as readonly (TransactionPartialSigner & TransactionSendingSigner)[];
+    const transaction = null as unknown as Transaction;
+    partiallySignTransactionWithSigners(signers, transaction);
+}
+
+{
+    // [partiallySignTransactionWithSigners]: does not accept a TransactionSendingSigner on its own
+    const signers = null as unknown as readonly TransactionSendingSigner[];
+    const transaction = null as unknown as Transaction;
+    // @ts-expect-error TransactionSendingSigner is not assignable to TransactionModifyingSigner | TransactionPartialSigner
+    partiallySignTransactionWithSigners(signers, transaction);
+}
+
+{
+    // [signTransactionWithSigners]: returns a FullySignedTransaction & Transaction & TransactionWithLifetime
+    const signers = null as unknown as readonly (TransactionModifyingSigner | TransactionPartialSigner)[];
+    const transaction = null as unknown as Transaction;
+    signTransactionWithSigners(signers, transaction) satisfies Promise<
+        Readonly<FullySignedTransaction & Transaction & TransactionWithLifetime>
+    >;
+}
+
+{
+    // [signTransactionWithSigners]: accepts a composite signer that is both a TransactionSendingSigner and a TransactionPartialSigner
+    const signers = null as unknown as readonly (TransactionPartialSigner & TransactionSendingSigner)[];
+    const transaction = null as unknown as Transaction;
+    signTransactionWithSigners(signers, transaction);
+}
+
+{
+    // [signTransactionWithSigners]: does not accept a TransactionSendingSigner on its own
+    const signers = null as unknown as readonly TransactionSendingSigner[];
+    const transaction = null as unknown as Transaction;
+    // @ts-expect-error TransactionSendingSigner is not assignable to TransactionModifyingSigner | TransactionPartialSigner
+    signTransactionWithSigners(signers, transaction);
+}
+
+{
+    // [signAndSendTransactionWithSigners]: returns SignatureBytes
+    const signers = null as unknown as readonly TransactionSigner[];
+    const transaction = null as unknown as Transaction;
+    signAndSendTransactionWithSigners(signers, transaction) satisfies Promise<SignatureBytes>;
 }

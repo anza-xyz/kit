@@ -10,6 +10,7 @@ import { getSignersFromTransactionMessage, TransactionMessageWithSigners } from 
 import { isTransactionModifyingSigner } from './transaction-modifying-signer';
 import { isTransactionPartialSigner } from './transaction-partial-signer';
 import { isTransactionSendingSigner } from './transaction-sending-signer';
+import { TransactionSigner } from './transaction-signer';
 
 /**
  * Defines a transaction message with exactly one {@link TransactionSendingSigner}.
@@ -101,7 +102,35 @@ export function assertIsTransactionMessageWithSingleSendingSigner<
 >(
     transaction: TTransactionMessage,
 ): asserts transaction is TransactionMessageWithSingleSendingSigner & TTransactionMessage {
-    const signers = getSignersFromTransactionMessage(transaction);
+    assertContainsResolvableTransactionSendingSigner(getSignersFromTransactionMessage(transaction));
+}
+
+/**
+ * Asserts that the provided signers contain at least one {@link TransactionSendingSigner}
+ * that can be unambiguously resolved.
+ *
+ * This means the signers must contain at least one sending signer, and at most one
+ * sending-only signer (i.e. a signer that implements {@link TransactionSendingSigner}
+ * but not {@link TransactionPartialSigner} or {@link TransactionModifyingSigner}).
+ * Composite signers that also implement other interfaces can be demoted to non-sending
+ * roles, so multiple composite sending signers are allowed.
+ *
+ * @param signers - The signers to check.
+ * @throws {@link SolanaError} with code {@link SOLANA_ERROR__SIGNER__TRANSACTION_SENDING_SIGNER_MISSING}
+ * if no sending signer is found.
+ * @throws {@link SolanaError} with code {@link SOLANA_ERROR__SIGNER__TRANSACTION_CANNOT_HAVE_MULTIPLE_SENDING_SIGNERS}
+ * if more than one sending-only signer is found.
+ *
+ * @example
+ * ```ts
+ * assertContainsResolvableTransactionSendingSigner(mySigners);
+ * const signature = await signAndSendTransactionWithSigners(mySigners, compiledTransaction);
+ * ```
+ *
+ * @see {@link signAndSendTransactionWithSigners}
+ * @see {@link assertIsTransactionMessageWithSingleSendingSigner}
+ */
+export function assertContainsResolvableTransactionSendingSigner(signers: readonly TransactionSigner[]) {
     const sendingSigners = signers.filter(isTransactionSendingSigner);
 
     if (sendingSigners.length === 0) {
