@@ -1,6 +1,6 @@
 import '@solana/test-matchers/toBeFrozenObject';
 
-import { createEmptyClient, extendClient } from '../client';
+import { createEmptyClient, extendClient, withCleanup } from '../client';
 
 describe('createEmptyClient', () => {
     it('creates an empty object with a use function', () => {
@@ -259,5 +259,61 @@ describe('extendClient', () => {
 
     it('returns a frozen object', () => {
         expect(extendClient({ fruit: 'apple' as const }, { vegetable: 'carrot' as const })).toBeFrozenObject();
+    });
+});
+
+describe('withCleanup', () => {
+    it('calls the cleanup function when disposed', () => {
+        const cleanup = jest.fn();
+        const result = withCleanup({}, cleanup);
+        result[Symbol.dispose]();
+        expect(cleanup).toHaveBeenCalledTimes(1);
+    });
+
+    it('disposes using the `using` syntax', () => {
+        const cleanup = jest.fn();
+        {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            using _ = withCleanup({}, cleanup);
+        }
+        expect(cleanup).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not call the cleanup function before dispose is invoked', () => {
+        const cleanup = jest.fn();
+        withCleanup({}, cleanup);
+        expect(cleanup).not.toHaveBeenCalled();
+    });
+
+    it('chains parent Symbol.dispose when client already has one', () => {
+        const callOrder: string[] = [];
+        const parentDispose = jest.fn(() => callOrder.push('parent'));
+        const cleanup = jest.fn(() => callOrder.push('cleanup'));
+        const client = { [Symbol.dispose]: parentDispose };
+        const result = withCleanup(client, cleanup);
+        result[Symbol.dispose]();
+        expect(cleanup).toHaveBeenCalledTimes(1);
+        expect(parentDispose).toHaveBeenCalledTimes(1);
+        expect(callOrder).toStrictEqual(['cleanup', 'parent']);
+    });
+
+    it('does not throw when client has no Symbol.dispose', () => {
+        const cleanup = jest.fn();
+        const result = withCleanup({}, cleanup);
+        expect(() => result[Symbol.dispose]()).not.toThrow();
+    });
+
+    it('preserves existing client properties', () => {
+        const result = withCleanup({ fruit: 'apple' as const }, () => {});
+        expect(result.fruit).toBe('apple');
+    });
+
+    it('symbol.dispose is a function on the result', () => {
+        const result = withCleanup({}, () => {});
+        expect(typeof result[Symbol.dispose]).toBe('function');
+    });
+
+    it('returns a frozen object', () => {
+        expect(withCleanup({ fruit: 'apple' as const }, () => {})).toBeFrozenObject();
     });
 });

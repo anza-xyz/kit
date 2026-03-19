@@ -242,3 +242,48 @@ export function extendClient<TClient extends object, TAdditions extends object>(
     Object.defineProperties(result, Object.getOwnPropertyDescriptors(additions));
     return Object.freeze(result) as Omit<TClient, keyof TAdditions> & TAdditions;
 }
+
+/**
+ * Wraps a client with a cleanup function, making it {@link Disposable}.
+ *
+ * Plugin authors can use this to register teardown logic (e.g. closing
+ * connections or clearing timers) that runs when the client is disposed.
+ * If the client already implements `Symbol.dispose`, the existing dispose
+ * logic is chained so that it runs after the new `cleanup` function.
+ *
+ * @typeParam TClient - The type of the original client.
+ * @param client - The client to wrap.
+ * @param cleanup - The cleanup function to run when the client is disposed.
+ * @return A new client that extends `TClient` and implements `Disposable`.
+ *
+ * @example
+ * Register a cleanup function in a plugin that opens a WebSocket connection.
+ * ```ts
+ * function myPlugin() {
+ *     return <T extends object>(client: T) => {
+ *         const socket = new WebSocket('wss://api.example.com');
+ *         return withCleanup(
+ *             extendClient(client, { socket }),
+ *             () => socket.close(),
+ *         );
+ *     };
+ * }
+ *
+ * // Later, when the client is no longer needed:
+ * using client = createEmptyClient().use(myPlugin();
+ * // `socket.close()` is called automatically when `client` goes out of scope.
+ * ```
+ *
+ * @see {@link extendClient}
+ */
+export function withCleanup<TClient extends object>(client: TClient, cleanup: () => void): Disposable & TClient {
+    const parentDispose: (() => void) | undefined =
+        Symbol.dispose in client ? (client as Disposable)[Symbol.dispose] : undefined;
+    const additions: Disposable = {
+        [Symbol.dispose]() {
+            cleanup();
+            parentDispose?.call(client);
+        },
+    };
+    return extendClient(client, additions) as Disposable & TClient;
+}
