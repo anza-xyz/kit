@@ -1,5 +1,18 @@
 # @solana/react
 
+## 6.5.0
+
+### Patch Changes
+
+- Updated dependencies [[`9e05736`](https://github.com/anza-xyz/kit/commit/9e057365a1a4e350f8a0ccc233b262e09b0134fa)]:
+    - @solana/signers@6.5.0
+    - @solana/addresses@6.5.0
+    - @solana/errors@6.5.0
+    - @solana/keys@6.5.0
+    - @solana/promises@6.5.0
+    - @solana/transaction-messages@6.5.0
+    - @solana/transactions@6.5.0
+
 ## 6.4.0
 
 ### Patch Changes

@@ -1,5 +1,16 @@
 # @solana/addresses
 
+## 6.5.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/assertions@6.5.0
+    - @solana/codecs-core@6.5.0
+    - @solana/codecs-strings@6.5.0
+    - @solana/errors@6.5.0
+    - @solana/nominal-types@6.5.0
+
 ## 6.4.0
 
 ### Patch Changes

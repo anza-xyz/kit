@@ -1,5 +1,22 @@
 # @solana/plugin-interfaces
 
+## 6.5.0
+
+### Minor Changes
+
+- [#1486](https://github.com/anza-xyz/kit/pull/1486) [`10cb920`](https://github.com/anza-xyz/kit/commit/10cb92045bba4710a6c6157a3963d9e3a61f755e) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add `ClientWithGetMinimumBalance` plugin interface for computing the minimum balance required for an account. Implementations can use any strategy (e.g., RPC call, cached value) to provide this value through a uniform API.
+
+### Patch Changes
+
+- Updated dependencies [[`9e05736`](https://github.com/anza-xyz/kit/commit/9e057365a1a4e350f8a0ccc233b262e09b0134fa)]:
+    - @solana/signers@6.5.0
+    - @solana/addresses@6.5.0
+    - @solana/instruction-plans@6.5.0
+    - @solana/keys@6.5.0
+    - @solana/rpc-spec@6.5.0
+    - @solana/rpc-subscriptions-spec@6.5.0
+    - @solana/rpc-types@6.5.0
+
 ## 6.4.0
 
 ### Patch Changes

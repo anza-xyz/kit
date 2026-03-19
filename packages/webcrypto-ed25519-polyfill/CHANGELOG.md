@@ -1,5 +1,7 @@
 # @solana/webcrypto-ed25519-polyfill
 
+## 6.5.0
+
 ## 6.4.0
 
 ## 6.3.1

@@ -1,5 +1,37 @@
 # @solana/kit
 
+## 6.5.0
+
+### Patch Changes
+
+- [#1485](https://github.com/anza-xyz/kit/pull/1485) [`4a4c217`](https://github.com/anza-xyz/kit/commit/4a4c21741e4982dd52e6d08a0e46ee626c73717c) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Deprecated `getMinimumBalanceForRentExemption`. The minimum balance for an account is being actively reduced (see [SIMD-0437](https://github.com/solana-foundation/solana-improvement-documents/pull/437)) and is expected to become dynamic in future Solana upgrades (see [SIMD-0194](https://github.com/solana-foundation/solana-improvement-documents/pull/194) and [SIMD-0389](https://github.com/solana-foundation/solana-improvement-documents/pull/389)). Use the `getMinimumBalanceForRentExemption` RPC method or a `ClientWithGetMinimumBalance` plugin instead. This function will be removed in v7.
+
+- Updated dependencies [[`10cb920`](https://github.com/anza-xyz/kit/commit/10cb92045bba4710a6c6157a3963d9e3a61f755e), [`9e05736`](https://github.com/anza-xyz/kit/commit/9e057365a1a4e350f8a0ccc233b262e09b0134fa)]:
+    - @solana/plugin-interfaces@6.5.0
+    - @solana/signers@6.5.0
+    - @solana/program-client-core@6.5.0
+    - @solana/accounts@6.5.0
+    - @solana/addresses@6.5.0
+    - @solana/codecs@6.5.0
+    - @solana/errors@6.5.0
+    - @solana/functional@6.5.0
+    - @solana/instruction-plans@6.5.0
+    - @solana/instructions@6.5.0
+    - @solana/keys@6.5.0
+    - @solana/offchain-messages@6.5.0
+    - @solana/plugin-core@6.5.0
+    - @solana/programs@6.5.0
+    - @solana/rpc@6.5.0
+    - @solana/rpc-api@6.5.0
+    - @solana/rpc-parsed-types@6.5.0
+    - @solana/rpc-spec-types@6.5.0
+    - @solana/rpc-subscriptions@6.5.0
+    - @solana/rpc-types@6.5.0
+    - @solana/sysvars@6.5.0
+    - @solana/transaction-confirmation@6.5.0
+    - @solana/transaction-messages@6.5.0
+    - @solana/transactions@6.5.0
+
 ## 6.4.0
 
 ### Minor Changes

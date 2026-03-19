@@ -1,5 +1,14 @@
 # @solana/codecs-data-structures
 
+## 6.5.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/codecs-core@6.5.0
+    - @solana/codecs-numbers@6.5.0
+    - @solana/errors@6.5.0
+
 ## 6.4.0
 
 ### Patch Changes

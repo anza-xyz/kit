@@ -1,5 +1,24 @@
 # @solana/signers
 
+## 6.5.0
+
+### Minor Changes
+
+- [#1487](https://github.com/anza-xyz/kit/pull/1487) [`9e05736`](https://github.com/anza-xyz/kit/commit/9e057365a1a4e350f8a0ccc233b262e09b0134fa) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add `partiallySignTransactionWithSigners`, `signTransactionWithSigners`, and `signAndSendTransactionWithSigners` functions that accept a set of signers and a compiled `Transaction` directly, without requiring signers to be embedded in a transaction message. Also add `assertContainsResolvableTransactionSendingSigner` to validate that a set of signers contains an unambiguously resolvable sending signer. The existing transaction message helpers now delegate to these new functions internally.
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/addresses@6.5.0
+    - @solana/codecs-core@6.5.0
+    - @solana/errors@6.5.0
+    - @solana/instructions@6.5.0
+    - @solana/keys@6.5.0
+    - @solana/nominal-types@6.5.0
+    - @solana/offchain-messages@6.5.0
+    - @solana/transaction-messages@6.5.0
+    - @solana/transactions@6.5.0
+
 ## 6.4.0
 
 ### Patch Changes

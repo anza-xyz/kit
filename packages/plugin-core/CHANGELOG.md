@@ -1,5 +1,7 @@
 # @solana/plugin-core
 
+## 6.5.0
+
 ## 6.4.0
 
 ### Minor Changes
