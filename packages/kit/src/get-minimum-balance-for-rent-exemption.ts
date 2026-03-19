@@ -10,6 +10,15 @@ import type { Lamports } from '@solana/rpc-types';
  * Note that this logic may change, or be incorrect depending on the cluster you are connected to.
  * You can always use the RPC method `getMinimumBalanceForRentExemption` to get the current value.
  *
+ * @deprecated The minimum balance for an account is being actively reduced
+ * (see {@link https://github.com/solana-foundation/solana-improvement-documents/pull/437 | SIMD-0437})
+ * and is expected to become dynamic in future Solana upgrades
+ * (see {@link https://github.com/solana-foundation/solana-improvement-documents/pull/194 | SIMD-0194}
+ * and {@link https://github.com/solana-foundation/solana-improvement-documents/pull/389 | SIMD-0389}),
+ * meaning a hardcoded local computation will no longer return accurate results. Use the
+ * {@link GetMinimumBalanceForRentExemptionApi.getMinimumBalanceForRentExemption | getMinimumBalanceForRentExemption}
+ * RPC method or a `ClientWithGetMinimumBalance` plugin instead. This function will be removed in v7.
+ *
  * @param space The number of bytes of account data.
  */
 export function getMinimumBalanceForRentExemption(space: bigint): Lamports {

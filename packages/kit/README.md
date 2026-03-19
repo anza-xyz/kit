@@ -46,14 +46,11 @@ Returns a `TransactionMessage` from a `CompiledTransactionMessage`. If any of th
 
 Given a list of addresses belonging to address lookup tables, returns a map of lookup table addresses to an ordered array of the addresses they contain.
 
-### `getMinimumBalanceForRentExemption(space)`
+### `getMinimumBalanceForRentExemption(space)` (Deprecated)
+
+> **Deprecated**: The minimum balance for an account is being actively reduced (see [SIMD-0437](https://github.com/solana-foundation/solana-improvement-documents/pull/437)) and is expected to become dynamic in future Solana upgrades (see [SIMD-0194](https://github.com/solana-foundation/solana-improvement-documents/pull/194) and [SIMD-0389](https://github.com/solana-foundation/solana-improvement-documents/pull/389)), meaning a hardcoded local computation will no longer return accurate results. Use the `getMinimumBalanceForRentExemption` RPC method or a `ClientWithGetMinimumBalance` plugin instead. This function will be removed in v7.
 
 Calculates the minimum `Lamports` required to make an account rent exempt for a given data size, without performing an RPC call.
-
-Values are sourced from the on-chain rent parameters in the Solana runtime:
-https://github.com/anza-xyz/solana-sdk/blob/c07f692e41d757057c8700211a9300cdcd6d33b1/rent/src/lib.rs#L93-L97
-
-Note that this logic may change, or be incorrect depending on the cluster you are connected to. You can always use the RPC method `getMinimumBalanceForRentExemption` to get the current value.
 
 ```ts
 import { getMinimumBalanceForRentExemption } from '@solana/kit';
