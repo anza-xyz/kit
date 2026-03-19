@@ -1,30 +1,23 @@
 import { Address } from '@solana/addresses';
-import type { VariableSizeCodec, VariableSizeDecoder } from '@solana/codecs-core';
+import type { VariableSizeCodec } from '@solana/codecs-core';
 import {
     SOLANA_ERROR__SIGNER__WALLET_MULTISIGN_UNIMPLEMENTED,
     SOLANA_ERROR__TRANSACTION__NONCE_ACCOUNT_CANNOT_BE_IN_LOOKUP_TABLE,
     SolanaError,
 } from '@solana/errors';
 import { SignatureBytes } from '@solana/keys';
-import { Blockhash } from '@solana/rpc-types';
 import {
-    CompiledTransactionMessage,
-    CompiledTransactionMessageWithLifetime,
-    getCompiledTransactionMessageDecoder,
-} from '@solana/transaction-messages';
-import {
-    getTransactionLifetimeConstraintFromCompiledTransactionMessage,
+    getTransactionCodec,
+    reconstructEncodedTransactionFromOriginalTransaction,
     Transaction,
     TransactionMessageBytes,
 } from '@solana/transactions';
-import { getTransactionCodec } from '@solana/transactions';
 import type { UiWalletAccount } from '@wallet-standard/ui';
 
 import { renderHook } from '../test-renderer';
 import { useSignTransaction } from '../useSignTransaction';
 import { useWalletAccountTransactionSigner } from '../useWalletAccountTransactionSigner';
 
-jest.mock('@solana/transaction-messages');
 jest.mock('@solana/transactions');
 jest.mock('../useSignTransaction');
 
@@ -32,6 +25,7 @@ describe('useWalletAccountTransactionSigner', () => {
     let mockSignTransaction: jest.Mock;
     let mockDecodeTransaction: jest.Mock;
     let mockEncodeTransaction: jest.Mock;
+    let mockReconstructEncodedTransactionFromOriginalTransaction: jest.Mock;
     let mockUiWalletAccount: {
         address: Address<'11111111111111111111111111111119'>;
         chains: ['solana:danknet'];
@@ -42,10 +36,14 @@ describe('useWalletAccountTransactionSigner', () => {
     beforeEach(() => {
         mockDecodeTransaction = jest.fn();
         mockEncodeTransaction = jest.fn();
+        mockReconstructEncodedTransactionFromOriginalTransaction = jest.fn();
         jest.mocked(getTransactionCodec).mockReturnValue({
             decode: mockDecodeTransaction,
             encode: mockEncodeTransaction,
         } as unknown as VariableSizeCodec<Transaction>);
+        jest.mocked(reconstructEncodedTransactionFromOriginalTransaction).mockImplementation(
+            mockReconstructEncodedTransactionFromOriginalTransaction,
+        );
         mockSignTransaction = jest.fn().mockResolvedValue({
             signature: new Uint8Array([1, 2, 3]),
             signedMessage: new Uint8Array([1, 2, 3]),
@@ -133,12 +131,15 @@ describe('useWalletAccountTransactionSigner', () => {
             expect(mockSignTransaction).toHaveBeenCalledWith({ transaction: mockEncodedTransaction });
         }
     });
-    it('decodes and returns the signed transaction bytes returned by `signTransactions`', async () => {
+    it('reconstructs and returns the signed transaction bytes returned by `signTransactions`', async () => {
         expect.assertions(2);
         const mockSignedTransaction = new Uint8Array([1, 2, 3, 4, 5, 6]);
-        const mockDecodedTransaction = { messageBytes: [1, 2, 3] } as unknown as Transaction;
+        const mockReconstructedTransaction = {
+            lifetimeConstraint: { blockhash: 'abc', lastValidBlockHeight: 123n },
+            messageBytes: [1, 2, 3],
+        } as unknown as Transaction;
         mockSignTransaction.mockResolvedValue({ signedTransaction: mockSignedTransaction });
-        mockDecodeTransaction.mockReturnValue(mockDecodedTransaction);
+        mockReconstructEncodedTransactionFromOriginalTransaction.mockResolvedValue(mockReconstructedTransaction);
         const { result } = renderHook(() => useWalletAccountTransactionSigner(mockUiWalletAccount, 'solana:danknet'));
         // eslint-disable-next-line jest/no-conditional-in-test
         if (result.__type === 'error' || !result.current) {
@@ -156,9 +157,12 @@ describe('useWalletAccountTransactionSigner', () => {
             const signPromise = modifyAndSignTransactions([inputTransaction]);
             await jest.runAllTimersAsync();
             // eslint-disable-next-line jest/no-conditional-expect
-            expect(mockDecodeTransaction).toHaveBeenCalledWith(mockSignedTransaction);
+            expect(mockReconstructEncodedTransactionFromOriginalTransaction).toHaveBeenCalledWith(
+                inputTransaction,
+                mockSignedTransaction,
+            );
             // eslint-disable-next-line jest/no-conditional-expect
-            await expect(signPromise).resolves.toEqual([{ ...mockDecodedTransaction, lifetimeConstraint }]);
+            await expect(signPromise).resolves.toEqual([mockReconstructedTransaction]);
         }
     });
     it('calls `signTransaction` with all options except the `abortSignal`', () => {
@@ -213,9 +217,12 @@ describe('useWalletAccountTransactionSigner', () => {
     it('returns an unchanged lifetime constraint if the signed transaction has the same one', async () => {
         expect.assertions(1);
         const mockSignedTransaction = new Uint8Array([1, 2, 3, 4, 5, 6]);
-        const mockDecodedTransaction = { messageBytes: [4, 5, 6] } as unknown as Transaction;
+        const mockReconstructedTransaction = {
+            lifetimeConstraint: { blockhash: 'abc', lastValidBlockHeight: 123n },
+            messageBytes: [4, 5, 6],
+        } as unknown as Transaction;
         mockSignTransaction.mockResolvedValue({ signedTransaction: mockSignedTransaction });
-        mockDecodeTransaction.mockReturnValue(mockDecodedTransaction);
+        mockReconstructEncodedTransactionFromOriginalTransaction.mockResolvedValue(mockReconstructedTransaction);
         const { result } = renderHook(() => useWalletAccountTransactionSigner(mockUiWalletAccount, 'solana:danknet'));
         // eslint-disable-next-line jest/no-conditional-in-test
         if (result.__type === 'error' || !result.current) {
@@ -228,23 +235,22 @@ describe('useWalletAccountTransactionSigner', () => {
                 messageBytes: new Uint8Array([1, 2, 3]) as unknown as TransactionMessageBytes,
                 signatures: {},
             };
-            jest.mocked(getCompiledTransactionMessageDecoder).mockReturnValue({
-                decode: jest.fn().mockReturnValue({
-                    lifetimeToken: 'abc',
-                }),
-            } as unknown as VariableSizeDecoder<CompiledTransactionMessage & CompiledTransactionMessageWithLifetime>);
             const signPromise = modifyAndSignTransactions([inputTransaction]);
             await jest.runAllTimersAsync();
             // eslint-disable-next-line jest/no-conditional-expect
-            await expect(signPromise).resolves.toEqual([{ ...mockDecodedTransaction, lifetimeConstraint }]);
+            await expect(signPromise).resolves.toEqual([mockReconstructedTransaction]);
         }
     });
     it('returns a new lifetime constraint if the input transaction does not have one', async () => {
         expect.assertions(1);
         const mockSignedTransaction = new Uint8Array([1, 2, 3, 4, 5, 6]);
-        const mockDecodedTransaction = { messageBytes: [4, 5, 6] } as unknown as Transaction;
+        const newLifetimeConstraint = { blockhash: 'abc', lastValidBlockHeight: 123n };
+        const mockReconstructedTransaction = {
+            lifetimeConstraint: newLifetimeConstraint,
+            messageBytes: [4, 5, 6],
+        } as unknown as Transaction;
         mockSignTransaction.mockResolvedValue({ signedTransaction: mockSignedTransaction });
-        mockDecodeTransaction.mockReturnValue(mockDecodedTransaction);
+        mockReconstructEncodedTransactionFromOriginalTransaction.mockResolvedValue(mockReconstructedTransaction);
         const { result } = renderHook(() => useWalletAccountTransactionSigner(mockUiWalletAccount, 'solana:danknet'));
         // eslint-disable-next-line jest/no-conditional-in-test
         if (result.__type === 'error' || !result.current) {
@@ -255,27 +261,22 @@ describe('useWalletAccountTransactionSigner', () => {
                 messageBytes: new Uint8Array([1, 2, 3]) as unknown as TransactionMessageBytes,
                 signatures: {},
             };
-            jest.mocked(getCompiledTransactionMessageDecoder).mockReturnValue({
-                decode: jest.fn().mockReturnValue({}),
-            } as unknown as VariableSizeDecoder<CompiledTransactionMessage & CompiledTransactionMessageWithLifetime>);
-            const newLifetimeConstraint = { blockhash: 'abc' as Blockhash, lastValidBlockHeight: 123n };
-            jest.mocked(getTransactionLifetimeConstraintFromCompiledTransactionMessage).mockResolvedValue(
-                newLifetimeConstraint,
-            );
             const signPromise = modifyAndSignTransactions([inputTransaction]);
             await jest.runAllTimersAsync();
             // eslint-disable-next-line jest/no-conditional-expect
-            await expect(signPromise).resolves.toEqual([
-                { ...mockDecodedTransaction, lifetimeConstraint: newLifetimeConstraint },
-            ]);
+            await expect(signPromise).resolves.toEqual([mockReconstructedTransaction]);
         }
     });
     it('returns a new lifetime constraint if the signed transaction has a different one', async () => {
         expect.assertions(1);
         const mockSignedTransaction = new Uint8Array([1, 2, 3, 4, 5, 6]);
-        const mockDecodedTransaction = { messageBytes: [4, 5, 6] } as unknown as Transaction;
+        const newLifetimeConstraint = { blockhash: 'def', lastValidBlockHeight: 456n };
+        const mockReconstructedTransaction = {
+            lifetimeConstraint: newLifetimeConstraint,
+            messageBytes: [4, 5, 6],
+        } as unknown as Transaction;
         mockSignTransaction.mockResolvedValue({ signedTransaction: mockSignedTransaction });
-        mockDecodeTransaction.mockReturnValue(mockDecodedTransaction);
+        mockReconstructEncodedTransactionFromOriginalTransaction.mockResolvedValue(mockReconstructedTransaction);
         const { result } = renderHook(() => useWalletAccountTransactionSigner(mockUiWalletAccount, 'solana:danknet'));
         // eslint-disable-next-line jest/no-conditional-in-test
         if (result.__type === 'error' || !result.current) {
@@ -288,29 +289,21 @@ describe('useWalletAccountTransactionSigner', () => {
                 messageBytes: new Uint8Array([1, 2, 3]) as unknown as TransactionMessageBytes,
                 signatures: {},
             };
-            jest.mocked(getCompiledTransactionMessageDecoder).mockReturnValue({
-                decode: jest.fn().mockReturnValue({
-                    lifetimeToken: 'def',
-                }),
-            } as unknown as VariableSizeDecoder<CompiledTransactionMessage & CompiledTransactionMessageWithLifetime>);
-            const newLifetimeConstraint = { blockhash: 'def' as Blockhash, lastValidBlockHeight: 456n };
-            jest.mocked(getTransactionLifetimeConstraintFromCompiledTransactionMessage).mockResolvedValue(
-                newLifetimeConstraint,
-            );
             const signPromise = modifyAndSignTransactions([inputTransaction]);
             await jest.runAllTimersAsync();
             // eslint-disable-next-line jest/no-conditional-expect
-            await expect(signPromise).resolves.toEqual([
-                { ...mockDecodedTransaction, lifetimeConstraint: newLifetimeConstraint },
-            ]);
+            await expect(signPromise).resolves.toEqual([mockReconstructedTransaction]);
         }
     });
     it('fatals when the signed transaction has a new durable nonce lifetime but the nonce account is only in a lookup table', async () => {
         expect.assertions(1);
         const mockSignedTransaction = new Uint8Array([1, 2, 3, 4, 5, 6]);
-        const mockDecodedTransaction = { messageBytes: [4, 5, 6] } as unknown as Transaction;
         mockSignTransaction.mockResolvedValue({ signedTransaction: mockSignedTransaction });
-        mockDecodeTransaction.mockReturnValue(mockDecodedTransaction);
+        mockReconstructEncodedTransactionFromOriginalTransaction.mockRejectedValue(
+            new SolanaError(SOLANA_ERROR__TRANSACTION__NONCE_ACCOUNT_CANNOT_BE_IN_LOOKUP_TABLE, {
+                nonce: 'abc',
+            }),
+        );
         const { result } = renderHook(() => useWalletAccountTransactionSigner(mockUiWalletAccount, 'solana:danknet'));
         // eslint-disable-next-line jest/no-conditional-in-test
         if (result.__type === 'error' || !result.current) {
@@ -321,14 +314,6 @@ describe('useWalletAccountTransactionSigner', () => {
                 messageBytes: new Uint8Array([1, 2, 3]) as unknown as TransactionMessageBytes,
                 signatures: {},
             };
-            jest.mocked(getCompiledTransactionMessageDecoder).mockReturnValue({
-                decode: jest.fn().mockReturnValue({}),
-            } as unknown as VariableSizeDecoder<CompiledTransactionMessage & CompiledTransactionMessageWithLifetime>);
-            jest.mocked(getTransactionLifetimeConstraintFromCompiledTransactionMessage).mockRejectedValue(
-                new SolanaError(SOLANA_ERROR__TRANSACTION__NONCE_ACCOUNT_CANNOT_BE_IN_LOOKUP_TABLE, {
-                    nonce: 'abc',
-                }),
-            );
             const signPromise = modifyAndSignTransactions([inputTransaction]);
             await jest.runAllTimersAsync();
             // eslint-disable-next-line jest/no-conditional-expect
