@@ -78,11 +78,11 @@
         "@solana/errors": "workspace:*",
         "@solana/rpc-spec": "workspace:*",
         "@solana/rpc-spec-types": "workspace:*",
-        "undici-types": "^7.22.0"
+        "undici-types": "^7.24.5"
     },
     "devDependencies": {
         "tinybench": "^6.0.0",
-        "undici": "^7.22.0",
+        "undici": "^7.24.5",
         "zx": "^8.8.5"
     },
     "peerDependencies": {
