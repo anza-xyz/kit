@@ -93,8 +93,8 @@ importers:
         specifier: ^2.0.13
         version: 2.0.13
       '@types/node':
-        specifier: 22.13.8
-        version: 22.13.8
+        specifier: 25.4.0
+        version: 25.4.0
       '@types/react':
         specifier: ^19.2.14
         version: 19.2.14
@@ -2702,8 +2702,8 @@ packages:
   '@types/node@20.11.0':
     resolution: {integrity: sha512-o9bjXmDNcF7GbM4CNQpmi+TutCgap/K3w1JyKgxAjqx41zp9qlIAVFi0IhCNsJcXolEqLWhbFbEeL0PvYm4pcQ==}
 
-  '@types/node@22.13.8':
-    resolution: {integrity: sha512-G3EfaZS+iOGYWLLRCEAXdWK9my08oHNZ+FHluRiggIYJPOXzhOiDgpVCUHaUvyIC5/fj7C/p637jdzC666AOKQ==}
+  '@types/node@25.4.0':
+    resolution: {integrity: sha512-9wLpoeWuBlcbBpOY3XmzSTG3oscB6xjBEEtn+pYXTfhyXhIxC5FsBer2KTopBlvKEiW9l13po9fq+SJY/5lkhw==}
 
   '@types/prismjs@1.26.5':
     resolution: {integrity: sha512-AUZTa7hQ2KY5L7AmtSiqxlhWxb4ina0yd8hNbl4TWuqnv/pFP0nDMb3YrfSBf4hJVGLh2YEIBfKaBW/9UEl6IQ==}
@@ -5577,8 +5577,8 @@ packages:
   undici-types@5.26.5:
     resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
 
-  undici-types@6.20.0:
-    resolution: {integrity: sha512-Ny6QZ2Nju20vw1SRHe3d9jVu6gJ+4e3+MMpqu7pqE5HT6WsTSlce++GQmK5UXS8mzV8DSYHrQH+Xrf2jVcuKNg==}
+  undici-types@7.18.2:
+    resolution: {integrity: sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w==}
 
   undici-types@7.22.0:
     resolution: {integrity: sha512-RKZvifiL60xdsIuC80UY0dq8Z7DbJUV8/l2hOVbyZAxBzEeQU4Z58+4ZzJ6WN2Lidi9KzT5EbiGX+PI/UGYuRw==}
@@ -8205,7 +8205,7 @@ snapshots:
 
   '@types/connect@3.4.38':
     dependencies:
-      '@types/node': 22.13.8
+      '@types/node': 25.4.0
 
   '@types/debug@4.1.12':
     dependencies:
@@ -8239,7 +8239,7 @@ snapshots:
 
   '@types/node-fetch@2.6.13':
     dependencies:
-      '@types/node': 22.13.8
+      '@types/node': 25.4.0
       form-data: 4.0.4
 
   '@types/node@12.20.55': {}
@@ -8252,9 +8252,9 @@ snapshots:
     dependencies:
       undici-types: 5.26.5
 
-  '@types/node@22.13.8':
+  '@types/node@25.4.0':
     dependencies:
-      undici-types: 6.20.0
+      undici-types: 7.18.2
 
   '@types/prismjs@1.26.5': {}
 
@@ -8276,11 +8276,11 @@ snapshots:
 
   '@types/ws@7.4.7':
     dependencies:
-      '@types/node': 22.13.8
+      '@types/node': 25.4.0
 
   '@types/ws@8.18.0':
     dependencies:
-      '@types/node': 22.13.8
+      '@types/node': 25.4.0
 
   '@typescript-eslint/eslint-plugin@8.50.0(@typescript-eslint/parser@8.50.0(eslint@10.0.0(jiti@2.4.2))(typescript@5.9.3))(eslint@10.0.0(jiti@2.4.2))(typescript@5.9.3)':
     dependencies:
@@ -12134,7 +12134,7 @@ snapshots:
 
   undici-types@5.26.5: {}
 
-  undici-types@6.20.0: {}
+  undici-types@7.18.2: {}
 
   undici-types@7.22.0: {}
 
