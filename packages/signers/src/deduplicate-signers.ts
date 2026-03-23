@@ -18,11 +18,27 @@ export function deduplicateSigners<TSigner extends MessageSigner | TransactionSi
     signers.forEach(signer => {
         if (!deduplicated[signer.address]) {
             deduplicated[signer.address] = signer;
-        } else if (deduplicated[signer.address] !== signer) {
+        } else if (!signersAreEquivalent(deduplicated[signer.address], signer)) {
             throw new SolanaError(SOLANA_ERROR__SIGNER__ADDRESS_CANNOT_HAVE_MULTIPLE_SIGNERS, {
                 address: signer.address,
             });
         }
     });
     return Object.values(deduplicated);
+}
+
+function signersAreEquivalent(a: MessageSigner | TransactionSigner, b: MessageSigner | TransactionSigner): boolean {
+    if (a === b) return true;
+    const aKeys = Object.getOwnPropertyNames(a);
+    const bKeys = Object.getOwnPropertyNames(b);
+    if (aKeys.length !== bKeys.length) return false;
+    return aKeys.every(key => {
+        if (!(key in b)) return false;
+        const aVal = (a as Record<string, unknown>)[key];
+        const bVal = (b as Record<string, unknown>)[key];
+        if (typeof aVal === 'function' && typeof bVal === 'function') {
+            return aVal.toString() === bVal.toString();
+        }
+        return aVal === bVal;
+    });
 }

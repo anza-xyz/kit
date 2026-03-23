@@ -2,6 +2,7 @@ import { Address } from '@solana/addresses';
 import { SOLANA_ERROR__SIGNER__ADDRESS_CANNOT_HAVE_MULTIPLE_SIGNERS, SolanaError } from '@solana/errors';
 
 import { deduplicateSigners } from '../deduplicate-signers';
+import { createNoopSigner } from '../noop-signer';
 import {
     createMockMessagePartialSigner,
     createMockTransactionModifyingSigner,
@@ -36,6 +37,36 @@ describe('deduplicateSigners', () => {
             createMockTransactionModifyingSigner(addressA),
             createMockTransactionSendingSigner(addressA),
         ];
+
+        // When we try deduplicate them.
+        const fn = () => deduplicateSigners(signers);
+
+        // Then we expect an error to be thrown.
+        expect(fn).toThrow(
+            new SolanaError(SOLANA_ERROR__SIGNER__ADDRESS_CANNOT_HAVE_MULTIPLE_SIGNERS, {
+                address: addressA,
+            }),
+        );
+    });
+
+    it('deduplicates equivalent noop signers with the same address', () => {
+        // Given two separately created noop signers for the same address.
+        const addressA = '1111' as Address;
+        const noopSignerA = createNoopSigner(addressA);
+        const noopSignerB = createNoopSigner(addressA);
+
+        // When we deduplicate them.
+        const deduplicatedSigners = deduplicateSigners([noopSignerA, noopSignerB]);
+
+        // Then we expect only one signer to remain and it should be the first one.
+        expect(deduplicatedSigners).toHaveLength(1);
+        expect(deduplicatedSigners[0]).toBe(noopSignerA);
+    });
+
+    it('fails when a noop signer and a real signer share the same address', () => {
+        // Given a noop signer and a real signer for the same address.
+        const addressA = '1111' as Address;
+        const signers = [createNoopSigner(addressA), createMockTransactionPartialSigner(addressA)];
 
         // When we try deduplicate them.
         const fn = () => deduplicateSigners(signers);
