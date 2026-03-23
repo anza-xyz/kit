@@ -143,7 +143,7 @@ Here’s an overview of how to use the new library to interact with the RPC, con
 
 ## RPC
 
-Kit ships with an implementation of the [JSON RPC specification](https://www.jsonrpc.org/specification) and a type spec for the [Solana JSON RPC](https://docs.solana.com/api).
+Kit ships with an implementation of the [JSON RPC specification](https://www.jsonrpc.org/specification) and a type spec for the [Solana JSON RPC](https://solana.com/docs/rpc).
 
 The main package responsible for managing communication with an RPC is `@solana/rpc`. However, this package makes use of more granular packages to break down the RPC logic into smaller pieces. Namely, these packages are:
 
@@ -698,7 +698,7 @@ const devnetRpc = createSolanaRpcSubscriptions(devnet('https://api.devnet.solana
 
 #### Including Unstable Subscriptions
 
-If your app needs access to [unstable RPC Subscriptions](https://docs.solana.com/api/websocket#blocksubscribe) — e.g. `BlockNotificationsApi` or `SlotsUpdatesNotificationsApi` — and your RPC server supports them, you may use the `createSolanaRpcSubscriptions_UNSTABLE` and `createSolanaRpcSubscriptionsFromTransport_UNSTABLE` functions to create an RPC Subscriptions client that includes those subscriptions.
+If your app needs access to [unstable RPC Subscriptions](https://solana.com/docs/rpc/websocket/blocksubscribe) — e.g. `BlockNotificationsApi` or `SlotsUpdatesNotificationsApi` — and your RPC server supports them, you may use the `createSolanaRpcSubscriptions_UNSTABLE` and `createSolanaRpcSubscriptionsFromTransport_UNSTABLE` functions to create an RPC Subscriptions client that includes those subscriptions.
 
 ```ts
 import {
