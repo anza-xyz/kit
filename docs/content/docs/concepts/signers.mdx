@@ -313,3 +313,227 @@ const seed = new Uint8Array(await crypto.subtle.digest('SHA-256', message));
 
 const derivedSigner = await createKeyPairSignerFromPrivateKeyBytes(seed);
 ```
+
+## Signing with signers
+
+Kit provides helper functions that use [`TransactionSigner`](/api/type-aliases/TransactionSigner) objects to sign and optionally send transactions. There are two families of signing functions:
+
+- **Transaction message functions** extract signers from the transaction message — either from the fee payer or from account metas — and handle compilation and signing automatically.
+- **Transaction functions** accept an explicit array of signers alongside a compiled [`Transaction`](/api/type-aliases/Transaction), giving you full control over which signers are used.
+
+### Signing transaction messages
+
+The following functions extract [`TransactionSigners`](/api/type-aliases/TransactionSigner) from a transaction message's account metas, compile the message into a [`Transaction`](/api/type-aliases/Transaction), and use those signers to sign it.
+
+#### partiallySignTransactionMessageWithSigners [!toc] [#partially-sign-transaction-message-with-signers]
+
+Signs a transaction message without requiring all signatures to be present. This is useful when you know the message only carries a subset of the required signers and you plan to add more signatures later.
+
+```ts twoslash
+import {
+    TransactionMessage,
+    TransactionMessageWithFeePayer,
+    TransactionMessageWithSigners,
+} from '@solana/kit';
+const transactionMessage = null as unknown as TransactionMessage &
+    TransactionMessageWithFeePayer &
+    TransactionMessageWithSigners;
+// ---cut-before---
+import { partiallySignTransactionMessageWithSigners } from '@solana/kit';
+
+const signedTransaction = await partiallySignTransactionMessageWithSigners(transactionMessage);
+```
+
+<Callout type="info">
+    This function ignores any [`TransactionSendingSigners`](/api/type-aliases/TransactionSendingSigner) in the message since it does not send the transaction. Use [`signAndSendTransactionMessageWithSigners`](#sign-and-send-transaction-message-with-signers) if you need to sign and send in a single step.
+</Callout>
+
+#### signTransactionMessageWithSigners [!toc] [#sign-transaction-message-with-signers]
+
+Signs a transaction message and asserts that all required signatures are present. The returned transaction satisfies the [`FullySignedTransaction`](/api/type-aliases/FullySignedTransaction) type.
+
+```ts twoslash
+import {
+    TransactionMessage,
+    TransactionMessageWithFeePayer,
+    TransactionMessageWithSigners,
+} from '@solana/kit';
+const transactionMessage = null as unknown as TransactionMessage &
+    TransactionMessageWithFeePayer &
+    TransactionMessageWithSigners;
+// ---cut-before---
+import { signTransactionMessageWithSigners } from '@solana/kit';
+
+const fullySignedTransaction = await signTransactionMessageWithSigners(transactionMessage);
+```
+
+<Callout type="warn">
+    This function will throw if the transaction message does not carry a [`TransactionSigner`](/api/type-aliases/TransactionSigner) implementation for every required signer. To partially sign a message that you know to carry a strict subset of the required signers, use [`partiallySignTransactionMessageWithSigners`](#partially-sign-transaction-message-with-signers).
+</Callout>
+
+#### signAndSendTransactionMessageWithSigners [!toc] [#sign-and-send-transaction-message-with-signers]
+
+Signs a transaction message and sends it to the network via the [`TransactionSendingSigner`](/api/type-aliases/TransactionSendingSigner) found in the message's account metas. Returns the transaction signature as [`SignatureBytes`](/api/type-aliases/SignatureBytes).
+
+```ts twoslash
+import {
+    TransactionMessage,
+    TransactionMessageWithFeePayer,
+    TransactionMessageWithSigners,
+    TransactionMessageWithSingleSendingSigner,
+} from '@solana/kit';
+const transactionMessage = null as unknown as TransactionMessage &
+    TransactionMessageWithFeePayer &
+    TransactionMessageWithSigners &
+    TransactionMessageWithSingleSendingSigner;
+// ---cut-before---
+import { signAndSendTransactionMessageWithSigners } from '@solana/kit';
+
+const signature = await signAndSendTransactionMessageWithSigners(transactionMessage);
+```
+
+The message must contain exactly one resolvable [`TransactionSendingSigner`](/api/type-aliases/TransactionSendingSigner). You can check this ahead of time using [`isTransactionMessageWithSingleSendingSigner`](/api/functions/isTransactionMessageWithSingleSendingSigner) to provide a fallback strategy:
+
+```ts twoslash
+// @noErrors: 2345
+import {
+    Rpc,
+    RpcSubscriptions,
+    SolanaRpcApi,
+    SolanaRpcSubscriptionsApi,
+    TransactionMessage,
+    TransactionMessageWithBlockhashLifetime,
+    TransactionMessageWithFeePayer,
+    TransactionMessageWithSigners,
+} from '@solana/kit';
+const transactionMessage = null as unknown as TransactionMessage &
+    TransactionMessageWithBlockhashLifetime &
+    TransactionMessageWithFeePayer &
+    TransactionMessageWithSigners;
+const rpc = null as unknown as Rpc<SolanaRpcApi>;
+const rpcSubscriptions = null as unknown as RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+// ---cut-before---
+import {
+    isTransactionMessageWithSingleSendingSigner,
+    sendAndConfirmTransactionFactory,
+    signAndSendTransactionMessageWithSigners,
+    signTransactionMessageWithSigners,
+} from '@solana/kit';
+
+if (isTransactionMessageWithSingleSendingSigner(transactionMessage)) {
+    // A sending signer is available — sign and send in one step.
+    const signature = await signAndSendTransactionMessageWithSigners(transactionMessage);
+} else {
+    // No sending signer — sign locally and use sendAndConfirmTransaction.
+    const signedTransaction = await signTransactionMessageWithSigners(transactionMessage);
+    const sendAndConfirm = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
+    await sendAndConfirm(signedTransaction, { commitment: 'confirmed' });
+}
+```
+
+### Signing compiled transactions
+
+When you already have a compiled [`Transaction`](/api/type-aliases/Transaction) and an explicit set of signers — for example, when signers are not embedded in the transaction message or when working with an externally provided transaction — you can use the following lower-level functions.
+
+#### partiallySignTransactionWithSigners [!toc] [#partially-sign-transaction-with-signers]
+
+Signs a compiled transaction using the provided [`TransactionModifyingSigners`](/api/type-aliases/TransactionModifyingSigner) and [`TransactionPartialSigners`](/api/type-aliases/TransactionPartialSigner) without requiring all signatures to be present.
+
+```ts twoslash
+import {
+    Transaction,
+    TransactionWithLifetime,
+    TransactionPartialSigner,
+    TransactionModifyingSigner,
+} from '@solana/kit';
+const compiledTransaction = null as unknown as Transaction & TransactionWithLifetime;
+const signerA = null as unknown as TransactionPartialSigner;
+const signerB = null as unknown as TransactionPartialSigner;
+// ---cut-before---
+import { partiallySignTransactionWithSigners } from '@solana/kit';
+
+const signedTransaction = await partiallySignTransactionWithSigners(
+    [signerA, signerB],
+    compiledTransaction,
+);
+```
+
+<Callout type="info">
+    This function ignores any [`TransactionSendingSigners`](/api/type-aliases/TransactionSendingSigner) in the provided array. Use [`signAndSendTransactionWithSigners`](#sign-and-send-transaction-with-signers) if you need to sign and send.
+</Callout>
+
+#### signTransactionWithSigners [!toc] [#sign-transaction-with-signers]
+
+Signs a compiled transaction using the provided signers and asserts that all required signatures are present. The returned transaction satisfies the [`FullySignedTransaction`](/api/type-aliases/FullySignedTransaction) type.
+
+```ts twoslash
+import {
+    Transaction,
+    TransactionWithLifetime,
+    TransactionPartialSigner,
+} from '@solana/kit';
+const compiledTransaction = null as unknown as Transaction & TransactionWithLifetime;
+const signerA = null as unknown as TransactionPartialSigner;
+const signerB = null as unknown as TransactionPartialSigner;
+// ---cut-before---
+import { signTransactionWithSigners } from '@solana/kit';
+
+const fullySignedTransaction = await signTransactionWithSigners(
+    [signerA, signerB],
+    compiledTransaction,
+);
+```
+
+<Callout type="warn">
+    This function will throw if the resultant transaction is missing a signature for one of its required signers. To partially sign, use [`partiallySignTransactionWithSigners`](#partially-sign-transaction-with-signers).
+</Callout>
+
+#### signAndSendTransactionWithSigners [!toc] [#sign-and-send-transaction-with-signers]
+
+Signs a compiled transaction using the provided signers and sends it to the network via the [`TransactionSendingSigner`](/api/type-aliases/TransactionSendingSigner) found in the array. Returns the transaction signature as [`SignatureBytes`](/api/type-aliases/SignatureBytes).
+
+```ts twoslash
+import {
+    Transaction,
+    TransactionWithLifetime,
+    TransactionPartialSigner,
+    TransactionSendingSigner,
+} from '@solana/kit';
+const compiledTransaction = null as unknown as Transaction & TransactionWithLifetime;
+const partialSigner = null as unknown as TransactionPartialSigner;
+const sendingSigner = null as unknown as TransactionSendingSigner;
+// ---cut-before---
+import { signAndSendTransactionWithSigners } from '@solana/kit';
+
+const signature = await signAndSendTransactionWithSigners(
+    [partialSigner, sendingSigner],
+    compiledTransaction,
+);
+```
+
+The provided signers must contain exactly one resolvable [`TransactionSendingSigner`](/api/type-aliases/TransactionSendingSigner). You can validate this ahead of time using [`assertContainsResolvableTransactionSendingSigner`](#assert-contains-resolvable-transaction-sending-signer).
+
+#### assertContainsResolvableTransactionSendingSigner [!toc] [#assert-contains-resolvable-transaction-sending-signer]
+
+Asserts that an array of signers contains at least one [`TransactionSendingSigner`](/api/type-aliases/TransactionSendingSigner) that can be unambiguously resolved. This is useful for validating your signers before calling [`signAndSendTransactionWithSigners`](#sign-and-send-transaction-with-signers).
+
+```ts twoslash
+import { TransactionSigner } from '@solana/kit';
+const mySigners = null as unknown as TransactionSigner[];
+// ---cut-before---
+import { assertContainsResolvableTransactionSendingSigner } from '@solana/kit';
+
+// Throws if no resolvable sending signer is found or if
+// multiple sending-only signers conflict with each other.
+assertContainsResolvableTransactionSendingSigner(mySigners);
+```
+
+### How composite signers are resolved
+
+When a signer implements multiple interfaces (e.g. both [`TransactionPartialSigner`](/api/type-aliases/TransactionPartialSigner) and [`TransactionSendingSigner`](/api/type-aliases/TransactionSendingSigner)), the signing functions automatically resolve it to the most appropriate role:
+
+1. **[`TransactionSendingSigner`](/api/type-aliases/TransactionSendingSigner)** — Used if no other signer exclusively implements the sending interface. Only one sending signer can be active.
+2. **[`TransactionModifyingSigner`](/api/type-aliases/TransactionModifyingSigner)** — Used if no other signer exclusively implements the modifying interface. Modifying signers run sequentially before all others.
+3. **[`TransactionPartialSigner`](/api/type-aliases/TransactionPartialSigner)** — The fallback. Partial signers run in parallel after all modifying signers have finished.
+
+This means a composite signer is always demoted to the least powerful interface that avoids conflicts with other signers.

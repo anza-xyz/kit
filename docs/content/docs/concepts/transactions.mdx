@@ -340,6 +340,8 @@ try {
     method to sign and send the transaction in a single step.
 </Callout>
 
+For a comprehensive guide on all signing functions — including the lower-level [`partiallySignTransactionWithSigners`](/api/functions/partiallySignTransactionWithSigners), [`signTransactionWithSigners`](/api/functions/signTransactionWithSigners), and [`signAndSendTransactionWithSigners`](/api/functions/signAndSendTransactionWithSigners) functions that accept an explicit array of signers and a compiled transaction — see the [Signing with signers](/docs/concepts/signers#signing-with-signers) section.
+
 Building transaction messages using `TransactionSigners` is the recommended way to create self-signable transaction messages. To sign with a `CryptoKey` directly, you first have to compile the transaction message.
 
 ```ts twoslash
@@ -389,6 +391,10 @@ try {
     This function will throw if the resultant transaction is missing a signature for one of the
     transaction's required signers. To partially sign a transaction, use the
     [`partiallySignTransaction`](/api/functions/partiallySignTransaction) method.
+</Callout>
+
+<Callout type="info">
+    If you have [`TransactionSigner`](/api/type-aliases/TransactionSigner) objects rather than raw `CryptoKeyPairs`, you can use [`signTransactionWithSigners`](/api/functions/signTransactionWithSigners) and [`partiallySignTransactionWithSigners`](/api/functions/partiallySignTransactionWithSigners) instead. See the [Signing with signers](/docs/concepts/signers#signing-compiled-transactions) section for details.
 </Callout>
 
 ## Serializing transactions
