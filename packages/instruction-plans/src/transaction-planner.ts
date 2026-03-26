@@ -16,7 +16,7 @@ import {
     TransactionMessage,
     TransactionMessageWithFeePayer,
 } from '@solana/transaction-messages';
-import { getTransactionMessageSize, TRANSACTION_SIZE_LIMIT } from '@solana/transactions';
+import { getTransactionMessageSize, getTransactionMessageSizeLimit } from '@solana/transactions';
 
 import {
     InstructionPlan,
@@ -326,7 +326,7 @@ async function selectAndMutateCandidate(
                 ),
                 context.abortSignal,
             );
-            if (getTransactionMessageSize(message) <= TRANSACTION_SIZE_LIMIT) {
+            if (getTransactionMessageSize(message) <= getTransactionMessageSizeLimit(message)) {
                 candidate.message = message;
                 return candidate;
             }
@@ -364,11 +364,11 @@ async function createNewMessage(
         context.abortSignal,
     );
     const updatedMessageSize = getTransactionMessageSize(updatedMessage);
-    if (updatedMessageSize > TRANSACTION_SIZE_LIMIT) {
+    if (updatedMessageSize > getTransactionMessageSizeLimit(updatedMessage)) {
         const newMessageSize = getTransactionMessageSize(newMessage);
         throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN, {
             numBytesRequired: updatedMessageSize - newMessageSize,
-            numFreeBytes: TRANSACTION_SIZE_LIMIT - newMessageSize,
+            numFreeBytes: getTransactionMessageSizeLimit(newMessage) - newMessageSize,
         });
     }
     return updatedMessage;
@@ -409,11 +409,11 @@ function fitEntirePlanInsideMessage(
             newMessage = appendTransactionMessageInstructions([instructionPlan.instruction], message);
             // eslint-disable-next-line no-case-declarations
             const newMessageSize = getTransactionMessageSize(newMessage);
-            if (newMessageSize > TRANSACTION_SIZE_LIMIT) {
+            if (newMessageSize > getTransactionMessageSizeLimit(newMessage)) {
                 const baseMessageSize = getTransactionMessageSize(message);
                 throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN, {
                     numBytesRequired: newMessageSize - baseMessageSize,
-                    numFreeBytes: TRANSACTION_SIZE_LIMIT - baseMessageSize,
+                    numFreeBytes: getTransactionMessageSizeLimit(message) - baseMessageSize,
                 });
             }
             return newMessage;

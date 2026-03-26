@@ -10,7 +10,7 @@ import {
     TransactionMessage,
     TransactionMessageWithFeePayer,
 } from '@solana/transaction-messages';
-import { getTransactionMessageSize, TRANSACTION_SIZE_LIMIT } from '@solana/transactions';
+import { getTransactionMessageSize, getTransactionMessageSizeLimit } from '@solana/transactions';
 
 /**
  * A set of instructions with constraints on how they can be executed.
@@ -934,7 +934,7 @@ export function getLinearMessagePackerInstructionPlan({
                         appendTransactionMessageInstruction(getInstruction(offset, 0), message),
                     );
                     const freeSpace =
-                        TRANSACTION_SIZE_LIMIT -
+                        getTransactionMessageSizeLimit(message) -
                         messageSizeWithBaseInstruction /* Includes the base instruction (length: 0). */ -
                         1; /* Leeway for shortU16 numbers in transaction headers. */
 
@@ -945,7 +945,7 @@ export function getLinearMessagePackerInstructionPlan({
                             // there is no point packing the base instruction alone.
                             numBytesRequired: messageSizeWithBaseInstruction - messageSize + 1,
                             // (-1) Leeway for shortU16 numbers in transaction headers.
-                            numFreeBytes: TRANSACTION_SIZE_LIMIT - messageSize - 1,
+                            numFreeBytes: getTransactionMessageSizeLimit(message) - messageSize - 1,
                         });
                     }
 
@@ -1006,13 +1006,13 @@ export function getMessagePackerInstructionPlanFromInstructions<TInstruction ext
                         message = appendTransactionMessageInstruction(instructions[index], message);
                         const messageSize = getTransactionMessageSize(message);
 
-                        if (messageSize > TRANSACTION_SIZE_LIMIT) {
+                        if (messageSize > getTransactionMessageSizeLimit(message)) {
                             if (index === instructionIndex) {
                                 throw new SolanaError(
                                     SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN,
                                     {
                                         numBytesRequired: messageSize - originalMessageSize,
-                                        numFreeBytes: TRANSACTION_SIZE_LIMIT - originalMessageSize,
+                                        numFreeBytes: getTransactionMessageSizeLimit(message) - originalMessageSize,
                                     },
                                 );
                             }
