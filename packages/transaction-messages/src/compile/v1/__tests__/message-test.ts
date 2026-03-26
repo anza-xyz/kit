@@ -1,4 +1,11 @@
 import { Address } from '@solana/addresses';
+import {
+    SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNT_ADDRESSES,
+    SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNTS_IN_INSTRUCTION,
+    SOLANA_ERROR__TRANSACTION__TOO_MANY_INSTRUCTIONS,
+    SOLANA_ERROR__TRANSACTION__TOO_MANY_SIGNER_ADDRESSES,
+    SolanaError,
+} from '@solana/errors';
 import { AccountRole } from '@solana/instructions';
 
 import { TransactionMessageWithBlockhashLifetime } from '../../../blockhash';
@@ -218,6 +225,134 @@ describe('compileTransactionMessage', () => {
             const tx = makeMockTransactionMessage();
             const message = compileTransactionMessage(tx);
             expect(message.numStaticAccounts).toBe(2);
+        });
+    });
+    describe('constraints', () => {
+        describe('too many account addresses', () => {
+            it('throws when there are more than 64 unique accounts', () => {
+                const accounts = Array.from({ length: 65 }, (_, i) => ({
+                    address: `account${i}` as Address,
+                    role: AccountRole.READONLY,
+                })) as unknown as OrderedAccounts;
+                jest.mocked(getOrderedAccountsFromAddressMap).mockReturnValue(accounts);
+                const tx = makeMockTransactionMessage();
+                expect(() => compileTransactionMessage(tx)).toThrow(
+                    new SolanaError(SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNT_ADDRESSES, {
+                        actualCount: 65,
+                        maxAllowed: 64,
+                    }),
+                );
+            });
+            it('does not throw with exactly 64 unique accounts', () => {
+                const accounts = Array.from({ length: 64 }, (_, i) => ({
+                    address: `account${i}` as Address,
+                    role: AccountRole.READONLY,
+                })) as unknown as OrderedAccounts;
+                jest.mocked(getOrderedAccountsFromAddressMap).mockReturnValue(accounts);
+                const tx = makeMockTransactionMessage();
+                expect(() => compileTransactionMessage(tx)).not.toThrow();
+            });
+        });
+        describe('too many signer addresses', () => {
+            it('throws when there are more than 12 unique signers', () => {
+                const accounts = Array.from({ length: 13 }, (_, i) => ({
+                    address: `signer${i}` as Address,
+                    role: AccountRole.WRITABLE_SIGNER,
+                })) as unknown as OrderedAccounts;
+                jest.mocked(getOrderedAccountsFromAddressMap).mockReturnValue(accounts);
+                const tx = makeMockTransactionMessage();
+                expect(() => compileTransactionMessage(tx)).toThrow(
+                    new SolanaError(SOLANA_ERROR__TRANSACTION__TOO_MANY_SIGNER_ADDRESSES, {
+                        actualCount: 13,
+                        maxAllowed: 12,
+                    }),
+                );
+            });
+            it('does not throw with exactly 12 signers', () => {
+                const accounts = Array.from({ length: 12 }, (_, i) => ({
+                    address: `signer${i}` as Address,
+                    role: AccountRole.WRITABLE_SIGNER,
+                })) as unknown as OrderedAccounts;
+                jest.mocked(getOrderedAccountsFromAddressMap).mockReturnValue(accounts);
+                const tx = makeMockTransactionMessage();
+                expect(() => compileTransactionMessage(tx)).not.toThrow();
+            });
+        });
+        describe('too many instructions', () => {
+            it('throws when there are more than 64 instructions', () => {
+                const tx = makeMockTransactionMessage({
+                    instructions: Array.from({ length: 65 }, () => ({ programAddress: 'prog' as Address })),
+                });
+                expect(() => compileTransactionMessage(tx)).toThrow(
+                    new SolanaError(SOLANA_ERROR__TRANSACTION__TOO_MANY_INSTRUCTIONS, {
+                        actualCount: 65,
+                        maxAllowed: 64,
+                    }),
+                );
+            });
+            it('does not throw with exactly 64 instructions', () => {
+                const tx = makeMockTransactionMessage({
+                    instructions: Array.from({ length: 64 }, () => ({ programAddress: 'prog' as Address })),
+                });
+                expect(() => compileTransactionMessage(tx)).not.toThrow();
+            });
+        });
+        describe('too many accounts in an instruction', () => {
+            it('throws when an instruction has more than 255 account references', () => {
+                const tx = makeMockTransactionMessage({
+                    instructions: [
+                        {
+                            accounts: Array.from({ length: 256 }, () => ({
+                                address: 'acct' as Address,
+                                role: AccountRole.READONLY,
+                            })),
+                            programAddress: 'prog' as Address,
+                        },
+                    ],
+                });
+                expect(() => compileTransactionMessage(tx)).toThrow(
+                    new SolanaError(SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNTS_IN_INSTRUCTION, {
+                        actualCount: 256,
+                        instructionIndex: 0,
+                        maxAllowed: 255,
+                    }),
+                );
+            });
+            it('does not throw with exactly 255 accounts in an instruction', () => {
+                const tx = makeMockTransactionMessage({
+                    instructions: [
+                        {
+                            accounts: Array.from({ length: 255 }, () => ({
+                                address: 'acct' as Address,
+                                role: AccountRole.READONLY,
+                            })),
+                            programAddress: 'prog' as Address,
+                        },
+                    ],
+                });
+                expect(() => compileTransactionMessage(tx)).not.toThrow();
+            });
+            it('reports the correct instruction index when a later instruction violates the constraint', () => {
+                const tx = makeMockTransactionMessage({
+                    instructions: [
+                        { programAddress: 'prog' as Address },
+                        {
+                            accounts: Array.from({ length: 256 }, () => ({
+                                address: 'acct' as Address,
+                                role: AccountRole.READONLY,
+                            })),
+                            programAddress: 'prog' as Address,
+                        },
+                    ],
+                });
+                expect(() => compileTransactionMessage(tx)).toThrow(
+                    new SolanaError(SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNTS_IN_INSTRUCTION, {
+                        actualCount: 256,
+                        instructionIndex: 1,
+                        maxAllowed: 255,
+                    }),
+                );
+            });
         });
     });
 });

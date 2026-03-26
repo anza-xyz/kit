@@ -198,6 +198,10 @@ import {
     SOLANA_ERROR__TRANSACTION__NONCE_ACCOUNT_CANNOT_BE_IN_LOOKUP_TABLE,
     SOLANA_ERROR__TRANSACTION__SIGNATURE_COUNT_TOO_HIGH_FOR_TRANSACTION_BYTES,
     SOLANA_ERROR__TRANSACTION__SIGNATURES_MISSING,
+    SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNT_ADDRESSES,
+    SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNTS_IN_INSTRUCTION,
+    SOLANA_ERROR__TRANSACTION__TOO_MANY_INSTRUCTIONS,
+    SOLANA_ERROR__TRANSACTION__TOO_MANY_SIGNER_ADDRESSES,
     SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED,
     SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_OUT_OF_RANGE,
     SOLANA_ERROR__TRANSACTION__VERSION_ZERO_MUST_BE_ENCODED_WITH_SIGNATURES_FIRST,
@@ -829,6 +833,23 @@ export type SolanaErrorContext = ReadonlyContextValue<
                 numExpectedSignatures: number;
                 transactionBytes: ReadonlyUint8Array;
                 transactionBytesLength: number;
+            };
+            [SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNTS_IN_INSTRUCTION]: {
+                actualCount: number;
+                instructionIndex: number;
+                maxAllowed: number;
+            };
+            [SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNT_ADDRESSES]: {
+                actualCount: number;
+                maxAllowed: number;
+            };
+            [SOLANA_ERROR__TRANSACTION__TOO_MANY_INSTRUCTIONS]: {
+                actualCount: number;
+                maxAllowed: number;
+            };
+            [SOLANA_ERROR__TRANSACTION__TOO_MANY_SIGNER_ADDRESSES]: {
+                actualCount: number;
+                maxAllowed: number;
             };
             [SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED]: {
                 unsupportedVersion: number;

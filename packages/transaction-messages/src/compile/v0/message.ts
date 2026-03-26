@@ -1,4 +1,12 @@
 import { Address } from '@solana/addresses';
+import {
+    SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNT_ADDRESSES,
+    SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNTS_IN_INSTRUCTION,
+    SOLANA_ERROR__TRANSACTION__TOO_MANY_INSTRUCTIONS,
+    SOLANA_ERROR__TRANSACTION__TOO_MANY_SIGNER_ADDRESSES,
+    SolanaError,
+} from '@solana/errors';
+import { isSignerRole } from '@solana/instructions';
 
 import { TransactionMessageWithFeePayer } from '../../fee-payer';
 import { TransactionMessageWithLifetime } from '../../lifetime';
@@ -35,6 +43,37 @@ export function compileTransactionMessage<
         transactionMessage.instructions,
     );
     const orderedAccounts = getOrderedAccountsFromAddressMap(addressMap);
+    const numAccounts = orderedAccounts.length;
+    if (numAccounts > 64) {
+        throw new SolanaError(SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNT_ADDRESSES, {
+            actualCount: numAccounts,
+            maxAllowed: 64,
+        });
+    }
+    const numSigners = orderedAccounts.filter(account => isSignerRole(account.role)).length;
+    if (numSigners > 12) {
+        throw new SolanaError(SOLANA_ERROR__TRANSACTION__TOO_MANY_SIGNER_ADDRESSES, {
+            actualCount: numSigners,
+            maxAllowed: 12,
+        });
+    }
+    const numInstructions = transactionMessage.instructions.length;
+    if (numInstructions > 64) {
+        throw new SolanaError(SOLANA_ERROR__TRANSACTION__TOO_MANY_INSTRUCTIONS, {
+            actualCount: numInstructions,
+            maxAllowed: 64,
+        });
+    }
+    for (let i = 0; i < transactionMessage.instructions.length; i++) {
+        const numAccountsInInstruction = transactionMessage.instructions[i].accounts?.length ?? 0;
+        if (numAccountsInInstruction > 255) {
+            throw new SolanaError(SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNTS_IN_INSTRUCTION, {
+                actualCount: numAccountsInInstruction,
+                instructionIndex: i,
+                maxAllowed: 255,
+            });
+        }
+    }
     const lifetimeConstraint = (transactionMessage as Partial<TransactionMessageWithLifetime>).lifetimeConstraint;
 
     return {

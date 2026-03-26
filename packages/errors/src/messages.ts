@@ -251,6 +251,10 @@ import {
     SOLANA_ERROR__TRANSACTION__NONCE_ACCOUNT_CANNOT_BE_IN_LOOKUP_TABLE,
     SOLANA_ERROR__TRANSACTION__SIGNATURE_COUNT_TOO_HIGH_FOR_TRANSACTION_BYTES,
     SOLANA_ERROR__TRANSACTION__SIGNATURES_MISSING,
+    SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNT_ADDRESSES,
+    SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNTS_IN_INSTRUCTION,
+    SOLANA_ERROR__TRANSACTION__TOO_MANY_INSTRUCTIONS,
+    SOLANA_ERROR__TRANSACTION__TOO_MANY_SIGNER_ADDRESSES,
     SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED,
     SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_OUT_OF_RANGE,
     SOLANA_ERROR__TRANSACTION__VERSION_ZERO_MUST_BE_ENCODED_WITH_SIGNATURES_FIRST,
@@ -800,4 +804,12 @@ export const SolanaErrorMessages: Readonly<{
         'The transaction config value for $configName has the incorrect kind. Expected $expectedKind, got $actualKind.',
     [SOLANA_ERROR__TRANSACTION__INSTRUCTION_HEADERS_PAYLOADS_MISMATCH]:
         'The transaction does not have the same number of instruction headers and instruction payloads. Got $numInstructionHeaders instruction headers, and $numInstructionPayloads instruction payloads.',
+    [SOLANA_ERROR__TRANSACTION__TOO_MANY_SIGNER_ADDRESSES]:
+        'Transaction has $actualCount unique signer addresses but the maximum allowed is $maxAllowed',
+    [SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNT_ADDRESSES]:
+        'Transaction has $actualCount unique account addresses but the maximum allowed is $maxAllowed',
+    [SOLANA_ERROR__TRANSACTION__TOO_MANY_INSTRUCTIONS]:
+        'Transaction has $actualCount instructions but the maximum allowed is $maxAllowed',
+    [SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNTS_IN_INSTRUCTION]:
+        'The instruction at index $instructionIndex has $actualCount account references but the maximum allowed is $maxAllowed',
 };
