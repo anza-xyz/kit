@@ -316,4 +316,35 @@ describe('withCleanup', () => {
     it('returns a frozen object', () => {
         expect(withCleanup({ fruit: 'apple' as const }, () => {})).toBeFrozenObject();
     });
+
+    it('calls all cleanup functions when withCleanup is called multiple times', () => {
+        const cleanup1 = jest.fn();
+        const cleanup2 = jest.fn();
+        const client = withCleanup({}, cleanup1);
+        const result = withCleanup(client, cleanup2);
+        result[Symbol.dispose]();
+        expect(cleanup1).toHaveBeenCalledTimes(1);
+        expect(cleanup2).toHaveBeenCalledTimes(1);
+    });
+
+    it('calls multiple cleanups in LIFO order', () => {
+        const callOrder: string[] = [];
+        const cleanup1 = jest.fn(() => callOrder.push('cleanup1'));
+        const cleanup2 = jest.fn(() => callOrder.push('cleanup2'));
+        const client = withCleanup({}, cleanup1);
+        const result = withCleanup(client, cleanup2);
+        result[Symbol.dispose]();
+        expect(callOrder).toStrictEqual(['cleanup2', 'cleanup1']);
+    });
+
+    it('calls multiple cleanups and existing parent dispose in the correct order', () => {
+        const callOrder: string[] = [];
+        const parentDispose = jest.fn(() => callOrder.push('parent'));
+        const cleanup1 = jest.fn(() => callOrder.push('cleanup1'));
+        const cleanup2 = jest.fn(() => callOrder.push('cleanup2'));
+        const client = withCleanup({ [Symbol.dispose]: parentDispose }, cleanup1);
+        const result = withCleanup(client, cleanup2);
+        result[Symbol.dispose]();
+        expect(callOrder).toStrictEqual(['cleanup2', 'cleanup1', 'parent']);
+    });
 });

@@ -277,13 +277,50 @@ export function extendClient<TClient extends object, TAdditions extends object>(
  * @see {@link extendClient}
  */
 export function withCleanup<TClient extends object>(client: TClient, cleanup: () => void): Disposable & TClient {
-    const parentDispose: (() => void) | undefined =
-        Symbol.dispose in client ? (client as Disposable)[Symbol.dispose] : undefined;
-    const additions: Disposable = {
+    if (DISPOSABLE_STACK_PROPERTY in client) {
+        return addCleanupToClientWithExistingStack(
+            client as Record<typeof DISPOSABLE_STACK_PROPERTY, DisposableStack> & TClient,
+            cleanup,
+        );
+    } else {
+        return addCleanupToClientWithoutExistingStack(client, cleanup);
+    }
+}
+
+const DISPOSABLE_STACK_PROPERTY = '__PRIVATE__DISPOSABLE_STACK' as const;
+
+function addCleanupToClientWithExistingStack<TClient extends Record<typeof DISPOSABLE_STACK_PROPERTY, DisposableStack>>(
+    client: TClient,
+    cleanup: () => void,
+): Disposable & TClient {
+    // If we already have the stack, add the new cleanup to it
+    client[DISPOSABLE_STACK_PROPERTY].defer(cleanup);
+    // We assume we already added a dispose method when we added the stack
+    return client as Disposable & TClient;
+}
+
+function addCleanupToClientWithoutExistingStack<TClient extends object>(
+    client: TClient,
+    cleanup: () => void,
+): Disposable & TClient {
+    const stack = new DisposableStack();
+
+    // If the client has an existing dispose method but not our stack, we maintain this existing cleanup by deferring it to the new stack
+    if (Symbol.dispose in client) {
+        const existingDispose = (client as Disposable)[Symbol.dispose];
+        stack.defer(() => existingDispose.call(client));
+    }
+
+    // Add the new cleanup to the stack
+    stack.defer(cleanup);
+
+    // We add our stack to the client, and replace any existing dispose method with our stack dispose
+    const additions = {
+        [DISPOSABLE_STACK_PROPERTY]: stack,
         [Symbol.dispose]() {
-            cleanup();
-            parentDispose?.call(client);
+            stack[Symbol.dispose]();
         },
     };
-    return extendClient(client, additions) as Disposable & TClient;
+
+    return extendClient(client, additions) as unknown as Disposable & TClient;
 }
