@@ -5,6 +5,7 @@ import {
     type ClientPlugin,
     createEmptyClient,
     extendClient,
+    withAsyncCleanup,
     withCleanup,
 } from '../client';
 
@@ -249,6 +250,13 @@ const EMPTY_ASYNC_CLIENT = null as unknown as AsyncClient<object>;
         withCleanup(client, () => {}) satisfies Client<object> & Disposable;
     }
 
+    // It can be used with the `using` syntax
+    {
+        const client = null as unknown as Client<object>;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        using _ = withCleanup(client, () => {});
+    }
+
     // It accepts an already Disposable client
     {
         const client = null as unknown as Client<object> & Disposable;
@@ -259,5 +267,69 @@ const EMPTY_ASYNC_CLIENT = null as unknown as AsyncClient<object>;
     {
         const client = null as unknown as AsyncClient<object>;
         withCleanup(client, () => {}) satisfies AsyncClient<object> & Disposable;
+    }
+
+    // It preserves an AsyncDisposable client
+    {
+        const client = null as unknown as AsyncDisposable & Client<object>;
+        withCleanup(client, () => {}) satisfies AsyncDisposable & Client<object>;
+    }
+
+    // It does not make an AsyncDisposable client Disposable
+    {
+        const client = null as unknown as AsyncDisposable & Client<object>;
+        // @ts-expect-error - client is not Disposable.
+        withCleanup(client, () => {}) satisfies Client<object> & Disposable;
+    }
+}
+
+// [Describe] withAsyncCleanup
+{
+    // It returns an AsyncDisposable client
+    {
+        const client = null as unknown as Client<object>;
+        withAsyncCleanup(client, async () => {}) satisfies AsyncDisposable & Client<object>;
+    }
+
+    // It cannot be used with the `using` syntax
+    {
+        const client = null as unknown as Client<object>;
+        // @ts-expect-error - withAsyncCleanup returns an AsyncDisposable, which cannot be used with `using`.
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        using _ = withAsyncCleanup(client, async () => {});
+    }
+
+    // It can be used with the `await using` syntax
+    {
+        const client = null as unknown as AsyncDisposable & Client<object>;
+        void (async () => {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            await using _ = withCleanup(client, () => {});
+        })();
+    }
+
+    // It accepts an already AsyncDisposable client
+    {
+        const client = null as unknown as AsyncDisposable & Client<object>;
+        withAsyncCleanup(client, async () => {}) satisfies AsyncDisposable & Client<object>;
+    }
+
+    // It accepts a Disposable (sync-only) client
+    {
+        const client = null as unknown as Client<object> & Disposable;
+        withAsyncCleanup(client, async () => {}) satisfies AsyncDisposable & Client<object>;
+    }
+
+    // It strips Disposable from a Disposable client
+    {
+        const client = null as unknown as Client<object> & Disposable;
+        // @ts-expect-error - returned client is not Disposable.
+        withAsyncCleanup(client, async () => {}) satisfies Client<object> & Disposable;
+    }
+
+    // It accepts an AsyncClient
+    {
+        const client = null as unknown as AsyncClient<object>;
+        withAsyncCleanup(client, async () => {}) satisfies AsyncClient<object> & AsyncDisposable;
     }
 }
