@@ -4,6 +4,10 @@ import {
     SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN,
     SOLANA_ERROR__INVARIANT_VIOLATION__INVALID_INSTRUCTION_PLAN_KIND,
     SOLANA_ERROR__INVARIANT_VIOLATION__INVALID_TRANSACTION_PLAN_KIND,
+    SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNT_ADDRESSES,
+    SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNTS_IN_INSTRUCTION,
+    SOLANA_ERROR__TRANSACTION__TOO_MANY_INSTRUCTIONS,
+    SOLANA_ERROR__TRANSACTION__TOO_MANY_SIGNER_ADDRESSES,
     SolanaError,
 } from '@solana/errors';
 import { getAbortablePromise } from '@solana/promises';
@@ -327,7 +331,13 @@ async function selectAndMutateCandidate(
                 return candidate;
             }
         } catch (error) {
-            if (isSolanaError(error, SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN)) {
+            if (
+                isSolanaError(error, SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN) ||
+                isSolanaError(error, SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNT_ADDRESSES) ||
+                isSolanaError(error, SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNTS_IN_INSTRUCTION) ||
+                isSolanaError(error, SOLANA_ERROR__TRANSACTION__TOO_MANY_INSTRUCTIONS) ||
+                isSolanaError(error, SOLANA_ERROR__TRANSACTION__TOO_MANY_SIGNER_ADDRESSES)
+            ) {
                 // Try the next candidate.
             } else {
                 throw error;

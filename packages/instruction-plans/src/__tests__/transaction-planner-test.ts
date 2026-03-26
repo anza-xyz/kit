@@ -1,7 +1,15 @@
 import '@solana/test-matchers/toBeFrozenObject';
 
-import { SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN, SolanaError } from '@solana/errors';
-import { Instruction } from '@solana/instructions';
+import { Address, getAddressDecoder } from '@solana/addresses';
+import {
+    SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN,
+    SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNT_ADDRESSES,
+    SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNTS_IN_INSTRUCTION,
+    SOLANA_ERROR__TRANSACTION__TOO_MANY_INSTRUCTIONS,
+    SOLANA_ERROR__TRANSACTION__TOO_MANY_SIGNER_ADDRESSES,
+    SolanaError,
+} from '@solana/errors';
+import { AccountRole, Instruction } from '@solana/instructions';
 import {
     appendTransactionMessageInstructions,
     TransactionMessage,
@@ -89,6 +97,180 @@ describe('createTransactionPlanner', () => {
                 }),
             );
         });
+    });
+
+    describe('transaction constraint scenarios', () => {
+        const addressDecoder = getAddressDecoder();
+        function makeAddress(i: number): Address {
+            return addressDecoder.decode(new Uint8Array(32).fill(i));
+        }
+        function makeAddresses(n: number, offset = 0): Address[] {
+            return Array.from({ length: n }, (_, i) => makeAddress(offset + i));
+        }
+
+        /**
+         *  [Seq]           ──────────────────────────────────────▶   [Seq]
+         *   │  (65 instructions, same program address)                  │
+         *   ├── [I0]                                                    ├── [Tx: I0…I63]
+         *   ├── …                                                       └── [Tx: I64]
+         *   └── [I64]
+         */
+        it('splits into a new transaction when there are too many instructions', async () => {
+            expect.assertions(1);
+            const createTransactionMessage = createMockTransactionMessage;
+            const { singleTransactionPlan } = getHelpers(createTransactionMessage);
+            const planner = createTransactionPlanner({ createTransactionMessage });
+
+            // All 65 instructions share the same program address so they don't add
+            // to the unique-account count. The 65th triggers TOO_MANY_INSTRUCTIONS.
+            const instruction: Instruction = { programAddress: makeAddress(1) };
+            const instructions = Array.from({ length: 65 }, () => instruction);
+
+            await expect(
+                planner(sequentialInstructionPlan(instructions.map(i => singleInstructionPlan(i)))),
+            ).resolves.toEqual(
+                sequentialTransactionPlan([
+                    singleTransactionPlan(instructions.slice(0, 64)),
+                    singleTransactionPlan([instruction]),
+                ]),
+            );
+        });
+
+        /**
+         *  [Seq]    ──────────────────────────────────────────────────▶   [Seq]
+         *   │  (A fills to 33 unique accounts; B adds 33 more               │
+         *   │   pushing the combined total to 66 > 64)                      ├── [Tx: A]
+         *   ├── [A]                                                         └── [Tx: B]
+         *   └── [B]
+         */
+        it('splits into a new transaction when there are too many account addresses', async () => {
+            expect.assertions(1);
+            const createTransactionMessage = createMockTransactionMessage;
+            const { singleTransactionPlan } = getHelpers(createTransactionMessage);
+            const planner = createTransactionPlanner({ createTransactionMessage });
+
+            // Base message: feePayer (1)
+            // A: A's program (1) + 31 READONLY accounts = 32 new unique accounts.
+            // B: B's program (1) + 32 new READONLY accounts = 33 new unique accounts.
+            // Combined: 66 unique accounts → TOO_MANY_ACCOUNT_ADDRESSES.
+            // A alone: fee payer (1) + A's program (1) + 31 accounts = 33 unique accounts (within limit).
+            // B alone: fee payer (1) + B's program (1) + 32 accounts = 34 accounts (within limit).
+            const instructionA: Instruction = {
+                accounts: makeAddresses(31).map(address => ({ address, role: AccountRole.READONLY })),
+                programAddress: makeAddress(32),
+            };
+            const instructionB: Instruction = {
+                accounts: makeAddresses(32, 32).map(address => ({ address, role: AccountRole.READONLY })),
+                programAddress: makeAddress(100),
+            };
+
+            await expect(
+                planner(
+                    sequentialInstructionPlan([
+                        singleInstructionPlan(instructionA),
+                        singleInstructionPlan(instructionB),
+                    ]),
+                ),
+            ).resolves.toEqual(
+                sequentialTransactionPlan([
+                    singleTransactionPlan([instructionA]),
+                    singleTransactionPlan([instructionB]),
+                ]),
+            );
+        });
+
+        /**
+         *  [Seq]    ──────────────────────────────────────────────────▶   [Seq]
+         *   │  (A fills to 11 signers; B adds 2 more                        │
+         *   │   pushing the combined total to 13 > 12)                      ├── [Tx: A]
+         *   ├── [A]                                                         └── [Tx: B]
+         *   └── [B]
+         */
+        it('splits into a new transaction when there are too many signer addresses', async () => {
+            expect.assertions(1);
+            const createTransactionMessage = createMockTransactionMessage;
+            const { singleTransactionPlan } = getHelpers(createTransactionMessage);
+            const planner = createTransactionPlanner({ createTransactionMessage });
+
+            // Base message: feePayer (1 signer)
+            // A: 10 new READONLY_SIGNER
+            // B: 2 new READONLY_SIGNER
+            // Combined: 13 signers → TOO_MANY_SIGNER_ADDRESSES.
+            // A alone: fee payer (1) + A's 10 signers = 11 signers (within limit).
+            // B alone: fee payer (1) + B's 2 signers = 3 signers (within limit).
+            const instructionA: Instruction = {
+                accounts: makeAddresses(10).map(address => ({ address, role: AccountRole.READONLY_SIGNER })),
+                programAddress: makeAddress(20),
+            };
+            const instructionB: Instruction = {
+                accounts: makeAddresses(2, 10).map(address => ({ address, role: AccountRole.READONLY_SIGNER })),
+                programAddress: makeAddress(30),
+            };
+
+            await expect(
+                planner(
+                    sequentialInstructionPlan([
+                        singleInstructionPlan(instructionA),
+                        singleInstructionPlan(instructionB),
+                    ]),
+                ),
+            ).resolves.toEqual(
+                sequentialTransactionPlan([
+                    singleTransactionPlan([instructionA]),
+                    singleTransactionPlan([instructionB]),
+                ]),
+            );
+        });
+
+        const CONSTRAINT_ERRORS: [string, SolanaError][] = [
+            [
+                'TOO_MANY_ACCOUNT_ADDRESSES',
+                new SolanaError(SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNT_ADDRESSES, {
+                    actualCount: 65,
+                    maxAllowed: 64,
+                }),
+            ],
+            [
+                'TOO_MANY_SIGNER_ADDRESSES',
+                new SolanaError(SOLANA_ERROR__TRANSACTION__TOO_MANY_SIGNER_ADDRESSES, {
+                    actualCount: 13,
+                    maxAllowed: 12,
+                }),
+            ],
+            [
+                'TOO_MANY_INSTRUCTIONS',
+                new SolanaError(SOLANA_ERROR__TRANSACTION__TOO_MANY_INSTRUCTIONS, {
+                    actualCount: 65,
+                    maxAllowed: 64,
+                }),
+            ],
+            [
+                'TOO_MANY_ACCOUNTS_IN_INSTRUCTION',
+                new SolanaError(SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNTS_IN_INSTRUCTION, {
+                    actualCount: 256,
+                    instructionIndex: 0,
+                    maxAllowed: 255,
+                }),
+            ],
+        ];
+
+        /**
+         *  [A] ──────────▶  Error
+         *  (createTransactionMessage always throws the constraint error)
+         */
+        it.each(CONSTRAINT_ERRORS)(
+            'propagates %s when createTransactionMessage cannot create a fresh message',
+            async (_name, constraintError) => {
+                expect.assertions(1);
+                const instruction: Instruction = { programAddress: makeAddress(1) };
+                const planner = createTransactionPlanner({
+                    createTransactionMessage: () => {
+                        throw constraintError;
+                    },
+                });
+                await expect(planner(singleInstructionPlan(instruction))).rejects.toThrow(constraintError);
+            },
+        );
     });
 
     describe('sequential scenarios', () => {
