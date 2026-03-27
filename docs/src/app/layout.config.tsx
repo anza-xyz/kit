@@ -5,7 +5,7 @@ import { ImageZoom } from 'fumadocs-ui/components/image-zoom';
 import { Step, Steps } from 'fumadocs-ui/components/steps';
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
 import defaultMdxComponents from 'fumadocs-ui/mdx';
-import { BookTextIcon, LibraryBigIcon } from 'lucide-react';
+import { BookTextIcon, CookingPotIcon, LibraryBigIcon } from 'lucide-react';
 import { Logo, LogoWithSolana } from './logo';
 import { MDXComponents } from 'mdx/types';
 
@@ -31,6 +31,12 @@ export const baseOptions: BaseLayoutProps = {
             url: '/docs',
             active: 'nested-url',
             icon: <BookTextIcon />,
+        },
+        {
+            text: 'Recipes',
+            url: '/recipes',
+            active: 'nested-url',
+            icon: <CookingPotIcon />,
         },
         {
             text: 'API Reference',

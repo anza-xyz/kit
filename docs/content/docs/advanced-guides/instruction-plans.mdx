@@ -3,6 +3,15 @@ title: Instruction Plans
 description: Compose instructions into multi-step operations
 ---
 
+<Callout type="warn" title="Planned Changes">
+**Status:** Existing page — significant updates planned
+
+This page will be updated to add a section showing `transactionPlanner` and `transactionPlanExecutor` plugins, demonstrate how to swap the executor on an existing RPC client (e.g. replacing the default one from `createClient`), show the connection between instruction plans and `client.sendTransaction()` / `client.sendTransactions()`, and add examples using `rpcTransactionPlanner` and `rpcTransactionPlanExecutor` from `@solana/kit-plugin-rpc`.
+
+**Current content preserved:** Yes, all existing content stays and is enriched.
+
+</Callout>
+
 ## Introduction
 
 Instruction plans describe operations that go beyond a single instruction and may even span multiple transactions.

@@ -1,0 +1,13 @@
+---
+title: Clients & Plugins
+description: Understand the client model and the plugin ecosystem
+---
+
+<Callout type="warn" title="Planned Content">
+**Status:** New page
+
+This overview will explain what a "client" is in Kit (a frozen, typed JavaScript object built by chaining plugins via `.use()`), the `createEmptyClient().use(plugin1()).use(plugin2())` pattern, how TypeScript enforces plugin ordering and prerequisites at compile time, the `ClientPlugin` type (`(input: TInput) => TOutput`), the `extendClient()` helper for preserving property descriptors, how official plugins implement standard interfaces (`ClientWithRpc`, `ClientWithPayer`, `ClientWithTransactionSending`, etc.), and how the ecosystem can build and share plugins and clients.
+
+**Draws from:** `@solana/plugin-core` source and docs, `@solana/plugin-interfaces` source and docs, kit-plugins main README.
+
+</Callout>

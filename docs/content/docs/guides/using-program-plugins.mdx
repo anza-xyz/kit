@@ -1,0 +1,15 @@
+---
+title: Using program plugins
+description: Add typed program APIs to your client
+---
+
+<Callout type="warn" title="Planned Content">
+**Status:** New page
+
+This guide will provide a deep dive into program plugins: what program plugins are (Codama-generated plugins that add typed `.accounts` and `.instructions` namespaces to a client), how `client.use(tokenProgram())` works under the hood, accessing typed accounts (`client.accounts.mint.fetch(address)`, `client.accounts.token.fetchAll(filter)`), accessing typed instructions (`client.instructions.transfer({...}).sendTransaction()`), using multiple program plugins together (e.g. System + Token + Compute Budget), how this pattern works for any Codama-generated program (not just official ones), and the relationship between program plugins and the `@solana-program/*` packages.
+
+**Draws from:** Kit-plugins program client documentation, Codama JS renderer docs, `@solana-program/token` README.
+
+**Links to:** [Clients & Plugins — Generating Program Plugins](/docs/clients-and-plugins/generating-program-plugins) for generating plugins for your own programs, [Clients & Plugins — Available Plugins](/docs/clients-and-plugins/available-plugins) for a directory of available program plugins.
+
+</Callout>

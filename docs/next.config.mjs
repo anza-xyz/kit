@@ -10,14 +10,18 @@ const config = {
         return [
             {
                 source: '/api/:path*.mdx',
-                destination: '/llms.mdx/api/:path*'
+                destination: '/llms.mdx/api/:path*',
             },
             {
                 source: '/docs/:path*.mdx',
-                destination: '/llms.mdx/docs/:path*'
-            }
-        ]
-    }
+                destination: '/llms.mdx/docs/:path*',
+            },
+            {
+                source: '/recipes/:path*.mdx',
+                destination: '/llms.mdx/recipes/:path*',
+            },
+        ];
+    },
 };
 
 export default withMDX(config);

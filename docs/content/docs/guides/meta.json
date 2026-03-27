@@ -1,0 +1,12 @@
+{
+    "title": "Guides",
+    "defaultOpen": true,
+    "pages": [
+        "setting-up-signers",
+        "sending-transactions",
+        "sending-multiple-transactions",
+        "fetching-accounts",
+        "using-program-plugins",
+        "testing-and-local-development"
+    ]
+}

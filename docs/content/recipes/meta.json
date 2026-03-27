@@ -1,0 +1,5 @@
+{
+    "title": "Recipes",
+    "root": true,
+    "pages": ["...", "transferring-sol", "creating-a-token", "airdropping-tokens"]
+}

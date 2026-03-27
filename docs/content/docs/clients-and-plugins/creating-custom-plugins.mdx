@@ -1,0 +1,15 @@
+---
+title: Creating custom plugins
+description: Write your own plugins to extend Kit clients
+---
+
+<Callout type="warn" title="Planned Content">
+**Status:** New page
+
+This page will cover how to write custom plugins: the `ClientPlugin<TInput, TOutput>` type signature, using `extendClient(client, additions)` to add capabilities (preserves property descriptors, freezes result), simple synchronous plugins (`(client) => extendClient(client, { myFeature: ... })`), async plugins (`async (client) => extendClient(client, { data: await fetch(...) })`), enforcing prerequisites via TypeScript generics (`<T extends ClientWithRpc>(client: T) => ...`), implementing standard interfaces (`ClientWithPayer`, `ClientWithTransactionSending`, etc.) for interoperability, a full worked example building a custom plugin from scratch, and best practices for naming, documentation, and publishing to npm.
+
+**Draws from:** `@solana/plugin-core` source and docs (`createEmptyClient`, `extendClient`, `ClientPlugin`), kit-plugins main README "Creating Custom Plugins" section.
+
+**Links to:** [Clients & Plugins — Overview](/docs/clients-and-plugins) for the client model, [Creating Custom Clients](/docs/clients-and-plugins/creating-custom-clients) for composing plugins into clients.
+
+</Callout>
