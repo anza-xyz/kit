@@ -3,13 +3,6 @@ title: Installation
 description: Get started with Kit
 ---
 
-<Callout type="warn" title="Planned Changes">
-**Status:** Existing page — rewrite planned
-
-This page will be rewritten with selectable cards at the top for choosing a client setup: **"RPC Client"** (production, the default selection), **"Local RPC Client"** (local development with test validator), **"LiteSVM Client"** (in-process testing, no network), and **"No Client"** (raw Kit, maximum treeshakability). Each card will have a brief subtitle explaining when to use it. Based on the selection, the installation steps below will adjust accordingly (different packages to install and different plugins to compose with `createClient().use(...)`). The "No Client" option will link to [Advanced Guides — Kit Without a Client](/docs/advanced-guides/kit-without-a-client).
-
-</Callout>
-
 Kit is a JavaScript SDK for building Solana apps across environments like Node, the web, and React Native. It provides a comprehensive set of data types and helper functions, forming the foundation for interacting with Solana in JavaScript.
 
 <Callout title="Coming from Web3.js?">
@@ -18,57 +11,235 @@ Kit is a JavaScript SDK for building Solana apps across environments like Node, 
 
 ## Quick start
 
-Follow these simple steps to install and get started with Kit:
+Choose the client setup that fits your environment:
+
+<CardTabs groupId="client-type" persist cards={[
+    { title: "RPC Client", description: "For production apps on mainnet, devnet, or testnet.", icon: "globe" },
+    { title: "Local RPC Client", description: "For local development with a test validator.", icon: "laptop" },
+    { title: "LiteSVM Client", description: "For fast unit testing. Node.js only.", icon: "flask-conical" },
+    { title: "No Client", description: "Maximum treeshakability. Import only what you need.", icon: "puzzle" },
+]}>
+<CardTab>
 
 <Steps>
 <Step>
- 
-### Install Kit
 
-Install Kit using the main `@solana/kit` library. It includes many smaller packages — such as `@solana/rpc` or `@solana/transactions` — that can also be used individually for more granular imports.
+### Install packages
+
+Install Kit and the plugins for RPC connectivity and signer management.
+
+```package-install
+@solana/kit @solana/kit-plugin-rpc @solana/kit-plugin-signer
+```
+
+</Step>
+<Step>
+
+### Install program plugins
+
+Install plugins for any Solana program you want to interact with. You can find a full list on the [Available Plugins](/docs/plugins/available-plugins) page.
+
+```package-install
+@solana-program/system @solana-program/token
+```
+
+</Step>
+<Step>
+
+### Create your client
+
+```ts twoslash
+import { createClient } from '@solana/kit';
+import { solanaMainnetRpc } from '@solana/kit-plugin-rpc';
+import { signerFromFile } from '@solana/kit-plugin-signer';
+import { systemProgram } from '@solana-program/system';
+import { tokenProgram } from '@solana-program/token';
+
+const client = await createClient()
+    .use(signerFromFile('~/.config/solana/id.json'))
+    .use(solanaMainnetRpc({ rpcUrl: 'https://api.mainnet-beta.solana.com' }))
+    .use(systemProgram())
+    .use(tokenProgram());
+
+// Here are some of the things you can do with your client:
+// client.rpc.getBalance(address).send();
+// client.system.instructions.transferSol({...}).sendTransaction();
+// client.token.accounts.mint.fetch(address);
+// client.sendTransaction(instructions);
+// And more...
+```
+
+This example loads the default Solana CLI keypair. See [Setting Up Signers](/docs/guides/setting-up-signers) for other production signer options such as using a wallet.
+
+</Step>
+</Steps>
+
+</CardTab>
+<CardTab>
+
+<Steps>
+<Step>
+
+### Install packages
+
+Install Kit and the plugins for local RPC connectivity and signer management.
+
+```package-install
+@solana/kit @solana/kit-plugin-rpc @solana/kit-plugin-signer
+```
+
+</Step>
+<Step>
+
+### Install program plugins
+
+Install plugins for any Solana program you want to interact with. You can find a full list on the [Available Plugins](/docs/plugins/available-plugins) page.
+
+```package-install
+@solana-program/system @solana-program/token
+```
+
+</Step>
+<Step>
+
+### Start a test validator
+
+Make sure you have a local Solana validator running before using your client.
+
+```shell
+solana-test-validator
+```
+
+</Step>
+<Step>
+
+### Create your client
+
+```ts twoslash
+import { createClient, lamports } from '@solana/kit';
+import { solanaLocalRpc } from '@solana/kit-plugin-rpc';
+import { airdropSigner, generatedSigner } from '@solana/kit-plugin-signer';
+import { systemProgram } from '@solana-program/system';
+import { tokenProgram } from '@solana-program/token';
+
+const client = await createClient()
+    .use(generatedSigner())
+    .use(solanaLocalRpc())
+    .use(airdropSigner(lamports(100_000_000_000n)))
+    .use(systemProgram())
+    .use(tokenProgram());
+
+// Signer is auto-generated and funded with SOL.
+// Here are some of the things you can do with your client:
+// client.rpc.getBalance(address).send();
+// client.system.instructions.transferSol({...}).sendTransaction();
+// client.token.accounts.mint.fetch(address);
+// client.sendTransaction(instructions);
+// And more...
+```
+
+</Step>
+</Steps>
+
+</CardTab>
+<CardTab>
+
+<Steps>
+<Step>
+
+### Install packages
+
+Install Kit and the plugins for LiteSVM and signer management.
+
+```package-install
+@solana/kit @solana/kit-plugin-litesvm @solana/kit-plugin-signer
+```
+
+</Step>
+<Step>
+
+### Install program plugins
+
+Install plugins for any Solana program you want to interact with. You can find a full list on the [Available Plugins](/docs/plugins/available-plugins) page.
+
+```package-install
+@solana-program/system @solana-program/token
+```
+
+</Step>
+<Step>
+
+### Create your client
+
+```ts twoslash
+import { createClient, lamports } from '@solana/kit';
+import { litesvm } from '@solana/kit-plugin-litesvm';
+import { airdropSigner, generatedSigner } from '@solana/kit-plugin-signer';
+import { systemProgram } from '@solana-program/system';
+import { tokenProgram } from '@solana-program/token';
+
+const client = await createClient()
+    .use(generatedSigner())
+    .use(litesvm())
+    .use(airdropSigner(lamports(100_000_000_000n)))
+    .use(systemProgram())
+    .use(tokenProgram());
+
+// Here are some of the things you can do with your client:
+// client.rpc.getBalance(address).send();
+// client.system.instructions.transferSol({...}).sendTransaction();
+// client.token.accounts.mint.fetch(address);
+// client.sendTransaction(instructions);
+// And more...
+```
+
+</Step>
+</Steps>
+
+</CardTab>
+<CardTab>
+
+<Steps>
+<Step>
+
+### Install Kit
 
 ```package-install
 @solana/kit
 ```
 
 </Step>
-
 <Step>
 
-### Install program clients
+### Install program libraries
 
-Install Kit-compatible plugins for any program you want to interact with. For example, to interact with the System program, install the `@solana-program/system` package. You can find a [list of available program plugins here](/docs/plugins/available-plugins).
+Install Kit-compatible libraries for any program you want to interact with. For example, to interact with the System program, install the `@solana-program/system` package. You can find a [list of available program plugins here](/docs/plugins/available-plugins).
 
 ```package-install
-npm install @solana-program/system \
-  @solana-program/memo \
-  @solana-program/token \
-  @solana-program/compute-budget
+@solana-program/system @solana-program/token
 ```
 
 </Step>
-
 <Step>
 
 ### Set up your project
 
-Use primitives provided by Kit to set up your project and start interacting with Solana!
-
-For example, if you are planning on sending transactions, you will likely need an RPC API, an RPC Subscriptions API and a "send and confirm" strategy.
-
 ```ts twoslash
-import {
-    createSolanaRpc,
-    createSolanaRpcSubscriptions,
-    sendAndConfirmTransactionFactory,
-} from '@solana/kit';
+import { address, createSolanaRpc } from '@solana/kit';
 
 const rpc = createSolanaRpc('https://api.devnet.solana.com');
-const rpcSubscriptions = createSolanaRpcSubscriptions('wss://api.devnet.solana.com');
-const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
+const { value: balance } = await rpc
+    .getBalance(address('TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb'))
+    .send();
+console.log(`Balance: ${balance} lamports`);
 ```
 
-Check out our [Getting started](/docs/getting-started) tutorial and our [Advanced Guides](/docs/advanced-guides) to learn more about how to use Kit.
+See [Kit Without a Client](/docs/advanced-guides/kit-without-a-client) for the full guide on sending transactions, signing, and more without a client.
 
 </Step>
 </Steps>
+
+</CardTab>
+</CardTabs>
+
+Ready to build? Check out the [Getting Started](/docs/getting-started) tutorial to build your first app, or explore the [Guides](/docs/guides) for specific topics.

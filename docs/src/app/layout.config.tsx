@@ -1,3 +1,4 @@
+import { CardTab, CardTabs } from '@/components/card-tabs';
 import { overridenMdxComponents } from '@/lib/Overrides';
 import { Spread } from '@/lib/Spread';
 import { Popup, PopupContent, PopupTrigger } from 'fumadocs-twoslash/ui';
@@ -51,6 +52,8 @@ export const mdxComponents: MDXComponents = {
     ...defaultMdxComponents,
     ...overridenMdxComponents,
     img: props => <ImageZoom {...props} alt={props.alt ?? ''} />,
+    CardTab,
+    CardTabs,
     Popup,
     PopupContent,
     PopupTrigger,
