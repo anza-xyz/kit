@@ -1,0 +1,27 @@
+---
+title: Getting started
+description: Build your first Solana app with Kit
+---
+
+<Callout type="warn" title="Planned Content">
+**Status:** New page (replaces the multi-page Getting Started tutorial)
+
+This is a single-page, hands-on tutorial that walks you through building a small Solana app using Kit. It uses devnet so you can get started without running a local validator.
+
+The page will cover the following sections:
+
+**Create a client** — Install `@solana/kit`, `@solana/kit-plugin-rpc`, and `@solana/kit-plugin-signer`, create a client connected to devnet using `createClient().use(...)`, and verify the connection by checking a balance.
+
+**Set up a signer** — Generate a keypair signer with `generateKeyPairSigner` and fund it by requesting an airdrop on devnet.
+
+**Send a transaction** — Build a transfer instruction using `@solana-program/system`, send it via `client.sendTransaction`, and confirm the result.
+
+**Fetch an account** — Read account data back from the network using `fetchEncodedAccount` and program plugin helpers.
+
+Code examples use top-level `await` for simplicity.
+
+**Draws from:** Current `getting-started/` tutorial pages (setup, signers, instructions, build-transaction, send-transaction, fetch-account), adapted to the plugin-based client approach and condensed into a single page.
+
+**Links to:** [Guides](/docs/guides) for deeper dives into specific features, [Plugins](/docs/plugins) for understanding the plugin system, [Advanced Guides](/docs/advanced-guides) for lower-level Kit internals.
+
+</Callout>

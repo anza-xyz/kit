@@ -3,6 +3,13 @@ title: Installation
 description: Get started with Kit
 ---
 
+<Callout type="warn" title="Planned Changes">
+**Status:** Existing page — rewrite planned
+
+This page will be rewritten with selectable cards at the top for choosing a client setup: **"RPC Client"** (production, the default selection), **"Local RPC Client"** (local development with test validator), **"LiteSVM Client"** (in-process testing, no network), and **"No Client"** (raw Kit, maximum treeshakability). Each card will have a brief subtitle explaining when to use it. Based on the selection, the installation steps below will adjust accordingly (different packages to install and different plugins to compose with `createClient().use(...)`). The "No Client" option will link to [Advanced Guides — Kit Without a Client](/docs/advanced-guides/kit-without-a-client).
+
+</Callout>
+
 Kit is a JavaScript SDK for building Solana apps across environments like Node, the web, and React Native. It provides a comprehensive set of data types and helper functions, forming the foundation for interacting with Solana in JavaScript.
 
 <Callout title="Coming from Web3.js?">
@@ -30,7 +37,7 @@ Install Kit using the main `@solana/kit` library. It includes many smaller packa
 
 ### Install program clients
 
-Install Kit compatible clients for any program you want to interact with. For example, to interact with the System program, install the `@solana-program/system` package. You can find a [list of available program clients here](/docs/compatible-clients).
+Install Kit-compatible plugins for any program you want to interact with. For example, to interact with the System program, install the `@solana-program/system` package. You can find a [list of available program plugins here](/docs/plugins/available-plugins).
 
 ```package-install
 npm install @solana-program/system \
@@ -61,7 +68,7 @@ const rpcSubscriptions = createSolanaRpcSubscriptions('wss://api.devnet.solana.c
 const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
 ```
 
-Check out our [Getting started](/docs/getting-started) tutorial and our [Core concepts](/docs/concepts) guides to learn more about how to use Kit.
+Check out our [Getting started](/docs/getting-started) tutorial and our [Advanced Guides](/docs/advanced-guides) to learn more about how to use Kit.
 
 </Step>
 </Steps>

@@ -179,7 +179,7 @@ Welcome to the Solana Kit API Reference! It covers a total of **${totalPackages}
 ## Need Help?
 
 - Check out our [Getting Started guide](/docs/getting-started/).
-- Learn about key concepts in our [Core Concept guides](/docs/concepts/).
+- Learn about key concepts in our [Advanced Guides](/docs/advanced-guides/).
 
 ## All Packages
 

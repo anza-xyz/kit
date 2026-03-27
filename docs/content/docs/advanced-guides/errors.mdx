@@ -3,6 +3,15 @@ title: Errors
 description: Recover from errors in development and production
 ---
 
+<Callout type="warn" title="Planned Changes">
+**Status:** Existing page — updates planned
+
+This page will be updated to add examples of extracting errors from `TransactionPlanResult` (failed transactions in multi-transaction operations) and to show how to parse program-specific errors from `SolanaError` context when using `client.sendTransaction()`.
+
+**Current content preserved:** Yes, all existing content stays.
+
+</Callout>
+
 ## Introduction
 
 The ecosystem of packages based on Kit's error system benefit from strongly typed error data, and descriptive error messages. Its error messages get scrubbed from your production bundles, which means that the library of error messages can grow indefinitely without adding a single byte to your app.

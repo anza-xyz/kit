@@ -3,6 +3,15 @@ title: RPC subscriptions
 description: Get notified of changes to the blockchain
 ---
 
+<Callout type="warn" title="Planned Changes">
+**Status:** Existing page — moved to Guides, updates planned in a follow-up PR
+
+This page was moved from Advanced Guides to Guides because the current content is a simple RPC Subscriptions introduction. A follow-up PR will update the examples to the plugin-flavored API and explain how `client.rpcSubscriptions` from a plugin-composed client relates to the `RpcSubscriptions` object described here.
+
+**Current content preserved:** Yes, all existing content stays.
+
+</Callout>
+
 ## Introduction
 
 Kit offers a TypeScript interface that you can use to subscribe for notifications from a Solana JSON RPC server. Registering subscriptions with a <abbr title="Remote procedure call">RPC</abbr> server will yield notifications over that channel when data matching your subscription is updated.

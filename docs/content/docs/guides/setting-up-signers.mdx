@@ -1,0 +1,15 @@
+---
+title: Setting up signers
+description: Use signers to sign and pay for transactions
+---
+
+<Callout type="warn" title="Planned Content">
+**Status:** New page
+
+This guide will cover all the ways to set up signers for your client: **`signer(signer)`** to use one signer as both payer and identity, **`payer(signer)`** and **`identity(signer)`** to set those roles independently, **`signerFromFile(path)`** / **`payerFromFile(path)`** to load a keypair from a JSON file (Node.js only, e.g. Solana CLI keypair), **wallet standard integration** for using a browser wallet as the signer, **`generatedSigner()`** / **`generatedPayer()`** to generate random keypairs for testing, **`generatedSignerWithSol(amount)`** / **`generatedPayerWithSol(amount)`** when an airdrop function is already available, **`airdropSigner(amount)`** / **`airdropPayer(amount)`** when a bundle such as `solanaLocalRpc` adds airdrop support after the signer is installed, and how signer roles flow through transaction planning and signing.
+
+**Draws from:** Current `getting-started/signers.mdx` (signer generation and airdrop sections), `@solana/kit-plugin-signer` README.
+
+**Links to:** [Advanced Guides — Signers](/docs/advanced-guides/signers) for the signer interface deep dive.
+
+</Callout>

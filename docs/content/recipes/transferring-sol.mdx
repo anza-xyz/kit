@@ -1,0 +1,15 @@
+---
+title: Transferring SOL
+description: Send SOL from one account to another with error handling
+---
+
+<Callout type="warn" title="Planned Content">
+**Status:** New page
+
+This recipe will walk through a complete SOL transfer: setting up a local client, generating a recipient address, building a `getTransferSolInstruction` from `@solana-program/system`, sending via `client.sendTransaction(instruction)`, handling errors by catching `SolanaError` and extracting program-specific error details, and linking to the explorer for debugging.
+
+**Draws from:** Kit-plugins `examples/transfer-lamports/` example (complete working implementation with error handling and explorer links).
+
+**Links to:** [Sending Transactions](/docs/guides/sending-transactions) for the full guide on transaction sending.
+
+</Callout>

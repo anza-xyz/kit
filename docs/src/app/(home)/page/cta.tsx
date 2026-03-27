@@ -26,7 +26,7 @@ export default function CtaSection() {
                         fetching its data.
                     </p>
                     <Link
-                        href="/docs/getting-started/setup"
+                        href="/docs/getting-started"
                         className="inline-block lg:text-xl 2xl:text-2xl text-white bg-mauve-400 hover:bg-mauve-500 dark:bg-mauve-500 dark:hover:bg-mauve-400 px-3 py-1.5 lg:px-6 lg:py-2 rounded-lg"
                     >
                         Get started

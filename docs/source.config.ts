@@ -8,8 +8,8 @@ export const api = defineDocs({
     docs: {
         postprocess: {
             includeProcessedMarkdown: true,
-        }
-    }
+        },
+    },
 });
 
 export const docs = defineDocs({
@@ -17,8 +17,17 @@ export const docs = defineDocs({
     docs: {
         postprocess: {
             includeProcessedMarkdown: true,
-        }
-    }
+        },
+    },
+});
+
+export const recipes = defineDocs({
+    dir: 'content/recipes',
+    docs: {
+        postprocess: {
+            includeProcessedMarkdown: true,
+        },
+    },
 });
 
 export const home = defineDocs({
