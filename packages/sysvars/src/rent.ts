@@ -1,5 +1,5 @@
 import { assertAccountExists, decodeAccount, type FetchAccountConfig } from '@solana/accounts';
-import { combineCodec, type FixedSizeCodec, type FixedSizeDecoder, type FixedSizeEncoder } from '@solana/codecs-core';
+import { combineCodec, type FixedSizeCodec, type FixedSizeDecoder, type FixedSizeEncoder, transformDecoder } from '@solana/codecs-core';
 import { getStructDecoder, getStructEncoder } from '@solana/codecs-data-structures';
 import { getF64Decoder, getF64Encoder, getU8Decoder, getU8Encoder } from '@solana/codecs-numbers';
 import type { GetAccountInfoApi } from '@solana/rpc-api';
@@ -24,12 +24,23 @@ export type SysvarRent = Readonly<{
      *
      * Valid values are in the range [0, 100]. The remaining percentage is distributed to
      * validators.
+     *
+     * @deprecated Rent no longer exists (SIMD-0194).
      */
     burnPercent: number;
-    /** Amount of time (in years) a balance must include rent for the account to be rent exempt */
+    /**
+     * Formerly, the amount of time (in years) a balance must include rent for the account to be rent exempt.
+     * Now deprecated — use {@link SysvarRent.lamportsPerByte | lamportsPerByte} directly to calculate the minimum balance.
+     *
+     * @deprecated Use {@link SysvarRent.lamportsPerByte | lamportsPerByte} directly (SIMD-0194).
+     */
     exemptionThreshold: F64UnsafeSeeDocumentation;
-    /** Rental rate in {@link Lamports}/byte-year. */
-    lamportsPerByteYear: Lamports;
+    /** Rental rate in {@link Lamports} per byte of account storage. */
+    lamportsPerByte: Lamports;
+    /**
+     * @deprecated Use {@link SysvarRent.lamportsPerByte | lamportsPerByte} instead (SIMD-0194).
+     */
+    lamportsPerByteYear?: Lamports;
 }>;
 
 /**
@@ -38,7 +49,7 @@ export type SysvarRent = Readonly<{
  */
 export function getSysvarRentEncoder(): FixedSizeEncoder<SysvarRent, SysvarRentSize> {
     return getStructEncoder([
-        ['lamportsPerByteYear', getDefaultLamportsEncoder()],
+        ['lamportsPerByte', getDefaultLamportsEncoder()],
         ['exemptionThreshold', getF64Encoder()],
         ['burnPercent', getU8Encoder()],
     ]) as FixedSizeEncoder<SysvarRent, SysvarRentSize>;
@@ -49,11 +60,17 @@ export function getSysvarRentEncoder(): FixedSizeEncoder<SysvarRent, SysvarRentS
  * account data to a {@link SysvarRent}.
  */
 export function getSysvarRentDecoder(): FixedSizeDecoder<SysvarRent, SysvarRentSize> {
-    return getStructDecoder([
-        ['lamportsPerByteYear', getDefaultLamportsDecoder()],
-        ['exemptionThreshold', getF64Decoder()],
-        ['burnPercent', getU8Decoder()],
-    ]) as FixedSizeDecoder<SysvarRent, SysvarRentSize>;
+    return transformDecoder(
+        getStructDecoder([
+            ['lamportsPerByte', getDefaultLamportsDecoder()],
+            ['exemptionThreshold', getF64Decoder()],
+            ['burnPercent', getU8Decoder()],
+        ]),
+        value => ({
+            ...value,
+            lamportsPerByteYear: value.lamportsPerByte,
+        })
+    ) as FixedSizeDecoder<SysvarRent, SysvarRentSize>;
 }
 
 /**

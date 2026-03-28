@@ -117,6 +117,8 @@ describe('sysvar account', () => {
         });
         it('fetch JSON-parsed', async () => {
             expect.assertions(3);
+            // Validators return `lamportsPerByteYear` in JSON-parsed responses
+            // even after SIMD-0194 (the binary value changed but the field name didn't).
             await assertValidJsonParsedSysvarAccount(SYSVAR_RENT_ADDRESS, {
                 data: {
                     burnPercent: expect.any(Number),
