@@ -78,11 +78,14 @@ importers:
         specifier: 6.5.0
         version: 6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@solana/kit-client-litesvm':
-        specifier: ^0.8.0
-        version: 0.8.0(@solana/kit@6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)
+        specifier: ^0.9.0
+        version: 0.9.0(@solana/kit@6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@solana/kit-client-rpc':
-        specifier: ^0.8.0
-        version: 0.8.0(@solana/kit@6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))
+        specifier: ^0.9.0
+        version: 0.9.0(@solana/kit@6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))
+      '@solana/kit-plugin-rpc':
+        specifier: ^0.9.0
+        version: 0.9.0(@solana/kit@6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))
       '@solana/react':
         specifier: 6.5.0
         version: 6.5.0(fastestsmallesttextencoderdecoder@1.0.22)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
@@ -2462,35 +2465,35 @@ packages:
       typescript:
         optional: true
 
-  '@solana/kit-client-litesvm@0.8.0':
-    resolution: {integrity: sha512-wE0iv1YWbY6xVPadib9otr717HNodi5+mJJjHGaUe3PLIBbuIUgBF2Abf2WrCSTY92ZJ7wukp9IsL/IG9kq+kQ==}
+  '@solana/kit-client-litesvm@0.9.0':
+    resolution: {integrity: sha512-33sL551vrOIrW98LUJ/PgaEOpK8LQeWexQ78kL0t7gJwaIXABZOqMUHLbKN1X5TF5IRLCUPpopqrHIEWOmycfQ==}
     peerDependencies:
-      '@solana/kit': ^6.4.0
+      '@solana/kit': ^6.5.0
 
-  '@solana/kit-client-rpc@0.8.0':
-    resolution: {integrity: sha512-YD9x3hZ9TKR8r5evmkfURI1e2BtIudnd6zUWXEakMLi0FhvUfdtPrWjQsHw5ngWUv9Ns9yYlI+h3DEY0xmweUg==}
+  '@solana/kit-client-rpc@0.9.0':
+    resolution: {integrity: sha512-lADHCK5wquNmgWLYMefVFxTS9AZKXuSflBJ7krKbXWvMWK6TKECG6iDGkthxnLaWafqvZZT6or+woBVRPxElEg==}
     peerDependencies:
-      '@solana/kit': ^6.4.0
+      '@solana/kit': ^6.5.0
 
-  '@solana/kit-plugin-instruction-plan@0.8.0':
-    resolution: {integrity: sha512-/wgyycjhaeMKUuYAymKUGZ+sF3U+rrFHQa80Rz5etThUmVOufR94lnJzRMw9KMzc1kbfOZ+45O2IcceMyTs72A==}
+  '@solana/kit-plugin-instruction-plan@0.9.0':
+    resolution: {integrity: sha512-IdqvhitisHRmo1wzo04Uwy87dZAMi0zQ7Kuj0Nib089N/FUJbGviZlx7XIyodRsEK2HWcnJGVvf/rm5/Pa/KMg==}
     peerDependencies:
-      '@solana/kit': ^6.4.0
+      '@solana/kit': ^6.5.0
 
-  '@solana/kit-plugin-litesvm@0.8.0':
-    resolution: {integrity: sha512-J507tUfXutL3F3r1PQCJoxz1e8iyVWRsf2pS5GYgcELNh9a/dfOQdM+mvRwkYHihHql5p+tSp5q8n7EfbrfGyg==}
+  '@solana/kit-plugin-litesvm@0.9.0':
+    resolution: {integrity: sha512-vfOrnAfCGnts8Ih81CHB/iIRN+6almu/MLdg1K3soGOWm/IjX14TPnmZy04tw8sp2cCRTgYXB0I9Wtni71lLbw==}
     peerDependencies:
-      '@solana/kit': ^6.4.0
+      '@solana/kit': ^6.5.0
 
-  '@solana/kit-plugin-payer@0.8.0':
-    resolution: {integrity: sha512-IGHv9TIHxj16WOSKElF2RqdvKNCSdgsRnuJ7vhE0qZ4BZjtW2qGPkdtTO7y/RFSNs+4oDwHJhYFUKJIW04Xzsw==}
+  '@solana/kit-plugin-payer@0.9.0':
+    resolution: {integrity: sha512-TLaz2QDVmhcDse8rHMDP8FnCmVzH6hC0f3SAWSBBqrpLzjP/ZwJ8wpRWEXob5Il/LJK1eDajoRwCVjRg1p7q6Q==}
     peerDependencies:
-      '@solana/kit': ^6.4.0
+      '@solana/kit': ^6.5.0
 
-  '@solana/kit-plugin-rpc@0.8.0':
-    resolution: {integrity: sha512-XIg4BqWHwVIVEqEBXN1zZ7BUkjCYmGYUXu8KAjPGvQcJg+gY6oOAWyr5APcbjbWZqzpq6axN5lvC3hhuAJwOXw==}
+  '@solana/kit-plugin-rpc@0.9.0':
+    resolution: {integrity: sha512-7QnEND09Vwcw2roZBsr6D0zk6NmR5xnZxkrZguwlGFNPFWGAQAQkz20b7Ym8+5b3X4GgeU1vVW3PMAueKycuJw==}
     peerDependencies:
-      '@solana/kit': ^6.4.0
+      '@solana/kit': ^6.5.0
 
   '@solana/kit@5.5.1':
     resolution: {integrity: sha512-irKUGiV2yRoyf+4eGQ/ZeCRxa43yjFEL1DUI5B0DkcfZw3cr0VJtVJnrG8OtVF01vT0OUfYOcUn6zJW5TROHvQ==}
@@ -8323,30 +8326,30 @@ snapshots:
     transitivePeerDependencies:
       - fastestsmallesttextencoderdecoder
 
-  '@solana/kit-client-litesvm@0.8.0(@solana/kit@6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)':
+  '@solana/kit-client-litesvm@0.9.0(@solana/kit@6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)':
     dependencies:
       '@solana/kit': 6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)
-      '@solana/kit-plugin-instruction-plan': 0.8.0(@solana/kit@6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))
-      '@solana/kit-plugin-litesvm': 0.8.0(@solana/kit@6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)
-      '@solana/kit-plugin-payer': 0.8.0(@solana/kit@6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))
+      '@solana/kit-plugin-instruction-plan': 0.9.0(@solana/kit@6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))
+      '@solana/kit-plugin-litesvm': 0.9.0(@solana/kit@6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)
+      '@solana/kit-plugin-payer': 0.9.0(@solana/kit@6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))
     transitivePeerDependencies:
       - bufferutil
       - fastestsmallesttextencoderdecoder
       - typescript
       - utf-8-validate
 
-  '@solana/kit-client-rpc@0.8.0(@solana/kit@6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))':
+  '@solana/kit-client-rpc@0.9.0(@solana/kit@6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))':
     dependencies:
       '@solana/kit': 6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)
-      '@solana/kit-plugin-instruction-plan': 0.8.0(@solana/kit@6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))
-      '@solana/kit-plugin-payer': 0.8.0(@solana/kit@6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))
-      '@solana/kit-plugin-rpc': 0.8.0(@solana/kit@6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))
+      '@solana/kit-plugin-instruction-plan': 0.9.0(@solana/kit@6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))
+      '@solana/kit-plugin-payer': 0.9.0(@solana/kit@6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))
+      '@solana/kit-plugin-rpc': 0.9.0(@solana/kit@6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))
 
-  '@solana/kit-plugin-instruction-plan@0.8.0(@solana/kit@6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))':
+  '@solana/kit-plugin-instruction-plan@0.9.0(@solana/kit@6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))':
     dependencies:
       '@solana/kit': 6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)
 
-  '@solana/kit-plugin-litesvm@0.8.0(@solana/kit@6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)':
+  '@solana/kit-plugin-litesvm@0.9.0(@solana/kit@6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)':
     dependencies:
       '@loris-sandbox/litesvm-kit': 0.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@solana/kit': 6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)
@@ -8356,11 +8359,11 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@solana/kit-plugin-payer@0.8.0(@solana/kit@6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))':
+  '@solana/kit-plugin-payer@0.9.0(@solana/kit@6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))':
     dependencies:
       '@solana/kit': 6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)
 
-  '@solana/kit-plugin-rpc@0.8.0(@solana/kit@6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))':
+  '@solana/kit-plugin-rpc@0.9.0(@solana/kit@6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))':
     dependencies:
       '@solana/kit': 6.5.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)
 

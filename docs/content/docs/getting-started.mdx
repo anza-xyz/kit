@@ -3,25 +3,203 @@ title: Getting started
 description: Build your first Solana app with Kit
 ---
 
-<Callout type="warn" title="Planned Content">
-**Status:** New page (replaces the multi-page Getting Started tutorial)
+This tutorial walks you through building a small Solana app with Kit. You'll connect to devnet, create a wallet, create a token, and read its data — all in a single TypeScript file.
 
-This is a single-page, hands-on tutorial that walks you through building a small Solana app using Kit. It uses devnet so you can get started without running a local validator.
+## Install dependencies
 
-The page will cover the following sections:
+First, install Kit and a client package for connecting to Solana via RPC.
 
-**Create a client** — Install `@solana/kit` and `@solana/kit-client-rpc`, create a client connected to devnet using `createClient`, and verify the connection by checking a balance.
+```package-install
+@solana/kit @solana/kit-client-rpc @solana/kit-plugin-rpc
+```
 
-**Set up a signer** — Generate a keypair signer with `generateKeyPairSigner` and fund it by requesting an airdrop on devnet.
+Then install program clients for the Solana programs you want to interact with. For this tutorial, we'll use the System program to create accounts and the Token program to create a token.
 
-**Send a transaction** — Build a transfer instruction using `@solana-program/system`, send it via `client.sendTransaction`, and confirm the result.
+```package-install
+@solana-program/system @solana-program/token
+```
 
-**Fetch an account** — Read account data back from the network using `fetchEncodedAccount` and program plugin helpers.
+## Create a client
 
-Code examples use top-level `await` for simplicity.
+Generate a keypair to act as your wallet and create a client connected to devnet.
 
-**Draws from:** Current `getting-started/` tutorial pages (setup, signers, instructions, build-transaction, send-transaction, fetch-account), adapted to the plugin-based client approach and condensed into a single page.
+```ts twoslash
+import { generateKeyPairSigner, lamports } from '@solana/kit';
+import { createClient } from '@solana/kit-client-rpc';
+import { rpcAirdrop } from '@solana/kit-plugin-rpc';
+import { systemProgram } from '@solana-program/system';
+import { tokenProgram } from '@solana-program/token';
 
-**Links to:** [Guides](/docs/guides) for deeper dives into specific features, [Clients & Plugins](/docs/clients-and-plugins) for understanding the plugin system, [Advanced Guides](/docs/advanced-guides) for lower-level Kit internals.
+const payer = await generateKeyPairSigner();
+const client = createClient({ url: 'https://api.devnet.solana.com', payer })
+    .use(rpcAirdrop())
+    .use(systemProgram())
+    .use(tokenProgram());
 
+await client.airdrop(client.payer.address, lamports(1_000_000_000n));
+```
+
+Here's what each piece does:
+
+- `generateKeyPairSigner()` creates a new random wallet that can sign transactions.
+- `createClient` connects to devnet with your wallet as the fee payer.
+- `.use(rpcAirdrop())` adds the ability to request airdrops on test networks.
+- `.use(systemProgram())` and `.use(tokenProgram())` add typed access to each program's instructions and accounts on the client.
+- `client.airdrop(...)` funds your wallet with 1 SOL on devnet.
+
+<Callout>
+    Airdrops are only available on test networks like devnet and localhost. If the airdrop fails due
+    to rate limiting, wait a moment and try again, or request devnet SOL from the [Solana
+    Faucet](https://faucet.solana.com). For production signer options, see the [Setting Up
+    Signers](/docs/guides/setting-up-signers) guide.
 </Callout>
+
+## Send a transaction
+
+Let's create a token mint on-chain. First, we need to allocate an account for it using the System program.
+
+```ts twoslash
+import { generateKeyPairSigner, lamports } from '@solana/kit';
+import { createClient } from '@solana/kit-client-rpc';
+import { rpcAirdrop } from '@solana/kit-plugin-rpc';
+import { systemProgram } from '@solana-program/system';
+import { getMintSize, TOKEN_PROGRAM_ADDRESS, tokenProgram } from '@solana-program/token';
+const payer = await generateKeyPairSigner();
+const client = createClient({ url: 'https://api.devnet.solana.com', payer })
+    .use(rpcAirdrop())
+    .use(systemProgram())
+    .use(tokenProgram());
+// ---cut-before---
+const mint = await generateKeyPairSigner();
+const rentLamports = await client.getMinimumBalance(getMintSize());
+
+await client.system.instructions
+    .createAccount({
+        newAccount: mint,
+        lamports: rentLamports,
+        space: getMintSize(),
+        programAddress: TOKEN_PROGRAM_ADDRESS,
+    })
+    .sendTransaction();
+```
+
+When an instruction is created through a program client like `systemProgram()`, you can call `.sendTransaction()` directly on it. The client handles building the transaction, signing, sending, and confirming — all in one call. Notice that we don't need to pass a `payer` here since the client fills it from `client.payer` automatically.
+
+Now let's also initialize the account as a token mint. We can send both instructions in a single atomic transaction using `client.sendTransaction(...)`.
+
+```ts twoslash
+import { generateKeyPairSigner, lamports } from '@solana/kit';
+import { createClient } from '@solana/kit-client-rpc';
+import { rpcAirdrop } from '@solana/kit-plugin-rpc';
+import { systemProgram } from '@solana-program/system';
+import { getMintSize, TOKEN_PROGRAM_ADDRESS, tokenProgram } from '@solana-program/token';
+const payer = await generateKeyPairSigner();
+const client = createClient({ url: 'https://api.devnet.solana.com', payer })
+    .use(rpcAirdrop())
+    .use(systemProgram())
+    .use(tokenProgram());
+// ---cut-before---
+const mint = await generateKeyPairSigner();
+const rentLamports = await client.getMinimumBalance(getMintSize());
+
+await client.sendTransaction([
+    client.system.instructions.createAccount({
+        newAccount: mint,
+        lamports: rentLamports,
+        space: getMintSize(),
+        programAddress: TOKEN_PROGRAM_ADDRESS,
+    }),
+    client.token.instructions.initializeMint({
+        mint: mint.address,
+        decimals: 9,
+        mintAuthority: client.payer.address,
+    }),
+]);
+```
+
+`client.sendTransaction([...])` accepts an array of instructions and sends them as a single transaction. Both instructions succeed or both revert.
+
+For error handling, priority fees, and more advanced patterns, see the [Sending Transactions](/docs/guides/sending-transactions) guide.
+
+## Fetch an account
+
+Now let's read the mint account we just created.
+
+```ts twoslash
+import { generateKeyPairSigner, lamports } from '@solana/kit';
+import { createClient } from '@solana/kit-client-rpc';
+import { rpcAirdrop } from '@solana/kit-plugin-rpc';
+import { systemProgram } from '@solana-program/system';
+import { getMintSize, TOKEN_PROGRAM_ADDRESS, tokenProgram } from '@solana-program/token';
+const payer = await generateKeyPairSigner();
+const client = createClient({ url: 'https://api.devnet.solana.com', payer })
+    .use(rpcAirdrop())
+    .use(systemProgram())
+    .use(tokenProgram());
+const mint = await generateKeyPairSigner();
+// ---cut-before---
+const mintAccount = await client.token.accounts.mint.fetch(mint.address);
+console.log('Decimals:', mintAccount.data.decimals);
+console.log('Mint authority:', mintAccount.data.mintAuthority);
+console.log('Supply:', mintAccount.data.supply);
+```
+
+Program clients provide typed fetch helpers that decode account data automatically. The `mintAccount.data` object gives you the full `Mint` structure with fields like `decimals`, `mintAuthority`, `supply`, and `freezeAuthority`.
+
+For raw account fetching and manual decoding, see the [Fetching Accounts](/docs/guides/fetching-accounts) guide.
+
+## Full example
+
+Here's the complete script you can copy and run.
+
+```ts twoslash
+import { generateKeyPairSigner, lamports } from '@solana/kit';
+import { createClient } from '@solana/kit-client-rpc';
+import { rpcAirdrop } from '@solana/kit-plugin-rpc';
+import { systemProgram } from '@solana-program/system';
+import { getMintSize, TOKEN_PROGRAM_ADDRESS, tokenProgram } from '@solana-program/token';
+
+// Create a client connected to devnet.
+const payer = await generateKeyPairSigner();
+const client = createClient({ url: 'https://api.devnet.solana.com', payer })
+    .use(rpcAirdrop())
+    .use(systemProgram())
+    .use(tokenProgram());
+
+// Fund the payer.
+await client.airdrop(client.payer.address, lamports(1_000_000_000n));
+
+// Create and initialize a token mint.
+const mint = await generateKeyPairSigner();
+const rentLamports = await client.getMinimumBalance(getMintSize());
+
+await client.sendTransaction([
+    client.system.instructions.createAccount({
+        newAccount: mint,
+        lamports: rentLamports,
+        space: getMintSize(),
+        programAddress: TOKEN_PROGRAM_ADDRESS,
+    }),
+    client.token.instructions.initializeMint({
+        mint: mint.address,
+        decimals: 9,
+        mintAuthority: client.payer.address,
+    }),
+]);
+
+// Fetch the mint account.
+const mintAccount = await client.token.accounts.mint.fetch(mint.address);
+console.log('Decimals:', mintAccount.data.decimals);
+console.log('Mint authority:', mintAccount.data.mintAuthority);
+console.log('Supply:', mintAccount.data.supply);
+```
+
+## Next steps
+
+You've connected to Solana, funded a wallet, created a token mint, and read its data. Here's where to go next:
+
+- [Setting Up Signers](/docs/guides/setting-up-signers) — load signers from keypair files, wallet standard, and more.
+- [Sending Transactions](/docs/guides/sending-transactions) — error handling, priority fees, and instruction plans.
+- [Fetching Accounts](/docs/guides/fetching-accounts) — program plugin fetch helpers, batch fetching, and decoding.
+- [Using Program Plugins](/docs/guides/using-program-plugins) — typed access to any Solana program.
+- [Clients & Plugins](/docs/clients-and-plugins) — understand and extend the plugin system.
