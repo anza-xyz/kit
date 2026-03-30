@@ -291,6 +291,8 @@ import {
     SOLANA_ERROR__TRANSACTION_ERROR__WOULD_EXCEED_MAX_ACCOUNT_COST_LIMIT,
     SOLANA_ERROR__TRANSACTION_ERROR__WOULD_EXCEED_MAX_BLOCK_COST_LIMIT,
     SOLANA_ERROR__TRANSACTION_ERROR__WOULD_EXCEED_MAX_VOTE_COST_LIMIT,
+    SOLANA_ERROR__WALLET__FEATURE_NOT_SUPPORTED,
+    SOLANA_ERROR__WALLET__NOT_CONNECTED,
     SolanaErrorCode,
 } from './codes';
 
@@ -800,4 +802,6 @@ export const SolanaErrorMessages: Readonly<{
         'The transaction config value for $configName has the incorrect kind. Expected $expectedKind, got $actualKind.',
     [SOLANA_ERROR__TRANSACTION__INSTRUCTION_HEADERS_PAYLOADS_MISMATCH]:
         'The transaction does not have the same number of instruction headers and instruction payloads. Got $numInstructionHeaders instruction headers, and $numInstructionPayloads instruction payloads.',
+    [SOLANA_ERROR__WALLET__FEATURE_NOT_SUPPORTED]: 'Wallet "$walletName" does not support  feature "$featureName"',
+    [SOLANA_ERROR__WALLET__NOT_CONNECTED]: 'Cannot $operation: no wallet connected',
 };
