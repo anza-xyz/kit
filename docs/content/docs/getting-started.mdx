@@ -3,25 +3,234 @@ title: Getting started
 description: Build your first Solana app with Kit
 ---
 
-<Callout type="warn" title="Planned Content">
-**Status:** New page (replaces the multi-page Getting Started tutorial)
+In this tutorial, we'll build a small Solana app with Kit. We'll create a devnet signer, fund it with devnet SOL, create a token mint, and read its data back — all with a plugin-composed Kit client.
 
-This is a single-page, hands-on tutorial that walks you through building a small Solana app using Kit. It uses devnet so you can get started without running a local validator.
+## Install dependencies
 
-The page will cover the following sections:
+First, let's install Kit and the plugins for connecting to Solana via RPC and loading a signer.
 
-**Create a client** — Install `@solana/kit`, `@solana/kit-plugin-rpc`, and `@solana/kit-plugin-signer`, create a client connected to devnet using `createClient().use(...)`, and verify the connection by checking a balance.
+```package-install
+@solana/kit @solana/kit-plugin-rpc @solana/kit-plugin-signer
+```
 
-**Set up a signer** — Generate a keypair signer with `generateKeyPairSigner` and fund it by requesting an airdrop on devnet.
+Then install the program plugins for the Solana programs you want to interact with. For this tutorial, we'll use the Token program to create and read a token mint.
 
-**Send a transaction** — Build a transfer instruction using `@solana-program/system`, send it via `client.sendTransaction`, and confirm the result.
+```package-install
+@solana-program/token
+```
 
-**Fetch an account** — Read account data back from the network using `fetchEncodedAccount` and program plugin helpers.
+## Create a devnet signer
 
-Code examples use top-level `await` for simplicity.
+Before we start, let's create a signer that we can reuse across this tutorial. This one-time setup script grinds a small vanity address, makes the keypair extractable, and writes it to a local file in the same JSON format used by Solana CLI keypairs.
 
-**Draws from:** Current `getting-started/` tutorial pages (setup, signers, instructions, build-transaction, send-transaction, fetch-account), adapted to the plugin-based client approach and condensed into a single page.
+```ts twoslash title="create-signer.ts"
+import { grindKeyPairSigner, writeKeyPairSigner } from '@solana/kit';
 
-**Links to:** [Guides](/docs/guides) for deeper dives into specific features, [Plugins](/docs/plugins) for understanding the plugin system, [Advanced Guides](/docs/advanced-guides) for lower-level Kit internals.
+const signer = await grindKeyPairSigner({
+    extractable: true,
+    matches: /^kit/i,
+});
 
+await writeKeyPairSigner(signer, './kit-getting-started-keypair.json');
+
+console.log(`✨ Created devnet signer ${signer.address}`);
+console.log('🔐 Wrote ./kit-getting-started-keypair.json');
+console.log('✅ Add this file to .gitignore before committing your project.');
+```
+
+Run this script once, then remove it from your project. We'll keep the generated `kit-getting-started-keypair.json` file locally for the rest of this tutorial. Be sure to add it to `.gitignore` if you are planning on committing these changes.
+
+<Callout>
+    Already have a Solana CLI keypair? You can skip this script and use
+    `signerFromFile('~/.config/solana/id.json')` instead. See [Setting Up
+    Signers](/docs/guides/setting-up-signers) for more signer options.
 </Callout>
+
+## Create a client
+
+Now let's create a client connected to devnet and load the signer from the file we just wrote.
+
+```ts twoslash
+import { createClient } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { signerFromFile } from '@solana/kit-plugin-signer';
+import { tokenProgram } from '@solana-program/token';
+
+const client = await createClient()
+    .use(signerFromFile('./kit-getting-started-keypair.json'))
+    .use(solanaDevnetRpc())
+    .use(tokenProgram());
+```
+
+Here's what each piece does:
+
+- `createClient()` creates an empty Kit client that can be extended with plugins.
+- `.use(signerFromFile(...))` loads our keypair file and sets it as both the client's payer (who pays fees) and identity (who owns assets).
+- `.use(solanaDevnetRpc())` connects to devnet and adds RPC, subscriptions, airdrops, minimum balance helpers, and transaction sending.
+- `.use(tokenProgram())` adds typed access to the Token program's instructions and accounts.
+
+Because we just created a fresh devnet signer, it won't have any SOL yet. Let's fund it with a devnet airdrop before moving on. If you're reusing a signer that already has devnet SOL, you can skip this step.
+
+```ts twoslash
+import { createClient, lamports } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { signerFromFile } from '@solana/kit-plugin-signer';
+import { tokenProgram } from '@solana-program/token';
+const client = await createClient()
+    .use(signerFromFile('./kit-getting-started-keypair.json'))
+    .use(solanaDevnetRpc())
+    .use(tokenProgram());
+// ---cut-before---
+const airdropSignature = await client.airdrop(client.payer.address, lamports(1_000_000_000n));
+
+console.log(`💸 Funded ${client.payer.address} with 1 SOL`);
+if (airdropSignature) {
+    console.log(`🔎 https://explorer.solana.com/tx/${airdropSignature}?cluster=devnet`);
+}
+```
+
+<Callout>
+    Airdrops are only available on test networks like devnet and localhost. Run the airdrop once,
+    then remove or comment out those lines before continuing so we do not hit devnet faucet rate
+    limits. If the airdrop fails, wait a moment and try again, or request devnet SOL from the
+    [Solana Faucet](https://faucet.solana.com).
+</Callout>
+
+## Send a transaction
+
+Let's create a token mint onchain. In Solana, every transaction contains one or more instructions: small commands that tell programs what to do. Some tasks, like creating a mint, require multiple instructions that should stay together. Kit represents that kind of multi-step operation as an **instruction plan**.
+
+The Token program plugin gives us one of these plans via `client.token.instructions.createMint(...)`. Under the hood, it creates a new account for the provided mint address with enough lamports to be rent-exempt (system program's `createAccount` instruction) and initializes it as a Token program mint (token program's `initializeMint` instruction). We pass the new mint as a signer (since we initialize a new account), choose `9` decimals, and set our client identity as the mint authority.
+
+```ts twoslash
+import { createClient, generateKeyPairSigner } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { signerFromFile } from '@solana/kit-plugin-signer';
+import { tokenProgram } from '@solana-program/token';
+const client = await createClient()
+    .use(signerFromFile('./kit-getting-started-keypair.json'))
+    .use(solanaDevnetRpc())
+    .use(tokenProgram());
+// ---cut-before---
+const mint = await generateKeyPairSigner();
+
+const createMintPlan = client.token.instructions.createMint({
+    newMint: mint,
+    decimals: 9,
+    mintAuthority: client.identity.address,
+});
+
+const createMintResult = await client.sendTransaction([createMintPlan]);
+const createMintSignature = createMintResult.context.signature;
+
+console.log(`🎉 Created token mint ${mint.address}`);
+console.log(`🔎 https://explorer.solana.com/tx/${createMintSignature}?cluster=devnet`);
+```
+
+`client.sendTransaction([...])` accepts an array of instructions and instruction plans and sends them as a single transaction. If one part fails, the whole transaction fails. This is the most common way to send transactions with a client, especially when we want to combine several instructions or plans.
+
+For simple one-off operations, program instruction helpers also include a `.sendTransaction()` shortcut. The following sends the same `createMint` instruction plan as a single transaction without explicitly calling `client.sendTransaction([...])`.
+
+```ts twoslash
+import { createClient, generateKeyPairSigner } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { signerFromFile } from '@solana/kit-plugin-signer';
+import { tokenProgram } from '@solana-program/token';
+const client = await createClient()
+    .use(signerFromFile('./kit-getting-started-keypair.json'))
+    .use(solanaDevnetRpc())
+    .use(tokenProgram());
+const mint = await generateKeyPairSigner();
+// ---cut-before---
+const createMintResult = await client.token.instructions
+    .createMint({
+        newMint: mint,
+        decimals: 9,
+        mintAuthority: client.identity.address,
+    })
+    .sendTransaction();
+```
+
+For error handling, priority fees, and more advanced patterns, see the [Sending Transactions](/docs/guides/sending-transactions) guide.
+
+## Fetch an account
+
+Now let's read the mint account we just created.
+
+Program plugins provide typed fetch helpers that decode account data automatically. The `mintAccount.data` object gives us the full `Mint` structure with fields like `decimals`, `mintAuthority`, `supply`, and `freezeAuthority`.
+
+```ts twoslash
+import { createClient, generateKeyPairSigner } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { signerFromFile } from '@solana/kit-plugin-signer';
+import { tokenProgram } from '@solana-program/token';
+const client = await createClient()
+    .use(signerFromFile('./kit-getting-started-keypair.json'))
+    .use(solanaDevnetRpc())
+    .use(tokenProgram());
+const mint = await generateKeyPairSigner();
+// ---cut-before---
+const mintAccount = await client.token.accounts.mint.fetch(mint.address);
+
+console.log('✅ Mint account decoded');
+console.log(`   Address: ${mint.address}`);
+console.log(`   Decimals: ${mintAccount.data.decimals}`);
+console.log('   Mint authority:', mintAccount.data.mintAuthority);
+console.log(`   Supply: ${mintAccount.data.supply}`);
+```
+
+For raw account fetching and manual decoding, see the [Fetching Accounts](/docs/guides/fetching-accounts) guide.
+
+## Full example
+
+Here's the complete script you can copy and run after creating `kit-getting-started-keypair.json`.
+
+```ts twoslash
+import { createClient, generateKeyPairSigner, lamports } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { signerFromFile } from '@solana/kit-plugin-signer';
+import { tokenProgram } from '@solana-program/token';
+
+const client = await createClient()
+    .use(signerFromFile('./kit-getting-started-keypair.json'))
+    .use(solanaDevnetRpc())
+    .use(tokenProgram());
+
+// Run this once, then remove or comment it out to avoid devnet faucet rate limits.
+const airdropSignature = await client.airdrop(client.payer.address, lamports(1_000_000_000n));
+console.log(`💸 Funded ${client.payer.address} with 1 SOL`);
+if (airdropSignature) {
+    console.log(`🔎 https://explorer.solana.com/tx/${airdropSignature}?cluster=devnet`);
+}
+
+const mint = await generateKeyPairSigner();
+const createMintPlan = client.token.instructions.createMint({
+    newMint: mint,
+    decimals: 9,
+    mintAuthority: client.identity.address,
+});
+
+const createMintResult = await client.sendTransaction([createMintPlan]);
+const createMintSignature = createMintResult.context.signature;
+
+console.log(`🎉 Created token mint ${mint.address}`);
+console.log(`🔎 https://explorer.solana.com/tx/${createMintSignature}?cluster=devnet`);
+
+const mintAccount = await client.token.accounts.mint.fetch(mint.address);
+
+console.log('✅ Mint account decoded');
+console.log(`   Address: ${mint.address}`);
+console.log(`   Decimals: ${mintAccount.data.decimals}`);
+console.log('   Mint authority:', mintAccount.data.mintAuthority);
+console.log(`   Supply: ${mintAccount.data.supply}`);
+```
+
+## Next steps
+
+We've connected to devnet, funded a signer, created a token mint, and read its data. Here's where to go next:
+
+- [Setting Up Signers](/docs/guides/setting-up-signers) — load signers from keypair files, wallet standard, and more.
+- [Sending Transactions](/docs/guides/sending-transactions) — error handling, priority fees, and instruction plans.
+- [Fetching Accounts](/docs/guides/fetching-accounts) — program plugin fetch helpers, batch fetching, and decoding.
+- [Using Program Plugins](/docs/guides/using-program-plugins) — typed access to any Solana program.
+- [Plugins](/docs/plugins) — understand and extend the plugin system.
