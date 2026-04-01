@@ -1,5 +1,17 @@
 # @solana/compat
 
+## 6.6.0
+
+### Patch Changes
+
+- Updated dependencies [[`742ffca`](https://github.com/anza-xyz/kit/commit/742ffcaf5304f702334e1f0b2a14cf208ae0ee5f), [`7f02d23`](https://github.com/anza-xyz/kit/commit/7f02d23948cc09e3f0bc70931d845569f1cb38ad)]:
+    - @solana/transactions@6.6.0
+    - @solana/errors@6.6.0
+    - @solana/addresses@6.6.0
+    - @solana/codecs-core@6.6.0
+    - @solana/instructions@6.6.0
+    - @solana/keys@6.6.0
+
 ## 6.5.0
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @solana/plugin-core
 
+## 6.6.0
+
+### Minor Changes
+
+- [#1480](https://github.com/anza-xyz/kit/pull/1480) [`9c4fd6e`](https://github.com/anza-xyz/kit/commit/9c4fd6e67a6f70b1386f0745cf5afe0f93c75e36) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `withCleanup` function to `@solana/plugin-core`. Plugin authors can use it to register teardown logic (e.g. closing connections or clearing timers) on a client, making it `Disposable`. If the client already implements `Symbol.dispose`, the new cleanup function is chained so both run on disposal.
+
 ## 6.5.0
 
 ## 6.4.0

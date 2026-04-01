@@ -1,5 +1,17 @@
 # @solana/sysvars
 
+## 6.6.0
+
+### Patch Changes
+
+- Updated dependencies [[`7f02d23`](https://github.com/anza-xyz/kit/commit/7f02d23948cc09e3f0bc70931d845569f1cb38ad)]:
+    - @solana/errors@6.6.0
+    - @solana/accounts@6.6.0
+    - @solana/codecs-core@6.6.0
+    - @solana/codecs-data-structures@6.6.0
+    - @solana/codecs-numbers@6.6.0
+    - @solana/rpc-types@6.6.0
+
 ## 6.5.0
 
 ### Patch Changes

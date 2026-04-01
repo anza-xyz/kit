@@ -1,5 +1,35 @@
 # @solana/kit
 
+## 6.6.0
+
+### Patch Changes
+
+- Updated dependencies [[`742ffca`](https://github.com/anza-xyz/kit/commit/742ffcaf5304f702334e1f0b2a14cf208ae0ee5f), [`7f02d23`](https://github.com/anza-xyz/kit/commit/7f02d23948cc09e3f0bc70931d845569f1cb38ad), [`9c4fd6e`](https://github.com/anza-xyz/kit/commit/9c4fd6e67a6f70b1386f0745cf5afe0f93c75e36), [`0fa54a4`](https://github.com/anza-xyz/kit/commit/0fa54a469937db3989f42afc4248882736f719f5), [`f055201`](https://github.com/anza-xyz/kit/commit/f055201c2dd3a4a69b9894d66b622ae81c13b8cd)]:
+    - @solana/instruction-plans@6.6.0
+    - @solana/transactions@6.6.0
+    - @solana/errors@6.6.0
+    - @solana/transaction-messages@6.6.0
+    - @solana/plugin-core@6.6.0
+    - @solana/signers@6.6.0
+    - @solana/plugin-interfaces@6.6.0
+    - @solana/program-client-core@6.6.0
+    - @solana/rpc-api@6.6.0
+    - @solana/transaction-confirmation@6.6.0
+    - @solana/accounts@6.6.0
+    - @solana/addresses@6.6.0
+    - @solana/instructions@6.6.0
+    - @solana/keys@6.6.0
+    - @solana/offchain-messages@6.6.0
+    - @solana/programs@6.6.0
+    - @solana/rpc@6.6.0
+    - @solana/rpc-subscriptions@6.6.0
+    - @solana/rpc-types@6.6.0
+    - @solana/sysvars@6.6.0
+    - @solana/rpc-parsed-types@6.6.0
+    - @solana/codecs@6.6.0
+    - @solana/functional@6.6.0
+    - @solana/rpc-spec-types@6.6.0
+
 ## 6.5.0
 
 ### Patch Changes

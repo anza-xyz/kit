@@ -1,5 +1,29 @@
 # @solana/transactions
 
+## 6.6.0
+
+### Minor Changes
+
+- [#1499](https://github.com/anza-xyz/kit/pull/1499) [`742ffca`](https://github.com/anza-xyz/kit/commit/742ffcaf5304f702334e1f0b2a14cf208ae0ee5f) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add version-aware transaction size limits. Version 1 transactions now allow up to 4096 bytes, while legacy and v0 transactions continue to use the existing 1232-byte limit. Two new helper functions are exported from `@solana/transactions`: `getTransactionSizeLimit` for compiled `Transaction` objects, and `getTransactionMessageSizeLimit` for `TransactionMessage` objects.
+
+    The existing `TRANSACTION_SIZE_LIMIT`, `TRANSACTION_PACKET_SIZE`, and `TRANSACTION_PACKET_HEADER` constants are now deprecated in favour of `getTransactionSizeLimit` and will be removed in a future major version.
+
+### Patch Changes
+
+- Updated dependencies [[`7f02d23`](https://github.com/anza-xyz/kit/commit/7f02d23948cc09e3f0bc70931d845569f1cb38ad)]:
+    - @solana/errors@6.6.0
+    - @solana/transaction-messages@6.6.0
+    - @solana/addresses@6.6.0
+    - @solana/codecs-core@6.6.0
+    - @solana/codecs-data-structures@6.6.0
+    - @solana/codecs-numbers@6.6.0
+    - @solana/codecs-strings@6.6.0
+    - @solana/instructions@6.6.0
+    - @solana/keys@6.6.0
+    - @solana/rpc-types@6.6.0
+    - @solana/functional@6.6.0
+    - @solana/nominal-types@6.6.0
+
 ## 6.5.0
 
 ### Patch Changes

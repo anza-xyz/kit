@@ -1,5 +1,30 @@
 # @solana/transaction-messages
 
+## 6.6.0
+
+### Minor Changes
+
+- [#1496](https://github.com/anza-xyz/kit/pull/1496) [`7f02d23`](https://github.com/anza-xyz/kit/commit/7f02d23948cc09e3f0bc70931d845569f1cb38ad) Thanks [@mcintyre94](https://github.com/mcintyre94)! - `compileTransactionMessage` now enforces four Solana protocol limits at compile time, throwing a typed `SolanaError` instead of silently producing a transaction that would be rejected by the network:
+    - More than 64 unique account addresses → `SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNT_ADDRESSES`
+    - More than 12 unique signer addresses → `SOLANA_ERROR__TRANSACTION__TOO_MANY_SIGNER_ADDRESSES`
+    - More than 64 instructions → `SOLANA_ERROR__TRANSACTION__TOO_MANY_INSTRUCTIONS`
+    - More than 255 accounts in a single instruction → `SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNTS_IN_INSTRUCTION`
+
+    All four error codes (and their context types / human-readable messages) are exported from `@solana/errors`.
+
+### Patch Changes
+
+- Updated dependencies [[`7f02d23`](https://github.com/anza-xyz/kit/commit/7f02d23948cc09e3f0bc70931d845569f1cb38ad)]:
+    - @solana/errors@6.6.0
+    - @solana/addresses@6.6.0
+    - @solana/codecs-core@6.6.0
+    - @solana/codecs-data-structures@6.6.0
+    - @solana/codecs-numbers@6.6.0
+    - @solana/instructions@6.6.0
+    - @solana/rpc-types@6.6.0
+    - @solana/functional@6.6.0
+    - @solana/nominal-types@6.6.0
+
 ## 6.5.0
 
 ### Patch Changes

@@ -1,5 +1,7 @@
 # @solana/rpc-spec-types
 
+## 6.6.0
+
 ## 6.5.0
 
 ## 6.4.0

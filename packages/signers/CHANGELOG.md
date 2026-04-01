@@ -1,5 +1,22 @@
 # @solana/signers
 
+## 6.6.0
+
+### Patch Changes
+
+- [#1492](https://github.com/anza-xyz/kit/pull/1492) [`0fa54a4`](https://github.com/anza-xyz/kit/commit/0fa54a469937db3989f42afc4248882736f719f5) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Allow `deduplicateSigners` to handle structurally equivalent signers (e.g. two `createNoopSigner` calls with the same address) instead of throwing.
+
+- Updated dependencies [[`742ffca`](https://github.com/anza-xyz/kit/commit/742ffcaf5304f702334e1f0b2a14cf208ae0ee5f), [`7f02d23`](https://github.com/anza-xyz/kit/commit/7f02d23948cc09e3f0bc70931d845569f1cb38ad)]:
+    - @solana/transactions@6.6.0
+    - @solana/errors@6.6.0
+    - @solana/transaction-messages@6.6.0
+    - @solana/addresses@6.6.0
+    - @solana/codecs-core@6.6.0
+    - @solana/instructions@6.6.0
+    - @solana/keys@6.6.0
+    - @solana/offchain-messages@6.6.0
+    - @solana/nominal-types@6.6.0
+
 ## 6.5.0
 
 ### Minor Changes
