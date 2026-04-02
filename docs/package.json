@@ -37,7 +37,7 @@
         "@solana/react": "6.5.0",
         "@solana/web3.js": "^1.98.4",
         "@solana/webcrypto-ed25519-polyfill": "6.5.0",
-        "@tailwindcss/postcss": "^4.1.4",
+        "@tailwindcss/postcss": "^4.2.2",
         "@types/mdx": "^2.0.13",
         "@types/node": "22.13.8",
         "@types/react": "^19.2.14",
