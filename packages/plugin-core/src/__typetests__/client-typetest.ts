@@ -1,12 +1,5 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
-import {
-    type AsyncClient,
-    type Client,
-    type ClientPlugin,
-    createEmptyClient,
-    extendClient,
-    withCleanup,
-} from '../client';
+import { type AsyncClient, type Client, type ClientPlugin, createClient, extendClient, withCleanup } from '../client';
 
 const EMPTY_CLIENT = null as unknown as Client<object>;
 const EMPTY_ASYNC_CLIENT = null as unknown as AsyncClient<object>;
@@ -204,11 +197,16 @@ const EMPTY_ASYNC_CLIENT = null as unknown as AsyncClient<object>;
     }
 }
 
-// [DESCRIBE] createEmptyClient
+// [DESCRIBE] createClient
 {
     // It returns an empty Client (See typetests above).
     {
-        createEmptyClient() satisfies typeof EMPTY_CLIENT;
+        createClient() satisfies typeof EMPTY_CLIENT;
+    }
+
+    // It creates a Client from an existing object.
+    {
+        createClient({ fruit: 'banana' as const }) satisfies Client<{ fruit: 'banana' }>;
     }
 }
 

@@ -9,7 +9,7 @@
  * and asynchronous transformations and extensions of the client.
  *
  * Plugins are usually applied using the `use` method on a {@link Client} or {@link AsyncClient}
- * instance, which {@link createEmptyClient} provides as a starting point.
+ * instance, which {@link createClient} provides as a starting point.
  *
  * @typeParam TInput - The input client object type that this plugin accepts.
  * @typeParam TOutput - The output type. Either a new client object or a promise resolving to one.
@@ -18,7 +18,7 @@
  * Given an RPC endpoint, this plugin adds an `rpc` property to the client.
  *
  * ```ts
- * import { createEmptyClient, createSolanaRpc } from '@solana/kit';
+ * import { createClient, createSolanaRpc } from '@solana/kit';
  *
  * // Define a simple RPC plugin.
  * function rpcPlugin(endpoint: string) {
@@ -26,7 +26,7 @@
  * }
  *
  * // Use the plugin.
- * const client = createEmptyClient().use(rpcPlugin('https://api.mainnet-beta.solana.com'));
+ * const client = createClient().use(rpcPlugin('https://api.mainnet-beta.solana.com'));
  * await client.rpc.getLatestBlockhash().send();
  * ```
  *
@@ -34,7 +34,7 @@
  * The following plugin shows how to create an asynchronous plugin that generates a new keypair signer.
  *
  * ```ts
- * import { createEmptyClient, generateKeypairSigner } from '@solana/kit';
+ * import { createClient, generateKeypairSigner } from '@solana/kit';
  *
  * // Define a plugin that generates a new keypair signer.
  * function generatedPayerPlugin() {
@@ -42,7 +42,7 @@
  * }
  *
  * // Use the plugin.
- * const client = await createEmptyClient().use(generatedPayerPlugin());
+ * const client = await createClient().use(generatedPayerPlugin());
  * console.log(client.payer.address);
  * ```
  *
@@ -51,7 +51,7 @@
  * client to already have a `payer` signer attached to the client in order to perform an airdrop.
  *
  * ```ts
- * import { createEmptyClient, TransactionSigner, Lamports, lamports } from '@solana/kit';
+ * import { createClient, TransactionSigner, Lamports, lamports } from '@solana/kit';
  *
  * // Define a plugin that airdrops lamports to the payer set on the client.
  * function airdropPayerPlugin(lamports: Lamports) {
@@ -62,7 +62,7 @@
  * }
  *
  * // Use the plugins.
- * const client = await createEmptyClient()
+ * const client = await createClient()
  *     .use(generatedPayerPlugin()) // This is required before using the airdrop plugin.
  *     .use(airdropPayerPlugin(lamports(1_000_000_000n)));
  * ```
@@ -74,7 +74,7 @@
  * This is because the `use` method on `AsyncClient` returns another `AsyncClient`, allowing for seamless chaining.
  *
  * ```ts
- * import { createEmptyClient, createSolanaRpc, createSolanaRpcSubscriptions, generateKeypairSigner } from '@solana/kit';
+ * import { createClient, createSolanaRpc, createSolanaRpcSubscriptions, generateKeypairSigner } from '@solana/kit';
  *
  * // Define multiple plugins.
  * function rpcPlugin(endpoint: string) {
@@ -91,7 +91,7 @@
  * }
  *
  * // Chain plugins together.
- * const client = await createEmptyClient()
+ * const client = await createClient()
  *     .use(rpcPlugin('https://api.mainnet-beta.solana.com'))
  *     .use(rpcSubscriptionsPlugin('wss://api.mainnet-beta.solana.com'))
  *     .use(generatedPayerPlugin())
@@ -146,7 +146,8 @@ export type AsyncClient<TSelf extends object> = Promise<Client<TSelf>> & {
     ) => AsyncClient<TOutput extends Promise<infer U> ? (U extends object ? U : never) : TOutput>;
 };
 
-// TODO(loris): Add examples in this docblock using real plugins once they have been published.
+/** @deprecated This function has been renamed. Use `createClient` instead. It behaves identically. */
+export const createEmptyClient = () => createClient();
 
 /**
  * Creates a new empty client that can be extended with plugins.
@@ -162,15 +163,17 @@ export type AsyncClient<TSelf extends object> = Promise<Client<TSelf>> & {
  *
  * @example Basic client setup
  * ```ts
- * import { createEmptyClient } from '@solana/client';
+ * import { createClient } from '@solana/client';
+ * import { generatedPayer } from '@solana/kit-plugin-payer';
+ * import { rpc } from '@solana/kit-plugin-rpc';
  *
- * const client = createEmptyClient()
- *     .use(myRpcPlugin('https://api.mainnet-beta.solana.com'))
- *     .use(myWalletPlugin());
+ * const client = await createClient()
+ *     .use(generatedPayer())
+ *     .use(rpc('https://api.mainnet-beta.solana.com'));
  * ```
  */
-export function createEmptyClient(): Client<object> {
-    return addUse({});
+export function createClient<TSelf extends object = object>(value?: TSelf): Client<TSelf> {
+    return addUse(value ?? ({} as TSelf));
 }
 
 function addUse<TSelf extends object>(value: TSelf): Client<TSelf> {
@@ -270,7 +273,7 @@ export function extendClient<TClient extends object, TAdditions extends object>(
  * }
  *
  * // Later, when the client is no longer needed:
- * using client = createEmptyClient().use(myPlugin();
+ * using client = createClient().use(myPlugin();
  * // `socket.close()` is called automatically when `client` goes out of scope.
  * ```
  *

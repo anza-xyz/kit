@@ -1,19 +1,28 @@
 import '@solana/test-matchers/toBeFrozenObject';
 
-import { createEmptyClient, extendClient, withCleanup } from '../client';
+import { createClient, extendClient, withCleanup } from '../client';
 
-describe('createEmptyClient', () => {
+describe('createClient', () => {
     it('creates an empty object with a use function', () => {
-        const emptyClient = createEmptyClient();
+        const emptyClient = createClient();
         expect(typeof emptyClient).toBe('object');
         const attributes = Object.getOwnPropertyNames(emptyClient);
         expect(attributes).toStrictEqual(['use']);
         expect(typeof emptyClient.use).toBe('function');
     });
 
+    it('creates an client from an existing object', () => {
+        const client = createClient({ fruit: 'banana' as const });
+        expect(typeof client).toBe('object');
+        const attributes = Object.getOwnPropertyNames(client);
+        expect(attributes).toStrictEqual(['fruit', 'use']);
+        expect(typeof client.use).toBe('function');
+        expect(client.fruit).toBe('banana');
+    });
+
     it('evolves when using plugins', () => {
         expect(
-            createEmptyClient()
+            createClient()
                 .use(c => ({ ...c, fruit: 'apple' as const }))
                 .use(c => ({ ...c, vegetable: 'carrot' as const })),
         ).toStrictEqual({
@@ -25,7 +34,7 @@ describe('createEmptyClient', () => {
 
     it('can be overriden by subsequent plugins', () => {
         expect(
-            createEmptyClient()
+            createClient()
                 .use(() => ({ fruit: 'apple' as const }))
                 .use(() => ({ vegetable: 'carrot' as const })),
         ).toStrictEqual({
@@ -36,7 +45,7 @@ describe('createEmptyClient', () => {
 
     it('allows plugins to enforce input type constraints', () => {
         expect(
-            createEmptyClient()
+            createClient()
                 .use(c => ({ ...c, fruit: 'apple' as const }))
                 .use(<T extends { fruit: 'apple' }>(c: T) => ({ ...c, dessert: 'apple cake' as const })),
         ).toStrictEqual({
@@ -47,7 +56,7 @@ describe('createEmptyClient', () => {
     });
 
     it('preserves getter properties from plugins', () => {
-        const client = createEmptyClient()
+        const client = createClient()
             // Make fruit a get() property
             .use(c => {
                 const result = { ...c };
@@ -69,7 +78,7 @@ describe('createEmptyClient', () => {
     it('preserves symbol-keyed properties from plugins', () => {
         const sym = Symbol('fruit');
 
-        const client = createEmptyClient()
+        const client = createClient()
             // Add the fruit symbol property
             .use(c => ({ ...c, [sym]: 'apple' }))
             // Add dessert as a normal property
@@ -86,7 +95,7 @@ describe('createEmptyClient', () => {
     it('supports asynchronous plugins', async () => {
         expect.assertions(1);
         await expect(
-            createEmptyClient()
+            createClient()
                 .use(c => Promise.resolve({ ...c, fruit: 'apple' as const }))
                 .use(c => Promise.resolve({ ...c, vegetable: 'carrot' as const })),
         ).resolves.toStrictEqual({
@@ -99,7 +108,7 @@ describe('createEmptyClient', () => {
     it('supports a mixture of synchronous and asynchronous plugins', async () => {
         expect.assertions(1);
         await expect(
-            createEmptyClient()
+            createClient()
                 .use(c => ({ ...c, fruit: 'apple' as const }))
                 .use(c => Promise.resolve({ ...c, vegetable: 'carrot' as const }))
                 .use(c => ({ ...c, grain: 'rice' as const }))
@@ -115,7 +124,7 @@ describe('createEmptyClient', () => {
 
     it('can catch synchronous errors', () => {
         expect(() =>
-            createEmptyClient().use(() => {
+            createClient().use(() => {
                 throw new Error('Missing fruit');
             }),
         ).toThrow('Missing fruit');
@@ -124,7 +133,7 @@ describe('createEmptyClient', () => {
     it('can catch asynchronous errors', async () => {
         expect.assertions(1);
         await expect(
-            createEmptyClient().use(() => {
+            createClient().use(() => {
                 return Promise.reject(new Error('Missing fruit'));
             }),
         ).rejects.toThrow('Missing fruit');
@@ -133,7 +142,7 @@ describe('createEmptyClient', () => {
     it('can chain the then function on the async client', async () => {
         expect.assertions(1);
         const thenFn = jest.fn();
-        await createEmptyClient()
+        await createClient()
             .use(() => Promise.resolve({ fruit: 'apple' as const }))
             .then(thenFn);
         expect(thenFn).toHaveBeenNthCalledWith(1, expect.objectContaining({ fruit: 'apple' }));
@@ -142,7 +151,7 @@ describe('createEmptyClient', () => {
     it('can chain the catch function on the async client', async () => {
         expect.assertions(1);
         const catchFn = jest.fn();
-        await createEmptyClient()
+        await createClient()
             .use(() => Promise.reject(new Error('Missing fruit')))
             .catch(catchFn);
         expect(catchFn).toHaveBeenNthCalledWith(1, expect.objectContaining({ message: 'Missing fruit' }));
@@ -151,7 +160,7 @@ describe('createEmptyClient', () => {
     it('can chain the finally function on the async client when successful', async () => {
         expect.assertions(1);
         const finallyFn = jest.fn();
-        await createEmptyClient()
+        await createClient()
             .use(() => Promise.resolve({ fruit: 'apple' as const }))
             .finally(finallyFn);
         expect(finallyFn).toHaveBeenCalledTimes(1);
@@ -160,7 +169,7 @@ describe('createEmptyClient', () => {
     it('can chain the finally function on the async client when unsuccessful', async () => {
         expect.assertions(1);
         const finallyFn = jest.fn();
-        await createEmptyClient()
+        await createClient()
             .use(() => Promise.reject(new Error('Missing fruit')))
             .finally(finallyFn)
             .catch(() => {});
@@ -170,23 +179,38 @@ describe('createEmptyClient', () => {
     it('does not resolve subsequent asynchronous plugins after an error', async () => {
         expect.assertions(1);
         const subsequentPlugin = jest.fn();
-        await createEmptyClient()
+        await createClient()
             .use(() => Promise.reject(new Error('Missing fruit')))
             .use(subsequentPlugin)
             .catch(() => {});
         expect(subsequentPlugin).not.toHaveBeenCalled();
     });
 
+    it('allows plugins to use createClient internally to offer plugin bundles', () => {
+        const fruitPlugin = <T extends object>(c: T) => ({ ...c, fruit: 'apple' as const });
+        const vegetablePlugin = <T extends object>(c: T) => ({ ...c, vegetable: 'carrot' as const });
+        const proteinPlugin = <T extends object>(c: T) => ({ ...c, protein: 'tofu' as const });
+        const foodPlugin = <T extends object>(c: T) =>
+            createClient(c).use(fruitPlugin).use(vegetablePlugin).use(proteinPlugin);
+
+        expect(createClient().use(foodPlugin)).toStrictEqual({
+            fruit: 'apple',
+            protein: 'tofu',
+            use: expect.any(Function),
+            vegetable: 'carrot',
+        });
+    });
+
     it('returns a frozen object when empty', () => {
-        expect(createEmptyClient()).toBeFrozenObject();
+        expect(createClient()).toBeFrozenObject();
     });
 
     it('returns a frozen object when extended by a plugin', () => {
-        expect(createEmptyClient().use(() => ({ fruit: 'apple' as const }))).toBeFrozenObject();
+        expect(createClient().use(() => ({ fruit: 'apple' as const }))).toBeFrozenObject();
     });
 
     it('returns a frozen object when extended by an asynchronous plugin', () => {
-        expect(createEmptyClient().use(() => Promise.resolve({ fruit: 'apple' as const }))).toBeFrozenObject();
+        expect(createClient().use(() => Promise.resolve({ fruit: 'apple' as const }))).toBeFrozenObject();
     });
 });
 
