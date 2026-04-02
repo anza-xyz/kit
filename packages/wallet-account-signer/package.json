@@ -1,6 +1,6 @@
 {
     "name": "@solana/wallet-account-signer",
-    "version": "6.6.0",
+    "version": "6.7.0",
     "description": "Utilities for converting from Wallet Standard accounts to Kit Signer objects",
     "homepage": "https://www.solanakit.com/api#solanawallet-account-signer",
     "exports": {

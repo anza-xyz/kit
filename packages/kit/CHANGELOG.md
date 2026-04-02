@@ -1,5 +1,35 @@
 # @solana/kit
 
+## 6.7.0
+
+### Patch Changes
+
+- Updated dependencies [[`2763d0c`](https://github.com/anza-xyz/kit/commit/2763d0c92b60089f4b20f6241cb5f91232cc2e75)]:
+    - @solana/plugin-core@6.7.0
+    - @solana/accounts@6.7.0
+    - @solana/addresses@6.7.0
+    - @solana/codecs@6.7.0
+    - @solana/errors@6.7.0
+    - @solana/functional@6.7.0
+    - @solana/instruction-plans@6.7.0
+    - @solana/instructions@6.7.0
+    - @solana/keys@6.7.0
+    - @solana/offchain-messages@6.7.0
+    - @solana/plugin-interfaces@6.7.0
+    - @solana/program-client-core@6.7.0
+    - @solana/programs@6.7.0
+    - @solana/rpc@6.7.0
+    - @solana/rpc-api@6.7.0
+    - @solana/rpc-parsed-types@6.7.0
+    - @solana/rpc-spec-types@6.7.0
+    - @solana/rpc-subscriptions@6.7.0
+    - @solana/rpc-types@6.7.0
+    - @solana/signers@6.7.0
+    - @solana/sysvars@6.7.0
+    - @solana/transaction-confirmation@6.7.0
+    - @solana/transaction-messages@6.7.0
+    - @solana/transactions@6.7.0
+
 ## 6.6.0
 
 ### Patch Changes

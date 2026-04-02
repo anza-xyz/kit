@@ -1,5 +1,17 @@
 # @solana/sysvars
 
+## 6.7.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/accounts@6.7.0
+    - @solana/codecs-core@6.7.0
+    - @solana/codecs-data-structures@6.7.0
+    - @solana/codecs-numbers@6.7.0
+    - @solana/errors@6.7.0
+    - @solana/rpc-types@6.7.0
+
 ## 6.6.0
 
 ### Patch Changes

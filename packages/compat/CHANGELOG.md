@@ -1,5 +1,17 @@
 # @solana/compat
 
+## 6.7.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/addresses@6.7.0
+    - @solana/codecs-core@6.7.0
+    - @solana/errors@6.7.0
+    - @solana/instructions@6.7.0
+    - @solana/keys@6.7.0
+    - @solana/transactions@6.7.0
+
 ## 6.6.0
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @solana/plugin-core
 
+## 6.7.0
+
+### Minor Changes
+
+- [#1509](https://github.com/anza-xyz/kit/pull/1509) [`2763d0c`](https://github.com/anza-xyz/kit/commit/2763d0c92b60089f4b20f6241cb5f91232cc2e75) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add `createClient` function that replaces `createEmptyClient` and accepts an optional initial value. The old `createEmptyClient` is preserved as a deprecated re-export.
+
 ## 6.6.0
 
 ### Minor Changes

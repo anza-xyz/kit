@@ -1,5 +1,14 @@
 # @solana/rpc-transport-http
 
+## 6.7.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/errors@6.7.0
+    - @solana/rpc-spec@6.7.0
+    - @solana/rpc-spec-types@6.7.0
+
 ## 6.6.0
 
 ### Patch Changes

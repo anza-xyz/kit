@@ -1,5 +1,20 @@
 # @solana/transaction-messages
 
+## 6.7.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/addresses@6.7.0
+    - @solana/codecs-core@6.7.0
+    - @solana/codecs-data-structures@6.7.0
+    - @solana/codecs-numbers@6.7.0
+    - @solana/errors@6.7.0
+    - @solana/functional@6.7.0
+    - @solana/instructions@6.7.0
+    - @solana/nominal-types@6.7.0
+    - @solana/rpc-types@6.7.0
+
 ## 6.6.0
 
 ### Minor Changes

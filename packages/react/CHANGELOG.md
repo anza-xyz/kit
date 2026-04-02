@@ -1,5 +1,18 @@
 # @solana/react
 
+## 6.7.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/addresses@6.7.0
+    - @solana/errors@6.7.0
+    - @solana/keys@6.7.0
+    - @solana/promises@6.7.0
+    - @solana/signers@6.7.0
+    - @solana/transaction-messages@6.7.0
+    - @solana/transactions@6.7.0
+
 ## 6.6.0
 
 ### Patch Changes
