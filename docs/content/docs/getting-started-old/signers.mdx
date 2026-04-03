@@ -1,7 +1,14 @@
 ---
-title: Generate a signer
+title: '❌ Generate a signer'
 description: Create a new keypair signer and airdrop lamports to it
 ---
+
+<Callout type="warn" title="Scheduled for Removal">
+**Status:** This page will be removed in a future PR.
+
+**Content redistributed to:** Signer setup content will move to [Guides — Setting Up Signers](/docs/guides/setting-up-signers), and signer interface explanations will move to [Advanced Guides — Signers](/docs/advanced-guides/signers).
+
+</Callout>
 
 Before we can start crafting transactions, we're going to need a wallet that can sign transactions and pay for fees. In this article, we'll explore how to generate new keypairs and how to airdrop some lamports to them in test environments.
 
@@ -54,7 +61,7 @@ wallet = await generateKeyPairSigner(); // [!code --]
 wallet = useWalletAccountTransactionSendingSigner(account, currentChain); // [!code ++]
 ```
 
-For a deeper dive into the Signer API, check out [this in-depth article about signers](/docs/concepts/signers).
+For a deeper dive into the Signer API, check out [this in-depth article about signers](/docs/advanced-guides/signers).
 
 ## Airdrop lamports
 

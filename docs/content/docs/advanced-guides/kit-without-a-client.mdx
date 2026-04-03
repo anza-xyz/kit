@@ -1,0 +1,31 @@
+---
+title: Kit without a client
+description: Use Kit's full power without the client abstraction
+---
+
+<Callout type="warn" title="Planned Content">
+**Status:** New page
+
+This guide will show how to achieve the same capabilities you get from a Kit client (like the RPC client) but without the client abstraction, using Kit's primitives directly. This is useful for maximum treeshakability, fine-grained control, or simply to understand what happens behind the scenes.
+
+The guide is structured as a reference so readers can jump to any section they need. Each section takes a capability from the client and shows the manual equivalent:
+
+**Setting up RPC** — Creating `Rpc` and `RpcSubscriptions` manually with `createSolanaRpc` and `createSolanaRpcSubscriptions` instead of the `rpc()` plugin.
+
+**Creating signers** — Generating keypairs with `generateKeyPairSigner()`, importing from files, understanding the signer interfaces.
+
+**Building transactions** — Constructing transaction messages with `pipe()` and Kit's functional composition pattern (`createTransactionMessage`, `setTransactionMessageFeePayerSigner`, `appendTransactionMessageInstructions`, etc.). Covers the immutability model.
+
+**Signing and compiling** — Manually signing with `signTransactionMessageWithSigners` and compiling with `getCompiledTransactionMessageEncoder`.
+
+**Sending and confirming** — Using `sendAndConfirmTransactionFactory` or calling `sendTransaction` RPC method directly, with manual confirmation strategies.
+
+**Fetching accounts** — Using `fetchEncodedAccount` and decoding with codecs, without program plugin helpers.
+
+The guide will also explain why you might choose this approach (smaller bundle size via treeshaking, full control over each step) and when the client-based approach is preferable (convenience, less boilerplate, consistent patterns).
+
+**Draws from:** Current `getting-started/setup.mdx` (hand-built Client type), `getting-started/build-transaction.mdx` (the `pipe()` / immutability walkthrough), `getting-started/send-transaction.mdx` (manual send and confirm), `getting-started/signers.mdx` (keypair generation). This is where the current tutorial's functional programming content finds its permanent home.
+
+**Links to:** [Clients & Plugins — Creating Custom Clients](/docs/clients-and-plugins/creating-custom-clients) for a middle ground between full client and no client.
+
+</Callout>

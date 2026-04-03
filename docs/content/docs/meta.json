@@ -2,5 +2,14 @@
     "title": "Documentation",
     "defaultOpen": true,
     "root": true,
-    "pages": ["...", "compatible-clients", "getting-started", "concepts"]
+    "pages": [
+        "index",
+        "getting-started",
+        "upgrade-guide",
+        "...",
+        "guides",
+        "clients-and-plugins",
+        "advanced-guides",
+        "getting-started-old"
+    ]
 }

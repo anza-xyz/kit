@@ -3,6 +3,15 @@ title: Signers
 description: Accounts with signing capabilities
 ---
 
+<Callout type="warn" title="Planned Changes">
+**Status:** Existing page — updates planned
+
+This page will be updated to add references to `payer()` and `generatedPayer()` plugins as the typical way to attach signers to a client, add a section showing how signer interfaces connect to the plugin system, port relevant content from the current `getting-started/signers.mdx`, and add the new wallet signer from the `@solana/wallet-account-signer` package to the "Available signers" section.
+
+**Current content preserved:** Yes, all existing content stays.
+
+</Callout>
+
 ## Introduction
 
 Signers are an abstraction that combines an account with an implementation that computes signatures on behalf of that account. No matter what actually computes the signature – a wallet app, a network API, the `SubtleCrypto` API, or a userspace implementation – so long as it implements the correct signer interface for your intended purpose, you can use it with all of Kit's signer-aware functions.
@@ -345,7 +354,11 @@ const signedTransaction = await partiallySignTransactionMessageWithSigners(trans
 ```
 
 <Callout type="info">
-    This function ignores any [`TransactionSendingSigners`](/api/type-aliases/TransactionSendingSigner) in the message since it does not send the transaction. Use [`signAndSendTransactionMessageWithSigners`](#sign-and-send-transaction-message-with-signers) if you need to sign and send in a single step.
+    This function ignores any
+    [`TransactionSendingSigners`](/api/type-aliases/TransactionSendingSigner) in the message since
+    it does not send the transaction. Use
+    [`signAndSendTransactionMessageWithSigners`](#sign-and-send-transaction-message-with-signers) if
+    you need to sign and send in a single step.
 </Callout>
 
 #### signTransactionMessageWithSigners [!toc] [#sign-transaction-message-with-signers]
@@ -368,7 +381,11 @@ const fullySignedTransaction = await signTransactionMessageWithSigners(transacti
 ```
 
 <Callout type="warn">
-    This function will throw if the transaction message does not carry a [`TransactionSigner`](/api/type-aliases/TransactionSigner) implementation for every required signer. To partially sign a message that you know to carry a strict subset of the required signers, use [`partiallySignTransactionMessageWithSigners`](#partially-sign-transaction-message-with-signers).
+    This function will throw if the transaction message does not carry a
+    [`TransactionSigner`](/api/type-aliases/TransactionSigner) implementation for every required
+    signer. To partially sign a message that you know to carry a strict subset of the required
+    signers, use
+    [`partiallySignTransactionMessageWithSigners`](#partially-sign-transaction-message-with-signers).
 </Callout>
 
 #### signAndSendTransactionMessageWithSigners [!toc] [#sign-and-send-transaction-message-with-signers]
@@ -459,7 +476,10 @@ const signedTransaction = await partiallySignTransactionWithSigners(
 ```
 
 <Callout type="info">
-    This function ignores any [`TransactionSendingSigners`](/api/type-aliases/TransactionSendingSigner) in the provided array. Use [`signAndSendTransactionWithSigners`](#sign-and-send-transaction-with-signers) if you need to sign and send.
+    This function ignores any
+    [`TransactionSendingSigners`](/api/type-aliases/TransactionSendingSigner) in the provided array.
+    Use [`signAndSendTransactionWithSigners`](#sign-and-send-transaction-with-signers) if you need
+    to sign and send.
 </Callout>
 
 #### signTransactionWithSigners [!toc] [#sign-transaction-with-signers]
@@ -467,11 +487,7 @@ const signedTransaction = await partiallySignTransactionWithSigners(
 Signs a compiled transaction using the provided signers and asserts that all required signatures are present. The returned transaction satisfies the [`FullySignedTransaction`](/api/type-aliases/FullySignedTransaction) type.
 
 ```ts twoslash
-import {
-    Transaction,
-    TransactionWithLifetime,
-    TransactionPartialSigner,
-} from '@solana/kit';
+import { Transaction, TransactionWithLifetime, TransactionPartialSigner } from '@solana/kit';
 const compiledTransaction = null as unknown as Transaction & TransactionWithLifetime;
 const signerA = null as unknown as TransactionPartialSigner;
 const signerB = null as unknown as TransactionPartialSigner;
@@ -485,7 +501,9 @@ const fullySignedTransaction = await signTransactionWithSigners(
 ```
 
 <Callout type="warn">
-    This function will throw if the resultant transaction is missing a signature for one of its required signers. To partially sign, use [`partiallySignTransactionWithSigners`](#partially-sign-transaction-with-signers).
+    This function will throw if the resultant transaction is missing a signature for one of its
+    required signers. To partially sign, use
+    [`partiallySignTransactionWithSigners`](#partially-sign-transaction-with-signers).
 </Callout>
 
 #### signAndSendTransactionWithSigners [!toc] [#sign-and-send-transaction-with-signers]

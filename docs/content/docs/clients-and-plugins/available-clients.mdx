@@ -1,0 +1,17 @@
+---
+title: Available clients
+description: Ready-made clients for common environments
+---
+
+<Callout type="warn" title="Planned Content">
+**Status:** New page
+
+This page will start with one unified table listing all known clients (Kit-maintained and community, mixed together) with columns for name, package, a brief description, and a link to documentation. Kit-maintained clients will link to the detailed sections below on this same page; community clients will link to their external documentation.
+
+Below the table, detailed sections will document each Kit-maintained client: **`createClient(config)`** from `@solana/kit-client-rpc` (production client for mainnet/devnet/testnet, requires `url` and `payer`), **`createLocalClient(config?)`** from `@solana/kit-client-rpc` (local development client, optional payer with auto-generation and 100 SOL airdrop), and **`createClient(config?)`** from `@solana/kit-client-litesvm` (LiteSVM test client, in-process SVM, no network). Each section will cover what the client composes, config options, and the resulting client shape. Alternatively, these sections could simply link to the package READMEs to avoid duplication, since the Installation page with selectable cards already handles the setup story.
+
+**Draws from:** `@solana/kit-client-rpc` README, `@solana/kit-client-litesvm` README, kit-plugins main README client table.
+
+**Links to:** [Creating Custom Clients](/docs/clients-and-plugins/creating-custom-clients).
+
+</Callout>

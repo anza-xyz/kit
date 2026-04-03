@@ -1,0 +1,15 @@
+---
+title: Fetching accounts
+description: Read and decode on-chain account data
+---
+
+<Callout type="warn" title="Planned Content">
+**Status:** New page
+
+This guide will cover reading account data from the blockchain: **`fetchEncodedAccount(client.rpc, address)`** as the recommended higher-level helper for fetching accounts, **`client.rpc.getMultipleAccounts(addresses)`** for batch fetching, program plugin fetch helpers (e.g. `client.accounts.mint.fetch(address)`) for typed fetch + decode in one call, manual decoding with codecs for accounts without a program plugin, understanding encoded vs decoded account data, and account subscriptions via `rpcSubscriptions` for real-time updates.
+
+**Draws from:** Current `getting-started/fetch-account.mdx` (account fetching and decoding with `fetchMint`), `@solana/kit-plugin-rpc` README.
+
+**Links to:** [Advanced Guides — Codecs](/docs/advanced-guides/codecs) for the serialization system, [Advanced Guides — RPC Requests](/docs/advanced-guides/rpc) for the full RPC API, [Using Program Plugins](/docs/guides/using-program-plugins) for typed account access.
+
+</Callout>

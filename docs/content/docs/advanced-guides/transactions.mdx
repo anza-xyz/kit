@@ -3,6 +3,15 @@ title: Transactions
 description: Build and compile transaction messages
 ---
 
+<Callout type="warn" title="Planned Changes">
+**Status:** Existing page — significant enrichment planned
+
+This page will be updated to show how `rpcTransactionPlanExecutor` handles blockhash fetching, CU estimation, signing, and confirmation, add references to the plugin-based transaction workflow, add a section about estimating compute units, and document the new unified transaction config setters (`setTransactionMessageComputeUnitLimit`, etc.). The `pipe()` / immutability walkthrough from the current `getting-started/build-transaction.mdx` will be ported to [Kit Without a Client](/docs/advanced-guides/kit-without-a-client).
+
+**Current content preserved:** Yes, all existing content stays and is enriched.
+
+</Callout>
+
 ## Introduction
 
 To take an action on Solana, whether to place an order, transfer an asset, or more generally to modify data on the blockchain, you need to prepare a transaction and sign to pay for it to be executed on the network. You can use Kit to create, sign, encode, and decode transactions.
@@ -340,7 +349,7 @@ try {
     method to sign and send the transaction in a single step.
 </Callout>
 
-For a comprehensive guide on all signing functions — including the lower-level [`partiallySignTransactionWithSigners`](/api/functions/partiallySignTransactionWithSigners), [`signTransactionWithSigners`](/api/functions/signTransactionWithSigners), and [`signAndSendTransactionWithSigners`](/api/functions/signAndSendTransactionWithSigners) functions that accept an explicit array of signers and a compiled transaction — see the [Signing with signers](/docs/concepts/signers#signing-with-signers) section.
+For a comprehensive guide on all signing functions — including the lower-level [`partiallySignTransactionWithSigners`](/api/functions/partiallySignTransactionWithSigners), [`signTransactionWithSigners`](/api/functions/signTransactionWithSigners), and [`signAndSendTransactionWithSigners`](/api/functions/signAndSendTransactionWithSigners) functions that accept an explicit array of signers and a compiled transaction — see the [Signing with signers](/docs/advanced-guides/signers#signing-with-signers) section.
 
 Building transaction messages using `TransactionSigners` is the recommended way to create self-signable transaction messages. To sign with a `CryptoKey` directly, you first have to compile the transaction message.
 
@@ -394,7 +403,12 @@ try {
 </Callout>
 
 <Callout type="info">
-    If you have [`TransactionSigner`](/api/type-aliases/TransactionSigner) objects rather than raw `CryptoKeyPairs`, you can use [`signTransactionWithSigners`](/api/functions/signTransactionWithSigners) and [`partiallySignTransactionWithSigners`](/api/functions/partiallySignTransactionWithSigners) instead. See the [Signing with signers](/docs/concepts/signers#signing-compiled-transactions) section for details.
+    If you have [`TransactionSigner`](/api/type-aliases/TransactionSigner) objects rather than raw
+    `CryptoKeyPairs`, you can use
+    [`signTransactionWithSigners`](/api/functions/signTransactionWithSigners) and
+    [`partiallySignTransactionWithSigners`](/api/functions/partiallySignTransactionWithSigners)
+    instead. See the [Signing with
+    signers](/docs/advanced-guides/signers#signing-compiled-transactions) section for details.
 </Callout>
 
 ## Serializing transactions
