@@ -1,13 +1,10 @@
 import { address } from '@solana/addresses';
-import { bytesEqual } from '@solana/codecs-core';
 import { SOLANA_ERROR__SIGNER__WALLET_MULTISIGN_UNIMPLEMENTED, SolanaError } from '@solana/errors';
 import { getAbortablePromise } from '@solana/promises';
 import { TransactionModifyingSigner } from '@solana/signers';
-import { getCompiledTransactionMessageDecoder } from '@solana/transaction-messages';
 import {
-    assertIsTransactionWithinSizeLimit,
     getTransactionCodec,
-    getTransactionLifetimeConstraintFromCompiledTransactionMessage,
+    reconstructEncodedTransactionFromOriginalTransaction,
     Transaction,
     TransactionWithinSizeLimit,
     TransactionWithLifetime,
@@ -88,57 +85,11 @@ export function useWalletAccountTransactionSigner<TWalletAccount extends UiWalle
                     transaction: wireTransactionBytes as Uint8Array,
                 };
                 const { signedTransaction } = await getAbortablePromise(signTransaction(inputWithOptions), abortSignal);
-                const decodedSignedTransaction = transactionCodec.decode(
+                const reconstructedTransaction = await reconstructEncodedTransactionFromOriginalTransaction(
+                    transaction,
                     signedTransaction,
-                ) as (typeof transactions)[number];
-
-                assertIsTransactionWithinSizeLimit(decodedSignedTransaction);
-
-                const existingLifetime =
-                    'lifetimeConstraint' in transaction
-                        ? (transaction as TransactionWithLifetime).lifetimeConstraint
-                        : undefined;
-
-                if (existingLifetime) {
-                    if (bytesEqual(decodedSignedTransaction.messageBytes, transaction.messageBytes)) {
-                        // If the transaction has identical bytes, the lifetime won't have changed
-                        return Object.freeze([
-                            {
-                                ...decodedSignedTransaction,
-                                lifetimeConstraint: existingLifetime,
-                            },
-                        ]);
-                    }
-
-                    // If the transaction has changed, check the lifetime constraint field
-                    const compiledTransactionMessage = getCompiledTransactionMessageDecoder().decode(
-                        decodedSignedTransaction.messageBytes,
-                    );
-                    const currentToken =
-                        'blockhash' in existingLifetime ? existingLifetime.blockhash : existingLifetime.nonce;
-
-                    if (compiledTransactionMessage.lifetimeToken === currentToken) {
-                        return Object.freeze([
-                            {
-                                ...decodedSignedTransaction,
-                                lifetimeConstraint: existingLifetime,
-                            },
-                        ]);
-                    }
-                }
-
-                // If we get here then there is no existing lifetime, or the lifetime has changed. We need to attach a new lifetime
-                const compiledTransactionMessage = getCompiledTransactionMessageDecoder().decode(
-                    decodedSignedTransaction.messageBytes,
                 );
-                const lifetimeConstraint =
-                    await getTransactionLifetimeConstraintFromCompiledTransactionMessage(compiledTransactionMessage);
-                return Object.freeze([
-                    {
-                        ...decodedSignedTransaction,
-                        lifetimeConstraint,
-                    },
-                ]);
+                return Object.freeze([reconstructedTransaction]);
             },
         }),
         [uiWalletAccount.address, signTransaction],
