@@ -672,11 +672,11 @@ export const SolanaErrorMessages: Readonly<{
         'environments that do not support Ed25519.\n\nFor a list of runtimes that ' +
         'currently support Ed25519 operations, visit ' +
         'https://github.com/WICG/webcrypto-secure-curves/issues/20.',
-    [SOLANA_ERROR__SUBTLE_CRYPTO__EXPORT_FUNCTION_UNIMPLEMENTED]:
-        'No signature verification implementation could be found.',
+    [SOLANA_ERROR__SUBTLE_CRYPTO__EXPORT_FUNCTION_UNIMPLEMENTED]: 'No key export implementation could be found.',
     [SOLANA_ERROR__SUBTLE_CRYPTO__GENERATE_FUNCTION_UNIMPLEMENTED]: 'No key generation implementation could be found.',
     [SOLANA_ERROR__SUBTLE_CRYPTO__SIGN_FUNCTION_UNIMPLEMENTED]: 'No signing implementation could be found.',
-    [SOLANA_ERROR__SUBTLE_CRYPTO__VERIFY_FUNCTION_UNIMPLEMENTED]: 'No key export implementation could be found.',
+    [SOLANA_ERROR__SUBTLE_CRYPTO__VERIFY_FUNCTION_UNIMPLEMENTED]:
+        'No signature verification implementation could be found.',
     [SOLANA_ERROR__TIMESTAMP_OUT_OF_RANGE]:
         'Timestamp value must be in the range [-(2n ** 63n), (2n ** 63n) - 1]. `$value` given',
     [SOLANA_ERROR__TRANSACTION_ERROR__ACCOUNT_BORROW_OUTSTANDING]:
