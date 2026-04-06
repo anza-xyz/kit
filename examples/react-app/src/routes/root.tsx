@@ -7,6 +7,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { Balance } from '../components/Balance';
 import { FeatureNotSupportedCallout } from '../components/FeatureNotSupportedCallout';
 import { FeaturePanel } from '../components/FeaturePanel';
+import { SlotIndicator } from '../components/SlotIndicator';
 import { SolanaPartialSignTransactionFeaturePanel } from '../components/SolanaPartialSignTransactionFeaturePanel';
 import { SolanaSignAndSendTransactionFeaturePanel } from '../components/SolanaSignAndSendTransactionFeaturePanel';
 import { SolanaSignMessageFeaturePanel } from '../components/SolanaSignMessageFeaturePanel';
@@ -21,6 +22,16 @@ function Root() {
         chain,
         selectedWalletAccount && getUiWalletAccountStorageKey(selectedWalletAccount),
     ].filter(Boolean);
+    const slotIndicator = (
+        <Flex direction="column" align="end">
+            <Heading as="h4" size="3">
+                Slot
+            </Heading>
+            <ErrorBoundary fallback={<Text>&ndash;</Text>} key={chain}>
+                <SlotIndicator />
+            </ErrorBoundary>
+        </Flex>
+    );
     return (
         <Container mx={{ initial: '3', xs: '6' }}>
             {selectedWalletAccount ? (
@@ -37,18 +48,21 @@ function Root() {
                                 </Code>
                             </Box>
                         </Flex>
-                        <Flex direction="column" align="end">
-                            <Heading as="h4" size="3">
-                                Balance
-                            </Heading>
-                            <ErrorBoundary
-                                fallback={<Text>&ndash;</Text>}
-                                key={`${selectedWalletAccount.address}:${chain}`}
-                            >
-                                <Suspense fallback={<Spinner loading my="1" />}>
-                                    <Balance account={selectedWalletAccount} />
-                                </Suspense>
-                            </ErrorBoundary>
+                        <Flex gap="6" align="end">
+                            {slotIndicator}
+                            <Flex direction="column" align="end">
+                                <Heading as="h4" size="3">
+                                    Balance
+                                </Heading>
+                                <ErrorBoundary
+                                    fallback={<Text>&ndash;</Text>}
+                                    key={`${selectedWalletAccount.address}:${chain}`}
+                                >
+                                    <Suspense fallback={<Spinner loading my="1" />}>
+                                        <Balance account={selectedWalletAccount} />
+                                    </Suspense>
+                                </ErrorBoundary>
+                            </Flex>
                         </Flex>
                     </Flex>
                     <DataList.Root orientation={{ initial: 'vertical', sm: 'horizontal' }} size="3">
@@ -87,7 +101,10 @@ function Root() {
                     </DataList.Root>
                 </Flex>
             ) : (
-                <Text as="p">Click &ldquo;Connect Wallet&rdquo; to get started.</Text>
+                <Flex gap="6" direction="column">
+                    <Flex justify="end">{slotIndicator}</Flex>
+                    <Text as="p">Click &ldquo;Connect Wallet&rdquo; to get started.</Text>
+                </Flex>
             )}
         </Container>
     );

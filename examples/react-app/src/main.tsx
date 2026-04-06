@@ -25,10 +25,7 @@ root.render(
     <StrictMode>
         <Theme>
             <ChainContextProvider>
-                <SelectedWalletAccountContextProvider
-                    filterWallets={(_: UiWallet) => true}
-                    stateSync={stateSync}
-                >
+                <SelectedWalletAccountContextProvider filterWallets={(_: UiWallet) => true} stateSync={stateSync}>
                     <RpcContextProvider>
                         <Flex direction="column">
                             <Nav />
