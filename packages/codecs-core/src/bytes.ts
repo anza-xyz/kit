@@ -106,16 +106,16 @@ export const fixBytes = (bytes: ReadonlyUint8Array | Uint8Array, length: number)
  * Returns true if and only if the provided `data` byte array contains
  * the provided `bytes` byte array at the specified `offset`.
  *
- * @param data - The byte sequence to search for.
- * @param bytes - The byte array in which to search for `data`.
- * @param offset - The position in `bytes` where the search begins.
+ * @param data - The byte array in which to search for `bytes`.
+ * @param bytes - The byte sequence to search for.
+ * @param offset - The position in `data` where the search begins.
  *
  * @example
  * ```ts
- * const bytes = new Uint8Array([0x01, 0x02, 0x03, 0x04]);
- * const data = new Uint8Array([0x02, 0x03]);
- * containsBytes(bytes, data, 1); // true
- * containsBytes(bytes, data, 2); // false
+ * const data = new Uint8Array([0x01, 0x02, 0x03, 0x04]);
+ * const bytes = new Uint8Array([0x02, 0x03]);
+ * containsBytes(data, bytes, 1); // true
+ * containsBytes(data, bytes, 2); // false
  * ```
  */
 export function containsBytes(
