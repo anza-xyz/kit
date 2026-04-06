@@ -27,6 +27,7 @@ describe('createBlockHeightExceedencePromiseFactory', () => {
         });
         const rpcSubscriptions = {
             slotNotifications: () => ({
+                reactive: jest.fn(),
                 subscribe: createSubscriptionIterable,
             }),
         };

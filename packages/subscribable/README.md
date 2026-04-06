@@ -27,6 +27,28 @@ dataPublisher.on('error', e => {
 }); // OK.
 ```
 
+### `ReactiveStore<T>`
+
+This type represents a reactive store that holds the latest value published to a data channel. It exposes a `{ getState, getError, subscribe }` contract compatible with `useSyncExternalStore`, Svelte stores, and other reactive primitives.
+
+```ts
+const store: ReactiveStore<AccountInfo> = /* ... */;
+
+// React
+const state = useSyncExternalStore(store.subscribe, () => {
+    if (store.getError()) throw store.getError();
+    return store.getState();
+});
+
+// Vue
+const data = shallowRef(store.getState());
+const error = shallowRef(store.getError());
+store.subscribe(() => {
+    data.value = store.getState();
+    error.value = store.getError();
+});
+```
+
 ### `TypedEventEmitter<TEventMap>`
 
 This type allows you to type `addEventListener` and `removeEventListener` so that the call signature of the listener matches the event type given.
@@ -80,6 +102,28 @@ Things to note:
 - If there are messages in the queue and an error occurs, all queued messages will be vended to the iterator before the error is thrown.
 - If there are messages in the queue and the abort signal fires, all queued messages will be vended to the iterator after which it will return.
 - Any new iterators created after the first error is encountered will reject with that error when polled.
+
+### `createReactiveStoreFromDataPublisher({ abortSignal, dataChannelName, dataPublisher, errorChannelName })`
+
+Returns a `ReactiveStore` given a data publisher. The store holds the most recent message published to `dataChannelName` and notifies subscribers on each update. When a message is published to `errorChannelName`, the error is captured in `getError()` and subscribers are notified. Triggering the abort signal disconnects the store from the data publisher.
+
+```ts
+const store = createReactiveStoreFromDataPublisher({
+    abortSignal: AbortSignal.timeout(10_000),
+    dataChannelName: 'notification',
+    dataPublisher,
+    errorChannelName: 'error',
+});
+const unsubscribe = store.subscribe(() => {
+    console.log('State updated:', store.getState());
+});
+```
+
+Things to note:
+
+- `getState()` returns `undefined` until the first notification arrives.
+- On error, `getState()` continues to return the last known value and `getError()` returns the error. Only the first error is captured.
+- The function returned by `subscribe` is idempotent &mdash; calling it multiple times is safe.
 
 ### `demultiplexDataPublisher(publisher, sourceChannelName, messageTransformer)`
 

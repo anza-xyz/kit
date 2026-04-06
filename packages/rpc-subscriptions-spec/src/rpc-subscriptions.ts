@@ -1,6 +1,6 @@
 import { SOLANA_ERROR__RPC_SUBSCRIPTIONS__CANNOT_CREATE_SUBSCRIPTION_PLAN, SolanaError } from '@solana/errors';
 import { Callable, Flatten, OverloadImplementations, UnionToIntersection } from '@solana/rpc-spec-types';
-import { createAsyncIterableFromDataPublisher } from '@solana/subscribable';
+import { createAsyncIterableFromDataPublisher, createReactiveStoreFromDataPublisher } from '@solana/subscribable';
 
 import { RpcSubscriptionsApi, RpcSubscriptionsPlan } from './rpc-subscriptions-api';
 import { PendingRpcSubscriptionsRequest, RpcSubscribeOptions } from './rpc-subscriptions-request';
@@ -79,6 +79,18 @@ function createPendingRpcSubscription<TNotification>(
     subscriptionsPlan: RpcSubscriptionsPlan<TNotification>,
 ): PendingRpcSubscriptionsRequest<TNotification> {
     return {
+        async reactive({ abortSignal }: RpcSubscribeOptions) {
+            const notificationsDataPublisher = await transport({
+                signal: abortSignal,
+                ...subscriptionsPlan,
+            });
+            return createReactiveStoreFromDataPublisher<TNotification>({
+                abortSignal,
+                dataChannelName: 'notification',
+                dataPublisher: notificationsDataPublisher,
+                errorChannelName: 'error',
+            });
+        },
         async subscribe({ abortSignal }: RpcSubscribeOptions): Promise<AsyncIterable<TNotification>> {
             const notificationsDataPublisher = await transport({
                 signal: abortSignal,
