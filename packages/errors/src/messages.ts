@@ -334,7 +334,7 @@ export const SolanaErrorMessages: Readonly<{
     [SOLANA_ERROR__ADDRESSES__STRING_LENGTH_OUT_OF_RANGE]:
         'Expected base58-encoded address string of length in the range [32, 44]. Actual length: $actualLength.',
     [SOLANA_ERROR__BLOCKHASH_STRING_LENGTH_OUT_OF_RANGE]:
-        'Expected base58-encoded blockash string of length in the range [32, 44]. Actual length: $actualLength.',
+        'Expected base58-encoded blockhash string of length in the range [32, 44]. Actual length: $actualLength.',
     [SOLANA_ERROR__BLOCK_HEIGHT_EXCEEDED]:
         'The network has progressed past the last block for which this transaction could have been committed.',
     [SOLANA_ERROR__CODECS__CANNOT_DECODE_EMPTY_BYTE_ARRAY]:
