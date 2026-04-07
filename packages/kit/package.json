@@ -119,6 +119,7 @@
         "@solana/rpc-parsed-types": "workspace:*",
         "@solana/rpc-spec-types": "workspace:*",
         "@solana/rpc-subscriptions": "workspace:*",
+        "@solana/subscribable": "workspace:*",
         "@solana/rpc-types": "workspace:*",
         "@solana/signers": "workspace:*",
         "@solana/sysvars": "workspace:*",

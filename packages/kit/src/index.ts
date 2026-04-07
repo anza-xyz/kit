@@ -25,6 +25,7 @@ export * from '@solana/rpc-types';
 export * from '@solana/signers';
 export * from '@solana/transaction-messages';
 export * from '@solana/transactions';
+export * from './create-reactive-store-from-rpc-and-subscription';
 export * from './airdrop';
 export * from './compute-unit-limit-estimation';
 export * from './decompile-transaction-message-fetching-lookup-tables';

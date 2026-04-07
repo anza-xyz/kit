@@ -38,6 +38,39 @@ await airdrop({
 
 > [!NOTE] This only works on test clusters.
 
+### `createReactiveStoreFromRpcAndSubscription(config)`
+
+Creates a `ReactiveStore` that combines an initial RPC fetch with an ongoing subscription to keep its state up to date. Uses slot-based comparison to ensure only the most recent value is kept, regardless of whether it came from the RPC response or a subscription notification.
+
+The returned store is compatible with React's `useSyncExternalStore`, Svelte stores, Solid's `from()`, and any other reactive primitive that expects a `{ subscribe, getState }` contract.
+
+```ts
+import {
+    address,
+    createReactiveStoreFromRpcAndSubscription,
+    createSolanaRpc,
+    createSolanaRpcSubscriptions,
+} from '@solana/kit';
+
+const rpc = createSolanaRpc('http://127.0.0.1:8899');
+const rpcSubscriptions = createSolanaRpcSubscriptions('ws://127.0.0.1:8900');
+const myAddress = address('FnHyam9w4NZoWR6mKN1CuGBritdsEWZQa4Z4oawLZGxa');
+
+const balanceStore = createReactiveStoreFromRpcAndSubscription({
+    abortSignal: AbortSignal.timeout(60_000),
+    rpcRequest: rpc.getBalance(myAddress, { commitment: 'confirmed' }),
+    rpcValueMapper: lamports => lamports,
+    subscriptionRequest: rpcSubscriptions.accountNotifications(myAddress),
+    subscriptionValueMapper: ({ lamports }) => lamports,
+});
+
+const unsubscribe = balanceStore.subscribe(() => {
+    const error = balanceStore.getError();
+    if (error) console.error('Error:', error);
+    else console.log('Balance:', balanceStore.getState());
+});
+```
+
 ### `decompileTransactionMessageFetchingLookupTables(compiledTransactionMessage, rpc, config)`
 
 Returns a `TransactionMessage` from a `CompiledTransactionMessage`. If any of the accounts in the compiled message require an address lookup table to find their address, this function will use the supplied RPC instance to fetch the contents of the address lookup table from the network.
