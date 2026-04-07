@@ -209,6 +209,7 @@ import {
     SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_RENT,
     SOLANA_ERROR__TRANSACTION_ERROR__PROGRAM_EXECUTION_TEMPORARILY_RESTRICTED,
     SOLANA_ERROR__TRANSACTION_ERROR__UNKNOWN,
+    SOLANA_ERROR__WALLET__NOT_CONNECTED,
     SolanaErrorCode,
 } from './codes';
 import { RpcSimulateTransactionResult } from './json-rpc-error';
@@ -860,6 +861,9 @@ export type SolanaErrorContext = ReadonlyContextValue<
             [SOLANA_ERROR__TRANSACTION__VERSION_ZERO_MUST_BE_ENCODED_WITH_SIGNATURES_FIRST]: {
                 firstByte: number;
                 transactionBytes: ReadonlyUint8Array;
+            };
+            [SOLANA_ERROR__WALLET__NOT_CONNECTED]: {
+                operation: string;
             };
         }
     >

@@ -362,6 +362,10 @@ export const SOLANA_ERROR__PROGRAM_CLIENTS__RESOLVED_INSTRUCTION_INPUT_MUST_BE_N
 export const SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_ACCOUNT_TYPE = 8500005;
 export const SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_ACCOUNT = 8500006;
 
+// Wallet-related errors.
+// Reserve error codes in the range [8900000-8900999].
+export const SOLANA_ERROR__WALLET__NOT_CONNECTED = 8900000;
+
 // Invariant violation errors.
 // Reserve error codes in the range [9900000-9900999].
 // These errors should only be thrown when there is a bug with the
@@ -678,7 +682,8 @@ export type SolanaErrorCode =
     | typeof SOLANA_ERROR__TRANSACTION_ERROR__WOULD_EXCEED_ACCOUNT_DATA_TOTAL_LIMIT
     | typeof SOLANA_ERROR__TRANSACTION_ERROR__WOULD_EXCEED_MAX_ACCOUNT_COST_LIMIT
     | typeof SOLANA_ERROR__TRANSACTION_ERROR__WOULD_EXCEED_MAX_BLOCK_COST_LIMIT
-    | typeof SOLANA_ERROR__TRANSACTION_ERROR__WOULD_EXCEED_MAX_VOTE_COST_LIMIT;
+    | typeof SOLANA_ERROR__TRANSACTION_ERROR__WOULD_EXCEED_MAX_VOTE_COST_LIMIT
+    | typeof SOLANA_ERROR__WALLET__NOT_CONNECTED;
 
 /**
  * Errors of this type are understood to have an optional {@link SolanaError} nested inside as

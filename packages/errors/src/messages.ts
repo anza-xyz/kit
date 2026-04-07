@@ -295,6 +295,7 @@ import {
     SOLANA_ERROR__TRANSACTION_ERROR__WOULD_EXCEED_MAX_ACCOUNT_COST_LIMIT,
     SOLANA_ERROR__TRANSACTION_ERROR__WOULD_EXCEED_MAX_BLOCK_COST_LIMIT,
     SOLANA_ERROR__TRANSACTION_ERROR__WOULD_EXCEED_MAX_VOTE_COST_LIMIT,
+    SOLANA_ERROR__WALLET__NOT_CONNECTED,
     SolanaErrorCode,
 } from './codes';
 
@@ -812,4 +813,5 @@ export const SolanaErrorMessages: Readonly<{
         'Transaction has $actualCount instructions but the maximum allowed is $maxAllowed',
     [SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNTS_IN_INSTRUCTION]:
         'The instruction at index $instructionIndex has $actualCount account references but the maximum allowed is $maxAllowed',
+    [SOLANA_ERROR__WALLET__NOT_CONNECTED]: 'Cannot $operation: no wallet connected',
 };
