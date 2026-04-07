@@ -87,15 +87,8 @@
     "devDependencies": {
         "@solana/codecs-core": "workspace:*",
         "@solana/event-target-impl": "workspace:*",
-        "@solana/instructions": "workspace:*"
-    },
-    "peerDependencies": {
+        "@solana/instructions": "workspace:*",
         "typescript": "^5.0.0"
-    },
-    "peerDependenciesMeta": {
-        "typescript": {
-            "optional": true
-        }
     },
     "engines": {
         "node": ">=20.18.0"

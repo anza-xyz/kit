@@ -82,15 +82,8 @@
         "@solana/transactions": "workspace:*"
     },
     "devDependencies": {
-        "@solana/web3.js": "^1"
-    },
-    "peerDependencies": {
+        "@solana/web3.js": "^1",
         "typescript": "^5.0.0"
-    },
-    "peerDependenciesMeta": {
-        "typescript": {
-            "optional": true
-        }
     },
     "engines": {
         "node": ">=20.18.0"

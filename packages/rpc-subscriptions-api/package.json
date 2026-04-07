@@ -83,15 +83,8 @@
         "@solana/transactions": "workspace:*"
     },
     "devDependencies": {
-        "@solana/rpc-subscriptions-channel-websocket": "workspace:*"
-    },
-    "peerDependencies": {
+        "@solana/rpc-subscriptions-channel-websocket": "workspace:*",
         "typescript": "^5.0.0"
-    },
-    "peerDependenciesMeta": {
-        "typescript": {
-            "optional": true
-        }
     },
     "engines": {
         "node": ">=20.18.0"

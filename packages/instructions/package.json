@@ -78,15 +78,8 @@
         "@solana/errors": "workspace:*"
     },
     "devDependencies": {
-        "@solana/addresses": "workspace:*"
-    },
-    "peerDependencies": {
+        "@solana/addresses": "workspace:*",
         "typescript": "^5.0.0"
-    },
-    "peerDependenciesMeta": {
-        "typescript": {
-            "optional": true
-        }
     },
     "engines": {
         "node": ">=20.18.0"

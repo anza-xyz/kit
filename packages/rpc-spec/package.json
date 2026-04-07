@@ -77,15 +77,10 @@
         "@solana/errors": "workspace:*",
         "@solana/rpc-spec-types": "workspace:*"
     },
-    "peerDependencies": {
-        "typescript": "^5.0.0"
-    },
-    "peerDependenciesMeta": {
-        "typescript": {
-            "optional": true
-        }
-    },
     "engines": {
         "node": ">=20.18.0"
+    },
+    "devDependencies": {
+        "typescript": "^5.0.0"
     }
 }

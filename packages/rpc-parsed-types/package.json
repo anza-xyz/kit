@@ -73,15 +73,8 @@
     ],
     "devDependencies": {
         "@solana/addresses": "workspace:*",
-        "@solana/rpc-types": "workspace:*"
-    },
-    "peerDependencies": {
+        "@solana/rpc-types": "workspace:*",
         "typescript": "^5.0.0"
-    },
-    "peerDependenciesMeta": {
-        "typescript": {
-            "optional": true
-        }
     },
     "engines": {
         "node": ">=20.18.0"

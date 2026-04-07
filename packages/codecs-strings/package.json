@@ -81,17 +81,14 @@
     },
     "devDependencies": {
         "@solana/text-encoding-impl": "workspace:*",
-        "tinybench": "^6.0.0"
+        "tinybench": "^6.0.0",
+        "typescript": "^5.0.0"
     },
     "peerDependencies": {
-        "fastestsmallesttextencoderdecoder": "^1.0.22",
-        "typescript": "^5.0.0"
+        "fastestsmallesttextencoderdecoder": "^1.0.22"
     },
     "peerDependenciesMeta": {
         "fastestsmallesttextencoderdecoder": {
-            "optional": true
-        },
-        "typescript": {
             "optional": true
         }
     },

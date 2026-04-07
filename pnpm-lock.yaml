@@ -338,6 +338,7 @@ importers:
       '@solana/rpc-types':
         specifier: workspace:*
         version: link:../rpc-types
+    devDependencies:
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
@@ -359,6 +360,7 @@ importers:
       '@solana/nominal-types':
         specifier: workspace:*
         version: link:../nominal-types
+    devDependencies:
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
@@ -368,6 +370,7 @@ importers:
       '@solana/errors':
         specifier: workspace:*
         version: link:../errors
+    devDependencies:
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
@@ -422,6 +425,7 @@ importers:
       '@solana/options':
         specifier: workspace:*
         version: link:../options
+    devDependencies:
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
@@ -431,13 +435,13 @@ importers:
       '@solana/errors':
         specifier: workspace:*
         version: link:../errors
-      typescript:
-        specifier: ^5.0.0
-        version: 5.9.3
     devDependencies:
       tinybench:
         specifier: ^6.0.0
         version: 6.0.0
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
 
   packages/codecs-data-structures:
     dependencies:
@@ -450,13 +454,13 @@ importers:
       '@solana/errors':
         specifier: workspace:*
         version: link:../errors
-      typescript:
-        specifier: ^5.0.0
-        version: 5.9.3
     devDependencies:
       '@solana/codecs-strings':
         specifier: workspace:*
         version: link:../codecs-strings
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
 
   packages/codecs-numbers:
     dependencies:
@@ -466,6 +470,7 @@ importers:
       '@solana/errors':
         specifier: workspace:*
         version: link:../errors
+    devDependencies:
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
@@ -484,9 +489,6 @@ importers:
       fastestsmallesttextencoderdecoder:
         specifier: ^1.0.22
         version: 1.0.22
-      typescript:
-        specifier: ^5.0.0
-        version: 5.9.3
     devDependencies:
       '@solana/text-encoding-impl':
         specifier: workspace:*
@@ -494,6 +496,9 @@ importers:
       tinybench:
         specifier: ^6.0.0
         version: 6.0.0
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
 
   packages/compat:
     dependencies:
@@ -515,13 +520,13 @@ importers:
       '@solana/transactions':
         specifier: workspace:*
         version: link:../transactions
-      typescript:
-        specifier: ^5.0.0
-        version: 5.9.3
     devDependencies:
       '@solana/web3.js':
         specifier: ^1
         version: 1.98.4(bufferutil@4.0.9)(typescript@5.9.3)(utf-8-validate@5.0.10)
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
 
   packages/crypto-impl: {}
 
@@ -533,6 +538,7 @@ importers:
       commander:
         specifier: 14.0.3
         version: 14.0.3
+    devDependencies:
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
@@ -577,10 +583,6 @@ importers:
   packages/event-target-impl: {}
 
   packages/fast-stable-stringify:
-    dependencies:
-      typescript:
-        specifier: ^5.0.0
-        version: 5.9.3
     devDependencies:
       '@types/json-stable-stringify':
         specifier: ^1.2.0
@@ -588,6 +590,9 @@ importers:
       json-stable-stringify:
         specifier: ^1.3.0
         version: 1.3.0
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
 
   packages/fetch-impl:
     devDependencies:
@@ -599,7 +604,7 @@ importers:
         version: 8.0.0
 
   packages/functional:
-    dependencies:
+    devDependencies:
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
@@ -624,9 +629,6 @@ importers:
       '@solana/transactions':
         specifier: workspace:*
         version: link:../transactions
-      typescript:
-        specifier: ^5.0.0
-        version: 5.9.3
     devDependencies:
       '@solana/addresses':
         specifier: workspace:*
@@ -637,6 +639,9 @@ importers:
       '@solana/functional':
         specifier: workspace:*
         version: link:../functional
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
 
   packages/instructions:
     dependencies:
@@ -646,13 +651,13 @@ importers:
       '@solana/errors':
         specifier: workspace:*
         version: link:../errors
-      typescript:
-        specifier: ^5.0.0
-        version: 5.9.3
     devDependencies:
       '@solana/addresses':
         specifier: workspace:*
         version: link:../addresses
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
 
   packages/keys:
     dependencies:
@@ -671,13 +676,13 @@ importers:
       '@solana/nominal-types':
         specifier: workspace:*
         version: link:../nominal-types
-      typescript:
-        specifier: ^5.0.0
-        version: 5.9.3
     devDependencies:
       tinybench:
         specifier: ^6.0.0
         version: 6.0.0
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
 
   packages/kit:
     dependencies:
@@ -753,12 +758,13 @@ importers:
       '@solana/transactions':
         specifier: workspace:*
         version: link:../transactions
+    devDependencies:
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
 
   packages/nominal-types:
-    dependencies:
+    devDependencies:
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
@@ -789,6 +795,7 @@ importers:
       '@solana/nominal-types':
         specifier: workspace:*
         version: link:../nominal-types
+    devDependencies:
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
@@ -810,12 +817,13 @@ importers:
       '@solana/errors':
         specifier: workspace:*
         version: link:../errors
+    devDependencies:
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
 
   packages/plugin-core:
-    dependencies:
+    devDependencies:
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
@@ -843,6 +851,7 @@ importers:
       '@solana/signers':
         specifier: workspace:*
         version: link:../signers
+    devDependencies:
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
@@ -876,9 +885,6 @@ importers:
       '@solana/signers':
         specifier: workspace:*
         version: link:../signers
-      typescript:
-        specifier: ^5.0.0
-        version: 5.9.3
     devDependencies:
       '@solana/codecs-data-structures':
         specifier: workspace:*
@@ -886,6 +892,9 @@ importers:
       '@solana/codecs-numbers':
         specifier: workspace:*
         version: link:../codecs-numbers
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
 
   packages/programs:
     dependencies:
@@ -895,9 +904,6 @@ importers:
       '@solana/errors':
         specifier: workspace:*
         version: link:../errors
-      typescript:
-        specifier: ^5.0.0
-        version: 5.9.3
     devDependencies:
       '@solana/functional':
         specifier: workspace:*
@@ -905,9 +911,12 @@ importers:
       '@solana/transaction-messages':
         specifier: workspace:*
         version: link:../transaction-messages
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
 
   packages/promises:
-    dependencies:
+    devDependencies:
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
@@ -1014,13 +1023,13 @@ importers:
       '@solana/rpc-types':
         specifier: workspace:*
         version: link:../rpc-types
-      typescript:
-        specifier: ^5.0.0
-        version: 5.9.3
     devDependencies:
       '@solana/event-target-impl':
         specifier: workspace:*
         version: link:../event-target-impl
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
 
   packages/rpc-api:
     dependencies:
@@ -1057,9 +1066,6 @@ importers:
       '@solana/transactions':
         specifier: workspace:*
         version: link:../transactions
-      typescript:
-        specifier: ^5.0.0
-        version: 5.9.3
     devDependencies:
       '@solana/rpc-spec-types':
         specifier: workspace:*
@@ -1067,6 +1073,9 @@ importers:
       '@solana/rpc-transport-http':
         specifier: workspace:*
         version: link:../rpc-transport-http
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
 
   packages/rpc-graphql:
     dependencies:
@@ -1085,9 +1094,6 @@ importers:
       graphql:
         specifier: ^16.13.2
         version: 16.13.2
-      typescript:
-        specifier: ^5.0.0
-        version: 5.9.3
     devDependencies:
       '@solana/addresses':
         specifier: workspace:*
@@ -1104,12 +1110,11 @@ importers:
       '@solana/transactions':
         specifier: workspace:*
         version: link:../transactions
-
-  packages/rpc-parsed-types:
-    dependencies:
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
+
+  packages/rpc-parsed-types:
     devDependencies:
       '@solana/addresses':
         specifier: workspace:*
@@ -1117,6 +1122,9 @@ importers:
       '@solana/rpc-types':
         specifier: workspace:*
         version: link:../rpc-types
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
 
   packages/rpc-spec:
     dependencies:
@@ -1126,12 +1134,13 @@ importers:
       '@solana/rpc-spec-types':
         specifier: workspace:*
         version: link:../rpc-spec-types
+    devDependencies:
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
 
   packages/rpc-spec-types:
-    dependencies:
+    devDependencies:
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
@@ -1171,9 +1180,6 @@ importers:
       '@solana/subscribable':
         specifier: workspace:*
         version: link:../subscribable
-      typescript:
-        specifier: ^5.0.0
-        version: 5.9.3
     devDependencies:
       '@solana/addresses':
         specifier: workspace:*
@@ -1181,6 +1187,9 @@ importers:
       '@solana/event-target-impl':
         specifier: workspace:*
         version: link:../event-target-impl
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
 
   packages/rpc-subscriptions-api:
     dependencies:
@@ -1205,13 +1214,13 @@ importers:
       '@solana/transactions':
         specifier: workspace:*
         version: link:../transactions
-      typescript:
-        specifier: ^5.0.0
-        version: 5.9.3
     devDependencies:
       '@solana/rpc-subscriptions-channel-websocket':
         specifier: workspace:*
         version: link:../rpc-subscriptions-channel-websocket
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
 
   packages/rpc-subscriptions-channel-websocket:
     dependencies:
@@ -1227,9 +1236,6 @@ importers:
       '@solana/subscribable':
         specifier: workspace:*
         version: link:../subscribable
-      typescript:
-        specifier: ^5.0.0
-        version: 5.9.3
       ws:
         specifier: ^8.19.0
         version: 8.19.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
@@ -1243,6 +1249,9 @@ importers:
       jest-websocket-mock:
         specifier: ^2.5.0
         version: 2.5.0
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
 
   packages/rpc-subscriptions-spec:
     dependencies:
@@ -1258,13 +1267,13 @@ importers:
       '@solana/subscribable':
         specifier: workspace:*
         version: link:../subscribable
-      typescript:
-        specifier: ^5.0.0
-        version: 5.9.3
     devDependencies:
       '@solana/event-target-impl':
         specifier: workspace:*
         version: link:../event-target-impl
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
 
   packages/rpc-transformers:
     dependencies:
@@ -1283,6 +1292,7 @@ importers:
       '@solana/rpc-types':
         specifier: workspace:*
         version: link:../rpc-types
+    devDependencies:
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
@@ -1298,9 +1308,6 @@ importers:
       '@solana/rpc-spec-types':
         specifier: workspace:*
         version: link:../rpc-spec-types
-      typescript:
-        specifier: ^5.0.0
-        version: 5.9.3
       undici-types:
         specifier: ^8.0.0
         version: 8.0.0
@@ -1308,6 +1315,9 @@ importers:
       tinybench:
         specifier: ^6.0.0
         version: 6.0.0
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
       undici:
         specifier: ^8.0.0
         version: 8.0.0
@@ -1335,6 +1345,7 @@ importers:
       '@solana/nominal-types':
         specifier: workspace:*
         version: link:../nominal-types
+    devDependencies:
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
@@ -1368,9 +1379,6 @@ importers:
       '@solana/transactions':
         specifier: workspace:*
         version: link:../transactions
-      typescript:
-        specifier: ^5.0.0
-        version: 5.9.3
     devDependencies:
       '@solana/rpc-types':
         specifier: workspace:*
@@ -1378,19 +1386,22 @@ importers:
       '@solana/text-encoding-impl':
         specifier: workspace:*
         version: link:../text-encoding-impl
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
 
   packages/subscribable:
     dependencies:
       '@solana/errors':
         specifier: workspace:*
         version: link:../errors
-      typescript:
-        specifier: ^5.0.0
-        version: 5.9.3
     devDependencies:
       '@solana/event-target-impl':
         specifier: workspace:*
         version: link:../event-target-impl
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
 
   packages/sysvars:
     dependencies:
@@ -1412,9 +1423,6 @@ importers:
       '@solana/rpc-types':
         specifier: workspace:*
         version: link:../rpc-types
-      typescript:
-        specifier: ^5.0.0
-        version: 5.9.3
     devDependencies:
       '@solana/addresses':
         specifier: workspace:*
@@ -1431,6 +1439,9 @@ importers:
       '@solana/rpc-transport-http':
         specifier: workspace:*
         version: link:../rpc-transport-http
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
 
   packages/test-config:
     dependencies:
@@ -1492,9 +1503,6 @@ importers:
       '@solana/transactions':
         specifier: workspace:*
         version: link:../transactions
-      typescript:
-        specifier: ^5.0.0
-        version: 5.9.3
     devDependencies:
       '@solana/codecs-core':
         specifier: workspace:*
@@ -1505,6 +1513,9 @@ importers:
       '@solana/instructions':
         specifier: workspace:*
         version: link:../instructions
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
 
   packages/transaction-messages:
     dependencies:
@@ -1535,13 +1546,13 @@ importers:
       '@solana/rpc-types':
         specifier: workspace:*
         version: link:../rpc-types
-      typescript:
-        specifier: ^5.0.0
-        version: 5.9.3
     devDependencies:
       '@solana/codecs-strings':
         specifier: workspace:*
         version: link:../codecs-strings
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
 
   packages/transactions:
     dependencies:
@@ -1581,6 +1592,7 @@ importers:
       '@solana/transaction-messages':
         specifier: workspace:*
         version: link:../transaction-messages
+    devDependencies:
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
@@ -1625,26 +1637,26 @@ importers:
       '@wallet-standard/ui-registry':
         specifier: ^1.0.1
         version: 1.0.1
-      typescript:
-        specifier: ^5.0.0
-        version: 5.9.3
     devDependencies:
       '@solana/errors':
         specifier: workspace:*
         version: link:../errors
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
 
   packages/webcrypto-ed25519-polyfill:
     dependencies:
       '@noble/ed25519':
         specifier: ^3.0.0
         version: 3.0.0
-      typescript:
-        specifier: ^5.0.0
-        version: 5.9.3
     devDependencies:
       '@solana/crypto-impl':
         specifier: workspace:*
         version: link:../crypto-impl
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
 
   packages/ws-impl:
     dependencies:

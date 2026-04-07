@@ -86,15 +86,8 @@
     },
     "devDependencies": {
         "@solana/rpc-types": "workspace:*",
-        "@solana/text-encoding-impl": "workspace:*"
-    },
-    "peerDependencies": {
+        "@solana/text-encoding-impl": "workspace:*",
         "typescript": "^5.0.0"
-    },
-    "peerDependenciesMeta": {
-        "typescript": {
-            "optional": true
-        }
     },
     "engines": {
         "node": ">=20.18.0"
