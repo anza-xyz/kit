@@ -496,5 +496,44 @@ describe('createReactiveStoreFromRpcAndSubscription', () => {
             await flushMicrotasks();
             expect(store.getError()).toBeUndefined();
         });
+        it('does not update state when the RPC response arrives after abort', async () => {
+            expect.assertions(2);
+            const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
+            const { mockRequest: subscriptionRequest } = createMockSubscriptionRequest();
+            const store = createReactiveStoreFromRpcAndSubscription({
+                abortSignal: abortController.signal,
+                rpcRequest,
+                rpcValueMapper: v => v.count,
+                subscriptionRequest,
+                subscriptionValueMapper: v => v.count,
+            });
+            const subscriber = jest.fn();
+            store.subscribe(subscriber);
+            abortController.abort();
+            resolve(rpcResponse(100, { count: 42 }));
+            await flushMicrotasks();
+            expect(store.getState()).toBeUndefined();
+            expect(subscriber).not.toHaveBeenCalled();
+        });
+        it('does not update state when a subscription notification arrives after abort', async () => {
+            expect.assertions(2);
+            const { mockRequest: rpcRequest } = createMockRpcRequest();
+            const { mockRequest: subscriptionRequest, pushNotification } = createMockSubscriptionRequest();
+            const store = createReactiveStoreFromRpcAndSubscription({
+                abortSignal: abortController.signal,
+                rpcRequest,
+                rpcValueMapper: v => v.count,
+                subscriptionRequest,
+                subscriptionValueMapper: v => v.count,
+            });
+            const subscriber = jest.fn();
+            store.subscribe(subscriber);
+            await flushMicrotasks();
+            abortController.abort();
+            pushNotification(rpcResponse(100, { count: 99 }));
+            await flushMicrotasks();
+            expect(store.getState()).toBeUndefined();
+            expect(subscriber).not.toHaveBeenCalled();
+        });
     });
 });

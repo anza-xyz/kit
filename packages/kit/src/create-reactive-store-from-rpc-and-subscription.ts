@@ -114,6 +114,7 @@ export function createReactiveStoreFromRpcAndSubscription<TRpcValue, TSubscripti
     rpcRequest
         .send({ abortSignal: signal })
         .then(({ context: { slot }, value }) => {
+            if (signal.aborted) return;
             if (slot < lastUpdateSlot) return;
             lastUpdateSlot = slot;
             currentState = rpcValueMapper(value);
@@ -128,6 +129,7 @@ export function createReactiveStoreFromRpcAndSubscription<TRpcValue, TSubscripti
                 context: { slot },
                 value,
             } of notifications) {
+                if (signal.aborted) return;
                 if (slot < lastUpdateSlot) continue;
                 lastUpdateSlot = slot;
                 currentState = subscriptionValueMapper(value);
