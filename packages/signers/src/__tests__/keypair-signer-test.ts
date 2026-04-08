@@ -185,7 +185,7 @@ describe('createSignerFromKeyPair', () => {
 
 describe('generateKeyPairSigner', () => {
     it('generates a new KeyPairSigner using the generateKeyPair function', async () => {
-        expect.assertions(3);
+        expect.assertions(4);
 
         // Given we mock the return value of generateKeyPair.
         const mockKeypair = getMockCryptoKeyPair();
@@ -203,8 +203,27 @@ describe('generateKeyPairSigner', () => {
         expect(mySigner.keyPair).toBe(mockKeypair);
         expect(mySigner.address).toBe(mockAddress);
 
-        // And generateKeyPair was called once.
+        // And generateKeyPair was called once with the default `extractable` value.
         expect(jest.mocked(generateKeyPair)).toHaveBeenCalledTimes(1);
+        expect(jest.mocked(generateKeyPair)).toHaveBeenCalledWith(false);
+    });
+
+    it('forwards the `extractable` argument to `generateKeyPair`', async () => {
+        expect.assertions(2);
+
+        // Given we mock the return value of generateKeyPair.
+        const mockKeypair = getMockCryptoKeyPair();
+        jest.mocked(generateKeyPair).mockResolvedValueOnce(mockKeypair);
+        jest.mocked(getAddressFromPublicKey).mockResolvedValueOnce(
+            address('Gp7YgHcJciP4px5FdFnywUiMG4UcfMZV9UagSAZzDxdy'),
+        );
+
+        // When we generate a new KeyPairSigner requesting an extractable key pair.
+        await generateKeyPairSigner(true);
+
+        // Then generateKeyPair was called with `extractable` set to `true`.
+        expect(jest.mocked(generateKeyPair)).toHaveBeenCalledTimes(1);
+        expect(jest.mocked(generateKeyPair)).toHaveBeenCalledWith(true);
     });
 
     it('freezes the generated signer', async () => {

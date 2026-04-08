@@ -15,6 +15,10 @@ import { signBytes, verifySignature } from './signatures';
  * Generates an Ed25519 public/private key pair for use with other methods in this package that
  * accept [`CryptoKey`](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey) objects.
  *
+ * @param extractable Setting this to `true` makes it possible to extract the bytes of the private
+ * key using the [`crypto.subtle.exportKey()`](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/exportKey)
+ * API. Defaults to `false`, which prevents the bytes of the private key from being visible to JS.
+ *
  * @example
  * ```ts
  * import { generateKeyPair } from '@solana/keys';
@@ -22,11 +26,11 @@ import { signBytes, verifySignature } from './signatures';
  * const { privateKey, publicKey } = await generateKeyPair();
  * ```
  */
-export async function generateKeyPair(): Promise<CryptoKeyPair> {
+export async function generateKeyPair(extractable: boolean = false): Promise<CryptoKeyPair> {
     await assertKeyGenerationIsAvailable();
     const keyPair = await crypto.subtle.generateKey(
         /* algorithm */ ED25519_ALGORITHM_IDENTIFIER, // Native implementation status: https://github.com/WICG/webcrypto-secure-curves/issues/20
-        /* extractable */ false, // Prevents the bytes of the private key from being visible to JS.
+        extractable,
         /* allowed uses */ ['sign', 'verify'],
     );
     return keyPair;

@@ -39,6 +39,16 @@ describe('key-pair', () => {
             const { privateKey } = await generateKeyPair();
             expect(privateKey).toHaveProperty('extractable', false);
         });
+        it('generates a non-extractable private key when `extractable` is explicitly `false`', async () => {
+            expect.assertions(1);
+            const { privateKey } = await generateKeyPair(false);
+            expect(privateKey).toHaveProperty('extractable', false);
+        });
+        it('generates an extractable private key when `extractable` is `true`', async () => {
+            expect.assertions(1);
+            const { privateKey } = await generateKeyPair(true);
+            expect(privateKey).toHaveProperty('extractable', true);
+        });
         it('generates a private key usable for signing operations', async () => {
             expect.assertions(1);
             const { privateKey } = await generateKeyPair();
