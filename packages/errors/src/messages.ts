@@ -156,6 +156,7 @@ import {
     SOLANA_ERROR__JSON_RPC__SERVER_ERROR_TRANSACTION_SIGNATURE_LEN_MISMATCH,
     SOLANA_ERROR__JSON_RPC__SERVER_ERROR_TRANSACTION_SIGNATURE_VERIFICATION_FAILURE,
     SOLANA_ERROR__JSON_RPC__SERVER_ERROR_UNSUPPORTED_TRANSACTION_VERSION,
+    SOLANA_ERROR__KEYS__INVALID_BASE58_IN_GRIND_REGEX,
     SOLANA_ERROR__KEYS__INVALID_KEY_PAIR_BYTE_LENGTH,
     SOLANA_ERROR__KEYS__INVALID_PRIVATE_KEY_BYTE_LENGTH,
     SOLANA_ERROR__KEYS__INVALID_SIGNATURE_BYTE_LENGTH,
@@ -541,6 +542,8 @@ export const SolanaErrorMessages: Readonly<{
     [SOLANA_ERROR__JSON_RPC__SERVER_ERROR_TRANSACTION_SIGNATURE_VERIFICATION_FAILURE]:
         'Transaction signature verification failure',
     [SOLANA_ERROR__JSON_RPC__SERVER_ERROR_UNSUPPORTED_TRANSACTION_VERSION]: '$__serverMessage',
+    [SOLANA_ERROR__KEYS__INVALID_BASE58_IN_GRIND_REGEX]:
+        'The grind regex `/$source/` contains the character `$character`, which is not in the base58 alphabet and can never match a Solana address.',
     [SOLANA_ERROR__KEYS__INVALID_KEY_PAIR_BYTE_LENGTH]: 'Key pair bytes must be of length 64, got $byteLength.',
     [SOLANA_ERROR__KEYS__INVALID_PRIVATE_KEY_BYTE_LENGTH]:
         'Expected private key bytes with length 32. Actual length: $actualLength.',

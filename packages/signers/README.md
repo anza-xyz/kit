@@ -343,6 +343,28 @@ const seed = new Uint8Array(await crypto.subtle.digest('SHA-256', message));
 const derivedSigner = await createKeyPairSignerFromPrivateKeyBytes(seed);
 ```
 
+#### `grindKeyPairSigner()`
+
+Mines a vanity `KeyPairSigner` whose address satisfies the provided `matches` criterion. The matcher may be a `RegExp` or a predicate function that receives the candidate address as a string. This is a thin wrapper around `grindKeyPair()` from `@solana/keys` that immediately wraps the resulting key pair in a `KeyPairSigner`.
+
+```ts
+import { grindKeyPairSigner } from '@solana/signers';
+
+const signer = await grindKeyPairSigner({ matches: /^anza/ });
+```
+
+The config is identical to `grindKeyPair()`'s and also accepts an `extractable` flag, a `concurrency` setting for the batch size (defaulting to `32`), and an `abortSignal` to cancel long-running grinds.
+
+#### `grindKeyPairSigners()`
+
+Mines multiple vanity `KeyPairSigners` whose addresses all satisfy the provided `matches` criterion. This is the batch variant of `grindKeyPairSigner()` and accepts the same configuration plus an `amount` field.
+
+```ts
+import { grindKeyPairSigners } from '@solana/signers';
+
+const signers = await grindKeyPairSigners({ matches: /^anza/, amount: 4 });
+```
+
 #### `isKeyPairSigner()`
 
 A type guard that returns `true` if the provided value is a `KeyPairSigner`.

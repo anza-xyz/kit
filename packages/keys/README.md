@@ -62,6 +62,28 @@ import { generateKeyPair } from '@solana/keys';
 const { privateKey, publicKey } = await generateKeyPair();
 ```
 
+### `grindKeyPair()`
+
+Mines a vanity Ed25519 key pair whose base58-encoded public key satisfies the provided `matches` criterion. The matcher may be a `RegExp` or a predicate function that receives the candidate address as a string. Key pairs are generated in parallel batches until one matches, so the expected time to find a match grows exponentially with the length of the desired prefix.
+
+```ts
+import { grindKeyPair } from '@solana/keys';
+
+const keyPair = await grindKeyPair({ matches: /^anza/ });
+```
+
+When `matches` is a `RegExp`, its literal characters are validated against the base58 alphabet up front to catch common typos (e.g. `/^sol0/`) before any key is generated. The config also accepts an `extractable` flag (forwarded to `generateKeyPair`), a `concurrency` setting for the batch size (defaulting to `32`), and an `abortSignal` to cancel long-running grinds.
+
+### `grindKeyPairs()`
+
+Mines multiple vanity Ed25519 key pairs whose base58-encoded public keys all satisfy the provided `matches` criterion. This is the batch variant of `grindKeyPair()` and accepts the same configuration plus an `amount` field.
+
+```ts
+import { grindKeyPairs } from '@solana/keys';
+
+const keyPairs = await grindKeyPairs({ matches: /^anza/, amount: 4 });
+```
+
 ### `createKeyPairFromBytes()`
 
 Given a 64-byte `Uint8Array` secret key, creates an Ed25519 public/private key pair for use with other methods in this package that accept `CryptoKey` objects.
