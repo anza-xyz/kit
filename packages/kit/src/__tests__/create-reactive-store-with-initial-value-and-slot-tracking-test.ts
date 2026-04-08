@@ -144,7 +144,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             });
             resolve(rpcResponse(100, { count: 42 }));
             await flushMicrotasks();
-            expect(store.getState()).toBe(42);
+            expect(store.getState()).toEqual({ context: { slot: 100n }, value: 42 });
         });
         it('updates with a subscription notification value', async () => {
             expect.assertions(1);
@@ -160,7 +160,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             await flushMicrotasks();
             pushNotification(rpcResponse(100, { count: 99 }));
             await flushMicrotasks();
-            expect(store.getState()).toBe(99);
+            expect(store.getState()).toEqual({ context: { slot: 100n }, value: 99 });
         });
         it('ignores the RPC response when a newer subscription notification has already arrived', async () => {
             expect.assertions(1);
@@ -179,7 +179,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             // RPC response arrives later at an older slot
             resolve(rpcResponse(100, { count: 42 }));
             await flushMicrotasks();
-            expect(store.getState()).toBe(99);
+            expect(store.getState()).toEqual({ context: { slot: 200n }, value: 99 });
         });
         it('ignores a subscription notification when the RPC response was at a newer slot', async () => {
             expect.assertions(1);
@@ -196,7 +196,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             await flushMicrotasks();
             pushNotification(rpcResponse(100, { count: 99 }));
             await flushMicrotasks();
-            expect(store.getState()).toBe(42);
+            expect(store.getState()).toEqual({ context: { slot: 200n }, value: 42 });
         });
         it('preserves the last known value after an error', async () => {
             expect.assertions(1);
@@ -213,7 +213,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             await flushMicrotasks();
             error(new Error('subscription failed'));
             await flushMicrotasks();
-            expect(store.getState()).toBe(42);
+            expect(store.getState()).toEqual({ context: { slot: 100n }, value: 42 });
         });
     });
 

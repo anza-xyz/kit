@@ -42,7 +42,9 @@ type CreateReactiveStoreWithInitialValueAndSlotTrackingConfig<TRpcValue, TSubscr
  *
  * Things to note:
  *
- * - `getState()` returns `undefined` until the first response or notification arrives.
+ * - `getState()` returns `undefined` until the first response or notification arrives. Once
+ *   data arrives, it returns a {@link SolanaRpcResponse} containing the value and the slot
+ *   context at which it was observed.
  * - On error from either source, `getState()` continues to return the last known value and
  *   `getError()` returns the error. Only the first error is captured.
  * - When an error occurs, the abort signal is triggered, cancelling both the RPC request and
@@ -75,7 +77,10 @@ type CreateReactiveStoreWithInitialValueAndSlotTrackingConfig<TRpcValue, TSubscr
  * const unsubscribe = balanceStore.subscribe(() => {
  *     const error = balanceStore.getError();
  *     if (error) console.error('Error:', error);
- *     else console.log('Balance:', balanceStore.getState());
+ *     else {
+ *         const state = balanceStore.getState();
+ *         if (state) console.log(`Balance at slot ${state.context.slot}:`, state.value);
+ *     }
  * });
  * ```
  *
@@ -87,12 +92,10 @@ export function createReactiveStoreWithInitialValueAndSlotTracking<TRpcValue, TS
     rpcValueMapper,
     rpcSubscriptionRequest,
     rpcSubscriptionValueMapper,
-}: CreateReactiveStoreWithInitialValueAndSlotTrackingConfig<
-    TRpcValue,
-    TSubscriptionValue,
-    TItem
->): ReactiveStore<TItem> {
-    let currentState: TItem | undefined;
+}: CreateReactiveStoreWithInitialValueAndSlotTrackingConfig<TRpcValue, TSubscriptionValue, TItem>): ReactiveStore<
+    SolanaRpcResponse<TItem>
+> {
+    let currentState: SolanaRpcResponse<TItem> | undefined;
     let currentError: unknown;
     let lastUpdateSlot = -1n;
     const subscribers = new Set<() => void>();
@@ -121,7 +124,7 @@ export function createReactiveStoreWithInitialValueAndSlotTracking<TRpcValue, TS
             if (signal.aborted) return;
             if (slot < lastUpdateSlot) return;
             lastUpdateSlot = slot;
-            currentState = rpcValueMapper(value);
+            currentState = { context: { slot }, value: rpcValueMapper(value) } as SolanaRpcResponse<TItem>;
             notifySubscribers();
         })
         .catch(handleError);
@@ -136,7 +139,10 @@ export function createReactiveStoreWithInitialValueAndSlotTracking<TRpcValue, TS
                 if (signal.aborted) return;
                 if (slot < lastUpdateSlot) continue;
                 lastUpdateSlot = slot;
-                currentState = rpcSubscriptionValueMapper(value);
+                currentState = {
+                    context: { slot },
+                    value: rpcSubscriptionValueMapper(value),
+                } as SolanaRpcResponse<TItem>;
                 notifySubscribers();
             }
         })
@@ -146,7 +152,7 @@ export function createReactiveStoreWithInitialValueAndSlotTracking<TRpcValue, TS
         getError(): unknown {
             return currentError;
         },
-        getState(): TItem | undefined {
+        getState(): SolanaRpcResponse<TItem> | undefined {
             return currentState;
         },
         subscribe(callback: () => void): () => void {

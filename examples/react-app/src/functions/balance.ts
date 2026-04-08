@@ -36,7 +36,7 @@ export function balanceSubscribe(
         if (error) {
             next(error as Error);
         } else {
-            next(null, store.getState());
+            next(null, store.getState()?.value);
         }
     });
     return () => {
