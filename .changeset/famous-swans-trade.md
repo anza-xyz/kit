@@ -1,0 +1,49 @@
+---
+'@solana/accounts': patch
+'@solana/addresses': patch
+'@solana/assertions': patch
+'@solana/codecs': patch
+'@solana/codecs-core': patch
+'@solana/codecs-data-structures': patch
+'@solana/codecs-numbers': patch
+'@solana/codecs-strings': patch
+'@solana/compat': patch
+'@solana/errors': patch
+'@solana/fast-stable-stringify': patch
+'@solana/functional': patch
+'@solana/instruction-plans': patch
+'@solana/instructions': patch
+'@solana/keys': patch
+'@solana/kit': patch
+'@solana/nominal-types': patch
+'@solana/offchain-messages': patch
+'@solana/options': patch
+'@solana/plugin-core': patch
+'@solana/plugin-interfaces': patch
+'@solana/program-client-core': patch
+'@solana/programs': patch
+'@solana/promises': patch
+'@solana/rpc': patch
+'@solana/rpc-api': patch
+'@solana/rpc-graphql': patch
+'@solana/rpc-parsed-types': patch
+'@solana/rpc-spec': patch
+'@solana/rpc-spec-types': patch
+'@solana/rpc-subscriptions': patch
+'@solana/rpc-subscriptions-api': patch
+'@solana/rpc-subscriptions-channel-websocket': patch
+'@solana/rpc-subscriptions-spec': patch
+'@solana/rpc-transformers': patch
+'@solana/rpc-transport-http': patch
+'@solana/rpc-types': patch
+'@solana/signers': patch
+'@solana/subscribable': patch
+'@solana/sysvars': patch
+'@solana/transaction-confirmation': patch
+'@solana/transaction-messages': patch
+'@solana/transactions': patch
+'@solana/wallet-account-signer': patch
+'@solana/webcrypto-ed25519-polyfill': patch
+---
+
+Update the TypeScript peer dependency from `^5.0.0` to `>=5.0.0` to allow TypeScript 6 and above.
