@@ -12,6 +12,7 @@
 # @solana/wallet-account-signer
 
 This package bridges [Wallet Standard](https://github.com/wallet-standard/wallet-standard) accounts to Kit [`@solana/signers`](https://github.com/anza-xyz/kit/tree/main/packages/signers) interfaces. It converts a `UiWalletAccount` into the appropriate Kit signer depending on which Wallet Standard features the wallet supports.
+
 ## Installation
 
 ```shell
