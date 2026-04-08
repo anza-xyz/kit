@@ -741,6 +741,9 @@ importers:
       '@solana/signers':
         specifier: workspace:*
         version: link:../signers
+      '@solana/subscribable':
+        specifier: workspace:*
+        version: link:../subscribable
       '@solana/sysvars':
         specifier: workspace:*
         version: link:../sysvars
