@@ -52,6 +52,26 @@ function memoPlugin() {
 }
 ```
 
+### `ClientWithIdentity`
+
+Represents a client that provides a default identity signer — the wallet that owns things in the application, such as the authority over accounts, tokens, or other on-chain assets owned by the current user. Unlike `ClientWithPayer`, which describes the signer responsible for paying transaction fees and storage costs, the identity describes the signer whose assets the application is acting upon. In many apps, the payer and identity refer to the same signer, but they can differ — for example, when a service pays fees on behalf of a user.
+
+```ts
+import { extendClient } from '@solana/plugin-core';
+import { ClientWithIdentity } from '@solana/plugin-interfaces';
+
+function nftPlugin() {
+    return <T extends ClientWithIdentity>(client: T) =>
+        extendClient(client, {
+            transferNft: (mint: Address, recipient: Address) => {
+                // Use client.identity as the current owner of the NFT
+                const owner = client.identity;
+                // ...
+            },
+        });
+}
+```
+
 ### `ClientWithAirdrop`
 
 Represents a client that can request SOL airdrops (typically on devnet/testnet). The airdrop succeeds when the promise resolves. Some implementations (e.g., LiteSVM) update balances directly without a transaction, so no signature is returned in those cases.

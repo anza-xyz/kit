@@ -8,5 +8,6 @@
 export * from './airdrop';
 export * from './instruction-plans';
 export * from './get-minimum-balance';
+export * from './identity';
 export * from './payer';
 export * from './rpc';
