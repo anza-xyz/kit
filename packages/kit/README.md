@@ -38,7 +38,7 @@ await airdrop({
 
 > [!NOTE] This only works on test clusters.
 
-### `createReactiveStoreFromRpcAndSubscription(config)`
+### `createReactiveStoreWithInitialValueAndSlotTracking(config)`
 
 Creates a `ReactiveStore` that combines an initial RPC fetch with an ongoing subscription to keep its state up to date. Uses slot-based comparison to ensure only the most recent value is kept, regardless of whether it came from the RPC response or a subscription notification.
 
@@ -47,7 +47,7 @@ The returned store is compatible with React's `useSyncExternalStore`, Svelte sto
 ```ts
 import {
     address,
-    createReactiveStoreFromRpcAndSubscription,
+    createReactiveStoreWithInitialValueAndSlotTracking,
     createSolanaRpc,
     createSolanaRpcSubscriptions,
 } from '@solana/kit';
@@ -56,12 +56,12 @@ const rpc = createSolanaRpc('http://127.0.0.1:8899');
 const rpcSubscriptions = createSolanaRpcSubscriptions('ws://127.0.0.1:8900');
 const myAddress = address('FnHyam9w4NZoWR6mKN1CuGBritdsEWZQa4Z4oawLZGxa');
 
-const balanceStore = createReactiveStoreFromRpcAndSubscription({
+const balanceStore = createReactiveStoreWithInitialValueAndSlotTracking({
     abortSignal: AbortSignal.timeout(60_000),
     rpcRequest: rpc.getBalance(myAddress, { commitment: 'confirmed' }),
     rpcValueMapper: lamports => lamports,
-    subscriptionRequest: rpcSubscriptions.accountNotifications(myAddress),
-    subscriptionValueMapper: ({ lamports }) => lamports,
+    rpcSubscriptionRequest: rpcSubscriptions.accountNotifications(myAddress),
+    rpcSubscriptionValueMapper: ({ lamports }) => lamports,
 });
 
 const unsubscribe = balanceStore.subscribe(() => {

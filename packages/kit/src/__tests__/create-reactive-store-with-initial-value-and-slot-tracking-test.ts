@@ -2,7 +2,7 @@ import type { PendingRpcRequest } from '@solana/rpc';
 import type { PendingRpcSubscriptionsRequest } from '@solana/rpc-subscriptions';
 import type { SolanaRpcResponse } from '@solana/rpc-types';
 
-import { createReactiveStoreFromRpcAndSubscription } from '../create-reactive-store-from-rpc-and-subscription';
+import { createReactiveStoreWithInitialValueAndSlotTracking } from '../create-reactive-store-with-initial-value-and-slot-tracking';
 
 /** Flush all pending microtasks by waiting for a macrotask boundary. */
 const flushMicrotasks = () => new Promise(resolve => setTimeout(resolve, 0));
@@ -107,7 +107,7 @@ function rpcResponse(slot: number, value: TestValue): SolanaRpcResponse<TestValu
     return { context: { slot: BigInt(slot) }, value } as SolanaRpcResponse<TestValue>;
 }
 
-describe('createReactiveStoreFromRpcAndSubscription', () => {
+describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
     let abortController: AbortController;
 
     beforeEach(() => {
@@ -121,26 +121,26 @@ describe('createReactiveStoreFromRpcAndSubscription', () => {
     describe('getState()', () => {
         it('returns `undefined` before any data arrives', () => {
             const { mockRequest: rpcRequest } = createMockRpcRequest();
-            const { mockRequest: subscriptionRequest } = createMockSubscriptionRequest();
-            const store = createReactiveStoreFromRpcAndSubscription({
+            const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
+            const store = createReactiveStoreWithInitialValueAndSlotTracking({
                 abortSignal: abortController.signal,
                 rpcRequest,
+                rpcSubscriptionRequest,
+                rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
-                subscriptionRequest,
-                subscriptionValueMapper: v => v.count,
             });
             expect(store.getState()).toBeUndefined();
         });
         it('updates with the RPC response value', async () => {
             expect.assertions(1);
             const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
-            const { mockRequest: subscriptionRequest } = createMockSubscriptionRequest();
-            const store = createReactiveStoreFromRpcAndSubscription({
+            const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
+            const store = createReactiveStoreWithInitialValueAndSlotTracking({
                 abortSignal: abortController.signal,
                 rpcRequest,
+                rpcSubscriptionRequest,
+                rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
-                subscriptionRequest,
-                subscriptionValueMapper: v => v.count,
             });
             resolve(rpcResponse(100, { count: 42 }));
             await flushMicrotasks();
@@ -149,13 +149,13 @@ describe('createReactiveStoreFromRpcAndSubscription', () => {
         it('updates with a subscription notification value', async () => {
             expect.assertions(1);
             const { mockRequest: rpcRequest } = createMockRpcRequest();
-            const { mockRequest: subscriptionRequest, pushNotification } = createMockSubscriptionRequest();
-            const store = createReactiveStoreFromRpcAndSubscription({
+            const { mockRequest: rpcSubscriptionRequest, pushNotification } = createMockSubscriptionRequest();
+            const store = createReactiveStoreWithInitialValueAndSlotTracking({
                 abortSignal: abortController.signal,
                 rpcRequest,
+                rpcSubscriptionRequest,
+                rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
-                subscriptionRequest,
-                subscriptionValueMapper: v => v.count,
             });
             await flushMicrotasks();
             pushNotification(rpcResponse(100, { count: 99 }));
@@ -165,13 +165,13 @@ describe('createReactiveStoreFromRpcAndSubscription', () => {
         it('ignores the RPC response when a newer subscription notification has already arrived', async () => {
             expect.assertions(1);
             const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
-            const { mockRequest: subscriptionRequest, pushNotification } = createMockSubscriptionRequest();
-            const store = createReactiveStoreFromRpcAndSubscription({
+            const { mockRequest: rpcSubscriptionRequest, pushNotification } = createMockSubscriptionRequest();
+            const store = createReactiveStoreWithInitialValueAndSlotTracking({
                 abortSignal: abortController.signal,
                 rpcRequest,
+                rpcSubscriptionRequest,
+                rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
-                subscriptionRequest,
-                subscriptionValueMapper: v => v.count,
             });
             await flushMicrotasks();
             pushNotification(rpcResponse(200, { count: 99 }));
@@ -184,13 +184,13 @@ describe('createReactiveStoreFromRpcAndSubscription', () => {
         it('ignores a subscription notification when the RPC response was at a newer slot', async () => {
             expect.assertions(1);
             const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
-            const { mockRequest: subscriptionRequest, pushNotification } = createMockSubscriptionRequest();
-            const store = createReactiveStoreFromRpcAndSubscription({
+            const { mockRequest: rpcSubscriptionRequest, pushNotification } = createMockSubscriptionRequest();
+            const store = createReactiveStoreWithInitialValueAndSlotTracking({
                 abortSignal: abortController.signal,
                 rpcRequest,
+                rpcSubscriptionRequest,
+                rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
-                subscriptionRequest,
-                subscriptionValueMapper: v => v.count,
             });
             resolve(rpcResponse(200, { count: 42 }));
             await flushMicrotasks();
@@ -201,13 +201,13 @@ describe('createReactiveStoreFromRpcAndSubscription', () => {
         it('preserves the last known value after an error', async () => {
             expect.assertions(1);
             const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
-            const { mockRequest: subscriptionRequest, error } = createMockSubscriptionRequest();
-            const store = createReactiveStoreFromRpcAndSubscription({
+            const { mockRequest: rpcSubscriptionRequest, error } = createMockSubscriptionRequest();
+            const store = createReactiveStoreWithInitialValueAndSlotTracking({
                 abortSignal: abortController.signal,
                 rpcRequest,
+                rpcSubscriptionRequest,
+                rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
-                subscriptionRequest,
-                subscriptionValueMapper: v => v.count,
             });
             resolve(rpcResponse(100, { count: 42 }));
             await flushMicrotasks();
@@ -220,26 +220,26 @@ describe('createReactiveStoreFromRpcAndSubscription', () => {
     describe('getError()', () => {
         it('returns `undefined` before any error', () => {
             const { mockRequest: rpcRequest } = createMockRpcRequest();
-            const { mockRequest: subscriptionRequest } = createMockSubscriptionRequest();
-            const store = createReactiveStoreFromRpcAndSubscription({
+            const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
+            const store = createReactiveStoreWithInitialValueAndSlotTracking({
                 abortSignal: abortController.signal,
                 rpcRequest,
+                rpcSubscriptionRequest,
+                rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
-                subscriptionRequest,
-                subscriptionValueMapper: v => v.count,
             });
             expect(store.getError()).toBeUndefined();
         });
         it('captures an error from the RPC request', async () => {
             expect.assertions(1);
             const { mockRequest: rpcRequest, reject } = createMockRpcRequest();
-            const { mockRequest: subscriptionRequest } = createMockSubscriptionRequest();
-            const store = createReactiveStoreFromRpcAndSubscription({
+            const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
+            const store = createReactiveStoreWithInitialValueAndSlotTracking({
                 abortSignal: abortController.signal,
                 rpcRequest,
+                rpcSubscriptionRequest,
+                rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
-                subscriptionRequest,
-                subscriptionValueMapper: v => v.count,
             });
             const error = new Error('rpc failed');
             reject(error);
@@ -249,13 +249,13 @@ describe('createReactiveStoreFromRpcAndSubscription', () => {
         it('captures an error from the subscription', async () => {
             expect.assertions(1);
             const { mockRequest: rpcRequest } = createMockRpcRequest();
-            const { mockRequest: subscriptionRequest, error } = createMockSubscriptionRequest();
-            const store = createReactiveStoreFromRpcAndSubscription({
+            const { mockRequest: rpcSubscriptionRequest, error } = createMockSubscriptionRequest();
+            const store = createReactiveStoreWithInitialValueAndSlotTracking({
                 abortSignal: abortController.signal,
                 rpcRequest,
+                rpcSubscriptionRequest,
+                rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
-                subscriptionRequest,
-                subscriptionValueMapper: v => v.count,
             });
             await flushMicrotasks();
             const subscriptionError = new Error('subscription failed');
@@ -266,13 +266,13 @@ describe('createReactiveStoreFromRpcAndSubscription', () => {
         it('only captures the first error when RPC fails then subscription fails', async () => {
             expect.assertions(1);
             const { mockRequest: rpcRequest, reject: rejectRpc } = createMockRpcRequest();
-            const { mockRequest: subscriptionRequest, error: errorSubscription } = createMockSubscriptionRequest();
-            const store = createReactiveStoreFromRpcAndSubscription({
+            const { mockRequest: rpcSubscriptionRequest, error: errorSubscription } = createMockSubscriptionRequest();
+            const store = createReactiveStoreWithInitialValueAndSlotTracking({
                 abortSignal: abortController.signal,
                 rpcRequest,
+                rpcSubscriptionRequest,
+                rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
-                subscriptionRequest,
-                subscriptionValueMapper: v => v.count,
             });
             await flushMicrotasks();
             rejectRpc(new Error('rpc error'));
@@ -284,13 +284,13 @@ describe('createReactiveStoreFromRpcAndSubscription', () => {
         it('only captures the first error when subscription fails then RPC fails', async () => {
             expect.assertions(1);
             const { mockRequest: rpcRequest, reject: rejectRpc } = createMockRpcRequest();
-            const { mockRequest: subscriptionRequest, error: errorSubscription } = createMockSubscriptionRequest();
-            const store = createReactiveStoreFromRpcAndSubscription({
+            const { mockRequest: rpcSubscriptionRequest, error: errorSubscription } = createMockSubscriptionRequest();
+            const store = createReactiveStoreWithInitialValueAndSlotTracking({
                 abortSignal: abortController.signal,
                 rpcRequest,
+                rpcSubscriptionRequest,
+                rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
-                subscriptionRequest,
-                subscriptionValueMapper: v => v.count,
             });
             await flushMicrotasks();
             errorSubscription(new Error('subscription error'));
@@ -305,13 +305,13 @@ describe('createReactiveStoreFromRpcAndSubscription', () => {
         it('calls the subscriber when the RPC response arrives', async () => {
             expect.assertions(1);
             const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
-            const { mockRequest: subscriptionRequest } = createMockSubscriptionRequest();
-            const store = createReactiveStoreFromRpcAndSubscription({
+            const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
+            const store = createReactiveStoreWithInitialValueAndSlotTracking({
                 abortSignal: abortController.signal,
                 rpcRequest,
+                rpcSubscriptionRequest,
+                rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
-                subscriptionRequest,
-                subscriptionValueMapper: v => v.count,
             });
             const subscriber = jest.fn();
             store.subscribe(subscriber);
@@ -322,13 +322,13 @@ describe('createReactiveStoreFromRpcAndSubscription', () => {
         it('calls the subscriber when a subscription notification arrives', async () => {
             expect.assertions(1);
             const { mockRequest: rpcRequest } = createMockRpcRequest();
-            const { mockRequest: subscriptionRequest, pushNotification } = createMockSubscriptionRequest();
-            const store = createReactiveStoreFromRpcAndSubscription({
+            const { mockRequest: rpcSubscriptionRequest, pushNotification } = createMockSubscriptionRequest();
+            const store = createReactiveStoreWithInitialValueAndSlotTracking({
                 abortSignal: abortController.signal,
                 rpcRequest,
+                rpcSubscriptionRequest,
+                rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
-                subscriptionRequest,
-                subscriptionValueMapper: v => v.count,
             });
             const subscriber = jest.fn();
             store.subscribe(subscriber);
@@ -340,13 +340,13 @@ describe('createReactiveStoreFromRpcAndSubscription', () => {
         it('does not call the subscriber when an out-of-order notification is skipped', async () => {
             expect.assertions(1);
             const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
-            const { mockRequest: subscriptionRequest, pushNotification } = createMockSubscriptionRequest();
-            const store = createReactiveStoreFromRpcAndSubscription({
+            const { mockRequest: rpcSubscriptionRequest, pushNotification } = createMockSubscriptionRequest();
+            const store = createReactiveStoreWithInitialValueAndSlotTracking({
                 abortSignal: abortController.signal,
                 rpcRequest,
+                rpcSubscriptionRequest,
+                rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
-                subscriptionRequest,
-                subscriptionValueMapper: v => v.count,
             });
             const subscriber = jest.fn();
             store.subscribe(subscriber);
@@ -362,13 +362,13 @@ describe('createReactiveStoreFromRpcAndSubscription', () => {
         it('calls the subscriber when an error occurs', async () => {
             expect.assertions(1);
             const { mockRequest: rpcRequest, reject } = createMockRpcRequest();
-            const { mockRequest: subscriptionRequest } = createMockSubscriptionRequest();
-            const store = createReactiveStoreFromRpcAndSubscription({
+            const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
+            const store = createReactiveStoreWithInitialValueAndSlotTracking({
                 abortSignal: abortController.signal,
                 rpcRequest,
+                rpcSubscriptionRequest,
+                rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
-                subscriptionRequest,
-                subscriptionValueMapper: v => v.count,
             });
             const subscriber = jest.fn();
             store.subscribe(subscriber);
@@ -379,13 +379,13 @@ describe('createReactiveStoreFromRpcAndSubscription', () => {
         it('calls the subscriber when a subscription error occurs', async () => {
             expect.assertions(1);
             const { mockRequest: rpcRequest } = createMockRpcRequest();
-            const { mockRequest: subscriptionRequest, error } = createMockSubscriptionRequest();
-            const store = createReactiveStoreFromRpcAndSubscription({
+            const { mockRequest: rpcSubscriptionRequest, error } = createMockSubscriptionRequest();
+            const store = createReactiveStoreWithInitialValueAndSlotTracking({
                 abortSignal: abortController.signal,
                 rpcRequest,
+                rpcSubscriptionRequest,
+                rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
-                subscriptionRequest,
-                subscriptionValueMapper: v => v.count,
             });
             const subscriber = jest.fn();
             store.subscribe(subscriber);
@@ -397,13 +397,13 @@ describe('createReactiveStoreFromRpcAndSubscription', () => {
         it('stops calling the subscriber after unsubscribe', async () => {
             expect.assertions(1);
             const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
-            const { mockRequest: subscriptionRequest } = createMockSubscriptionRequest();
-            const store = createReactiveStoreFromRpcAndSubscription({
+            const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
+            const store = createReactiveStoreWithInitialValueAndSlotTracking({
                 abortSignal: abortController.signal,
                 rpcRequest,
+                rpcSubscriptionRequest,
+                rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
-                subscriptionRequest,
-                subscriptionValueMapper: v => v.count,
             });
             const subscriber = jest.fn();
             const unsubscribe = store.subscribe(subscriber);
@@ -414,13 +414,13 @@ describe('createReactiveStoreFromRpcAndSubscription', () => {
         });
         it('the unsubscribe function is idempotent', () => {
             const { mockRequest: rpcRequest } = createMockRpcRequest();
-            const { mockRequest: subscriptionRequest } = createMockSubscriptionRequest();
-            const store = createReactiveStoreFromRpcAndSubscription({
+            const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
+            const store = createReactiveStoreWithInitialValueAndSlotTracking({
                 abortSignal: abortController.signal,
                 rpcRequest,
+                rpcSubscriptionRequest,
+                rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
-                subscriptionRequest,
-                subscriptionValueMapper: v => v.count,
             });
             const unsubscribe = store.subscribe(jest.fn());
             expect(() => {
@@ -433,13 +433,13 @@ describe('createReactiveStoreFromRpcAndSubscription', () => {
     describe('abort signal', () => {
         it('aborts the signal passed to the RPC request when the caller aborts', () => {
             const { mockRequest: rpcRequest } = createMockRpcRequest();
-            const { mockRequest: subscriptionRequest } = createMockSubscriptionRequest();
-            createReactiveStoreFromRpcAndSubscription({
+            const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
+            createReactiveStoreWithInitialValueAndSlotTracking({
                 abortSignal: abortController.signal,
                 rpcRequest,
+                rpcSubscriptionRequest,
+                rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
-                subscriptionRequest,
-                subscriptionValueMapper: v => v.count,
             });
             const rpcSignal = (rpcRequest.send as jest.Mock).mock.calls[0][0].abortSignal;
             expect(rpcSignal.aborted).toBe(false);
@@ -449,15 +449,15 @@ describe('createReactiveStoreFromRpcAndSubscription', () => {
         });
         it('aborts the signal passed to the subscription request when the caller aborts', () => {
             const { mockRequest: rpcRequest } = createMockRpcRequest();
-            const { mockRequest: subscriptionRequest } = createMockSubscriptionRequest();
-            createReactiveStoreFromRpcAndSubscription({
+            const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
+            createReactiveStoreWithInitialValueAndSlotTracking({
                 abortSignal: abortController.signal,
                 rpcRequest,
+                rpcSubscriptionRequest,
+                rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
-                subscriptionRequest,
-                subscriptionValueMapper: v => v.count,
             });
-            const subscriptionSignal = (subscriptionRequest.subscribe as jest.Mock).mock.calls[0][0].abortSignal;
+            const subscriptionSignal = (rpcSubscriptionRequest.subscribe as jest.Mock).mock.calls[0][0].abortSignal;
             expect(subscriptionSignal.aborted).toBe(false);
             abortController.abort('test reason');
             expect(subscriptionSignal.aborted).toBe(true);
@@ -466,13 +466,13 @@ describe('createReactiveStoreFromRpcAndSubscription', () => {
         it('swallows errors from the RPC request when the caller aborts', async () => {
             expect.assertions(1);
             const { mockRequest: rpcRequest, reject } = createMockRpcRequest();
-            const { mockRequest: subscriptionRequest } = createMockSubscriptionRequest();
-            const store = createReactiveStoreFromRpcAndSubscription({
+            const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
+            const store = createReactiveStoreWithInitialValueAndSlotTracking({
                 abortSignal: abortController.signal,
                 rpcRequest,
+                rpcSubscriptionRequest,
+                rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
-                subscriptionRequest,
-                subscriptionValueMapper: v => v.count,
             });
             abortController.abort();
             reject(new Error('aborted'));
@@ -482,13 +482,13 @@ describe('createReactiveStoreFromRpcAndSubscription', () => {
         it('swallows errors from the subscription when the caller aborts', async () => {
             expect.assertions(1);
             const { mockRequest: rpcRequest } = createMockRpcRequest();
-            const { mockRequest: subscriptionRequest, error } = createMockSubscriptionRequest();
-            const store = createReactiveStoreFromRpcAndSubscription({
+            const { mockRequest: rpcSubscriptionRequest, error } = createMockSubscriptionRequest();
+            const store = createReactiveStoreWithInitialValueAndSlotTracking({
                 abortSignal: abortController.signal,
                 rpcRequest,
+                rpcSubscriptionRequest,
+                rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
-                subscriptionRequest,
-                subscriptionValueMapper: v => v.count,
             });
             await flushMicrotasks();
             abortController.abort();
@@ -499,13 +499,13 @@ describe('createReactiveStoreFromRpcAndSubscription', () => {
         it('does not update state when the RPC response arrives after abort', async () => {
             expect.assertions(2);
             const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
-            const { mockRequest: subscriptionRequest } = createMockSubscriptionRequest();
-            const store = createReactiveStoreFromRpcAndSubscription({
+            const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
+            const store = createReactiveStoreWithInitialValueAndSlotTracking({
                 abortSignal: abortController.signal,
                 rpcRequest,
+                rpcSubscriptionRequest,
+                rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
-                subscriptionRequest,
-                subscriptionValueMapper: v => v.count,
             });
             const subscriber = jest.fn();
             store.subscribe(subscriber);
@@ -518,13 +518,13 @@ describe('createReactiveStoreFromRpcAndSubscription', () => {
         it('does not update state when a subscription notification arrives after abort', async () => {
             expect.assertions(2);
             const { mockRequest: rpcRequest } = createMockRpcRequest();
-            const { mockRequest: subscriptionRequest, pushNotification } = createMockSubscriptionRequest();
-            const store = createReactiveStoreFromRpcAndSubscription({
+            const { mockRequest: rpcSubscriptionRequest, pushNotification } = createMockSubscriptionRequest();
+            const store = createReactiveStoreWithInitialValueAndSlotTracking({
                 abortSignal: abortController.signal,
                 rpcRequest,
+                rpcSubscriptionRequest,
+                rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
-                subscriptionRequest,
-                subscriptionValueMapper: v => v.count,
             });
             const subscriber = jest.fn();
             store.subscribe(subscriber);

@@ -1,7 +1,7 @@
 import {
     AccountNotificationsApi,
     Address,
-    createReactiveStoreFromRpcAndSubscription,
+    createReactiveStoreWithInitialValueAndSlotTracking,
     GetBalanceApi,
     Lamports,
     Rpc,
@@ -14,7 +14,7 @@ import { SWRSubscription } from 'swr/subscription';
  * It's implemented as an SWR subscription function (https://swr.vercel.app/docs/subscription) but
  * the approach is generalizable.
  *
- * It uses {@link createReactiveStoreFromRpcAndSubscription} to combine an initial RPC fetch with an
+ * It uses {@link createReactiveStoreWithInitialValueAndSlotTracking} to combine an initial RPC fetch with an
  * ongoing subscription, using slot-based comparison to ensure only the latest value is published.
  */
 export function balanceSubscribe(
@@ -24,12 +24,12 @@ export function balanceSubscribe(
 ) {
     const [{ address }, { next }] = subscriptionArgs;
     const abortController = new AbortController();
-    const store = createReactiveStoreFromRpcAndSubscription({
+    const store = createReactiveStoreWithInitialValueAndSlotTracking({
         abortSignal: abortController.signal,
         rpcRequest: rpc.getBalance(address, { commitment: 'confirmed' }),
+        rpcSubscriptionRequest: rpcSubscriptions.accountNotifications(address),
+        rpcSubscriptionValueMapper: ({ lamports }) => lamports,
         rpcValueMapper: lamports => lamports,
-        subscriptionRequest: rpcSubscriptions.accountNotifications(address),
-        subscriptionValueMapper: ({ lamports }) => lamports,
     });
     store.subscribe(() => {
         const error = store.getError();

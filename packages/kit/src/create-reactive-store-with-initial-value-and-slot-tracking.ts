@@ -3,7 +3,7 @@ import type { PendingRpcSubscriptionsRequest } from '@solana/rpc-subscriptions';
 import type { SolanaRpcResponse } from '@solana/rpc-types';
 import type { ReactiveStore } from '@solana/subscribable';
 
-type CreateReactiveStoreFromRpcAndSubscriptionConfig<TRpcValue, TSubscriptionValue, TItem> = Readonly<{
+type CreateReactiveStoreWithInitialValueAndSlotTrackingConfig<TRpcValue, TSubscriptionValue, TItem> = Readonly<{
     /**
      * Triggering this abort signal will cancel the pending RPC request and subscription, and
      * disconnect the store from further updates.
@@ -16,19 +16,19 @@ type CreateReactiveStoreFromRpcAndSubscriptionConfig<TRpcValue, TSubscriptionVal
      */
     rpcRequest: PendingRpcRequest<SolanaRpcResponse<TRpcValue>>;
     /**
-     * Maps the value from the RPC response to the item type stored in the reactive store.
-     */
-    rpcValueMapper: (value: TRpcValue) => TItem;
-    /**
      * A pending RPC subscription request whose notifications will be used to keep the store
      * up to date. Each notification must be a {@link SolanaRpcResponse} so that its slot can be
      * compared with the initial RPC response and other notifications.
      */
-    subscriptionRequest: PendingRpcSubscriptionsRequest<SolanaRpcResponse<TSubscriptionValue>>;
+    rpcSubscriptionRequest: PendingRpcSubscriptionsRequest<SolanaRpcResponse<TSubscriptionValue>>;
     /**
      * Maps the value from a subscription notification to the item type stored in the reactive store.
      */
-    subscriptionValueMapper: (value: TSubscriptionValue) => TItem;
+    rpcSubscriptionValueMapper: (value: TSubscriptionValue) => TItem;
+    /**
+     * Maps the value from the RPC response to the item type stored in the reactive store.
+     */
+    rpcValueMapper: (value: TRpcValue) => TItem;
 }>;
 
 /**
@@ -55,7 +55,7 @@ type CreateReactiveStoreFromRpcAndSubscriptionConfig<TRpcValue, TSubscriptionVal
  * ```ts
  * import {
  *     address,
- *     createReactiveStoreFromRpcAndSubscription,
+ *     createReactiveStoreWithInitialValueAndSlotTracking,
  *     createSolanaRpc,
  *     createSolanaRpcSubscriptions,
  * } from '@solana/kit';
@@ -64,12 +64,12 @@ type CreateReactiveStoreFromRpcAndSubscriptionConfig<TRpcValue, TSubscriptionVal
  * const rpcSubscriptions = createSolanaRpcSubscriptions('ws://127.0.0.1:8900');
  * const myAddress = address('FnHyam9w4NZoWR6mKN1CuGBritdsEWZQa4Z4oawLZGxa');
  *
- * const balanceStore = createReactiveStoreFromRpcAndSubscription({
+ * const balanceStore = createReactiveStoreWithInitialValueAndSlotTracking({
  *     abortSignal: AbortSignal.timeout(60_000),
  *     rpcRequest: rpc.getBalance(myAddress, { commitment: 'confirmed' }),
  *     rpcValueMapper: lamports => lamports,
- *     subscriptionRequest: rpcSubscriptions.accountNotifications(myAddress),
- *     subscriptionValueMapper: ({ lamports }) => lamports,
+ *     rpcSubscriptionRequest: rpcSubscriptions.accountNotifications(myAddress),
+ *     rpcSubscriptionValueMapper: ({ lamports }) => lamports,
  * });
  *
  * const unsubscribe = balanceStore.subscribe(() => {
@@ -81,13 +81,17 @@ type CreateReactiveStoreFromRpcAndSubscriptionConfig<TRpcValue, TSubscriptionVal
  *
  * @see {@link ReactiveStore}
  */
-export function createReactiveStoreFromRpcAndSubscription<TRpcValue, TSubscriptionValue, TItem>({
+export function createReactiveStoreWithInitialValueAndSlotTracking<TRpcValue, TSubscriptionValue, TItem>({
     abortSignal,
     rpcRequest,
     rpcValueMapper,
-    subscriptionRequest,
-    subscriptionValueMapper,
-}: CreateReactiveStoreFromRpcAndSubscriptionConfig<TRpcValue, TSubscriptionValue, TItem>): ReactiveStore<TItem> {
+    rpcSubscriptionRequest,
+    rpcSubscriptionValueMapper,
+}: CreateReactiveStoreWithInitialValueAndSlotTrackingConfig<
+    TRpcValue,
+    TSubscriptionValue,
+    TItem
+>): ReactiveStore<TItem> {
     let currentState: TItem | undefined;
     let currentError: unknown;
     let lastUpdateSlot = -1n;
@@ -122,7 +126,7 @@ export function createReactiveStoreFromRpcAndSubscription<TRpcValue, TSubscripti
         })
         .catch(handleError);
 
-    subscriptionRequest
+    rpcSubscriptionRequest
         .subscribe({ abortSignal: signal })
         .then(async notifications => {
             for await (const {
@@ -132,7 +136,7 @@ export function createReactiveStoreFromRpcAndSubscription<TRpcValue, TSubscripti
                 if (signal.aborted) return;
                 if (slot < lastUpdateSlot) continue;
                 lastUpdateSlot = slot;
-                currentState = subscriptionValueMapper(value);
+                currentState = rpcSubscriptionValueMapper(value);
                 notifySubscribers();
             }
         })
