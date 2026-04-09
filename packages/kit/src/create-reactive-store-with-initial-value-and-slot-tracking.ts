@@ -124,7 +124,7 @@ export function createReactiveStoreWithInitialValueAndSlotTracking<TRpcValue, TS
             if (signal.aborted) return;
             if (slot < lastUpdateSlot) return;
             lastUpdateSlot = slot;
-            currentState = { context: { slot }, value: rpcValueMapper(value) } as SolanaRpcResponse<TItem>;
+            currentState = { context: { slot }, value: rpcValueMapper(value) };
             notifySubscribers();
         })
         .catch(handleError);
@@ -142,7 +142,7 @@ export function createReactiveStoreWithInitialValueAndSlotTracking<TRpcValue, TS
                 currentState = {
                     context: { slot },
                     value: rpcSubscriptionValueMapper(value),
-                } as SolanaRpcResponse<TItem>;
+                };
                 notifySubscribers();
             }
         })
