@@ -93,8 +93,19 @@ export async function* createAsyncGeneratorWithInitialValueAndSlotTracking<TRpcV
     const queue: SolanaRpcResponse<TItem>[] = [];
     let waitingResolve: ((value: IteratorResult<SolanaRpcResponse<TItem>>) => void) | null = null;
     let waitingReject: ((reason: unknown) => void) | null = null;
+    let rpcDone = false;
+    let subscriptionDone = false;
     let done = false;
     let pendingError: unknown;
+
+    function markSourcesDone() {
+        done = true;
+        if (waitingResolve) {
+            const resolve = waitingResolve;
+            waitingResolve = null;
+            resolve({ done: true, value: undefined });
+        }
+    }
 
     const abortController = new AbortController();
     const signal = abortController.signal;
@@ -148,6 +159,10 @@ export async function* createAsyncGeneratorWithInitialValueAndSlotTracking<TRpcV
             lastUpdateSlot = slot;
             enqueue({ context: { slot }, value: rpcValueMapper(value) });
         })
+        .then(() => {
+            rpcDone = true;
+            if (subscriptionDone) markSourcesDone();
+        })
         .catch(handleError);
 
     rpcSubscriptionRequest
@@ -163,12 +178,8 @@ export async function* createAsyncGeneratorWithInitialValueAndSlotTracking<TRpcV
                 enqueue({ context: { slot }, value: rpcSubscriptionValueMapper(value) });
             }
             // Subscription completed normally.
-            done = true;
-            if (waitingResolve) {
-                const resolve = waitingResolve;
-                waitingResolve = null;
-                resolve({ done: true, value: undefined });
-            }
+            subscriptionDone = true;
+            if (rpcDone) markSourcesDone();
         })
         .catch(handleError);
 
@@ -178,7 +189,6 @@ export async function* createAsyncGeneratorWithInitialValueAndSlotTracking<TRpcV
             if (queue.length > 0) {
                 yield queue.shift()!;
             } else if (done) {
-                if (pendingError) throw pendingError;
                 return;
             } else {
                 // if no value queued or error, wait for the next value or error

@@ -232,7 +232,7 @@ describe('createAsyncGeneratorWithInitialValueAndSlotTracking', () => {
         });
         it('silently drops older subscription notifications while yielding newer ones', async () => {
             expect.assertions(1);
-            const { mockRequest: rpcRequest } = createMockRpcRequest();
+            const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
             const { mockRequest: rpcSubscriptionRequest, pushNotification, complete } = createMockSubscriptionRequest();
             const gen = createAsyncGeneratorWithInitialValueAndSlotTracking({
                 abortSignal: abortController.signal,
@@ -252,13 +252,16 @@ describe('createAsyncGeneratorWithInitialValueAndSlotTracking', () => {
             await flushMicrotasks();
             pushNotification(rpcResponse(400, { count: 4 }));
             await flushMicrotasks();
+            // Resolve RPC at old slot (dropped) so the generator can complete.
+            resolve(rpcResponse(0, { count: 0 }));
+            await flushMicrotasks();
             complete();
             const values = await valuesPromise;
             expect(values).toEqual([expectedResponse(100, 1), expectedResponse(300, 3), expectedResponse(400, 4)]);
         });
         it('buffers values that arrive while the consumer has not yet called next, then yields them', async () => {
             expect.assertions(4);
-            const { mockRequest: rpcRequest } = createMockRpcRequest();
+            const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
             const { mockRequest: rpcSubscriptionRequest, pushNotification, complete } = createMockSubscriptionRequest();
             const gen = createAsyncGeneratorWithInitialValueAndSlotTracking({
                 abortSignal: abortController.signal,
@@ -281,6 +284,9 @@ describe('createAsyncGeneratorWithInitialValueAndSlotTracking', () => {
             // Consume — values should drain from the queue.
             await expect(gen.next()).resolves.toEqual({ done: false, value: expectedResponse(200, 2) });
             await expect(gen.next()).resolves.toEqual({ done: false, value: expectedResponse(300, 3) });
+            // Resolve RPC at old slot (dropped) and complete subscription.
+            resolve(rpcResponse(0, { count: 0 }));
+            await flushMicrotasks();
             complete();
             await expect(gen.next()).resolves.toEqual({ done: true, value: undefined });
         });
@@ -359,9 +365,9 @@ describe('createAsyncGeneratorWithInitialValueAndSlotTracking', () => {
             const values = await valuesPromise;
             expect(values).toEqual([expectedResponse(100, 42)]);
         });
-        it('completes when the subscription ends while the consumer has not yet called next', async () => {
+        it('completes when both the subscription and RPC end while the consumer has not yet called next', async () => {
             expect.assertions(3);
-            const { mockRequest: rpcRequest } = createMockRpcRequest();
+            const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
             const { mockRequest: rpcSubscriptionRequest, pushNotification, complete } = createMockSubscriptionRequest();
             const gen = createAsyncGeneratorWithInitialValueAndSlotTracking({
                 abortSignal: abortController.signal,
@@ -375,13 +381,58 @@ describe('createAsyncGeneratorWithInitialValueAndSlotTracking', () => {
             await flushMicrotasks();
             pushNotification(rpcResponse(100, { count: 1 }));
             await expect(firstNext).resolves.toEqual({ done: false, value: expectedResponse(100, 1) });
-            // Generator is now suspended at the yield. Complete the subscription.
+            // Resolve RPC at older slot (will be dropped) and complete the subscription.
+            resolve(rpcResponse(50, { count: 0 }));
+            await flushMicrotasks();
             complete();
             await flushMicrotasks();
             // Next call should see done=true and return.
             await expect(gen.next()).resolves.toEqual({ done: true, value: undefined });
             // Subsequent calls also return done.
             await expect(gen.next()).resolves.toEqual({ done: true, value: undefined });
+        });
+        it('yields the RPC response when the subscription ends before the RPC resolves', async () => {
+            expect.assertions(1);
+            const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
+            const { mockRequest: rpcSubscriptionRequest, complete } = createMockSubscriptionRequest();
+            const gen = createAsyncGeneratorWithInitialValueAndSlotTracking({
+                abortSignal: abortController.signal,
+                rpcRequest,
+                rpcSubscriptionRequest,
+                rpcSubscriptionValueMapper: v => v.count,
+                rpcValueMapper: v => v.count,
+            });
+            const valuesPromise = collectValues(gen);
+            await flushMicrotasks();
+            // Subscription ends before the RPC responds.
+            complete();
+            await flushMicrotasks();
+            // RPC resolves after the subscription is already done.
+            resolve(rpcResponse(100, { count: 42 }));
+            const values = await valuesPromise;
+            expect(values).toEqual([expectedResponse(100, 42)]);
+        });
+        it('does not complete until both the RPC and subscription have completed', async () => {
+            expect.assertions(2);
+            const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
+            const { mockRequest: rpcSubscriptionRequest, pushNotification, complete } = createMockSubscriptionRequest();
+            const gen = createAsyncGeneratorWithInitialValueAndSlotTracking({
+                abortSignal: abortController.signal,
+                rpcRequest,
+                rpcSubscriptionRequest,
+                rpcSubscriptionValueMapper: v => v.count,
+                rpcValueMapper: v => v.count,
+            });
+            const firstNext = gen.next();
+            await flushMicrotasks();
+            pushNotification(rpcResponse(100, { count: 1 }));
+            await expect(firstNext).resolves.toEqual({ done: false, value: expectedResponse(100, 1) });
+            // Complete the subscription — generator should NOT be done because RPC is pending.
+            complete();
+            await flushMicrotasks();
+            // Resolve the RPC at a newer slot — should be yielded, then generator completes.
+            resolve(rpcResponse(200, { count: 42 }));
+            await expect(gen.next()).resolves.toEqual({ done: false, value: expectedResponse(200, 42) });
         });
         it('returns immediately if the abort signal is already aborted', async () => {
             expect.assertions(1);
