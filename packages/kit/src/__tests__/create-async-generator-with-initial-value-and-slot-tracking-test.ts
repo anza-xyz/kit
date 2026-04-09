@@ -104,7 +104,7 @@ function createMockSubscriptionRequest(): {
 }
 
 function rpcResponse(slot: number, value: TestValue): SolanaRpcResponse<TestValue> {
-    return { context: { slot: BigInt(slot) }, value } as SolanaRpcResponse<TestValue>;
+    return { context: { slot: BigInt(slot) }, value };
 }
 
 /** Build the expected `{ context: { slot }, value }` shape for a yielded value. */

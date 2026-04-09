@@ -103,6 +103,7 @@ export async function* createAsyncGeneratorWithInitialValueAndSlotTracking<TRpcV
         if (waitingResolve) {
             const resolve = waitingResolve;
             waitingResolve = null;
+            waitingReject = null;
             resolve({ done: true, value: undefined });
         }
     }
