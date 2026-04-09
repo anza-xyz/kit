@@ -485,6 +485,38 @@ describe('createAsyncGeneratorWithInitialValueAndSlotTracking', () => {
             expect(firstResult).toEqual({ done: false, value: expectedResponse(100, 42) });
             abortController.abort();
         });
+        it('drains buffered values after abort before completing', async () => {
+            expect.assertions(3);
+            const { mockRequest: rpcRequest } = createMockRpcRequest();
+            const { mockRequest: rpcSubscriptionRequest, pushNotification } = createMockSubscriptionRequest();
+            const gen = createAsyncGeneratorWithInitialValueAndSlotTracking({
+                abortSignal: abortController.signal,
+                rpcRequest,
+                rpcSubscriptionRequest,
+                rpcSubscriptionValueMapper: v => v.count,
+                rpcValueMapper: v => v.count,
+            });
+            // Pull the first value — generator enters the await.
+            const firstNext = gen.next();
+            await flushMicrotasks();
+            // Push three notifications at once. The first resolves the generator's
+            // waiting promise; the other two are buffered in the mock.
+            pushNotification(rpcResponse(100, { count: 1 }));
+            pushNotification(rpcResponse(200, { count: 2 }));
+            pushNotification(rpcResponse(300, { count: 3 }));
+            // Flush so the for-await loop processes all three notifications.
+            // The generator yields slot 100 (via waitingResolve) and the loop
+            // enqueues slots 200 and 300 into the internal queue.
+            await flushMicrotasks();
+            await firstNext;
+            // Abort while slots 200 and 300 are sitting in the queue.
+            abortController.abort();
+            // Buffered values should still be yielded.
+            await expect(gen.next()).resolves.toEqual({ done: false, value: expectedResponse(200, 2) });
+            await expect(gen.next()).resolves.toEqual({ done: false, value: expectedResponse(300, 3) });
+            // Then the generator completes.
+            await expect(gen.next()).resolves.toEqual({ done: true, value: undefined });
+        });
         it('does not yield values that arrive after abort', async () => {
             expect.assertions(1);
             const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
