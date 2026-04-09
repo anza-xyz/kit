@@ -365,6 +365,20 @@ import { grindKeyPairSigners } from '@solana/signers';
 const signers = await grindKeyPairSigners({ matches: /^anza/, amount: 4 });
 ```
 
+#### `writeKeyPairSigner()`
+
+Persists the `CryptoKeyPair` backing a `KeyPairSigner` to disk in the format produced by `solana-keygen`. This is a thin wrapper around `writeKeyPair()` from `@solana/keys` and requires that the signer's underlying key pair was created as extractable (e.g. via `generateKeyPairSigner(true)` or `createKeyPairSignerFromBytes(bytes, true)`).
+
+```ts
+import { generateKeyPairSigner, writeKeyPairSigner } from '@solana/signers';
+
+// Generate an extractable signer so its bytes can be persisted.
+const signer = await generateKeyPairSigner(true);
+await writeKeyPairSigner(signer, './my-keypair.json');
+```
+
+Like `writeKeyPair()`, this helper requires a writable filesystem, creates missing parent directories, writes the file with mode `0600`, and refuses to overwrite an existing file unless the caller passes `{ unsafelyOverwriteExistingKeyPair: true }` — which permanently destroys the previous key and any funds controlled by it.
+
 #### `isKeyPairSigner()`
 
 A type guard that returns `true` if the provided value is a `KeyPairSigner`.

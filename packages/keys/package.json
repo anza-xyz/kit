@@ -91,6 +91,7 @@
         }
     },
     "devDependencies": {
+        "@solana/fs-impl": "workspace:*",
         "tinybench": "^6.0.0"
     },
     "engines": {

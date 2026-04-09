@@ -171,6 +171,8 @@ export async function generateKeyPairSigner(extractable: boolean = false): Promi
  * ```
  *
  * @see {@link createKeyPairSignerFromPrivateKeyBytes} if you only have the 32-bytes private key instead.
+ * @see {@link writeKeyPairSigner} — the inverse helper that persists a signer's key pair to
+ * disk in the same format.
  */
 export async function createKeyPairSignerFromBytes(
     bytes: ReadonlyUint8Array,

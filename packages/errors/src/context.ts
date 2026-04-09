@@ -44,6 +44,7 @@ import {
     SOLANA_ERROR__CODECS__UNION_VARIANT_OUT_OF_RANGE,
     SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION,
     SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS,
+    SOLANA_ERROR__FS__UNSUPPORTED_ENVIRONMENT,
     SOLANA_ERROR__INSTRUCTION__EXPECTED_TO_HAVE_ACCOUNTS,
     SOLANA_ERROR__INSTRUCTION__EXPECTED_TO_HAVE_DATA,
     SOLANA_ERROR__INSTRUCTION__PROGRAM_ID_MISMATCH,
@@ -458,6 +459,9 @@ export type SolanaErrorContext = ReadonlyContextValue<
                     preflightData?: Omit<RpcSimulateTransactionResult, 'err'>;
                 }>;
                 transactionPlanResult: unknown;
+            };
+            [SOLANA_ERROR__FS__UNSUPPORTED_ENVIRONMENT]: {
+                operation: string;
             };
             [SOLANA_ERROR__INSTRUCTION_ERROR__BORSH_IO_ERROR]: {
                 index: number;

@@ -70,6 +70,7 @@ export function getBaseConfig(platform: Platform, formats: Format[], _options: O
                               ...(format === 'cjs' ? ['@noble/ed25519'] : []),
                               '@solana/crypto-impl',
                               '@solana/event-target-impl',
+                              '@solana/fs-impl',
                               '@solana/text-encoding-impl',
                               '@solana/ws-impl',
                           ],

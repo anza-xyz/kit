@@ -100,6 +100,20 @@ const keypairBytes = new Uint8Array(JSON.parse(keypairFile.toString()));
 const { privateKey, publicKey } = await createKeyPairFromBytes(keypairBytes);
 ```
 
+### `writeKeyPair()`
+
+Writes an extractable `CryptoKeyPair` to disk as a JSON array of 64 bytes, matching the format produced by `solana-keygen`. The first 32 bytes are the raw Ed25519 seed (private key) and the last 32 bytes are the raw public key. Missing parent directories are created automatically and the file is written with mode `0600` (owner read/write only). This helper requires a writable filesystem and will throw in environments that don't provide one (such as browsers or React Native).
+
+```ts
+import { generateKeyPair, writeKeyPair } from '@solana/keys';
+
+// Generate an extractable key pair so its bytes can be persisted.
+const keyPair = await generateKeyPair(true);
+await writeKeyPair(keyPair, './my-keypair.json');
+```
+
+By default, `writeKeyPair()` refuses to overwrite an existing file and throws `EEXIST`. Callers can opt in by passing `{ unsafelyOverwriteExistingKeyPair: true }`, but doing so permanently destroys the previous key and, with it, access to any funds or onchain state controlled by that address.
+
 ### `createKeyPairFromPrivateKeyBytes()`
 
 Given a private key represented as a 32-bytes `Uint8Array`, creates an Ed25519 public/private key pair for use with other methods in this package that accept `CryptoKey` objects.

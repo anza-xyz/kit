@@ -59,6 +59,9 @@ export async function generateKeyPair(extractable: boolean = false): Promise<Cry
  * // Create a CryptoKeyPair from the bytes.
  * const { privateKey, publicKey } = await createKeyPairFromBytes(keypairBytes);
  * ```
+ *
+ * @see {@link writeKeyPair} — the inverse helper that persists a key pair to disk in the
+ * same format.
  */
 export async function createKeyPairFromBytes(
     bytes: ReadonlyUint8Array,
