@@ -4,9 +4,6 @@ import type { SolanaRpcResponse } from '@solana/rpc-types';
 
 import { createAsyncGeneratorWithInitialValueAndSlotTracking } from '../create-async-generator-with-initial-value-and-slot-tracking';
 
-/** Flush all pending microtasks by waiting for a macrotask boundary. */
-const flushMicrotasks = () => new Promise(resolve => setTimeout(resolve, 0));
-
 type TestValue = { count: number };
 
 function createMockRpcRequest(): {
@@ -14,12 +11,7 @@ function createMockRpcRequest(): {
     reject(error: unknown): void;
     resolve(response: SolanaRpcResponse<TestValue>): void;
 } {
-    let resolve!: (response: SolanaRpcResponse<TestValue>) => void;
-    let reject!: (error: unknown) => void;
-    const promise = new Promise<SolanaRpcResponse<TestValue>>((res, rej) => {
-        resolve = res;
-        reject = rej;
-    });
+    const { promise, resolve, reject } = Promise.withResolvers<SolanaRpcResponse<TestValue>>();
     return {
         mockRequest: { send: jest.fn().mockReturnValue(promise) },
         reject,
@@ -122,6 +114,8 @@ async function collectValues<T>(gen: AsyncGenerator<T>, n?: number): Promise<T[]
     return values;
 }
 
+jest.useFakeTimers();
+
 describe('createAsyncGeneratorWithInitialValueAndSlotTracking', () => {
     let abortController: AbortController;
 
@@ -162,7 +156,8 @@ describe('createAsyncGeneratorWithInitialValueAndSlotTracking', () => {
             });
             // Start consuming — the generator won't yield until a value arrives.
             const valuesPromise = collectValues(gen, 1);
-            await flushMicrotasks();
+            // await jest.runAllTimersAsync();
+            await jest.runAllTimersAsync();
             pushNotification(rpcResponse(100, { count: 99 }));
             const values = await valuesPromise;
             expect(values).toEqual([expectedResponse(100, 99)]);
@@ -180,7 +175,8 @@ describe('createAsyncGeneratorWithInitialValueAndSlotTracking', () => {
             });
             resolve(rpcResponse(100, { count: 42 }));
             const valuesPromise = collectValues(gen, 2);
-            await flushMicrotasks();
+            // await jest.runAllTimersAsync()
+            await jest.runAllTimersAsync();
             pushNotification(rpcResponse(200, { count: 99 }));
             const values = await valuesPromise;
             expect(values).toEqual([expectedResponse(100, 42), expectedResponse(200, 99)]);
@@ -197,13 +193,13 @@ describe('createAsyncGeneratorWithInitialValueAndSlotTracking', () => {
                 rpcValueMapper: v => v.count,
             });
             const valuesPromise = collectValues(gen);
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             // Subscription notification arrives first at slot 200
             pushNotification(rpcResponse(200, { count: 99 }));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             // RPC response arrives later at older slot 100 — should be dropped
             resolve(rpcResponse(100, { count: 42 }));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             complete();
             const values = await valuesPromise;
             expect(values).toEqual([expectedResponse(200, 99)]);
@@ -222,10 +218,10 @@ describe('createAsyncGeneratorWithInitialValueAndSlotTracking', () => {
             const valuesPromise = collectValues(gen);
             // RPC response arrives first at slot 200
             resolve(rpcResponse(200, { count: 42 }));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             // Subscription notification at older slot — should be dropped
             pushNotification(rpcResponse(100, { count: 99 }));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             complete();
             const values = await valuesPromise;
             expect(values).toEqual([expectedResponse(200, 42)]);
@@ -242,19 +238,19 @@ describe('createAsyncGeneratorWithInitialValueAndSlotTracking', () => {
                 rpcValueMapper: v => v.count,
             });
             const valuesPromise = collectValues(gen);
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             pushNotification(rpcResponse(100, { count: 1 }));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             pushNotification(rpcResponse(300, { count: 3 }));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             // Slot 200 is older than 300 — should be dropped
             pushNotification(rpcResponse(200, { count: 2 }));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             pushNotification(rpcResponse(400, { count: 4 }));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             // Resolve RPC at old slot (dropped) so the generator can complete.
             resolve(rpcResponse(0, { count: 0 }));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             complete();
             const values = await valuesPromise;
             expect(values).toEqual([expectedResponse(100, 1), expectedResponse(300, 3), expectedResponse(400, 4)]);
@@ -272,7 +268,7 @@ describe('createAsyncGeneratorWithInitialValueAndSlotTracking', () => {
             });
             // Start the generator — it enters the await.
             const firstNext = gen.next();
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             // First notification resolves the waiting promise; the generator yields it.
             pushNotification(rpcResponse(100, { count: 1 }));
             await expect(firstNext).resolves.toEqual({ done: false, value: expectedResponse(100, 1) });
@@ -280,13 +276,13 @@ describe('createAsyncGeneratorWithInitialValueAndSlotTracking', () => {
             // buffer into the internal queue because the consumer hasn't called next().
             pushNotification(rpcResponse(200, { count: 2 }));
             pushNotification(rpcResponse(300, { count: 3 }));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             // Consume — values should drain from the queue.
             await expect(gen.next()).resolves.toEqual({ done: false, value: expectedResponse(200, 2) });
             await expect(gen.next()).resolves.toEqual({ done: false, value: expectedResponse(300, 3) });
             // Resolve RPC at old slot (dropped) and complete subscription.
             resolve(rpcResponse(0, { count: 0 }));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             complete();
             await expect(gen.next()).resolves.toEqual({ done: true, value: undefined });
         });
@@ -320,7 +316,7 @@ describe('createAsyncGeneratorWithInitialValueAndSlotTracking', () => {
                 rpcValueMapper: v => v.count,
             });
             const valuesPromise = collectValues(gen);
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             const subscriptionError = new Error('subscription failed');
             error(subscriptionError);
             await expect(valuesPromise).rejects.toBe(subscriptionError);
@@ -340,7 +336,7 @@ describe('createAsyncGeneratorWithInitialValueAndSlotTracking', () => {
             // Collect one value, then wait for the next (which will be an error).
             const firstResult = await gen.next();
             expect(firstResult).toEqual({ done: false, value: expectedResponse(100, 42) });
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             error(new Error('subscription failed'));
             await expect(gen.next()).rejects.toEqual(new Error('subscription failed'));
         });
@@ -360,7 +356,7 @@ describe('createAsyncGeneratorWithInitialValueAndSlotTracking', () => {
             });
             resolve(rpcResponse(100, { count: 42 }));
             const valuesPromise = collectValues(gen);
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             complete();
             const values = await valuesPromise;
             expect(values).toEqual([expectedResponse(100, 42)]);
@@ -378,14 +374,14 @@ describe('createAsyncGeneratorWithInitialValueAndSlotTracking', () => {
             });
             // Start the generator — it enters the await.
             const firstNext = gen.next();
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             pushNotification(rpcResponse(100, { count: 1 }));
             await expect(firstNext).resolves.toEqual({ done: false, value: expectedResponse(100, 1) });
             // Resolve RPC at older slot (will be dropped) and complete the subscription.
             resolve(rpcResponse(50, { count: 0 }));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             complete();
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             // Next call should see done=true and return.
             await expect(gen.next()).resolves.toEqual({ done: true, value: undefined });
             // Subsequent calls also return done.
@@ -403,10 +399,10 @@ describe('createAsyncGeneratorWithInitialValueAndSlotTracking', () => {
                 rpcValueMapper: v => v.count,
             });
             const valuesPromise = collectValues(gen);
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             // Subscription ends before the RPC responds.
             complete();
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             // RPC resolves after the subscription is already done.
             resolve(rpcResponse(100, { count: 42 }));
             const values = await valuesPromise;
@@ -424,12 +420,12 @@ describe('createAsyncGeneratorWithInitialValueAndSlotTracking', () => {
                 rpcValueMapper: v => v.count,
             });
             const firstNext = gen.next();
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             pushNotification(rpcResponse(100, { count: 1 }));
             await expect(firstNext).resolves.toEqual({ done: false, value: expectedResponse(100, 1) });
             // Complete the subscription — generator should NOT be done because RPC is pending.
             complete();
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             // Resolve the RPC at a newer slot — should be yielded, then generator completes.
             resolve(rpcResponse(200, { count: 42 }));
             await expect(gen.next()).resolves.toEqual({ done: false, value: expectedResponse(200, 42) });
@@ -463,7 +459,7 @@ describe('createAsyncGeneratorWithInitialValueAndSlotTracking', () => {
                 rpcValueMapper: v => v.count,
             });
             const valuesPromise = collectValues(gen);
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             abortController.abort();
             const values = await valuesPromise;
             expect(values).toEqual([]);
@@ -498,7 +494,7 @@ describe('createAsyncGeneratorWithInitialValueAndSlotTracking', () => {
             });
             // Pull the first value — generator enters the await.
             const firstNext = gen.next();
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             // Push three notifications at once. The first resolves the generator's
             // waiting promise; the other two are buffered in the mock.
             pushNotification(rpcResponse(100, { count: 1 }));
@@ -507,7 +503,7 @@ describe('createAsyncGeneratorWithInitialValueAndSlotTracking', () => {
             // Flush so the for-await loop processes all three notifications.
             // The generator yields slot 100 (via waitingResolve) and the loop
             // enqueues slots 200 and 300 into the internal queue.
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             await firstNext;
             // Abort while slots 200 and 300 are sitting in the queue.
             abortController.abort();
@@ -529,7 +525,7 @@ describe('createAsyncGeneratorWithInitialValueAndSlotTracking', () => {
                 rpcValueMapper: v => v.count,
             });
             const valuesPromise = collectValues(gen);
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             abortController.abort();
             // RPC resolves after abort.
             resolve(rpcResponse(100, { count: 42 }));
@@ -566,7 +562,7 @@ describe('createAsyncGeneratorWithInitialValueAndSlotTracking', () => {
                 rpcValueMapper: v => v.count,
             });
             const nextPromise = gen.next();
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             const subscriptionSignal = (rpcSubscriptionRequest.subscribe as jest.Mock).mock.calls[0][0].abortSignal;
             expect(subscriptionSignal.aborted).toBe(false);
             abortController.abort('test reason');
@@ -587,7 +583,7 @@ describe('createAsyncGeneratorWithInitialValueAndSlotTracking', () => {
             resolve(rpcResponse(100, { count: 42 }));
             // Collect only 1 value (simulates breaking out of the loop).
             await collectValues(gen, 1);
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             const rpcSignal = (rpcRequest.send as jest.Mock).mock.calls[0][0].abortSignal;
             expect(rpcSignal.aborted).toBe(true);
         });

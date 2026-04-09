@@ -4,9 +4,6 @@ import type { SolanaRpcResponse } from '@solana/rpc-types';
 
 import { createReactiveStoreWithInitialValueAndSlotTracking } from '../create-reactive-store-with-initial-value-and-slot-tracking';
 
-/** Flush all pending microtasks by waiting for a macrotask boundary. */
-const flushMicrotasks = () => new Promise(resolve => setTimeout(resolve, 0));
-
 type TestValue = { count: number };
 
 function createMockRpcRequest(): {
@@ -14,12 +11,7 @@ function createMockRpcRequest(): {
     reject(error: unknown): void;
     resolve(response: SolanaRpcResponse<TestValue>): void;
 } {
-    let resolve!: (response: SolanaRpcResponse<TestValue>) => void;
-    let reject!: (error: unknown) => void;
-    const promise = new Promise<SolanaRpcResponse<TestValue>>((res, rej) => {
-        resolve = res;
-        reject = rej;
-    });
+    const { promise, resolve, reject } = Promise.withResolvers<SolanaRpcResponse<TestValue>>();
     return {
         mockRequest: { send: jest.fn().mockReturnValue(promise) },
         reject,
@@ -107,6 +99,8 @@ function rpcResponse(slot: number, value: TestValue): SolanaRpcResponse<TestValu
     return { context: { slot: BigInt(slot) }, value };
 }
 
+jest.useFakeTimers();
+
 describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
     let abortController: AbortController;
 
@@ -143,7 +137,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcValueMapper: v => v.count,
             });
             resolve(rpcResponse(100, { count: 42 }));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             expect(store.getState()).toEqual({ context: { slot: 100n }, value: 42 });
         });
         it('updates with a subscription notification value', async () => {
@@ -157,9 +151,9 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             pushNotification(rpcResponse(100, { count: 99 }));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             expect(store.getState()).toEqual({ context: { slot: 100n }, value: 99 });
         });
         it('ignores the RPC response when a newer subscription notification has already arrived', async () => {
@@ -173,12 +167,12 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             pushNotification(rpcResponse(200, { count: 99 }));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             // RPC response arrives later at an older slot
             resolve(rpcResponse(100, { count: 42 }));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             expect(store.getState()).toEqual({ context: { slot: 200n }, value: 99 });
         });
         it('ignores a subscription notification when the RPC response was at a newer slot', async () => {
@@ -193,9 +187,9 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcValueMapper: v => v.count,
             });
             resolve(rpcResponse(200, { count: 42 }));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             pushNotification(rpcResponse(100, { count: 99 }));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             expect(store.getState()).toEqual({ context: { slot: 200n }, value: 42 });
         });
         it('preserves the last known value after an error', async () => {
@@ -210,9 +204,9 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcValueMapper: v => v.count,
             });
             resolve(rpcResponse(100, { count: 42 }));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             error(new Error('subscription failed'));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             expect(store.getState()).toEqual({ context: { slot: 100n }, value: 42 });
         });
     });
@@ -243,7 +237,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             });
             const error = new Error('rpc failed');
             reject(error);
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             expect(store.getError()).toBe(error);
         });
         it('captures an error from the subscription', async () => {
@@ -257,10 +251,10 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             const subscriptionError = new Error('subscription failed');
             error(subscriptionError);
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             expect(store.getError()).toBe(subscriptionError);
         });
         it('only captures the first error when RPC fails then subscription fails', async () => {
@@ -274,11 +268,11 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             rejectRpc(new Error('rpc error'));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             errorSubscription(new Error('subscription error'));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             expect(store.getError()).toEqual(new Error('rpc error'));
         });
         it('only captures the first error when subscription fails then RPC fails', async () => {
@@ -292,11 +286,11 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             errorSubscription(new Error('subscription error'));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             rejectRpc(new Error('rpc error'));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             expect(store.getError()).toEqual(new Error('subscription error'));
         });
     });
@@ -316,7 +310,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             const subscriber = jest.fn();
             store.subscribe(subscriber);
             resolve(rpcResponse(100, { count: 42 }));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             expect(subscriber).toHaveBeenCalledTimes(1);
         });
         it('calls the subscriber when a subscription notification arrives', async () => {
@@ -332,9 +326,9 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             });
             const subscriber = jest.fn();
             store.subscribe(subscriber);
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             pushNotification(rpcResponse(100, { count: 99 }));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             expect(subscriber).toHaveBeenCalledTimes(1);
         });
         it('does not call the subscriber when an out-of-order notification is skipped', async () => {
@@ -351,12 +345,12 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             const subscriber = jest.fn();
             store.subscribe(subscriber);
             resolve(rpcResponse(200, { count: 42 }));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             subscriber.mockClear();
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             // This notification is at an older slot and should be skipped
             pushNotification(rpcResponse(100, { count: 99 }));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             expect(subscriber).not.toHaveBeenCalled();
         });
         it('calls the subscriber when an error occurs', async () => {
@@ -373,7 +367,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             const subscriber = jest.fn();
             store.subscribe(subscriber);
             reject(new Error('fail'));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             expect(subscriber).toHaveBeenCalledTimes(1);
         });
         it('calls the subscriber when a subscription error occurs', async () => {
@@ -389,9 +383,9 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             });
             const subscriber = jest.fn();
             store.subscribe(subscriber);
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             error(new Error('fail'));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             expect(subscriber).toHaveBeenCalledTimes(1);
         });
         it('stops calling the subscriber after unsubscribe', async () => {
@@ -409,7 +403,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             const unsubscribe = store.subscribe(subscriber);
             unsubscribe();
             resolve(rpcResponse(100, { count: 42 }));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             expect(subscriber).not.toHaveBeenCalled();
         });
         it('the unsubscribe function is idempotent', () => {
@@ -476,7 +470,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             });
             abortController.abort();
             reject(new Error('aborted'));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             expect(store.getError()).toBeUndefined();
         });
         it('swallows errors from the subscription when the caller aborts', async () => {
@@ -490,10 +484,10 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             abortController.abort();
             error(new Error('aborted'));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             expect(store.getError()).toBeUndefined();
         });
         it('does not update state when the RPC response arrives after abort', async () => {
@@ -511,7 +505,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             store.subscribe(subscriber);
             abortController.abort();
             resolve(rpcResponse(100, { count: 42 }));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             expect(store.getState()).toBeUndefined();
             expect(subscriber).not.toHaveBeenCalled();
         });
@@ -528,10 +522,10 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             });
             const subscriber = jest.fn();
             store.subscribe(subscriber);
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             abortController.abort();
             pushNotification(rpcResponse(100, { count: 99 }));
-            await flushMicrotasks();
+            await jest.runAllTimersAsync();
             expect(store.getState()).toBeUndefined();
             expect(subscriber).not.toHaveBeenCalled();
         });
