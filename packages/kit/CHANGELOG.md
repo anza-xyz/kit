@@ -1,5 +1,44 @@
 # @solana/kit
 
+## 6.8.0
+
+### Minor Changes
+
+- [#1528](https://github.com/anza-xyz/kit/pull/1528) [`09a7509`](https://github.com/anza-xyz/kit/commit/09a75092c48f4b827d7d2ac6db0b1bd34c4a41dd) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `createReactiveStoreWithInitialValueAndSlotTracking()`, a helper that combines an initial RPC fetch with an ongoing subscription into a single `ReactiveStore`. Uses slot-based comparison to ensure only the most recent value is kept, regardless of arrival order. The store state is a `SolanaRpcResponse<TItem>`. Compatible with `useSyncExternalStore`, Svelte stores, and other reactive primitives.
+
+- [#1536](https://github.com/anza-xyz/kit/pull/1536) [`cec688e`](https://github.com/anza-xyz/kit/commit/cec688e59a34f092d89f9a3f2253edb571c37899) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `createAsyncGeneratorWithInitialValueAndSlotTracking`, an async generator alternative to `createReactiveStoreWithInitialValueAndSlotTracking` that yields values from both an RPC fetch and an ongoing subscription, silently dropping any value at a slot older than the last seen.
+
+### Patch Changes
+
+- [#1532](https://github.com/anza-xyz/kit/pull/1532) [`667a0f0`](https://github.com/anza-xyz/kit/commit/667a0f059f5432244ab2cf8a23a22f53c7a36b4b) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Update the TypeScript peer dependency from `^5.0.0` to `>=5.0.0` to allow TypeScript 6 and above.
+
+- Updated dependencies [[`d79f8d1`](https://github.com/anza-xyz/kit/commit/d79f8d115065557194db9604f3a0bfef7d37a2b6), [`667a0f0`](https://github.com/anza-xyz/kit/commit/667a0f059f5432244ab2cf8a23a22f53c7a36b4b), [`fdfcb6c`](https://github.com/anza-xyz/kit/commit/fdfcb6cbf439eb55e07ad7d59372347bd816d6d3), [`f53ce07`](https://github.com/anza-xyz/kit/commit/f53ce0796c782e79490e1cf11a55e28fb62b8c8f), [`43bc570`](https://github.com/anza-xyz/kit/commit/43bc570a5b51a9fda75abc1f0f818728ca3cd439), [`ffb7665`](https://github.com/anza-xyz/kit/commit/ffb76652f6b887eb5020c3584f1d827a1098dccc), [`f8d6131`](https://github.com/anza-xyz/kit/commit/f8d61310a0ca7dfeb86f7e7d3f5975b8a140370a)]:
+    - @solana/signers@6.8.0
+    - @solana/keys@6.8.0
+    - @solana/accounts@6.8.0
+    - @solana/addresses@6.8.0
+    - @solana/codecs@6.8.0
+    - @solana/errors@6.8.0
+    - @solana/functional@6.8.0
+    - @solana/instruction-plans@6.8.0
+    - @solana/instructions@6.8.0
+    - @solana/offchain-messages@6.8.0
+    - @solana/plugin-core@6.8.0
+    - @solana/plugin-interfaces@6.8.0
+    - @solana/program-client-core@6.8.0
+    - @solana/programs@6.8.0
+    - @solana/rpc@6.8.0
+    - @solana/rpc-api@6.8.0
+    - @solana/rpc-parsed-types@6.8.0
+    - @solana/rpc-spec-types@6.8.0
+    - @solana/rpc-subscriptions@6.8.0
+    - @solana/rpc-types@6.8.0
+    - @solana/subscribable@6.8.0
+    - @solana/sysvars@6.8.0
+    - @solana/transaction-confirmation@6.8.0
+    - @solana/transaction-messages@6.8.0
+    - @solana/transactions@6.8.0
+
 ## 6.7.0
 
 ### Patch Changes

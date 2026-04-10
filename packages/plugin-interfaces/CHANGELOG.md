@@ -1,5 +1,24 @@
 # @solana/plugin-interfaces
 
+## 6.8.0
+
+### Minor Changes
+
+- [#1530](https://github.com/anza-xyz/kit/pull/1530) [`f8d6131`](https://github.com/anza-xyz/kit/commit/f8d61310a0ca7dfeb86f7e7d3f5975b8a140370a) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add `ClientWithIdentity` interface for clients that provide a default identity signer. Whereas `ClientWithPayer` describes the signer responsible for paying transaction fees and storage costs, `ClientWithIdentity` describes the signer whose assets the application is acting upon — such as the authority over accounts, tokens, or other on-chain assets owned by the current user. In many apps the payer and identity refer to the same signer, but they can differ when a service pays fees on behalf of a user.
+
+### Patch Changes
+
+- [#1532](https://github.com/anza-xyz/kit/pull/1532) [`667a0f0`](https://github.com/anza-xyz/kit/commit/667a0f059f5432244ab2cf8a23a22f53c7a36b4b) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Update the TypeScript peer dependency from `^5.0.0` to `>=5.0.0` to allow TypeScript 6 and above.
+
+- Updated dependencies [[`d79f8d1`](https://github.com/anza-xyz/kit/commit/d79f8d115065557194db9604f3a0bfef7d37a2b6), [`667a0f0`](https://github.com/anza-xyz/kit/commit/667a0f059f5432244ab2cf8a23a22f53c7a36b4b), [`fdfcb6c`](https://github.com/anza-xyz/kit/commit/fdfcb6cbf439eb55e07ad7d59372347bd816d6d3), [`f53ce07`](https://github.com/anza-xyz/kit/commit/f53ce0796c782e79490e1cf11a55e28fb62b8c8f), [`43bc570`](https://github.com/anza-xyz/kit/commit/43bc570a5b51a9fda75abc1f0f818728ca3cd439)]:
+    - @solana/signers@6.8.0
+    - @solana/keys@6.8.0
+    - @solana/addresses@6.8.0
+    - @solana/instruction-plans@6.8.0
+    - @solana/rpc-spec@6.8.0
+    - @solana/rpc-subscriptions-spec@6.8.0
+    - @solana/rpc-types@6.8.0
+
 ## 6.7.0
 
 ### Patch Changes

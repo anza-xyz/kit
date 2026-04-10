@@ -1,5 +1,27 @@
 # @solana/keys
 
+## 6.8.0
+
+### Minor Changes
+
+- [#1531](https://github.com/anza-xyz/kit/pull/1531) [`d79f8d1`](https://github.com/anza-xyz/kit/commit/d79f8d115065557194db9604f3a0bfef7d37a2b6) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add an optional `extractable` argument to `generateKeyPair` and `generateKeyPairSigner`. It defaults to `false`, preserving the existing secure-by-default behavior, but can be set to `true` when you need to export the generated private key bytes via `crypto.subtle.exportKey()`.
+
+- [#1537](https://github.com/anza-xyz/kit/pull/1537) [`fdfcb6c`](https://github.com/anza-xyz/kit/commit/fdfcb6cbf439eb55e07ad7d59372347bd816d6d3) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add `writeKeyPair` and `writeKeyPairSigner` helpers for persisting an extractable key pair to disk as a JSON byte array, matching the format produced by `solana-keygen`. Missing parent directories are created automatically, and written files use mode `0600`. These helpers are Node-only and refuse to overwrite an existing file unless the caller sets `unsafelyOverwriteExistingKeyPair: true`.
+
+- [#1534](https://github.com/anza-xyz/kit/pull/1534) [`43bc570`](https://github.com/anza-xyz/kit/commit/43bc570a5b51a9fda75abc1f0f818728ca3cd439) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add `grindKeyPair`, `grindKeyPairs`, `grindKeyPairSigner`, and `grindKeyPairSigners` for mining vanity key pairs whose base58-encoded public key matches a `RegExp` or a custom predicate. Supports `amount` for mining multiple key pairs, `extractable` for forwarding to the underlying `generateKeyPair` call, `concurrency` (defaulting to `32`) for batched parallel key generation, and `abortSignal` for cancellation. Regex matchers are statically checked for base58-alphabet violations at runtime (after stripping escapes, character classes, quantifiers, and groups) to catch common typos like `/^sol0/`.
+
+### Patch Changes
+
+- [#1532](https://github.com/anza-xyz/kit/pull/1532) [`667a0f0`](https://github.com/anza-xyz/kit/commit/667a0f059f5432244ab2cf8a23a22f53c7a36b4b) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Update the TypeScript peer dependency from `^5.0.0` to `>=5.0.0` to allow TypeScript 6 and above.
+
+- Updated dependencies [[`667a0f0`](https://github.com/anza-xyz/kit/commit/667a0f059f5432244ab2cf8a23a22f53c7a36b4b), [`43bc570`](https://github.com/anza-xyz/kit/commit/43bc570a5b51a9fda75abc1f0f818728ca3cd439), [`ffb7665`](https://github.com/anza-xyz/kit/commit/ffb76652f6b887eb5020c3584f1d827a1098dccc)]:
+    - @solana/assertions@6.8.0
+    - @solana/codecs-core@6.8.0
+    - @solana/codecs-strings@6.8.0
+    - @solana/errors@6.8.0
+    - @solana/nominal-types@6.8.0
+    - @solana/promises@6.8.0
+
 ## 6.7.0
 
 ### Patch Changes
