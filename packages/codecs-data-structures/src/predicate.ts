@@ -56,7 +56,7 @@ export function getPredicateEncoder<TFrom>(
     predicate: (value: TFrom) => boolean,
     ifTrue: FixedSizeEncoder<TFrom>,
     ifFalse: FixedSizeEncoder<TFrom>,
-): FixedSizeEncoder<TFrom>;
+): Encoder<TFrom>;
 export function getPredicateEncoder<TFrom>(
     predicate: (value: TFrom) => boolean,
     ifTrue: VariableSizeEncoder<TFrom>,
@@ -116,7 +116,7 @@ export function getPredicateDecoder<TTo>(
     predicate: (value: ReadonlyUint8Array) => boolean,
     ifTrue: FixedSizeDecoder<TTo>,
     ifFalse: FixedSizeDecoder<TTo>,
-): FixedSizeDecoder<TTo>;
+): Decoder<TTo>;
 export function getPredicateDecoder<TTo>(
     predicate: (value: ReadonlyUint8Array) => boolean,
     ifTrue: VariableSizeDecoder<TTo>,
@@ -187,7 +187,7 @@ export function getPredicateCodec<TFrom, TTo extends TFrom>(
     decodePredicate: (value: ReadonlyUint8Array) => boolean,
     ifTrue: FixedSizeCodec<TFrom, TTo>,
     ifFalse: FixedSizeCodec<TFrom, TTo>,
-): FixedSizeCodec<TFrom, TTo>;
+): Codec<TFrom, TTo>;
 export function getPredicateCodec<TFrom, TTo extends TFrom>(
     encodePredicate: (value: TFrom) => boolean,
     decodePredicate: (value: ReadonlyUint8Array) => boolean,

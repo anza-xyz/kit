@@ -24,7 +24,7 @@ const predicate = null as unknown as () => boolean;
         predicate,
         {} as FixedSizeEncoder<number>,
         {} as FixedSizeEncoder<number>,
-    ) satisfies FixedSizeEncoder<number>;
+    ) satisfies Encoder<number>;
 
     // It maintains the size if both encoders are FixedSizeEncoder with the same size
     getPredicateEncoder(
@@ -76,7 +76,7 @@ const predicate = null as unknown as () => boolean;
         predicate,
         {} as FixedSizeDecoder<number>,
         {} as FixedSizeDecoder<number>,
-    ) satisfies FixedSizeDecoder<number>;
+    ) satisfies Decoder<number>;
 
     // It maintains the size if both decoders are FixedSizeDecoder with the same size
     getPredicateDecoder(
@@ -129,7 +129,7 @@ const predicate = null as unknown as () => boolean;
         predicate,
         {} as FixedSizeCodec<number>,
         {} as FixedSizeCodec<number>,
-    ) satisfies FixedSizeCodec<number>;
+    ) satisfies Codec<number>;
 
     // It maintains the size if both codecs are FixedSizeCodec with the same size
     getPredicateCodec(

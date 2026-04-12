@@ -31,7 +31,7 @@ const stringTypePredicate = null as unknown as (value: number | string) => value
         getPatternMatchEncoder([
             [numberValuePredicate, {} as FixedSizeEncoder<number>],
             [numberValuePredicate, {} as FixedSizeEncoder<number>],
-        ]) satisfies FixedSizeEncoder<number>;
+        ]) satisfies Encoder<number>;
 
         // It maintains the size if all encoders are FixedSizeEncoder with the same size
         getPatternMatchEncoder([
@@ -115,7 +115,7 @@ const stringTypePredicate = null as unknown as (value: number | string) => value
     getPatternMatchDecoder([
         [bytesPredicate, {} as FixedSizeDecoder<number>],
         [bytesPredicate, {} as FixedSizeDecoder<number>],
-    ]) satisfies FixedSizeDecoder<number>;
+    ]) satisfies Decoder<number>;
 
     // It maintains the size if all decoders are FixedSizeDecoder with the same size
     getPatternMatchDecoder([
@@ -157,7 +157,7 @@ const stringTypePredicate = null as unknown as (value: number | string) => value
         getPatternMatchCodec([
             [numberValuePredicate, bytesPredicate, {} as FixedSizeCodec<number>],
             [numberValuePredicate, bytesPredicate, {} as FixedSizeCodec<number>],
-        ]) satisfies FixedSizeCodec<number>;
+        ]) satisfies Codec<number>;
 
         // It maintains the size if all codecs are FixedSizeCodec with the same size
         getPatternMatchCodec([

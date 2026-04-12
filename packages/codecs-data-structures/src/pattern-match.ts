@@ -94,7 +94,7 @@ export function getPatternMatchEncoder<TFrom, TSize extends number>(
 ): FixedSizeEncoder<TFrom, TSize>;
 export function getPatternMatchEncoder<TFrom>(
     patterns: FixedSizePatternMatchEncoderEntry<TFrom>[],
-): FixedSizeEncoder<TFrom>;
+): Encoder<TFrom>;
 export function getPatternMatchEncoder<TFrom>(
     patterns: VariableSizePatternMatchEncoderEntry<TFrom>[],
 ): VariableSizeEncoder<TFrom>;
@@ -151,7 +151,7 @@ export function getPatternMatchDecoder<TTo, TSize extends number>(
 ): FixedSizeDecoder<TTo, TSize>;
 export function getPatternMatchDecoder<TTo>(
     patterns: [(value: ReadonlyUint8Array) => boolean, FixedSizeDecoder<TTo>][],
-): FixedSizeDecoder<TTo>;
+): Decoder<TTo>;
 export function getPatternMatchDecoder<TTo>(
     patterns: [(value: ReadonlyUint8Array) => boolean, VariableSizeDecoder<TTo>][],
 ): VariableSizeDecoder<TTo>;
@@ -293,7 +293,7 @@ export function getPatternMatchCodec<TFrom, TTo extends TFrom = TFrom, TSize ext
 ): FixedSizeCodec<TFrom, TTo, TSize>;
 export function getPatternMatchCodec<TFrom, TTo extends TFrom = TFrom>(
     patterns: FixedSizePatternMatchCodecEntry<TFrom, TFrom, TTo>[],
-): FixedSizeCodec<TFrom, TTo>;
+): Codec<TFrom, TTo>;
 export function getPatternMatchCodec<TFrom, TTo extends TFrom = TFrom>(
     patterns: VariableSizePatternMatchCodecEntry<TFrom, TFrom, TTo>[],
 ): VariableSizeCodec<TFrom, TTo>;
