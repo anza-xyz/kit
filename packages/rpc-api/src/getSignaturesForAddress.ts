@@ -9,6 +9,8 @@ type GetSignaturesForAddressTransaction = Readonly<{
     confirmationStatus: Commitment | null;
     /** Error if transaction failed, null if transaction succeeded. */
     err: TransactionError | null;
+    /** Index of the transaction in the block */
+    index: number;
     /** Memo associated with the transaction, null if no memo is present */
     memo: string | null;
     /** transaction signature as base-58 encoded string */
