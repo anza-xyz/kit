@@ -371,6 +371,8 @@ export const SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_ACCOUNT = 8500006
 // Wallet-related errors.
 // Reserve error codes in the range [8900000-8900999].
 export const SOLANA_ERROR__WALLET__NOT_CONNECTED = 8900000;
+export const SOLANA_ERROR__WALLET__NO_SIGNER_CONNECTED = 8900001;
+export const SOLANA_ERROR__WALLET__SIGNER_NOT_AVAILABLE = 8900002;
 
 // Invariant violation errors.
 // Reserve error codes in the range [9900000-9900999].
@@ -692,7 +694,9 @@ export type SolanaErrorCode =
     | typeof SOLANA_ERROR__TRANSACTION_ERROR__WOULD_EXCEED_MAX_ACCOUNT_COST_LIMIT
     | typeof SOLANA_ERROR__TRANSACTION_ERROR__WOULD_EXCEED_MAX_BLOCK_COST_LIMIT
     | typeof SOLANA_ERROR__TRANSACTION_ERROR__WOULD_EXCEED_MAX_VOTE_COST_LIMIT
-    | typeof SOLANA_ERROR__WALLET__NOT_CONNECTED;
+    | typeof SOLANA_ERROR__WALLET__NO_SIGNER_CONNECTED
+    | typeof SOLANA_ERROR__WALLET__NOT_CONNECTED
+    | typeof SOLANA_ERROR__WALLET__SIGNER_NOT_AVAILABLE;
 
 /**
  * Errors of this type are understood to have an optional {@link SolanaError} nested inside as

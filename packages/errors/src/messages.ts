@@ -298,7 +298,9 @@ import {
     SOLANA_ERROR__TRANSACTION_ERROR__WOULD_EXCEED_MAX_ACCOUNT_COST_LIMIT,
     SOLANA_ERROR__TRANSACTION_ERROR__WOULD_EXCEED_MAX_BLOCK_COST_LIMIT,
     SOLANA_ERROR__TRANSACTION_ERROR__WOULD_EXCEED_MAX_VOTE_COST_LIMIT,
+    SOLANA_ERROR__WALLET__NO_SIGNER_CONNECTED,
     SOLANA_ERROR__WALLET__NOT_CONNECTED,
+    SOLANA_ERROR__WALLET__SIGNER_NOT_AVAILABLE,
     SolanaErrorCode,
 } from './codes';
 
@@ -823,4 +825,6 @@ export const SolanaErrorMessages: Readonly<{
     [SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNTS_IN_INSTRUCTION]:
         'The instruction at index $instructionIndex has $actualCount account references but the maximum allowed is $maxAllowed',
     [SOLANA_ERROR__WALLET__NOT_CONNECTED]: 'Cannot $operation: no wallet connected',
+    [SOLANA_ERROR__WALLET__NO_SIGNER_CONNECTED]: 'No signing wallet connected (status: $status)',
+    [SOLANA_ERROR__WALLET__SIGNER_NOT_AVAILABLE]: 'Connected wallet does not support signing',
 };

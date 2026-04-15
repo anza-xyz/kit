@@ -211,6 +211,7 @@ import {
     SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_RENT,
     SOLANA_ERROR__TRANSACTION_ERROR__PROGRAM_EXECUTION_TEMPORARILY_RESTRICTED,
     SOLANA_ERROR__TRANSACTION_ERROR__UNKNOWN,
+    SOLANA_ERROR__WALLET__NO_SIGNER_CONNECTED,
     SOLANA_ERROR__WALLET__NOT_CONNECTED,
     SolanaErrorCode,
 } from './codes';
@@ -873,6 +874,9 @@ export type SolanaErrorContext = ReadonlyContextValue<
             };
             [SOLANA_ERROR__WALLET__NOT_CONNECTED]: {
                 operation: string;
+            };
+            [SOLANA_ERROR__WALLET__NO_SIGNER_CONNECTED]: {
+                status: string;
             };
         }
     >
