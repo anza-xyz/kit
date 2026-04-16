@@ -8,8 +8,14 @@ import { RpcSimulateTransactionResult, unwrapSimulationError } from '../index';
 
 const rpcSimulationError: Omit<RpcSimulateTransactionResult, 'err'> = {
     accounts: null,
+    fee: null,
     loadedAccountsDataSize: null,
+    loadedAddresses: { readonly: [], writable: [] },
     logs: null,
+    postBalances: null,
+    postTokenBalances: null,
+    preBalances: null,
+    preTokenBalances: null,
     replacementBlockhash: null,
     returnData: null,
     unitsConsumed: null,

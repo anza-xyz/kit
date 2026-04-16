@@ -6,7 +6,6 @@ import {
     SOLANA_ERROR__JSON_RPC__INVALID_PARAMS,
     SOLANA_ERROR__JSON_RPC__SERVER_ERROR_MIN_CONTEXT_SLOT_NOT_REACHED,
     SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE,
-    SOLANA_ERROR__JSON_RPC__SERVER_ERROR_TRANSACTION_SIGNATURE_VERIFICATION_FAILURE,
     SOLANA_ERROR__TRANSACTION_ERROR__ACCOUNT_NOT_FOUND,
     SOLANA_ERROR__TRANSACTION_ERROR__BLOCKHASH_NOT_FOUND,
     SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE,
@@ -153,8 +152,9 @@ describe('sendTransaction', () => {
                 { encoding: 'base64', preflightCommitment: 'processed' },
             )
             .send();
-        await expect(resultPromise).rejects.toThrow(
-            new SolanaError(SOLANA_ERROR__JSON_RPC__SERVER_ERROR_TRANSACTION_SIGNATURE_VERIFICATION_FAILURE),
+        await expect(resultPromise).rejects.toHaveProperty(
+            'context.__code',
+            SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE,
         );
     });
     it('fatals when called with a transaction having an unsupported version', async () => {
@@ -246,9 +246,15 @@ describe('sendTransaction', () => {
             new SolanaError(SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE, {
                 accounts: null,
                 cause: new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__ACCOUNT_NOT_FOUND),
+                fee: null,
                 innerInstructions: null,
                 loadedAccountsDataSize: 0,
+                loadedAddresses: null,
                 logs: [],
+                postBalances: null,
+                postTokenBalances: null,
+                preBalances: null,
+                preTokenBalances: null,
                 replacementBlockhash: null,
                 returnData: null,
                 unitsConsumed: 0n,
@@ -283,9 +289,15 @@ describe('sendTransaction', () => {
             new SolanaError(SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE, {
                 accounts: null,
                 cause: new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
+                fee: null,
                 innerInstructions: null,
                 loadedAccountsDataSize: 0,
+                loadedAddresses: null,
                 logs: [],
+                postBalances: null,
+                postTokenBalances: null,
+                preBalances: null,
+                preTokenBalances: null,
                 replacementBlockhash: null,
                 returnData: null,
                 unitsConsumed: 0n,
@@ -317,9 +329,15 @@ describe('sendTransaction', () => {
             new SolanaError(SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE, {
                 accounts: null,
                 cause: new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__BLOCKHASH_NOT_FOUND),
+                fee: null,
                 innerInstructions: null,
                 loadedAccountsDataSize: 0,
+                loadedAddresses: null,
                 logs: [],
+                postBalances: null,
+                postTokenBalances: null,
+                preBalances: null,
+                preTokenBalances: null,
                 replacementBlockhash: null,
                 returnData: null,
                 unitsConsumed: 0n,

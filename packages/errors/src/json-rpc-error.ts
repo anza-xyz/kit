@@ -55,6 +55,7 @@ export interface RpcSimulateTransactionResult {
           } | null)[]
         | null;
     err: TransactionError | null;
+    fee: bigint | null;
     // Enabled by `enable_cpi_recording`
     innerInstructions?:
         | {
@@ -85,7 +86,15 @@ export interface RpcSimulateTransactionResult {
           }[]
         | null;
     loadedAccountsDataSize: number | null;
+    loadedAddresses: {
+        readonly: readonly string[];
+        writable: readonly string[];
+    } | null;
     logs: string[] | null;
+    postBalances: bigint[] | null;
+    postTokenBalances: unknown[] | null;
+    preBalances: bigint[] | null;
+    preTokenBalances: unknown[] | null;
     replacementBlockhash: string | null;
     returnData: {
         data: [string, 'base64'];

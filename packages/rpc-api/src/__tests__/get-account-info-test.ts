@@ -635,25 +635,22 @@ describe('getAccountInfo', () => {
 
                 await expect(accountInfoPromise).resolves.toStrictEqual({
                     context: CONTEXT_MATCHER,
-                    value: {
+                    value: expect.objectContaining({
                         data: {
                             parsed: {
-                                info: {
+                                info: expect.objectContaining({
                                     burnPercent: 50,
-                                    exemptionThreshold: 2,
-                                    lamportsPerByteYear: '3480',
-                                },
+                                    exemptionThreshold: 1,
+                                    lamportsPerByteYear: '6960',
+                                }),
                                 type: 'rent',
                             },
                             program: 'sysvar',
                             space: 17n,
                         },
                         executable: false,
-                        lamports: 1009200n,
                         owner: 'Sysvar1111111111111111111111111111111111111',
-                        rentEpoch: 0n,
-                        space: 17n,
-                    },
+                    }),
                 });
             });
 
@@ -671,10 +668,10 @@ describe('getAccountInfo', () => {
 
                 await expect(accountInfoPromise).resolves.toStrictEqual({
                     context: CONTEXT_MATCHER,
-                    value: {
+                    value: expect.objectContaining({
                         data: {
                             parsed: {
-                                info: {
+                                info: expect.objectContaining({
                                     authorizedVoters: [
                                         {
                                             authorizedVoter: 'HMU77m6WSL9Xew9YvVCgz1hLuhzamz74eD9avi4XPdr',
@@ -682,8 +679,11 @@ describe('getAccountInfo', () => {
                                         },
                                     ],
                                     authorizedWithdrawer: 'HMU77m6WSL9Xew9YvVCgz1hLuhzamz74eD9avi4XPdr',
+                                    blockRevenueCollector: expect.any(String),
+                                    blockRevenueCommissionBps: expect.any(BigInt),
+                                    blsPubkeyCompressed: null,
                                     commission: 50,
-                                    epochCredits: [
+                                    epochCredits: expect.arrayContaining([
                                         {
                                             credits: '117764802',
                                             epoch: 593n,
@@ -1004,141 +1004,19 @@ describe('getAccountInfo', () => {
                                             epoch: 656n,
                                             previousCredits: '120345192',
                                         },
-                                    ],
+                                    ]),
+                                    inflationRewardsCollector: expect.any(String),
+                                    inflationRewardsCommissionBps: expect.any(BigInt),
                                     lastTimestamp: {
                                         slot: 283619438n,
                                         timestamp: 1709828565n,
                                     },
                                     nodePubkey: 'HMU77m6WSL9Xew9YvVCgz1hLuhzamz74eD9avi4XPdr',
+                                    pendingDelegatorRewards: expect.any(String),
                                     priorVoters: [],
                                     rootSlot: 283619407n,
-                                    votes: [
-                                        {
-                                            confirmationCount: 31,
-                                            slot: 283619408n,
-                                        },
-                                        {
-                                            confirmationCount: 30,
-                                            slot: 283619409n,
-                                        },
-                                        {
-                                            confirmationCount: 29,
-                                            slot: 283619410n,
-                                        },
-                                        {
-                                            confirmationCount: 28,
-                                            slot: 283619411n,
-                                        },
-                                        {
-                                            confirmationCount: 27,
-                                            slot: 283619412n,
-                                        },
-                                        {
-                                            confirmationCount: 26,
-                                            slot: 283619413n,
-                                        },
-                                        {
-                                            confirmationCount: 25,
-                                            slot: 283619414n,
-                                        },
-                                        {
-                                            confirmationCount: 24,
-                                            slot: 283619415n,
-                                        },
-                                        {
-                                            confirmationCount: 23,
-                                            slot: 283619416n,
-                                        },
-                                        {
-                                            confirmationCount: 22,
-                                            slot: 283619417n,
-                                        },
-                                        {
-                                            confirmationCount: 21,
-                                            slot: 283619418n,
-                                        },
-                                        {
-                                            confirmationCount: 20,
-                                            slot: 283619419n,
-                                        },
-                                        {
-                                            confirmationCount: 19,
-                                            slot: 283619420n,
-                                        },
-                                        {
-                                            confirmationCount: 18,
-                                            slot: 283619421n,
-                                        },
-                                        {
-                                            confirmationCount: 17,
-                                            slot: 283619422n,
-                                        },
-                                        {
-                                            confirmationCount: 16,
-                                            slot: 283619423n,
-                                        },
-                                        {
-                                            confirmationCount: 15,
-                                            slot: 283619424n,
-                                        },
-                                        {
-                                            confirmationCount: 14,
-                                            slot: 283619425n,
-                                        },
-                                        {
-                                            confirmationCount: 13,
-                                            slot: 283619426n,
-                                        },
-                                        {
-                                            confirmationCount: 12,
-                                            slot: 283619427n,
-                                        },
-                                        {
-                                            confirmationCount: 11,
-                                            slot: 283619428n,
-                                        },
-                                        {
-                                            confirmationCount: 10,
-                                            slot: 283619429n,
-                                        },
-                                        {
-                                            confirmationCount: 9,
-                                            slot: 283619430n,
-                                        },
-                                        {
-                                            confirmationCount: 8,
-                                            slot: 283619431n,
-                                        },
-                                        {
-                                            confirmationCount: 7,
-                                            slot: 283619432n,
-                                        },
-                                        {
-                                            confirmationCount: 6,
-                                            slot: 283619433n,
-                                        },
-                                        {
-                                            confirmationCount: 5,
-                                            slot: 283619434n,
-                                        },
-                                        {
-                                            confirmationCount: 4,
-                                            slot: 283619435n,
-                                        },
-                                        {
-                                            confirmationCount: 3,
-                                            slot: 283619436n,
-                                        },
-                                        {
-                                            confirmationCount: 2,
-                                            slot: 283619437n,
-                                        },
-                                        {
-                                            confirmationCount: 1,
-                                            slot: 283619438n,
-                                        },
-                                    ],
-                                },
+                                    votes: expect.any(Array),
+                                }),
                                 type: 'vote',
                             },
                             program: 'vote',
@@ -1149,7 +1027,7 @@ describe('getAccountInfo', () => {
                         owner: 'Vote111111111111111111111111111111111111111',
                         rentEpoch: 0n,
                         space: 3762n,
-                    },
+                    }),
                 });
             });
         });

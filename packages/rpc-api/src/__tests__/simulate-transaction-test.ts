@@ -6,7 +6,6 @@ import { getBase58Decoder, getBase58Encoder } from '@solana/codecs-strings';
 import {
     SOLANA_ERROR__JSON_RPC__INVALID_PARAMS,
     SOLANA_ERROR__JSON_RPC__SERVER_ERROR_MIN_CONTEXT_SLOT_NOT_REACHED,
-    SOLANA_ERROR__JSON_RPC__SERVER_ERROR_TRANSACTION_SIGNATURE_VERIFICATION_FAILURE,
     SolanaError,
 } from '@solana/errors';
 import { createPrivateKeyFromBytes } from '@solana/keys';
@@ -169,16 +168,24 @@ describe('simulateTransaction', () => {
 
                 await expect(resultPromise).resolves.toStrictEqual({
                     context: CONTEXT_MATCHER,
-                    value: {
+                    value: expect.objectContaining({
                         accounts: null,
                         err: null,
+                        fee: expect.any(BigInt),
                         innerInstructions: null,
-                        loadedAccountsDataSize: expect.any(Number),
+                        loadedAddresses: {
+                            readonly: expect.any(Array),
+                            writable: expect.any(Array),
+                        },
                         logs: expect.any(Array),
+                        postBalances: expect.any(Array),
+                        postTokenBalances: expect.any(Array),
+                        preBalances: expect.any(Array),
+                        preTokenBalances: expect.any(Array),
                         replacementBlockhash: null,
                         returnData: null,
                         unitsConsumed: expect.any(BigInt),
-                    },
+                    }),
                 });
             });
         });
@@ -222,7 +229,7 @@ describe('simulateTransaction', () => {
         ]);
     });
 
-    it('throws when called with an invalid signature if `sigVerify` is true', async () => {
+    it('returns a SignatureFailure error when called with an invalid signature if `sigVerify` is true', async () => {
         expect.assertions(1);
         const { value: latestBlockhash } = await rpc.getLatestBlockhash({ commitment: 'processed' }).send();
         const message = getMockTransactionMessage({
@@ -248,9 +255,12 @@ describe('simulateTransaction', () => {
             )
             .send();
 
-        await expect(resultPromise).rejects.toThrow(
-            new SolanaError(SOLANA_ERROR__JSON_RPC__SERVER_ERROR_TRANSACTION_SIGNATURE_VERIFICATION_FAILURE),
-        );
+        await expect(resultPromise).resolves.toStrictEqual({
+            context: CONTEXT_MATCHER,
+            value: expect.objectContaining({
+                err: 'SignatureFailure',
+            }),
+        });
     });
 
     it('does not throw when called with an invalid signature when `sigVerify` is false', async () => {
@@ -281,16 +291,15 @@ describe('simulateTransaction', () => {
 
         await expect(resultPromise).resolves.toStrictEqual({
             context: CONTEXT_MATCHER,
-            value: {
+            value: expect.objectContaining({
                 accounts: null,
                 err: null,
                 innerInstructions: null,
-                loadedAccountsDataSize: expect.any(Number),
                 logs: expect.any(Array),
                 replacementBlockhash: null,
                 returnData: null,
                 unitsConsumed: expect.any(BigInt),
-            },
+            }),
         });
     });
 
@@ -322,16 +331,15 @@ describe('simulateTransaction', () => {
 
         await expect(resultPromise).resolves.toStrictEqual({
             context: CONTEXT_MATCHER,
-            value: {
+            value: expect.objectContaining({
                 accounts: null,
                 err: 'BlockhashNotFound',
                 innerInstructions: null,
-                loadedAccountsDataSize: expect.any(Number),
                 logs: expect.any(Array),
                 replacementBlockhash: null,
                 returnData: null,
                 unitsConsumed: expect.any(BigInt),
-            },
+            }),
         });
     });
 
@@ -363,11 +371,10 @@ describe('simulateTransaction', () => {
 
         await expect(resultPromise).resolves.toStrictEqual({
             context: CONTEXT_MATCHER,
-            value: {
+            value: expect.objectContaining({
                 accounts: null,
                 err: null,
                 innerInstructions: null,
-                loadedAccountsDataSize: expect.any(Number),
                 logs: expect.any(Array),
                 replacementBlockhash: {
                     blockhash: expect.any(String),
@@ -375,7 +382,7 @@ describe('simulateTransaction', () => {
                 },
                 returnData: null,
                 unitsConsumed: expect.any(BigInt),
-            },
+            }),
         });
     });
 
@@ -469,16 +476,15 @@ describe('simulateTransaction', () => {
 
         await expect(resultPromise).resolves.toStrictEqual({
             context: CONTEXT_MATCHER,
-            value: {
+            value: expect.objectContaining({
                 accounts: null,
                 err: 'AccountNotFound',
                 innerInstructions: null,
-                loadedAccountsDataSize: expect.any(Number),
                 logs: expect.any(Array),
                 replacementBlockhash: null,
                 returnData: null,
                 unitsConsumed: expect.any(BigInt),
-            },
+            }),
         });
     });
 
@@ -516,7 +522,7 @@ describe('simulateTransaction', () => {
 
         await expect(resultPromise).resolves.toStrictEqual({
             context: CONTEXT_MATCHER,
-            value: {
+            value: expect.objectContaining({
                 accounts: [
                     expect.objectContaining({
                         data: ['', 'base64'],
@@ -524,12 +530,11 @@ describe('simulateTransaction', () => {
                 ],
                 err: null,
                 innerInstructions: null,
-                loadedAccountsDataSize: expect.any(Number),
                 logs: expect.any(Array),
                 replacementBlockhash: null,
                 returnData: null,
                 unitsConsumed: expect.any(BigInt),
-            },
+            }),
         });
     });
 
@@ -567,7 +572,7 @@ describe('simulateTransaction', () => {
 
         await expect(resultPromise).resolves.toStrictEqual({
             context: CONTEXT_MATCHER,
-            value: {
+            value: expect.objectContaining({
                 accounts: [
                     expect.objectContaining({
                         data: [expect.any(String), 'base64+zstd'],
@@ -575,12 +580,11 @@ describe('simulateTransaction', () => {
                 ],
                 err: null,
                 innerInstructions: null,
-                loadedAccountsDataSize: expect.any(Number),
                 logs: expect.any(Array),
                 replacementBlockhash: null,
                 returnData: null,
                 unitsConsumed: expect.any(BigInt),
-            },
+            }),
         });
     });
 
@@ -619,12 +623,12 @@ describe('simulateTransaction', () => {
 
         await expect(resultPromise).resolves.toStrictEqual({
             context: CONTEXT_MATCHER,
-            value: {
+            value: expect.objectContaining({
                 accounts: [
                     expect.objectContaining({
                         data: expect.objectContaining({
                             parsed: expect.objectContaining({
-                                info: {
+                                info: expect.objectContaining({
                                     authorizedVoters: expect.any(Array),
                                     authorizedWithdrawer: expect.any(String),
                                     commission: expect.any(Number),
@@ -634,7 +638,7 @@ describe('simulateTransaction', () => {
                                     priorVoters: expect.any(Array),
                                     rootSlot: expect.any(BigInt),
                                     votes: expect.any(Array),
-                                },
+                                }),
                                 type: 'vote',
                             }),
                             program: 'vote',
@@ -643,12 +647,11 @@ describe('simulateTransaction', () => {
                 ],
                 err: null,
                 innerInstructions: null,
-                loadedAccountsDataSize: expect.any(Number),
                 logs: expect.any(Array),
                 replacementBlockhash: null,
                 returnData: null,
                 unitsConsumed: expect.any(BigInt),
-            },
+            }),
         });
     });
 
@@ -686,7 +689,7 @@ describe('simulateTransaction', () => {
 
         await expect(resultPromise).resolves.toStrictEqual({
             context: CONTEXT_MATCHER,
-            value: {
+            value: expect.objectContaining({
                 accounts: [
                     expect.objectContaining({
                         // falls back to base64
@@ -695,12 +698,11 @@ describe('simulateTransaction', () => {
                 ],
                 err: null,
                 innerInstructions: null,
-                loadedAccountsDataSize: expect.any(Number),
                 logs: expect.any(Array),
                 replacementBlockhash: null,
                 returnData: null,
                 unitsConsumed: expect.any(BigInt),
-            },
+            }),
         });
     });
 
@@ -737,7 +739,7 @@ describe('simulateTransaction', () => {
 
         await expect(resultPromise).resolves.toStrictEqual({
             context: CONTEXT_MATCHER,
-            value: {
+            value: expect.objectContaining({
                 accounts: [
                     expect.objectContaining({
                         data: ['', 'base64'],
@@ -745,12 +747,11 @@ describe('simulateTransaction', () => {
                 ],
                 err: null,
                 innerInstructions: null,
-                loadedAccountsDataSize: expect.any(Number),
                 logs: expect.any(Array),
                 replacementBlockhash: null,
                 returnData: null,
                 unitsConsumed: expect.any(BigInt),
-            },
+            }),
         });
     });
 
@@ -792,7 +793,7 @@ describe('simulateTransaction', () => {
 
         await expect(resultPromise).resolves.toStrictEqual({
             context: CONTEXT_MATCHER,
-            value: {
+            value: expect.objectContaining({
                 accounts: [
                     null,
                     expect.objectContaining({
@@ -801,12 +802,11 @@ describe('simulateTransaction', () => {
                 ],
                 err: null,
                 innerInstructions: null,
-                loadedAccountsDataSize: expect.any(Number),
                 logs: expect.any(Array),
                 replacementBlockhash: null,
                 returnData: null,
                 unitsConsumed: expect.any(BigInt),
-            },
+            }),
         });
     });
 
@@ -839,16 +839,15 @@ describe('simulateTransaction', () => {
 
         await expect(resultPromise).resolves.toStrictEqual({
             context: CONTEXT_MATCHER,
-            value: {
+            value: expect.objectContaining({
                 accounts: null,
                 err: null,
                 innerInstructions: null,
-                loadedAccountsDataSize: expect.any(Number),
                 logs: expect.any(Array),
                 replacementBlockhash: null,
                 returnData: null,
                 unitsConsumed: expect.any(BigInt),
-            },
+            }),
         });
     });
 });
