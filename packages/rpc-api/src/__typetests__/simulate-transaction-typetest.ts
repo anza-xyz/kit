@@ -86,14 +86,16 @@ const base64Transaction = 'SomeTx11111111111111111111111111111' as Base64Encoded
             replaceRecentBlockhash: true,
         }) satisfies PendingRpcRequest<{ value: { replacementBlockhash: TransactionBlockhashLifetime } }>;
     }
-    // `replacementBlockhash` is always present but `null` when `replaceRecentBlockhash` is `false` or omitted
+    // It does not materialize a replacement blockhash in the response when `false` or omitted
     {
         rpc.simulateTransaction(base64Transaction, {
             encoding: 'base64',
             replaceRecentBlockhash: false,
-        }) satisfies PendingRpcRequest<{ value: { replacementBlockhash: TransactionBlockhashLifetime | null } }>;
+            // @ts-expect-error `replacementBlockhash` should not be a property on the response
+        }) satisfies PendingRpcRequest<{ value: { replacementBlockhash: unknown } }>;
         rpc.simulateTransaction(base64Transaction, {
             encoding: 'base64',
-        }) satisfies PendingRpcRequest<{ value: { replacementBlockhash: TransactionBlockhashLifetime | null } }>;
+            // @ts-expect-error `replacementBlockhash` should not be a property on the response
+        }) satisfies PendingRpcRequest<{ value: { replacementBlockhash: unknown } }>;
     }
 }

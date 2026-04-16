@@ -79,7 +79,11 @@ export function estimateComputeUnitLimitFactory({
                     sigVerify: false,
                 })
                 .send({ abortSignal });
-            const { err: transactionError, ...simulationResult } = response.value as RpcSimulateTransactionResult;
+            // The API response type varies based on config (eg. `replacementBlockhash` is only
+            // present when `replaceRecentBlockhash` is true), but `RpcSimulateTransactionResult`
+            // is a flat superset. Cast through `unknown` to bridge the structural gap.
+            const { err: transactionError, ...simulationResult } =
+                response.value as unknown as RpcSimulateTransactionResult;
 
             if (simulationResult.unitsConsumed == null) {
                 throw new SolanaError(SOLANA_ERROR__TRANSACTION__FAILED_TO_ESTIMATE_COMPUTE_LIMIT);
