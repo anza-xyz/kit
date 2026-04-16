@@ -144,7 +144,11 @@ type SimulateTransactionApiResponseWithInnerInstructions = Readonly<
 type SimulateTransactionApiResponseWithReplacementBlockhash = Readonly<{
     /**
      * The blockhash that was used to simulate the transaction when `replaceRecentBlockhash` is
-     * `true`
+     * `true`.
+     *
+     * Note: Agave v3.x validators always return this field (as `null` when not requested), but
+     * Kit's types currently only surface it when `replaceRecentBlockhash` is `true`. A future
+     * breaking change will move this to the base response type to match v3.x behavior.
      */
     replacementBlockhash: TransactionBlockhashLifetime;
 }>;
