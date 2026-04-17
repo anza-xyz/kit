@@ -1059,6 +1059,8 @@ describe('account', () => {
                 const variableValues = {
                     address: 'SysvarRent111111111111111111111111111111111',
                 };
+                // Validators return `lamportsPerByteYear` in JSON-parsed responses
+                // even after SIMD-0194 (the binary value changed but the field name didn't).
                 const source = /* GraphQL */ `
                     query testQuery($address: Address!) {
                         account(address: $address) {

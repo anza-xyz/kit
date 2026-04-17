@@ -34,7 +34,9 @@ type JsonParsedRecentBlockhashesAccount_DEPRECATED = Readonly<{
 type JsonParsedRentAccount = Readonly<{
     burnPercent: number;
     exemptionThreshold: number;
-    lamportsPerByteYear: StringifiedBigInt;
+    lamportsPerByte: StringifiedBigInt;
+    /** @deprecated Use `lamportsPerByte` instead (SIMD-0194) */
+    lamportsPerByteYear?: StringifiedBigInt;
 }>;
 
 type JsonParsedSlotHashesAccount = Readonly<{

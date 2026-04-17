@@ -101,7 +101,7 @@ import { JsonParsedSysvarAccount } from '../sysvar-accounts';
         info: {
             burnPercent: 50,
             exemptionThreshold: 2.0,
-            lamportsPerByteYear: '3480' as StringifiedBigInt,
+            lamportsPerByte: '3480' as StringifiedBigInt,
         },
         type: 'rent' as const,
     };
@@ -112,7 +112,22 @@ import { JsonParsedSysvarAccount } from '../sysvar-accounts';
     const account = {} as unknown as JsonParsedSysvarAccount;
     if (account.type === 'rent') {
         account.info.burnPercent satisfies number;
+        account.info.lamportsPerByte satisfies StringifiedBigInt;
     }
+}
+
+// rent account with deprecated lamportsPerByteYear alias (SIMD-0194)
+{
+    const account = {
+        info: {
+            burnPercent: 50,
+            exemptionThreshold: 1.0,
+            lamportsPerByte: '6960' as StringifiedBigInt,
+            lamportsPerByteYear: '6960' as StringifiedBigInt,
+        },
+        type: 'rent' as const,
+    };
+    account satisfies JsonParsedSysvarAccount;
 }
 
 // slot hashes account
