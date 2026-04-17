@@ -21,12 +21,14 @@ pnpm add @solana/wallet-account-signer
 
 ## Chains
 
-Several functions in this package require a `chain` parameter of type `SolanaChain` from `@solana/wallet-standard-chains`. Valid values are:
+Several functions in this package require a `chain` parameter. The known Solana chains from `@solana/wallet-standard-chains` are autocompleted:
 
 - `'solana:mainnet'`
 - `'solana:devnet'`
 - `'solana:testnet'`
 - `'solana:localnet'`
+
+Any other Wallet Standard `IdentifierString` (i.e. any `${namespace}:${reference}` value) is also accepted to support wallets that advertise non-standard chains.
 
 ## Usage
 

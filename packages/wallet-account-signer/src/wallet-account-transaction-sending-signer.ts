@@ -5,6 +5,7 @@ import { TransactionSendingSigner } from '@solana/signers';
 import { getTransactionEncoder } from '@solana/transactions';
 import { SolanaChain } from '@solana/wallet-standard-chains';
 import { SolanaSignAndSendTransaction, SolanaSignAndSendTransactionFeature } from '@solana/wallet-standard-features';
+import { IdentifierString } from '@wallet-standard/base';
 import {
     WALLET_STANDARD_ERROR__FEATURES__WALLET_ACCOUNT_CHAIN_UNSUPPORTED,
     WalletStandardError,
@@ -38,7 +39,7 @@ import { getWalletAccountForUiWalletAccount_DO_NOT_USE_OR_YOU_WILL_BE_FIRED } fr
  */
 export function createTransactionSendingSignerFromWalletAccount<TWalletAccount extends UiWalletAccount>(
     uiWalletAccount: TWalletAccount,
-    chain: SolanaChain,
+    chain: SolanaChain | (IdentifierString & {}),
 ): TransactionSendingSigner<TWalletAccount['address']> {
     if (!uiWalletAccount.chains.includes(chain)) {
         throw new WalletStandardError(WALLET_STANDARD_ERROR__FEATURES__WALLET_ACCOUNT_CHAIN_UNSUPPORTED, {

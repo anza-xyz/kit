@@ -7,6 +7,7 @@ import {
     SolanaSignMessage,
     SolanaSignTransaction,
 } from '@solana/wallet-standard-features';
+import { IdentifierString } from '@wallet-standard/base';
 import {
     WALLET_STANDARD_ERROR__FEATURES__WALLET_ACCOUNT_CHAIN_UNSUPPORTED,
     WalletStandardError,
@@ -67,7 +68,7 @@ import { createTransactionSignerFromWalletAccount } from './wallet-account-trans
  */
 export function createSignerFromWalletAccount<TWalletAccount extends UiWalletAccount>(
     uiWalletAccount: TWalletAccount,
-    chain: SolanaChain,
+    chain: SolanaChain | (IdentifierString & {}),
 ):
     | TransactionSigner<TWalletAccount['address']>
     | (MessageSigner<TWalletAccount['address']> & TransactionSigner<TWalletAccount['address']>) {

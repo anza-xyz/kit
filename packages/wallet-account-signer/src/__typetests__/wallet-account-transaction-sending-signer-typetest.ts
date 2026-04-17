@@ -27,3 +27,8 @@ const mockAccount = {
     createTransactionSendingSignerFromWalletAccount(mockAccount, 'solana:devnet');
     createTransactionSendingSignerFromWalletAccount(mockAccount, 'solana:testnet');
 }
+
+{
+    // [createSendingSignerFromWalletAccount]: It accepts any non-Solana chain identifier.
+    createTransactionSendingSignerFromWalletAccount(mockAccount, 'l2:mainnet');
+}
