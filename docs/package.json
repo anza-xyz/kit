@@ -31,7 +31,7 @@
         "@solana-program/compute-budget": "^0.15.0",
         "@solana-program/memo": "^0.11.0",
         "@solana-program/system": "^0.12.0",
-        "@solana-program/token": "^0.12.0",
+        "@solana-program/token": "^0.13.0",
         "@solana/compat": "6.5.0",
         "@solana/kit": "6.5.0",
         "@solana/react": "6.5.0",
