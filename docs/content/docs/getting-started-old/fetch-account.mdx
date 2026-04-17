@@ -1,7 +1,14 @@
 ---
-title: Fetch an account
+title: '❌ Fetch an account'
 description: Fetch and decode on-chain accounts
 ---
+
+<Callout type="warn" title="Scheduled for Removal">
+**Status:** This page will be removed in a future PR.
+
+**Content redistributed to:** The [Getting Started](/docs/getting-started) one-pager will cover fetching accounts briefly, and [Guides — Fetching Accounts](/docs/guides/fetching-accounts) will be the comprehensive reference.
+
+</Callout>
 
 In the previous article of this series, we've learned how to send a transaction that creates a new Solana token — also known as a `Mint` account. In this last article, we'll learn how to retrieve the account we created and access its decoded data.
 
@@ -96,7 +103,7 @@ So far, we have been dealing with encoded accounts, meaning the `data` field of 
 
 Kit ships with a set of serialization libraries called Codecs. These libraries offer types and functions to create Codec objects that can be composed together to create more complex serialization and deserialization logic.
 
-You can [read more about Codecs here](/docs/concepts/codecs), but let's quickly see how we can create a Codec object to decode our `Mint` account.
+You can [read more about Codecs here](/docs/advanced-guides/codecs), but let's quickly see how we can create a Codec object to decode our `Mint` account.
 
 Mint accounts are composed of the following data:
 
@@ -280,4 +287,4 @@ Congrats on completing this tutorial! You've learned how to get started with the
 - Sending transactions and waiting for them to be confirmed.
 - Fetching and decoding on-chain accounts that were created by your transactions.
 
-If you'd like to dig deeper into the Kit library, you may be interested in the [Core concepts](/docs/concepts) section of the documentation. There, you'll find in-depth articles about specific parts of the library such as [Codecs](/docs/concepts/codecs), [Signers](/docs/concepts/signers), and [RPCs](/docs/concepts/rpc).
+If you'd like to dig deeper into the Kit library, you may be interested in the [Advanced Guides](/docs/advanced-guides) section of the documentation. There, you'll find in-depth articles about specific parts of the library such as [Codecs](/docs/advanced-guides/codecs), [Signers](/docs/advanced-guides/signers), and [RPCs](/docs/advanced-guides/rpc).

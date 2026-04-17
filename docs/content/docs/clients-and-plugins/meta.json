@@ -1,0 +1,11 @@
+{
+    "title": "Clients & Plugins",
+    "defaultOpen": true,
+    "pages": [
+        "available-clients",
+        "available-plugins",
+        "creating-custom-plugins",
+        "generating-program-plugins",
+        "creating-custom-clients"
+    ]
+}
