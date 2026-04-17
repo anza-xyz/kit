@@ -1,5 +1,20 @@
 # @solana/wallet-account-signer
 
+## 6.9.0
+
+### Patch Changes
+
+- [#1548](https://github.com/anza-xyz/kit/pull/1548) [`f9bf4ef`](https://github.com/anza-xyz/kit/commit/f9bf4ef8cfaeff5be0d792c0d7245904cb838361) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Widen the `chain` parameter on `createSignerFromWalletAccount`, `createTransactionSignerFromWalletAccount`, and `createTransactionSendingSignerFromWalletAccount` from `SolanaChain` to `SolanaChain | (IdentifierString & {})`. The known Solana chain identifiers continue to autocomplete, but any Wallet Standard `${namespace}:${reference}` value is now also accepted, matching the underlying `solana:signTransaction` and `solana:signAndSendTransaction` feature inputs.
+
+- Updated dependencies []:
+    - @solana/addresses@6.9.0
+    - @solana/codecs-core@6.9.0
+    - @solana/keys@6.9.0
+    - @solana/signers@6.9.0
+    - @solana/transaction-messages@6.9.0
+    - @solana/transactions@6.9.0
+    - @solana/promises@6.9.0
+
 ## 6.8.0
 
 ### Patch Changes
