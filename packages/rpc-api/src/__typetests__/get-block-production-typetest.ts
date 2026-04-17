@@ -1,5 +1,5 @@
 import type { Address } from '@solana/addresses';
-import type { Rpc } from '@solana/rpc-spec';
+import type { PendingRpcRequest, Rpc } from '@solana/rpc-spec';
 
 import type { GetBlockProductionApi } from '../getBlockProduction';
 
@@ -9,6 +9,13 @@ const identity = 'Joe11111111111111111111111111111' as Address<'Joe1111111111111
 void (async () => {
     // [DESCRIBE] getBlockProduction with no identity.
     {
+        // Accepts no arguments.
+        rpc.getBlockProduction() satisfies PendingRpcRequest<{
+            value: Readonly<{
+                byIdentity: Record<Address, [leaderSlots: bigint, blocksProduced: bigint]>;
+            }>;
+        }>;
+
         // Returns leader slot / blocks produced record, by validator.
         const result = await rpc.getBlockProduction().send();
         result.value.byIdentity satisfies Record<Address, [leaderSlots: bigint, blocksProduced: bigint]>;
