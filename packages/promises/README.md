@@ -28,6 +28,22 @@ const result = await getAbortablePromise(
 );
 ```
 
+### `isAbortError(err)`
+
+Returns `true` if `err` is an `Error` whose `name` is `'AbortError'`. Use this to distinguish abort rejections from other failures without having to `instanceof`-check every platform-specific error class.
+
+```ts
+try {
+    await getAbortablePromise(doWork(), signal);
+} catch (e) {
+    if (isAbortError(e)) {
+        // The operation was aborted; don't surface as an error.
+        return;
+    }
+    throw e;
+}
+```
+
 ### `safeRace(...promises)`
 
 An implementation of `Promise.race` that causes all of the losing promises to settle. This allows them to be released and garbage collected, preventing memory leaks.

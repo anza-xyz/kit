@@ -1,4 +1,4 @@
-import { getAbortablePromise } from '../abortable';
+import { getAbortablePromise, isAbortError } from '../abortable';
 
 describe('getAbortablePromise()', () => {
     let promise: Promise<unknown>;
@@ -72,5 +72,41 @@ describe('getAbortablePromise()', () => {
         await expect(Promise.race([Promise.resolve('pending'), getAbortablePromise(promise, signal)])).resolves.toBe(
             'pending',
         );
+    });
+});
+
+describe('isAbortError()', () => {
+    it('returns `true` for an `Error` whose `name` is `AbortError`', () => {
+        const err = new Error('aborted');
+        err.name = 'AbortError';
+        expect(isAbortError(err)).toBe(true);
+    });
+    it('returns `true` for a subclass of `Error` whose `name` is `AbortError`', () => {
+        class CustomError extends Error {
+            override name = 'AbortError';
+        }
+        expect(isAbortError(new CustomError())).toBe(true);
+    });
+    it('returns `true` for the rejection reason of an aborted fetch-style promise', async () => {
+        expect.assertions(1);
+        const controller = new AbortController();
+        const promise = getAbortablePromise(new Promise(() => {}), controller.signal);
+        controller.abort(Object.assign(new Error('The operation was aborted.'), { name: 'AbortError' }));
+        await expect(promise.catch(e => isAbortError(e))).resolves.toBe(true);
+    });
+    it('returns `false` for a regular `Error`', () => {
+        expect(isAbortError(new Error('nope'))).toBe(false);
+    });
+    it('returns `false` for a `TypeError`', () => {
+        expect(isAbortError(new TypeError('nope'))).toBe(false);
+    });
+    it('returns `false` for a non-`Error` object whose `name` is `AbortError`', () => {
+        expect(isAbortError({ name: 'AbortError' })).toBe(false);
+    });
+    it('returns `false` for `undefined`', () => {
+        expect(isAbortError(undefined)).toBe(false);
+    });
+    it('returns `false` for `null`', () => {
+        expect(isAbortError(null)).toBe(false);
     });
 });
