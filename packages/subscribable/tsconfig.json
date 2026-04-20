@@ -4,6 +4,6 @@
     "extends": "../tsconfig/base.json",
     "include": ["../build-scripts/build-time-constants.d.ts", "src"],
     "compilerOptions": {
-        "lib": ["DOM", "ES2015"]
+        "lib": ["DOM", "ES2015", "ES2024.Promise"]
     }
 }

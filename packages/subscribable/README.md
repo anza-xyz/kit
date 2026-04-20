@@ -63,6 +63,24 @@ store.subscribe(() => {
 
 The individual `getState()` and `getError()` getters on `ReactiveStreamStore<T>` are `@deprecated` &mdash; prefer `getUnifiedState()`, which exposes the same information with a stable snapshot identity and `status` discriminator.
 
+### `ActionStore<TArgs, TResult>`
+
+A framework-agnostic state machine for wrapping an async action (a function you dispatch on demand — like a form submission, a mutation, or an on-click fetch). It exposes a `{ dispatch, getState, subscribe, reset }` contract that bridges trivially into `useSyncExternalStore`, Svelte stores, Vue's `shallowRef`, and similar reactive primitives.
+
+The snapshot is a discriminated union:
+
+```ts
+type ActionState<TResult> =
+    | { status: 'idle'; data: undefined; error: undefined }
+    | { status: 'running'; data: TResult | undefined; error: undefined }
+    | { status: 'success'; data: TResult; error: undefined }
+    | { status: 'error'; data: TResult | undefined; error: unknown };
+```
+
+`data` is the last successful result and survives across transitions — a `running` or `error` snapshot still carries the last value so UIs can render stale content while a retry is in flight. Only `reset()` clears it.
+
+Unlike `ReactiveStreamStore<T>` (which models a stream of values with a separate error channel), `ActionStore` models a one-shot-per-dispatch lifecycle where errors are part of the snapshot.
+
 ### `TypedEventEmitter<TEventMap>`
 
 This type allows you to type `addEventListener` and `removeEventListener` so that the call signature of the listener matches the event type given.
@@ -86,6 +104,42 @@ target.dispatchEvent(new CustomEvent('candyVended', { detail: { flavor: 'raspber
 ```
 
 ## Functions
+
+### `createActionStore(fn)`
+
+Wraps an async function in an `ActionStore`. Each `dispatch` creates a fresh `AbortController` and aborts the previous one, so a rapid succession of dispatches only produces one final state transition — the outcome of the most recent call. The wrapped function receives the `AbortSignal` as its first argument, followed by the arguments passed to `dispatch`.
+
+```tsx
+const store = createActionStore(async (signal: AbortSignal, accountId: Address) => {
+    const response = await fetch(`/api/accounts/${accountId}`, { signal });
+    return response.json();
+});
+
+// React — stale-while-revalidate: keep showing the card during retries.
+const { data, error, status } = useSyncExternalStore(store.subscribe, store.getState);
+return (
+    <>
+        {data !== undefined && <AccountCard account={data} />}
+        {status === 'running' && <InlineSpinner />}
+        {status === 'error' && <RetryBanner error={error} onRetry={() => store.dispatch(someAccountId)} />}
+        {status === 'idle' && data === undefined && <button onClick={() => store.dispatch(someAccountId)}>Load</button>}
+    </>
+);
+```
+
+Things to note:
+
+- Starts at `{ status: 'idle' }`. `getState()` always returns a defined snapshot.
+- `dispatch` is a stable reference — safe to pass into memoized callbacks without re-renders.
+- Two ways to trigger the action:
+    - `dispatch(...)` — fire-and-forget. Returns `undefined` synchronously and never throws; safe to call from UI event handlers without a `.catch`. Failures surface on state as `{ status: 'error' }`.
+    - `dispatchAsync(...)` — returns a promise that resolves to the wrapped function's result. Rejects on failure and with an `AbortError` when superseded or `reset()`. Use from imperative code that needs the resolved value; pair with [`isAbortError`](../promises#isaborterrorerr) from `@solana/promises` to filter abort rejections.
+- Calling either dispatch while one is in flight aborts the previous call; its outcome is dropped from state regardless of which variant started it.
+- `data` survives across transitions: a fresh `running` or `error` snapshot carries the last successful result so call sites can keep rendering stale content while a retry is in flight. Only `reset()` clears it.
+- `reset()` aborts the in-flight dispatch and restores the idle snapshot, clearing both `data` and `error`.
+- Subscribers are notified only when the snapshot's `status`, `data`, or `error` actually changes, so redundant transitions (`dispatch` while already `running` with the same `data`, `reset` while already `idle`) are silent.
+- `fn` is captured at construction, so the store holds a closure over whatever `fn` referenced at that moment. In React, create the store once (`useState(() => createActionStore(...))` or `useRef`) and read the latest closure through a ref if you need it to change between renders — don't call `createActionStore` directly in a render body.
+- The store holds strong references to its subscribers. Non-framework consumers that subscribe without unsubscribing will keep their listeners (and anything the listeners close over) alive for the lifetime of the store.
 
 ### `createAsyncIterableFromDataPublisher({ abortSignal, dataChannelName, dataPublisher, errorChannelName })`
 
