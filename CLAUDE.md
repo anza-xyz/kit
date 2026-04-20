@@ -70,6 +70,7 @@ All errors use the `SolanaError` class from `@solana/errors`. Key rules:
 - **Dev-only code**: Guard with `__DEV__` (e.g. verbose error messages, debug assertions).
 - **Formatting**: ESLint via `@solana/eslint-config-solana`, Prettier via `@solana/prettier-config-solana`. Run `pnpm style:fix` to auto-fix.
 - **All publishable packages share a fixed version** (currently in lockstep).
+- **Deferred promises**: Use `Promise.withResolvers<T>()` instead of hand-rolling a `new Promise((resolve, reject) => ...)` with captured externals. Do not reintroduce a `deferred()` helper — `Promise.withResolvers` already returns `{ promise, resolve, reject }`.
 
 ## Changesets & Releases
 

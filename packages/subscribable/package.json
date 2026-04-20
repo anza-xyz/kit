@@ -74,7 +74,8 @@
         "maintained node versions"
     ],
     "dependencies": {
-        "@solana/errors": "workspace:*"
+        "@solana/errors": "workspace:*",
+        "@solana/promises": "workspace:*"
     },
     "devDependencies": {
         "@solana/event-target-impl": "workspace:*"
