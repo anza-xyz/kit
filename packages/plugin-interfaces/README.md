@@ -72,6 +72,32 @@ function nftPlugin() {
 }
 ```
 
+### `ClientWithSubscribeToPayer` / `ClientWithSubscribeToIdentity`
+
+Some plugins set `client.payer` or `client.identity` reactively — the connected wallet may change, an account may be swapped, or a signer may be cleared on disconnect. Plugins that participate in this pattern advertise it by installing a sibling `subscribeTo<Capability>` function on the client:
+
+| Type                            | Sibling function      | Advertises that…                       |
+| ------------------------------- | --------------------- | -------------------------------------- |
+| `ClientWithSubscribeToPayer`    | `subscribeToPayer`    | `client.payer` may change over time    |
+| `ClientWithSubscribeToIdentity` | `subscribeToIdentity` | `client.identity` may change over time |
+
+Reactive consumers (framework hooks, stores, effects) can then observe changes without having to know which plugin installed the capability — they duck-type on the subscribe function:
+
+```ts
+import { ClientWithPayer, ClientWithSubscribeToPayer } from '@solana/plugin-interfaces';
+
+function observePayer() {
+    return <T extends ClientWithPayer & ClientWithSubscribeToPayer>(client: T) => {
+        client.subscribeToPayer(() => {
+            console.log('payer is now', client.payer);
+        });
+        return client;
+    };
+}
+```
+
+Plugins that leave the signer fixed for the lifetime of the client do **not** need to install these hooks — there is nothing to subscribe to. The convention is meant for plugins that reassign `client.payer` / `client.identity` as the user connects, switches accounts, or disconnects.
+
 ### `ClientWithAirdrop`
 
 Represents a client that can request SOL airdrops (typically on devnet/testnet). The airdrop succeeds when the promise resolves. Some implementations (e.g., LiteSVM) update balances directly without a transaction, so no signature is returned in those cases.
