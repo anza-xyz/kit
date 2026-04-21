@@ -89,6 +89,9 @@ function createMockSubscriptionRequest(): {
         error,
         mockRequest: {
             reactive: jest.fn().mockRejectedValue(new Error('not implemented')),
+            reactiveStore: jest.fn().mockImplementation(() => {
+                throw new Error('not implemented');
+            }),
             subscribe: jest.fn().mockResolvedValue(asyncIterable),
         },
         pushNotification,
@@ -633,6 +636,9 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             };
             const rpcSubscriptionRequest: PendingRpcSubscriptionsRequest<SolanaRpcResponse<TestValue>> = {
                 reactive: jest.fn().mockRejectedValue(new Error('not implemented')),
+                reactiveStore: jest.fn().mockImplementation(() => {
+                    throw new Error('not implemented');
+                }),
                 subscribe: jest.fn().mockImplementation(() => {
                     const instance = createMockSubscriptionRequest();
                     subscriptionInstances.push({

@@ -89,6 +89,9 @@ function createMockSubscriptionRequest(): {
         error,
         mockRequest: {
             reactive: jest.fn().mockRejectedValue(new Error('not implemented')),
+            reactiveStore: jest.fn().mockImplementation(() => {
+                throw new Error('not implemented');
+            }),
             subscribe: jest.fn().mockResolvedValue(asyncIterable),
         },
         pushNotification,

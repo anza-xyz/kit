@@ -9,9 +9,9 @@ import { ReactiveStore } from '@solana/subscribable';
  * {@link PendingRpcSubscriptionsRequest | PendingRpcSubscriptionsRequest<TNotification>} will
  * trigger the subscription and return a promise for an async iterable that vends `TNotifications`.
  *
- * Calling the {@link PendingRpcSubscriptionsRequest.reactive | `reactive(options)`} method will
- * trigger the subscription and return a promise for a {@link ReactiveStore} compatible with
- * `useSyncExternalStore`, Svelte stores, and other reactive primitives.
+ * Calling the {@link PendingRpcSubscriptionsRequest.reactiveStore | `reactiveStore(options)`}
+ * method will return a {@link ReactiveStore} compatible with `useSyncExternalStore`, Svelte stores,
+ * and other reactive primitives.
  */
 export type PendingRpcSubscriptionsRequest<TNotification> = {
     /**
@@ -28,8 +28,30 @@ export type PendingRpcSubscriptionsRequest<TNotification> = {
      *     return store.getState();
      * });
      * ```
+     *
+     * @deprecated Use {@link PendingRpcSubscriptionsRequest.reactiveStore | `reactiveStore()`}
+     * instead. The synchronous variant returns a store that reconnects on
+     * {@link ReactiveStore.retry | `retry()`} after an error, whereas the store returned by
+     * `reactive()` cannot recover once its underlying `DataPublisher` has failed.
      */
     reactive(options: RpcSubscribeOptions): Promise<ReactiveStore<TNotification>>;
+    /**
+     * Synchronously returns a {@link ReactiveStore} that subscribes in the background and holds the
+     * latest notification. Compatible with `useSyncExternalStore` and other reactive primitives
+     * that expect a `{ subscribe, getUnifiedState }` contract. The store opens a fresh subscription
+     * on construction and on every {@link ReactiveStore.retry | `retry()`}.
+     *
+     * @example
+     * ```ts
+     * const store = rpc.accountNotifications(address).reactiveStore({ abortSignal });
+     * // React — the unified snapshot has stable identity per update.
+     * const state = useSyncExternalStore(store.subscribe, store.getUnifiedState);
+     * if (state.status === 'error') return <ErrorMessage error={state.error} onRetry={store.retry} />;
+     * if (state.status === 'loading') return <Spinner />;
+     * return <View data={state.data} />;
+     * ```
+     */
+    reactiveStore(options: RpcSubscribeOptions): ReactiveStore<TNotification>;
     /**
      * Triggers the subscription and returns a promise for an async iterable of notifications.
      * Use `for await...of` to consume notifications as they arrive. Abort the signal to
