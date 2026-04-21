@@ -1,3 +1,4 @@
+import { SOLANA_ERROR__SUBSCRIBABLE__RETRY_NOT_SUPPORTED, SolanaError } from '@solana/errors';
 import { AbortController } from '@solana/event-target-impl';
 
 import { DataPublisher } from './data-publisher';
@@ -24,41 +25,99 @@ type Config = Readonly<{
     errorChannelName: string;
 }>;
 
+type FactoryConfig = Readonly<{
+    /**
+     * Triggering this abort signal will cause the store to stop updating and will disconnect it from
+     * any active {@link DataPublisher}. Subsequent calls to {@link ReactiveStore.retry | `retry()`}
+     * are no-ops once this signal has fired.
+     */
+    abortSignal: AbortSignal;
+    /**
+     * An async factory that produces a fresh {@link DataPublisher} each time it is invoked. Called
+     * once on construction and again on every {@link ReactiveStore.retry | `retry()`}. Rejections
+     * surface as a store error.
+     */
+    createDataPublisher: () => Promise<DataPublisher>;
+    /**
+     * Messages from this channel of the produced `DataPublisher` will be used to update the store's
+     * state.
+     */
+    dataChannelName: string;
+    /**
+     * Messages from this channel of the produced `DataPublisher` will transition the store to an
+     * error state, preserving the last known value.
+     */
+    errorChannelName: string;
+}>;
+
+/**
+ * The lifecycle state of a {@link ReactiveStore} as a single snapshot.
+ *
+ * - `loading`: the store is waiting for its first value. `data` is `undefined`.
+ * - `loaded`: a value has been received and no error is active. `data` is defined.
+ * - `error`: the stream failed. `data` is the last known value (or `undefined` if no value ever
+ *   arrived), and `error` holds the failure.
+ * - `retrying`: a {@link ReactiveStore.retry | `retry()`} is in progress after a previous error.
+ *   `error` is cleared; `data` is preserved from before the failure if present.
+ */
+export type ReactiveState<T> =
+    | { readonly data: T | undefined; readonly error: undefined; readonly status: 'retrying' }
+    | { readonly data: T | undefined; readonly error: unknown; readonly status: 'error' }
+    | { readonly data: T; readonly error: undefined; readonly status: 'loaded' }
+    | { readonly data: undefined; readonly error: undefined; readonly status: 'loading' };
+
+const LOADING_STATE: ReactiveState<never> = Object.freeze({
+    data: undefined,
+    error: undefined,
+    status: 'loading',
+});
+
 /**
  * A reactive store that holds the latest value published to a data channel and allows external
  * systems to subscribe to changes. Compatible with `useSyncExternalStore`, Svelte stores, Solid's
- * `from()`, and other reactive primitives that expect a `{ subscribe, getState }` contract.
+ * `from()`, and other reactive primitives that expect a `{ subscribe, getUnifiedState }` contract.
  *
  * @example
  * ```ts
- * // React — throw error from snapshot function to surface via Error Boundary
- * const state = useSyncExternalStore(store.subscribe, () => {
- *     if (store.getError()) throw store.getError();
- *     return store.getState();
- * });
- *
- * // Vue — check error reactively in a composable
- * const data = shallowRef(store.getState());
- * const error = shallowRef(store.getError());
- * store.subscribe(() => {
- *     data.value = store.getState();
- *     error.value = store.getError();
- * });
+ * // React — the unified state snapshot has stable identity per update, making it suitable as
+ * // the second argument to `useSyncExternalStore`.
+ * const state = useSyncExternalStore(store.subscribe, store.getUnifiedState);
+ * if (state.status === 'error') return <ErrorMessage error={state.error} onRetry={store.retry} />;
+ * if (state.status === 'loading') return <Spinner />;
+ * return <View data={state.data} />;
  * ```
  *
- * @see {@link createReactiveStoreFromDataPublisher}
+ * @see {@link createReactiveStoreFromDataPublisherFactory}
  */
 export type ReactiveStore<T> = {
     /**
      * Returns the error published to the error channel, or `undefined` if no error has occurred.
-     * Once set, the error is preserved — subsequent errors do not overwrite it.
+     *
+     * @deprecated Use {@link ReactiveStore.getUnifiedState | `getUnifiedState()`} instead. This
+     * getter returns only the error field and cannot narrow the relationship between the current
+     * value, error, and status.
      */
     getError(): unknown;
     /**
      * Returns the most recent value published to the data channel, or `undefined` if no
      * notification has arrived yet. On error, continues to return the last known value.
+     *
+     * @deprecated Use {@link ReactiveStore.getUnifiedState | `getUnifiedState()`} instead. This
+     * getter returns only the value field and does not surface lifecycle status (e.g. `retrying`).
      */
     getState(): T | undefined;
+    /**
+     * Returns the current lifecycle snapshot: `{ data, error, status }`. The returned object has
+     * stable identity between state changes, making it safe to pass directly as the
+     * `getSnapshot` argument to React's `useSyncExternalStore`.
+     *
+     * @see {@link ReactiveState}
+     */
+    getUnifiedState(): ReactiveState<T>;
+    /**
+     * Re-opens the stream after an error. No-op when the store is not in the `error` state.
+     */
+    retry(): void;
     /**
      * Registers a callback to be called whenever the state changes or an error is received.
      * Returns an unsubscribe function. Safe to call multiple times.
@@ -76,25 +135,19 @@ export type ReactiveStore<T> = {
  *
  * Things to note:
  *
- * - `getState()` returns `undefined` until the first notification arrives.
- * - On error, `getState()` continues to return the last known value and `getError()` returns the
- *   error. Only the first error is captured.
+ * - `getUnifiedState()` starts in `status: 'loading'` until the first notification arrives.
+ * - On error, `getUnifiedState().data` continues to return the last known value and `error` holds
+ *   the failure. Only the first error is captured.
  * - The function returned by `subscribe` is idempotent — calling it multiple times is safe.
+ * - Because a `DataPublisher` instance cannot be restarted, {@link ReactiveStore.retry | `retry()`}
+ *   on the returned store throws a
+ *   {@link SOLANA_ERROR__SUBSCRIBABLE__RETRY_NOT_SUPPORTED | `SolanaError`}.
  *
  * @param config
  *
- * @example
- * ```ts
- * const store = createReactiveStoreFromDataPublisher({
- *     abortSignal: AbortSignal.timeout(10_000),
- *     dataChannelName: 'notification',
- *     dataPublisher,
- *     errorChannelName: 'error',
- * });
- * const unsubscribe = store.subscribe(() => {
- *     console.log('State updated:', store.getState());
- * });
- * ```
+ * @deprecated Use {@link createReactiveStoreFromDataPublisherFactory} instead. That variant accepts
+ * a factory function for the underlying {@link DataPublisher} and can therefore support
+ * {@link ReactiveStore.retry | `retry()`}.
  */
 export function createReactiveStoreFromDataPublisher<TData>({
     abortSignal,
@@ -102,39 +155,171 @@ export function createReactiveStoreFromDataPublisher<TData>({
     dataPublisher,
     errorChannelName,
 }: Config): ReactiveStore<TData> {
-    let currentState: TData | undefined;
-    let currentError: unknown;
+    let currentState: ReactiveState<TData> = LOADING_STATE;
     const subscribers = new Set<() => void>();
 
     const abortController = new AbortController();
     abortSignal.addEventListener('abort', () => abortController.abort(abortSignal.reason));
 
+    function notify() {
+        subscribers.forEach(cb => cb());
+    }
+
     dataPublisher.on(
         dataChannelName,
         data => {
-            currentState = data as TData;
-            subscribers.forEach(cb => cb());
+            currentState = { data: data as TData, error: undefined, status: 'loaded' };
+            notify();
         },
         { signal: abortController.signal },
     );
     dataPublisher.on(
         errorChannelName,
         err => {
-            if (currentError !== undefined) return;
-            currentError = err;
-            // Abort the signal passed to dataPublisher, which stops the subscriptions
+            if (currentState.status === 'error') return;
+            currentState = { data: currentState.data, error: err, status: 'error' };
             abortController.abort(err);
-            subscribers.forEach(cb => cb());
+            notify();
         },
         { signal: abortController.signal },
     );
 
     return {
         getError(): unknown {
-            return currentError;
+            return currentState.error;
         },
         getState(): TData | undefined {
+            return currentState.data;
+        },
+        getUnifiedState(): ReactiveState<TData> {
             return currentState;
+        },
+        retry(): void {
+            throw new SolanaError(SOLANA_ERROR__SUBSCRIBABLE__RETRY_NOT_SUPPORTED);
+        },
+        subscribe(callback: () => void): () => void {
+            subscribers.add(callback);
+            return () => {
+                subscribers.delete(callback);
+            };
+        },
+    };
+}
+
+/**
+ * Returns a {@link ReactiveStore} that wires itself to a fresh {@link DataPublisher} on
+ * construction and on every {@link ReactiveStore.retry | `retry()`}.
+ *
+ * Unlike {@link createReactiveStoreFromDataPublisher}, this variant accepts a `createDataPublisher`
+ * factory rather than a ready-made publisher. That lets the store tear down a broken stream and
+ * open a new one without losing subscribers or the last known value.
+ *
+ * Things to note:
+ *
+ * - `getUnifiedState()` starts in `status: 'loading'` until the first notification arrives.
+ * - On error, the store transitions to `status: 'error'` preserving the last known value. Only the
+ *   first error per connection window is captured — a subsequent `retry()` resets that window.
+ * - `retry()` is a no-op unless the store is currently in `status: 'error'`. When it fires, the
+ *   store transitions to `status: 'retrying'` (preserving stale data), invokes
+ *   `createDataPublisher()`, and wires up a fresh connection. If the factory rejects, the store
+ *   transitions to `status: 'error'` with the rejection reason.
+ * - Triggering the caller's `abortSignal` disconnects the store permanently; subsequent `retry()`
+ *   calls are no-ops.
+ *
+ * @param config
+ *
+ * @example
+ * ```ts
+ * const store = createReactiveStoreFromDataPublisherFactory({
+ *     abortSignal,
+ *     async createDataPublisher() {
+ *         return getDataPublisherFromEventEmitter(new WebSocket(url));
+ *     },
+ *     dataChannelName: 'message',
+ *     errorChannelName: 'error',
+ * });
+ * const unsubscribe = store.subscribe(() => {
+ *     const snapshot = store.getUnifiedState();
+ *     if (snapshot.status === 'error') console.error('Connection failed:', snapshot.error);
+ *     else if (snapshot.status === 'loaded') console.log('Latest:', snapshot.data);
+ * });
+ * // Call `store.retry()` to recover after an error — e.g. from a user-triggered "Retry" button.
+ * ```
+ */
+export function createReactiveStoreFromDataPublisherFactory<TData>({
+    abortSignal,
+    createDataPublisher,
+    dataChannelName,
+    errorChannelName,
+}: FactoryConfig): ReactiveStore<TData> {
+    let currentState: ReactiveState<TData> = LOADING_STATE;
+    const subscribers = new Set<() => void>();
+
+    const outerController = new AbortController();
+    abortSignal.addEventListener('abort', () => outerController.abort(abortSignal.reason));
+
+    function notify() {
+        subscribers.forEach(cb => cb());
+    }
+
+    function connect() {
+        if (outerController.signal.aborted) return;
+        // Inner signal is passed to data publisher
+        const innerController = new AbortController();
+        // Forward an abort from the outer signal to the inner one, so that when the caller aborts, we disconnect
+        // Scope this forwarder to the inner signal so it's removed on reconnection
+        // and we don't accumulate listeners on the outer signal across retries.
+        const forwardAbort = () => innerController.abort(outerController.signal.reason);
+        outerController.signal.addEventListener('abort', forwardAbort, { signal: innerController.signal });
+        createDataPublisher().then(
+            publisher => {
+                if (innerController.signal.aborted) return;
+                publisher.on(
+                    dataChannelName,
+                    data => {
+                        currentState = { data: data as TData, error: undefined, status: 'loaded' };
+                        notify();
+                    },
+                    { signal: innerController.signal },
+                );
+                publisher.on(
+                    errorChannelName,
+                    err => {
+                        if (currentState.status === 'error') return;
+                        currentState = { data: currentState.data, error: err, status: 'error' };
+                        innerController.abort(err);
+                        notify();
+                    },
+                    { signal: innerController.signal },
+                );
+            },
+            err => {
+                if (innerController.signal.aborted) return;
+                currentState = { data: currentState.data, error: err, status: 'error' };
+                innerController.abort(err);
+                notify();
+            },
+        );
+    }
+
+    connect();
+
+    return {
+        getError(): unknown {
+            return currentState.error;
+        },
+        getState(): TData | undefined {
+            return currentState.data;
+        },
+        getUnifiedState(): ReactiveState<TData> {
+            return currentState;
+        },
+        retry(): void {
+            if (outerController.signal.aborted) return;
+            if (currentState.status !== 'error') return;
+            currentState = { data: currentState.data, error: undefined, status: 'retrying' };
+            notify();
+            connect();
         },
         subscribe(callback: () => void): () => void {
             subscribers.add(callback);
