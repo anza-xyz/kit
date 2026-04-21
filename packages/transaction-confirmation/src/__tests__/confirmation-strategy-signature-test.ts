@@ -27,9 +27,11 @@ describe('createSignatureConfirmationPromiseFactory', () => {
         createSubscriptionIterable = jest.fn().mockResolvedValue({
             [Symbol.asyncIterator]: signatureNotificationGenerator,
         });
-        createPendingSubscription = jest
-            .fn()
-            .mockReturnValue({ reactive: jest.fn(), subscribe: createSubscriptionIterable });
+        createPendingSubscription = jest.fn().mockReturnValue({
+            reactive: jest.fn(),
+            reactiveStore: jest.fn(),
+            subscribe: createSubscriptionIterable,
+        });
         const rpcSubscriptions = {
             signatureNotifications: createPendingSubscription,
         };
