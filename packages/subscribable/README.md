@@ -29,25 +29,37 @@ dataPublisher.on('error', e => {
 
 ### `ReactiveStore<T>`
 
-This type represents a reactive store that holds the latest value published to a data channel. It exposes a `{ getState, getError, subscribe }` contract compatible with `useSyncExternalStore`, Svelte stores, and other reactive primitives.
+This type represents a reactive store that holds the latest value published to a data channel. It exposes a `{ getUnifiedState, retry, subscribe }` contract compatible with `useSyncExternalStore`, Svelte stores, and other reactive primitives.
+
+`getUnifiedState()` returns a discriminated snapshot of the store's lifecycle:
+
+```ts
+type ReactiveState<T> =
+    | { data: undefined; error: undefined; status: 'loading' }
+    | { data: T; error: undefined; status: 'loaded' }
+    | { data: T | undefined; error: unknown; status: 'error' }
+    | { data: T | undefined; error: undefined; status: 'retrying' };
+```
 
 ```ts
 const store: ReactiveStore<AccountInfo> = /* ... */;
 
-// React
-const state = useSyncExternalStore(store.subscribe, () => {
-    if (store.getError()) throw store.getError();
-    return store.getState();
-});
+// React — snapshot identity is stable between updates, so it can be passed directly.
+const state = useSyncExternalStore(store.subscribe, store.getUnifiedState);
+if (state.status === 'error') return <ErrorMessage error={state.error} onRetry={store.retry} />;
+if (state.status === 'loading') return <Spinner />;
+return <View data={state.data} />;
 
 // Vue
-const data = shallowRef(store.getState());
-const error = shallowRef(store.getError());
+const snapshot = shallowRef(store.getUnifiedState());
 store.subscribe(() => {
-    data.value = store.getState();
-    error.value = store.getError();
+    snapshot.value = store.getUnifiedState();
 });
 ```
+
+`retry()` re-opens the stream after an error. When the underlying store supports restart (see [`createReactiveStoreFromDataPublisherFactory`](#createreactivestorefromdatapublisherfactory-abortsignal-createdatapublisher-datachannelname-errorchannelname-)), the store transitions to `status: 'retrying'` and reconnects. Stores that cannot be restarted throw a `SolanaError` with code `SOLANA_ERROR__SUBSCRIBABLE__RETRY_NOT_SUPPORTED` instead.
+
+The individual `getState()` and `getError()` getters on `ReactiveStore<T>` are `@deprecated` &mdash; prefer `getUnifiedState()`, which exposes the same information with a stable snapshot identity and `status` discriminator.
 
 ### `TypedEventEmitter<TEventMap>`
 
@@ -105,7 +117,9 @@ Things to note:
 
 ### `createReactiveStoreFromDataPublisher({ abortSignal, dataChannelName, dataPublisher, errorChannelName })`
 
-Returns a `ReactiveStore` given a data publisher. The store holds the most recent message published to `dataChannelName` and notifies subscribers on each update. When a message is published to `errorChannelName`, the error is captured in `getError()` and subscribers are notified. Triggering the abort signal disconnects the store from the data publisher.
+> **Deprecated.** Prefer [`createReactiveStoreFromDataPublisherFactory`](#createreactivestorefromdatapublisherfactory-abortsignal-createdatapublisher-datachannelname-errorchannelname-) &mdash; it supports `retry()`. Because this function accepts a ready-made `DataPublisher` rather than a factory, it cannot restart the underlying source, and calling `retry()` on the returned store throws a `SolanaError` with code `SOLANA_ERROR__SUBSCRIBABLE__RETRY_NOT_SUPPORTED`.
+
+Returns a `ReactiveStore` given a data publisher. The store holds the most recent message published to `dataChannelName` and notifies subscribers on each update. When a message is published to `errorChannelName`, the store transitions to `status: 'error'` preserving the last known value. Triggering the abort signal disconnects the store from the data publisher.
 
 ```ts
 const store = createReactiveStoreFromDataPublisher({
@@ -115,15 +129,41 @@ const store = createReactiveStoreFromDataPublisher({
     errorChannelName: 'error',
 });
 const unsubscribe = store.subscribe(() => {
-    console.log('State updated:', store.getState());
+    console.log('State updated:', store.getUnifiedState());
 });
 ```
 
 Things to note:
 
-- `getState()` returns `undefined` until the first notification arrives.
-- On error, `getState()` continues to return the last known value and `getError()` returns the error. Only the first error is captured.
+- `getUnifiedState()` starts in `status: 'loading'` until the first notification arrives.
+- On error, `status` becomes `'error'` with the last known value preserved on `data`. Only the first error is captured.
 - The function returned by `subscribe` is idempotent &mdash; calling it multiple times is safe.
+
+### `createReactiveStoreFromDataPublisherFactory({ abortSignal, createDataPublisher, dataChannelName, errorChannelName })`
+
+Returns a `ReactiveStore` that wires itself to a fresh `DataPublisher` on construction and on every `retry()`. Unlike `createReactiveStoreFromDataPublisher`, this variant accepts an async factory so the store can tear down a broken stream and open a new one without losing subscribers or the last known value.
+
+```ts
+const store = createReactiveStoreFromDataPublisherFactory({
+    abortSignal: AbortSignal.timeout(60_000),
+    async createDataPublisher() {
+        return await openMyConnection();
+    },
+    dataChannelName: 'notification',
+    errorChannelName: 'error',
+});
+store.subscribe(() => {
+    const snapshot = store.getUnifiedState();
+    if (snapshot.status === 'error') store.retry();
+});
+```
+
+Things to note:
+
+- `createDataPublisher` is called once on construction and again on every `retry()`.
+- `retry()` is a no-op unless the store is in `status: 'error'`; otherwise the store transitions to `status: 'retrying'` (preserving stale data) and reconnects.
+- If `createDataPublisher` rejects, the store transitions to `status: 'error'` with the rejection as the error. Call `retry()` to try again.
+- Triggering the caller's `abortSignal` disconnects the store permanently; subsequent `retry()` calls are no-ops.
 
 ### `demultiplexDataPublisher(publisher, sourceChannelName, messageTransformer)`
 
