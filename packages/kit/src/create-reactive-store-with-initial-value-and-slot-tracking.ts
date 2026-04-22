@@ -1,7 +1,7 @@
 import type { PendingRpcRequest } from '@solana/rpc';
 import type { PendingRpcSubscriptionsRequest } from '@solana/rpc-subscriptions';
 import type { SolanaRpcResponse } from '@solana/rpc-types';
-import type { ReactiveState, ReactiveStore } from '@solana/subscribable';
+import type { ReactiveState, ReactiveStreamStore } from '@solana/subscribable';
 
 type CreateReactiveStoreWithInitialValueAndSlotTrackingConfig<TRpcValue, TSubscriptionValue, TItem> = Readonly<{
     /**
@@ -38,7 +38,7 @@ const LOADING_STATE: ReactiveState<never> = Object.freeze({
 });
 
 /**
- * Creates a {@link ReactiveStore} that combines an initial RPC fetch with an ongoing subscription
+ * Creates a {@link ReactiveStreamStore} that combines an initial RPC fetch with an ongoing subscription
  * to keep its state up to date.
  *
  * The store uses slot-based comparison to ensure that only the most recent value is kept,
@@ -53,7 +53,7 @@ const LOADING_STATE: ReactiveState<never> = Object.freeze({
  *   {@link SolanaRpcResponse} containing the value and the slot context at which it was observed.
  * - On error from either source, the store transitions to `status: 'error'` preserving the last
  *   known value. Only the first error per connection window is captured.
- * - Calling {@link ReactiveStore.retry | `retry()`} while in `status: 'error'` re-sends the RPC
+ * - Calling {@link ReactiveStreamStore.retry | `retry()`} while in `status: 'error'` re-sends the RPC
  *   request and re-subscribes to the subscription using a fresh inner abort signal. The store
  *   transitions through `status: 'retrying'` back to `loaded`/`error`.
  * - Triggering the caller's abort signal disconnects the store permanently; subsequent `retry()`
@@ -93,7 +93,7 @@ const LOADING_STATE: ReactiveState<never> = Object.freeze({
  * });
  * ```
  *
- * @see {@link ReactiveStore}
+ * @see {@link ReactiveStreamStore}
  */
 export function createReactiveStoreWithInitialValueAndSlotTracking<TRpcValue, TSubscriptionValue, TItem>({
     abortSignal,
@@ -101,7 +101,7 @@ export function createReactiveStoreWithInitialValueAndSlotTracking<TRpcValue, TS
     rpcValueMapper,
     rpcSubscriptionRequest,
     rpcSubscriptionValueMapper,
-}: CreateReactiveStoreWithInitialValueAndSlotTrackingConfig<TRpcValue, TSubscriptionValue, TItem>): ReactiveStore<
+}: CreateReactiveStoreWithInitialValueAndSlotTrackingConfig<TRpcValue, TSubscriptionValue, TItem>): ReactiveStreamStore<
     SolanaRpcResponse<TItem>
 > {
     let currentState: ReactiveState<SolanaRpcResponse<TItem>> = LOADING_STATE;

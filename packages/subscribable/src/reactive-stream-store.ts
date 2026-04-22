@@ -28,13 +28,13 @@ type Config = Readonly<{
 type FactoryConfig = Readonly<{
     /**
      * Triggering this abort signal will cause the store to stop updating and will disconnect it from
-     * any active {@link DataPublisher}. Subsequent calls to {@link ReactiveStore.retry | `retry()`}
+     * any active {@link DataPublisher}. Subsequent calls to {@link ReactiveStreamStore.retry | `retry()`}
      * are no-ops once this signal has fired.
      */
     abortSignal: AbortSignal;
     /**
      * An async factory that produces a fresh {@link DataPublisher} each time it is invoked. Called
-     * once on construction and again on every {@link ReactiveStore.retry | `retry()`}. Rejections
+     * once on construction and again on every {@link ReactiveStreamStore.retry | `retry()`}. Rejections
      * surface as a store error.
      */
     createDataPublisher: () => Promise<DataPublisher>;
@@ -51,13 +51,13 @@ type FactoryConfig = Readonly<{
 }>;
 
 /**
- * The lifecycle state of a {@link ReactiveStore} as a single snapshot.
+ * The lifecycle state of a {@link ReactiveStreamStore} as a single snapshot.
  *
  * - `loading`: the store is waiting for its first value. `data` is `undefined`.
  * - `loaded`: a value has been received and no error is active. `data` is defined.
  * - `error`: the stream failed. `data` is the last known value (or `undefined` if no value ever
  *   arrived), and `error` holds the failure.
- * - `retrying`: a {@link ReactiveStore.retry | `retry()`} is in progress after a previous error.
+ * - `retrying`: a {@link ReactiveStreamStore.retry | `retry()`} is in progress after a previous error.
  *   `error` is cleared; `data` is preserved from before the failure if present.
  */
 export type ReactiveState<T> =
@@ -89,11 +89,11 @@ const LOADING_STATE: ReactiveState<never> = Object.freeze({
  *
  * @see {@link createReactiveStoreFromDataPublisherFactory}
  */
-export type ReactiveStore<T> = {
+export type ReactiveStreamStore<T> = {
     /**
      * Returns the error published to the error channel, or `undefined` if no error has occurred.
      *
-     * @deprecated Use {@link ReactiveStore.getUnifiedState | `getUnifiedState()`} instead. This
+     * @deprecated Use {@link ReactiveStreamStore.getUnifiedState | `getUnifiedState()`} instead. This
      * getter returns only the error field and cannot narrow the relationship between the current
      * value, error, and status.
      */
@@ -102,7 +102,7 @@ export type ReactiveStore<T> = {
      * Returns the most recent value published to the data channel, or `undefined` if no
      * notification has arrived yet. On error, continues to return the last known value.
      *
-     * @deprecated Use {@link ReactiveStore.getUnifiedState | `getUnifiedState()`} instead. This
+     * @deprecated Use {@link ReactiveStreamStore.getUnifiedState | `getUnifiedState()`} instead. This
      * getter returns only the value field and does not surface lifecycle status (e.g. `retrying`).
      */
     getState(): T | undefined;
@@ -126,7 +126,13 @@ export type ReactiveStore<T> = {
 };
 
 /**
- * Returns a {@link ReactiveStore} given a data publisher.
+ * @deprecated Use {@link ReactiveStreamStore} instead. This alias will be removed in a future
+ * major release.
+ */
+export type ReactiveStore<T> = ReactiveStreamStore<T>;
+
+/**
+ * Returns a {@link ReactiveStreamStore} given a data publisher.
  *
  * The store will update its state with each message published to `dataChannelName` and notify all
  * subscribers. When a message is published to `errorChannelName`, subscribers are notified so they
@@ -139,7 +145,7 @@ export type ReactiveStore<T> = {
  * - On error, `getUnifiedState().data` continues to return the last known value and `error` holds
  *   the failure. Only the first error is captured.
  * - The function returned by `subscribe` is idempotent — calling it multiple times is safe.
- * - Because a `DataPublisher` instance cannot be restarted, {@link ReactiveStore.retry | `retry()`}
+ * - Because a `DataPublisher` instance cannot be restarted, {@link ReactiveStreamStore.retry | `retry()`}
  *   on the returned store throws a
  *   {@link SOLANA_ERROR__SUBSCRIBABLE__RETRY_NOT_SUPPORTED | `SolanaError`}.
  *
@@ -147,14 +153,14 @@ export type ReactiveStore<T> = {
  *
  * @deprecated Use {@link createReactiveStoreFromDataPublisherFactory} instead. That variant accepts
  * a factory function for the underlying {@link DataPublisher} and can therefore support
- * {@link ReactiveStore.retry | `retry()`}.
+ * {@link ReactiveStreamStore.retry | `retry()`}.
  */
 export function createReactiveStoreFromDataPublisher<TData>({
     abortSignal,
     dataChannelName,
     dataPublisher,
     errorChannelName,
-}: Config): ReactiveStore<TData> {
+}: Config): ReactiveStreamStore<TData> {
     let currentState: ReactiveState<TData> = LOADING_STATE;
     const subscribers = new Set<() => void>();
 
@@ -207,8 +213,8 @@ export function createReactiveStoreFromDataPublisher<TData>({
 }
 
 /**
- * Returns a {@link ReactiveStore} that wires itself to a fresh {@link DataPublisher} on
- * construction and on every {@link ReactiveStore.retry | `retry()`}.
+ * Returns a {@link ReactiveStreamStore} that wires itself to a fresh {@link DataPublisher} on
+ * construction and on every {@link ReactiveStreamStore.retry | `retry()`}.
  *
  * Unlike {@link createReactiveStoreFromDataPublisher}, this variant accepts a `createDataPublisher`
  * factory rather than a ready-made publisher. That lets the store tear down a broken stream and
@@ -251,7 +257,7 @@ export function createReactiveStoreFromDataPublisherFactory<TData>({
     createDataPublisher,
     dataChannelName,
     errorChannelName,
-}: FactoryConfig): ReactiveStore<TData> {
+}: FactoryConfig): ReactiveStreamStore<TData> {
     let currentState: ReactiveState<TData> = LOADING_STATE;
     const subscribers = new Set<() => void>();
 

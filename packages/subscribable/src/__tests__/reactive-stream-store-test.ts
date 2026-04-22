@@ -1,7 +1,10 @@
 import { SOLANA_ERROR__SUBSCRIBABLE__RETRY_NOT_SUPPORTED, SolanaError } from '@solana/errors';
 
 import { DataPublisher } from '../data-publisher';
-import { createReactiveStoreFromDataPublisher, createReactiveStoreFromDataPublisherFactory } from '../reactive-store';
+import {
+    createReactiveStoreFromDataPublisher,
+    createReactiveStoreFromDataPublisherFactory,
+} from '../reactive-stream-store';
 
 jest.useFakeTimers();
 
