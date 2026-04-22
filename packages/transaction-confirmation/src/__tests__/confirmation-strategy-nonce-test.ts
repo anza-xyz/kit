@@ -38,6 +38,9 @@ describe('createNonceInvalidationPromiseFactory', () => {
         getAccountInfoMock = jest.fn().mockReturnValue(FOREVER_PROMISE);
         const rpc = {
             getAccountInfo: () => ({
+                reactiveStore: jest.fn().mockImplementation(() => {
+                    throw new Error('not implemented');
+                }),
                 send: getAccountInfoMock,
             }),
         };
@@ -45,8 +48,10 @@ describe('createNonceInvalidationPromiseFactory', () => {
             [Symbol.asyncIterator]: accountNotificationGenerator,
         });
         createPendingSubscription = jest.fn().mockReturnValue({
-            reactive: jest.fn(),
-            reactiveStore: jest.fn(),
+            reactive: jest.fn().mockRejectedValue(new Error('not implemented')),
+            reactiveStore: jest.fn().mockImplementation(() => {
+                throw new Error('not implemented');
+            }),
             subscribe: createSubscriptionIterable,
         });
         const rpcSubscriptions = {

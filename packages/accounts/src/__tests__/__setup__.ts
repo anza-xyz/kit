@@ -20,7 +20,10 @@ export function getMockRpc(
 ): Rpc<GetAccountInfoApi | GetMultipleAccountsApi> & { getAccountInfo: jest.Mock; getMultipleAccounts: jest.Mock } {
     const wrapInPendingResponse = <T>(value: T): PendingRpcRequest<SolanaRpcResponse<T>> => {
         const send = jest.fn().mockResolvedValue({ context: { slot: 0n }, value });
-        return { send };
+        const reactiveStore = jest.fn().mockImplementation(() => {
+            throw new Error('not implemented');
+        });
+        return { reactiveStore, send };
     };
 
     const getAccountInfo = jest

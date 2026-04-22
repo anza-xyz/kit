@@ -13,7 +13,12 @@ function createMockRpcRequest(): {
 } {
     const { promise, resolve, reject } = Promise.withResolvers<SolanaRpcResponse<TestValue>>();
     return {
-        mockRequest: { send: jest.fn().mockReturnValue(promise) },
+        mockRequest: {
+            reactiveStore: jest.fn().mockImplementation(() => {
+                throw new Error('not implemented');
+            }),
+            send: jest.fn().mockReturnValue(promise),
+        },
         reject,
         resolve,
     };
@@ -628,6 +633,9 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 pushNotification(notification: SolanaRpcResponse<TestValue>): void;
             }[] = [];
             const rpcRequest: PendingRpcRequest<SolanaRpcResponse<TestValue>> = {
+                reactiveStore: jest.fn().mockImplementation(() => {
+                    throw new Error('not implemented');
+                }),
                 send: jest.fn().mockImplementation(() => {
                     const { promise, resolve, reject } = Promise.withResolvers<SolanaRpcResponse<TestValue>>();
                     rpcInstances.push({ reject, resolve });

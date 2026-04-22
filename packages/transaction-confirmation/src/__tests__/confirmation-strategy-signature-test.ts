@@ -21,6 +21,9 @@ describe('createSignatureConfirmationPromiseFactory', () => {
         getSignatureStatusesMock = jest.fn().mockReturnValue(FOREVER_PROMISE);
         const rpc = {
             getSignatureStatuses: () => ({
+                reactiveStore: jest.fn().mockImplementation(() => {
+                    throw new Error('not implemented');
+                }),
                 send: getSignatureStatusesMock,
             }),
         };
@@ -28,8 +31,10 @@ describe('createSignatureConfirmationPromiseFactory', () => {
             [Symbol.asyncIterator]: signatureNotificationGenerator,
         });
         createPendingSubscription = jest.fn().mockReturnValue({
-            reactive: jest.fn(),
-            reactiveStore: jest.fn(),
+            reactive: jest.fn().mockRejectedValue(new Error('not implemented')),
+            reactiveStore: jest.fn().mockImplementation(() => {
+                throw new Error('not implemented');
+            }),
             subscribe: createSubscriptionIterable,
         });
         const rpcSubscriptions = {

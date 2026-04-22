@@ -27,8 +27,10 @@ describe('createBlockHeightExceedencePromiseFactory', () => {
         });
         const rpcSubscriptions = {
             slotNotifications: () => ({
-                reactive: jest.fn(),
-                reactiveStore: jest.fn(),
+                reactive: jest.fn().mockRejectedValue(new Error('not implemented')),
+                reactiveStore: jest.fn().mockImplementation(() => {
+                    throw new Error('not implemented');
+                }),
                 subscribe: createSubscriptionIterable,
             }),
         };
