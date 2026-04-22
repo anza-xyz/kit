@@ -6,7 +6,7 @@
  *
  * @packageDocumentation
  */
-export * from './action-store';
+export * from './reactive-action-store';
 export * from './async-iterable';
 export * from './data-publisher';
 export * from './demultiplex';

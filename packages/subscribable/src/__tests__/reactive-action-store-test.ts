@@ -1,8 +1,8 @@
-import { createActionStore } from '../action-store';
+import { createReactiveActionStore } from '../reactive-action-store';
 
-describe('createActionStore', () => {
+describe('createReactiveActionStore', () => {
     it('starts in the `idle` state', () => {
-        const store = createActionStore(() => Promise.resolve('never'));
+        const store = createReactiveActionStore(() => Promise.resolve('never'));
         expect(store.getState()).toStrictEqual({
             data: undefined,
             error: undefined,
@@ -13,7 +13,7 @@ describe('createActionStore', () => {
     it('transitions `idle` → `running` → `success` on a successful dispatch', async () => {
         expect.assertions(2);
         const { promise, resolve } = Promise.withResolvers<number>();
-        const store = createActionStore(() => promise);
+        const store = createReactiveActionStore(() => promise);
         const dispatched = store.dispatchAsync();
         expect(store.getState()).toStrictEqual({
             data: undefined,
@@ -32,7 +32,7 @@ describe('createActionStore', () => {
     it('transitions `idle` → `running` → `error` when the dispatch rejects', async () => {
         expect.assertions(2);
         const { promise, reject } = Promise.withResolvers<number>();
-        const store = createActionStore(() => promise);
+        const store = createReactiveActionStore(() => promise);
         const dispatched = store.dispatchAsync();
         expect(store.getState()).toStrictEqual({
             data: undefined,
@@ -50,33 +50,33 @@ describe('createActionStore', () => {
     });
 
     it('returns `undefined` synchronously from `dispatch`', () => {
-        const store = createActionStore(() => Promise.reject(new Error('boom')));
+        const store = createReactiveActionStore(() => Promise.reject(new Error('boom')));
         expect(store.dispatch()).toBeUndefined();
     });
 
     it('rejects `dispatchAsync` on failure so callers can `try/catch`', async () => {
         expect.assertions(1);
-        const store = createActionStore(() => Promise.reject(new Error('boom')));
+        const store = createReactiveActionStore(() => Promise.reject(new Error('boom')));
         await expect(store.dispatchAsync()).rejects.toThrow('boom');
     });
 
     it('resolves `dispatchAsync` with the wrapped function result on success', async () => {
         expect.assertions(1);
-        const store = createActionStore(() => Promise.resolve(42));
+        const store = createReactiveActionStore(() => Promise.resolve(42));
         await expect(store.dispatchAsync()).resolves.toBe(42);
     });
 
     it('forwards the `AbortSignal` as the first argument of the wrapped function', async () => {
         expect.assertions(1);
         const fn = jest.fn<Promise<string>, [AbortSignal, string, number]>(() => Promise.resolve('ok'));
-        const store = createActionStore(fn);
+        const store = createReactiveActionStore(fn);
         await store.dispatchAsync('hello', 7);
         expect(fn.mock.calls).toStrictEqual([[expect.any(AbortSignal), 'hello', 7]]);
     });
 
     it('aborts an in-flight dispatch when a new dispatch supersedes it', () => {
         const signals: AbortSignal[] = [];
-        const store = createActionStore((signal: AbortSignal) => {
+        const store = createReactiveActionStore((signal: AbortSignal) => {
             signals.push(signal);
             return new Promise<string>(() => {});
         });
@@ -87,7 +87,7 @@ describe('createActionStore', () => {
 
     it('rejects a superseded `dispatchAsync` with an `AbortError`', async () => {
         expect.assertions(1);
-        const store = createActionStore(() => new Promise<string>(() => {}));
+        const store = createReactiveActionStore(() => new Promise<string>(() => {}));
         const first = store.dispatchAsync();
         store.dispatch();
         await expect(first).rejects.toMatchObject({ name: 'AbortError' });
@@ -96,7 +96,7 @@ describe('createActionStore', () => {
     it('rejects `dispatchAsync` with an `AbortError` if superseded after `fn` resolves but before the continuation runs', async () => {
         expect.assertions(1);
         const { promise, resolve } = Promise.withResolvers<string>();
-        const store = createActionStore(() => promise);
+        const store = createReactiveActionStore(() => promise);
         const first = store.dispatchAsync();
         resolve('stale');
         // Let the wrapper promise resolve, then synchronously supersede before
@@ -109,7 +109,7 @@ describe('createActionStore', () => {
     it('rejects `dispatchAsync` with an `AbortError` if superseded after `fn` rejects but before the continuation runs', async () => {
         expect.assertions(1);
         const { promise, reject } = Promise.withResolvers<string>();
-        const store = createActionStore(() => promise);
+        const store = createReactiveActionStore(() => promise);
         const first = store.dispatchAsync();
         reject(new Error('nope'));
         // Let the wrapper promise reject, then synchronously supersede before
@@ -125,7 +125,7 @@ describe('createActionStore', () => {
         const { promise: firstPromise, resolve: resolveFirst } = Promise.withResolvers<string>();
         const { promise: secondPromise, resolve: resolveSecond } = Promise.withResolvers<string>();
         const results = [firstPromise, secondPromise];
-        const store = createActionStore(() => results.shift()!);
+        const store = createReactiveActionStore(() => results.shift()!);
         store.dispatch();
         const second = store.dispatchAsync();
         resolveSecond('second');
@@ -143,7 +143,7 @@ describe('createActionStore', () => {
         const { promise: firstPromise, reject: rejectFirst } = Promise.withResolvers<string>();
         const { promise: secondPromise, resolve: resolveSecond } = Promise.withResolvers<string>();
         const results = [firstPromise, secondPromise];
-        const store = createActionStore(() => results.shift()!);
+        const store = createReactiveActionStore(() => results.shift()!);
         store.dispatch();
         const second = store.dispatchAsync();
         resolveSecond('winner');
@@ -161,7 +161,7 @@ describe('createActionStore', () => {
     it('does not overwrite the idle state when a superseded call resolves after `reset`', async () => {
         expect.assertions(1);
         const { promise, resolve } = Promise.withResolvers<string>();
-        const store = createActionStore(() => promise);
+        const store = createReactiveActionStore(() => promise);
         store.dispatch();
         store.reset();
         resolve('stale');
@@ -177,7 +177,7 @@ describe('createActionStore', () => {
     describe('reset()', () => {
         it('returns the store to idle from a success state', async () => {
             expect.assertions(1);
-            const store = createActionStore(() => Promise.resolve('ok'));
+            const store = createReactiveActionStore(() => Promise.resolve('ok'));
             await store.dispatchAsync();
             store.reset();
             expect(store.getState()).toStrictEqual({
@@ -189,7 +189,7 @@ describe('createActionStore', () => {
 
         it('returns the store to idle from an error state', async () => {
             expect.assertions(1);
-            const store = createActionStore(() => Promise.reject(new Error('boom')));
+            const store = createReactiveActionStore(() => Promise.reject(new Error('boom')));
             await store.dispatchAsync().catch(() => {});
             store.reset();
             expect(store.getState()).toStrictEqual({
@@ -201,7 +201,7 @@ describe('createActionStore', () => {
 
         it('aborts an in-flight dispatch', () => {
             const signals: AbortSignal[] = [];
-            const store = createActionStore((signal: AbortSignal) => {
+            const store = createReactiveActionStore((signal: AbortSignal) => {
                 signals.push(signal);
                 return new Promise<string>(() => {});
             });
@@ -212,7 +212,7 @@ describe('createActionStore', () => {
 
         it('rejects an in-flight `dispatchAsync` with an `AbortError`', async () => {
             expect.assertions(1);
-            const store = createActionStore(() => new Promise<string>(() => {}));
+            const store = createReactiveActionStore(() => new Promise<string>(() => {}));
             const dispatched = store.dispatchAsync();
             store.reset();
             await expect(dispatched).rejects.toMatchObject({ name: 'AbortError' });
@@ -221,7 +221,7 @@ describe('createActionStore', () => {
 
     describe('subscribe()', () => {
         it('notifies listeners on transition to `running`', () => {
-            const store = createActionStore(() => new Promise<string>(() => {}));
+            const store = createReactiveActionStore(() => new Promise<string>(() => {}));
             const listener = jest.fn();
             store.subscribe(listener);
             store.dispatch();
@@ -231,7 +231,7 @@ describe('createActionStore', () => {
         it('notifies listeners on transition to `success`', async () => {
             expect.assertions(1);
             const { promise, resolve } = Promise.withResolvers<string>();
-            const store = createActionStore(() => promise);
+            const store = createReactiveActionStore(() => promise);
             const dispatched = store.dispatchAsync();
             const listener = jest.fn();
             store.subscribe(listener);
@@ -243,7 +243,7 @@ describe('createActionStore', () => {
         it('notifies listeners on transition to `error`', async () => {
             expect.assertions(1);
             const { promise, reject } = Promise.withResolvers<string>();
-            const store = createActionStore(() => promise);
+            const store = createReactiveActionStore(() => promise);
             const dispatched = store.dispatchAsync();
             const listener = jest.fn();
             store.subscribe(listener);
@@ -254,7 +254,7 @@ describe('createActionStore', () => {
 
         it('does not notify listeners that unsubscribed before the transition', async () => {
             expect.assertions(1);
-            const store = createActionStore(() => Promise.resolve('ok'));
+            const store = createReactiveActionStore(() => Promise.resolve('ok'));
             const listener = jest.fn();
             const unsubscribe = store.subscribe(listener);
             unsubscribe();
@@ -264,7 +264,7 @@ describe('createActionStore', () => {
 
         it('notifies multiple listeners independently', async () => {
             expect.assertions(2);
-            const store = createActionStore(() => Promise.resolve('ok'));
+            const store = createReactiveActionStore(() => Promise.resolve('ok'));
             const listenerA = jest.fn();
             const listenerB = jest.fn();
             store.subscribe(listenerA);
@@ -275,7 +275,7 @@ describe('createActionStore', () => {
         });
 
         it('the unsubscribe function is idempotent', () => {
-            const store = createActionStore(() => Promise.resolve('ok'));
+            const store = createReactiveActionStore(() => Promise.resolve('ok'));
             const unsubscribe = store.subscribe(jest.fn());
             expect(() => {
                 unsubscribe();
@@ -285,7 +285,7 @@ describe('createActionStore', () => {
 
         it('notifies on reset() from a non-idle state', async () => {
             expect.assertions(1);
-            const store = createActionStore(() => Promise.resolve('ok'));
+            const store = createReactiveActionStore(() => Promise.resolve('ok'));
             await store.dispatchAsync();
             const listener = jest.fn();
             store.subscribe(listener);
@@ -294,7 +294,7 @@ describe('createActionStore', () => {
         });
 
         it('does not notify on reset() when already idle', () => {
-            const store = createActionStore(() => Promise.resolve('ok'));
+            const store = createReactiveActionStore(() => Promise.resolve('ok'));
             const listener = jest.fn();
             store.subscribe(listener);
             store.reset();
@@ -302,7 +302,7 @@ describe('createActionStore', () => {
         });
 
         it('does not notify on a superseding dispatch when the state is already `running`', () => {
-            const store = createActionStore(() => new Promise<string>(() => {}));
+            const store = createReactiveActionStore(() => new Promise<string>(() => {}));
             store.dispatch();
             const listener = jest.fn();
             store.subscribe(listener);
@@ -313,7 +313,7 @@ describe('createActionStore', () => {
 
     it('has a stable `dispatch` reference across state changes', async () => {
         expect.assertions(1);
-        const store = createActionStore(() => Promise.resolve('ok'));
+        const store = createReactiveActionStore(() => Promise.resolve('ok'));
         const initial = store.dispatch;
         await store.dispatchAsync();
         store.reset();
@@ -322,7 +322,7 @@ describe('createActionStore', () => {
 
     it('returns a stable snapshot reference for the `idle` state across resets', async () => {
         expect.assertions(1);
-        const store = createActionStore(() => Promise.resolve('ok'));
+        const store = createReactiveActionStore(() => Promise.resolve('ok'));
         const idleBefore = store.getState();
         await store.dispatchAsync();
         store.reset();
@@ -334,7 +334,7 @@ describe('createActionStore', () => {
             expect.assertions(1);
             const { promise: second, resolve: resolveSecond } = Promise.withResolvers<string>();
             const results = [Promise.resolve('first'), second];
-            const store = createActionStore(() => results.shift()!);
+            const store = createReactiveActionStore(() => results.shift()!);
             await store.dispatchAsync();
             store.dispatch();
             expect(store.getState()).toStrictEqual({
@@ -349,7 +349,7 @@ describe('createActionStore', () => {
             expect.assertions(1);
             const failure = new Error('boom');
             const results = [Promise.resolve('first'), Promise.reject(failure)];
-            const store = createActionStore(() => results.shift()!);
+            const store = createReactiveActionStore(() => results.shift()!);
             await store.dispatchAsync();
             await store.dispatchAsync().catch(() => {});
             expect(store.getState()).toStrictEqual({
@@ -362,7 +362,7 @@ describe('createActionStore', () => {
         it('replaces stale `data` when a subsequent dispatch succeeds with a new value', async () => {
             expect.assertions(1);
             const results = [Promise.resolve('first'), Promise.resolve('second')];
-            const store = createActionStore(() => results.shift()!);
+            const store = createReactiveActionStore(() => results.shift()!);
             await store.dispatchAsync();
             await store.dispatchAsync();
             expect(store.getState()).toStrictEqual({
@@ -375,7 +375,7 @@ describe('createActionStore', () => {
         it('clears a previous error once a subsequent dispatch succeeds', async () => {
             expect.assertions(1);
             const results = [Promise.reject(new Error('boom')), Promise.resolve('ok')];
-            const store = createActionStore(() => results.shift()!);
+            const store = createReactiveActionStore(() => results.shift()!);
             await store.dispatchAsync().catch(() => {});
             await store.dispatchAsync();
             expect(store.getState()).toStrictEqual({
@@ -387,7 +387,7 @@ describe('createActionStore', () => {
 
         it('clears `data` on reset()', async () => {
             expect.assertions(1);
-            const store = createActionStore(() => Promise.resolve('ok'));
+            const store = createReactiveActionStore(() => Promise.resolve('ok'));
             await store.dispatchAsync();
             store.reset();
             expect(store.getState()).toStrictEqual({
@@ -400,7 +400,7 @@ describe('createActionStore', () => {
         it('does not restore stale `data` after reset() when a new dispatch runs', () => {
             const { promise } = Promise.withResolvers<string>();
             const results = [Promise.resolve('first'), promise];
-            const store = createActionStore(() => results.shift()!);
+            const store = createReactiveActionStore(() => results.shift()!);
             store.dispatch();
             store.reset();
             store.dispatch();
@@ -414,7 +414,7 @@ describe('createActionStore', () => {
         it('keeps `data` undefined in the error state when no prior success occurred', async () => {
             expect.assertions(1);
             const failure = new Error('boom');
-            const store = createActionStore(() => Promise.reject(failure));
+            const store = createReactiveActionStore(() => Promise.reject(failure));
             await store.dispatchAsync().catch(() => {});
             expect(store.getState()).toStrictEqual({
                 data: undefined,

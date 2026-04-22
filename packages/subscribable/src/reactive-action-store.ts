@@ -1,17 +1,17 @@
 import { AbortController } from '@solana/event-target-impl';
 import { getAbortablePromise } from '@solana/promises';
 
-/** Lifecycle status of an {@link ActionStore}. */
-export type ActionStatus = 'error' | 'idle' | 'running' | 'success';
+/** Lifecycle status of a {@link ReactiveActionStore}. */
+export type ReactiveActionStatus = 'error' | 'idle' | 'running' | 'success';
 
 /**
- * Discriminated state of an {@link ActionStore}, keyed by {@link ActionStatus}.
+ * Discriminated state of a {@link ReactiveActionStore}, keyed by {@link ReactiveActionStatus}.
  *
  * `data` holds the most recent successful result and persists through subsequent `running` and
  * `error` states so call sites can keep rendering stale content while a retry is in flight. Only
  * `reset()` clears it.
  */
-export type ActionState<TResult> =
+export type ReactiveActionState<TResult> =
     | { readonly data: TResult | undefined; readonly error: undefined; readonly status: 'running' }
     | { readonly data: TResult | undefined; readonly error: unknown; readonly status: 'error' }
     | { readonly data: TResult; readonly error: undefined; readonly status: 'success' }
@@ -22,15 +22,15 @@ export type ActionState<TResult> =
  * `{ dispatch, getState, subscribe, reset }` contract. Bridges trivially into
  * `useSyncExternalStore`, Svelte stores, Vue's `shallowRef`, and similar reactive primitives.
  *
- * @see {@link createActionStore}
+ * @see {@link createReactiveActionStore}
  */
-export type ActionStore<TArgs extends readonly unknown[], TResult> = {
+export type ReactiveActionStore<TArgs extends readonly unknown[], TResult> = {
     /**
      * Fire-and-forget dispatch. Returns `undefined` synchronously and never throws — failures
      * surface on state as `{ status: 'error' }`, and superseded or `reset()`-aborted calls produce
      * no state update. Use from UI event handlers; there's no promise to handle or `.catch`.
      *
-     * @see {@link ActionStore.dispatchAsync} when you need the resolved value or propagated errors.
+     * @see {@link ReactiveActionStore.dispatchAsync} when you need the resolved value or propagated errors.
      */
     readonly dispatch: (...args: TArgs) => void;
     /**
@@ -41,21 +41,21 @@ export type ActionStore<TArgs extends readonly unknown[], TResult> = {
      */
     readonly dispatchAsync: (...args: TArgs) => Promise<TResult>;
     /** Returns the current state. */
-    readonly getState: () => ActionState<TResult>;
+    readonly getState: () => ReactiveActionState<TResult>;
     /** Aborts any in-flight dispatch and resets the state to `{ status: 'idle' }`. */
     readonly reset: () => void;
     /** Registers a listener called on every state change. Returns an unsubscribe function. */
     readonly subscribe: (listener: () => void) => () => void;
 };
 
-const IDLE_STATE: ActionState<never> = Object.freeze({
+const IDLE_STATE: ReactiveActionState<never> = Object.freeze({
     data: undefined,
     error: undefined,
     status: 'idle',
 });
 
 /**
- * Wraps an async function in an {@link ActionStore}. Each `dispatch` creates a fresh
+ * Wraps an async function in a {@link ReactiveActionStore}. Each `dispatch` creates a fresh
  * {@link AbortController} and aborts the previous one; the superseded call's outcome is dropped,
  * so only the most recent dispatch can mutate state.
  *
@@ -65,12 +65,12 @@ const IDLE_STATE: ActionState<never> = Object.freeze({
  * @typeParam TArgs - Argument tuple forwarded from `dispatch` to `fn`.
  * @typeParam TResult - Resolved value type of `fn`.
  * @param fn - Async function to wrap. Receives an {@link AbortSignal} plus the dispatch arguments.
- * @return An {@link ActionStore} exposing `dispatch`, `dispatchAsync`, `getState`, `subscribe`,
+ * @return A {@link ReactiveActionStore} exposing `dispatch`, `dispatchAsync`, `getState`, `subscribe`,
  * and `reset`.
  *
  * @example
  * ```ts
- * const store = createActionStore(async (signal, accountId: Address) => {
+ * const store = createReactiveActionStore(async (signal, accountId: Address) => {
  *     const response = await fetch(`/api/accounts/${accountId}`, { signal });
  *     return response.json();
  * });
@@ -82,16 +82,16 @@ const IDLE_STATE: ActionState<never> = Object.freeze({
  * const account = await store.dispatchAsync(someAccountId);
  * ```
  *
- * @see {@link ActionStore}
+ * @see {@link ReactiveActionStore}
  */
-export function createActionStore<TArgs extends readonly unknown[], TResult>(
+export function createReactiveActionStore<TArgs extends readonly unknown[], TResult>(
     fn: (signal: AbortSignal, ...args: TArgs) => Promise<TResult>,
-): ActionStore<TArgs, TResult> {
-    let state: ActionState<TResult> = IDLE_STATE;
+): ReactiveActionStore<TArgs, TResult> {
+    let state: ReactiveActionState<TResult> = IDLE_STATE;
     let currentController: AbortController | undefined;
     const listeners = new Set<() => void>();
 
-    function setState(next: ActionState<TResult>) {
+    function setState(next: ReactiveActionState<TResult>) {
         if (state.status === next.status && state.data === next.data && state.error === next.error) {
             return;
         }
