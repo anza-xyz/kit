@@ -1,4 +1,6 @@
 import {
+    SOLANA_ERROR__FIXED_POINTS__ARITHMETIC_OVERFLOW,
+    SOLANA_ERROR__FIXED_POINTS__DIVISION_BY_ZERO,
     SOLANA_ERROR__FIXED_POINTS__FRACTIONAL_BITS_EXCEED_TOTAL_BITS,
     SOLANA_ERROR__FIXED_POINTS__INVALID_DECIMALS,
     SOLANA_ERROR__FIXED_POINTS__INVALID_FRACTIONAL_BITS,
@@ -236,6 +238,56 @@ export function assertRawIsBigint(kind: FixedPointKind, value: unknown): asserts
         throw new SolanaError(SOLANA_ERROR__FIXED_POINTS__MALFORMED_RAW_VALUE, {
             kind,
             raw,
+        });
+    }
+}
+
+/**
+ * Asserts that a bigint `result` produced by an arithmetic operation fits
+ * the range claimed by the given signedness and total bits. Throws
+ * `SOLANA_ERROR__FIXED_POINTS__ARITHMETIC_OVERFLOW` otherwise, carrying
+ * the operation name so the error message can identify which op overflowed.
+ *
+ * @internal
+ */
+export function assertNoArithmeticOverflow(
+    kind: FixedPointKind,
+    operation: string,
+    signedness: Signedness,
+    totalBits: number,
+    result: bigint,
+): void {
+    const { max, min } = getRawRange(signedness, totalBits);
+    if (result < min || result > max) {
+        throw new SolanaError(SOLANA_ERROR__FIXED_POINTS__ARITHMETIC_OVERFLOW, {
+            kind,
+            max,
+            min,
+            operation,
+            result,
+            signedness,
+            totalBits,
+        });
+    }
+}
+
+/**
+ * Asserts that a divisor is non-zero. Throws
+ * `SOLANA_ERROR__FIXED_POINTS__DIVISION_BY_ZERO` otherwise.
+ *
+ * @internal
+ */
+export function assertNoDivisionByZero(
+    kind: FixedPointKind,
+    signedness: Signedness,
+    totalBits: number,
+    denominator: bigint,
+): void {
+    if (denominator === 0n) {
+        throw new SolanaError(SOLANA_ERROR__FIXED_POINTS__DIVISION_BY_ZERO, {
+            kind,
+            signedness,
+            totalBits,
         });
     }
 }
