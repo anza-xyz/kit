@@ -10,12 +10,7 @@
  *
  * @packageDocumentation
  */
-
-/**
- * Placeholder export that exists solely to give this package tree-shakable
- * contents while its real API is implemented in follow-up PRs. It will be
- * removed as soon as the first real export lands.
- *
- * @internal
- */
-export const __placeholder: unique symbol = Symbol('@solana/fixed-points/placeholder');
+export * from './binary';
+export * from './decimal';
+export * from './rounding';
+export * from './signedness';
