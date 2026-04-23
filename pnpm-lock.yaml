@@ -603,6 +603,9 @@ importers:
 
   packages/fixed-points:
     dependencies:
+      '@solana/errors':
+        specifier: workspace:*
+        version: link:../errors
       typescript:
         specifier: '>=5.0.0'
         version: 5.9.3
