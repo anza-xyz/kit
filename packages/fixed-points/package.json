@@ -73,6 +73,9 @@
         "supports bigint and not dead",
         "maintained node versions"
     ],
+    "dependencies": {
+        "@solana/errors": "workspace:*"
+    },
     "peerDependencies": {
         "typescript": ">=5.0.0"
     },

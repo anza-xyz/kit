@@ -12,5 +12,5 @@
  */
 export * from './binary';
 export * from './decimal';
-export * from './rounding';
+export type { RoundingMode } from './rounding';
 export * from './signedness';
