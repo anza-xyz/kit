@@ -55,6 +55,19 @@ import {
     SOLANA_ERROR__CRYPTO__RANDOM_VALUES_FUNCTION_UNIMPLEMENTED,
     SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION,
     SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS,
+    SOLANA_ERROR__FIXED_POINTS__ARITHMETIC_OVERFLOW,
+    SOLANA_ERROR__FIXED_POINTS__DIVISION_BY_ZERO,
+    SOLANA_ERROR__FIXED_POINTS__FRACTIONAL_BITS_EXCEED_TOTAL_BITS,
+    SOLANA_ERROR__FIXED_POINTS__INVALID_DECIMALS,
+    SOLANA_ERROR__FIXED_POINTS__INVALID_FRACTIONAL_BITS,
+    SOLANA_ERROR__FIXED_POINTS__INVALID_STRING,
+    SOLANA_ERROR__FIXED_POINTS__INVALID_TOTAL_BITS,
+    SOLANA_ERROR__FIXED_POINTS__INVALID_ZERO_DENOMINATOR_RATIO,
+    SOLANA_ERROR__FIXED_POINTS__MALFORMED_RAW_VALUE,
+    SOLANA_ERROR__FIXED_POINTS__SHAPE_MISMATCH,
+    SOLANA_ERROR__FIXED_POINTS__STRICT_MODE_PRECISION_LOSS,
+    SOLANA_ERROR__FIXED_POINTS__TOTAL_BITS_NOT_BYTE_ALIGNED,
+    SOLANA_ERROR__FIXED_POINTS__VALUE_OUT_OF_RANGE,
     SOLANA_ERROR__FS__UNSUPPORTED_ENVIRONMENT,
     SOLANA_ERROR__INSTRUCTION__EXPECTED_TO_HAVE_ACCOUNTS,
     SOLANA_ERROR__INSTRUCTION__EXPECTED_TO_HAVE_DATA,
@@ -395,6 +408,31 @@ export const SolanaErrorMessages: Readonly<{
     [SOLANA_ERROR__CRYPTO__RANDOM_VALUES_FUNCTION_UNIMPLEMENTED]: 'No random values implementation could be found.',
     [SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION]: 'Failed to send transaction$causeMessage',
     [SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS]: 'Failed to send transactions$causeMessages',
+    [SOLANA_ERROR__FIXED_POINTS__ARITHMETIC_OVERFLOW]:
+        'Fixed-point operation `$operation` of kind `$kind` overflowed. Expected a raw bigint in [$min, $max], got $result.',
+    [SOLANA_ERROR__FIXED_POINTS__DIVISION_BY_ZERO]:
+        'Fixed-point division by zero for value of kind `$kind` ($signedness, $totalBits bits).',
+    [SOLANA_ERROR__FIXED_POINTS__FRACTIONAL_BITS_EXCEED_TOTAL_BITS]:
+        '`fractionalBits` ($fractionalBits) must not exceed `totalBits` ($totalBits).',
+    [SOLANA_ERROR__FIXED_POINTS__INVALID_DECIMALS]:
+        'Invalid `decimals`. Expected a non-negative integer, got $decimals.',
+    [SOLANA_ERROR__FIXED_POINTS__INVALID_FRACTIONAL_BITS]:
+        'Invalid `fractionalBits`. Expected a non-negative integer, got $fractionalBits.',
+    [SOLANA_ERROR__FIXED_POINTS__INVALID_STRING]: 'Invalid string `$input` for fixed-point value of kind `$kind`.',
+    [SOLANA_ERROR__FIXED_POINTS__INVALID_TOTAL_BITS]:
+        'Invalid `totalBits`. Expected a positive integer, got $totalBits.',
+    [SOLANA_ERROR__FIXED_POINTS__INVALID_ZERO_DENOMINATOR_RATIO]:
+        'Invalid ratio $numerator/$denominator for fixed-point value of kind `$kind`. Denominator must be non-zero.',
+    [SOLANA_ERROR__FIXED_POINTS__MALFORMED_RAW_VALUE]:
+        'Fixed-point value of kind `$kind` has a malformed `raw` field. Expected a bigint, got `$raw`.',
+    [SOLANA_ERROR__FIXED_POINTS__SHAPE_MISMATCH]:
+        'Fixed-point `$operation` operation expected $expectedKind ($expectedSignedness, $expectedTotalBits bits, $expectedScale $expectedScaleLabel); got $actualKind ($actualSignedness, $actualTotalBits bits, $actualScale $actualScaleLabel).',
+    [SOLANA_ERROR__FIXED_POINTS__STRICT_MODE_PRECISION_LOSS]:
+        'Fixed-point operation `$operation` of kind `$kind` cannot be performed exactly; pass a rounding mode other than `strict` to allow a rounded result.',
+    [SOLANA_ERROR__FIXED_POINTS__TOTAL_BITS_NOT_BYTE_ALIGNED]:
+        'Fixed-point codec of kind `$kind` requires `totalBits` to be a multiple of 8; got $totalBits.',
+    [SOLANA_ERROR__FIXED_POINTS__VALUE_OUT_OF_RANGE]:
+        'Fixed-point value of kind `$kind` is out of range for $signedness $totalBits-bit storage. Expected a raw bigint in [$min, $max], got $raw.',
     [SOLANA_ERROR__FS__UNSUPPORTED_ENVIRONMENT]:
         'Filesystem operation `$operation` is not supported in this environment.',
     [SOLANA_ERROR__INSTRUCTION_ERROR__ACCOUNT_ALREADY_INITIALIZED]: 'Instruction requires an uninitialized account',
