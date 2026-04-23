@@ -419,6 +419,9 @@ describe('account loader', () => {
                 // First we should see `getMultipleAccounts` used for the first two layers
                 rpc.getMultipleAccounts
                     .mockImplementationOnce(() => ({
+                        reactiveStore: jest.fn().mockImplementation(() => {
+                            throw new Error('not implemented');
+                        }),
                         send: () =>
                             Promise.resolve(
                                 getMultipleAccountsMockResponse([
@@ -442,6 +445,9 @@ describe('account loader', () => {
                             ),
                     }))
                     .mockImplementationOnce(() => ({
+                        reactiveStore: jest.fn().mockImplementation(() => {
+                            throw new Error('not implemented');
+                        }),
                         send: () =>
                             Promise.resolve(
                                 getMultipleAccountsMockResponse([
@@ -464,6 +470,9 @@ describe('account loader', () => {
                 // Then we should see `getAccountInfo` used for the single
                 // account in the last layer
                 rpc.getAccountInfo.mockReturnValue({
+                    reactiveStore: jest.fn().mockImplementation(() => {
+                        throw new Error('not implemented');
+                    }),
                     send: jest.fn().mockResolvedValueOnce({
                         context: {
                             slot: 0,

@@ -1,5 +1,6 @@
 import { SOLANA_ERROR__RPC__API_PLAN_MISSING_FOR_RPC_METHOD, SolanaError } from '@solana/errors';
 import { Callable, Flatten, OverloadImplementations, UnionToIntersection } from '@solana/rpc-spec-types';
+import { createReactiveActionStore, ReactiveActionStore } from '@solana/subscribable';
 
 import { RpcApi, RpcPlan } from './rpc-api';
 import { RpcTransport } from './rpc-transport';
@@ -26,8 +27,29 @@ export type Rpc<TRpcMethods> = {
  * Calling the {@link PendingRpcRequest.send | `send(options)`} method on a
  * {@link PendingRpcRequest | PendingRpcRequest<TResponse>} will trigger the request and return a
  * promise for `TResponse`.
+ *
+ * Calling the {@link PendingRpcRequest.reactiveStore | `reactiveStore()`} method will fire the
+ * request and return a {@link ReactiveActionStore} compatible with `useSyncExternalStore`, Svelte
+ * stores, and other reactive primitives.
  */
 export type PendingRpcRequest<TResponse> = {
+    /**
+     * Synchronously returns a {@link ReactiveActionStore} that fires the request on construction
+     * and holds its lifecycle state. Compatible with `useSyncExternalStore` and other reactive
+     * primitives that expect a `{ subscribe, getState }` contract. Call `dispatch()` to re-fire the
+     * request (for example after an error), or `reset()` to abort the in-flight call and return to
+     * `status: 'idle'`.
+     *
+     * @example
+     * ```ts
+     * const store = rpc.getAccountInfo(address).reactiveStore();
+     * const state = useSyncExternalStore(store.subscribe, store.getState);
+     * if (state.status === 'error') return <ErrorMessage error={state.error} onRetry={store.dispatch} />;
+     * if (state.status === 'running' && !state.data) return <Spinner />;
+     * return <View data={state.data!} />;
+     * ```
+     */
+    reactiveStore(): ReactiveActionStore<[], TResponse>;
     send(options?: RpcSendOptions): Promise<TResponse>;
 };
 
@@ -96,6 +118,11 @@ function createPendingRpcRequest<TRpcMethods, TRpcTransport extends RpcTransport
     plan: RpcPlan<TResponse>,
 ): PendingRpcRequest<TResponse> {
     return {
+        reactiveStore(): ReactiveActionStore<[], TResponse> {
+            const store = createReactiveActionStore<[], TResponse>(signal => plan.execute({ signal, transport }));
+            store.dispatch();
+            return store;
+        },
         async send(options?: RpcSendOptions): Promise<TResponse> {
             return await plan.execute({ signal: options?.abortSignal, transport });
         },

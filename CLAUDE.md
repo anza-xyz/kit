@@ -50,6 +50,8 @@ Four private "impl" packages (`@solana/crypto-impl`, `@solana/text-encoding-impl
 - **Lint/prettier**: Also run through Jest runners (`jest-runner-eslint`, `jest-runner-prettier`).
 - **Commands**: `pnpm test` runs all unit tests. `pnpm lint` runs lint checks. `pnpm style:fix` auto-fixes formatting.
 - **`expect.assertions`**: Only use `expect.assertions(n)` in **async** tests (where you need to guarantee the expected number of assertions ran). Synchronous tests do not need it.
+- **Flushing async state**: When a test needs to wait for queued microtasks or promise chains to settle, prefer `jest.useFakeTimers()` + `await jest.runAllTimersAsync()` over hand-rolled `flushMicrotasks` helpers that `await Promise.resolve()` in a loop. The loop count is fragile and breaks as soon as an extra `.then` is introduced. When enabling fake timers in a scoped `beforeEach` (i.e. not at the top of the file), pair it with an `afterEach(() => { jest.useRealTimers(); })` so subsequent describes don't inherit fake timers.
+- **Placeholder mocks**: When a test mock must satisfy an interface but a particular method shouldn't be called in that test, make the stub throw/reject rather than using a bare `jest.fn()` that silently returns `undefined`. For sync methods use `jest.fn().mockImplementation(() => { throw new Error('not implemented'); })`; for async methods use `jest.fn().mockRejectedValue(new Error('not implemented'))`. An accidental call then fails the test loudly instead of producing `undefined` and a confusing downstream assertion error.
 
 ## Error System
 
