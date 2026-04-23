@@ -1399,6 +1399,9 @@ importers:
       '@solana/errors':
         specifier: workspace:*
         version: link:../errors
+      '@solana/promises':
+        specifier: workspace:*
+        version: link:../promises
       typescript:
         specifier: '>=5.0.0'
         version: 5.9.3
