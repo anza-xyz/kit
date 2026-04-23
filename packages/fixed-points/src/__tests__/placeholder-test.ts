@@ -1,7 +1,5 @@
-import { __placeholder } from '..';
-
-describe('@solana/fixed-points scaffold', () => {
-    it('exports a placeholder symbol until the real API lands', () => {
-        expect(typeof __placeholder).toBe('symbol');
+describe('@solana/fixed-points', () => {
+    it('has runtime tests that arrive with the upcoming factory PR', () => {
+        expect(true).toBe(true);
     });
 });
