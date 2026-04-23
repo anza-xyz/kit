@@ -27,7 +27,7 @@ dataPublisher.on('error', e => {
 }); // OK.
 ```
 
-### `ReactiveStore<T>`
+### `ReactiveStreamStore<T>`
 
 This type represents a reactive store that holds the latest value published to a data channel. It exposes a `{ getUnifiedState, retry, subscribe }` contract compatible with `useSyncExternalStore`, Svelte stores, and other reactive primitives.
 
@@ -41,8 +41,10 @@ type ReactiveState<T> =
     | { data: T | undefined; error: undefined; status: 'retrying' };
 ```
 
+> Also exported as `ReactiveStore<T>` for backwards compatibility. That alias is deprecated and will be removed in a future major release.
+
 ```ts
-const store: ReactiveStore<AccountInfo> = /* ... */;
+const store: ReactiveStreamStore<AccountInfo> = /* ... */;
 
 // React — snapshot identity is stable between updates, so it can be passed directly.
 const state = useSyncExternalStore(store.subscribe, store.getUnifiedState);
@@ -59,7 +61,7 @@ store.subscribe(() => {
 
 `retry()` re-opens the stream after an error. When the underlying store supports restart (see [`createReactiveStoreFromDataPublisherFactory`](#createreactivestorefromdatapublisherfactory-abortsignal-createdatapublisher-datachannelname-errorchannelname-)), the store transitions to `status: 'retrying'` and reconnects. Stores that cannot be restarted throw a `SolanaError` with code `SOLANA_ERROR__SUBSCRIBABLE__RETRY_NOT_SUPPORTED` instead.
 
-The individual `getState()` and `getError()` getters on `ReactiveStore<T>` are `@deprecated` &mdash; prefer `getUnifiedState()`, which exposes the same information with a stable snapshot identity and `status` discriminator.
+The individual `getState()` and `getError()` getters on `ReactiveStreamStore<T>` are `@deprecated` &mdash; prefer `getUnifiedState()`, which exposes the same information with a stable snapshot identity and `status` discriminator.
 
 ### `TypedEventEmitter<TEventMap>`
 
@@ -119,7 +121,7 @@ Things to note:
 
 > **Deprecated.** Prefer [`createReactiveStoreFromDataPublisherFactory`](#createreactivestorefromdatapublisherfactory-abortsignal-createdatapublisher-datachannelname-errorchannelname-) &mdash; it supports `retry()`. Because this function accepts a ready-made `DataPublisher` rather than a factory, it cannot restart the underlying source, and calling `retry()` on the returned store throws a `SolanaError` with code `SOLANA_ERROR__SUBSCRIBABLE__RETRY_NOT_SUPPORTED`.
 
-Returns a `ReactiveStore` given a data publisher. The store holds the most recent message published to `dataChannelName` and notifies subscribers on each update. When a message is published to `errorChannelName`, the store transitions to `status: 'error'` preserving the last known value. Triggering the abort signal disconnects the store from the data publisher.
+Returns a `ReactiveStreamStore` given a data publisher. The store holds the most recent message published to `dataChannelName` and notifies subscribers on each update. When a message is published to `errorChannelName`, the store transitions to `status: 'error'` preserving the last known value. Triggering the abort signal disconnects the store from the data publisher.
 
 ```ts
 const store = createReactiveStoreFromDataPublisher({
@@ -141,7 +143,7 @@ Things to note:
 
 ### `createReactiveStoreFromDataPublisherFactory({ abortSignal, createDataPublisher, dataChannelName, errorChannelName })`
 
-Returns a `ReactiveStore` that wires itself to a fresh `DataPublisher` on construction and on every `retry()`. Unlike `createReactiveStoreFromDataPublisher`, this variant accepts an async factory so the store can tear down a broken stream and open a new one without losing subscribers or the last known value.
+Returns a `ReactiveStreamStore` that wires itself to a fresh `DataPublisher` on construction and on every `retry()`. Unlike `createReactiveStoreFromDataPublisher`, this variant accepts an async factory so the store can tear down a broken stream and open a new one without losing subscribers or the last known value.
 
 ```ts
 const store = createReactiveStoreFromDataPublisherFactory({
