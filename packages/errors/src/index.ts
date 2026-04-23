@@ -63,6 +63,7 @@
  *
  * @packageDocumentation
  */
+export * from './coded-error';
 export * from './codes';
 export * from './error';
 export * from './instruction-error';

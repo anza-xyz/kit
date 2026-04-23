@@ -1,11 +1,22 @@
 import '@solana/test-matchers/toBeFrozenObject';
 
+import { SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN } from '../codes';
 import { isSolanaError, SolanaError } from '../error';
-import { getErrorMessage } from '../message-formatter';
+import { formatMessageTemplate } from '../message-formatter';
 
 jest.mock('../message-formatter');
 
 describe('SolanaError', () => {
+    let originalDev: boolean | undefined;
+    beforeEach(() => {
+        originalDev = (globalThis as { __DEV__?: boolean }).__DEV__;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (globalThis as any).__DEV__ = true;
+        jest.mocked(formatMessageTemplate).mockReturnValue('mock message');
+    });
+    afterEach(() => {
+        (globalThis as { __DEV__?: boolean }).__DEV__ = originalDev;
+    });
     describe('given an error with context', () => {
         let errorWithContext: SolanaError;
         beforeEach(() => {
@@ -24,23 +35,27 @@ describe('SolanaError', () => {
         it('exposes no cause', () => {
             expect(errorWithContext.cause).toBeUndefined();
         });
-        it('calls the message formatter with the code and context', () => {
-            expect(getErrorMessage).toHaveBeenCalledWith(123, expect.objectContaining({ foo: 'bar' }));
+        it('formats the message template with the context', () => {
+            expect(formatMessageTemplate).toHaveBeenCalledWith(
+                undefined, // `messages[123]` is not a real Solana error message.
+                expect.objectContaining({ foo: 'bar' }),
+            );
         });
         it('freezes the context object', () => {
             expect(errorWithContext.context).toBeFrozenObject();
         });
     });
     describe('given an error with no context', () => {
+        let errorWithoutContext: SolanaError;
         beforeEach(() => {
-            new SolanaError(
+            errorWithoutContext = new SolanaError(
                 // @ts-expect-error Mock error codes don't conform to `SolanaErrorCode`
                 123,
                 undefined,
             );
         });
-        it('calls the message formatter with undefined context', () => {
-            expect(getErrorMessage).toHaveBeenCalledWith(123, undefined);
+        it('exposes only the `__code` on context', () => {
+            expect(errorWithoutContext.context).toEqual({ __code: 123 });
         });
     });
     describe('given an error with a cause', () => {
@@ -72,21 +87,68 @@ describe('SolanaError', () => {
         it('omits the error option from its context', () => {
             expect(errorWithOption.context).not.toHaveProperty(propName);
         });
-        it('calls the message formatter with the error option omitted', () => {
-            expect(getErrorMessage).toHaveBeenCalledWith(123, undefined);
+    });
+    it('sets its message to the output of the message formatter', () => {
+        jest.mocked(formatMessageTemplate).mockReturnValue('o no');
+        const error456 = new SolanaError(
+            // @ts-expect-error Mock error codes don't conform to `SolanaErrorCode`
+            456,
+            undefined,
+        );
+        expect(error456).toHaveProperty('message', 'o no');
+    });
+    describe('instruction-index suffix (dev mode)', () => {
+        beforeEach(() => {
+            jest.mocked(formatMessageTemplate).mockReturnValue('Some instruction error');
+        });
+        it('appends `(instruction #N)` for codes in the instruction-error range when context carries `index`', () => {
+            const err = new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN, { errorName: 'X', index: 0 });
+            expect(err.message).toBe('Some instruction error (instruction #1)');
+        });
+        it('uses one-based instruction numbering', () => {
+            const err = new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN, { errorName: 'X', index: 5 });
+            expect(err.message).toBe('Some instruction error (instruction #6)');
+        });
+        it('does not append the suffix when the context has no `index`', () => {
+            const err = new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN, {
+                errorName: 'X',
+            } as ConstructorParameters<typeof SolanaError<typeof SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN>>[1]);
+            expect(err.message).toBe('Some instruction error');
+        });
+        it('does not append the suffix to non-instruction error codes', () => {
+            const err = new SolanaError(
+                // @ts-expect-error Mock error codes don't conform to `SolanaErrorCode`
+                123,
+                { index: 0 },
+            );
+            expect(err.message).toBe('Some instruction error');
         });
     });
-    it('sets its message to the output of the message formatter', async () => {
-        expect.assertions(1);
-        jest.mocked(getErrorMessage).mockReturnValue('o no');
-        await jest.isolateModulesAsync(async () => {
-            const SolanaErrorModule =
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-ignore
-                await import('../error');
-            // @ts-expect-error Mock error codes don't conform to `SolanaErrorCode`
-            const error456 = new SolanaErrorModule.SolanaError(456);
-            expect(error456).toHaveProperty('message', 'o no');
+    describe('in production mode', () => {
+        beforeEach(() => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (globalThis as any).__DEV__ = false;
+        });
+        // Outer `afterEach` restores `__DEV__` to its pre-test value.
+        it('renders the prod message prefix and decode command without context', () => {
+            const err = new SolanaError(
+                // @ts-expect-error Mock error codes don't conform to `SolanaErrorCode`
+                123,
+                undefined,
+            );
+            expect(err.message).toBe(
+                'Solana error #123; Decode this error by running `npx @solana/errors decode -- 123`',
+            );
+        });
+        it('renders the prod message prefix, decode command, and encoded context when context is present', () => {
+            const err = new SolanaError(
+                // @ts-expect-error Mock error codes don't conform to `SolanaErrorCode`
+                123,
+                { foo: 'bar' },
+            );
+            expect(err.message).toMatch(
+                /^Solana error #123; Decode this error by running `npx @solana\/errors decode -- 123 '[^']+'`$/,
+            );
         });
     });
 });
@@ -94,6 +156,7 @@ describe('SolanaError', () => {
 describe('isSolanaError()', () => {
     let error123: SolanaError;
     beforeEach(() => {
+        jest.mocked(formatMessageTemplate).mockReturnValue('mock message');
         // @ts-expect-error Mock error codes don't conform to `SolanaErrorCode`
         error123 = new SolanaError(123);
     });

@@ -1,5 +1,4 @@
 import { SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN, SolanaErrorCode } from './codes';
-import { encodeContextObject } from './context';
 import { SolanaErrorMessages } from './messages';
 
 const INSTRUCTION_ERROR_RANGE_SIZE = 1000;
@@ -16,11 +15,20 @@ type State = Readonly<{
 const START_INDEX = 'i';
 const TYPE = 't';
 
-export function getHumanReadableErrorMessage<TErrorCode extends SolanaErrorCode>(
-    code: TErrorCode,
-    context: object = {},
-): string {
-    const messageFormatString = SolanaErrorMessages[code];
+/**
+ * Interpolates `$variable` tokens in a message template with values from a context object.
+ *
+ * Tokens that do not have a matching key in the context are rendered literally (e.g. `$foo` stays
+ * `$foo`). Use a backslash to escape a `$` that should not be treated as a variable (e.g. `\$foo`).
+ *
+ * This is the low-level formatter shared by {@link getHumanReadableErrorMessage} (which layers on
+ * the {@link SolanaErrorMessages} lookup and the instruction-error-index suffix) and by
+ * {@link createCodedErrorClass} (which layers on a consumer-provided message map).
+ *
+ * @param messageFormatString The message template containing `$variable` tokens.
+ * @param context             An object whose keys correspond to the variables in the template.
+ */
+export function formatMessageTemplate(messageFormatString: string, context: object = {}): string {
     if (messageFormatString.length === 0) {
         return '';
     }
@@ -83,7 +91,14 @@ export function getHumanReadableErrorMessage<TErrorCode extends SolanaErrorCode>
         }
     });
     commitStateUpTo();
-    let message = fragments.join('');
+    return fragments.join('');
+}
+
+export function getHumanReadableErrorMessage<TErrorCode extends SolanaErrorCode>(
+    code: TErrorCode,
+    context: object = {},
+): string {
+    let message = formatMessageTemplate(SolanaErrorMessages[code], context);
     if (
         code >= SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN &&
         code < SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN + INSTRUCTION_ERROR_RANGE_SIZE &&
@@ -92,24 +107,4 @@ export function getHumanReadableErrorMessage<TErrorCode extends SolanaErrorCode>
         message += ` (instruction #${(context as { index: number }).index + 1})`;
     }
     return message;
-}
-
-export function getErrorMessage<TErrorCode extends SolanaErrorCode>(
-    code: TErrorCode,
-    context: Record<string, unknown> = {},
-): string {
-    if (__DEV__) {
-        return getHumanReadableErrorMessage(code, context);
-    } else {
-        let decodingAdviceMessage = `Solana error #${code}; Decode this error by running \`npx @solana/errors decode -- ${code}`;
-        if (Object.keys(context).length) {
-            /**
-             * DANGER: Be sure that the shell command is escaped in such a way that makes it
-             *         impossible for someone to craft malicious context values that would result in
-             *         an exploit against anyone who bindly copy/pastes it into their terminal.
-             */
-            decodingAdviceMessage += ` '${encodeContextObject(context)}'`;
-        }
-        return `${decodingAdviceMessage}\``;
-    }
 }

@@ -85,3 +85,49 @@ try {
     throw e;
 }
 ```
+
+## Building your own coded error class
+
+Downstream tools built on Kit (e.g. paymasters, wallets, programs) often want the same ergonomics as `SolanaError` — a strongly-typed class, a code-narrowing guard, dev/prod message branching — but without adding their own error codes to this package. Use `createCodedErrorClass` to mint a new error system owned by your package.
+
+```ts
+import { createCodedErrorClass } from '@solana/errors';
+
+export const KORA_ERROR__ACCOUNT_NOT_FOUND = -32050 as const;
+export const KORA_ERROR__RATE_LIMIT_EXCEEDED = -32030 as const;
+
+type KoraErrorCode = typeof KORA_ERROR__ACCOUNT_NOT_FOUND | typeof KORA_ERROR__RATE_LIMIT_EXCEEDED;
+type KoraErrorContext = {
+    [KORA_ERROR__ACCOUNT_NOT_FOUND]: { address: string };
+    [KORA_ERROR__RATE_LIMIT_EXCEEDED]: undefined;
+};
+
+export const { ErrorClass: KoraError, isError: isKoraError } = createCodedErrorClass<KoraErrorCode, KoraErrorContext>({
+    messages: {
+        [KORA_ERROR__ACCOUNT_NOT_FOUND]: 'Account $address not found',
+        [KORA_ERROR__RATE_LIMIT_EXCEEDED]: 'Rate limit exceeded',
+    },
+    name: 'KoraError',
+});
+
+try {
+    /* ... */
+} catch (e) {
+    if (isKoraError(e, KORA_ERROR__ACCOUNT_NOT_FOUND)) {
+        // `e.context.address` is typed as `string`.
+        displayError(`Missing account ${e.context.address}`);
+    }
+}
+```
+
+The factory takes over exactly the plumbing that you would otherwise duplicate — context freezing, `cause` extraction, `$variable` interpolation, a dev/prod message switch — while leaving your error codes, messages, and context shapes in your own package. Pass `prodDecodeCommand` (e.g. `'npx @your-pkg/errors decode --'`) if you ship a CLI for decoding error codes in production bundles.
+
+If you want consumers to be able to write `MyError<typeof SOME_CODE>` as a type the same way they can with `SolanaError`, re-export a generic alias alongside the class:
+
+```ts
+import type { CodedError } from '@solana/errors';
+
+export type KoraError<C extends KoraErrorCode = KoraErrorCode> = CodedError<KoraErrorCode, KoraErrorContext, C>;
+```
+
+The alias narrows `KoraError['context']` to the context shape for `C`, matching the narrowing you get from `isKoraError(e, code)`.
