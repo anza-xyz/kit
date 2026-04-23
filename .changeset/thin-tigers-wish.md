@@ -1,0 +1,50 @@
+---
+'@solana/accounts': minor
+'@solana/addresses': minor
+'@solana/assertions': minor
+'@solana/codecs-core': minor
+'@solana/codecs-data-structures': minor
+'@solana/codecs-numbers': minor
+'@solana/codecs-strings': minor
+'@solana/codecs': minor
+'@solana/compat': minor
+'@solana/errors': minor
+'@solana/fast-stable-stringify': minor
+'@solana/fixed-points': minor
+'@solana/functional': minor
+'@solana/instruction-plans': minor
+'@solana/instructions': minor
+'@solana/keys': minor
+'@solana/kit': minor
+'@solana/nominal-types': minor
+'@solana/offchain-messages': minor
+'@solana/options': minor
+'@solana/plugin-core': minor
+'@solana/plugin-interfaces': minor
+'@solana/program-client-core': minor
+'@solana/programs': minor
+'@solana/promises': minor
+'@solana/rpc-api': minor
+'@solana/rpc-graphql': minor
+'@solana/rpc-parsed-types': minor
+'@solana/rpc-spec-types': minor
+'@solana/rpc-spec': minor
+'@solana/rpc-subscriptions-api': minor
+'@solana/rpc-subscriptions-channel-websocket': minor
+'@solana/rpc-subscriptions-spec': minor
+'@solana/rpc-subscriptions': minor
+'@solana/rpc-transformers': minor
+'@solana/rpc-transport-http': minor
+'@solana/rpc-types': minor
+'@solana/rpc': minor
+'@solana/signers': minor
+'@solana/subscribable': minor
+'@solana/sysvars': minor
+'@solana/transaction-confirmation': minor
+'@solana/transaction-messages': minor
+'@solana/transactions': minor
+'@solana/wallet-account-signer': minor
+'@solana/webcrypto-ed25519-polyfill': minor
+---
+
+Bump the TypeScript peer dependency floor from `>=5.0.0` to `>=5.4.0`.
