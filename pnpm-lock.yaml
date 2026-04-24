@@ -1362,6 +1362,9 @@ importers:
       '@solana/errors':
         specifier: workspace:*
         version: link:../errors
+      '@solana/fixed-points':
+        specifier: workspace:*
+        version: link:../fixed-points
       '@solana/nominal-types':
         specifier: workspace:*
         version: link:../nominal-types

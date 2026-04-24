@@ -14,6 +14,7 @@ export * from './commitment';
 export * from './encoded-bytes';
 export * from './lamports';
 export * from './rpc-api';
+export * from './sol';
 export * from './stringified-bigint';
 export * from './stringified-number';
 export * from './token-amount';
