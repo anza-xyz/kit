@@ -1,4 +1,9 @@
-import { type BinaryFixedPoint, toSignedBinaryFixedPoint, toUnsignedBinaryFixedPoint } from '../binary';
+import {
+    type BinaryFixedPoint,
+    rescaleBinaryFixedPoint,
+    toSignedBinaryFixedPoint,
+    toUnsignedBinaryFixedPoint,
+} from '../binary';
 
 // [DESCRIBE] toUnsignedBinaryFixedPoint.
 {
@@ -31,5 +36,24 @@ import { type BinaryFixedPoint, toSignedBinaryFixedPoint, toUnsignedBinaryFixedP
     {
         const value = {} as BinaryFixedPoint<'unsigned', 8, 4>;
         toSignedBinaryFixedPoint(value) satisfies BinaryFixedPoint<'signed', 8, 4>;
+    }
+}
+
+// [DESCRIBE] rescaleBinaryFixedPoint.
+{
+    // It preserves the input signedness and picks up the new totalBits and fractionalBits.
+    {
+        const value = {} as BinaryFixedPoint<'signed', 128, 64>;
+        rescaleBinaryFixedPoint(value, 16, 8) satisfies BinaryFixedPoint<'signed', 16, 8>;
+    }
+    {
+        const value = {} as BinaryFixedPoint<'unsigned', 8, 4>;
+        rescaleBinaryFixedPoint(value, 32, 16) satisfies BinaryFixedPoint<'unsigned', 32, 16>;
+    }
+
+    // It accepts an optional RoundingMode as its fourth argument.
+    {
+        const value = {} as BinaryFixedPoint<'signed', 32, 16>;
+        rescaleBinaryFixedPoint(value, 16, 8, 'floor') satisfies BinaryFixedPoint<'signed', 16, 8>;
     }
 }
