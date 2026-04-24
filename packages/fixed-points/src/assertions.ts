@@ -7,6 +7,7 @@ import {
     SOLANA_ERROR__FIXED_POINTS__INVALID_TOTAL_BITS,
     SOLANA_ERROR__FIXED_POINTS__MALFORMED_RAW_VALUE,
     SOLANA_ERROR__FIXED_POINTS__SHAPE_MISMATCH,
+    SOLANA_ERROR__FIXED_POINTS__TOTAL_BITS_NOT_BYTE_ALIGNED,
     SOLANA_ERROR__FIXED_POINTS__VALUE_OUT_OF_RANGE,
     SolanaError,
 } from '@solana/errors';
@@ -89,6 +90,25 @@ export function assertFractionalBitsFitInTotalBits(fractionalBits: number, total
     if (fractionalBits > totalBits) {
         throw new SolanaError(SOLANA_ERROR__FIXED_POINTS__FRACTIONAL_BITS_EXCEED_TOTAL_BITS, {
             fractionalBits,
+            totalBits,
+        });
+    }
+}
+
+/**
+ * Asserts that `totalBits` is a multiple of 8. Throws
+ * `SOLANA_ERROR__FIXED_POINTS__TOTAL_BITS_NOT_BYTE_ALIGNED` otherwise.
+ *
+ * This is a codec-only constraint: fixed-point values themselves accept
+ * any positive `totalBits`, but the byte-oriented codec can only serialize
+ * sizes that are exact multiples of 8 bits.
+ *
+ * @internal
+ */
+export function assertTotalBitsIsByteAligned(kind: FixedPointKind, totalBits: number): void {
+    if (totalBits % 8 !== 0) {
+        throw new SolanaError(SOLANA_ERROR__FIXED_POINTS__TOTAL_BITS_NOT_BYTE_ALIGNED, {
+            kind,
             totalBits,
         });
     }

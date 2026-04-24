@@ -11,6 +11,7 @@
  * @packageDocumentation
  */
 export * from './binary';
+export type { FixedPointCodecConfig } from './codecs';
 export * from './decimal';
 export type { FixedPointToStringOptions } from './formatting';
 export type { RoundingMode } from './rounding';
