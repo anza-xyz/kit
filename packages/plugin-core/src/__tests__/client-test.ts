@@ -284,6 +284,21 @@ describe('extendClient', () => {
     it('returns a frozen object', () => {
         expect(extendClient({ fruit: 'apple' as const }, { vegetable: 'carrot' as const })).toBeFrozenObject();
     });
+
+    it('allows a later plugin to override a key set by an earlier plugin', () => {
+        const client = createClient()
+            .use(c => extendClient(c, { payer: 'A' as const }))
+            .use(c => extendClient(c, { payer: 'B' as const }));
+        expect(client.payer).toBe('B');
+    });
+
+    it('allows override when the earlier plugin set multiple keys', () => {
+        const client = createClient()
+            .use(c => extendClient(c, { identity: 'X' as const, payer: 'A' as const }))
+            .use(c => extendClient(c, { payer: 'B' as const }));
+        expect(client.identity).toBe('X');
+        expect(client.payer).toBe('B');
+    });
 });
 
 describe('withCleanup', () => {

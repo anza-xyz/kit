@@ -241,9 +241,17 @@ export function extendClient<TClient extends object, TAdditions extends object>(
     client: TClient,
     additions: TAdditions,
 ): Omit<TClient, keyof TAdditions> & TAdditions {
-    const result = Object.defineProperties({}, Object.getOwnPropertyDescriptors(client));
+    const result = Object.defineProperties({}, toConfigurableDescriptors(Object.getOwnPropertyDescriptors(client)));
     Object.defineProperties(result, Object.getOwnPropertyDescriptors(additions));
     return Object.freeze(result) as Omit<TClient, keyof TAdditions> & TAdditions;
+}
+
+function toConfigurableDescriptors<T extends PropertyDescriptorMap>(descriptors: T): T {
+    const result = {} as Record<string | symbol, PropertyDescriptor>;
+    for (const key of Reflect.ownKeys(descriptors)) {
+        result[key] = { ...descriptors[key as keyof T], configurable: true };
+    }
+    return result as T;
 }
 
 /**
