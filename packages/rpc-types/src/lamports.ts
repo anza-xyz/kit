@@ -7,10 +7,13 @@ import {
     FixedSizeDecoder,
     FixedSizeEncoder,
     transformDecoder,
+    transformEncoder,
 } from '@solana/codecs-core';
 import { getU64Decoder, getU64Encoder, NumberCodec, NumberDecoder, NumberEncoder } from '@solana/codecs-numbers';
 import { SOLANA_ERROR__LAMPORTS_OUT_OF_RANGE, SolanaError } from '@solana/errors';
 import { Brand } from '@solana/nominal-types';
+
+import type { Sol } from './sol';
 
 /**
  * Represents an integer value denominated in Lamports (ie. $1 \times 10^{-9}$ ◎).
@@ -110,14 +113,16 @@ type ExtractAdditionalProps<T, U> = Omit<T, keyof U>;
 
 /**
  * Returns an encoder that you can use to encode a 64-bit {@link Lamports} value to 8 bytes in
- * little endian order.
+ * little endian order. The encoder also accepts a {@link Sol} fixed-point value.
  */
-export function getDefaultLamportsEncoder(): FixedSizeEncoder<Lamports, 8> {
+export function getDefaultLamportsEncoder(): FixedSizeEncoder<Lamports | Sol, 8> {
     return getLamportsEncoder(getMemoizedU64Encoder());
 }
 
 /**
- * Returns an encoder that you can use to encode a {@link Lamports} value to a byte array.
+ * Returns an encoder that you can use to encode a {@link Lamports} value to a byte array. The
+ * encoder also accepts a {@link Sol} fixed-point value, whose `raw` bigint is written as if it
+ * were a Lamports value.
  *
  * You must supply a number decoder that will determine how encode the numeric value.
  *
@@ -134,8 +139,10 @@ export function getDefaultLamportsEncoder(): FixedSizeEncoder<Lamports, 8> {
  */
 export function getLamportsEncoder<TEncoder extends NumberEncoder>(
     innerEncoder: TEncoder,
-): Encoder<Lamports> & ExtractAdditionalProps<TEncoder, NumberEncoder> {
-    return innerEncoder;
+): Encoder<Lamports | Sol> & ExtractAdditionalProps<TEncoder, NumberEncoder> {
+    return transformEncoder<bigint | number, Lamports | Sol>(innerEncoder, value =>
+        typeof value === 'bigint' ? value : value.raw,
+    ) as Encoder<Lamports | Sol> & ExtractAdditionalProps<TEncoder, NumberEncoder>;
 }
 
 /**
@@ -173,23 +180,30 @@ export function getLamportsDecoder<TDecoder extends NumberDecoder>(
 
 /**
  * Returns a codec that you can use to encode from or decode to a 64-bit {@link Lamports} value.
+ * The encoder also accepts a {@link Sol} fixed-point value; the decoder always returns
+ * {@link Lamports}.
  *
  * @see {@link getDefaultLamportsDecoder}
  * @see {@link getDefaultLamportsEncoder}
  */
-export function getDefaultLamportsCodec(): FixedSizeCodec<Lamports, Lamports, 8> {
+export function getDefaultLamportsCodec(): FixedSizeCodec<Lamports | Sol, Lamports, 8> {
     return combineCodec(getDefaultLamportsEncoder(), getDefaultLamportsDecoder());
 }
 
 /**
- * Returns a codec that you can use to encode from or decode to {@link Lamports} value.
+ * Returns a codec that you can use to encode from or decode to a {@link Lamports} value. The
+ * encoder also accepts a {@link Sol} fixed-point value; the decoder always returns
+ * {@link Lamports}.
  *
  * @see {@link getLamportsDecoder}
  * @see {@link getLamportsEncoder}
  */
 export function getLamportsCodec<TCodec extends NumberCodec>(
     innerCodec: TCodec,
-): Codec<Lamports, Lamports> & ExtractAdditionalProps<TCodec, NumberCodec> {
-    return combineCodec(getLamportsEncoder(innerCodec), getLamportsDecoder(innerCodec)) as Codec<Lamports, Lamports> &
+): Codec<Lamports | Sol, Lamports> & ExtractAdditionalProps<TCodec, NumberCodec> {
+    return combineCodec(getLamportsEncoder(innerCodec), getLamportsDecoder(innerCodec)) as Codec<
+        Lamports | Sol,
+        Lamports
+    > &
         ExtractAdditionalProps<TCodec, NumberCodec>;
 }
