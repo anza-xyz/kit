@@ -12,5 +12,6 @@
  */
 export * from './binary';
 export * from './decimal';
+export type { FixedPointToStringOptions } from './formatting';
 export type { RoundingMode } from './rounding';
 export * from './signedness';
