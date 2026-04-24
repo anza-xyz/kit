@@ -1,4 +1,10 @@
-import { assertRawFitsInRange } from '../assertions';
+import {
+    assertNoArithmeticOverflow,
+    assertRawFitsInRange,
+    assertValidDecimals,
+    assertValidTotalBits,
+} from '../assertions';
+import { roundDivision, type RoundingMode } from '../rounding';
 import type { Signedness } from '../signedness';
 import type { DecimalFixedPoint } from './core';
 
@@ -60,4 +66,61 @@ export function toSignedDecimalFixedPoint<TTotalBits extends number, TDecimals e
     }
     assertRawFitsInRange('decimalFixedPoint', 'signed', value.totalBits, value.raw);
     return Object.freeze({ ...value, signedness: 'signed' });
+}
+
+/**
+ * Returns a {@link DecimalFixedPoint} with the same signedness as `value`
+ * but a new `totalBits` and `decimals`. If the requested shape matches
+ * the input shape, the same reference is returned.
+ *
+ * Scale-up (higher `decimals`) is always exact. Scale-down (lower
+ * `decimals`) is potentially lossy; the optional {@link RoundingMode} is
+ * consulted on inexact results and defaults to `'strict'`, which throws
+ * `SOLANA_ERROR__FIXED_POINTS__STRICT_MODE_PRECISION_LOSS`.
+ *
+ * Throws `SOLANA_ERROR__FIXED_POINTS__ARITHMETIC_OVERFLOW` when the
+ * rescaled raw value does not fit the new `totalBits`.
+ *
+ * @example
+ * ```ts
+ * // Bridge EVM USDC (u128 d18) down to SPL USDC (u64 d6).
+ * const evmUsdc = decimalFixedPoint('unsigned', 128, 18);
+ * rescaleDecimalFixedPoint(evmUsdc('100.123456789012345678'), 64, 6, 'floor');
+ * // represents 100.123456
+ * ```
+ *
+ * @see {@link toSignedDecimalFixedPoint}
+ * @see {@link toUnsignedDecimalFixedPoint}
+ */
+export function rescaleDecimalFixedPoint<
+    TSignedness extends Signedness,
+    TNewTotalBits extends number,
+    TNewDecimals extends number,
+>(
+    value: DecimalFixedPoint<TSignedness, number, number>,
+    newTotalBits: TNewTotalBits,
+    newDecimals: TNewDecimals,
+    rounding: RoundingMode = 'strict',
+): DecimalFixedPoint<TSignedness, TNewTotalBits, TNewDecimals> {
+    assertValidTotalBits('decimalFixedPoint', newTotalBits);
+    assertValidDecimals(newDecimals);
+    if (value.totalBits === newTotalBits && value.decimals === newDecimals) {
+        return value as DecimalFixedPoint<TSignedness, TNewTotalBits, TNewDecimals>;
+    }
+    let result: bigint;
+    if (newDecimals === value.decimals) {
+        result = value.raw;
+    } else if (newDecimals > value.decimals) {
+        result = value.raw * 10n ** BigInt(newDecimals - value.decimals);
+    } else {
+        result = roundDivision(
+            'decimalFixedPoint',
+            'rescale',
+            value.raw,
+            10n ** BigInt(value.decimals - newDecimals),
+            rounding,
+        );
+    }
+    assertNoArithmeticOverflow('decimalFixedPoint', 'rescale', value.signedness, newTotalBits, result);
+    return Object.freeze({ ...value, decimals: newDecimals, raw: result, totalBits: newTotalBits });
 }
