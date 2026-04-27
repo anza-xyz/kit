@@ -30,6 +30,7 @@ const { ErrorClass, isError } = createCodedErrorClass<SolanaErrorCode, SolanaErr
 });
 
 type SolanaErrorConstructor = {
+    readonly name: string;
     new <TErrorCode extends SolanaErrorCode = SolanaErrorCode>(
         ...args: SolanaErrorContext[TErrorCode] extends undefined
             ? [code: TErrorCode, errorOptions?: ErrorOptions | undefined]

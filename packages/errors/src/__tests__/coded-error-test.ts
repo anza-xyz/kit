@@ -40,7 +40,9 @@ describe('createCodedErrorClass', () => {
             const { ErrorClass } = makeBundle();
             const err = new ErrorClass(CODE_WITHOUT_CONTEXT);
             expect(err).toBeInstanceOf(Error);
+            expect(ErrorClass.name).toBe('TestError');
             expect(err.name).toBe('TestError');
+            expect(err.constructor.name).toBe('TestError');
         });
         it('freezes the context object and sets __code', () => {
             const { ErrorClass } = makeBundle();

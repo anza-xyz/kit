@@ -24,7 +24,8 @@ export type CodedErrorContextMap<TCode extends number> = {
  * @typeParam C           The specific error code this instance carries (narrowed by the guard).
  */
 type CodedErrorCodedContext<TCode extends number, TContextMap extends CodedErrorContextMap<TCode>> = {
-    [P in TCode]: Readonly<{ __code: P }> & (TContextMap[P] extends undefined ? object : NonNullable<TContextMap[P]>);
+    [P in TCode]: Readonly<{ __code: P }> &
+        (TContextMap[P] extends undefined ? object : Readonly<NonNullable<TContextMap[P]>>);
 };
 
 export interface CodedError<
@@ -122,6 +123,10 @@ type FormatterArgsFor<
  * that object is extracted and forwarded as {@link ErrorOptions.cause}.
  */
 export interface CodedErrorConstructor<TCode extends number, TContextMap extends CodedErrorContextMap<TCode>> {
+    /**
+     * The configured constructor name.
+     */
+    readonly name: string;
     new <C extends TCode>(...args: ConstructorArgsFor<TCode, TContextMap, C>): CodedError<TCode, TContextMap, C>;
 }
 
@@ -272,6 +277,7 @@ export function createCodedErrorClass<TCode extends number, TContextMap extends 
             this.name = name;
         }
     }
+    Object.defineProperty(CodedErrorImpl, 'name', { value: name });
 
     const isError = ((e: unknown, code?: TCode) => {
         if (!(e instanceof Error) || e.name !== name) {

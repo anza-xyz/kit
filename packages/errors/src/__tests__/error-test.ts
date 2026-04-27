@@ -17,6 +17,15 @@ describe('SolanaError', () => {
     afterEach(() => {
         (globalThis as { __DEV__?: boolean }).__DEV__ = originalDev;
     });
+    it('exposes the public constructor name on the class and instances', () => {
+        const err = new SolanaError(
+            // @ts-expect-error Mock error codes don't conform to `SolanaErrorCode`
+            123,
+            undefined,
+        );
+        expect(SolanaError.name).toBe('SolanaError');
+        expect(err.constructor.name).toBe('SolanaError');
+    });
     describe('given an error with context', () => {
         let errorWithContext: SolanaError;
         beforeEach(() => {

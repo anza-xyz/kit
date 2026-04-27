@@ -42,6 +42,10 @@ new TestError(CODE_WITH_CONTEXT, { count: 1 });
     err.context.__code satisfies typeof CODE_WITHOUT_CONTEXT;
     err.context.name satisfies string;
     err.context.count satisfies number;
+    // @ts-expect-error Context is frozen at runtime, so exposed properties are readonly.
+    err.context.name = 'b';
+    // @ts-expect-error The error code tag is readonly.
+    err.context.__code = CODE_WITHOUT_CONTEXT;
     // @ts-expect-error No such property on this code's context.
     void err.context.nope;
 }
@@ -60,6 +64,8 @@ new TestError(CODE_WITH_CONTEXT, { count: 1 });
     if (isTestError(e, CODE_WITH_CONTEXT)) {
         e.context.name satisfies string;
         e.context.count satisfies number;
+        // @ts-expect-error Context is frozen at runtime, so narrowed properties are readonly.
+        e.context.name = 'b';
         // @ts-expect-error Not a property of CODE_WITH_CONTEXT's context.
         void e.context.other;
     }
