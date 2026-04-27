@@ -42,23 +42,27 @@ export interface CodedError<
  */
 export interface CodedErrorDefinition<TCode extends number> {
     /**
-     * Optional hook called on the fully-interpolated dev-mode message immediately before it is
-     * passed to {@link Error}'s constructor. Use this to append a suffix based on context (for
-     * example, {@link SolanaError} uses it to append `" (instruction #N)"` to messages for error
-     * codes in the instruction-error range when the context carries an `index` key).
+     * Optional hook called on the fully-interpolated message immediately before it is used. Use
+     * this to append a suffix based on context (for example, {@link SolanaError} uses it to
+     * append `" (instruction #N)"` to messages for error codes in the instruction-error range
+     * when the context carries an `index` key).
      *
-     * Not invoked in production mode.
+     * Invoked only when a human-readable message is actually rendered — i.e. inside the
+     * {@link CodedErrorConstructor} when `__DEV__ === true`, and by
+     * {@link CodedErrorClassBundle.getHumanReadableMessage} when `__DEV__ === true`. In
+     * production-mode constructor paths the short-form `"{prefix} #{code}"` message is emitted
+     * without invoking the post-processor.
      */
     messagePostProcessor?: <C extends TCode>(code: C, context: object, message: string) => string;
     /**
      * Human-readable message templates keyed by code. Use `$variable` tokens to interpolate
      * values from an error's context; escape a literal `$` with `\\$`.
      *
-     * Templates are only rendered when `__DEV__ === true`. In production builds the factory
-     * ignores this map and emits the short-form message described by
-     * {@link CodedErrorDefinition.prodDecodeCommand}. Unlike {@link SolanaError}'s own messages
-     * map, the factory does not arrange for these strings to be stripped from production
-     * bundles — consumers that want that must drop the templates in their own build pipeline.
+     * Read only when `__DEV__ === true`. In production builds the factory emits the short-form
+     * message described by {@link CodedErrorDefinition.prodDecodeCommand} and never reads this
+     * map. To allow your bundler to tree-shake the templates out of production builds, gate the
+     * reference at the call site — e.g. `messages: __DEV__ ? MyMessages : ({} as typeof MyMessages)`
+     * — so the module holding your templates is only reachable in dev.
      */
     messages: Readonly<Record<TCode, string>>;
     /**
@@ -71,10 +75,16 @@ export interface CodedErrorDefinition<TCode extends number> {
      * Optional shell command that recovers a human-readable message from an error code in
      * production builds. If supplied, production error messages take the form:
      *
+     *     "{prefix} #{code}; Decode this error by running `{prodDecodeCommand} {code}`"
+     *
+     * and, when the error carries a non-empty context, an encoded-context segment is appended
+     * before the closing backtick:
+     *
      *     "{prefix} #{code}; Decode this error by running `{prodDecodeCommand} {code} '{encodedContext}'`"
      *
      * where `{prefix}` is {@link CodedErrorDefinition.prodMessagePrefix} (falling back to
-     * {@link CodedErrorDefinition.name}). If omitted, production messages are simply `"{prefix} #{code}"`.
+     * {@link CodedErrorDefinition.name}). If this field is omitted, production messages are
+     * simply `"{prefix} #{code}"`.
      *
      * @example
      * ```ts
@@ -203,8 +213,11 @@ export function createCodedErrorClass<TCode extends number, TContextMap extends 
     function getHumanReadableMessage<C extends TCode>(...args: FormatterArgsFor<TCode, TContextMap, C>): string {
         const [code, context] = args;
         const ctx = context ?? {};
-        const rendered = formatMessageTemplate(messages[code], ctx);
-        return messagePostProcessor ? messagePostProcessor(code, ctx, rendered) : rendered;
+        if (__DEV__) {
+            const rendered = formatMessageTemplate(messages[code], ctx);
+            return messagePostProcessor ? messagePostProcessor(code, ctx, rendered) : rendered;
+        }
+        return `${prefix} #${code}`;
     }
 
     function getMessage<C extends TCode>(code: C, context: Record<string, unknown>): string {
@@ -265,16 +278,20 @@ export function createCodedErrorClass<TCode extends number, TContextMap extends 
             return false;
         }
         // A foreign `Error` could share our `name` (coincidence, duplicate install, manual
-        // reassignment of `error.name`). Require a frozen `context.__code` matching our
-        // convention before returning true, so we never narrow onto an unrelated object.
+        // reassignment of `error.name`). Require a `context.__code` matching our convention
+        // before returning true, so we never narrow onto an unrelated object.
         const { context } = e as { context?: unknown };
         if (typeof context !== 'object' || context === null || !('__code' in context)) {
+            return false;
+        }
+        const candidateCode = (context as { __code: unknown }).__code;
+        if (typeof candidateCode !== 'number') {
             return false;
         }
         if (code === undefined) {
             return true;
         }
-        return (context as { __code: unknown }).__code === code;
+        return candidateCode === code;
     }) as CodedErrorGuard<TCode, TContextMap>;
 
     return {

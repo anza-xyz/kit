@@ -146,6 +146,85 @@ describe('createCodedErrorClass', () => {
                 'Hello bob, you have 2 items',
             );
         });
+        it('returns the short-form message in production mode', () => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (globalThis as any).__DEV__ = false;
+            const { getHumanReadableMessage } = makeBundle();
+            expect(getHumanReadableMessage(CODE_WITH_CONTEXT, { count: 2, name: 'bob' })).toBe(
+                `TestError #${CODE_WITH_CONTEXT}`,
+            );
+        });
+        it('does not read the messages map in production mode', () => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (globalThis as any).__DEV__ = false;
+            const messagesProxy = new Proxy(
+                {},
+                {
+                    get() {
+                        throw new Error('messages map was accessed in prod');
+                    },
+                },
+            ) as Readonly<Record<TestCode, string>>;
+            const { getHumanReadableMessage, ErrorClass } = createCodedErrorClass<TestCode, TestContext>({
+                messages: messagesProxy,
+                name: 'TestError',
+            });
+            expect(() => new ErrorClass(CODE_WITHOUT_CONTEXT)).not.toThrow();
+            expect(() => getHumanReadableMessage(CODE_WITHOUT_CONTEXT)).not.toThrow();
+        });
+    });
+
+    describe('context preservation', () => {
+        it('preserves non-enumerable context properties', () => {
+            const { ErrorClass } = makeBundle();
+            const ctx = {} as TestContext[typeof CODE_WITH_CONTEXT];
+            Object.defineProperty(ctx, 'name', { enumerable: false, value: 'alice' });
+            Object.defineProperty(ctx, 'count', { enumerable: false, value: 7 });
+            const err = new ErrorClass(CODE_WITH_CONTEXT, ctx);
+            expect((err.context as { name: string }).name).toBe('alice');
+            expect((err.context as { count: number }).count).toBe(7);
+        });
+        it('preserves accessor (getter) context properties', () => {
+            const { ErrorClass } = makeBundle();
+            let reads = 0;
+            const ctx = {
+                count: 1,
+                get name() {
+                    reads++;
+                    return 'alice';
+                },
+            } as unknown as TestContext[typeof CODE_WITH_CONTEXT];
+            const err = new ErrorClass(CODE_WITH_CONTEXT, ctx);
+            expect((err.context as { name: string }).name).toBe('alice');
+            expect(reads).toBeGreaterThan(0);
+        });
+        it('does not leak inherited (prototype) properties into context', () => {
+            const { ErrorClass } = makeBundle();
+            const proto = { inherited: 'nope' };
+            const ctx = Object.create(proto) as TestContext[typeof CODE_WITH_CONTEXT];
+            Object.assign(ctx, { count: 1, name: 'alice' });
+            const err = new ErrorClass(CODE_WITH_CONTEXT, ctx);
+            expect(Object.prototype.hasOwnProperty.call(err.context, 'inherited')).toBe(false);
+        });
+        it('strips `cause: undefined` from context but forwards it to ErrorOptions', () => {
+            const { ErrorClass } = makeBundle();
+            const err = new ErrorClass(CODE_WITH_CONTEXT, {
+                cause: undefined,
+                count: 1,
+                name: 'x',
+            } as unknown as TestContext[typeof CODE_WITH_CONTEXT]);
+            expect(err.context).not.toHaveProperty('cause');
+        });
+    });
+
+    describe('isError guard additional hardening', () => {
+        it('rejects a same-name error whose context.__code is not a number', () => {
+            const { isError } = makeBundle();
+            const foreign = new Error('bogus');
+            foreign.name = 'TestError';
+            (foreign as unknown as { context: object }).context = { __code: 'not-a-number' };
+            expect(isError(foreign)).toBe(false);
+        });
     });
 
     describe('messagePostProcessor', () => {

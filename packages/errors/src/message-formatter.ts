@@ -28,14 +28,15 @@ const TYPE = 't';
  * @param messageFormatString The message template containing `$variable` tokens.
  * @param context             An object whose keys correspond to the variables in the template.
  */
-export function formatMessageTemplate(messageFormatString: string, context: object = {}): string {
-    if (messageFormatString.length === 0) {
+export function formatMessageTemplate(messageFormatString: string | undefined, context: object = {}): string {
+    if (!messageFormatString) {
         return '';
     }
+    const template: string = messageFormatString;
     let state: State;
     function commitStateUpTo(endIndex?: number) {
         if (state[TYPE] === StateType.Variable) {
-            const variableName = messageFormatString.slice(state[START_INDEX] + 1, endIndex);
+            const variableName = template.slice(state[START_INDEX] + 1, endIndex);
 
             fragments.push(
                 variableName in context
@@ -44,18 +45,18 @@ export function formatMessageTemplate(messageFormatString: string, context: obje
                     : `$${variableName}`,
             );
         } else if (state[TYPE] === StateType.Text) {
-            fragments.push(messageFormatString.slice(state[START_INDEX], endIndex));
+            fragments.push(template.slice(state[START_INDEX], endIndex));
         }
     }
     const fragments: string[] = [];
-    messageFormatString.split('').forEach((char, ii) => {
+    template.split('').forEach((char, ii) => {
         if (ii === 0) {
             state = {
                 [START_INDEX]: 0,
                 [TYPE]:
-                    messageFormatString[0] === '\\'
+                    template[0] === '\\'
                         ? StateType.EscapeSequence
-                        : messageFormatString[0] === '$'
+                        : template[0] === '$'
                           ? StateType.Variable
                           : StateType.Text,
             };
