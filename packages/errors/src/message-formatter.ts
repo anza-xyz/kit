@@ -17,16 +17,11 @@ const TYPE = 't';
 
 /**
  * Interpolates `$variable` tokens in a message template with values from a context object.
+ * Tokens with no matching context key are rendered literally; escape a literal `$` with `\\$`.
  *
- * Tokens that do not have a matching key in the context are rendered literally (e.g. `$foo` stays
- * `$foo`). Use a backslash to escape a `$` that should not be treated as a variable (e.g. `\$foo`).
+ * Shared by {@link getHumanReadableErrorMessage} and {@link createCodedErrorClass}.
  *
- * This is the low-level formatter shared by {@link getHumanReadableErrorMessage} (which layers on
- * the {@link SolanaErrorMessages} lookup and the instruction-error-index suffix) and by
- * {@link createCodedErrorClass} (which layers on a consumer-provided message map).
- *
- * @param messageFormatString The message template containing `$variable` tokens.
- * @param context             An object whose keys correspond to the variables in the template.
+ * @internal
  */
 export function formatMessageTemplate(messageFormatString: string | undefined, context: object = {}): string {
     if (!messageFormatString) {

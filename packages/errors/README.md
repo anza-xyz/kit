@@ -88,7 +88,7 @@ try {
 
 ## Building your own coded error class
 
-Downstream tools built on Kit (e.g. paymasters, wallets, programs) often want the same ergonomics as `SolanaError` — a strongly-typed class, a code-narrowing guard, dev/prod message branching — but without adding their own error codes to this package. Use `createCodedErrorClass` to mint a new error system owned by your package.
+Downstream tools built on Kit (e.g. paymasters, wallets, programs) often want the same ergonomics as `SolanaError` (strongly-typed class, code-narrowing guard, dev/prod message branching) without adding their own error codes to this package. Use `createCodedErrorClass` to mint a coded error system owned by your package.
 
 ```ts
 import { createCodedErrorClass } from '@solana/errors';
@@ -120,9 +120,9 @@ try {
 }
 ```
 
-The factory takes over exactly the plumbing that you would otherwise duplicate — context freezing, `cause` extraction, `$variable` interpolation, a dev/prod message switch — while leaving your error codes, messages, and context shapes in your own package. Pass `prodDecodeCommand` (e.g. `'npx @your-pkg/errors decode --'`) if you ship a CLI for decoding error codes in production bundles.
+The factory handles context freezing, `cause` extraction, `$variable` interpolation, and dev/prod message branching. Your codes, messages, and context shapes stay in your own package. Pass `prodDecodeCommand` (e.g. `'npx @your-pkg/errors decode --'`) if you ship a CLI for decoding error codes in production bundles.
 
-The factory never reads the `messages` map when `__DEV__` is `false`. If you ship a bundler-targeted build where `__DEV__` is statically replaced with `false`, a downstream bundler can DCE the templates. If you want to guarantee the templates drop out of your own production bundles, gate the reference at the call site — e.g. `messages: __DEV__ ? MyMessages : ({} as typeof MyMessages)` — so the templates module is unreachable under a static `__DEV__ === false` replacement.
+The factory only reads `messages` when `__DEV__` is `true`. To guarantee the templates drop out of your production bundles, gate the reference at the call site — e.g. `messages: __DEV__ ? MyMessages : ({} as typeof MyMessages)` — so the templates module is unreachable under a static `__DEV__ === false` replacement.
 
 If you want consumers to be able to write `MyError<typeof SOME_CODE>` as a type the same way they can with `SolanaError`, re-export a generic alias alongside the class:
 

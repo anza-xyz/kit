@@ -43,33 +43,29 @@ export interface CodedError<
  */
 export interface CodedErrorDefinition<TCode extends number> {
     /**
-     * Optional hook called on the fully-interpolated message immediately before it is used. Use
-     * this to append a suffix based on context (for example, {@link SolanaError} uses it to
-     * append `" (instruction #N)"` to messages for error codes in the instruction-error range
-     * when the context carries an `index` key).
-     *
-     * Invoked only when a human-readable message is actually rendered — i.e. inside the
-     * {@link CodedErrorConstructor} when `__DEV__ === true`, and by
-     * {@link CodedErrorClassBundle.getHumanReadableMessage} when `__DEV__ === true`. In
-     * production-mode constructor paths the short-form `"{prefix} #{code}"` message is emitted
-     * without invoking the post-processor.
+     * Optional hook called on the fully-interpolated message before it is used. Use this to
+     * append a context-derived suffix (for example, {@link SolanaError} appends
+     * `" (instruction #N)"` to messages in the instruction-error range when the context carries
+     * an `index` key). Only invoked when `__DEV__ === true`.
      */
     messagePostProcessor?: <C extends TCode>(code: C, context: object, message: string) => string;
     /**
      * Human-readable message templates keyed by code. Use `$variable` tokens to interpolate
      * values from an error's context; escape a literal `$` with `\\$`.
      *
-     * Read only when `__DEV__ === true`. In production builds the factory emits the short-form
-     * message described by {@link CodedErrorDefinition.prodDecodeCommand} and never reads this
-     * map. To allow your bundler to tree-shake the templates out of production builds, gate the
-     * reference at the call site — e.g. `messages: __DEV__ ? MyMessages : ({} as typeof MyMessages)`
-     * — so the module holding your templates is only reachable in dev.
+     * Only read when `__DEV__ === true`. To let your bundler tree-shake the templates out of
+     * production builds, gate the reference at the call site — e.g.
+     * `messages: __DEV__ ? MyMessages : ({} as typeof MyMessages)`.
      */
     messages: Readonly<Record<TCode, string>>;
     /**
      * The class name (and the value written to `error.name`). Downstream guards identify
      * instances by matching this exact string, so pick something unique (e.g. `'KoraError'`,
      * `'CodamaError'`).
+     *
+     * Note: `__code` is reserved on the context object — the factory writes it itself and
+     * frees you from having to declare it in your context shapes. Don't include `__code` in
+     * a context value passed to the constructor; it will be overwritten.
      */
     name: string;
     /**
@@ -255,7 +251,6 @@ export function createCodedErrorClass<TCode extends number, TContextMap extends 
             if (contextAndErrorOptions) {
                 Object.entries(Object.getOwnPropertyDescriptors(contextAndErrorOptions)).forEach(
                     ([propName, descriptor]) => {
-                        // If the `ErrorOptions` type ever changes, update this code.
                         if (propName === 'cause') {
                             errorOptions = { cause: descriptor.value };
                         } else {
@@ -283,9 +278,8 @@ export function createCodedErrorClass<TCode extends number, TContextMap extends 
         if (!(e instanceof Error) || e.name !== name) {
             return false;
         }
-        // A foreign `Error` could share our `name` (coincidence, duplicate install, manual
-        // reassignment of `error.name`). Require a `context.__code` matching our convention
-        // before returning true, so we never narrow onto an unrelated object.
+        // A foreign error could share `name` (duplicate install, manual reassignment). Require a
+        // numeric `context.__code` so we don't narrow onto an unrelated object.
         const { context } = e as { context?: unknown };
         if (typeof context !== 'object' || context === null || !('__code' in context)) {
             return false;
