@@ -22,6 +22,7 @@ import {
     getLamportsEncoder,
     lamports,
 } from '../lamports';
+import { sol } from '../sol';
 
 describe('assertIsLamports()', () => {
     it('throws when supplied a negative number', () => {
@@ -66,6 +67,11 @@ describe('getDefaultLamportsEncoder', () => {
         const encoder = getDefaultLamportsEncoder();
         expect(encoder.fixedSize).toBe(8);
     });
+    it('also accepts a Sol value as input', () => {
+        const encoder = getDefaultLamportsEncoder();
+        // 1 SOL = 1_000_000_000 lamports.
+        expect(encoder.encode(sol('1'))).toStrictEqual(new Uint8Array([0, 202, 154, 59, 0, 0, 0, 0]));
+    });
 });
 
 describe('getLamportsEncoder', () => {
@@ -74,6 +80,11 @@ describe('getLamportsEncoder', () => {
         const encoder = getLamportsEncoder(getU8Encoder());
         const buffer = encoder.encode(lamportsValue);
         expect(buffer).toStrictEqual(new Uint8Array([100]));
+    });
+    it('also accepts a Sol value as input', () => {
+        // Smallest Sol = 1 lamport = u8 100... we'll use a real one: sol('0.0000001') = 100 lamports.
+        const encoder = getLamportsEncoder(getU8Encoder());
+        expect(encoder.encode(sol('0.0000001'))).toStrictEqual(new Uint8Array([100]));
     });
     it('encodes a lamports value using a passed big-endian u16 encoder', () => {
         const lamportsValue = lamports(100n);
