@@ -44,6 +44,19 @@ import {
     SOLANA_ERROR__CODECS__UNION_VARIANT_OUT_OF_RANGE,
     SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION,
     SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS,
+    SOLANA_ERROR__FIXED_POINTS__ARITHMETIC_OVERFLOW,
+    SOLANA_ERROR__FIXED_POINTS__DIVISION_BY_ZERO,
+    SOLANA_ERROR__FIXED_POINTS__FRACTIONAL_BITS_EXCEED_TOTAL_BITS,
+    SOLANA_ERROR__FIXED_POINTS__INVALID_DECIMALS,
+    SOLANA_ERROR__FIXED_POINTS__INVALID_FRACTIONAL_BITS,
+    SOLANA_ERROR__FIXED_POINTS__INVALID_STRING,
+    SOLANA_ERROR__FIXED_POINTS__INVALID_TOTAL_BITS,
+    SOLANA_ERROR__FIXED_POINTS__INVALID_ZERO_DENOMINATOR_RATIO,
+    SOLANA_ERROR__FIXED_POINTS__MALFORMED_RAW_VALUE,
+    SOLANA_ERROR__FIXED_POINTS__SHAPE_MISMATCH,
+    SOLANA_ERROR__FIXED_POINTS__STRICT_MODE_PRECISION_LOSS,
+    SOLANA_ERROR__FIXED_POINTS__TOTAL_BITS_NOT_BYTE_ALIGNED,
+    SOLANA_ERROR__FIXED_POINTS__VALUE_OUT_OF_RANGE,
     SOLANA_ERROR__FS__UNSUPPORTED_ENVIRONMENT,
     SOLANA_ERROR__INSTRUCTION__EXPECTED_TO_HAVE_ACCOUNTS,
     SOLANA_ERROR__INSTRUCTION__EXPECTED_TO_HAVE_DATA,
@@ -460,6 +473,76 @@ export type SolanaErrorContext = ReadonlyContextValue<
                     preflightData?: Omit<RpcSimulateTransactionResult, 'err'>;
                 }>;
                 transactionPlanResult: unknown;
+            };
+            [SOLANA_ERROR__FIXED_POINTS__ARITHMETIC_OVERFLOW]: {
+                kind: string;
+                max: bigint;
+                min: bigint;
+                operation: string;
+                result: bigint;
+                signedness: string;
+                totalBits: number;
+            };
+            [SOLANA_ERROR__FIXED_POINTS__DIVISION_BY_ZERO]: {
+                kind: string;
+                signedness: string;
+                totalBits: number;
+            };
+            [SOLANA_ERROR__FIXED_POINTS__FRACTIONAL_BITS_EXCEED_TOTAL_BITS]: {
+                fractionalBits: number;
+                totalBits: number;
+            };
+            [SOLANA_ERROR__FIXED_POINTS__INVALID_DECIMALS]: {
+                decimals: unknown;
+            };
+            [SOLANA_ERROR__FIXED_POINTS__INVALID_FRACTIONAL_BITS]: {
+                fractionalBits: unknown;
+            };
+            [SOLANA_ERROR__FIXED_POINTS__INVALID_STRING]: {
+                input: string;
+                kind: string;
+            };
+            [SOLANA_ERROR__FIXED_POINTS__INVALID_TOTAL_BITS]: {
+                kind: string;
+                totalBits: unknown;
+            };
+            [SOLANA_ERROR__FIXED_POINTS__INVALID_ZERO_DENOMINATOR_RATIO]: {
+                denominator: bigint;
+                kind: string;
+                numerator: bigint;
+            };
+            [SOLANA_ERROR__FIXED_POINTS__MALFORMED_RAW_VALUE]: {
+                kind: string;
+                raw: unknown;
+            };
+            [SOLANA_ERROR__FIXED_POINTS__SHAPE_MISMATCH]: {
+                actualKind: string;
+                actualScale: number;
+                actualScaleLabel: string;
+                actualSignedness: string;
+                actualTotalBits: number;
+                expectedKind: string;
+                expectedScale: number;
+                expectedScaleLabel: string;
+                expectedSignedness: string;
+                expectedTotalBits: number;
+                operation: string;
+            };
+            [SOLANA_ERROR__FIXED_POINTS__STRICT_MODE_PRECISION_LOSS]: {
+                kind: string;
+                operation: string;
+            };
+            [SOLANA_ERROR__FIXED_POINTS__TOTAL_BITS_NOT_BYTE_ALIGNED]: {
+                kind: string;
+                totalBits: number;
+            };
+            [SOLANA_ERROR__FIXED_POINTS__VALUE_OUT_OF_RANGE]: {
+                kind: string;
+                max: bigint;
+                min: bigint;
+                raw: bigint;
+                signedness: string;
+                totalBits: number;
             };
             [SOLANA_ERROR__FS__UNSUPPORTED_ENVIRONMENT]: {
                 operation: string;
