@@ -603,6 +603,9 @@ importers:
 
   packages/fixed-points:
     dependencies:
+      '@solana/codecs-core':
+        specifier: workspace:*
+        version: link:../codecs-core
       '@solana/errors':
         specifier: workspace:*
         version: link:../errors
