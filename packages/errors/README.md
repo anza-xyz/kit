@@ -122,7 +122,13 @@ try {
 
 The factory handles context freezing, `cause` extraction, `$variable` interpolation, and dev/prod message branching. Your codes, messages, and context shapes stay in your own package. Pass `prodDecodeCommand` (e.g. `'npx @your-pkg/errors decode --'`) if you ship a CLI for decoding error codes in production bundles.
 
-The factory only reads `messages` when `__DEV__` is `true`. To guarantee the templates drop out of your production bundles, gate the reference at the call site — e.g. `messages: __DEV__ ? MyMessages : ({} as typeof MyMessages)` — so the templates module is unreachable under a static `__DEV__ === false` replacement.
+The factory only reads `messages` when `__DEV__` is `true`. To let your bundler tree-shake the templates out of production builds, supply `messages` as a function and gate the lookup with `__DEV__`:
+
+```ts
+messages: code => (__DEV__ ? MyMessages[code] : ''),
+```
+
+Under a static `__DEV__ === false` replacement, the `MyMessages` reference lives only inside a dead branch, so the bundler can drop the module that holds your templates.
 
 If you want consumers to be able to write `MyError<typeof SOME_CODE>` as a type the same way they can with `SolanaError`, re-export a generic alias alongside the class:
 
@@ -133,3 +139,47 @@ export type KoraError<C extends KoraErrorCode = KoraErrorCode> = CodedError<Kora
 ```
 
 The alias narrows `KoraError['context']` to the context shape for `C`, matching the narrowing you get from `isKoraError(e, code)`.
+
+### Narrowing `cause`, including a deprecated-cause category
+
+`CodedError`'s `cause` is typed as `unknown`. To narrow it for specific codes — for example, "transaction errors always have a `cause` that is itself a `KoraError`" — re-shape the alias and wrap the guard with overloads. This is exactly what `SolanaError` and `isSolanaError` do on top of the same factory:
+
+```ts
+import type { CodedError } from '@solana/errors';
+import { createCodedErrorClass } from '@solana/errors';
+
+// Codes whose `cause` is meaningful, and the type it should be narrowed to.
+type KoraErrorCodeWithCause = typeof KORA_ERROR__TRANSACTION_FAILED;
+// Codes for which `cause` is deprecated and should warn in IDEs.
+type KoraErrorCodeWithDeprecatedCause = typeof KORA_ERROR__LEGACY_FOO;
+
+export type KoraError<C extends KoraErrorCode = KoraErrorCode> = Omit<
+    CodedError<KoraErrorCode, KoraErrorContext, C>,
+    'cause'
+> & {
+    readonly cause?: C extends KoraErrorCodeWithCause ? KoraError : unknown;
+};
+
+export interface KoraErrorWithDeprecatedCause<C extends KoraErrorCodeWithDeprecatedCause> extends Omit<
+    KoraError<C>,
+    'cause'
+> {
+    /** @deprecated `cause` is no longer populated for this error code; read `context` instead. */
+    readonly cause?: unknown;
+}
+
+const { isError } = createCodedErrorClass<KoraErrorCode, KoraErrorContext>({
+    /* ... */
+});
+
+export function isKoraError<C extends KoraErrorCodeWithDeprecatedCause>(
+    e: unknown,
+    code: C,
+): e is KoraErrorWithDeprecatedCause<C>;
+export function isKoraError<C extends KoraErrorCode>(e: unknown, code?: C): e is KoraError<C>;
+export function isKoraError(e: unknown, code?: KoraErrorCode): boolean {
+    return code === undefined ? isError(e) : isError(e, code);
+}
+```
+
+The factory's `isError` runs the actual identity check; the overloads only refine the return type. Add or remove categories independently as your error system evolves.

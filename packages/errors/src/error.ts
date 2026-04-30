@@ -23,7 +23,9 @@ const { ErrorClass, isError } = createCodedErrorClass<SolanaErrorCode, SolanaErr
         }
         return message;
     },
-    messages: SolanaErrorMessages,
+    // Use the function form so `SolanaErrorMessages` lives inside a `__DEV__`-gated branch
+    // and can be tree-shaken out of bundles where `__DEV__` is statically replaced with `false`.
+    messages: code => (__DEV__ ? SolanaErrorMessages[code] : ''),
     name: 'SolanaError',
     prodDecodeCommand: 'npx @solana/errors decode --',
     prodMessagePrefix: 'Solana error',

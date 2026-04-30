@@ -50,14 +50,22 @@ export interface CodedErrorDefinition<TCode extends number> {
      */
     messagePostProcessor?: <C extends TCode>(code: C, context: object, message: string) => string;
     /**
-     * Human-readable message templates keyed by code. Use `$variable` tokens to interpolate
-     * values from an error's context; escape a literal `$` with `\\$`.
+     * Human-readable message templates. Use `$variable` tokens to interpolate values from an
+     * error's context; escape a literal `$` with `\\$`. May be supplied as either:
      *
-     * Only read when `__DEV__ === true`. To let your bundler tree-shake the templates out of
-     * production builds, gate the reference at the call site — e.g.
-     * `messages: __DEV__ ? MyMessages : ({} as typeof MyMessages)`.
+     * - A `Readonly<Record<TCode, string>>` keyed by code (gives exhaustiveness checking
+     *   against the {@link TCode} union).
+     * - A `(code: TCode) => string` function. Prefer this form to let bundlers tree-shake your
+     *   templates out of production builds — write the body as
+     *   `(code) => (__DEV__ ? MyMessages[code] : '')` so the reference to `MyMessages` lives
+     *   inside a `__DEV__`-gated branch and can be eliminated under a static
+     *   `__DEV__ === false` replacement.
+     *
+     * Either form is only consulted when `__DEV__ === true`. In production the factory emits
+     * the short-form message described by {@link CodedErrorDefinition.prodDecodeCommand} and
+     * never invokes this lookup.
      */
-    messages: Readonly<Record<TCode, string>>;
+    messages: Readonly<Record<TCode, string>> | ((code: TCode) => string);
     /**
      * The class name (and the value written to `error.name`). Downstream guards identify
      * instances by matching this exact string, so pick something unique (e.g. `'KoraError'`,
@@ -210,12 +218,13 @@ export function createCodedErrorClass<TCode extends number, TContextMap extends 
 ): CodedErrorClassBundle<TCode, TContextMap> {
     const { messagePostProcessor, messages, name, prodDecodeCommand, prodMessagePrefix } = definition;
     const prefix = prodMessagePrefix ?? name;
+    const lookupTemplate = typeof messages === 'function' ? messages : (code: TCode) => messages[code];
 
     function getHumanReadableMessage<C extends TCode>(...args: FormatterArgsFor<TCode, TContextMap, C>): string {
         const [code, context] = args;
         const ctx = context ?? {};
         if (__DEV__) {
-            const rendered = formatMessageTemplate(messages[code], ctx);
+            const rendered = formatMessageTemplate(lookupTemplate(code), ctx);
             return messagePostProcessor ? messagePostProcessor(code, ctx, rendered) : rendered;
         }
         return `${prefix} #${code}`;
@@ -223,7 +232,7 @@ export function createCodedErrorClass<TCode extends number, TContextMap extends 
 
     function getMessage<C extends TCode>(code: C, context: Record<string, unknown>): string {
         if (__DEV__) {
-            const rendered = formatMessageTemplate(messages[code], context);
+            const rendered = formatMessageTemplate(lookupTemplate(code), context);
             return messagePostProcessor ? messagePostProcessor(code, context, rendered) : rendered;
         }
         let message = `${prefix} #${code}`;
