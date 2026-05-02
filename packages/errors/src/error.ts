@@ -1,6 +1,68 @@
-import { SolanaErrorCode, SolanaErrorCodeWithCause, SolanaErrorCodeWithDeprecatedCause } from './codes';
+import { type CodedError, createCodedErrorClass } from './coded-error';
+import {
+    SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN,
+    SolanaErrorCode,
+    SolanaErrorCodeWithCause,
+    SolanaErrorCodeWithDeprecatedCause,
+} from './codes';
 import { SolanaErrorContext } from './context';
-import { getErrorMessage } from './message-formatter';
+import { SolanaErrorMessages } from './messages';
+
+const INSTRUCTION_ERROR_RANGE_SIZE = 1000;
+
+type SolanaErrorContextMap = { [P in SolanaErrorCode]: SolanaErrorContext[P] };
+
+const { ErrorClass, isError } = createCodedErrorClass<SolanaErrorCode, SolanaErrorContextMap>({
+    messagePostProcessor: (code, context, message) => {
+        if (
+            code >= SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN &&
+            code < SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN + INSTRUCTION_ERROR_RANGE_SIZE &&
+            'index' in context
+        ) {
+            return message + ` (instruction #${(context as { index: number }).index + 1})`;
+        }
+        return message;
+    },
+    // Use the function form so `SolanaErrorMessages` lives inside a `__DEV__`-gated branch
+    // and can be tree-shaken out of bundles where `__DEV__` is statically replaced with `false`.
+    messages: code => (__DEV__ ? SolanaErrorMessages[code] : ''),
+    name: 'SolanaError',
+    prodDecodeCommand: 'npx @solana/errors decode --',
+    prodMessagePrefix: 'Solana error',
+});
+
+type SolanaErrorConstructor = {
+    readonly name: string;
+    new <TErrorCode extends SolanaErrorCode = SolanaErrorCode>(
+        ...args: SolanaErrorContext[TErrorCode] extends undefined
+            ? [code: TErrorCode, errorOptions?: ErrorOptions | undefined]
+            : [code: TErrorCode, contextAndErrorOptions: SolanaErrorContext[TErrorCode] & (ErrorOptions | undefined)]
+    ): SolanaError<TErrorCode>;
+};
+
+/**
+ * Encapsulates an error's stacktrace, a Solana-specific numeric code that indicates what went
+ * wrong, and optional context if the type of error indicated by the code supports it.
+ */
+export const SolanaError = ErrorClass as unknown as SolanaErrorConstructor;
+
+/**
+ * The type of an instance of {@link SolanaError}. Narrows `context` to the shape associated with
+ * the supplied error code, and narrows `cause` to {@link SolanaError} for error codes in
+ * {@link SolanaErrorCodeWithCause} and to `unknown` otherwise.
+ */
+export type SolanaError<TErrorCode extends SolanaErrorCode = SolanaErrorCode> = Omit<
+    CodedError<SolanaErrorCode, SolanaErrorContextMap, TErrorCode>,
+    'cause'
+> & {
+    /**
+     * Indicates the root cause of this {@link SolanaError}, if any.
+     *
+     * For example, a transaction error might have an instruction error as its root cause. In this
+     * case, you will be able to access the instruction error on the transaction error as `cause`.
+     */
+    readonly cause?: TErrorCode extends SolanaErrorCodeWithCause ? SolanaError : unknown;
+};
 
 /**
  * A variant of {@link SolanaError} where the `cause` property is deprecated.
@@ -69,80 +131,6 @@ export function isSolanaError<TErrorCode extends SolanaErrorCode>(
     e: unknown,
     code?: TErrorCode,
 ): e is SolanaError<TErrorCode>;
-export function isSolanaError<TErrorCode extends SolanaErrorCode>(
-    e: unknown,
-    /**
-     * When supplied, this function will require that the input is a {@link SolanaError} _and_ that
-     * its error code is exactly this value.
-     */
-    code?: TErrorCode,
-): e is SolanaError<TErrorCode> {
-    const isSolanaError = e instanceof Error && e.name === 'SolanaError';
-    if (isSolanaError) {
-        if (code !== undefined) {
-            return (e as SolanaError<TErrorCode>).context.__code === code;
-        }
-        return true;
-    }
-    return false;
-}
-
-type SolanaErrorCodedContext = {
-    [P in SolanaErrorCode]: Readonly<{
-        __code: P;
-    }> &
-        (SolanaErrorContext[P] extends undefined ? object : SolanaErrorContext[P]);
-};
-
-/**
- * Encapsulates an error's stacktrace, a Solana-specific numeric code that indicates what went
- * wrong, and optional context if the type of error indicated by the code supports it.
- */
-export class SolanaError<TErrorCode extends SolanaErrorCode = SolanaErrorCode> extends Error {
-    /**
-     * Indicates the root cause of this {@link SolanaError}, if any.
-     *
-     * For example, a transaction error might have an instruction error as its root cause. In this
-     * case, you will be able to access the instruction error on the transaction error as `cause`.
-     */
-    readonly cause?: TErrorCode extends SolanaErrorCodeWithCause ? SolanaError : unknown = this.cause;
-    /**
-     * Contains context that can assist in understanding or recovering from a {@link SolanaError}.
-     */
-    readonly context: SolanaErrorCodedContext[TErrorCode];
-    constructor(
-        ...[code, contextAndErrorOptions]: SolanaErrorContext[TErrorCode] extends undefined
-            ? [code: TErrorCode, errorOptions?: ErrorOptions | undefined]
-            : [code: TErrorCode, contextAndErrorOptions: SolanaErrorContext[TErrorCode] & (ErrorOptions | undefined)]
-    ) {
-        let context: SolanaErrorContext[TErrorCode] | undefined;
-        let errorOptions: ErrorOptions | undefined;
-        if (contextAndErrorOptions) {
-            Object.entries(Object.getOwnPropertyDescriptors(contextAndErrorOptions)).forEach(([name, descriptor]) => {
-                // If the `ErrorOptions` type ever changes, update this code.
-                if (name === 'cause') {
-                    errorOptions = { cause: descriptor.value };
-                } else {
-                    if (context === undefined) {
-                        context = {
-                            __code: code,
-                        } as unknown as SolanaErrorContext[TErrorCode];
-                    }
-                    Object.defineProperty(context, name, descriptor);
-                }
-            });
-        }
-        const message = getErrorMessage(code, context);
-        super(message, errorOptions);
-        this.context = Object.freeze(
-            context === undefined
-                ? {
-                      __code: code,
-                  }
-                : context,
-        ) as SolanaErrorCodedContext[TErrorCode];
-        // This is necessary so that `isSolanaError()` can identify a `SolanaError` without having
-        // to import the class for use in an `instanceof` check.
-        this.name = 'SolanaError';
-    }
+export function isSolanaError(e: unknown, code?: SolanaErrorCode): boolean {
+    return code === undefined ? isError(e) : isError(e, code);
 }

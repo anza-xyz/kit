@@ -1,5 +1,4 @@
 import { SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN, SolanaErrorCode } from './codes';
-import { encodeContextObject } from './context';
 import { SolanaErrorMessages } from './messages';
 
 const INSTRUCTION_ERROR_RANGE_SIZE = 1000;
@@ -16,18 +15,23 @@ type State = Readonly<{
 const START_INDEX = 'i';
 const TYPE = 't';
 
-export function getHumanReadableErrorMessage<TErrorCode extends SolanaErrorCode>(
-    code: TErrorCode,
-    context: object = {},
-): string {
-    const messageFormatString = SolanaErrorMessages[code];
-    if (messageFormatString.length === 0) {
+/**
+ * Interpolates `$variable` tokens in a message template with values from a context object.
+ * Tokens with no matching context key are rendered literally; escape a literal `$` with `\\$`.
+ *
+ * Shared by {@link getHumanReadableErrorMessage} and {@link createCodedErrorClass}.
+ *
+ * @internal
+ */
+export function formatMessageTemplate(messageFormatString: string | undefined, context: object = {}): string {
+    if (!messageFormatString) {
         return '';
     }
+    const template: string = messageFormatString;
     let state: State;
     function commitStateUpTo(endIndex?: number) {
         if (state[TYPE] === StateType.Variable) {
-            const variableName = messageFormatString.slice(state[START_INDEX] + 1, endIndex);
+            const variableName = template.slice(state[START_INDEX] + 1, endIndex);
 
             fragments.push(
                 variableName in context
@@ -36,18 +40,18 @@ export function getHumanReadableErrorMessage<TErrorCode extends SolanaErrorCode>
                     : `$${variableName}`,
             );
         } else if (state[TYPE] === StateType.Text) {
-            fragments.push(messageFormatString.slice(state[START_INDEX], endIndex));
+            fragments.push(template.slice(state[START_INDEX], endIndex));
         }
     }
     const fragments: string[] = [];
-    messageFormatString.split('').forEach((char, ii) => {
+    template.split('').forEach((char, ii) => {
         if (ii === 0) {
             state = {
                 [START_INDEX]: 0,
                 [TYPE]:
-                    messageFormatString[0] === '\\'
+                    template[0] === '\\'
                         ? StateType.EscapeSequence
-                        : messageFormatString[0] === '$'
+                        : template[0] === '$'
                           ? StateType.Variable
                           : StateType.Text,
             };
@@ -83,7 +87,14 @@ export function getHumanReadableErrorMessage<TErrorCode extends SolanaErrorCode>
         }
     });
     commitStateUpTo();
-    let message = fragments.join('');
+    return fragments.join('');
+}
+
+export function getHumanReadableErrorMessage<TErrorCode extends SolanaErrorCode>(
+    code: TErrorCode,
+    context: object = {},
+): string {
+    let message = formatMessageTemplate(SolanaErrorMessages[code], context);
     if (
         code >= SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN &&
         code < SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN + INSTRUCTION_ERROR_RANGE_SIZE &&
@@ -92,24 +103,4 @@ export function getHumanReadableErrorMessage<TErrorCode extends SolanaErrorCode>
         message += ` (instruction #${(context as { index: number }).index + 1})`;
     }
     return message;
-}
-
-export function getErrorMessage<TErrorCode extends SolanaErrorCode>(
-    code: TErrorCode,
-    context: Record<string, unknown> = {},
-): string {
-    if (__DEV__) {
-        return getHumanReadableErrorMessage(code, context);
-    } else {
-        let decodingAdviceMessage = `Solana error #${code}; Decode this error by running \`npx @solana/errors decode -- ${code}`;
-        if (Object.keys(context).length) {
-            /**
-             * DANGER: Be sure that the shell command is escaped in such a way that makes it
-             *         impossible for someone to craft malicious context values that would result in
-             *         an exploit against anyone who bindly copy/pastes it into their terminal.
-             */
-            decodingAdviceMessage += ` '${encodeContextObject(context)}'`;
-        }
-        return `${decodingAdviceMessage}\``;
-    }
 }
