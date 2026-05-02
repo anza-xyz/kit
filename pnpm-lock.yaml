@@ -419,6 +419,9 @@ importers:
       '@solana/codecs-strings':
         specifier: workspace:*
         version: link:../codecs-strings
+      '@solana/fixed-points':
+        specifier: workspace:*
+        version: link:../fixed-points
       '@solana/options':
         specifier: workspace:*
         version: link:../options
@@ -597,6 +600,12 @@ importers:
       undici:
         specifier: ^8.1.0
         version: 8.1.0
+
+  packages/fixed-points:
+    dependencies:
+      typescript:
+        specifier: '>=5.0.0'
+        version: 5.9.3
 
   packages/fs-impl:
     dependencies:
