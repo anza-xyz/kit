@@ -1,5 +1,11 @@
 # @solana/promises
 
+## 6.9.0
+
+### Minor Changes
+
+- [#1549](https://github.com/anza-xyz/kit/pull/1549) [`8d73de5`](https://github.com/anza-xyz/kit/commit/8d73de5241d709946431f2fdda74f2a0df5e9529) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Added `isAbortError(err)` — returns `true` if `err` is an `Error` whose `name` is `'AbortError'`. Use it to distinguish abort rejections from other failures without having to `instanceof`-check every platform-specific error class.
+
 ## 6.8.0
 
 ### Patch Changes

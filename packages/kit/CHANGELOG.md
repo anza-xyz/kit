@@ -1,5 +1,52 @@
 # @solana/kit
 
+## 6.9.0
+
+### Minor Changes
+
+- [#1544](https://github.com/anza-xyz/kit/pull/1544) [`e82e03e`](https://github.com/anza-xyz/kit/commit/e82e03eb0e982db74f96d11b9aa8fefb4f0038c3) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Update RPC types for Agave v3.x validator compatibility.
+
+    **`@solana/rpc-parsed-types`**: `JsonParsedVoteAccount` now includes `blockRevenueCollector`, `blockRevenueCommissionBps`, `blsPubkeyCompressed`, `inflationRewardsCollector`, `inflationRewardsCommissionBps`, `pendingDelegatorRewards`, and a `latency` field on each vote entry.
+
+    **`@solana/rpc-api`**: `SimulateTransactionApiResponseBase` now includes `fee`, `loadedAddresses`, `preBalances`, `postBalances`, `preTokenBalances`, and `postTokenBalances`.
+
+    **`@solana/errors`**: `RpcSimulateTransactionResult` updated with the same new fields.
+
+    **Note on `replacementBlockhash`**: Agave v3.x validators now always return `replacementBlockhash` in `simulateTransaction` responses (as `null` when `replaceRecentBlockhash` is not set). Kit's types still model this field as conditionally present based on config. A future breaking change will move it to the base response type as `TransactionBlockhashLifetime | null` to match v3.x behavior. Consumers using v3.x validators may see this field at runtime even when Kit's types don't surface it.
+
+    **Note on Agave v3.x validator behavior**: Validators running Agave v3.x no longer return a dedicated `TRANSACTION_SIGNATURE_VERIFICATION_FAILURE` RPC error for invalid signatures in `simulateTransaction` or `sendTransaction`. Instead, `simulateTransaction` returns a result with `err: "SignatureFailure"`, and `sendTransaction` returns a preflight failure with the signature error as the cause. This is a validator-level change and does not affect Kit's API surface.
+
+- [#1551](https://github.com/anza-xyz/kit/pull/1551) [`d24f908`](https://github.com/anza-xyz/kit/commit/d24f908a4fbbddddd9e8bacc57485de6d8e022b4) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `ClientWithSubscribeToPayer` and `ClientWithSubscribeToIdentity` interfaces. These are a framework-agnostic convention for plugins that mutate `client.payer` / `client.identity` reactively — they install a sibling `subscribeToPayer` / `subscribeToIdentity` function so consumers can observe changes without naming the specific plugin that provides them.
+
+### Patch Changes
+
+- Updated dependencies [[`92126f4`](https://github.com/anza-xyz/kit/commit/92126f438afff8b7521f827cf0e92b1d2cd69c55), [`b1ae82b`](https://github.com/anza-xyz/kit/commit/b1ae82bbb2159f17a3e0f337c5f8677613b5b32d), [`e82e03e`](https://github.com/anza-xyz/kit/commit/e82e03eb0e982db74f96d11b9aa8fefb4f0038c3), [`d24f908`](https://github.com/anza-xyz/kit/commit/d24f908a4fbbddddd9e8bacc57485de6d8e022b4)]:
+    - @solana/errors@6.9.0
+    - @solana/plugin-core@6.9.0
+    - @solana/rpc-api@6.9.0
+    - @solana/rpc-parsed-types@6.9.0
+    - @solana/plugin-interfaces@6.9.0
+    - @solana/instruction-plans@6.9.0
+    - @solana/keys@6.9.0
+    - @solana/rpc-subscriptions@6.9.0
+    - @solana/transaction-confirmation@6.9.0
+    - @solana/accounts@6.9.0
+    - @solana/addresses@6.9.0
+    - @solana/instructions@6.9.0
+    - @solana/offchain-messages@6.9.0
+    - @solana/program-client-core@6.9.0
+    - @solana/programs@6.9.0
+    - @solana/rpc@6.9.0
+    - @solana/rpc-types@6.9.0
+    - @solana/signers@6.9.0
+    - @solana/subscribable@6.9.0
+    - @solana/sysvars@6.9.0
+    - @solana/transaction-messages@6.9.0
+    - @solana/transactions@6.9.0
+    - @solana/codecs@6.9.0
+    - @solana/functional@6.9.0
+    - @solana/rpc-spec-types@6.9.0
+
 ## 6.8.0
 
 ### Minor Changes
