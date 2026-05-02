@@ -1,5 +1,7 @@
 # @solana/fast-stable-stringify
 
+## 6.9.0
+
 ## 6.8.0
 
 ### Patch Changes

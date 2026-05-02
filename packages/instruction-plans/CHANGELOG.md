@@ -1,5 +1,17 @@
 # @solana/instruction-plans
 
+## 6.9.0
+
+### Patch Changes
+
+- Updated dependencies [[`8d73de5`](https://github.com/anza-xyz/kit/commit/8d73de5241d709946431f2fdda74f2a0df5e9529), [`92126f4`](https://github.com/anza-xyz/kit/commit/92126f438afff8b7521f827cf0e92b1d2cd69c55), [`e82e03e`](https://github.com/anza-xyz/kit/commit/e82e03eb0e982db74f96d11b9aa8fefb4f0038c3)]:
+    - @solana/promises@6.9.0
+    - @solana/errors@6.9.0
+    - @solana/keys@6.9.0
+    - @solana/instructions@6.9.0
+    - @solana/transaction-messages@6.9.0
+    - @solana/transactions@6.9.0
+
 ## 6.8.0
 
 ### Patch Changes

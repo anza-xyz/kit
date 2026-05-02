@@ -1,5 +1,23 @@
 # @solana/errors
 
+## 6.9.0
+
+### Minor Changes
+
+- [#1542](https://github.com/anza-xyz/kit/pull/1542) [`92126f4`](https://github.com/anza-xyz/kit/commit/92126f438afff8b7521f827cf0e92b1d2cd69c55) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `SOLANA_ERROR__WALLET__NO_SIGNER_CONNECTED` and `SOLANA_ERROR__WALLET__SIGNER_NOT_AVAILABLE` error codes for wallet-signer availability checks.
+
+- [#1544](https://github.com/anza-xyz/kit/pull/1544) [`e82e03e`](https://github.com/anza-xyz/kit/commit/e82e03eb0e982db74f96d11b9aa8fefb4f0038c3) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Update RPC types for Agave v3.x validator compatibility.
+
+    **`@solana/rpc-parsed-types`**: `JsonParsedVoteAccount` now includes `blockRevenueCollector`, `blockRevenueCommissionBps`, `blsPubkeyCompressed`, `inflationRewardsCollector`, `inflationRewardsCommissionBps`, `pendingDelegatorRewards`, and a `latency` field on each vote entry.
+
+    **`@solana/rpc-api`**: `SimulateTransactionApiResponseBase` now includes `fee`, `loadedAddresses`, `preBalances`, `postBalances`, `preTokenBalances`, and `postTokenBalances`.
+
+    **`@solana/errors`**: `RpcSimulateTransactionResult` updated with the same new fields.
+
+    **Note on `replacementBlockhash`**: Agave v3.x validators now always return `replacementBlockhash` in `simulateTransaction` responses (as `null` when `replaceRecentBlockhash` is not set). Kit's types still model this field as conditionally present based on config. A future breaking change will move it to the base response type as `TransactionBlockhashLifetime | null` to match v3.x behavior. Consumers using v3.x validators may see this field at runtime even when Kit's types don't surface it.
+
+    **Note on Agave v3.x validator behavior**: Validators running Agave v3.x no longer return a dedicated `TRANSACTION_SIGNATURE_VERIFICATION_FAILURE` RPC error for invalid signatures in `simulateTransaction` or `sendTransaction`. Instead, `simulateTransaction` returns a result with `err: "SignatureFailure"`, and `sendTransaction` returns a preflight failure with the signature error as the cause. This is a validator-level change and does not affect Kit's API surface.
+
 ## 6.8.0
 
 ### Minor Changes
