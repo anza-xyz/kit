@@ -216,6 +216,7 @@ import {
     SOLANA_ERROR__SIGNER__TRANSACTION_SENDING_SIGNER_MISSING,
     SOLANA_ERROR__SIGNER__WALLET_ACCOUNT_CANNOT_SIGN_TRANSACTION,
     SOLANA_ERROR__SIGNER__WALLET_MULTISIGN_UNIMPLEMENTED,
+    SOLANA_ERROR__SUBSCRIBABLE__RETRY_NOT_SUPPORTED,
     SOLANA_ERROR__SUBTLE_CRYPTO__CANNOT_EXPORT_NON_EXTRACTABLE_KEY,
     SOLANA_ERROR__SUBTLE_CRYPTO__DIGEST_UNIMPLEMENTED,
     SOLANA_ERROR__SUBTLE_CRYPTO__DISALLOWED_IN_INSECURE_CONTEXT,
@@ -673,6 +674,9 @@ export const SolanaErrorMessages: Readonly<{
         'The account supports the following features: $supportedFeatures.',
     [SOLANA_ERROR__SIGNER__WALLET_MULTISIGN_UNIMPLEMENTED]:
         'Wallet account signers do not support signing multiple messages/transactions in a single operation',
+    [SOLANA_ERROR__SUBSCRIBABLE__RETRY_NOT_SUPPORTED]:
+        'This `ReactiveStore` does not support retry. Use `createReactiveStoreFromDataPublisherFactory` ' +
+        'to construct a retryable store.',
     [SOLANA_ERROR__SUBTLE_CRYPTO__CANNOT_EXPORT_NON_EXTRACTABLE_KEY]: 'Cannot export a non-extractable key.',
     [SOLANA_ERROR__SUBTLE_CRYPTO__DIGEST_UNIMPLEMENTED]: 'No digest implementation could be found.',
     [SOLANA_ERROR__SUBTLE_CRYPTO__DISALLOWED_IN_INSECURE_CONTEXT]:
