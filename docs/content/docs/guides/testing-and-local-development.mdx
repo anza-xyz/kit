@@ -1,0 +1,15 @@
+---
+title: Testing & local development
+description: Test your Solana applications locally and in CI
+---
+
+<Callout type="warn" title="Planned Content">
+**Status:** New page
+
+This guide will cover testing and local development patterns: test validator setup (`solana-test-validator`) and when to use it, airdropping funds on test clusters via `client.airdrop(address, lamports(1_000_000_000n))`, LiteSVM for unit tests (fast, in-process, no network required), composing local clients with `createClient().use(generatedSigner()).use(solanaLocalRpc())` for test validators or `createClient().use(generatedSigner()).use(litesvm())` for LiteSVM, API symmetry so code that works against one setup works against the other, test patterns and fixtures (generating test keypairs, setting up test state), comparing approaches for when to use test validator vs LiteSVM, and CI integration for running tests without a running validator.
+
+**Draws from:** `@solana/kit-plugin-rpc` README (`solanaLocalRpc`), `@solana/kit-plugin-litesvm` README, `@solana/kit-plugin-signer` README, kit-plugins examples.
+
+**Links to:** [Plugins — Available Plugins](/docs/plugins/available-plugins) for comparing local RPC and LiteSVM plugin bundles.
+
+</Callout>

@@ -35,7 +35,7 @@ const features: Feature[] = [
         key: 'rpc',
         label: 'RPC',
         description: 'Configure your Solana RPC and send requests to send transactions or fetch data.',
-        href: '/docs/concepts/rpc',
+        href: '/docs/guides/rpc',
         image: {
             dark: DarkRpcImage,
             light: LightRpcImage,
@@ -45,7 +45,7 @@ const features: Feature[] = [
         key: 'codecs',
         label: 'Codecs',
         description: 'Compose codecs together to encode and decode any value to and from a byte array.',
-        href: '/docs/concepts/codecs',
+        href: '/docs/advanced-guides/codecs',
         image: {
             dark: DarkCodecsImage,
             light: LightCodecsImage,
@@ -55,7 +55,7 @@ const features: Feature[] = [
         key: 'signers',
         label: 'Signers',
         description: 'Create signer objects to sign transactions and/or messages with your wallets.',
-        href: '/docs/concepts/signers',
+        href: '/docs/advanced-guides/signers',
         image: {
             dark: DarkSignersImage,
             light: LightSignersImage,
@@ -65,7 +65,7 @@ const features: Feature[] = [
         key: 'transactions',
         label: 'Transactions',
         description: 'Gradually build transaction messages before compiling and sending them to the network.',
-        href: '/docs/concepts/transactions',
+        href: '/docs/advanced-guides/transactions',
         image: {
             dark: DarkTransactionsImage,
             light: LightTransactionsImage,
@@ -75,7 +75,7 @@ const features: Feature[] = [
         key: 'rpc-subscriptions',
         label: 'RPC Subscriptions',
         description: 'Subscribe to RPC notifications such as account changes, slot updates, and more.',
-        href: '/docs/concepts/rpc-subscriptions',
+        href: '/docs/guides/rpc-subscriptions',
         image: {
             dark: DarkRpcSubscriptionsImage,
             light: LightRpcSubscriptionsImage,
@@ -85,7 +85,7 @@ const features: Feature[] = [
         key: 'solana-programs',
         label: 'Solana Programs',
         description: 'Interact with various Solana programs using their Codama-generated SDKs.',
-        href: '/docs/compatible-clients',
+        href: '/docs/plugins/available-plugins',
         image: {
             dark: DarkSolanaProgramsImage,
             light: LightSolanaProgramsImage,
@@ -138,7 +138,7 @@ export default function FeaturesSection() {
                 ))}
             </div>
             <Link
-                href="/docs/concepts"
+                href="/docs/advanced-guides"
                 className="block mt-16 font-title text-2xl text-linen-300 dark:text-mauve-500 text-center"
             >
                 And many more...

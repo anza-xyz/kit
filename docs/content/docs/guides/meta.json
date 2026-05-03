@@ -1,0 +1,14 @@
+{
+    "title": "Guides",
+    "defaultOpen": true,
+    "pages": [
+        "setting-up-signers",
+        "rpc",
+        "rpc-subscriptions",
+        "sending-transactions",
+        "sending-multiple-transactions",
+        "fetching-accounts",
+        "using-program-plugins",
+        "testing-and-local-development"
+    ]
+}

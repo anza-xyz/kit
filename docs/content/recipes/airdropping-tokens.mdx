@@ -1,0 +1,15 @@
+---
+title: Airdropping tokens
+description: Airdrop tokens to many wallets using parallel transaction plans
+---
+
+<Callout type="warn" title="Planned Content">
+**Status:** New page
+
+This recipe will walk through a multi-address token airdrop: setting up a local client, creating a token mint, generating many recipient addresses, building a complex instruction plan (`sequentialInstructionPlan` containing mint creation followed by a `parallelInstructionPlan` of `getMintToATAInstructionPlanAsync` calls), sending via `client.sendTransactions(plan)` where the client handles splitting into transactions and parallel execution, using `passthroughFailedTransactionPlanExecution` to continue past failures, and processing results with `flattenTransactionPlanResult` to log successes, failures, and cancellations.
+
+**Draws from:** Kit-plugins `examples/token-airdrop/` example (complete working implementation with parallel plans and error recovery).
+
+**Links to:** [Sending Multiple Transactions](/docs/guides/sending-multiple-transactions) for the full guide on multi-transaction operations, [Advanced Guides — Instruction Plans](/docs/advanced-guides/instruction-plans) for the underlying plan system.
+
+</Callout>

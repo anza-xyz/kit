@@ -1,0 +1,15 @@
+---
+title: Sending transactions
+description: Send single transactions with error handling and configuration
+---
+
+<Callout type="warn" title="Planned Content">
+**Status:** New page
+
+This guide will cover sending single transactions through the client: **`client.sendTransaction(instruction)`** for the simplest case, passing instruction plans (sequential, parallel, non-divisible) to `sendTransaction`, error handling including catching `SolanaError`, understanding error codes, and extracting program-specific errors, priority fees and compute budget configuration, and **`client.planTransaction(instruction)`** for planning without sending (dry runs, inspection). The guide will also briefly describe the typical lifecycle a client follows when sending a transaction (planning, signing, sending, confirming) while noting that the exact behavior depends on the transaction planner and executor plugins configured on the client, which are fully customizable.
+
+**Draws from:** Current `getting-started/send-transaction.mdx` (conceptual explanation), `getting-started/build-transaction.mdx` (transaction construction), `@solana/kit-plugin-instruction-plan` README, `@solana/kit-plugin-rpc` README (`rpcTransactionPlanExecutor`), kit-plugins `transfer-lamports` example (error handling).
+
+**Links to:** [Sending Multiple Transactions](/docs/guides/sending-multiple-transactions) for complex multi-transaction operations, [Advanced Guides — Transactions](/docs/advanced-guides/transactions) for the full manual transaction lifecycle, [Advanced Guides — Instruction Plans](/docs/advanced-guides/instruction-plans) for the underlying plan system.
+
+</Callout>

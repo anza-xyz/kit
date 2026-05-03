@@ -1,0 +1,17 @@
+---
+title: Sending multiple transactions
+description: Plan and execute complex multi-transaction operations
+---
+
+<Callout type="warn" title="Planned Content">
+**Status:** New page
+
+This guide assumes the reader is familiar with `InstructionPlan` structures (covered in [Sending Transactions](/docs/guides/sending-transactions)), but a brief recap with a link back will be included so this guide works standalone.
+
+The guide will introduce two structures that are new and specific to multi-transaction operations: the **`TransactionPlan`** (the result of planning instruction plans into concrete transactions) and the **`TransactionPlanResult`** (the tree structure returned after execution, containing success, failure, and cancellation states). It will cover **`client.sendTransactions(instructionPlan)`** for sending instruction plans that span multiple transactions, **`client.planTransactions(instructionPlan)`** for planning without executing (inspection, debugging), helper functions like `summarizeTransactionPlanResult` and `flattenTransactionPlanResult` for processing results, error recovery via `passthroughFailedTransactionPlanExecution` to continue past failures, and handling partial failures, cancelled transactions, and successful transactions in the result tree.
+
+**Draws from:** Kit-plugins `token-airdrop` example (multi-address airdrop with parallel plans and error recovery), `@solana/kit-plugin-instruction-plan` README, `@solana/kit-plugin-rpc` README (`rpcTransactionPlanExecutor`).
+
+**Links to:** [Sending Transactions](/docs/guides/sending-transactions) for single transaction basics, [Advanced Guides — Instruction Plans](/docs/advanced-guides/instruction-plans) for the underlying plan system, [Recipes — Airdropping Tokens](/recipes/airdropping-tokens) for a concrete multi-transaction example.
+
+</Callout>

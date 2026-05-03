@@ -3,6 +3,15 @@ title: Transactions
 description: Build and compile transaction messages
 ---
 
+<Callout type="warn" title="Planned Changes">
+**Status:** Existing page — significant enrichment planned
+
+This page will be updated to show how `rpcTransactionPlanExecutor` handles blockhash fetching, CU estimation, signing, and confirmation, add references to the plugin-based transaction workflow, add a section about estimating compute units, and document the new unified transaction config setters (`setTransactionMessageComputeUnitLimit`, etc.). The `pipe()` / immutability walkthrough from the current `getting-started/build-transaction.mdx` will be ported to [Kit Without a Client](/docs/advanced-guides/kit-without-a-client).
+
+**Current content preserved:** Yes, all existing content stays and is enriched.
+
+</Callout>
+
 ## Introduction
 
 To take an action on Solana, whether to place an order, transfer an asset, or more generally to modify data on the blockchain, you need to prepare a transaction and sign to pay for it to be executed on the network. You can use Kit to create, sign, encode, and decode transactions.
@@ -91,7 +100,7 @@ const signedTransaction = await signTransactionMessageWithSigners(transactionMes
 const transactionSignature = getSignatureFromTransaction(signedTransaction);
 ```
 
-For more detail see the ‘[Build a transaction](/docs/getting-started/build-transaction)’ and ‘[Send a transaction](/docs/getting-started/send-transaction)’ sections of the Getting Started guide.
+For more detail about the no-client transaction flow, see [Kit without a client](/docs/advanced-guides/kit-without-a-client).
 
 ## Building transaction messages
 
@@ -172,7 +181,7 @@ const txMessageWithBlockhashLifetime = setTransactionMessageLifetimeUsingBlockha
 
 #### Using a durable nonce [!toc] [#building-transaction-messages-lifetime-using-a-durable-nonce]
 
-The [`TransactionMessageWithDurableNonceLifetime`](/api/interfaces/TransactionMessageWithDurableNonceLifetime) type represents a transaction message whose lifetime is defined by the value of a nonce account on-chain. Such a transaction can only be landed on the network if the nonce value in the transaction message matches the one in the nonce account at the time the transaction executes.
+The [`TransactionMessageWithDurableNonceLifetime`](/api/interfaces/TransactionMessageWithDurableNonceLifetime) type represents a transaction message whose lifetime is defined by the value of a nonce account onchain. Such a transaction can only be landed on the network if the nonce value in the transaction message matches the one in the nonce account at the time the transaction executes.
 
 Given a nonce, the account where the value of the nonce is stored, and the address of the account authorized to consume that nonce, this method will return a new transaction having the same type as the one supplied plus the [`TransactionMessageWithDurableNonceLifetime`](/api/interfaces/TransactionMessageWithDurableNonceLifetime) type.
 
@@ -244,7 +253,7 @@ To add an array of instructions to a transaction message, see [`appendTransactio
 
 ## Compressing transaction messages
 
-Every transaction message must include a reference to the account addresses it will read from and write to. One alternative to storing these addresses in the message itself is to store them in an on-chain account called an **address lookup table**. This lets you save space in the message by replacing many 32-byte account addresses with one or more 32-byte address lookup table account addresses then a 1-byte index into those tables for each address.
+Every transaction message must include a reference to the account addresses it will read from and write to. One alternative to storing these addresses in the message itself is to store them in an onchain account called an **address lookup table**. This lets you save space in the message by replacing many 32-byte account addresses with one or more 32-byte address lookup table account addresses then a 1-byte index into those tables for each address.
 
 <Callout type="warn">
     Addresses that are required signers of a transaction message can not be looked up in an address
@@ -340,7 +349,7 @@ try {
     method to sign and send the transaction in a single step.
 </Callout>
 
-For a comprehensive guide on all signing functions — including the lower-level [`partiallySignTransactionWithSigners`](/api/functions/partiallySignTransactionWithSigners), [`signTransactionWithSigners`](/api/functions/signTransactionWithSigners), and [`signAndSendTransactionWithSigners`](/api/functions/signAndSendTransactionWithSigners) functions that accept an explicit array of signers and a compiled transaction — see the [Signing with signers](/docs/concepts/signers#signing-with-signers) section.
+For a comprehensive guide on all signing functions — including the lower-level [`partiallySignTransactionWithSigners`](/api/functions/partiallySignTransactionWithSigners), [`signTransactionWithSigners`](/api/functions/signTransactionWithSigners), and [`signAndSendTransactionWithSigners`](/api/functions/signAndSendTransactionWithSigners) functions that accept an explicit array of signers and a compiled transaction — see the [Signing with signers](/docs/advanced-guides/signers#signing-with-signers) section.
 
 Building transaction messages using `TransactionSigners` is the recommended way to create self-signable transaction messages. To sign with a `CryptoKey` directly, you first have to compile the transaction message.
 
@@ -394,7 +403,12 @@ try {
 </Callout>
 
 <Callout type="info">
-    If you have [`TransactionSigner`](/api/type-aliases/TransactionSigner) objects rather than raw `CryptoKeyPairs`, you can use [`signTransactionWithSigners`](/api/functions/signTransactionWithSigners) and [`partiallySignTransactionWithSigners`](/api/functions/partiallySignTransactionWithSigners) instead. See the [Signing with signers](/docs/concepts/signers#signing-compiled-transactions) section for details.
+    If you have [`TransactionSigner`](/api/type-aliases/TransactionSigner) objects rather than raw
+    `CryptoKeyPairs`, you can use
+    [`signTransactionWithSigners`](/api/functions/signTransactionWithSigners) and
+    [`partiallySignTransactionWithSigners`](/api/functions/partiallySignTransactionWithSigners)
+    instead. See the [Signing with
+    signers](/docs/advanced-guides/signers#signing-compiled-transactions) section for details.
 </Callout>
 
 ## Serializing transactions
@@ -415,9 +429,9 @@ const signature = await rpc.sendTransaction(serializedTransaction, { encoding: '
 ```
 
 <Callout type="info">
-    Typically you would not serialize and send transactions to the network manually. See how to use
-    [send-and-confirm helpers](/docs/getting-started/send-transaction) to make sending transactions
-    easier and more reliable.
+    Typically you would not serialize and send transactions to the network manually. See [Kit
+    without a client](/docs/advanced-guides/kit-without-a-client) for the full no-client transaction
+    flow.
 </Callout>
 
 ## Deserializing transactions

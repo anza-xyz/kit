@@ -1,13 +1,20 @@
 ---
-title: Fetch an account
-description: Fetch and decode on-chain accounts
+title: '❌ Fetch an account'
+description: Fetch and decode onchain accounts
 ---
+
+<Callout type="warn" title="Scheduled for Removal">
+**Status:** This page will be removed in a future PR.
+
+**Content redistributed to:** The [Getting Started](/docs/getting-started) one-pager will cover fetching accounts briefly, and [Guides — Fetching Accounts](/docs/guides/fetching-accounts) will be the comprehensive reference.
+
+</Callout>
 
 In the previous article of this series, we've learned how to send a transaction that creates a new Solana token — also known as a `Mint` account. In this last article, we'll learn how to retrieve the account we created and access its decoded data.
 
 ## Fetch using RPC methods
 
-RPC methods such as `getAccountInfo` or `getMultipleAccounts` can be used to fetch on-chain accounts from their addresses. These take a variety of options and return different outputs based on these options. For instance, the `encoding` option will determine which string format to use when returning the account's encoded data.
+RPC methods such as `getAccountInfo` or `getMultipleAccounts` can be used to fetch onchain accounts from their addresses. These take a variety of options and return different outputs based on these options. For instance, the `encoding` option will determine which string format to use when returning the account's encoded data.
 
 ```ts twoslash
 import { Rpc, SolanaRpcApi } from '@solana/kit';
@@ -23,7 +30,7 @@ const { value: accounts } = await rpc.getMultipleAccounts([address('1234..5678')
 
 Having so many possible return values makes it harder to work with the retrieved information. For instance, the `getAccountInfo` RPC method will default to a Base58 encoding whereas the `getMultipleAccounts` method will default to Base64.
 
-Additionally, when trying to fetch an account that does not exist on-chain, the `null` value is returned which is particularly inconvenient when dealing with multiple accounts as it requires zipping the address array with the account array to determine which ones are missing.
+Additionally, when trying to fetch an account that does not exist onchain, the `null` value is returned which is particularly inconvenient when dealing with multiple accounts as it requires zipping the address array with the account array to determine which ones are missing.
 
 Therefore, Kit offers a set of types and helpers that aim to unify these APIs and make them easier to work with. For instance, the `fetchEncodedAccount` and `fetchEncodedAccounts` helpers can be used to fetch one or multiple accounts and return them in a unified format.
 
@@ -45,7 +52,7 @@ account satisfies MaybeEncodedAccount;
 accounts satisfies MaybeEncodedAccount[];
 ```
 
-As you can see, the return types are all `MaybeAccounts`. This means the account may or may not exist on-chain. It contains an `exists` field indicating whether the account exists. If it does, we have access to all its fields. Otherwise, we just know its address — since it was provided as an input.
+As you can see, the return types are all `MaybeAccounts`. This means the account may or may not exist onchain. It contains an `exists` field indicating whether the account exists. If it does, we have access to all its fields. Otherwise, we just know its address — since it was provided as an input.
 
 ```ts twoslash
 import { Rpc, SolanaRpcApi } from '@solana/kit';
@@ -96,7 +103,7 @@ So far, we have been dealing with encoded accounts, meaning the `data` field of 
 
 Kit ships with a set of serialization libraries called Codecs. These libraries offer types and functions to create Codec objects that can be composed together to create more complex serialization and deserialization logic.
 
-You can [read more about Codecs here](/docs/concepts/codecs), but let's quickly see how we can create a Codec object to decode our `Mint` account.
+You can [read more about Codecs here](/docs/advanced-guides/codecs), but let's quickly see how we can create a Codec object to decode our `Mint` account.
 
 Mint accounts are composed of the following data:
 
@@ -201,7 +208,7 @@ account satisfies Account<Mint>;
 
 ## Update `index.ts`
 
-Now that we know how to fetch and decode on-chain accounts, let's update our main `tutorial` function to fetch the `Mint` account we created in the previous article and display its decoded data.
+Now that we know how to fetch and decode onchain accounts, let's update our main `tutorial` function to fetch the `Mint` account we created in the previous article and display its decoded data.
 
 Since some of its data is optional, we'll use the `unwrapOption` helper to convert `Option<T>` types into `T | null` before displaying them.
 
@@ -278,6 +285,6 @@ Congrats on completing this tutorial! You've learned how to get started with the
 - Building instructions and transaction messages.
 - Generating signer objects and using them to sign transactions.
 - Sending transactions and waiting for them to be confirmed.
-- Fetching and decoding on-chain accounts that were created by your transactions.
+- Fetching and decoding onchain accounts that were created by your transactions.
 
-If you'd like to dig deeper into the Kit library, you may be interested in the [Core concepts](/docs/concepts) section of the documentation. There, you'll find in-depth articles about specific parts of the library such as [Codecs](/docs/concepts/codecs), [Signers](/docs/concepts/signers), and [RPCs](/docs/concepts/rpc).
+If you'd like to dig deeper into the Kit library, you may be interested in the [Advanced Guides](/docs/advanced-guides) section of the documentation. There, you'll find in-depth articles about specific parts of the library such as [Codecs](/docs/advanced-guides/codecs), [Signers](/docs/advanced-guides/signers), and [RPCs](/docs/guides/rpc).
