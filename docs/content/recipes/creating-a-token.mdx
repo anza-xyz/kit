@@ -1,15 +1,131 @@
 ---
 title: Creating a token
-description: Create a new SPL token mint and mint tokens
+description: Create a new SPL token mint, mint tokens, and transfer them
 ---
 
-<Callout type="warn" title="Planned Content">
-**Status:** Adapted from existing content
+This recipe walks through the full lifecycle of an SPL token: creating a mint, minting tokens to your own associated token account (ATA), and transferring some to another wallet. It runs against a local validator so you can experiment without spending mainnet SOL.
 
-This recipe will walk through creating a new SPL token: setting up a client with the Token program plugin, creating a mint account (CreateAccount + InitializeMint instructions), minting tokens to an account, and verifying the mint by fetching and decoding it. It uses a plugin-based client but preserves the functional patterns (`pipe()`, immutability) from the current tutorial as the "Kit way" of building transaction messages where relevant.
+## Set up a client
 
-**Adapted from:** Current `getting-started/instructions.mdx` (CreateAccount + InitializeMint instruction creation), `getting-started/build-transaction.mdx` (transaction construction with `pipe()`), `getting-started/send-transaction.mdx` (sending and confirming), `getting-started/fetch-account.mdx` (fetching the mint).
+Install Kit and the plugins you need.
 
-**Links to:** [Getting Started](/docs/getting-started) for the full tutorial, [Using Program Plugins](/docs/guides/using-program-plugins) for program plugin patterns.
+```package-install
+@solana/kit @solana/kit-plugin-rpc @solana/kit-plugin-signer @solana-program/token
+```
 
-</Callout>
+Compose a client with a generated signer, a local RPC connection, an airdrop to fund the signer, and the Token program plugin. Make sure a local validator is running (`solana-test-validator`) before this code executes.
+
+```ts twoslash
+import { createClient, lamports } from '@solana/kit';
+import { solanaLocalRpc } from '@solana/kit-plugin-rpc';
+import { airdropSigner, generatedSigner } from '@solana/kit-plugin-signer';
+import { tokenProgram } from '@solana-program/token';
+
+const client = await createClient()
+    .use(generatedSigner())
+    .use(solanaLocalRpc())
+    .use(airdropSigner(lamports(1_000_000_000n)))
+    .use(tokenProgram());
+```
+
+## Create the mint
+
+Generate a fresh signer for the mint account and ask the Token program plugin to build a `createMint` instruction plan. The plan creates the mint account, funds it for rent exemption, and initializes it as a Token mint — all in one atomic operation.
+
+```ts twoslash
+import { generateKeyPairSigner } from '@solana/kit';
+// ---cut-start---
+import { createClient, lamports } from '@solana/kit';
+import { solanaLocalRpc } from '@solana/kit-plugin-rpc';
+import { airdropSigner, generatedSigner } from '@solana/kit-plugin-signer';
+import { tokenProgram } from '@solana-program/token';
+const client = await createClient()
+    .use(generatedSigner())
+    .use(solanaLocalRpc())
+    .use(airdropSigner(lamports(1_000_000_000n)))
+    .use(tokenProgram());
+// ---cut-end---
+const mint = await generateKeyPairSigner();
+
+await client.token.instructions
+    .createMint({
+        newMint: mint,
+        decimals: 9,
+        mintAuthority: client.identity.address,
+    })
+    .sendTransaction();
+
+console.log(`🎉 Mint created: ${mint.address}`);
+```
+
+The mint authority is the signer allowed to mint new tokens later. Setting it to `client.identity.address` makes the current client's identity the authority, which is what you want for a recipe like this one.
+
+## Mint tokens to your ATA
+
+Tokens live in associated token accounts (ATAs) — one ATA per `(owner, mint)` pair. The plugin's `mintToATA` helper derives the ATA address, creates it if it does not exist yet, and mints tokens to it in a single instruction plan.
+
+```ts twoslash
+import { Address } from '@solana/kit';
+const mintAddress = null as unknown as Address;
+// ---cut-start---
+import { createClient, lamports } from '@solana/kit';
+import { solanaLocalRpc } from '@solana/kit-plugin-rpc';
+import { airdropSigner, generatedSigner } from '@solana/kit-plugin-signer';
+import { tokenProgram } from '@solana-program/token';
+const client = await createClient()
+    .use(generatedSigner())
+    .use(solanaLocalRpc())
+    .use(airdropSigner(lamports(1_000_000_000n)))
+    .use(tokenProgram());
+// ---cut-end---
+await client.token.instructions
+    .mintToATA({
+        mint: mintAddress,
+        owner: client.identity.address,
+        mintAuthority: client.identity,
+        amount: 1_000n * 10n ** 9n, // 1,000 tokens with 9 decimals
+        decimals: 9,
+    })
+    .sendTransaction();
+```
+
+`mintToATA` is asynchronous because it derives the ATA address before building the plan, but the `.sendTransaction()` shortcut is exposed on the returned promise itself — a single `await` on the call is enough. Pass the same `decimals` you used when creating the mint; the plugin uses it as a safety check to make sure you are minting against the mint you think you are.
+
+## Transfer tokens to a recipient
+
+Sending tokens to another wallet follows the same pattern as minting: the plugin derives both the source and destination ATAs, creates the destination if it doesn't exist, and issues the transfer.
+
+```ts twoslash
+import { address, Address } from '@solana/kit';
+const mintAddress = null as unknown as Address;
+// ---cut-start---
+import { createClient, lamports } from '@solana/kit';
+import { solanaLocalRpc } from '@solana/kit-plugin-rpc';
+import { airdropSigner, generatedSigner } from '@solana/kit-plugin-signer';
+import { tokenProgram } from '@solana-program/token';
+const client = await createClient()
+    .use(generatedSigner())
+    .use(solanaLocalRpc())
+    .use(airdropSigner(lamports(1_000_000_000n)))
+    .use(tokenProgram());
+// ---cut-end---
+const recipient = address('GdnSyH3YtwcxFvQrVVJMm1JhTS4QVX7MFsX56uJLUfiZ');
+
+await client.token.instructions
+    .transferToATA({
+        mint: mintAddress,
+        authority: client.identity,
+        recipient,
+        amount: 100n * 10n ** 9n, // 100 tokens
+        decimals: 9,
+    })
+    .sendTransaction();
+```
+
+The `authority` is the owner of the source tokens, which here is the same identity that minted them. The plugin pulls tokens out of `authority`'s ATA for the given mint, creates the recipient's ATA if needed, and deposits the tokens.
+
+## Next steps
+
+- [Using program plugins](/docs/guides/using-program-plugins) — explore everything `client.token` and other program namespaces expose.
+- [Fetching accounts](/docs/guides/fetching-accounts) — read the mint and token account balances back from the chain.
+- [Airdropping tokens](/recipes/airdropping-tokens) — extend this recipe to many recipients in parallel.

@@ -3,13 +3,114 @@ title: Transferring SOL
 description: Send SOL from one account to another with error handling
 ---
 
-<Callout type="warn" title="Planned Content">
-**Status:** New page
+This recipe walks through sending SOL from your client's payer to another address. It uses a local validator so you can run it end-to-end without touching real funds, and shows how to surface a useful error when a transfer fails.
 
-This recipe will walk through a complete SOL transfer: setting up a local client, generating a recipient address, building a `getTransferSolInstruction` from `@solana-program/system`, sending via `client.sendTransaction(instruction)`, handling errors by catching `SolanaError` and extracting program-specific error details, and linking to the explorer for debugging.
+## Set up a client
 
-**Draws from:** Kit-plugins `examples/transfer-lamports/` example (complete working implementation with error handling and explorer links).
+Install Kit and the plugins you need.
 
-**Links to:** [Sending Transactions](/docs/guides/sending-transactions) for the full guide on transaction sending.
+```package-install
+@solana/kit @solana/kit-plugin-rpc @solana/kit-plugin-signer @solana-program/system
+```
 
-</Callout>
+Compose a client with a generated signer, a local RPC connection, an airdrop to fund the signer, and the System program plugin. Make sure a local validator is running (`solana-test-validator`) before this code executes.
+
+```ts twoslash
+import { createClient, lamports } from '@solana/kit';
+import { solanaLocalRpc } from '@solana/kit-plugin-rpc';
+import { airdropSigner, generatedSigner } from '@solana/kit-plugin-signer';
+import { systemProgram } from '@solana-program/system';
+
+const client = await createClient()
+    .use(generatedSigner())
+    .use(solanaLocalRpc())
+    .use(airdropSigner(lamports(1_000_000_000n)))
+    .use(systemProgram());
+```
+
+## Send the transfer
+
+Use `client.system.instructions.transferSol` to build the transfer instruction, then call `.sendTransaction()` to plan, sign, send, and confirm it in one step.
+
+```ts twoslash
+import { address, lamports } from '@solana/kit';
+// ---cut-start---
+import { createClient } from '@solana/kit';
+import { solanaLocalRpc } from '@solana/kit-plugin-rpc';
+import { airdropSigner, generatedSigner } from '@solana/kit-plugin-signer';
+import { systemProgram } from '@solana-program/system';
+const client = await createClient()
+    .use(generatedSigner())
+    .use(solanaLocalRpc())
+    .use(airdropSigner(lamports(1_000_000_000n)))
+    .use(systemProgram());
+// ---cut-end---
+const recipient = address('GdnSyH3YtwcxFvQrVVJMm1JhTS4QVX7MFsX56uJLUfiZ');
+
+const result = await client.system.instructions
+    .transferSol({
+        source: client.payer,
+        destination: recipient,
+        amount: lamports(10_000_000n), // 0.01 SOL
+    })
+    .sendTransaction();
+
+console.log(`✅ ${result.context.signature}`);
+```
+
+The shortcut is equivalent to passing the instruction to `client.sendTransaction([...])`. Reach for the array form when you want to combine several instructions into a single atomic transaction.
+
+## Handle errors
+
+When a transfer fails, `client.sendTransaction(...)` throws a [`SolanaError`](/docs/advanced-guides/errors) with the `SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION` code. Wrapping the call lets you surface a useful message and inspect the underlying program error.
+
+```ts twoslash
+import {
+    address,
+    isSolanaError,
+    lamports,
+    SingleTransactionPlanResult,
+    SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION,
+} from '@solana/kit';
+import { getSystemErrorMessage, isSystemError } from '@solana-program/system';
+// ---cut-start---
+import { createClient } from '@solana/kit';
+import { solanaLocalRpc } from '@solana/kit-plugin-rpc';
+import { airdropSigner, generatedSigner } from '@solana/kit-plugin-signer';
+import { systemProgram } from '@solana-program/system';
+const client = await createClient()
+    .use(generatedSigner())
+    .use(solanaLocalRpc())
+    .use(airdropSigner(lamports(1_000_000_000n)))
+    .use(systemProgram());
+const recipient = address('GdnSyH3YtwcxFvQrVVJMm1JhTS4QVX7MFsX56uJLUfiZ');
+// ---cut-end---
+try {
+    await client.system.instructions
+        .transferSol({
+            source: client.payer,
+            destination: recipient,
+            amount: lamports(10_000_000n),
+        })
+        .sendTransaction();
+} catch (e) {
+    if (!isSolanaError(e, SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION)) throw e;
+
+    const result = e.context.transactionPlanResult as SingleTransactionPlanResult;
+    const transactionMessage = result.context.message ?? result.plannedMessage;
+    const cause = e.cause as Error;
+
+    if (isSystemError(cause, transactionMessage)) {
+        console.error(`System program error: ${getSystemErrorMessage(cause.context.code)}`);
+    } else {
+        console.error('Transfer failed:', e.message);
+    }
+}
+```
+
+`error.cause` carries the underlying error, and `error.context.transactionPlanResult` carries the planned transaction message. Pairing them with `isSystemError` and `getSystemErrorMessage` from `@solana-program/system` turns an opaque program error code into a human-readable message — invaluable when something like an underfunded source account causes the transfer to fail.
+
+## Next steps
+
+- [Sending transactions](/docs/guides/sending-transactions) — the full guide on single transactions, including planning and configuration.
+- [Advanced guides — Errors](/docs/advanced-guides/errors) — deep dive on `SolanaError` codes and program-specific error parsing.

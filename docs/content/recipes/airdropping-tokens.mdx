@@ -3,13 +3,135 @@ title: Airdropping tokens
 description: Airdrop tokens to many wallets using parallel transaction plans
 ---
 
-<Callout type="warn" title="Planned Content">
-**Status:** New page
+This recipe airdrops a freshly minted SPL token to many recipient wallets at once. It demonstrates how to compose an [instruction plan](/docs/guides/sending-multiple-transactions) that creates the mint sequentially first and then mints to every recipient in parallel — letting Kit pack the work into as few transactions as possible and send the parallel batches concurrently.
 
-This recipe will walk through a multi-address token airdrop: setting up a local client, creating a token mint, generating many recipient addresses, building a complex instruction plan (`sequentialInstructionPlan` containing mint creation followed by a `parallelInstructionPlan` of `getMintToATAInstructionPlanAsync` calls), sending via `client.sendTransactions(plan)` where the client handles splitting into transactions and parallel execution, using `passthroughFailedTransactionPlanExecution` to continue past failures, and processing results with `flattenTransactionPlanResult` to log successes, failures, and cancellations.
+## Set up a client
 
-**Draws from:** Kit-plugins `examples/token-airdrop/` example (complete working implementation with parallel plans and error recovery).
+Install Kit and the plugins you need.
 
-**Links to:** [Sending Multiple Transactions](/docs/guides/sending-multiple-transactions) for the full guide on multi-transaction operations, [Advanced Guides — Instruction Plans](/docs/advanced-guides/instruction-plans) for the underlying plan system.
+```package-install
+@solana/kit @solana/kit-plugin-rpc @solana/kit-plugin-signer @solana-program/token
+```
 
-</Callout>
+Compose a client with a generated signer, a local RPC connection, an airdrop to fund the signer, and the Token program plugin. Make sure a local validator is running (`solana-test-validator`) before this code executes.
+
+```ts twoslash
+import { createClient, lamports } from '@solana/kit';
+import { solanaLocalRpc } from '@solana/kit-plugin-rpc';
+import { airdropSigner, generatedSigner } from '@solana/kit-plugin-signer';
+import { tokenProgram } from '@solana-program/token';
+
+const client = await createClient()
+    .use(generatedSigner())
+    .use(solanaLocalRpc())
+    .use(airdropSigner(lamports(100_000_000_000n)))
+    .use(tokenProgram());
+```
+
+The signer is funded with 100 SOL because creating ATAs costs a small amount of rent for each recipient.
+
+## Generate the recipients
+
+For the demo, generate 100 random destination addresses up front. In a real airdrop, this list would come from a database, a CSV, or some other source.
+
+```ts twoslash
+import { generateKeyPairSigner } from '@solana/kit';
+
+const recipients = await Promise.all(
+    Array.from({ length: 100 }, async () => (await generateKeyPairSigner()).address),
+);
+```
+
+## Build the airdrop plan
+
+Compose the work as a `sequentialInstructionPlan` whose first child creates the mint and whose second child is a `parallelInstructionPlan` containing one mint-to-ATA plan per recipient.
+
+```ts twoslash
+import {
+    Address,
+    generateKeyPairSigner,
+    parallelInstructionPlan,
+    sequentialInstructionPlan,
+} from '@solana/kit';
+const recipients = null as unknown as Address[];
+// ---cut-start---
+import { createClient, lamports } from '@solana/kit';
+import { solanaLocalRpc } from '@solana/kit-plugin-rpc';
+import { airdropSigner, generatedSigner } from '@solana/kit-plugin-signer';
+import { tokenProgram } from '@solana-program/token';
+const client = await createClient()
+    .use(generatedSigner())
+    .use(solanaLocalRpc())
+    .use(airdropSigner(lamports(100_000_000_000n)))
+    .use(tokenProgram());
+// ---cut-end---
+const mint = await generateKeyPairSigner();
+
+const instructionPlan = sequentialInstructionPlan([
+    client.token.instructions.createMint({
+        newMint: mint,
+        decimals: 6,
+        mintAuthority: client.identity.address,
+    }),
+    parallelInstructionPlan(
+        await Promise.all(
+            recipients.map((owner) =>
+                client.token.instructions.mintToATA({
+                    mint: mint.address,
+                    owner,
+                    mintAuthority: client.identity,
+                    amount: 1_000n * 10n ** 6n, // 1,000 tokens
+                    decimals: 6,
+                }),
+            ),
+        ),
+    ),
+]);
+```
+
+The mint must exist before any recipient can receive tokens, which is why the outer plan is sequential. Each `mintToATA` is independent of the others, so wrapping them in a `parallelInstructionPlan` lets Kit run them concurrently. The Token plugin's `mintToATA` is asynchronous because it derives each recipient's ATA address up front, so wrap the whole list in a single `Promise.all`.
+
+## Send and inspect the results
+
+`client.sendTransactions(plan)` plans, signs, sends, and confirms every transaction in the tree. Wrap the call in [`passthroughFailedTransactionPlanExecution`](/docs/advanced-guides/errors#walking-transaction-plan-results) so a failure on one transaction does not throw — you keep the full result tree and can decide what to do per recipient.
+
+```ts twoslash
+import {
+    flattenTransactionPlanResult,
+    InstructionPlan,
+    passthroughFailedTransactionPlanExecution,
+} from '@solana/kit';
+const instructionPlan = null as unknown as InstructionPlan;
+// ---cut-start---
+import { createClient, lamports } from '@solana/kit';
+import { solanaLocalRpc } from '@solana/kit-plugin-rpc';
+import { airdropSigner, generatedSigner } from '@solana/kit-plugin-signer';
+import { tokenProgram } from '@solana-program/token';
+const client = await createClient()
+    .use(generatedSigner())
+    .use(solanaLocalRpc())
+    .use(airdropSigner(lamports(100_000_000_000n)))
+    .use(tokenProgram());
+// ---cut-end---
+const result = await passthroughFailedTransactionPlanExecution(
+    client.sendTransactions(instructionPlan),
+);
+
+for (const [index, single] of flattenTransactionPlanResult(result).entries()) {
+    if (single.status === 'successful') {
+        console.log(`#${index} ✅ ${single.context.signature}`);
+    } else if (single.status === 'failed') {
+        console.error(`#${index} ❌ ${single.error.message}`);
+    } else {
+        console.warn(`#${index} ⏭️  canceled`);
+    }
+}
+```
+
+`flattenTransactionPlanResult` collapses the tree into one entry per transaction in the order they were planned, so iterating the array is enough to log each outcome individually. For a single bottom-line view across the whole airdrop, [`summarizeTransactionPlanResult`](/docs/advanced-guides/errors#walking-transaction-plan-results) returns success/failure/cancellation counts and a top-level `successful` boolean.
+
+## Next steps
+
+- [Sending multiple transactions](/docs/guides/sending-multiple-transactions) — the full guide on multi-transaction operations and instruction plan composition.
+- [Advanced guides — Errors](/docs/advanced-guides/errors) — deep dive on `TransactionPlanResult`, walking failed trees, and program-specific errors.
+- [Creating a token](/recipes/creating-a-token) — the simpler single-recipient version of this flow.
