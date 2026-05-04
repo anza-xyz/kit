@@ -81,8 +81,8 @@ importers:
         specifier: ^0.10.0
         version: 0.10.0(@solana/kit@6.8.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@solana/kit-plugin-rpc':
-        specifier: ^0.10.0
-        version: 0.10.0(@solana/kit@6.8.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))
+        specifier: ^0.11.0
+        version: 0.11.0(@solana/kit@6.8.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))
       '@solana/kit-plugin-signer':
         specifier: ^0.10.0
         version: 0.10.0(@solana/kit@6.8.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))
@@ -2301,8 +2301,8 @@ packages:
     peerDependencies:
       '@solana/kit': ^6.8.0
 
-  '@solana/kit-plugin-rpc@0.10.0':
-    resolution: {integrity: sha512-UWKCcardpRHbj1G1S5UVPbZCP6LCqEwVX784C0JSeaWSKfeK6G81guiW2oEt8ETcryQFiZLBpwypqgfBdYGliQ==}
+  '@solana/kit-plugin-rpc@0.11.0':
+    resolution: {integrity: sha512-hoE/Xh6671DhZ/Qh7w838TpUfvYrha874VUcGZ5iZrJ7gE29/tUz2NoNEabBT3aFehh7l+4T2aLxOCrtEd2eTw==}
     peerDependencies:
       '@solana/kit': ^6.8.0
 
@@ -7832,7 +7832,7 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@solana/kit-plugin-rpc@0.10.0(@solana/kit@6.8.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))':
+  '@solana/kit-plugin-rpc@0.11.0(@solana/kit@6.8.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))':
     dependencies:
       '@solana/kit': 6.8.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@solana/kit-plugin-instruction-plan': 0.10.0(@solana/kit@6.8.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))
