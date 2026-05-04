@@ -1,8 +1,8 @@
 {
-    "name": "@solana/errors",
+    "name": "@solana/errors-core",
     "version": "6.8.0",
-    "description": "Throw, identify, and decode Solana JavaScript errors",
-    "homepage": "https://www.solanakit.com/api#solanaerrors",
+    "description": "Primitives for building strongly-typed, numerically-coded JavaScript error classes",
+    "homepage": "https://www.solanakit.com/api#solanaerrorscore",
     "exports": {
         "edge-light": {
             "import": "./dist/index.node.mjs",
@@ -42,10 +42,9 @@
         "solana",
         "web3"
     ],
-    "bin": "./bin/cli.mjs",
     "scripts": {
         "compile:docs": "typedoc",
-        "compile:js": "tsup --config build-scripts/tsup.config.package.ts && tsup src/cli.ts --define.__NODEJS__ true --format esm --treeshake",
+        "compile:js": "tsup --config build-scripts/tsup.config.package.ts",
         "compile:typedefs": "tsc -p ./tsconfig.declarations.json",
         "dev": "NODE_OPTIONS=\"--no-experimental-webstorage\" jest -c ../../node_modules/@solana/test-config/jest-dev.config.js --rootDir . --watch",
         "prepublishOnly": "pnpm pkg delete devDependencies",
@@ -74,11 +73,6 @@
         "supports bigint and not dead",
         "maintained node versions"
     ],
-    "dependencies": {
-        "@solana/errors-core": "workspace:*",
-        "chalk": "5.6.2",
-        "commander": "14.0.3"
-    },
     "peerDependencies": {
         "typescript": ">=5.0.0"
     },

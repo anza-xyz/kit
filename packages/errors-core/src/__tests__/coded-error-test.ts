@@ -28,8 +28,7 @@ describe('createCodedErrorClass', () => {
     let originalDev: boolean | undefined;
     beforeEach(() => {
         originalDev = (globalThis as { __DEV__?: boolean }).__DEV__;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (globalThis as any).__DEV__ = true;
+        (globalThis as { __DEV__?: boolean }).__DEV__ = true;
     });
     afterEach(() => {
         (globalThis as { __DEV__?: boolean }).__DEV__ = originalDev;
@@ -44,15 +43,23 @@ describe('createCodedErrorClass', () => {
             expect(err.name).toBe('TestError');
             expect(err.constructor.name).toBe('TestError');
         });
-        it('freezes the context object and sets __code', () => {
+        it('sets __code on the context', () => {
             const { ErrorClass } = makeBundle();
             const err = new ErrorClass(CODE_WITH_CONTEXT, { count: 3, name: 'world' });
             expect(err.context).toHaveProperty('__code', CODE_WITH_CONTEXT);
+        });
+        it('preserves all context properties', () => {
+            const { ErrorClass } = makeBundle();
+            const err = new ErrorClass(CODE_WITH_CONTEXT, { count: 3, name: 'world' });
             expect(err.context).toHaveProperty('name', 'world');
             expect(err.context).toHaveProperty('count', 3);
+        });
+        it('freezes the context object', () => {
+            const { ErrorClass } = makeBundle();
+            const err = new ErrorClass(CODE_WITH_CONTEXT, { count: 3, name: 'world' });
             expect(err.context).toBeFrozenObject();
         });
-        it('exposes a default empty-ish context for codes without context', () => {
+        it('exposes a context with only __code for codes without context', () => {
             const { ErrorClass } = makeBundle();
             const err = new ErrorClass(CODE_WITHOUT_CONTEXT);
             expect(err.context).toEqual({ __code: CODE_WITHOUT_CONTEXT });
@@ -125,6 +132,13 @@ describe('createCodedErrorClass', () => {
             foreign.name = 'TestError';
             expect(() => isError(foreign, CODE_WITH_CONTEXT)).not.toThrow();
         });
+        it('rejects a same-name error whose context.__code is not a number', () => {
+            const { isError } = makeBundle();
+            const foreign = new Error('bogus');
+            foreign.name = 'TestError';
+            (foreign as unknown as { context: object }).context = { __code: 'not-a-number' };
+            expect(isError(foreign)).toBe(false);
+        });
         it('does not cross-match between two bundles with different names', () => {
             const a = makeBundle();
             const b = createCodedErrorClass<TestCode, TestContext>({
@@ -149,30 +163,22 @@ describe('createCodedErrorClass', () => {
             );
         });
         it('returns the short-form message in production mode', () => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (globalThis as any).__DEV__ = false;
+            (globalThis as { __DEV__?: boolean }).__DEV__ = false;
             const { getHumanReadableMessage } = makeBundle();
             expect(getHumanReadableMessage(CODE_WITH_CONTEXT, { count: 2, name: 'bob' })).toBe(
                 `TestError #${CODE_WITH_CONTEXT}`,
             );
         });
         it('does not read the messages map in production mode', () => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (globalThis as any).__DEV__ = false;
-            const messagesProxy = new Proxy(
-                {},
-                {
-                    get() {
-                        throw new Error('messages map was accessed in prod');
-                    },
-                },
-            ) as Readonly<Record<TestCode, string>>;
+            (globalThis as { __DEV__?: boolean }).__DEV__ = false;
+            const messagesFn = jest.fn();
             const { getHumanReadableMessage, ErrorClass } = createCodedErrorClass<TestCode, TestContext>({
-                messages: messagesProxy,
+                messages: messagesFn as unknown as (code: TestCode) => string,
                 name: 'TestError',
             });
-            expect(() => new ErrorClass(CODE_WITHOUT_CONTEXT)).not.toThrow();
-            expect(() => getHumanReadableMessage(CODE_WITHOUT_CONTEXT)).not.toThrow();
+            new ErrorClass(CODE_WITHOUT_CONTEXT);
+            getHumanReadableMessage(CODE_WITHOUT_CONTEXT);
+            expect(messagesFn).not.toHaveBeenCalled();
         });
     });
 
@@ -188,17 +194,16 @@ describe('createCodedErrorClass', () => {
         });
         it('preserves accessor (getter) context properties', () => {
             const { ErrorClass } = makeBundle();
-            let reads = 0;
+            const nameGetter = jest.fn().mockReturnValue('alice');
             const ctx = {
                 count: 1,
                 get name() {
-                    reads++;
-                    return 'alice';
+                    return nameGetter() as string;
                 },
             } as unknown as TestContext[typeof CODE_WITH_CONTEXT];
             const err = new ErrorClass(CODE_WITH_CONTEXT, ctx);
             expect((err.context as { name: string }).name).toBe('alice');
-            expect(reads).toBeGreaterThan(0);
+            expect(nameGetter).toHaveBeenCalled();
         });
         it('does not leak inherited (prototype) properties into context', () => {
             const { ErrorClass } = makeBundle();
@@ -216,16 +221,8 @@ describe('createCodedErrorClass', () => {
                 name: 'x',
             } as unknown as TestContext[typeof CODE_WITH_CONTEXT]);
             expect(err.context).not.toHaveProperty('cause');
-        });
-    });
-
-    describe('isError guard additional hardening', () => {
-        it('rejects a same-name error whose context.__code is not a number', () => {
-            const { isError } = makeBundle();
-            const foreign = new Error('bogus');
-            foreign.name = 'TestError';
-            (foreign as unknown as { context: object }).context = { __code: 'not-a-number' };
-            expect(isError(foreign)).toBe(false);
+            expect('cause' in err).toBe(true);
+            expect(err.cause).toBeUndefined();
         });
     });
 
@@ -262,8 +259,7 @@ describe('createCodedErrorClass', () => {
             expect(getHumanReadableMessage(CODE_WITH_CONTEXT, { count: 1, name: 'bob' })).toBe('Hello bob (suffix)');
         });
         it('is not invoked in production mode', () => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (globalThis as any).__DEV__ = false;
+            (globalThis as { __DEV__?: boolean }).__DEV__ = false;
             const postProcessor = jest.fn((_code, _ctx, message) => `${message}!!`);
             const { ErrorClass } = createCodedErrorClass<TestCode, TestContext>({
                 messagePostProcessor: postProcessor,
@@ -282,8 +278,7 @@ describe('createCodedErrorClass', () => {
 
     describe('production mode messaging', () => {
         beforeEach(() => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (globalThis as any).__DEV__ = false;
+            (globalThis as { __DEV__?: boolean }).__DEV__ = false;
         });
         // Top-level afterEach restores __DEV__ to its pre-test value.
 
@@ -323,6 +318,11 @@ describe('createCodedErrorClass', () => {
             expect(err.message).toBe(
                 `Test error #${CODE_WITHOUT_CONTEXT}; Decode this error by running \`npx @test/errors decode -- ${CODE_WITHOUT_CONTEXT}\``,
             );
+        });
+        it('does not append an encoded context when no prodDecodeCommand is configured', () => {
+            const { ErrorClass } = makeBundle();
+            const err = new ErrorClass(CODE_WITH_CONTEXT, { count: 1, name: 'x' });
+            expect(err.message).toBe(`TestError #${CODE_WITH_CONTEXT}`);
         });
         it('appends an encoded context when present', () => {
             const { ErrorClass } = createCodedErrorClass<TestCode, TestContext>({

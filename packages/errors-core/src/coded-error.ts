@@ -179,7 +179,7 @@ export interface CodedErrorClassBundle<TCode extends number, TContextMap extends
  *
  * @example
  * ```ts
- * import { createCodedErrorClass } from '@solana/errors';
+ * import { createCodedErrorClass } from '@solana/errors-core';
  *
  * export const KORA_ERROR__ACCOUNT_NOT_FOUND = -32050 as const;
  * export const KORA_ERROR__RATE_LIMIT_EXCEEDED = -32030 as const;

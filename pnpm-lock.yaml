@@ -527,12 +527,21 @@ importers:
 
   packages/errors:
     dependencies:
+      '@solana/errors-core':
+        specifier: workspace:*
+        version: link:../errors-core
       chalk:
         specifier: 5.6.2
         version: 5.6.2
       commander:
         specifier: 14.0.3
         version: 14.0.3
+      typescript:
+        specifier: '>=5.0.0'
+        version: 5.9.3
+
+  packages/errors-core:
+    dependencies:
       typescript:
         specifier: '>=5.0.0'
         version: 5.9.3

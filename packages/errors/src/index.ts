@@ -63,7 +63,15 @@
  *
  * @packageDocumentation
  */
-export * from './coded-error';
+export {
+    type CodedError,
+    type CodedErrorClassBundle,
+    type CodedErrorConstructor,
+    type CodedErrorContextMap,
+    type CodedErrorDefinition,
+    type CodedErrorGuard,
+    createCodedErrorClass,
+} from '@solana/errors-core';
 export * from './codes';
 export * from './error';
 export * from './instruction-error';

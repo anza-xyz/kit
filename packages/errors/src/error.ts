@@ -1,4 +1,5 @@
-import { type CodedError, createCodedErrorClass } from './coded-error';
+import { type CodedError, createCodedErrorClass } from '@solana/errors-core';
+
 import {
     SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN,
     SolanaErrorCode,
@@ -12,7 +13,7 @@ const INSTRUCTION_ERROR_RANGE_SIZE = 1000;
 
 type SolanaErrorContextMap = { [P in SolanaErrorCode]: SolanaErrorContext[P] };
 
-const { ErrorClass, isError } = createCodedErrorClass<SolanaErrorCode, SolanaErrorContextMap>({
+const SolanaErrorBundle = /*#__PURE__*/ createCodedErrorClass<SolanaErrorCode, SolanaErrorContextMap>({
     messagePostProcessor: (code, context, message) => {
         if (
             code >= SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN &&
@@ -40,11 +41,15 @@ type SolanaErrorConstructor = {
     ): SolanaError<TErrorCode>;
 };
 
+function getSolanaErrorConstructor(): SolanaErrorConstructor {
+    return SolanaErrorBundle.ErrorClass as unknown as SolanaErrorConstructor;
+}
+
 /**
  * Encapsulates an error's stacktrace, a Solana-specific numeric code that indicates what went
  * wrong, and optional context if the type of error indicated by the code supports it.
  */
-export const SolanaError = ErrorClass as unknown as SolanaErrorConstructor;
+export const SolanaError = /*#__PURE__*/ getSolanaErrorConstructor();
 
 /**
  * The type of an instance of {@link SolanaError}. Narrows `context` to the shape associated with
@@ -132,5 +137,5 @@ export function isSolanaError<TErrorCode extends SolanaErrorCode>(
     code?: TErrorCode,
 ): e is SolanaError<TErrorCode>;
 export function isSolanaError(e: unknown, code?: SolanaErrorCode): boolean {
-    return code === undefined ? isError(e) : isError(e, code);
+    return code === undefined ? SolanaErrorBundle.isError(e) : SolanaErrorBundle.isError(e, code);
 }
