@@ -3,19 +3,74 @@ title: Available plugins
 description: Directory of plugins for Kit clients
 ---
 
-<Callout type="warn" title="Planned Content">
-**Status:** New page
+This page lists the Kit plugins published today. Anyone can author and publish a plugin; if you have one you'd like added here, open a PR against [`anza-xyz/kit`](https://github.com/anza-xyz/kit) to be listed alongside the others.
 
-This page will have one unified table listing all known plugins (Kit-maintained and community, mixed together) with columns for name, package, a brief description, and a link to documentation. Plugins may be loosely tagged by type (e.g. "Bundle", "RPC", "Signer", "Program", "Testing", "General") but these are soft labels, not rigid categories — some plugins span multiple concerns.
+The tables below group plugins by category. Within each category, generic plugins from Anza are listed first because they target the broadest range of use cases, followed by community plugins in alphabetical order. When a single package contains plugins with materially different purposes, those plugins are split across multiple rows so each description stays targeted.
 
-The official plugin sections will cover the higher-level bundle plugins — `solanaRpc`, `solanaMainnetRpc`, `solanaDevnetRpc`, `solanaLocalRpc`, and `litesvm` — alongside the granular plugins they compose, such as `solanaRpcConnection`, `rpcAirdrop`, `rpcTransactionPlanner`, `rpcTransactionPlanExecutor`, `signer`, `payer`, `identity`, `generatedSigner`, `generatedPayer`, `airdropSigner`, `litesvmConnection`, and `planAndSendTransactions`.
+## Signer plugins
 
-Below the table, a dedicated **Program plugins** section will explain the Codama-generated pattern since program plugins are a distinct concept: they add typed program namespaces such as `client.system` or `client.token`, with `.accounts` and `.instructions` helpers below each namespace. This section absorbs the current [Compatible Clients](/docs/compatible-clients) table of `@solana-program/*` packages.
+Signer plugins install a `TransactionSigner` on the client as the `payer`, the `identity`, or both. See [Setting up signers](/docs/guides/setting-up-signers) for an overview of when each variant fits.
 
-A community plugins section will encourage ecosystem contributions and explain how to get listed.
+| Maintainer                    | Package                                                                                | Plugins                                                                       | Description                                                      |
+| ----------------------------- | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| [Anza](https://www.anza.xyz/) | [`@solana/kit-plugin-signer`](https://www.npmjs.com/package/@solana/kit-plugin-signer) | `signer`, `payer`, `identity`                                                 | Install an existing `TransactionSigner` on the client.           |
+| [Anza](https://www.anza.xyz/) | [`@solana/kit-plugin-signer`](https://www.npmjs.com/package/@solana/kit-plugin-signer) | `signerFromFile`, `payerFromFile`, `identityFromFile`                         | Load a Solana CLI keypair from a JSON file (Node.js only).       |
+| [Anza](https://www.anza.xyz/) | [`@solana/kit-plugin-signer`](https://www.npmjs.com/package/@solana/kit-plugin-signer) | `generatedSigner`, `generatedPayer`, `generatedIdentity`                      | Generate a fresh in-memory keypair, useful for tests.            |
+| [Anza](https://www.anza.xyz/) | [`@solana/kit-plugin-signer`](https://www.npmjs.com/package/@solana/kit-plugin-signer) | `generatedSignerWithSol`, `generatedPayerWithSol`, `generatedIdentityWithSol` | Generate a signer and airdrop SOL to it in one step.             |
+| [Anza](https://www.anza.xyz/) | [`@solana/kit-plugin-signer`](https://www.npmjs.com/package/@solana/kit-plugin-signer) | `airdropSigner`, `airdropPayer`, `airdropIdentity`                            | Airdrop SOL to a signer that is already installed on the client. |
 
-**Draws from:** Kit-plugins main README plugin table, individual plugin package READMEs, current `compatible-clients.mdx`.
+## RPC plugins
 
-**Links to:** [Creating Custom Plugins](/docs/plugins/creating-custom-plugins), [Generating Program Plugins](/docs/plugins/generating-program-plugins).
+RPC plugins install Solana RPC connectivity on the client. LiteSVM is included here because it implements a subset of the same RPC API in-process, with no network involved.
 
-</Callout>
+| Maintainer                         | Package                                                                                                   | Plugins                                                              | Description                                                                            |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| [Anza](https://www.anza.xyz/)      | [`@solana/kit-plugin-rpc`](https://www.npmjs.com/package/@solana/kit-plugin-rpc)                          | `solanaRpc`, `solanaMainnetRpc`, `solanaDevnetRpc`, `solanaLocalRpc` | Bundle plugins that wire up RPC, subscriptions, planning, and sending in one step.     |
+| [Anza](https://www.anza.xyz/)      | [`@solana/kit-plugin-rpc`](https://www.npmjs.com/package/@solana/kit-plugin-rpc)                          | `solanaRpcConnection`                                                | Install `client.rpc` and `client.rpcSubscriptions` from a cluster URL.                 |
+| [Anza](https://www.anza.xyz/)      | [`@solana/kit-plugin-rpc`](https://www.npmjs.com/package/@solana/kit-plugin-rpc)                          | `rpcAirdrop`                                                         | Add `client.airdrop` for devnet, testnet, and local validators.                        |
+| [Anza](https://www.anza.xyz/)      | [`@solana/kit-plugin-rpc`](https://www.npmjs.com/package/@solana/kit-plugin-rpc)                          | `rpcGetMinimumBalance`                                               | Add `client.getMinimumBalance` using the matching RPC method.                          |
+| [Anza](https://www.anza.xyz/)      | [`@solana/kit-plugin-litesvm`](https://www.npmjs.com/package/@solana/kit-plugin-litesvm)                  | `litesvm`                                                            | Bundle plugin that runs an in-process Solana VM with full transaction sending support. |
+| [Anza](https://www.anza.xyz/)      | [`@solana/kit-plugin-litesvm`](https://www.npmjs.com/package/@solana/kit-plugin-litesvm)                  | `litesvmConnection`                                                  | Install `client.svm` and a subset of `client.rpc` backed by an in-process VM.          |
+| [Anza](https://www.anza.xyz/)      | [`@solana/kit-plugin-litesvm`](https://www.npmjs.com/package/@solana/kit-plugin-litesvm)                  | `litesvmAirdrop`                                                     | Add `client.airdrop` against the in-process VM.                                        |
+| [Anza](https://www.anza.xyz/)      | [`@solana/kit-plugin-litesvm`](https://www.npmjs.com/package/@solana/kit-plugin-litesvm)                  | `litesvmGetMinimumBalance`                                           | Add `client.getMinimumBalance` against the in-process VM.                              |
+| [@amilz](https://github.com/amilz) | [`local-validator`](https://github.com/amilz/kit-helpers/tree/main/plugins/local-validator) (unpublished) | `localValidatorPlugin`                                               | Manage the lifecycle of a local `solana-test-validator` (start, stop, restart).        |
+
+## Instruction plan plugins
+
+Instruction plan plugins install transaction planning and sending capabilities on the client. The RPC and LiteSVM packages are listed here too because they ship default planner and executor implementations on top of their respective backends — including the bundle plugins, which install everything needed to call `client.planTransaction(s)` and `client.sendTransaction(s)` in one step.
+
+| Maintainer                         | Package                                                                                                           | Plugins                                                              | Description                                                                                                 |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| [Anza](https://www.anza.xyz/)      | [`@solana/kit-plugin-instruction-plan`](https://www.npmjs.com/package/@solana/kit-plugin-instruction-plan)        | `transactionPlanner`                                                 | Install a custom transaction planner on the client.                                                         |
+| [Anza](https://www.anza.xyz/)      | [`@solana/kit-plugin-instruction-plan`](https://www.npmjs.com/package/@solana/kit-plugin-instruction-plan)        | `transactionPlanExecutor`                                            | Install a custom transaction plan executor on the client.                                                   |
+| [Anza](https://www.anza.xyz/)      | [`@solana/kit-plugin-instruction-plan`](https://www.npmjs.com/package/@solana/kit-plugin-instruction-plan)        | `planAndSendTransactions`                                            | Add `client.planTransaction(s)` and `client.sendTransaction(s)` on top of an existing planner and executor. |
+| [Anza](https://www.anza.xyz/)      | [`@solana/kit-plugin-rpc`](https://www.npmjs.com/package/@solana/kit-plugin-rpc)                                  | `solanaRpc`, `solanaMainnetRpc`, `solanaDevnetRpc`, `solanaLocalRpc` | Bundle plugins that wire up RPC, subscriptions, planning, and sending in one step.                          |
+| [Anza](https://www.anza.xyz/)      | [`@solana/kit-plugin-rpc`](https://www.npmjs.com/package/@solana/kit-plugin-rpc)                                  | `rpcTransactionPlanner`, `rpcTransactionPlanExecutor`                | Default transaction planner and executor backed by RPC.                                                     |
+| [Anza](https://www.anza.xyz/)      | [`@solana/kit-plugin-litesvm`](https://www.npmjs.com/package/@solana/kit-plugin-litesvm)                          | `litesvm`                                                            | Bundle plugin that runs an in-process Solana VM with full transaction sending support.                      |
+| [Anza](https://www.anza.xyz/)      | [`@solana/kit-plugin-litesvm`](https://www.npmjs.com/package/@solana/kit-plugin-litesvm)                          | `litesvmTransactionPlanner`, `litesvmTransactionPlanExecutor`        | Default transaction planner and executor backed by LiteSVM.                                                 |
+| [@amilz](https://github.com/amilz) | [`transaction-builder`](https://github.com/amilz/kit-helpers/tree/main/plugins/transaction-builder) (unpublished) | `transactionBuilderPlugin`                                           | Helpers for constructing, signing, and sending transactions.                                                |
+
+## Program plugins
+
+Program plugins are generated from program IDLs and install a typed `client.<program>` namespace with `accounts` and `instructions` helpers. See [Using program plugins](/docs/guides/using-program-plugins) for usage and [Generating program plugins](/docs/plugins/generating-program-plugins) for authoring new ones.
+
+| Maintainer                         | Package                                                                                                      | Plugins                           | Description                                                                   |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------ | --------------------------------- | ----------------------------------------------------------------------------- |
+| [Anza](https://www.anza.xyz/)      | [`@solana-program/address-lookup-table`](https://www.npmjs.com/package/@solana-program/address-lookup-table) | _Plugin coming soon_              | Address Lookup Table program.                                                 |
+| [Anza](https://www.anza.xyz/)      | [`@solana-program/compute-budget`](https://www.npmjs.com/package/@solana-program/compute-budget)             | _Plugin coming soon_              | Compute Budget program: priority fees and compute unit limits.                |
+| [Anza](https://www.anza.xyz/)      | [`@solana-program/memo`](https://www.npmjs.com/package/@solana-program/memo)                                 | _Plugin coming soon_              | Memo program.                                                                 |
+| [Anza](https://www.anza.xyz/)      | [`@solana-program/stake`](https://www.npmjs.com/package/@solana-program/stake)                               | _Plugin coming soon_              | Stake program.                                                                |
+| [Anza](https://www.anza.xyz/)      | [`@solana-program/system`](https://www.npmjs.com/package/@solana-program/system)                             | `systemProgram`                   | Native System program: account creation, transfers, nonce accounts, and more. |
+| [Anza](https://www.anza.xyz/)      | [`@solana-program/token`](https://www.npmjs.com/package/@solana-program/token)                               | `tokenProgram`                    | SPL Token program: mints, token accounts, and ATAs.                           |
+| [Anza](https://www.anza.xyz/)      | [`@solana-program/token-2022`](https://www.npmjs.com/package/@solana-program/token-2022)                     | _Plugin coming soon_              | SPL Token Extension program (Token-2022).                                     |
+| [@amilz](https://github.com/amilz) | [`airdrop-token`](https://github.com/amilz/kit-helpers/tree/main/plugins/airdrop-token) (unpublished)        | `airdropToken`, `testTokenPlugin` | Helpers for creating mints, ATAs, and minting tokens for tests.               |
+
+## Other plugins
+
+Plugins that don't fit into the categories above land here. Nothing has been listed yet — open a PR against [`anza-xyz/kit`](https://github.com/anza-xyz/kit) to add yours.
+
+## Next steps
+
+- [Creating custom plugins](/docs/plugins/creating-custom-plugins) — write your own plugin and publish it.
+- [Generating program plugins](/docs/plugins/generating-program-plugins) — generate a typed plugin for a Solana program.
+- [Using program plugins](/docs/guides/using-program-plugins) — consume program plugins from a Kit client.

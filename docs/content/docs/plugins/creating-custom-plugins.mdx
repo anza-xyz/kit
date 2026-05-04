@@ -3,15 +3,133 @@ title: Creating custom plugins
 description: Write your own plugins to extend Kit clients
 ---
 
-<Callout type="warn" title="Planned Content">
-**Status:** New page
+Plugins are small, focused functions that extend a Kit client with new capabilities. This page walks through writing a plugin from scratch, declaring its prerequisites, handling asynchronous setup, registering cleanup logic, and composing several plugins into a higher-level bundle.
 
-This page will cover how to write custom plugins: the `ClientPlugin<TInput, TOutput>` type signature, using `extendClient(client, additions)` to add capabilities (preserves property descriptors, freezes result), simple synchronous plugins (`(client) => extendClient(client, { myFeature: ... })`), async plugins (`async (client) => extendClient(client, { data: await fetch(...) })`), enforcing prerequisites via TypeScript generics (`<T extends ClientWithRpc>(client: T) => ...`), implementing standard interfaces (`ClientWithPayer`, `ClientWithTransactionSending`, etc.) for interoperability, a full worked example building a custom plugin from scratch, and best practices for naming, documentation, and publishing to npm.
+## The `ClientPlugin` shape
 
-It will also include a section on creating **plugin bundles**: reusable plugins that compose several smaller plugins into one setup step. This section will show how official bundles such as `solanaRpc`, `solanaDevnetRpc`, `solanaLocalRpc`, and `litesvm` are structured, when an application or library should create its own bundle, and how to keep bundles composable by accepting an existing client from `createClient()` rather than hiding client construction behind a factory.
+A plugin is a function that takes a client and returns a new client object. The recommended way to add properties is the `extendClient(client, additions)` helper from `@solana/kit`, which preserves property descriptors (getters, symbol-keyed properties) that a plain object spread would flatten.
 
-**Draws from:** `@solana/plugin-core` source and docs (`createClient`, `extendClient`, `ClientPlugin`), kit-plugins main README "Create Your Own Plugins" and "Compose Granular Plugins" sections.
+```ts twoslash
+import { createClient, extendClient } from '@solana/kit';
 
-**Links to:** [Plugins — Overview](/docs/plugins) for the client model, [Available Plugins](/docs/plugins/available-plugins) for existing plugin bundles and granular plugins.
+function apple() {
+    return <T extends object>(client: T) => extendClient(client, { fruit: 'apple' as const });
+}
 
-</Callout>
+const client = createClient().use(apple());
+client.fruit; // 'apple'
+```
+
+Wrapping the plugin in a small factory function (`apple()` rather than `apple`) is the convention across Kit plugins. It gives you somewhere to accept configuration without changing the shape of the function returned to `.use(...)`.
+
+## Add prerequisites with TypeScript generics
+
+Plugins can require capabilities from the input client by constraining the input type. If a consumer applies your plugin in the wrong order, TypeScript reports a compile-time error rather than letting it fail at runtime.
+
+```ts twoslash
+// @errors: 2345
+import { createClient, extendClient } from '@solana/kit';
+
+function appleTart() {
+    return <T extends { fruit: 'apple' }>(client: T) =>
+        extendClient(client, { dessert: 'appleTart' as const });
+}
+
+createClient().use(appleTart()); // ❌ Missing `fruit: 'apple'`.
+```
+
+The same mechanism is what makes the official plugins compose so cleanly: `airdropPayer()` requires `ClientWithPayer & ClientWithAirdrop`, `solanaRpc(...)` requires `ClientWithPayer`, and so on. Adopting the same pattern in your own plugins keeps users honest about the order of operations.
+
+## Use the standard interfaces
+
+Whenever possible, declare your prerequisites and additions using the standard interfaces from `@solana/plugin-interfaces` (re-exported from `@solana/kit`). This lets your plugin compose with any other plugin that targets the same shape, regardless of its package.
+
+The most common interfaces are:
+
+- `ClientWithPayer` and `ClientWithIdentity` for signer roles.
+- `ClientWithRpc<TApi>` and `ClientWithRpcSubscriptions<TApi>` for transports.
+- `ClientWithAirdrop` and `ClientWithGetMinimumBalance` for funding helpers.
+- `ClientWithTransactionPlanning` and `ClientWithTransactionSending` for the transaction lifecycle.
+
+If your plugin's capability does not match any existing interface, define your own type and export it. If you think the capability is generally useful and there is a gap in the standard interfaces, consider opening a PR against [`anza-xyz/kit`](https://github.com/anza-xyz/kit) so other plugins can adopt it too. Treating capabilities as named interfaces makes them addressable from other code without naming the specific plugin that installed them.
+
+## Asynchronous plugins
+
+Plugins can return a `Promise<Client>` instead of a `Client`. The `.use(...)` chain awaits async plugins automatically, so you only need a single `await` at the end of the chain.
+
+```ts twoslash
+import {
+    createClient,
+    createKeyPairSignerFromBytes,
+    extendClient,
+    KeyPairSigner,
+} from '@solana/kit';
+import { readFile } from 'node:fs/promises';
+
+function signerFromBytesFile(path: string) {
+    return async <T extends object>(client: T) => {
+        const bytes = JSON.parse(await readFile(path, 'utf-8')) as number[];
+        const signer: KeyPairSigner = await createKeyPairSignerFromBytes(new Uint8Array(bytes));
+        return extendClient(client, { payer: signer, identity: signer });
+    };
+}
+
+const client = await createClient().use(signerFromBytesFile('./keypair.json'));
+```
+
+Async and sync plugins can be mixed freely in the same chain. Once any async plugin is involved, the `.use(...)` chain returns an `AsyncClient` that you await once at the end.
+
+## Release resources on disposal
+
+Plugins that hold disposable resources — WebSocket connections, intervals, file handles — can register a cleanup function with `withCleanup(...)`. The returned client implements `Disposable`, so a `using` declaration runs the cleanup when the client goes out of scope.
+
+```ts twoslash
+import { extendClient, withCleanup } from '@solana/kit';
+
+function liveFeed(url: string) {
+    return <T extends object>(client: T) => {
+        const socket = new WebSocket(url);
+        return withCleanup(extendClient(client, { socket }), () => socket.close());
+    };
+}
+```
+
+`withCleanup` chains existing dispose logic, so you can call it more than once across plugins without overriding earlier cleanup. Reach for it whenever your plugin owns a resource the user would otherwise have to remember to release manually.
+
+## Compose smaller plugins into a bundle
+
+A bundle plugin is just a regular plugin that applies several smaller plugins one after another. The `pipe(...)` helper from `@solana/kit` makes the composition concise and the resulting type predictable.
+
+```ts twoslash
+// @noErrors
+import { ClientWithPayer, pipe } from '@solana/kit';
+import {
+    rpcAirdrop,
+    rpcGetMinimumBalance,
+    solanaRpcConnection,
+    SolanaRpcConnectionConfig,
+} from '@solana/kit-plugin-rpc';
+
+function myDevnetBundle(config: SolanaRpcConnectionConfig) {
+    return <T extends ClientWithPayer>(client: T) =>
+        pipe(client, solanaRpcConnection(config), rpcGetMinimumBalance(), rpcAirdrop());
+}
+```
+
+The bundle accepts an existing client rather than calling `createClient()` itself. That keeps your bundle composable: callers stay in control of their own client and can apply additional plugins before or after yours. It is also what lets the official `solanaRpc`, `solanaDevnetRpc`, `solanaLocalRpc`, and `litesvm` bundles drop into any client the same way a single plugin would.
+
+## Publish your plugin
+
+A few small conventions go a long way once a plugin lands on npm:
+
+- Name the factory function after the capability it installs (e.g. `signer`, `rpcAirdrop`, `tokenProgram`) rather than the package, and make sure it reads well at the call site — `use(tokenProgram())` should sound like the sentence you would write to describe what it does.
+- Document the standard interfaces your plugin requires and provides; this is what other plugin authors will read first.
+- Keep the public surface minimal — one factory function per concept — and prefer composition over bigger plugins that try to do everything.
+
+Once your plugin is published, open a PR against [`anza-xyz/kit`](https://github.com/anza-xyz/kit) to be listed on the [Available plugins](/docs/plugins/available-plugins) page so other developers can find it.
+
+## Next steps
+
+- [Plugins](/docs/plugins) — revisit the client model and standard interfaces.
+- [Available plugins](/docs/plugins/available-plugins) — see how published plugins describe themselves.
+- [Generating program plugins](/docs/plugins/generating-program-plugins) — let Codama write a program plugin for you.

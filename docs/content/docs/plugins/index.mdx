@@ -3,11 +3,70 @@ title: Plugins
 description: Understand Kit's plugin ecosystem
 ---
 
-<Callout type="warn" title="Planned Content">
-**Status:** New page
+Plugins are how Kit clients gain capabilities. Everything from RPC connectivity, wallet signers, transaction sending, and even typed access to Solana programs is delivered as a plugin you opt into. This page explains the underlying client model and the conventions plugins follow.
 
-This overview will explain how plugins extend Kit clients. It will introduce a Kit client as a frozen, typed JavaScript object created with `createClient()` from `@solana/kit` and extended by chaining `.use(plugin())` calls. It will explain how TypeScript enforces plugin ordering and prerequisites at compile time, the `ClientPlugin` type (`(input: TInput) => TOutput`), the `extendClient()` helper for preserving property descriptors, how official plugins implement standard interfaces (`ClientWithRpc`, `ClientWithPayer`, `ClientWithTransactionSending`, etc.), and how the ecosystem can build and share individual plugins, program plugins, and higher-level plugin bundles.
+## What is a Kit client?
 
-**Draws from:** `@solana/plugin-core` source and docs, `@solana/plugin-interfaces` source and docs, kit-plugins main README.
+A Kit client is a frozen, typed JavaScript object created with `createClient()` from `@solana/kit` and extended by chaining `.use(plugin())` calls. Each call applies a plugin, and the returned client is a brand new immutable object — the previous one is left untouched.
 
-</Callout>
+```ts twoslash
+import { createClient } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { generatedSigner } from '@solana/kit-plugin-signer';
+
+const client = await createClient().use(generatedSigner()).use(solanaDevnetRpc());
+```
+
+Because the client is immutable, you cannot accidentally mutate it from somewhere else in your application: `client` always reflects the exact set of plugins you applied at creation time.
+
+## What is a plugin?
+
+A plugin is a function that takes a client object and returns either a new client object or a promise resolving to one. The shape is captured by the `ClientPlugin<TInput, TOutput>` type.
+
+```ts twoslash
+import { ClientPlugin, extendClient } from '@solana/kit';
+
+const apple = (): ClientPlugin<object, { fruit: 'apple' }> => (client) =>
+    extendClient(client, { fruit: 'apple' as const });
+```
+
+Most plugins follow the same convention: they are exported as small factory functions (so you can pass configuration to them) that return the actual `ClientPlugin` function. Asynchronous plugins are supported too; the `.use(...)` chain awaits them automatically, so you only need a single `await` at the end.
+
+## Plugin requirements and ordering
+
+Plugins can require capabilities from the input client by constraining the input type. This means installing them in the wrong order produces a TypeScript error rather than a runtime surprise.
+
+```ts twoslash
+// @errors: 2345
+import { ClientWithPayer, createClient, extendClient } from '@solana/kit';
+
+function airdropPayer() {
+    return <T extends ClientWithPayer>(client: T) => extendClient(client, { airdropped: true });
+}
+
+// Requires a `payer` to be installed first; this fails at compile time.
+const client = createClient().use(airdropPayer());
+```
+
+Adding `payer(...)` (or any other plugin that satisfies `ClientWithPayer`) before `airdropPayer()` makes the chain type-check. The TypeScript compiler walks the whole chain and verifies that each plugin's input requirements are met by the time it is applied.
+
+## Standard plugin interfaces
+
+Kit ships a small set of standard interfaces in `@solana/plugin-interfaces` (re-exported from `@solana/kit`) so plugins from different packages can interoperate. A plugin that installs `client.rpc` declares it provides `ClientWithRpc<...>`; a plugin that needs a payer constrains its input with `ClientWithPayer`. The most common interfaces are:
+
+- `ClientWithPayer` — installs `client.payer`.
+- `ClientWithIdentity` — installs `client.identity`.
+- `ClientWithRpc<TApi>` — installs `client.rpc`.
+- `ClientWithRpcSubscriptions<TApi>` — installs `client.rpcSubscriptions`.
+- `ClientWithAirdrop` — installs `client.airdrop`.
+- `ClientWithGetMinimumBalance` — installs `client.getMinimumBalance`.
+- `ClientWithTransactionPlanning` — installs `client.planTransaction(s)`.
+- `ClientWithTransactionSending` — installs `client.sendTransaction(s)`.
+
+Sticking to these interfaces lets plugins from any source compose freely with each other — and lets your application code take a `ClientWithRpc` rather than caring which specific plugin produced the RPC capability.
+
+## Next steps
+
+- [Available plugins](/docs/plugins/available-plugins) — browse the plugins published today.
+- [Creating custom plugins](/docs/plugins/creating-custom-plugins) — write your own plugin.
+- [Generating program plugins](/docs/plugins/generating-program-plugins) — generate a typed plugin for a Solana program.

@@ -3,6 +3,7 @@ import { createMDX } from 'fumadocs-mdx/next';
 const withMDX = createMDX();
 
 const docsRouteRedirects = [
+    ['compatible-clients', 'plugins/available-plugins'],
     ['concepts', 'advanced-guides'],
     ['concepts/codecs', 'advanced-guides/codecs'],
     ['concepts/errors', 'advanced-guides/errors'],
