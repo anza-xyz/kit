@@ -3,15 +3,6 @@ title: Errors
 description: Recover from errors in development and production
 ---
 
-<Callout type="warn" title="Planned Changes">
-**Status:** Existing page — updates planned
-
-This page will be updated to add examples of extracting errors from `TransactionPlanResult` (failed transactions in multi-transaction operations) and to show how to parse program-specific errors from `SolanaError` context when using `client.sendTransaction()`.
-
-**Current content preserved:** Yes, all existing content stays.
-
-</Callout>
-
 ## Introduction
 
 The ecosystem of packages based on Kit's error system benefit from strongly typed error data, and descriptive error messages. Its error messages get scrubbed from your production bundles, which means that the library of error messages can grow indefinitely without adding a single byte to your app.
@@ -147,6 +138,129 @@ try {
     }
 }
 ```
+
+## Failed transaction errors
+
+When a transaction fails to send, Kit raises one of two high-level error codes that wrap whatever actually went wrong with extra context useful for debugging.
+
+### `SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION` [#failed-to-send-transaction]
+
+This is the error you get back when sending a single transaction fails. The message itself indicates whether the failure happened during preflight or after the transaction was submitted; the context exposes the underlying error, simulation logs, the preflight result when available, and the full `TransactionPlanResult` for deeper inspection.
+
+```ts twoslash
+import { SolanaError } from '@solana/kit';
+const error = null as unknown as SolanaError;
+// ---cut-before---
+import { isSolanaError, SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION } from '@solana/kit';
+
+if (isSolanaError(error, SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION)) {
+    console.error(error.message); // Includes "(preflight)" or the transaction signature.
+    console.error('Cause:', error.cause); // The underlying error that triggered the failure.
+    console.error('Logs:', error.context.logs); // Program logs, when available.
+    console.error('Preflight:', error.context.preflightData); // Simulation result, when available.
+}
+```
+
+The full `TransactionPlanResult` is also attached as `error.context.transactionPlanResult`, but it is non-enumerable so it does not pollute serialized errors. Cast it to [`TransactionPlanResult`](/api/type-aliases/TransactionPlanResult) when you need to walk the tree.
+
+### `SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS` [#failed-to-send-transactions]
+
+The plural variant is raised when sending more than one transaction fails. Its context exposes a `failedTransactions` array — one entry per failure, with the underlying error, its position in the plan, simulation logs, and preflight data — plus the same non-enumerable `transactionPlanResult`.
+
+```ts twoslash
+import { SolanaError } from '@solana/kit';
+const error = null as unknown as SolanaError;
+// ---cut-before---
+import { isSolanaError, SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS } from '@solana/kit';
+
+if (isSolanaError(error, SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS)) {
+    for (const { error: cause, index, logs } of error.context.failedTransactions) {
+        console.error(`Transaction #${index + 1} failed:`, cause.message);
+        if (logs) console.error('Logs:', logs);
+    }
+}
+```
+
+Each individual `error` in the array has already been unwrapped from any preflight wrapper, so you can branch on its code directly the same way you would for a standalone `SolanaError`.
+
+## Walking transaction plan results
+
+Both failed-transaction errors above expose a `transactionPlanResult` you can inspect, and any successful multi-transaction send returns one directly. A [`TransactionPlanResult`](/api/type-aliases/TransactionPlanResult) is a tree that mirrors the original plan, with one of three statuses at each leaf — `successful`, `failed`, or `canceled`. Kit ships a small set of helpers for working with these trees without writing your own recursion.
+
+[`flattenTransactionPlanResult`](/api/functions/flattenTransactionPlanResult) collapses the tree into an array of leaf results, in the order they appear:
+
+```ts twoslash
+import { TransactionPlanResult } from '@solana/kit';
+const result = null as unknown as TransactionPlanResult;
+// ---cut-before---
+import { flattenTransactionPlanResult } from '@solana/kit';
+
+for (const single of flattenTransactionPlanResult(result)) {
+    if (single.status === 'successful') {
+        console.log('✅', single.context.signature);
+    } else if (single.status === 'failed') {
+        console.error('❌', single.error.message);
+    } else {
+        console.warn('⏭️', 'canceled');
+    }
+}
+```
+
+[`summarizeTransactionPlanResult`](/api/functions/summarizeTransactionPlanResult) bucketizes the leaves into successful, failed, and canceled arrays, plus a single `successful` boolean for the overall outcome:
+
+```ts twoslash
+import { TransactionPlanResult } from '@solana/kit';
+const result = null as unknown as TransactionPlanResult;
+// ---cut-before---
+import { summarizeTransactionPlanResult } from '@solana/kit';
+
+const summary = summarizeTransactionPlanResult(result);
+console.log(`${summary.successfulTransactions.length} ok`);
+console.log(`${summary.failedTransactions.length} failed`);
+console.log(`${summary.canceledTransactions.length} canceled`);
+```
+
+[`getFirstFailedSingleTransactionPlanResult`](/api/functions/getFirstFailedSingleTransactionPlanResult) is a convenience for when you only care about the first failure in a tree — useful for surfacing a single root cause in error UI:
+
+```ts twoslash
+import { TransactionPlanResult } from '@solana/kit';
+const result = null as unknown as TransactionPlanResult;
+// ---cut-before---
+import { getFirstFailedSingleTransactionPlanResult } from '@solana/kit';
+
+const failed = getFirstFailedSingleTransactionPlanResult(result);
+console.error('First failure:', failed.error.message);
+```
+
+By default, executors throw [`SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN`](/api/variables/SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN) on any failure. If you would rather inspect a partial result without a `try`/`catch`, [`passthroughFailedTransactionPlanExecution`](/api/functions/passthroughFailedTransactionPlanExecution) catches that error and returns the embedded `TransactionPlanResult` instead.
+
+```ts twoslash
+import { TransactionPlanResult } from '@solana/kit';
+const sendTransactionsPromise = null as unknown as Promise<TransactionPlanResult>;
+// ---cut-before---
+import { passthroughFailedTransactionPlanExecution } from '@solana/kit';
+
+const result = await passthroughFailedTransactionPlanExecution(sendTransactionsPromise);
+```
+
+## Program-specific errors
+
+Codama-generated program packages export their own error helpers so you can identify and format program-specific failures. The pattern is consistent across packages: an `isXError(error, transactionMessage)` type guard, a `getXErrorMessage(code)` formatter, and an enum-shaped `XError` for individual codes (where `X` is the program name, e.g. `System` for `@solana-program/system`).
+
+```ts twoslash
+import { SolanaError, TransactionMessage } from '@solana/kit';
+const error = null as unknown as SolanaError;
+const transactionMessage = null as unknown as TransactionMessage;
+// ---cut-before---
+import { getSystemErrorMessage, isSystemError } from '@solana-program/system';
+
+if (isSystemError(error, transactionMessage)) {
+    console.error(`System program error: ${getSystemErrorMessage(error.context.code)}`);
+    console.error(`Failed instruction index: ${error.context.index}`);
+}
+```
+
+When sending a transaction or transaction plan, the program-specific error usually lives a few hops down the chain — typically as the `cause` of `SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION` or as one of the `failedTransactions[i].error` entries on the plural variant. Pair the helpers above with the failed-transaction errors documented earlier to surface actionable error messages to your users.
 
 ## Error messages
 

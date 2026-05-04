@@ -3,15 +3,6 @@ title: Signers
 description: Accounts with signing capabilities
 ---
 
-<Callout type="warn" title="Planned Changes">
-**Status:** Existing page — updates planned
-
-This page will be updated to add references to `payer()` and `generatedPayer()` plugins as the typical way to attach signers to a client, add a section showing how signer interfaces connect to the plugin system, port relevant content from the current `getting-started/signers.mdx`, and add the new wallet signer from the `@solana/wallet-account-signer` package to the "Available signers" section.
-
-**Current content preserved:** Yes, all existing content stays.
-
-</Callout>
-
 ## Introduction
 
 Signers are an abstraction that combines an account with an implementation that computes signatures on behalf of that account. No matter what actually computes the signature – a wallet app, a network API, the `SubtleCrypto` API, or a userspace implementation – so long as it implements the correct signer interface for your intended purpose, you can use it with all of Kit's signer-aware functions.
@@ -321,6 +312,75 @@ const message = getUtf8Encoder().encode('Hello, World!');
 const seed = new Uint8Array(await crypto.subtle.digest('SHA-256', message));
 
 const derivedSigner = await createKeyPairSignerFromPrivateKeyBytes(seed);
+```
+
+### Wallet account signers
+
+Wallet account signers bridge between [Wallet Standard](https://github.com/wallet-standard/wallet-standard) accounts and Kit's signer interfaces. They live in the [`@solana/wallet-account-signer`](https://www.npmjs.com/package/@solana/wallet-account-signer) package and let any wallet that exposes the standard Solana features participate in signing transactions and messages.
+
+```package-install
+@solana/wallet-account-signer
+```
+
+<div className="*:columns-5xs *:gap-8">
+
+[createSignerFromWalletAccount](#create-signer-from-wallet-account)
+[createTransactionSignerFromWalletAccount](#create-transaction-signer-from-wallet-account)
+[createTransactionSendingSignerFromWalletAccount](#create-transaction-sending-signer-from-wallet-account)
+[createMessageSignerFromWalletAccount](#create-message-signer-from-wallet-account)
+
+</div>
+
+#### createSignerFromWalletAccount [!toc] [#create-signer-from-wallet-account]
+
+Inspects the wallet account's available features and returns a single signer object combining whichever capabilities the wallet supports — `modifyAndSignTransactions`, `signAndSendTransactions`, and/or `modifyAndSignMessages`. Use this when you do not know in advance which features a wallet exposes.
+
+```ts twoslash
+import { UiWalletAccount } from '@wallet-standard/ui';
+const walletAccount = null as unknown as UiWalletAccount;
+// ---cut-before---
+import { createSignerFromWalletAccount } from '@solana/wallet-account-signer';
+
+const signer = createSignerFromWalletAccount(walletAccount, 'solana:devnet');
+```
+
+#### createTransactionSignerFromWalletAccount [!toc] [#create-transaction-signer-from-wallet-account]
+
+Returns a [`TransactionModifyingSigner`](/api/type-aliases/TransactionModifyingSigner) that signs transactions with the wallet via the `solana:signTransaction` feature. The signer is allowed to modify the transaction before signing, which lets the wallet inject guard instructions or priority fees if it wants to.
+
+```ts twoslash
+import { UiWalletAccount } from '@wallet-standard/ui';
+const walletAccount = null as unknown as UiWalletAccount;
+// ---cut-before---
+import { createTransactionSignerFromWalletAccount } from '@solana/wallet-account-signer';
+
+const signer = createTransactionSignerFromWalletAccount(walletAccount, 'solana:devnet');
+```
+
+#### createTransactionSendingSignerFromWalletAccount [!toc] [#create-transaction-sending-signer-from-wallet-account]
+
+Returns a [`TransactionSendingSigner`](/api/type-aliases/TransactionSendingSigner) that uses the `solana:signAndSendTransaction` feature to sign and immediately submit the transaction to the network. This is the right shape for wallets that do not let the dapp inspect or relay the signed transaction itself.
+
+```ts twoslash
+import { UiWalletAccount } from '@wallet-standard/ui';
+const walletAccount = null as unknown as UiWalletAccount;
+// ---cut-before---
+import { createTransactionSendingSignerFromWalletAccount } from '@solana/wallet-account-signer';
+
+const signer = createTransactionSendingSignerFromWalletAccount(walletAccount, 'solana:devnet');
+```
+
+#### createMessageSignerFromWalletAccount [!toc] [#create-message-signer-from-wallet-account]
+
+Returns a [`MessageModifyingSigner`](/api/type-aliases/MessageModifyingSigner) that signs arbitrary messages via the `solana:signMessage` feature. This is the wallet-backed counterpart to a key pair signer's message-signing capability.
+
+```ts twoslash
+import { UiWalletAccount } from '@wallet-standard/ui';
+const walletAccount = null as unknown as UiWalletAccount;
+// ---cut-before---
+import { createMessageSignerFromWalletAccount } from '@solana/wallet-account-signer';
+
+const signer = createMessageSignerFromWalletAccount(walletAccount);
 ```
 
 ## Signing with signers

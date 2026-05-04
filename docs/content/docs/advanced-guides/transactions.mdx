@@ -3,15 +3,6 @@ title: Transactions
 description: Build and compile transaction messages
 ---
 
-<Callout type="warn" title="Planned Changes">
-**Status:** Existing page — significant enrichment planned
-
-This page will be updated to show how `rpcTransactionPlanExecutor` handles blockhash fetching, CU estimation, signing, and confirmation, add references to the plugin-based transaction workflow, add a section about estimating compute units, and document the new unified transaction config setters (`setTransactionMessageComputeUnitLimit`, etc.). The `pipe()` / immutability walkthrough from the current `getting-started/build-transaction.mdx` will be ported to [Kit Without a Client](/docs/advanced-guides/kit-without-a-client).
-
-**Current content preserved:** Yes, all existing content stays and is enriched.
-
-</Callout>
-
 ## Introduction
 
 To take an action on Solana, whether to place an order, transfer an asset, or more generally to modify data on the blockchain, you need to prepare a transaction and sign to pay for it to be executed on the network. You can use Kit to create, sign, encode, and decode transactions.
@@ -250,6 +241,87 @@ const memoTransactionMessage = appendTransactionMessageInstruction(
 To add an instruction to the beginning of the list instead, see [`prependTransactionMessageInstruction`](/api/functions/prependTransactionMessageInstruction)
 
 To add an array of instructions to a transaction message, see [`appendTransactionMessageInstructions`](/api/functions/appendTransactionMessageInstructions) and [`prependTransactionMessageInstructions`](/api/functions/prependTransactionMessageInstructions).
+
+## Configuring compute and priority fees
+
+Every transaction has a compute budget — a maximum number of compute units (CUs) it is allowed to consume. The Solana network also lets you attach a priority fee to influence inclusion ordering. Kit exposes these as first-class configuration setters on the transaction message, so you do not need to add or update Compute Budget program instructions yourself.
+
+### Setting the compute unit limit [#configuring-compute-unit-limit]
+
+The compute unit limit caps how many CUs the transaction may consume. Setting it close to what your transaction actually uses increases the chance of inclusion, packs more transactions per block, and reduces the amount of priority fees you pay.
+
+```ts twoslash
+import { TransactionMessage } from '@solana/kit';
+const transactionMessage = null as unknown as TransactionMessage;
+// ---cut-before---
+import { setTransactionMessageComputeUnitLimit } from '@solana/kit';
+
+const transactionMessageWithLimit = setTransactionMessageComputeUnitLimit(
+    50_000,
+    transactionMessage,
+);
+```
+
+To remove the limit, pass `undefined` as the first argument. The matching reader [`getTransactionMessageComputeUnitLimit`](/api/functions/getTransactionMessageComputeUnitLimit) returns the limit currently set on a message, or `undefined` if none is set.
+
+### Estimating the compute unit limit [#configuring-compute-unit-limit-estimation]
+
+A good way to size the compute unit limit is to simulate the transaction and use the result. Kit ships [`estimateComputeUnitLimitFactory`](/api/functions/estimateComputeUnitLimitFactory) for the simulation step and [`estimateAndSetComputeUnitLimitFactory`](/api/functions/estimateAndSetComputeUnitLimitFactory) for the common case of estimating and writing the result back onto the message in one call.
+
+```ts twoslash
+import {
+    Rpc,
+    SimulateTransactionApi,
+    TransactionMessage,
+    TransactionMessageWithFeePayer,
+} from '@solana/kit';
+const rpc = null as unknown as Rpc<SimulateTransactionApi>;
+const transactionMessage = null as unknown as TransactionMessage & TransactionMessageWithFeePayer;
+// ---cut-before---
+import {
+    estimateAndSetComputeUnitLimitFactory,
+    estimateComputeUnitLimitFactory,
+} from '@solana/kit';
+
+const estimateComputeUnitLimit = estimateComputeUnitLimitFactory({ rpc });
+const estimateAndSetComputeUnitLimit =
+    estimateAndSetComputeUnitLimitFactory(estimateComputeUnitLimit);
+
+const transactionMessageWithLimit = await estimateAndSetComputeUnitLimit(transactionMessage);
+```
+
+The estimator simulates the transaction with the maximum allowed limit so the simulation itself never runs out of budget; the returned value is the compute unit count actually consumed. `estimateAndSetComputeUnitLimitFactory` only updates the message if no explicit limit is already set or if the existing limit is the provisory `0` value, leaving messages with manually configured limits untouched.
+
+When constructing a message that you intend to estimate later, [`fillTransactionMessageProvisoryComputeUnitLimit`](/api/functions/fillTransactionMessageProvisoryComputeUnitLimit) reserves space for the limit by setting it to a provisory value of `0`.
+
+### Setting the priority fee [#configuring-priority-fees]
+
+Priority fees boost the chance that your transaction is included sooner. The exact knob depends on the transaction version: legacy and v0 transactions express priority fees as a price per compute unit, while v1 transactions express them as a single total amount in lamports.
+
+```ts twoslash
+import { TransactionMessage } from '@solana/kit';
+const v0TransactionMessage = null as unknown as TransactionMessage & { version: 0 };
+const v1TransactionMessage = null as unknown as TransactionMessage & { version: 1 };
+// ---cut-before---
+import {
+    setTransactionMessageComputeUnitPrice,
+    setTransactionMessagePriorityFeeLamports,
+} from '@solana/kit';
+
+// Legacy or v0: 10,000 micro-lamports per compute unit.
+const v0WithPriorityFee = setTransactionMessageComputeUnitPrice(10_000n, v0TransactionMessage);
+
+// v1: 50,000 lamports total, regardless of compute unit usage.
+const v1WithPriorityFee = setTransactionMessagePriorityFeeLamports(50_000n, v1TransactionMessage);
+```
+
+Both setters accept `undefined` to clear the configuration. The matching readers [`getTransactionMessageComputeUnitPrice`](/api/functions/getTransactionMessageComputeUnitPrice) and [`getTransactionMessagePriorityFeeLamports`](/api/functions/getTransactionMessagePriorityFeeLamports) return the current value or `undefined` when none is set.
+
+<Callout type="info">
+    Bundled clients such as `solanaRpc` and `litesvm` estimate the compute unit limit when sending
+    transactions for you. Reach for the setters above when you build messages by hand or when you
+    want to override what a client would do automatically.
+</Callout>
 
 ## Compressing transaction messages
 

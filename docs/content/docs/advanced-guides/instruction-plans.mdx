@@ -3,15 +3,6 @@ title: Instruction Plans
 description: Compose instructions into multi-step operations
 ---
 
-<Callout type="warn" title="Planned Changes">
-**Status:** Existing page — significant updates planned
-
-This page will be updated to add a section showing `transactionPlanner` and `transactionPlanExecutor` plugins, demonstrate how to swap the executor on an existing RPC client (e.g. replacing the default one from `createClient`), show the connection between instruction plans and `client.sendTransaction()` / `client.sendTransactions()`, and add examples using `rpcTransactionPlanner` and `rpcTransactionPlanExecutor` from `@solana/kit-plugin-rpc`.
-
-**Current content preserved:** Yes, all existing content stays and is enriched.
-
-</Callout>
-
 ## Introduction
 
 Instruction plans describe operations that go beyond a single instruction and may even span multiple transactions.
@@ -623,13 +614,20 @@ type TransactionPlanExecutor = (
 
 This allows you to implement custom execution strategies, such as using transaction bundles for atomic execution or adding custom transaction prioritization.
 
+<Callout type="info">
+    Bundled clients such as `solanaRpc` and `litesvm` install ready-to-use planner and executor
+    implementations on the client. See [Available plugins](/docs/plugins/available-plugins) for the
+    full list, and [Sending multiple transactions](/docs/guides/sending-multiple-transactions) for
+    the consumer-facing API they expose.
+</Callout>
+
 ## Recipes
 
 Here are some common patterns and recipes for using instruction plans effectively.
 
 ### Setting priority fees
 
-You can set priority fees by using the `setTransactionMessageComputeUnitPrice` helper from `@solana-program/compute-budget` in your `createTransactionMessage` function.
+You can set priority fees by using the [`setTransactionMessageComputeUnitPrice`](/api/functions/setTransactionMessageComputeUnitPrice) helper from `@solana/kit` in your `createTransactionMessage` function. See [Configuring compute and priority fees](/docs/advanced-guides/transactions#configuring-priority-fees) for the full set of fee setters, including the v1 [`setTransactionMessagePriorityFeeLamports`](/api/functions/setTransactionMessagePriorityFeeLamports) variant.
 
 ```ts twoslash
 import {
@@ -641,7 +639,7 @@ import {
 } from '@solana/kit';
 const payer = {} as unknown as TransactionSigner;
 // ---cut-before---
-import { setTransactionMessageComputeUnitPrice } from '@solana-program/compute-budget'; // [!code ++]
+import { setTransactionMessageComputeUnitPrice } from '@solana/kit'; // [!code ++]
 
 const transactionPlanner = createTransactionPlanner({
     createTransactionMessage: () =>
@@ -659,10 +657,10 @@ const transactionPlanner = createTransactionPlanner({
 
 You can estimate and set compute unit limits dynamically by using a two-step process:
 
-- First, add a provisional compute unit limit instruction (if missing) in your transaction planner.
+- First, add a provisory compute unit limit (if missing) in your transaction planner.
 - Then, estimate and update it right before sending the transaction.
 
-You may use the `fillProvisorySetComputeUnitLimitInstruction` helper in your transaction planner so the instruction is accounted for when planning transaction messages.
+The [`fillTransactionMessageProvisoryComputeUnitLimit`](/api/functions/fillTransactionMessageProvisoryComputeUnitLimit) helper from `@solana/kit` reserves the limit by setting it to a provisory value of `0`, so the planner can account for the resulting compute budget instruction when packing transaction messages. See [Estimating the compute unit limit](/docs/advanced-guides/transactions#configuring-compute-unit-limit-estimation) for the full estimator API.
 
 ```ts twoslash
 import {
@@ -674,19 +672,19 @@ import {
 } from '@solana/kit';
 const payer = {} as unknown as TransactionSigner;
 // ---cut-before---
-import { fillProvisorySetComputeUnitLimitInstruction } from '@solana-program/compute-budget'; // [!code ++]
+import { fillTransactionMessageProvisoryComputeUnitLimit } from '@solana/kit'; // [!code ++]
 
 const transactionPlanner = createTransactionPlanner({
     createTransactionMessage: () =>
         pipe(
             createTransactionMessage({ version: 0 }),
             (message) => setTransactionMessageFeePayerSigner(payer, message),
-            (message) => fillProvisorySetComputeUnitLimitInstruction(message), // [!code ++]
+            (message) => fillTransactionMessageProvisoryComputeUnitLimit(message), // [!code ++]
         ),
 });
 ```
 
-Then, use the `estimateAndUpdateProvisoryComputeUnitLimitFactory` helper in your transaction plan executor to estimate the compute units right before sending the transaction.
+Then, pair [`estimateComputeUnitLimitFactory`](/api/functions/estimateComputeUnitLimitFactory) with [`estimateAndSetComputeUnitLimitFactory`](/api/functions/estimateAndSetComputeUnitLimitFactory) in your transaction plan executor to estimate the compute units right before sending the transaction.
 
 ```ts twoslash
 import {
@@ -708,14 +706,14 @@ const rpcSubscriptions = {} as unknown as RpcSubscriptions<SolanaRpcSubscription
 // ---cut-before---
 // [!code ++:4]
 import {
+    estimateAndSetComputeUnitLimitFactory,
     estimateComputeUnitLimitFactory,
-    estimateAndUpdateProvisoryComputeUnitLimitFactory,
-} from '@solana-program/compute-budget';
+} from '@solana/kit';
 
 const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
 // [!code ++:2]
 const estimateCULimit = estimateComputeUnitLimitFactory({ rpc });
-const estimateAndSetCULimit = estimateAndUpdateProvisoryComputeUnitLimitFactory(estimateCULimit);
+const estimateAndSetCULimit = estimateAndSetComputeUnitLimitFactory(estimateCULimit);
 
 const transactionPlanExecutor = createTransactionPlanExecutor({
     executeTransactionMessage: async (context, message) => {
