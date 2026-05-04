@@ -1,15 +1,169 @@
 ---
 title: Testing & local development
-description: Test your Solana applications locally and in CI
+description: Test your Solana applications locally
 ---
 
-<Callout type="warn" title="Planned Content">
-**Status:** New page
+Local development and testing benefit hugely from Kit's plugin system: the same application code can run against devnet, a local validator, or an in-process [LiteSVM](https://github.com/litesvm/litesvm) instance, depending on which bundle plugin you install. This guide walks through the three options and the small patterns that make tests easy to write and maintain.
 
-This guide will cover testing and local development patterns: test validator setup (`solana-test-validator`) and when to use it, airdropping funds on test clusters via `client.airdrop(address, lamports(1_000_000_000n))`, LiteSVM for unit tests (fast, in-process, no network required), composing local clients with `createClient().use(generatedSigner()).use(solanaLocalRpc())` for test validators or `createClient().use(generatedSigner()).use(litesvm())` for LiteSVM, API symmetry so code that works against one setup works against the other, test patterns and fixtures (generating test keypairs, setting up test state), comparing approaches for when to use test validator vs LiteSVM, and CI integration for running tests without a running validator.
+## Choose a local environment
 
-**Draws from:** `@solana/kit-plugin-rpc` README (`solanaLocalRpc`), `@solana/kit-plugin-litesvm` README, `@solana/kit-plugin-signer` README, kit-plugins examples.
+Each environment shines in a different situation. The table below summarizes when to reach for each.
 
-**Links to:** [Plugins — Available Plugins](/docs/plugins/available-plugins) for comparing local RPC and LiteSVM plugin bundles.
+| Environment     | Best for                                             | Tradeoffs                                                 |
+| --------------- | ---------------------------------------------------- | --------------------------------------------------------- |
+| Devnet          | shared/manual testing                                | faucet limits, network latency, shared state across tests |
+| Local validator | integration testing, full RPC API                    | requires a separate process, shared state across tests    |
+| LiteSVM         | fast unit tests, manipulating account state per test | Node.js only, RPC subset, in-memory only state            |
 
+You do not have to commit to one environment for the whole project. It is common to use LiteSVM for fast unit tests, a local validator for integration tests, and devnet for manual exploration.
+
+## Use devnet for shared testing
+
+Devnet is the easiest way to share a Solana environment with your team. The `solanaDevnetRpc()` plugin defaults to the public devnet endpoint and bundles an `airdrop` capability for funding accounts.
+
+```ts twoslash
+import { address, createClient, lamports } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { signerFromFile } from '@solana/kit-plugin-signer';
+
+const client = await createClient()
+    .use(signerFromFile('~/.config/solana/id.json'))
+    .use(solanaDevnetRpc());
+
+await client.airdrop(client.payer.address, lamports(1_000_000_000n));
+```
+
+Devnet is great for one-off scripts and manual exploration, but the public faucet has tight rate limits. For automated tests, prefer one of the local options.
+
+## Use a local validator
+
+A local validator runs the same software as mainnet but on your own machine. You can install the `solana-test-validator` binary by following the [Anza installation guide](https://docs.anza.xyz/cli/install) and start it with a single command.
+
+```shell
+solana-test-validator
+```
+
+Once the validator is running, the `solanaLocalRpc()` plugin connects to its default endpoints (`http://127.0.0.1:8899` and `ws://127.0.0.1:8900`) and ships the same `airdrop` capability as devnet — without any rate limits.
+
+```ts twoslash
+import { createClient, lamports } from '@solana/kit';
+import { solanaLocalRpc } from '@solana/kit-plugin-rpc';
+import { airdropSigner, generatedSigner } from '@solana/kit-plugin-signer';
+
+const client = await createClient()
+    .use(generatedSigner())
+    .use(solanaLocalRpc())
+    .use(airdropSigner(lamports(1_000_000_000n)));
+```
+
+Use this setup for integration tests that need the full Solana RPC API or to load deployed programs the way a real validator would. Make sure the validator is running before your tests start; otherwise, the first RPC call will fail with a connection error.
+
+## Use LiteSVM for fast tests
+
+LiteSVM runs the Solana virtual machine in-process, with no validator and no network. It is significantly faster than a local validator and is ideal for unit tests. The `litesvm()` plugin from `@solana/kit-plugin-litesvm` installs a LiteSVM-backed client that exposes the same `client.rpc`, `client.airdrop`, `client.sendTransaction`, and `client.sendTransactions` APIs as the RPC bundles.
+
+```ts twoslash
+import { createClient, lamports } from '@solana/kit';
+import { litesvm } from '@solana/kit-plugin-litesvm';
+import { airdropSigner, generatedSigner } from '@solana/kit-plugin-signer';
+
+const client = await createClient()
+    .use(generatedSigner())
+    .use(litesvm())
+    .use(airdropSigner(lamports(1_000_000_000n)));
+```
+
+Each LiteSVM-backed client owns its own in-memory SVM instance, so every test can have a completely isolated state. This is particularly useful for unit tests where one test should never affect the state observed by another.
+
+<Callout title="Node.js only" type="warn">
+    LiteSVM runs natively in Node.js. It will throw if you try to use it in a browser or in React
+    Native. The exposed RPC also covers a subset of the full API — enough for most tests, but worth
+    double-checking against the [`@solana/kit-plugin-litesvm`
+    README](https://github.com/anza-xyz/kit-plugins/tree/main/packages/kit-plugin-litesvm#readme)
+    for the methods you rely on.
 </Callout>
+
+## Create a funded test client
+
+For most tests you want a fresh, funded signer for every run. The pattern is the same regardless of the chosen environment: install a generated signer, install the environment, and airdrop SOL.
+
+```ts twoslash
+import { createClient, lamports } from '@solana/kit';
+import { litesvm } from '@solana/kit-plugin-litesvm';
+import { airdropSigner, generatedSigner } from '@solana/kit-plugin-signer';
+
+const client = await createClient()
+    .use(generatedSigner())
+    .use(litesvm())
+    .use(airdropSigner(lamports(10_000_000_000n)));
+```
+
+Swapping `litesvm()` for `solanaLocalRpc()` is a one-line change and the rest of your test code stays the same. This is one of the main benefits of the plugin model: the surface your tests interact with is a `client`, not a particular environment.
+
+## Reuse setup across tests
+
+Wrap the client creation in a small factory so every test starts from a clean state. Adding any program plugins or extra setup to the factory keeps tests focused on what they are actually testing.
+
+```ts twoslash
+import { createClient, lamports } from '@solana/kit';
+import { litesvm } from '@solana/kit-plugin-litesvm';
+import { airdropSigner, generatedSigner } from '@solana/kit-plugin-signer';
+import { systemProgram } from '@solana-program/system';
+import { tokenProgram } from '@solana-program/token';
+
+async function createTestClient() {
+    return await createClient()
+        .use(generatedSigner())
+        .use(litesvm())
+        .use(airdropSigner(lamports(10_000_000_000n)))
+        .use(systemProgram())
+        .use(tokenProgram());
+}
+```
+
+Because Kit clients are immutable, you do not need to worry about leaking state between tests as long as you do not share a single client instance across them.
+
+## Seed accounts and programs
+
+LiteSVM exposes the underlying SVM through `client.svm`, which lets you preload accounts and programs before your test code runs. This is the quickest way to set up a specific scenario without chaining a series of transactions.
+
+```ts twoslash
+import { address, EncodedAccount, lamports } from '@solana/kit';
+// ---cut-start---
+import { createClient } from '@solana/kit';
+import { litesvm } from '@solana/kit-plugin-litesvm';
+import { generatedSigner } from '@solana/kit-plugin-signer';
+const client = await createClient().use(generatedSigner()).use(litesvm());
+// ---cut-end---
+const myAccount: EncodedAccount = {
+    address: address('GdnSyH3YtwcxFvQrVVJMm1JhTS4QVX7MFsX56uJLUfiZ'),
+    data: new Uint8Array([1, 2, 3]),
+    executable: false,
+    lamports: lamports(1_000_000_000n),
+    programAddress: address('11111111111111111111111111111111'),
+    space: 3n,
+};
+client.svm.setAccount(myAccount);
+
+client.svm.addProgramFromFile(
+    address('MyProgram111111111111111111111111111111111'),
+    './my_program.so',
+);
+```
+
+A local validator supports similar workflows through its CLI flags (`--account`, `--bpf-program`, etc.), which you can pass when starting `solana-test-validator`. See [`@solana/kit-plugin-litesvm`](/docs/plugins/available-plugins) and the [Anza CLI documentation](https://docs.anza.xyz/cli/) for the exact APIs.
+
+## Troubleshooting
+
+A few issues come up often when wiring up local environments:
+
+- **Faucet rate limits on devnet** — switch to `solanaLocalRpc()` or `litesvm()` for repeated runs, or top up your devnet signer manually from the [Solana Faucet](https://faucet.solana.com).
+- **Validator not running** — `solana-test-validator` must be running before tests start; check the process and the default port (`8899`).
+- **WebSocket endpoint mismatch** — when overriding `rpcUrl`, also set `rpcSubscriptionsUrl` if your provider uses a different URL for WebSocket traffic.
+- **`litesvm()` errors in browser tests** — LiteSVM is Node.js only; run those tests in a Node.js environment or pick a different bundle.
+
+## Next steps
+
+- [Sending transactions](/docs/guides/sending-transactions) — exercise your client end-to-end.
+- [Using program plugins](/docs/guides/using-program-plugins) — add typed program access to your tests.
+- [Available plugins](/docs/plugins/available-plugins) — explore the LiteSVM and RPC plugin packages.

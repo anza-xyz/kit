@@ -3,13 +3,163 @@ title: Fetching accounts
 description: Read and decode onchain account data
 ---
 
-<Callout type="warn" title="Planned Content">
-**Status:** New page
+Reading data from Solana usually means fetching one or more accounts and decoding their data into something your application can use. This guide walks through the helpers Kit provides at each step, from the raw RPC call all the way to typed account objects.
 
-This guide will cover reading account data from the blockchain: **`fetchEncodedAccount(client.rpc, address)`** as the recommended higher-level helper for fetching accounts, **`client.rpc.getMultipleAccounts(addresses)`** for batch fetching, program plugin fetch helpers (e.g. `client.token.accounts.mint.fetch(address)`) for typed fetch + decode in one call, manual decoding with codecs for accounts without a program plugin, understanding encoded vs decoded account data, and account subscriptions via `rpcSubscriptions` for real-time updates.
+## Fetch raw account data
 
-**Draws from:** Current `getting-started/fetch-account.mdx` (account fetching and decoding with `fetchMint`), `@solana/kit-plugin-rpc` README.
+The `fetchEncodedAccount` helper wraps the `getAccountInfo` RPC method and returns a `MaybeEncodedAccount`. The result always has the same shape regardless of whether the account exists, which makes it easier to handle than the raw RPC response.
 
-**Links to:** [Advanced Guides — Codecs](/docs/advanced-guides/codecs) for the serialization system, [RPC Requests](/docs/guides/rpc) for the full RPC API, [Using Program Plugins](/docs/guides/using-program-plugins) for typed account access.
+```ts twoslash
+import { address, fetchEncodedAccount } from '@solana/kit';
+// ---cut-start---
+import { createClient } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { generatedSigner } from '@solana/kit-plugin-signer';
+const client = await createClient().use(generatedSigner()).use(solanaDevnetRpc());
+// ---cut-end---
+const wallet = address('GdnSyH3YtwcxFvQrVVJMm1JhTS4QVX7MFsX56uJLUfiZ');
+const account = await fetchEncodedAccount(client.rpc, wallet);
+```
 
-</Callout>
+When the account exists, you get back its address, lamports, owner program, and a `data` field containing the raw bytes as a `Uint8Array`. When it does not, the same object is returned with `exists: false` and just the address.
+
+## Handle missing accounts
+
+A `MaybeEncodedAccount` is a discriminated union: TypeScript narrows the type once you check `account.exists`. You can branch on that flag, or use `assertAccountExists` when you would rather throw if the account is not present.
+
+```ts twoslash
+import { address, assertAccountExists, fetchEncodedAccount } from '@solana/kit';
+// ---cut-start---
+import { createClient } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { generatedSigner } from '@solana/kit-plugin-signer';
+const client = await createClient().use(generatedSigner()).use(solanaDevnetRpc());
+// ---cut-end---
+const wallet = address('GdnSyH3YtwcxFvQrVVJMm1JhTS4QVX7MFsX56uJLUfiZ');
+const account = await fetchEncodedAccount(client.rpc, wallet);
+assertAccountExists(account);
+
+// `account` is now `EncodedAccount`, with `data` typed as `Uint8Array`.
+account.data satisfies Uint8Array;
+```
+
+Asserting up front lets the rest of your function rely on a fully populated account, which is convenient for scripts and tests. In application code, branching on `account.exists` is usually a better fit so you can show a sensible empty state. When working with several accounts at once, `assertAccountsExist(accounts)` performs the same check across an entire array in one call.
+
+## Fetch multiple accounts
+
+When you need several accounts at once, `fetchEncodedAccounts` batches them into a single `getMultipleAccounts` RPC request and returns a parallel array of `MaybeEncodedAccount` values.
+
+```ts twoslash
+import { address, fetchEncodedAccounts } from '@solana/kit';
+// ---cut-start---
+import { createClient } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { generatedSigner } from '@solana/kit-plugin-signer';
+const client = await createClient().use(generatedSigner()).use(solanaDevnetRpc());
+// ---cut-end---
+const accounts = await fetchEncodedAccounts(client.rpc, [
+    address('GdnSyH3YtwcxFvQrVVJMm1JhTS4QVX7MFsX56uJLUfiZ'),
+    address('Ay1zdJ3VDbhrAtkRiqBUJgKLHYbgFZN5BXk7svtMowif'),
+]);
+```
+
+Each returned account already carries its own address, so you do not need to zip arrays together to figure out which result belongs to which input. The same `exists` flag works on every entry, and `assertAccountsExist(accounts)` is the multi-account counterpart of `assertAccountExists`.
+
+## Decode accounts manually
+
+Once you have an encoded account, the `decodeAccount` helper turns it into a typed `Account` (or `MaybeAccount`) by running its `data` through any `Decoder`. The [Codecs guide](/docs/advanced-guides/codecs) covers how to build these decoders.
+
+```ts twoslash
+import { address, decodeAccount, fetchEncodedAccount } from '@solana/kit';
+import {
+    addDecoderSizePrefix,
+    Decoder,
+    getStructDecoder,
+    getU32Decoder,
+    getU8Decoder,
+    getUtf8Decoder,
+} from '@solana/kit';
+// ---cut-start---
+import { createClient } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { generatedSigner } from '@solana/kit-plugin-signer';
+const client = await createClient().use(generatedSigner()).use(solanaDevnetRpc());
+// ---cut-end---
+
+type Person = { name: string; age: number };
+const personDecoder: Decoder<Person> = getStructDecoder([
+    ['name', addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
+    ['age', getU8Decoder()],
+]);
+
+const wallet = address('GdnSyH3YtwcxFvQrVVJMm1JhTS4QVX7MFsX56uJLUfiZ');
+const encodedAccount = await fetchEncodedAccount(client.rpc, wallet);
+const decodedAccount = decodeAccount(encodedAccount, personDecoder);
+```
+
+`decodeAccount` preserves the `MaybeAccount` shape: a missing account stays missing, and a present account gets its `data` swapped from raw bytes to your decoded type. This means you can keep narrowing with `account.exists` exactly like before.
+
+## Decode using program helpers
+
+For most popular Solana programs you will not need to write a decoder yourself. The `@solana-program/*` packages include generated helpers that handle decoding for every account they define, exposed as `decodeX`, `fetchX`, and `fetchMaybeX` functions where `X` is the account name.
+
+```ts twoslash
+import { address } from '@solana/kit';
+import { fetchMint } from '@solana-program/token';
+// ---cut-start---
+import { createClient } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { generatedSigner } from '@solana/kit-plugin-signer';
+const client = await createClient().use(generatedSigner()).use(solanaDevnetRpc());
+// ---cut-end---
+const mint = await fetchMint(client.rpc, address('So11111111111111111111111111111111111111112'));
+mint.data.decimals; // typed as `number`
+```
+
+Each program package follows the same naming convention: `fetchMint` and `fetchMaybeMint` for the `Mint` account, `fetchToken` and `fetchMaybeToken` for the `Token` account, and so on. The standalone `decodeMint` and `decodeToken` helpers work on encoded accounts you have already fetched. If you would rather access these through a typed `client.token.accounts.*` namespace, see the [Using program plugins](/docs/guides/using-program-plugins) guide.
+
+## Subscribe to account changes
+
+If you need live updates rather than a one-off read, pair an account fetch with an account subscription. The subscription notifies you whenever the account's data changes onchain, and the same address is used in both calls.
+
+```ts twoslash
+import { address } from '@solana/kit';
+// ---cut-start---
+import { createClient } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { generatedSigner } from '@solana/kit-plugin-signer';
+const client = await createClient().use(generatedSigner()).use(solanaDevnetRpc());
+// ---cut-end---
+const wallet = address('GdnSyH3YtwcxFvQrVVJMm1JhTS4QVX7MFsX56uJLUfiZ');
+const accountNotifications = await client.rpcSubscriptions
+    .accountNotifications(wallet, { commitment: 'confirmed' })
+    .subscribe({ abortSignal: AbortSignal.timeout(60_000) });
+
+for await (const notification of accountNotifications) {
+    console.log('Account changed:', notification.value);
+}
+```
+
+See the [RPC subscriptions](/docs/guides/rpc-subscriptions) guide for more on cancellation, error handling, and the async iterator model.
+
+## Choose the right fetch helper
+
+Each helper trades a different amount of structure and convenience. The table below summarizes when each one shines.
+
+| Helper                                | Returns                           | Best for                               |
+| ------------------------------------- | --------------------------------- | -------------------------------------- |
+| `client.rpc.getAccountInfo(...)`      | raw RPC response                  | one-off reads with custom encoding     |
+| `client.rpc.getMultipleAccounts(...)` | raw RPC response                  | bulk reads with custom encoding        |
+| `fetchEncodedAccount(...)`            | `MaybeEncodedAccount`             | unified handling of single accounts    |
+| `fetchEncodedAccounts(...)`           | `MaybeEncodedAccount[]`           | unified batch reads                    |
+| `decodeAccount(...)`                  | `Account<T>` / `MaybeAccount<T>`  | turning raw bytes into typed data      |
+| `fetchMint`, `fetchToken`, ...        | `Account<T>` / `MaybeAccount<T>`  | typed reads for known program accounts |
+| `accountNotifications(...)`           | async iterator of account updates | live updates instead of one-off reads  |
+
+In practice you can pick any of them in isolation, or combine them to match the access pattern you need.
+
+## Next steps
+
+- [Codecs](/docs/advanced-guides/codecs) — learn how to build custom decoders.
+- [RPC requests](/docs/guides/rpc) — explore the rest of the RPC API.
+- [Using program plugins](/docs/guides/using-program-plugins) — read typed accounts through `client.token.accounts.mint.fetch(...)` and friends.

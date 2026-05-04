@@ -3,64 +3,111 @@ title: RPC requests
 description: Read and write data to the blockchain
 ---
 
-<Callout type="warn" title="Planned Changes">
-**Status:** Existing page — moved to Guides, updates planned in a follow-up PR
+Solana applications interact with the network through a JSON-RPC server. RPC requests are how your code reads onchain state, simulates transactions, and submits transactions to be processed. Kit ships a fully typed RPC client and exposes it on Kit clients via plugins, so the same RPC API is available whether you compose a client or use the lower-level building blocks directly.
 
-This page was moved from Advanced Guides to Guides because the current content is a simple RPC introduction. A follow-up PR will update the examples to the plugin-flavored API and explain how `client.rpc` from a plugin-composed client relates to the `Rpc` object described here.
-
-**Current content preserved:** Yes, all existing content stays.
-
-</Callout>
-
-## Introduction
-
-Kit offers a TypeScript interface that you can use to communicate with a Solana JSON RPC server. Calling methods on a <abbr title="Remote procedure call">RPC</abbr> server lets you read data from the blockchain, simulate transactions, and send transactions to be processed.
-
-Kit aims to implement all of the RPC methods documented in the [Solana RPC HTTP methods](https://solana.com/docs/rpc/http) docs. You can either browse the available methods in the docs, or you can follow Kit's TypeScript types and inline documentation in your editor.
+Kit aims to support every method documented in the [Solana RPC HTTP methods](https://solana.com/docs/rpc/http) docs. You can either browse the methods in the official documentation or rely on TypeScript autocompletion in your editor.
 
 ## Installation
 
-Functions for creating RPC clients are **included within the `@solana/kit` library** but you may also install them using their standalone package.
+You will typically install Kit alongside the RPC plugin package.
 
 ```package-install
-@solana/rpc
+@solana/kit @solana/kit-plugin-rpc
 ```
 
-Note that the `@solana/rpc` package itself is composed of several smaller packages, each with a distinct responsibility. Here's the list of all packages that come together to implement the default RPC client should you wish to create your own custom one:
+The `@solana/kit-plugin-rpc` package contains the plugins that install RPC connectivity on a client. The `@solana/kit` package contains the lower-level RPC primitives those plugins are built on top of, so you can also use it standalone if you prefer not to use a client.
 
-| Package                                                                              | Description                                                                                                                    |
-| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
-| [`@solana/kit`](https://npmjs.org/package/@solana/kit)                               | Includes `@solana/rpc`, `@solana/rpc-parsed-types`, `@solana/rpc-spec-types`, and `@solana/rpc-types`                          |
-| [`@solana/rpc`](https://npmjs.org/package/@solana/rpc)                               | Includes `@solana/rpc-api`, `@solana/rpc-spec`, and utilities for creating default RPC instances                               |
-| [`@solana/rpc-api`](https://npmjs.org/package/@solana/rpc-api)                       | Types that describe every method in the Solana JSON RPC API                                                                    |
-| [`@solana/rpc-spec`](https://npmjs.org/package/@solana/rpc-spec)                     | Types and methods that can be used to create an RPC implementation                                                             |
-| [`@solana/rpc-spec-types`](https://npmjs.org/package/@solana/rpc-spec-types)         | Utility types common to both RPC and RPC Subscriptions implementations                                                         |
-| [`@solana/rpc-transformers`](https://npmjs.org/package/@solana/rpc-transformers)     | Helpers for transforming RPC requests and responses in various ways appropriate for use in a JavaScript application            |
-| [`@solana/rpc-transport-http`](https://npmjs.org/package/@solana/rpc-transport-http) | Utilities for creating custom RPC transports                                                                                   |
-| [`@solana/rpc-types`](https://npmjs.org/package/@solana/rpc-types)                   | Types for values used in the [Solana JSON-RPC](https://docs.solana.com/api/http) and a series of helpers for working with them |
+## Create an RPC client
 
-## What is a RPC?
-
-A RPC is a server with an up-to-date view of the Solana blockchain. You can make HTTP requests to it for things like account data, token balances, and transaction details. You can also ask it to simulate a transaction of your own creation, or to forward it to the network to be processed.
-
-Here's a quick example that fetches the native token balance of an account at a given address, in Lamports.
+The most convenient way to make RPC requests is to compose a Kit client with one of the bundle plugins, which install both `client.rpc` and `client.rpcSubscriptions` in one call.
 
 ```ts twoslash
-import { address, createSolanaRpc, mainnet } from '@solana/kit';
-const rpc = createSolanaRpc(mainnet('https://api.mainnet-beta.solana.com'));
-const { value: balanceInLamports } = await rpc
-    .getBalance(address('anza1Vgz2kcN9Qo6ECvf43v8RxBzQ7UpvxFoxJtLmGz'))
-    .send();
+import { createClient } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { generatedSigner } from '@solana/kit-plugin-signer';
+
+const client = await createClient().use(generatedSigner()).use(solanaDevnetRpc());
 ```
 
-Most RPC servers implement most of the Solana JSON-RPC API covered by Kit, but some offer extra methods above and beyond that. Those that do should offer an SDK that you can use to wrap Kit's RPC API implementation, merging the method implementations and TypeScript types of both APIs into a single object.
+The bundle plugins also wire up minimum balance computation, transaction planning, and transaction sending, which you will use in the other guides. If you only need to make read-only RPC requests, you can drop the signer plugin and use `solanaRpcConnection(...)` instead, which only installs `client.rpc` and `client.rpcSubscriptions`.
 
-## Where to find an RPC
+## Send your first RPC request
 
-For light development or personal use, you can use a public RPC server for the cluster you want to access.
+Once you have an RPC client, you build a request by calling the corresponding method on `client.rpc` and finalize it with `.send()`. Most RPC responses come back wrapped in a `{ context, value }` object, so destructuring `value` is a common pattern.
+
+```ts twoslash
+import { address } from '@solana/kit';
+// ---cut-start---
+import { createClient } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { generatedSigner } from '@solana/kit-plugin-signer';
+const client = await createClient().use(generatedSigner()).use(solanaDevnetRpc());
+// ---cut-end---
+
+const wallet = address('GdnSyH3YtwcxFvQrVVJMm1JhTS4QVX7MFsX56uJLUfiZ');
+const { value: balance } = await client.rpc.getBalance(wallet).send();
+```
+
+Although `client.rpc` looks like a regular object, it is actually a [`Proxy`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy) that constructs RPC requests on demand. TypeScript provides type safety for every method based on the API installed by your plugin, which makes the available methods discoverable from your editor while keeping the bundle small.
+
+## Use cluster-specific RPC bundles
+
+The `@solana/kit-plugin-rpc` package ships several bundle plugins, each tailored to a specific use case. The cluster-typed variants type the RPC API to match what is available on that cluster, which prevents accidents like calling `airdrop` against mainnet at compile time.
+
+| Plugin                  | Default endpoint                | Adds to the client                                          |
+| ----------------------- | ------------------------------- | ----------------------------------------------------------- |
+| `solanaRpc(config)`     | provided via `rpcUrl`           | RPC, subscriptions, planning, sending                       |
+| `solanaMainnetRpc(...)` | provided via `rpcUrl`           | mainnet-typed RPC, subscriptions, planning, sending         |
+| `solanaDevnetRpc(...)`  | `https://api.devnet.solana.com` | devnet-typed RPC, subscriptions, planning, sending, airdrop |
+| `solanaLocalRpc(...)`   | `http://127.0.0.1:8899`         | localnet RPC, subscriptions, planning, sending, airdrop     |
+
+If you need to talk to a custom RPC provider, pass its URL through `solanaRpc({ rpcUrl: '...' })` or `solanaMainnetRpc({ rpcUrl: '...' })`. The other settings on `SolanaRpcConfig` cover advanced options such as transport configuration and transaction planner overrides.
+
+## Pass request options
+
+Most RPC methods accept a configuration object as their final argument. This is where you control things like the requested commitment level, encoding, or pagination, depending on the method.
+
+```ts twoslash
+import { address } from '@solana/kit';
+// ---cut-start---
+import { createClient } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { generatedSigner } from '@solana/kit-plugin-signer';
+const client = await createClient().use(generatedSigner()).use(solanaDevnetRpc());
+// ---cut-end---
+
+const wallet = address('GdnSyH3YtwcxFvQrVVJMm1JhTS4QVX7MFsX56uJLUfiZ');
+const { value: balance } = await client.rpc.getBalance(wallet, { commitment: 'confirmed' }).send();
+```
+
+The `.send(...)` call itself accepts an optional `abortSignal` that lets you cancel the request in flight.
+
+## Use RPC without a client
+
+If you do not need a Kit client, you can build an `Rpc` object directly with `createSolanaRpc`. This is useful when you want maximum tree-shaking, when you are writing a library that should not assume a client, or when you simply want to keep your dependency surface small.
+
+```ts twoslash
+import { address, createSolanaRpc } from '@solana/kit';
+
+const rpc = createSolanaRpc('https://api.devnet.solana.com');
+const wallet = address('GdnSyH3YtwcxFvQrVVJMm1JhTS4QVX7MFsX56uJLUfiZ');
+const { value: balance } = await rpc.getBalance(wallet).send();
+```
+
+The standalone `Rpc` object exposes the exact same API as `client.rpc`, so any code that takes an `Rpc` will work in either setup. See the [Kit without a client](/docs/advanced-guides/kit-without-a-client) guide for more on this approach.
+
+## Choose an RPC endpoint
+
+For light development or personal use, the public RPC endpoints maintained by the Solana Foundation are a fine starting point.
 
 - `https://api.mainnet-beta.solana.com`
 - `https://api.testnet.solana.com`
 - `https://api.devnet.solana.com`
 
-When deploying your application to production, you will want to lease an RPC server or [set up your own](https://docs.anza.xyz/operations/setup-an-rpc-node).
+These endpoints are heavily rate-limited and should not be used for anything close to production traffic. When you ship to production, lease an RPC node from a provider or [run your own](https://docs.anza.xyz/operations/setup-an-rpc-node). Some RPC providers also expose extra methods on top of the standard JSON-RPC API; many of them ship a Kit-compatible SDK that you can layer on top of `createSolanaRpc(...)` to merge their additional methods into the typed RPC object.
+
+## Next steps
+
+- [RPC subscriptions](/docs/guides/rpc-subscriptions) — receive live updates from a WebSocket endpoint.
+- [Fetching accounts](/docs/guides/fetching-accounts) — go from raw account bytes to typed data.
+- [Sending transactions](/docs/guides/sending-transactions) — submit transactions through your client.

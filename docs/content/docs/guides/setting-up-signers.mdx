@@ -1,15 +1,123 @@
 ---
 title: Setting up signers
-description: Use signers to sign and pay for transactions
+description: Authorize transactions, pay fees, and own onchain assets
 ---
 
-<Callout type="warn" title="Planned Content">
-**Status:** New page
+Most Kit applications need at least one signer. Signers represent the accounts that authorize transactions, pay fees, and own onchain assets such as tokens or program authorities. This guide covers the different ways you can attach signers to a Kit client and the situations each one is best suited for.
 
-This guide will cover all the ways to set up signers for your client: **`signer(signer)`** to use one signer as both payer and identity, **`payer(signer)`** and **`identity(signer)`** to set those roles independently, **`signerFromFile(path)`** / **`payerFromFile(path)`** to load a keypair from a JSON file (Node.js only, e.g. Solana CLI keypair), **wallet standard integration** for using a browser wallet as the signer, **`generatedSigner()`** / **`generatedPayer()`** to generate random keypairs for testing, **`generatedSignerWithSol(amount)`** / **`generatedPayerWithSol(amount)`** when an airdrop function is already available, **`airdropSigner(amount)`** / **`airdropPayer(amount)`** when a bundle such as `solanaLocalRpc` adds airdrop support after the signer is installed, and how signer roles flow through transaction planning and signing.
+## Installation
 
-**Draws from:** Current `getting-started/signers.mdx` (signer generation and airdrop sections), `@solana/kit-plugin-signer` README.
+You will need Kit and the signer plugin package.
 
-**Links to:** [Advanced Guides — Signers](/docs/advanced-guides/signers) for the signer interface deep dive.
+```package-install
+@solana/kit @solana/kit-plugin-signer
+```
 
+Some examples below also use `@solana/kit-plugin-rpc` or `@solana/kit-plugin-litesvm` to fund signers in local environments.
+
+## What is a signer?
+
+A signer is an object that carries an `Address` and knows how to produce a signature for that address. Where the underlying private key actually lives — in memory, in a keypair file, in a browser wallet, on a hardware device, or behind a remote signing service — is an implementation detail. As long as the signer implements one of Kit's signer interfaces, it can be plugged into the same APIs.
+
+This means you can swap a generated keypair for a wallet-backed signer without changing the rest of your code. The [Advanced guides — Signers](/docs/advanced-guides/signers) page goes into the different signer interfaces and when each one applies.
+
+## Payer and identity
+
+Kit clients hold two distinct signer roles:
+
+- **`payer`** — the signer that pays transaction fees and storage costs (the rent reserved when creating new accounts).
+- **`identity`** — the signer that represents the wallet your application acts on behalf of, typically the authority over accounts, tokens, or other onchain assets.
+
+In most apps these roles are filled by the same signer, but they can be separated when you want a sponsored fee payer, a custodial backend, or any setup where authority and fee payment do not belong to the same key.
+
+## Install signers on your client
+
+The most common way to install a signer is to use the `signer(...)` plugin, which sets the same signer as both the `payer` and the `identity` of the client.
+
+```ts twoslash
+import { createClient, generateKeyPairSigner } from '@solana/kit';
+import { signer } from '@solana/kit-plugin-signer';
+
+const mySigner = await generateKeyPairSigner();
+const client = createClient().use(signer(mySigner));
+```
+
+The `signer(...)` plugin accepts any object that implements the `TransactionSigner` interface, so a signer obtained from somewhere else in your code — a library, a hook, a custom factory — can be passed in directly without any wrapping.
+
+If your application needs a sponsored fee payer or otherwise wants to set the two roles independently, you may use the `payer(...)` and `identity(...)` plugins instead. They have the exact same shape as `signer(...)` but install only one role each.
+
+```ts twoslash
+import { createClient, generateKeyPairSigner } from '@solana/kit';
+import { identity, payer } from '@solana/kit-plugin-signer';
+
+const feePayer = await generateKeyPairSigner();
+const owner = await generateKeyPairSigner();
+
+const client = createClient().use(payer(feePayer)).use(identity(owner));
+```
+
+## Load a signer from a file
+
+Most Solana CLI keypairs are stored as a JSON byte array on disk. The `signerFromFile(...)` plugin reads such a file and installs the resulting signer on both the `payer` and `identity` roles.
+
+```ts twoslash
+import { createClient } from '@solana/kit';
+import { signerFromFile } from '@solana/kit-plugin-signer';
+
+const client = await createClient().use(signerFromFile('~/.config/solana/id.json'));
+```
+
+This is convenient for command-line tools, scripts, and backend services that already use a Solana CLI keypair. As with the in-memory plugins above, `payerFromFile(path)` and `identityFromFile(path)` are available if you only want to install a single role.
+
+<Callout title="Node.js only" type="warn">
+    The file-based signer plugins read from the local filesystem and therefore only work in Node.js
+    environments. They throw an error in browsers and React Native. Make sure your keypair files are
+    excluded from version control and from any production build artifact.
 </Callout>
+
+## Use a browser wallet signer
+
+A dedicated wallet signer plugin is on its way and will be documented here once it lands. It will use the [Wallet Standard](https://github.com/wallet-standard/wallet-standard) under the hood and expose a framework-agnostic reactive layer, so it can be used from any UI framework — not just React.
+
+Until then, the [`@solana/react`](/api) hooks can produce a `TransactionSigner` from a connected wallet account, and you can install that signer on a Kit client with the `signer(...)`, `payer(...)`, or `identity(...)` plugins shown above.
+
+## Generate signers for tests
+
+When writing tests, generating a fresh signer per run keeps each scenario isolated and avoids leaking state between tests. The `generatedSigner()` plugin creates a brand new keypair signer and installs it on both roles.
+
+```ts twoslash
+import { createClient } from '@solana/kit';
+import { generatedSigner } from '@solana/kit-plugin-signer';
+
+const client = await createClient().use(generatedSigner());
+```
+
+`generatedPayer()` and `generatedIdentity()` follow the same pattern when you only want to generate one of the two roles. Generated signers are great for tests but should not be used as long-lived production identities, since the keypair only exists for the lifetime of the client.
+
+## Fund signers in local environments
+
+Generated signers start with no SOL, so they can not pay fees or rent until they have been funded. The typical local pattern is to install a generated signer first, then install a local environment that ships an `airdrop` capability — either `solanaLocalRpc()` or `litesvm()` — and finally airdrop SOL to the signer with the `airdropSigner(...)` plugin.
+
+```ts twoslash
+import { createClient, lamports } from '@solana/kit';
+import { solanaLocalRpc } from '@solana/kit-plugin-rpc';
+import { airdropSigner, generatedSigner } from '@solana/kit-plugin-signer';
+
+const client = await createClient()
+    .use(generatedSigner())
+    .use(solanaLocalRpc())
+    .use(airdropSigner(lamports(1_000_000_000n)));
+```
+
+The order matters: the signer must exist before the RPC bundle is added (so the bundle can wire the signer into transaction planning), and the airdrop function must be available before `airdropSigner(...)` runs (which `solanaLocalRpc()` and `litesvm()` both provide). `airdropPayer(...)` and `airdropIdentity(...)` are available if you split roles between two different signers.
+
+<Callout type="warn">
+    Airdrops only work on test clusters such as devnet, testnet, and local validators. Mainnet does
+    not have a faucet, and `solanaMainnetRpc(...)` will refuse to type-check an `airdrop` call.
+</Callout>
+
+## Next steps
+
+- [Sending transactions](/docs/guides/sending-transactions) — use your client to send and confirm transactions.
+- [Testing and local development](/docs/guides/testing-and-local-development) — set up local validators or LiteSVM for testing.
+- [Advanced guides — Signers](/docs/advanced-guides/signers) — learn the signer interfaces in depth.

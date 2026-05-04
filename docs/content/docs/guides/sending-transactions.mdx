@@ -1,15 +1,164 @@
 ---
 title: Sending transactions
-description: Send single transactions with error handling and configuration
+description: Send single transactions with a Kit client
 ---
 
-<Callout type="warn" title="Planned Content">
-**Status:** New page
+A Kit client can take a list of instructions and turn it into a fully signed, sent, and confirmed transaction in a single call. This guide covers the basics of sending one transaction at a time. When an operation needs to span multiple transactions, see [Sending multiple transactions](/docs/guides/sending-multiple-transactions).
 
-This guide will cover sending single transactions through the client: **`client.sendTransaction(instruction)`** for the simplest case, passing instruction plans (sequential, parallel, non-divisible) to `sendTransaction`, error handling including catching `SolanaError`, understanding error codes, and extracting program-specific errors, priority fees and compute budget configuration, and **`client.planTransaction(instruction)`** for planning without sending (dry runs, inspection). The guide will also briefly describe the typical lifecycle a client follows when sending a transaction (planning, signing, sending, confirming) while noting that the exact behavior depends on the transaction planner and executor plugins configured on the client, which are fully customizable.
+## Create a transaction-ready client
 
-**Draws from:** Current `getting-started/send-transaction.mdx` (conceptual explanation), `getting-started/build-transaction.mdx` (transaction construction), `@solana/kit-plugin-instruction-plan` README, `@solana/kit-plugin-rpc` README (`rpcTransactionPlanExecutor`), kit-plugins `transfer-lamports` example (error handling).
+Sending transactions requires a client that exposes a `sendTransaction` method. At the lowest level, this means installing the [`planAndSendTransactions`](/docs/plugins/available-plugins) plugin from `@solana/kit-plugin-instruction-plan` on top of a custom `transactionPlanner` and `transactionPlanExecutor`. In practice, you almost always pick a higher-level bundle that does this for you.
 
-**Links to:** [Sending Multiple Transactions](/docs/guides/sending-multiple-transactions) for complex multi-transaction operations, [Advanced Guides — Transactions](/docs/advanced-guides/transactions) for the full manual transaction lifecycle, [Advanced Guides — Instruction Plans](/docs/advanced-guides/instruction-plans) for the underlying plan system.
+```ts twoslash
+import { createClient } from '@solana/kit';
+import { solanaLocalRpc } from '@solana/kit-plugin-rpc';
+import { generatedSigner } from '@solana/kit-plugin-signer';
 
-</Callout>
+const client = await createClient().use(generatedSigner()).use(solanaLocalRpc());
+```
+
+The bundle plugins from `@solana/kit-plugin-rpc` (`solanaRpc`, `solanaMainnetRpc`, `solanaDevnetRpc`, `solanaLocalRpc`) and the `litesvm` plugin from `@solana/kit-plugin-litesvm` all install a working planner and executor out of the box. Community plugins that target other backends should follow the same pattern, so the rest of this guide works the same way regardless of where transactions are actually sent.
+
+The signer plugin must be installed before the bundle, because the bundle's transaction planner needs a `payer` on the client to plan transactions. See [Setting up signers](/docs/guides/setting-up-signers) for the full set of signer options.
+
+## Send instructions
+
+Once your client is ready, `client.sendTransaction([...])` accepts an array of instructions and turns them into a single transaction. The client takes care of fetching a recent blockhash, estimating compute units when applicable, setting the fee payer, signing with all attached signers, sending the transaction, and waiting for confirmation.
+
+```ts twoslash
+import { address, lamports } from '@solana/kit';
+import { getTransferSolInstruction } from '@solana-program/system';
+// ---cut-start---
+import { createClient } from '@solana/kit';
+import { solanaLocalRpc } from '@solana/kit-plugin-rpc';
+import { airdropSigner, generatedSigner } from '@solana/kit-plugin-signer';
+const client = await createClient()
+    .use(generatedSigner())
+    .use(solanaLocalRpc())
+    .use(airdropSigner(lamports(1_000_000_000n)));
+// ---cut-end---
+const recipient = address('GdnSyH3YtwcxFvQrVVJMm1JhTS4QVX7MFsX56uJLUfiZ');
+
+const result = await client.sendTransaction([
+    getTransferSolInstruction({
+        source: client.payer,
+        destination: recipient,
+        amount: lamports(500_000n),
+    }),
+    getTransferSolInstruction({
+        source: client.payer,
+        destination: recipient,
+        amount: lamports(500_000n),
+    }),
+]);
+```
+
+A single `client.sendTransaction([...])` call always produces exactly one transaction onchain, which means every instruction succeeds together or fails together. If you have so many instructions that they cannot fit in one transaction, use [`client.sendTransactions(...)`](/docs/guides/sending-multiple-transactions) instead.
+
+## Plan before sending
+
+Sometimes you do not want to send the transaction immediately. You may want to inspect the planned message before signing, log it for debugging, or take over the rest of the lifecycle yourself. The `client.planTransaction([...])` method returns the planned transaction message and stops there, leaving signing and sending to you.
+
+```ts twoslash
+import { address, lamports } from '@solana/kit';
+import { getTransferSolInstruction } from '@solana-program/system';
+// ---cut-start---
+import { createClient } from '@solana/kit';
+import { solanaLocalRpc } from '@solana/kit-plugin-rpc';
+import { airdropSigner, generatedSigner } from '@solana/kit-plugin-signer';
+const client = await createClient()
+    .use(generatedSigner())
+    .use(solanaLocalRpc())
+    .use(airdropSigner(lamports(1_000_000_000n)));
+// ---cut-end---
+const recipient = address('GdnSyH3YtwcxFvQrVVJMm1JhTS4QVX7MFsX56uJLUfiZ');
+
+const transactionMessage = await client.planTransaction([
+    getTransferSolInstruction({
+        source: client.payer,
+        destination: recipient,
+        amount: lamports(500_000n),
+    }),
+]);
+```
+
+This gives you full control over what happens next: you can sign the message with [`signTransactionMessageWithSigners`](/docs/advanced-guides/signers), encode it for transmission to another service, or pass it to a custom executor. Note that the executor used by `client.sendTransaction([...])` may further mutate the planned message before sending — for example by attaching a fresh blockhash or refreshing the compute unit limit — so the message you inspect here is not guaranteed to be byte-identical to what would land onchain. The [Kit without a client](/docs/advanced-guides/kit-without-a-client) guide goes deeper into building and sending transactions step by step.
+
+## Handle transaction errors
+
+When a transaction fails, `client.sendTransaction(...)` throws a [`SolanaError`](/docs/advanced-guides/errors) with the `SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION` code. The error message identifies whether the failure happened in preflight or onchain, and the `cause` carries the underlying error you can branch on.
+
+```ts twoslash
+import {
+    address,
+    isSolanaError,
+    lamports,
+    SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION,
+} from '@solana/kit';
+import { getTransferSolInstruction } from '@solana-program/system';
+// ---cut-start---
+import { createClient } from '@solana/kit';
+import { solanaLocalRpc } from '@solana/kit-plugin-rpc';
+import { airdropSigner, generatedSigner } from '@solana/kit-plugin-signer';
+const client = await createClient()
+    .use(generatedSigner())
+    .use(solanaLocalRpc())
+    .use(airdropSigner(lamports(1_000_000_000n)));
+const recipient = address('GdnSyH3YtwcxFvQrVVJMm1JhTS4QVX7MFsX56uJLUfiZ');
+// ---cut-end---
+try {
+    await client.sendTransaction([
+        getTransferSolInstruction({
+            source: client.payer,
+            destination: recipient,
+            amount: lamports(500_000n),
+        }),
+    ]);
+} catch (error) {
+    if (isSolanaError(error, SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION)) {
+        console.error(error.message);
+        console.error('Logs:', error.context.logs);
+    } else {
+        throw error;
+    }
+}
+```
+
+The same `error.context` object also exposes the underlying `transactionPlanResult`, which is particularly useful when you want to inspect the failed transaction message or its signature. Program-specific errors (such as System program or SPL Token program errors) live deeper inside `error.cause`. The [Errors](/docs/advanced-guides/errors) guide covers how to identify and handle them.
+
+## Inspect transaction signatures
+
+A successful `client.sendTransaction(...)` resolves with a result object whose `context` carries the transaction `signature` and the original transaction message. You can use the signature to log a link to a block explorer or store it for later reference.
+
+```ts twoslash
+import { address, lamports } from '@solana/kit';
+import { getTransferSolInstruction } from '@solana-program/system';
+// ---cut-start---
+import { createClient } from '@solana/kit';
+import { solanaLocalRpc } from '@solana/kit-plugin-rpc';
+import { airdropSigner, generatedSigner } from '@solana/kit-plugin-signer';
+const client = await createClient()
+    .use(generatedSigner())
+    .use(solanaLocalRpc())
+    .use(airdropSigner(lamports(1_000_000_000n)));
+const recipient = address('GdnSyH3YtwcxFvQrVVJMm1JhTS4QVX7MFsX56uJLUfiZ');
+// ---cut-end---
+const result = await client.sendTransaction([
+    getTransferSolInstruction({
+        source: client.payer,
+        destination: recipient,
+        amount: lamports(500_000n),
+    }),
+]);
+
+console.log(`✅ ${result.context.signature}`);
+```
+
+Transaction signatures are deterministic, so the signature is known as soon as the fee payer signs the transaction — you do not need to wait for confirmation to learn what it will be. If you build and sign your own transactions, the [`getSignatureFromTransaction`](/docs/advanced-guides/transactions) helper exposes the same value.
+
+## Next steps
+
+- [Sending multiple transactions](/docs/guides/sending-multiple-transactions) — plan and execute work that does not fit in a single transaction.
+- [Using program plugins](/docs/guides/using-program-plugins) — discover the `.sendTransaction()` shortcut on typed program helpers.
+- [Advanced guides — Transactions](/docs/advanced-guides/transactions) — learn the full transaction lifecycle.
+- [Advanced guides — Errors](/docs/advanced-guides/errors) — handle failures with `SolanaError`.

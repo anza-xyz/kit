@@ -3,13 +3,184 @@ title: Using program plugins
 description: Add typed program APIs to your client
 ---
 
-<Callout type="warn" title="Planned Content">
-**Status:** New page
+Program plugins are how Kit clients gain typed access to a specific Solana program. They install a typed namespace under the client — `client.system`, `client.token`, and so on — and expose the program's accounts and instructions through it. This guide walks through adding program plugins to a client and using them, alongside the standalone helpers that the same packages also expose.
 
-This guide will provide a deep dive into program plugins: what program plugins are (Codama-generated plugins that add typed program namespaces to a client), how `client.use(tokenProgram())` works under the hood, accessing typed accounts (`client.token.accounts.mint.fetch(address)`, `client.token.accounts.token.fetchAll(filter)`), accessing typed instructions (`client.token.instructions.transfer({...}).sendTransaction()`), using multiple program plugins together (e.g. System + Token + Compute Budget), how this pattern works for any Codama-generated program (not just official ones), and the relationship between program plugins and the `@solana-program/*` packages.
+## Installation
 
-**Draws from:** Kit-plugins program client documentation, Codama JS renderer docs, `@solana-program/token` README.
+Most popular Solana programs ship a Codama-generated package that doubles as a Kit program plugin. Install one for each program you want to interact with.
 
-**Links to:** [Plugins — Generating Program Plugins](/docs/plugins/generating-program-plugins) for generating plugins for your own programs, [Plugins — Available Plugins](/docs/plugins/available-plugins) for a directory of available program plugins.
+```package-install
+@solana-program/system @solana-program/token
+```
 
-</Callout>
+The [Available plugins](/docs/plugins/available-plugins) page lists the program plugins available today. Once installed, apply each plugin with `.use(...)` after your signer and bundle plugins, and the client gains a new typed namespace named after the program.
+
+```ts twoslash
+import { createClient, lamports } from '@solana/kit';
+import { solanaLocalRpc } from '@solana/kit-plugin-rpc';
+import { airdropSigner, generatedSigner } from '@solana/kit-plugin-signer';
+import { systemProgram } from '@solana-program/system';
+import { tokenProgram } from '@solana-program/token';
+
+const client = await createClient()
+    .use(generatedSigner())
+    .use(solanaLocalRpc())
+    .use(airdropSigner(lamports(10_000_000_000n)))
+    .use(systemProgram())
+    .use(tokenProgram());
+```
+
+`client.system` and `client.token` now expose `accounts` and `instructions` namespaces typed against the System and Token programs. Multiple program plugins compose freely — installing more of them simply adds more namespaces to the client.
+
+## What is a program plugin?
+
+A program plugin is a function from a Codama-generated package that adds a typed namespace for one program's accounts and instructions to a Kit client. The same package also exports standalone helpers — `getXInstruction`, `fetchX`, `decodeX`, and so on, where `X` is the instruction or account name — for cases where you do not want a client.
+
+```ts twoslash
+import { systemProgram } from '@solana-program/system';
+import { tokenProgram } from '@solana-program/token';
+```
+
+You can think of a program plugin as a typed adapter on top of these standalone helpers. The plugin handles the wiring — passing the client's RPC and payer where needed — so your code can focus on what the program does. This is great for developer experience and program discoverability, but the tradeoff is tree-shakability: pulling an entire program namespace into your client tends to produce a larger bundle than importing only the standalone helpers you actually use.
+
+## Fetch typed accounts
+
+Each `accounts` namespace exposes one entry per account type defined by the program, with `fetch`, `fetchMaybe`, `fetchAll`, and `fetchAllMaybe` methods that already know the codec to use.
+
+```ts twoslash
+import { address } from '@solana/kit';
+// ---cut-start---
+import { createClient, lamports } from '@solana/kit';
+import { solanaLocalRpc } from '@solana/kit-plugin-rpc';
+import { airdropSigner, generatedSigner } from '@solana/kit-plugin-signer';
+import { tokenProgram } from '@solana-program/token';
+const client = await createClient()
+    .use(generatedSigner())
+    .use(solanaLocalRpc())
+    .use(airdropSigner(lamports(10_000_000_000n)))
+    .use(tokenProgram());
+// ---cut-end---
+const mint = await client.token.accounts.mint.fetch(
+    address('So11111111111111111111111111111111111111112'),
+);
+mint.data.decimals; // typed as `number`
+```
+
+Because the account namespace is generated from the program's IDL, every field on `mint.data` is fully typed — autocompletion and refactors flow through naturally. See [Fetching accounts](/docs/guides/fetching-accounts) for raw account fetching that doesn't depend on a program plugin.
+
+## Create typed instructions
+
+The matching `instructions` namespace exposes one builder per instruction the program defines. The builders accept a typed input and return an instruction ready to be sent.
+
+```ts twoslash
+import { address, lamports } from '@solana/kit';
+// ---cut-start---
+import { createClient } from '@solana/kit';
+import { solanaLocalRpc } from '@solana/kit-plugin-rpc';
+import { airdropSigner, generatedSigner } from '@solana/kit-plugin-signer';
+import { systemProgram } from '@solana-program/system';
+const client = await createClient()
+    .use(generatedSigner())
+    .use(solanaLocalRpc())
+    .use(airdropSigner(lamports(10_000_000_000n)))
+    .use(systemProgram());
+const recipient = address('GdnSyH3YtwcxFvQrVVJMm1JhTS4QVX7MFsX56uJLUfiZ');
+// ---cut-end---
+const transferSol = client.system.instructions.transferSol({
+    source: client.payer,
+    destination: recipient,
+    amount: lamports(500_000n),
+});
+```
+
+## Use the `.sendTransaction()` shortcut
+
+Each typed instruction returned by a program plugin also exposes a `.sendTransaction()` method that wraps `client.sendTransaction([instruction])`. This is the most concise way to send a one-off transaction.
+
+```ts twoslash
+import { address, lamports } from '@solana/kit';
+// ---cut-start---
+import { createClient } from '@solana/kit';
+import { solanaLocalRpc } from '@solana/kit-plugin-rpc';
+import { airdropSigner, generatedSigner } from '@solana/kit-plugin-signer';
+import { systemProgram } from '@solana-program/system';
+const client = await createClient()
+    .use(generatedSigner())
+    .use(solanaLocalRpc())
+    .use(airdropSigner(lamports(10_000_000_000n)))
+    .use(systemProgram());
+const recipient = address('GdnSyH3YtwcxFvQrVVJMm1JhTS4QVX7MFsX56uJLUfiZ');
+// ---cut-end---
+const result = await client.system.instructions
+    .transferSol({
+        source: client.payer,
+        destination: recipient,
+        amount: lamports(500_000n),
+    })
+    .sendTransaction();
+```
+
+The same returned object also exposes `.sendTransactions()`, `.planTransaction()`, and `.planTransactions()` shortcuts that wrap the matching client methods. The shortcut shines for single-instruction operations where the rest of the transaction would just be ceremony. When you want to combine several instructions into one transaction or compose larger operations, [`client.sendTransaction([...])`](/docs/guides/sending-transactions) is the more flexible primitive.
+
+## Use instruction plans from program plugins
+
+Some operations naturally span more than one instruction — creating and initializing a token mint is a classic example. Program plugins expose these as instruction plans rather than raw instructions, which means they can also be combined into larger plans.
+
+```ts twoslash
+import { generateKeyPairSigner } from '@solana/kit';
+// ---cut-start---
+import { createClient, lamports } from '@solana/kit';
+import { solanaLocalRpc } from '@solana/kit-plugin-rpc';
+import { airdropSigner, generatedSigner } from '@solana/kit-plugin-signer';
+import { tokenProgram } from '@solana-program/token';
+const client = await createClient()
+    .use(generatedSigner())
+    .use(solanaLocalRpc())
+    .use(airdropSigner(lamports(10_000_000_000n)))
+    .use(tokenProgram());
+// ---cut-end---
+const newMint = await generateKeyPairSigner();
+const createMintPlan = client.token.instructions.createMint({
+    newMint,
+    decimals: 9,
+    mintAuthority: client.identity.address,
+});
+```
+
+The returned plan can be sent on its own with `.sendTransaction()` or `.sendTransactions()`, fed into [`client.sendTransaction([...])`](/docs/guides/sending-transactions) alongside other work, or combined with [`sequentialInstructionPlan(...)`](/docs/guides/sending-multiple-transactions) and [`parallelInstructionPlan(...)`](/docs/guides/sending-multiple-transactions) helpers when building larger operations.
+
+## Use program libraries without a client
+
+Every program package also exports standalone helpers that work on a plain `Rpc` object or with raw `Instruction`s. This is useful for libraries that should not assume a Kit client, or when you want maximum tree-shaking.
+
+```ts twoslash
+import { address, createSolanaRpc, generateKeyPairSigner, lamports } from '@solana/kit';
+import { fetchMint } from '@solana-program/token';
+import { getTransferSolInstruction } from '@solana-program/system';
+
+const rpc = createSolanaRpc('https://api.devnet.solana.com');
+
+const mint = await fetchMint(rpc, address('So11111111111111111111111111111111111111112'));
+
+const source = await generateKeyPairSigner();
+const transferSol = getTransferSolInstruction({
+    source,
+    destination: address('Ay1zdJ3VDbhrAtkRiqBUJgKLHYbgFZN5BXk7svtMowif'),
+    amount: lamports(500_000n),
+});
+```
+
+Because the standalone helpers and the plugin-based namespaces are generated from the same IDL, the input shapes match exactly. You can move from one style to the other without rewriting the data your application passes around.
+
+## Generate plugins for your own programs
+
+Any program with a Codama IDL can be turned into a Kit-compatible package, with both standalone helpers and a program plugin, using the [Codama JS renderer](https://github.com/codama-idl/renderers-js). The renderer reads the IDL, emits TypeScript bindings, and wires them up through the same `@solana/program-client-core` primitives the `@solana-program/*` packages use.
+
+If your program is built with Anchor, you can convert its Anchor IDL to a Codama IDL first, which means program plugin generation works for Anchor programs as well. See [Generating program plugins](/docs/plugins/generating-program-plugins) for a step-by-step walkthrough.
+
+## Next steps
+
+- [Available plugins](/docs/plugins/available-plugins) — browse the program plugins available today.
+- [Generating program plugins](/docs/plugins/generating-program-plugins) — generate a plugin for your own program.
+- [Fetching accounts](/docs/guides/fetching-accounts) — combine typed accounts with raw RPC reads.
+- [Sending transactions](/docs/guides/sending-transactions) — use typed instructions with `client.sendTransaction([...])`.

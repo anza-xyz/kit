@@ -3,67 +3,157 @@ title: RPC subscriptions
 description: Get notified of changes to the blockchain
 ---
 
-<Callout type="warn" title="Planned Changes">
-**Status:** Existing page — moved to Guides, updates planned in a follow-up PR
+RPC subscriptions let your application receive live updates from the network instead of polling for them. They are delivered over a WebSocket endpoint and surface as async iterators in Kit, which fit naturally into modern JavaScript control flow.
 
-This page was moved from Advanced Guides to Guides because the current content is a simple RPC Subscriptions introduction. A follow-up PR will update the examples to the plugin-flavored API and explain how `client.rpcSubscriptions` from a plugin-composed client relates to the `RpcSubscriptions` object described here.
-
-**Current content preserved:** Yes, all existing content stays.
-
-</Callout>
-
-## Introduction
-
-Kit offers a TypeScript interface that you can use to subscribe for notifications from a Solana JSON RPC server. Registering subscriptions with a <abbr title="Remote procedure call">RPC</abbr> server will yield notifications over that channel when data matching your subscription is updated.
-
-Kit aims to implement all of the RPC Subscription methods documented in the [Solana RPC WebSocket methods](https://solana.com/docs/rpc/websocket) docs. You can either browse the available methods in the docs, or you can follow Kit's TypeScript types and inline documentation in your editor.
+Kit aims to support every method documented in the [Solana RPC WebSocket methods](https://solana.com/docs/rpc/websocket) docs. As with HTTP RPC, you can either browse the methods in the official documentation or rely on TypeScript autocompletion in your editor.
 
 ## Installation
 
-Functions for creating RPC Subscriptions clients are **included within the `@solana/kit` library** but you may also install them using their standalone package.
+You will typically install Kit alongside the RPC plugin package, which provides both HTTP and WebSocket connectivity.
 
 ```package-install
-@solana/rpc-subscriptions
+@solana/kit @solana/kit-plugin-rpc
 ```
 
-Note that the `@solana/rpc-subscriptions` package itself is composed of several smaller packages, each with a distinct responsibility. Here's the list of all packages that come together to implement the default RPC Subscriptions client should you wish to create your own custom one:
+If you only need subscriptions and prefer not to use a Kit client, the lower-level `createSolanaRpcSubscriptions` function is available directly from `@solana/kit`.
 
-| Package                                                                                                                | Description                                                                                                                                |
-| ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| [`@solana/kit`](https://npmjs.org/package/@solana/kit)                                                                 | Includes `@solana/rpc-subscriptions`, `@solana/rpc-parsed-types`, `@solana/rpc-spec-types`, and `@solana/rpc-types`                        |
-| [`@solana/rpc-subscriptions`](https://npmjs.org/package/@solana/rpc-subscriptions)                                     | Includes `@solana/rpc-subscriptions-api`, `@solana/rpc-subscriptions-spec`, and utilities for creating default RPC Subscriptions instances |
-| [`@solana/rpc-subscriptions-api`](https://npmjs.org/package/@solana/rpc-subscriptions-api)                             | Types that describe every method in the Solana RPC WebSocket API                                                                           |
-| [`@solana/rpc-subscriptions-spec`](https://npmjs.org/package/@solana/rpc-subscriptions-spec)                           | Types and methods that can be used to create an RPC Subscriptions implementation                                                           |
-| [`@solana/rpc-spec-types`](https://npmjs.org/package/@solana/rpc-spec-types)                                           | Utility types common to both RPC and RPC Subscriptions implementations                                                                     |
-| [`@solana/rpc-transformers`](https://npmjs.org/package/@solana/rpc-transformers)                                       | Helpers for transforming RPC subscriptions and notifications in various ways appropriate for use in a JavaScript application               |
-| [`@solana/rpc-subscriptions-channel-websocket`](https://npmjs.org/package/@solana/rpc-subscriptions-channel-websocket) | Utilities for creating custom RPC Subscriptions channels                                                                                   |
-| [`@solana/rpc-types`](https://npmjs.org/package/@solana/rpc-types)                                                     | Types for values used in the [Solana Websocket API](https://docs.solana.com/api/websocket) and a series of helpers for working with them   |
+## Create a subscriptions client
 
-## What is a RPC?
+The bundle plugins from `@solana/kit-plugin-rpc` install both `client.rpc` and `client.rpcSubscriptions` in one step. You do not need to manage two separate transports.
 
-A RPC is a server with an up-to-date view of the Solana blockchain. You can send it subscriptions to request notifications for changes to things like account data, signature statuses, and slot progression.
+```ts twoslash
+import { createClient } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { generatedSigner } from '@solana/kit-plugin-signer';
 
-Here's a quick example that subscribes for a notification every time the network's slot count advances, then unsubscribes after 10 seconds.
+const client = await createClient().use(generatedSigner()).use(solanaDevnetRpc());
+```
+
+By default, the WebSocket endpoint is derived from the HTTP endpoint by swapping `http`/`https` for `ws`/`wss`. If your provider hosts the two endpoints at different URLs, pass `rpcSubscriptionsUrl` explicitly in the plugin configuration.
+
+## Subscribe to slot notifications
+
+Subscriptions return an async iterator. The most idiomatic way to consume one is a `for await` loop, which keeps reading notifications until the underlying subscription ends.
+
+```ts twoslash
+// ---cut-start---
+import { createClient } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { generatedSigner } from '@solana/kit-plugin-signer';
+const client = await createClient().use(generatedSigner()).use(solanaDevnetRpc());
+// ---cut-end---
+const slotNotifications = await client.rpcSubscriptions
+    .slotNotifications()
+    .subscribe({ abortSignal: AbortSignal.timeout(10_000) });
+
+for await (const notification of slotNotifications) {
+    console.log('The network advanced to slot', notification.slot);
+}
+```
+
+The `.subscribe({ abortSignal })` step is mandatory because every subscription must be tied to an `AbortSignal`. This forces you to think up front about when the subscription should end and prevents leaks.
+
+## Cancel subscriptions
+
+You may want to cancel a subscription before it ends naturally — for example, when a component unmounts in a UI. Pass an `AbortController` so that calling `.abort()` from anywhere in your code stops the iterator gracefully.
+
+```ts twoslash
+// ---cut-start---
+import { createClient } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { generatedSigner } from '@solana/kit-plugin-signer';
+const client = await createClient().use(generatedSigner()).use(solanaDevnetRpc());
+// ---cut-end---
+const abortController = new AbortController();
+const slotNotifications = await client.rpcSubscriptions
+    .slotNotifications()
+    .subscribe({ abortSignal: abortController.signal });
+
+// Stop receiving notifications after the user navigates away.
+abortController.abort();
+```
+
+`AbortSignal.timeout(ms)` is a convenient shortcut when you simply want a fixed duration. For one-off subscriptions, that single line is often all you need.
+
+## Subscribe to account changes
+
+Account subscriptions notify you whenever an account's data changes onchain. The shape of the notification mirrors the response of `getAccountInfo`, so the same encoding and commitment options apply.
+
+```ts twoslash
+import { address } from '@solana/kit';
+// ---cut-start---
+import { createClient } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { generatedSigner } from '@solana/kit-plugin-signer';
+const client = await createClient().use(generatedSigner()).use(solanaDevnetRpc());
+// ---cut-end---
+const wallet = address('GdnSyH3YtwcxFvQrVVJMm1JhTS4QVX7MFsX56uJLUfiZ');
+const accountNotifications = await client.rpcSubscriptions
+    .accountNotifications(wallet, { commitment: 'confirmed' })
+    .subscribe({ abortSignal: AbortSignal.timeout(60_000) });
+
+for await (const notification of accountNotifications) {
+    console.log('Account changed:', notification.value);
+}
+```
+
+If you only need a one-off read of an account, [`fetchEncodedAccount`](/docs/guides/fetching-accounts) is usually a better fit. Use subscriptions for live, ongoing updates.
+
+## Handle disconnects and errors
+
+Long-lived subscriptions can disconnect for many reasons — flaky networks, server restarts, or connection limits — and errors can be raised at any point during iteration. Wrap the iteration in a `try`/`catch` so your application can react gracefully.
+
+```ts twoslash
+import { address } from '@solana/kit';
+// ---cut-start---
+import { createClient } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { generatedSigner } from '@solana/kit-plugin-signer';
+const client = await createClient().use(generatedSigner()).use(solanaDevnetRpc());
+// ---cut-end---
+const wallet = address('GdnSyH3YtwcxFvQrVVJMm1JhTS4QVX7MFsX56uJLUfiZ');
+const accountNotifications = await client.rpcSubscriptions
+    .accountNotifications(wallet, { commitment: 'confirmed' })
+    .subscribe({ abortSignal: AbortSignal.timeout(60_000) });
+
+try {
+    for await (const notification of accountNotifications) {
+        console.log('Account changed:', notification.value);
+    }
+} catch (error) {
+    // Reconnect, log, surface a UI error, etc.
+}
+```
+
+Depending on your application, you may want to recreate the subscription with a fresh `AbortSignal` after a disconnect, possibly using a small backoff to avoid thrashing the server.
+
+## Use subscriptions without a client
+
+If you do not need a Kit client, you can build an `RpcSubscriptions` object directly with `createSolanaRpcSubscriptions`. This is the lower-level building block the plugins use under the hood.
 
 ```ts twoslash
 import { createSolanaRpcSubscriptions, mainnet } from '@solana/kit';
+
 const rpcSubscriptions = createSolanaRpcSubscriptions(mainnet('wss://api.mainnet-beta.solana.com'));
 const slotNotifications = await rpcSubscriptions
     .slotNotifications()
     .subscribe({ abortSignal: AbortSignal.timeout(10_000) });
-for await (const slotNotification of slotNotifications) {
-    console.log('The network has advanced to slot', slotNotification.slot);
-}
 ```
 
-Most RPC servers implement most of the Solana WebSocket API covered by Kit, but some offer extra methods above and beyond that. Those that do should offer an SDK that you can use to wrap Kit's RPC WebSocket API implementation, merging the method implementations and TypeScript types of both APIs into a single object.
+This is useful when you want maximum tree-shaking, when you are writing a library that should not assume a client, or when you only need a tiny subset of the subscriptions API.
 
-## Where to find an RPC
+## Choose a WebSocket endpoint
 
-For light development or personal use, you can use a public RPC server for the cluster you want to access.
+For light development or personal use, the public WebSocket endpoints maintained by the Solana Foundation work the same way as their HTTP counterparts.
 
 - `wss://api.mainnet-beta.solana.com`
 - `wss://api.testnet.solana.com`
 - `wss://api.devnet.solana.com`
 
-When deploying your application to production, you will want to lease an RPC server or [set up your own](https://docs.anza.xyz/operations/setup-an-rpc-node).
+In production, your HTTP and WebSocket endpoints should match — both clusters and providers — to avoid subtle mismatches between the data each transport returns. Most RPC providers offer paired endpoints; consult their documentation for the exact URLs they expect you to use.
+
+## Next steps
+
+- [RPC requests](/docs/guides/rpc) — read state and submit one-off requests over HTTP.
+- [Fetching accounts](/docs/guides/fetching-accounts) — pair subscriptions with a baseline read.
+- [Sending transactions](/docs/guides/sending-transactions) — submit work to the network.

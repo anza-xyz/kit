@@ -1,17 +1,216 @@
 ---
 title: Sending multiple transactions
-description: Plan and execute complex multi-transaction operations
+description: Plan and execute work across several transactions
 ---
 
-<Callout type="warn" title="Planned Content">
-**Status:** New page
+When an operation cannot fit in a single transaction — too many instructions, too much data, or work that should run in parallel — you need to split it across several transactions. Kit clients support this through the same `client.sendTransactions(...)` and `client.planTransactions(...)` methods you used in [Sending transactions](/docs/guides/sending-transactions), but plural.
 
-This guide assumes the reader is familiar with `InstructionPlan` structures (covered in [Sending Transactions](/docs/guides/sending-transactions)), but a brief recap with a link back will be included so this guide works standalone.
+## Prerequisites
 
-The guide will introduce two structures that are new and specific to multi-transaction operations: the **`TransactionPlan`** (the result of planning instruction plans into concrete transactions) and the **`TransactionPlanResult`** (the tree structure returned after execution, containing success, failure, and cancellation states). It will cover **`client.sendTransactions(instructionPlan)`** for sending instruction plans that span multiple transactions, **`client.planTransactions(instructionPlan)`** for planning without executing (inspection, debugging), helper functions like `summarizeTransactionPlanResult` and `flattenTransactionPlanResult` for processing results, error recovery via `passthroughFailedTransactionPlanExecution` to continue past failures, and handling partial failures, cancelled transactions, and successful transactions in the result tree.
+This guide assumes a transaction-ready client, like the one set up in [Sending transactions](/docs/guides/sending-transactions). The same bundle plugins from `@solana/kit-plugin-rpc` and `@solana/kit-plugin-litesvm` install everything `client.sendTransactions(...)` needs out of the box.
 
-**Draws from:** Kit-plugins `token-airdrop` example (multi-address airdrop with parallel plans and error recovery), `@solana/kit-plugin-instruction-plan` README, `@solana/kit-plugin-rpc` README (`rpcTransactionPlanExecutor`).
+## Instruction plans
 
-**Links to:** [Sending Transactions](/docs/guides/sending-transactions) for single transaction basics, [Advanced Guides — Instruction Plans](/docs/advanced-guides/instruction-plans) for the underlying plan system, [Recipes — Airdropping Tokens](/recipes/airdropping-tokens) for a concrete multi-transaction example.
+An instruction plan describes an operation made of several instructions together with constraints on how they can run — some steps must happen sequentially, others may run in parallel, and some must stay atomic. Kit represents this as a tree, so simple operations stay simple while more complex flows can nest sequential and parallel branches inside each other. The plan is then handed to a [transaction planner](/docs/advanced-guides/instruction-plans) that decides how to pack it into transaction messages, and then to a [transaction plan executor](/docs/advanced-guides/instruction-plans) that sends those transactions.
 
-</Callout>
+Kit's planners can divide work, batch it into transactions, and even pack variable-sized data into the available space. For most cases you only need to know about three building blocks: `singleInstructionPlan`, `sequentialInstructionPlan`, and `parallelInstructionPlan`. The [Instruction plans](/docs/advanced-guides/instruction-plans) advanced guide goes much deeper.
+
+## Run work sequentially
+
+Use `sequentialInstructionPlan(...)` when each step depends on the previous one — for example, creating an account before initializing it.
+
+```ts twoslash
+import { Instruction, sequentialInstructionPlan } from '@solana/kit';
+const createAccount = {} as Instruction;
+const initializeAccount = {} as Instruction;
+// ---cut-before---
+const instructionPlan = sequentialInstructionPlan([createAccount, initializeAccount]);
+```
+
+Sequential plans accept either raw instructions or other instruction plans, so you can compose larger flows from smaller ones. A `nonDivisibleSequentialInstructionPlan(...)` variant also exists for steps that must run atomically inside a single transaction (or transaction bundle when not possible).
+
+## Run work in parallel
+
+Use `parallelInstructionPlan(...)` when independent steps can run in any order. The planner is then free to pack them into separate transactions and send them concurrently.
+
+```ts twoslash
+import { Instruction, parallelInstructionPlan } from '@solana/kit';
+const transferToBob = {} as Instruction;
+const transferToCarla = {} as Instruction;
+// ---cut-before---
+const instructionPlan = parallelInstructionPlan([transferToBob, transferToCarla]);
+```
+
+The two helpers compose freely: a sequential plan can contain parallel children and vice versa. This is how you describe operations like "set up these two accounts in parallel, then run the operation that depends on both of them".
+
+## Plan multiple transactions
+
+When you only want to inspect or persist the planned transactions, `client.planTransactions(plan)` runs the planner without executing anything and returns the resulting `TransactionPlan` tree.
+
+```ts twoslash
+import { lamports, parallelInstructionPlan } from '@solana/kit';
+import { getTransferSolInstruction } from '@solana-program/system';
+// ---cut-start---
+import { address } from '@solana/kit';
+import { createClient } from '@solana/kit';
+import { solanaLocalRpc } from '@solana/kit-plugin-rpc';
+import { airdropSigner, generatedSigner } from '@solana/kit-plugin-signer';
+const client = await createClient()
+    .use(generatedSigner())
+    .use(solanaLocalRpc())
+    .use(airdropSigner(lamports(10_000_000_000n)));
+const bob = address('GdnSyH3YtwcxFvQrVVJMm1JhTS4QVX7MFsX56uJLUfiZ');
+const carla = address('Ay1zdJ3VDbhrAtkRiqBUJgKLHYbgFZN5BXk7svtMowif');
+// ---cut-end---
+const instructionPlan = parallelInstructionPlan([
+    getTransferSolInstruction({
+        source: client.payer,
+        destination: bob,
+        amount: lamports(500_000n),
+    }),
+    getTransferSolInstruction({
+        source: client.payer,
+        destination: carla,
+        amount: lamports(500_000n),
+    }),
+]);
+
+const transactionPlan = await client.planTransactions(instructionPlan);
+```
+
+The returned `TransactionPlan` keeps the same sequential and parallel structure as the original instruction plan, but its leaves are the concrete transaction messages the planner chose to pack the work into. This is useful for dry runs, debugging, or feeding a custom executor.
+
+## Send multiple transactions
+
+To plan and send in one call, use `client.sendTransactions(plan)`. The result is a `TransactionPlanResult` tree that mirrors the original plan, with one leaf per transaction.
+
+```ts twoslash
+import { lamports, parallelInstructionPlan } from '@solana/kit';
+import { getTransferSolInstruction } from '@solana-program/system';
+// ---cut-start---
+import { address } from '@solana/kit';
+import { createClient } from '@solana/kit';
+import { solanaLocalRpc } from '@solana/kit-plugin-rpc';
+import { airdropSigner, generatedSigner } from '@solana/kit-plugin-signer';
+const client = await createClient()
+    .use(generatedSigner())
+    .use(solanaLocalRpc())
+    .use(airdropSigner(lamports(10_000_000_000n)));
+const bob = address('GdnSyH3YtwcxFvQrVVJMm1JhTS4QVX7MFsX56uJLUfiZ');
+const carla = address('Ay1zdJ3VDbhrAtkRiqBUJgKLHYbgFZN5BXk7svtMowif');
+// ---cut-end---
+const instructionPlan = parallelInstructionPlan([
+    getTransferSolInstruction({
+        source: client.payer,
+        destination: bob,
+        amount: lamports(500_000n),
+    }),
+    getTransferSolInstruction({
+        source: client.payer,
+        destination: carla,
+        amount: lamports(500_000n),
+    }),
+]);
+
+const result = await client.sendTransactions(instructionPlan);
+```
+
+`client.sendTransactions(...)` is the multi-transaction counterpart of `client.sendTransaction(...)`. The single-transaction version asserts that the plan resolves to exactly one transaction and unwraps its result — a convenience for the common case. The plural version preserves the full tree, which you can walk to see what happened.
+
+## Understand transaction plan results
+
+Every leaf in the result tree is a `SingleTransactionPlanResult` with one of three statuses:
+
+- `successful` — the transaction was sent and confirmed; `context.signature` is always present.
+- `failed` — the transaction was attempted but failed during preflight, simulation, or execution. `error` carries the underlying error.
+- `canceled` — the transaction was never attempted, typically because a prior transaction in a sequential branch failed first.
+
+```ts twoslash
+import { TransactionPlanResult } from '@solana/kit';
+const result = {} as TransactionPlanResult;
+// ---cut-before---
+if (result.kind === 'single') {
+    if (result.status === 'successful') {
+        console.log('Signature:', result.context.signature);
+    } else if (result.status === 'failed') {
+        console.error('Failed:', result.error);
+    } else {
+        console.warn('Canceled before being sent');
+    }
+}
+```
+
+Branch nodes use `kind: 'parallel'` or `kind: 'sequential'`, with their child results in `plans`. You usually do not need to walk the tree by hand — the helpers in the next sections cover the common cases.
+
+## Summarize results
+
+`summarizeTransactionPlanResult(...)` flattens the tree and bucketizes the results so you can quickly check whether everything succeeded.
+
+```ts twoslash
+import { summarizeTransactionPlanResult, TransactionPlanResult } from '@solana/kit';
+const result = {} as TransactionPlanResult;
+// ---cut-before---
+const summary = summarizeTransactionPlanResult(result);
+
+if (summary.successful) {
+    console.log(`✅ ${summary.successfulTransactions.length} transactions confirmed`);
+} else {
+    console.warn(
+        `${summary.successfulTransactions.length} ok, ` +
+            `${summary.failedTransactions.length} failed, ` +
+            `${summary.canceledTransactions.length} canceled`,
+    );
+}
+```
+
+This is usually the first thing to reach for after `client.sendTransactions(...)` — it gives you a quick health check without writing any tree-walking code.
+
+## Continue after failures
+
+By default, `client.sendTransactions(...)` throws as soon as any transaction in the plan fails. That behaviour is convenient for small operations, but counterproductive when you are running a large batch and want to inspect partial results. The `passthroughFailedTransactionPlanExecution(...)` helper turns that thrown error back into a `TransactionPlanResult`.
+
+```ts twoslash
+import { InstructionPlan, passthroughFailedTransactionPlanExecution } from '@solana/kit';
+const instructionPlan = {} as InstructionPlan;
+// ---cut-start---
+import { createClient, lamports } from '@solana/kit';
+import { solanaLocalRpc } from '@solana/kit-plugin-rpc';
+import { airdropSigner, generatedSigner } from '@solana/kit-plugin-signer';
+const client = await createClient()
+    .use(generatedSigner())
+    .use(solanaLocalRpc())
+    .use(airdropSigner(lamports(10_000_000_000n)));
+// ---cut-end---
+const result = await passthroughFailedTransactionPlanExecution(
+    client.sendTransactions(instructionPlan),
+);
+```
+
+After this call, `result` is the same tree you would have received on full success — but with `failed` and `canceled` leaves where the issues occurred. You can then summarize it, walk it, or react however you need.
+
+## Handle partial success
+
+When you want to react to each transaction individually, `flattenTransactionPlanResult(...)` collapses the tree into an array of leaf results in the order they appear.
+
+```ts twoslash
+import { flattenTransactionPlanResult, TransactionPlanResult } from '@solana/kit';
+const result = {} as TransactionPlanResult;
+// ---cut-before---
+for (const single of flattenTransactionPlanResult(result)) {
+    if (single.status === 'successful') {
+        console.log('✅', single.context.signature);
+    } else if (single.status === 'failed') {
+        console.error('❌', single.error.message);
+    } else {
+        console.warn('⏭️', 'canceled');
+    }
+}
+```
+
+Combined with `passthroughFailedTransactionPlanExecution(...)`, this is enough to drive a UI that shows per-transaction status, retry buttons, or detailed error messages for a long-running multi-transaction operation.
+
+## Next steps
+
+- [Sending transactions](/docs/guides/sending-transactions) — single-transaction basics.
+- [Advanced guides — Instruction plans](/docs/advanced-guides/instruction-plans) — the full instruction plan API.
+- [Advanced guides — Errors](/docs/advanced-guides/errors) — recover from `SolanaError` failures.
