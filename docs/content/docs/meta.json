@@ -9,7 +9,6 @@
         "...",
         "guides",
         "plugins",
-        "advanced-guides",
-        "getting-started-old"
+        "advanced-guides"
     ]
 }

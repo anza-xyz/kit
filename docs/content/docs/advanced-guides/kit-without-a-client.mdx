@@ -3,29 +3,171 @@ title: Kit without a client
 description: Use Kit's full power without the client abstraction
 ---
 
-<Callout type="warn" title="Planned Content">
-**Status:** New page
+This guide shows how to achieve the same capabilities a [Kit client](/docs/plugins) gives you, but using Kit's primitives directly. The page is organized as a reference: each section takes one piece of what a fully composed client offers and shows the manual equivalent, so you can pick and choose the exact bits you need.
 
-This guide will show how to achieve the same capabilities you get from a Kit client (like the RPC client) but without the client abstraction, using Kit's primitives directly. This is useful for maximum treeshakability, fine-grained control, or simply to understand what happens behind the scenes.
+## When to skip the client
 
-The guide is structured as a reference so readers can jump to any section they need. Each section takes a capability from the client and shows the manual equivalent:
+Going client-less is the right choice when you want the smallest possible bundles, full control over every step of the transaction lifecycle, or when you are writing library code that should not assume a Kit client. The cost is a little more boilerplate and a less prescriptive structure. The client model, on the other hand, gives you consistent ergonomics and a curated set of plugin interfaces other plugins can build on.
 
-**Setting up RPC** — Creating `Rpc` and `RpcSubscriptions` manually with `createSolanaRpc` and `createSolanaRpcSubscriptions` instead of the `rpc()` plugin.
+If you need ergonomics on top of a curated set of primitives, consider [creating a custom plugin bundle](/docs/plugins/creating-custom-plugins) instead. A bundle plugin is just a regular plugin that composes several smaller ones, so you keep the client model while owning exactly which primitives are wired up.
 
-**Creating signers** — Generating keypairs with `generateKeyPairSigner()`, importing from files, understanding the signer interfaces.
+## Set up RPC
 
-**Building transactions** — Constructing transaction messages with `pipe()` and Kit's functional composition pattern (`createTransactionMessage`, `setTransactionMessageFeePayerSigner`, `appendTransactionMessageInstructions`, etc.). Covers the immutability model.
+Kit ships two factories for talking to a Solana RPC node: `createSolanaRpc` for HTTP requests and `createSolanaRpcSubscriptions` for the WebSocket channel. Both return typed proxies with the full Solana JSON-RPC API surface available on them.
 
-**Signing and compiling** — Manually signing with `signTransactionMessageWithSigners` and compiling with `getCompiledTransactionMessageEncoder`.
+```ts twoslash
+import { createSolanaRpc, createSolanaRpcSubscriptions } from '@solana/kit';
 
-**Sending and confirming** — Using `sendAndConfirmTransactionFactory` or calling `sendTransaction` RPC method directly, with manual confirmation strategies.
+const rpc = createSolanaRpc('https://api.devnet.solana.com');
+const rpcSubscriptions = createSolanaRpcSubscriptions('wss://api.devnet.solana.com');
+```
 
-**Fetching accounts** — Using `fetchEncodedAccount` and decoding with codecs, without program plugin helpers.
+The objects returned by these factories are exactly what `client.rpc` and `client.rpcSubscriptions` expose under the hood, so any code that takes an `Rpc` or `RpcSubscriptions` works in either setup. See [RPC requests](/docs/guides/rpc) and [RPC subscriptions](/docs/guides/rpc-subscriptions) for the user-facing API.
 
-The guide will also explain why you might choose this approach (smaller bundle size via treeshaking, full control over each step) and when the client-based approach is preferable (convenience, less boilerplate, consistent patterns).
+## Create a signer
 
-**Draws from:** Current `getting-started/setup.mdx` (hand-built Client type), `getting-started/build-transaction.mdx` (the `pipe()` / immutability walkthrough), `getting-started/send-transaction.mdx` (manual send and confirm), `getting-started/signers.mdx` (keypair generation). This is where the current tutorial's functional programming content finds its permanent home.
+The most common way to create a signer is to generate a fresh in-memory keypair with `generateKeyPairSigner`. The returned object is a `KeyPairSigner` that satisfies both the `TransactionSigner` and `MessageSigner` interfaces.
 
-**Links to:** [Plugins — Creating Custom Plugins](/docs/plugins/creating-custom-plugins) for composing plugin bundles as a middle ground between full custom setup and no client.
+```ts twoslash
+import { generateKeyPairSigner } from '@solana/kit';
 
-</Callout>
+const signer = await generateKeyPairSigner();
+```
+
+If you already have a keypair stored as a JSON byte array — for example, a Solana CLI keypair file — you can rebuild a signer from it with `createKeyPairSignerFromBytes`. See [Setting up signers](/docs/guides/setting-up-signers) for the broader signer setup story and [Advanced guides — Signers](/docs/advanced-guides/signers) for the underlying signer interfaces.
+
+```ts twoslash
+import { createKeyPairSignerFromBytes } from '@solana/kit';
+import { readFileSync } from 'node:fs';
+
+const bytes = JSON.parse(readFileSync('keypair.json', 'utf-8')) as number[];
+const signer = await createKeyPairSignerFromBytes(new Uint8Array(bytes));
+```
+
+## Build a transaction message
+
+Kit transaction messages are immutable: each helper returns a new object with a narrower type, so TypeScript can enforce that required fields are set before the message is signed or sent. The `pipe` helper threads a value through a sequence of transformations and lets the type narrow at each step.
+
+```ts twoslash
+import {
+    appendTransactionMessageInstructions,
+    createTransactionMessage,
+    Instruction,
+    pipe,
+    setTransactionMessageFeePayerSigner,
+    setTransactionMessageLifetimeUsingBlockhash,
+} from '@solana/kit';
+// ---cut-start---
+import { createSolanaRpc, generateKeyPairSigner } from '@solana/kit';
+const rpc = createSolanaRpc('https://api.devnet.solana.com');
+const signer = await generateKeyPairSigner();
+const instructionA = {} as Instruction;
+const instructionB = {} as Instruction;
+// ---cut-end---
+const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
+
+const transactionMessage = pipe(
+    createTransactionMessage({ version: 0 }),
+    (tx) => setTransactionMessageFeePayerSigner(signer, tx),
+    (tx) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx),
+    (tx) => appendTransactionMessageInstructions([instructionA, instructionB], tx),
+);
+```
+
+This is the same composition the bundled clients use internally. See [Advanced guides — Transactions](/docs/advanced-guides/transactions) for the full transaction message API, including durable-nonce lifetimes and other configuration helpers.
+
+## Estimate compute units
+
+Setting an explicit compute unit limit close to what your transaction actually consumes increases the chance of inclusion, packs more transactions per block, and reduces priority fees. Kit ships everything you need for this without leaving `@solana/kit`: `estimateComputeUnitLimitFactory` simulates the message to estimate the cost, and `estimateAndSetComputeUnitLimitFactory` wraps that estimator to write the result back onto the message in one step.
+
+```ts twoslash
+import {
+    estimateAndSetComputeUnitLimitFactory,
+    estimateComputeUnitLimitFactory,
+    TransactionMessage,
+    TransactionMessageWithFeePayer,
+} from '@solana/kit';
+// ---cut-start---
+import { createSolanaRpc } from '@solana/kit';
+const rpc = createSolanaRpc('https://api.devnet.solana.com');
+const transactionMessage = {} as TransactionMessage & TransactionMessageWithFeePayer;
+// ---cut-end---
+const estimateComputeUnitLimit = estimateComputeUnitLimitFactory({ rpc });
+const estimateAndSetComputeUnitLimit =
+    estimateAndSetComputeUnitLimitFactory(estimateComputeUnitLimit);
+
+const transactionMessageWithLimit = await estimateAndSetComputeUnitLimit(transactionMessage);
+```
+
+Bundled clients such as `solanaRpc` and `litesvm` already do this for you when sending transactions.
+
+## Sign the transaction
+
+Once a transaction message is fully configured, `signTransactionMessageWithSigners` extracts every signer attached to it (the fee payer plus any signer-typed instruction inputs) and produces a signed `Transaction`.
+
+```ts twoslash
+import {
+    signTransactionMessageWithSigners,
+    TransactionMessage,
+    TransactionMessageWithFeePayer,
+} from '@solana/kit';
+// ---cut-start---
+const transactionMessage = {} as TransactionMessage & TransactionMessageWithFeePayer;
+// ---cut-end---
+const signedTransaction = await signTransactionMessageWithSigners(transactionMessage);
+```
+
+Two assertions are typically useful at this point: `assertIsSendableTransaction` verifies the transaction has every required signature and fits within the size limit, and `assertIsTransactionWithBlockhashLifetime` narrows the lifetime so it can be passed to `sendAndConfirmTransactionFactory` below. The transaction identifier on Solana is the fee payer's signature, which is fully determined as soon as the fee payer signs — `getSignatureFromTransaction(signedTransaction)` returns that identifier directly, without needing to send the transaction first.
+
+## Send and confirm a transaction
+
+`sendAndConfirmTransactionFactory` builds a function that sends a signed transaction and waits for the configured commitment. It needs both an `rpc` and an `rpcSubscriptions` because confirmation listens to slot and signature notifications.
+
+```ts twoslash
+import {
+    SendableTransaction,
+    sendAndConfirmTransactionFactory,
+    Transaction,
+    TransactionWithBlockhashLifetime,
+} from '@solana/kit';
+// ---cut-start---
+import { createSolanaRpc, createSolanaRpcSubscriptions } from '@solana/kit';
+const rpc = createSolanaRpc('https://api.devnet.solana.com');
+const rpcSubscriptions = createSolanaRpcSubscriptions('wss://api.devnet.solana.com');
+const signedTransaction = {} as Transaction &
+    SendableTransaction &
+    TransactionWithBlockhashLifetime;
+// ---cut-end---
+const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
+await sendAndConfirmTransaction(signedTransaction, { commitment: 'confirmed' });
+```
+
+For durable-nonce transactions, use `sendAndConfirmDurableNonceTransactionFactory` instead, which knows how to confirm against a nonce account instead of a recent blockhash. If you don't need confirmation at all, `sendTransactionWithoutConfirmingFactory` returns a fire-and-forget sender. All three return `Promise<void>`; pair them with `getSignatureFromTransaction` to obtain the signature for logging or display.
+
+## Fetch and decode accounts
+
+To read onchain state, `fetchEncodedAccount` wraps `getAccountInfo` and returns a `MaybeEncodedAccount` whose shape is consistent regardless of whether the account exists. `assertAccountExists` narrows the result so the rest of your code can rely on a fully populated account.
+
+```ts twoslash
+import { address, assertAccountExists, fetchEncodedAccount } from '@solana/kit';
+// ---cut-start---
+import { createSolanaRpc } from '@solana/kit';
+const rpc = createSolanaRpc('https://api.devnet.solana.com');
+// ---cut-end---
+const account = await fetchEncodedAccount(
+    rpc,
+    address('GdnSyH3YtwcxFvQrVVJMm1JhTS4QVX7MFsX56uJLUfiZ'),
+);
+assertAccountExists(account);
+
+account.data satisfies Uint8Array;
+```
+
+For typed reads, the `@solana-program/*` packages export `fetchX` and `decodeX` standalone helpers that take any `Rpc` and return decoded `Account<T>` values without needing a Kit client. See [Fetching accounts](/docs/guides/fetching-accounts) for the full helper line-up and [Codecs](/docs/advanced-guides/codecs) for decoding raw bytes when no helper is available.
+
+## Next steps
+
+- [Plugins](/docs/plugins) — opt back in to the client model when you want it.
+- [Plugins — Creating custom plugins](/docs/plugins/creating-custom-plugins) — wrap a curated set of primitives into a reusable bundle.
+- [Advanced guides — Transactions](/docs/advanced-guides/transactions) — the full transaction message API.
+- [Advanced guides — Signers](/docs/advanced-guides/signers) — the signer interfaces in depth.

@@ -1,5 +1,0 @@
-{
-    "title": "Getting Started (Old)",
-    "defaultOpen": false,
-    "pages": ["signers", "instructions", "build-transaction", "send-transaction", "fetch-account"]
-}
