@@ -997,8 +997,8 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0(react@19.2.5)
       react-test-renderer:
-        specifier: ^19.2.4
-        version: 19.2.4(react@19.2.5)
+        specifier: ^19.2.5
+        version: 19.2.5(react@19.2.5)
 
   packages/rpc:
     dependencies:
@@ -8472,8 +8472,8 @@ packages:
   react-is@18.3.1:
     resolution: {integrity: sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg==}
 
-  react-is@19.2.4:
-    resolution: {integrity: sha512-W+EWGn2v0ApPKgKKCy/7s7WHXkboGcsrXE+2joLyVxkbyVQfO3MUEaUQDHoSmb8TFFrSKYa9mw64WZHNHSDzYA==}
+  react-is@19.2.5:
+    resolution: {integrity: sha512-Dn0t8IQhCmeIT3wu+Apm1/YVsJXsGWi6k4sPdnBIdqMVtHtv0IGi6dcpNpNkNac0zB2uUAqNX3MHzN8c+z2rwQ==}
 
   react-remove-scroll-bar@2.3.8:
     resolution: {integrity: sha512-9r+yi9+mgU33AKcj6IbT9oRCO78WriSj6t/cF8DWBZJ9aOGPOTEDvdUDz1FwKim7QXWwmHqtdHnRJfhAxEG46Q==}
@@ -8515,10 +8515,10 @@ packages:
       '@types/react':
         optional: true
 
-  react-test-renderer@19.2.4:
-    resolution: {integrity: sha512-Ttl5D7Rnmi6JGMUpri4UjB4BAN0FPs4yRDnu2XSsigCWOLm11o8GwRlVsh27ER+4WFqsGtrBuuv5zumUaRCmKw==}
+  react-test-renderer@19.2.5:
+    resolution: {integrity: sha512-kwViRpdISMTpcpy5B6TSewfJzRjnajihRaj57ZmOWKD+SPN6k9LUM13O0pfOuW8ir6B6OOiAXwCRqOoVxRNykA==}
     peerDependencies:
-      react: ^19.2.4
+      react: ^19.2.5
 
   react@19.2.5:
     resolution: {integrity: sha512-llUJLzz1zTUBrskt2pwZgLq59AemifIftw4aB7JxOqf1HY2FDaGDxgwpAPVzHU1kdWabH7FauP4i1oEeer2WCA==}
@@ -17869,7 +17869,7 @@ snapshots:
 
   react-is@18.3.1: {}
 
-  react-is@19.2.4: {}
+  react-is@19.2.5: {}
 
   react-remove-scroll-bar@2.3.8(@types/react@19.2.14)(react@19.2.5):
     dependencies:
@@ -17909,10 +17909,10 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.14
 
-  react-test-renderer@19.2.4(react@19.2.5):
+  react-test-renderer@19.2.5(react@19.2.5):
     dependencies:
       react: 19.2.5
-      react-is: 19.2.4
+      react-is: 19.2.5
       scheduler: 0.27.0
 
   react@19.2.5: {}
