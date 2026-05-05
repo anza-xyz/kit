@@ -12,7 +12,7 @@
     },
     "devDependencies": {
         "@changesets/changelog-github": "^0.5.2",
-        "@changesets/cli": "^2.30.0",
+        "@changesets/cli": "^2.31.0",
         "@prettier/sync": "^0.6.1",
         "@solana/build-scripts": "workspace:*",
         "@solana/eslint-config": "workspace:*",
