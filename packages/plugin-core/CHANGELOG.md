@@ -1,5 +1,15 @@
 # @solana/plugin-core
 
+## 6.9.0
+
+### Minor Changes
+
+- [#1562](https://github.com/anza-xyz/kit/pull/1562) [`096c48e`](https://github.com/anza-xyz/kit/commit/096c48e6771ad7ea833cb4ca51206b7cc827a3d7) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Bump the TypeScript peer dependency floor from `>=5.0.0` to `>=5.4.0`.
+
+### Patch Changes
+
+- [#1569](https://github.com/anza-xyz/kit/pull/1569) [`b1ae82b`](https://github.com/anza-xyz/kit/commit/b1ae82bbb2159f17a3e0f337c5f8677613b5b32d) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Fix `extendClient` so that a later plugin can override a key previously set by an earlier plugin. Previously, chaining two plugins that set the same key threw `TypeError: Cannot redefine property` because the frozen client's non-configurable property descriptors were copied verbatim onto the intermediate object.
+
 ## 6.8.0
 
 ### Patch Changes

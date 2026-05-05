@@ -1,6 +1,6 @@
 {
     "name": "@solana/fixed-points",
-    "version": "6.8.0",
+    "version": "6.9.0",
     "description": "Fixed-point number types for JavaScript",
     "homepage": "https://www.solanakit.com/api#solanafixed-points",
     "exports": {

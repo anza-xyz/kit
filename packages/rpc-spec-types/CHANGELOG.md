@@ -1,5 +1,11 @@
 # @solana/rpc-spec-types
 
+## 6.9.0
+
+### Minor Changes
+
+- [#1562](https://github.com/anza-xyz/kit/pull/1562) [`096c48e`](https://github.com/anza-xyz/kit/commit/096c48e6771ad7ea833cb4ca51206b7cc827a3d7) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Bump the TypeScript peer dependency floor from `>=5.0.0` to `>=5.4.0`.
+
 ## 6.8.0
 
 ### Patch Changes
