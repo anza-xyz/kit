@@ -12,11 +12,55 @@ import {
 
 import {
     binaryFixedPoint,
+    binaryFixedPointToBase10,
     rawBinaryFixedPoint,
     rescaleBinaryFixedPoint,
     toSignedBinaryFixedPoint,
     toUnsignedBinaryFixedPoint,
 } from '../binary';
+
+describe('binaryFixedPointToBase10', () => {
+    it('returns a zero raw and the value fractionalBits as decimals for zero', () => {
+        const value = rawBinaryFixedPoint('signed', 16, 15)(0n);
+        expect(binaryFixedPointToBase10(value)).toStrictEqual({ decimals: 15, raw: 0n });
+    });
+
+    it('returns the input raw unchanged when fractionalBits is zero', () => {
+        const value = rawBinaryFixedPoint('signed', 8, 0)(-42n);
+        expect(binaryFixedPointToBase10(value)).toStrictEqual({ decimals: 0, raw: -42n });
+    });
+
+    it('scales the raw by 5 ** fractionalBits to reach base 10', () => {
+        // raw 1 at QX.1 represents 0.5 → (1 * 5) / 10 = 0.5.
+        const value = rawBinaryFixedPoint('unsigned', 8, 1)(1n);
+        expect(binaryFixedPointToBase10(value)).toStrictEqual({ decimals: 1, raw: 5n });
+    });
+
+    it('preserves the sign of negative values', () => {
+        // raw -16384 at Q1.15 represents -0.5 → (-16384 * 5 ** 15) / 10 ** 15.
+        const value = rawBinaryFixedPoint('signed', 16, 15)(-16384n);
+        const base10 = binaryFixedPointToBase10(value);
+        expect(base10.decimals).toBe(15);
+        expect(base10.raw).toBe(-500000000000000n);
+    });
+
+    it('produces the full exact decimal expansion for a smallest-unit value', () => {
+        // 1 / 2 ** 15 = 0.000030517578125 = 30517578125 / 10 ** 15.
+        const value = rawBinaryFixedPoint('unsigned', 16, 15)(1n);
+        expect(binaryFixedPointToBase10(value)).toStrictEqual({ decimals: 15, raw: 30517578125n });
+    });
+
+    it('handles raw values that exceed Number.MAX_SAFE_INTEGER', () => {
+        // raw 2 ** 60 at QX.20 represents 2 ** 40 → (2 ** 60) * 5 ** 20 / 10 ** 20.
+        const raw = 1n << 60n;
+        const value = rawBinaryFixedPoint('unsigned', 128, 20)(raw);
+        const base10 = binaryFixedPointToBase10(value);
+        expect(base10.decimals).toBe(20);
+        expect(base10.raw).toBe(raw * 5n ** 20n);
+        // Sanity-check the round trip: dividing by 10 ** 20 yields 2 ** 40.
+        expect(base10.raw / 10n ** 20n).toBe(1n << 40n);
+    });
+});
 
 describe('toUnsignedBinaryFixedPoint', () => {
     it('converts a signed non-negative value to unsigned', () => {

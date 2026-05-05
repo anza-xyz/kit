@@ -36,6 +36,41 @@ export function decimalFixedPointToString(
 }
 
 /**
+ * Formats a {@link DecimalFixedPoint} using a user-supplied
+ * `Intl.NumberFormat` instance, preserving full precision regardless of
+ * the value's magnitude.
+ *
+ * Forwards `value.raw` to `formatter.format` using ES2023 string
+ * scientific notation (`"<raw>E-<decimals>"`). This preserves precision
+ * in fully-compliant runtimes and bypasses the JavaScript `number`
+ * mantissa limit.
+ *
+ * Use this when you want locale-aware output, currency formatting,
+ * grouping separators, or rounding modes from the rich
+ * `Intl.NumberFormat` API. Prefer {@link decimalFixedPointToString} when
+ * portability across older runtimes (older Hermes/React Native, etc.) is
+ * a concern.
+ *
+ * @example
+ * ```ts
+ * const usdc = decimalFixedPoint('unsigned', 64, 6);
+ * const formatter = new Intl.NumberFormat('en-US', {
+ *     currency: 'USD',
+ *     style: 'currency',
+ * });
+ * formatDecimalFixedPoint(formatter, usdc('1234.5')); // "$1,234.50"
+ * ```
+ *
+ * @see {@link decimalFixedPointToString}
+ */
+export function formatDecimalFixedPoint(
+    formatter: Intl.NumberFormat,
+    value: DecimalFixedPoint<Signedness, number, number>,
+): string {
+    return (formatter.format as unknown as (input: string) => string)(`${value.raw}E-${value.decimals}`);
+}
+
+/**
  * Converts a {@link DecimalFixedPoint} to a JavaScript `number`.
  *
  * This conversion is inherently lossy: `1 / 10 ** decimals` is not

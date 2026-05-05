@@ -10,6 +10,39 @@ import type { Signedness } from '../signedness';
 import type { BinaryFixedPoint } from './core';
 
 /**
+ * Converts a {@link BinaryFixedPoint} to its exact base-10 representation
+ * as a `(raw, decimals)` pair such that the mathematical value equals
+ * `raw / 10 ** decimals`.
+ *
+ * Because `1 / 2 ** F` has a finite decimal expansion of exactly `F`
+ * digits, the conversion is always lossless:
+ * `raw / 2 ** F === (raw * 5 ** F) / 10 ** F`. The transformed raw
+ * therefore carries exactly `fractionalBits` decimal digits of
+ * precision.
+ *
+ * Useful when you want to feed a binary fixed-point into a tool that
+ * understands base-10 scaled integers (such as `Intl.NumberFormat`'s
+ * string scientific notation).
+ *
+ * @example
+ * ```ts
+ * const q1_15 = binaryFixedPoint('signed', 16, 15);
+ * binaryFixedPointToBase10(q1_15('0.5'));
+ * // { raw: 500000000000000n, decimals: 15 }
+ * ```
+ *
+ * @see {@link BinaryFixedPoint}
+ */
+export function binaryFixedPointToBase10(value: BinaryFixedPoint<Signedness, number, number>): {
+    decimals: number;
+    raw: bigint;
+} {
+    const decimals = value.fractionalBits;
+    const raw = decimals === 0 ? value.raw : value.raw * 5n ** BigInt(decimals);
+    return { decimals, raw };
+}
+
+/**
  * Converts a {@link BinaryFixedPoint} to its unsigned equivalent at the
  * same `totalBits` and `fractionalBits`.
  *

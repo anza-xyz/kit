@@ -1,5 +1,6 @@
 import { applyDecimalsOption, type FixedPointToStringOptions, formatScaledBigint } from '../formatting';
 import type { Signedness } from '../signedness';
+import { binaryFixedPointToBase10 } from './conversions';
 import type { BinaryFixedPoint } from './core';
 
 /**
@@ -32,13 +33,46 @@ export function binaryFixedPointToString(
     value: BinaryFixedPoint<Signedness, number, number>,
     options?: FixedPointToStringOptions,
 ): string {
-    // Convert the base-2 representation to an exact base-10 representation:
-    // raw / 2 ** F === (raw * 5 ** F) / 10 ** F, which terminates cleanly.
-    // The transformed raw carries exactly F decimal digits of precision.
-    const base10Decimals = value.fractionalBits;
-    const base10Raw = base10Decimals === 0 ? value.raw : value.raw * 5n ** BigInt(base10Decimals);
-    const { decimals, raw } = applyDecimalsOption('binaryFixedPoint', base10Raw, base10Decimals, options);
+    const base10 = binaryFixedPointToBase10(value);
+    const { decimals, raw } = applyDecimalsOption('binaryFixedPoint', base10.raw, base10.decimals, options);
     return formatScaledBigint(raw, decimals, options?.padTrailingZeros ?? false);
+}
+
+/**
+ * Formats a {@link BinaryFixedPoint} using a user-supplied
+ * `Intl.NumberFormat` instance, preserving full precision regardless of
+ * the value's magnitude.
+ *
+ * Internally calls {@link binaryFixedPointToBase10} and forwards the
+ * resulting integer to `formatter.format` using ES2023 string scientific
+ * notation (`"<raw>E-<decimals>"`). This preserves precision in
+ * fully-compliant runtimes and bypasses the JavaScript `number` mantissa
+ * limit.
+ *
+ * Use this when you want locale-aware output, currency formatting,
+ * grouping separators, or rounding modes from the rich
+ * `Intl.NumberFormat` API. Prefer {@link binaryFixedPointToString} when
+ * portability across older runtimes (older Hermes/React Native, etc.) is
+ * a concern.
+ *
+ * @example
+ * ```ts
+ * const q1_15 = binaryFixedPoint('signed', 16, 15);
+ * const formatter = new Intl.NumberFormat('fr-FR', {
+ *     maximumFractionDigits: 4,
+ * });
+ * formatBinaryFixedPoint(formatter, q1_15('0.1')); // "0,1"
+ * ```
+ *
+ * @see {@link binaryFixedPointToString}
+ * @see {@link binaryFixedPointToBase10}
+ */
+export function formatBinaryFixedPoint(
+    formatter: Intl.NumberFormat,
+    value: BinaryFixedPoint<Signedness, number, number>,
+): string {
+    const { decimals, raw } = binaryFixedPointToBase10(value);
+    return (formatter.format as unknown as (input: string) => string)(`${raw}E-${decimals}`);
 }
 
 /**

@@ -4,6 +4,7 @@ import {
     binaryFixedPoint,
     binaryFixedPointToNumber,
     binaryFixedPointToString,
+    formatBinaryFixedPoint,
     ratioBinaryFixedPoint,
     rawBinaryFixedPoint,
 } from '../binary';
@@ -88,6 +89,78 @@ describe('binaryFixedPointToString', () => {
     it('does not throw when capping at the same number of decimals as the native expansion', () => {
         const value = rawBinaryFixedPoint('unsigned', 16, 15)(1n);
         expect(binaryFixedPointToString(value, { decimals: 15 })).toBe('0.000030517578125');
+    });
+});
+
+describe('formatBinaryFixedPoint', () => {
+    it('formats zero with a default formatter', () => {
+        const formatter = new Intl.NumberFormat('en-US');
+        const value = rawBinaryFixedPoint('signed', 16, 15)(0n);
+        expect(formatBinaryFixedPoint(formatter, value)).toBe('0');
+    });
+
+    it('formats a simple fraction with a default formatter', () => {
+        const formatter = new Intl.NumberFormat('en-US');
+        const value = binaryFixedPoint('signed', 16, 15)('0.5');
+        expect(formatBinaryFixedPoint(formatter, value)).toBe('0.5');
+    });
+
+    it('formats negative values with the formatter sign convention', () => {
+        const formatter = new Intl.NumberFormat('en-US');
+        const value = rawBinaryFixedPoint('signed', 16, 15)(-16384n);
+        expect(formatBinaryFixedPoint(formatter, value)).toBe('-0.5');
+    });
+
+    it('respects a non-default locale', () => {
+        const formatter = new Intl.NumberFormat('fr-FR');
+        const value = binaryFixedPoint('signed', 16, 15)('0.5');
+        // French uses ',' as the decimal separator.
+        expect(formatBinaryFixedPoint(formatter, value)).toBe('0,5');
+    });
+
+    it('honours the formatter rounding via maximumFractionDigits', () => {
+        // 1 / 2 ** 15 = 0.000030517578125 — capped to 4 fractional digits → '0'.
+        const formatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 4 });
+        const value = rawBinaryFixedPoint('unsigned', 16, 15)(1n);
+        expect(formatBinaryFixedPoint(formatter, value)).toBe('0');
+    });
+
+    it('pads trailing zeros via minimumFractionDigits', () => {
+        const formatter = new Intl.NumberFormat('en-US', { minimumFractionDigits: 4 });
+        const value = binaryFixedPoint('signed', 16, 15)('0.5');
+        expect(formatBinaryFixedPoint(formatter, value)).toBe('0.5000');
+    });
+
+    it('renders the full exact decimal expansion when minimumFractionDigits matches fractionalBits', () => {
+        const formatter = new Intl.NumberFormat('en-US', {
+            maximumFractionDigits: 15,
+            minimumFractionDigits: 15,
+            useGrouping: false,
+        });
+        const value = rawBinaryFixedPoint('unsigned', 16, 15)(1n);
+        expect(formatBinaryFixedPoint(formatter, value)).toBe('0.000030517578125');
+    });
+
+    it('preserves precision when the raw value exceeds Number.MAX_SAFE_INTEGER', () => {
+        // raw 2 ** 60 at QX.20 represents exactly 2 ** 40 = 1099511627776.
+        const formatter = new Intl.NumberFormat('en-US', { useGrouping: false });
+        const value = rawBinaryFixedPoint('unsigned', 128, 20)(1n << 60n);
+        expect(formatBinaryFixedPoint(formatter, value)).toBe('1099511627776');
+    });
+
+    it('combines locale, currency style, grouping, and fraction digits', () => {
+        const formatter = new Intl.NumberFormat('de-DE', {
+            currency: 'EUR',
+            maximumFractionDigits: 2,
+            minimumFractionDigits: 2,
+            style: 'currency',
+            useGrouping: true,
+        });
+        // raw 32_768_000 at QX.15 represents exactly 1000.0 (32_768_000 / 2 ** 15 = 1000).
+        const value = rawBinaryFixedPoint('unsigned', 32, 15)(32_768_000n);
+        // German uses '.' for grouping, ',' as the decimal separator, and '€' as the currency suffix.
+        // ICU emits a no-break space (U+00A0) between the number and the currency symbol.
+        expect(formatBinaryFixedPoint(formatter, value)).toBe('1.000,00\u00A0€');
     });
 });
 

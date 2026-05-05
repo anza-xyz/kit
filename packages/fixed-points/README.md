@@ -151,6 +151,27 @@ decimalFixedPointToString(usdc('42.5'), { padTrailingZeros: true }); // "42.5000
 decimalFixedPointToNumber(usdc('42.5')); // 42.5
 ```
 
+For locale-aware output, pass any `Intl.NumberFormat` instance to `formatDecimalFixedPoint` or `formatBinaryFixedPoint`. The helpers route the raw bigint through string scientific notation so precision is preserved beyond JavaScript's `number` mantissa.
+
+```ts
+const eurc = decimalFixedPoint('unsigned', 64, 6);
+const eurFormatter = new Intl.NumberFormat('de-DE', { currency: 'EUR', style: 'currency' });
+formatDecimalFixedPoint(eurFormatter, eurc('1234.5')); // "1.234,50 €"
+```
+
+The same helper exists for binary fixed-points.
+
+```ts
+const fr = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 4 });
+formatBinaryFixedPoint(fr, audioSample('0.1')); // "0,1"
+```
+
+To plug a binary fixed-point into a custom formatter, convert it to its exact base-10 representation with `binaryFixedPointToBase10` first. Decimal fixed-points already carry `raw` and `decimals` directly on the value object, so no equivalent helper is needed for them.
+
+```ts
+binaryFixedPointToBase10(audioSample('0.5')); // { raw: 500000000000000n, decimals: 15 }
+```
+
 ## Type guards
 
 The `is*` and `assertIs*` guards narrow an unknown value to a fixed-point. All shape arguments are optional — pass `undefined` for any dimension you don't care about.

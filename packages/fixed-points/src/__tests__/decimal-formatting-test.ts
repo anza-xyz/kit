@@ -1,6 +1,12 @@
 import { SOLANA_ERROR__FIXED_POINTS__STRICT_MODE_PRECISION_LOSS, SolanaError } from '@solana/errors';
 
-import { decimalFixedPointToNumber, decimalFixedPointToString, rawDecimalFixedPoint } from '../decimal';
+import {
+    decimalFixedPoint,
+    decimalFixedPointToNumber,
+    decimalFixedPointToString,
+    formatDecimalFixedPoint,
+    rawDecimalFixedPoint,
+} from '../decimal';
 
 describe('decimalFixedPointToString', () => {
     it('renders zero', () => {
@@ -77,6 +83,73 @@ describe('decimalFixedPointToString', () => {
     it('does not throw when capping at the same number of decimals as the native scale', () => {
         const value = rawDecimalFixedPoint('unsigned', 64, 2)(4250n);
         expect(decimalFixedPointToString(value, { decimals: 2 })).toBe('42.5');
+    });
+});
+
+describe('formatDecimalFixedPoint', () => {
+    it('formats zero with a default formatter', () => {
+        const formatter = new Intl.NumberFormat('en-US');
+        const value = rawDecimalFixedPoint('unsigned', 64, 6)(0n);
+        expect(formatDecimalFixedPoint(formatter, value)).toBe('0');
+    });
+
+    it('formats a simple value with a default formatter', () => {
+        const formatter = new Intl.NumberFormat('en-US');
+        const value = decimalFixedPoint('unsigned', 64, 6)('42.5');
+        expect(formatDecimalFixedPoint(formatter, value)).toBe('42.5');
+    });
+
+    it('formats negative values with the formatter sign convention', () => {
+        const formatter = new Intl.NumberFormat('en-US');
+        const value = decimalFixedPoint('signed', 64, 2)('-0.05');
+        expect(formatDecimalFixedPoint(formatter, value)).toBe('-0.05');
+    });
+
+    it('respects a non-default locale', () => {
+        const formatter = new Intl.NumberFormat('de-DE');
+        const value = decimalFixedPoint('unsigned', 64, 2)('1234.5');
+        // German uses '.' for grouping and ',' as the decimal separator.
+        expect(formatDecimalFixedPoint(formatter, value)).toBe('1.234,5');
+    });
+
+    it('renders currency formatting', () => {
+        const formatter = new Intl.NumberFormat('en-US', { currency: 'USD', style: 'currency' });
+        const value = decimalFixedPoint('unsigned', 64, 6)('1234.5');
+        expect(formatDecimalFixedPoint(formatter, value)).toBe('$1,234.50');
+    });
+
+    it('honours the formatter rounding via maximumFractionDigits', () => {
+        // raw 42678 at d3 represents 42.678; formatter caps to 2 fractional digits with default rounding → '42.68'.
+        const formatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2, useGrouping: false });
+        const value = rawDecimalFixedPoint('unsigned', 64, 3)(42_678n);
+        expect(formatDecimalFixedPoint(formatter, value)).toBe('42.68');
+    });
+
+    it('disables grouping separators when useGrouping is false', () => {
+        const formatter = new Intl.NumberFormat('en-US', { useGrouping: false });
+        const value = decimalFixedPoint('unsigned', 64, 2)('1234567.89');
+        expect(formatDecimalFixedPoint(formatter, value)).toBe('1234567.89');
+    });
+
+    it('preserves precision when the raw value exceeds Number.MAX_SAFE_INTEGER', () => {
+        // raw 10 ** 20 at d6 represents 10 ** 14 = 100000000000000.
+        const formatter = new Intl.NumberFormat('en-US', { useGrouping: false });
+        const value = rawDecimalFixedPoint('unsigned', 128, 6)(10n ** 20n);
+        expect(formatDecimalFixedPoint(formatter, value)).toBe('100000000000000');
+    });
+
+    it('combines locale, currency style, grouping, and fraction digits', () => {
+        const formatter = new Intl.NumberFormat('de-DE', {
+            currency: 'EUR',
+            maximumFractionDigits: 2,
+            minimumFractionDigits: 2,
+            style: 'currency',
+            useGrouping: true,
+        });
+        const value = decimalFixedPoint('unsigned', 64, 6)('1234567.891');
+        // German uses '.' for grouping, ',' as the decimal separator, and '€' as the currency suffix.
+        // ICU emits a no-break space (U+00A0) between the number and the currency symbol.
+        expect(formatDecimalFixedPoint(formatter, value)).toBe('1.234.567,89\u00A0€');
     });
 });
 
