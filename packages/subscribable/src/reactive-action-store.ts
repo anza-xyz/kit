@@ -48,6 +48,28 @@ export type ReactiveActionStore<TArgs extends readonly unknown[], TResult> = {
     readonly subscribe: (listener: () => void) => () => void;
 };
 
+/**
+ * Duck-type for objects that build a {@link ReactiveActionStore} on demand via a zero-argument
+ * `reactiveStore()` method. Satisfied by `PendingRpcRequest<T>`. The `[]` argument tuple is
+ * intentional — the operation's arguments are already baked into the pending request, so each
+ * `dispatch()` re-fires the same call.
+ *
+ * @typeParam T - The value type resolved by the wrapped operation.
+ *
+ * @example
+ * ```ts
+ * function bind<T>(source: ReactiveActionSource<T>) {
+ *     return source.reactiveStore();
+ * }
+ * ```
+ *
+ * @see {@link ReactiveActionStore}
+ * @see {@link ReactiveStreamSource}
+ */
+export type ReactiveActionSource<T> = {
+    reactiveStore(): ReactiveActionStore<[], T>;
+};
+
 const IDLE_STATE: ReactiveActionState<never> = Object.freeze({
     data: undefined,
     error: undefined,

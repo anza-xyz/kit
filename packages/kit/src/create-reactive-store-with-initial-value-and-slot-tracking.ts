@@ -3,7 +3,18 @@ import type { PendingRpcSubscriptionsRequest } from '@solana/rpc-subscriptions';
 import type { SolanaRpcResponse } from '@solana/rpc-types';
 import type { ReactiveState, ReactiveStreamStore } from '@solana/subscribable';
 
-type CreateReactiveStoreWithInitialValueAndSlotTrackingConfig<TRpcValue, TSubscriptionValue, TItem> = Readonly<{
+/**
+ * Configuration for {@link createReactiveStoreWithInitialValueAndSlotTracking}. Pairs a one-shot
+ * RPC fetch with an ongoing subscription so the resulting store can hydrate from the initial
+ * response and keep up to date with notifications, slot-deduplicating the two streams.
+ *
+ * @typeParam TRpcValue - The value type returned by `rpcRequest` (inside the {@link SolanaRpcResponse} envelope).
+ * @typeParam TSubscriptionValue - The value type emitted by `rpcSubscriptionRequest` (inside the {@link SolanaRpcResponse} envelope).
+ * @typeParam TItem - The unified item type the store holds, produced by the two value mappers.
+ *
+ * @see {@link createReactiveStoreWithInitialValueAndSlotTracking}
+ */
+export type CreateReactiveStoreWithInitialValueAndSlotTrackingConfig<TRpcValue, TSubscriptionValue, TItem> = Readonly<{
     /**
      * Triggering this abort signal will cancel the pending RPC request and subscription, and
      * disconnect the store from further updates.

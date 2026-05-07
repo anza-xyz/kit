@@ -132,6 +132,28 @@ export type ReactiveStreamStore<T> = {
 export type ReactiveStore<T> = ReactiveStreamStore<T>;
 
 /**
+ * Duck-type for objects that build a {@link ReactiveStreamStore} on demand via a
+ * `reactiveStore({ abortSignal })` method. Satisfied by `PendingRpcSubscriptionsRequest<T>`.
+ * Reactive-framework bindings (e.g. React's `useSubscription`) consume this duck-type so they
+ * don't have to name a concrete producer type.
+ *
+ * @typeParam T - The value type emitted by the resulting stream store.
+ *
+ * @example
+ * ```ts
+ * function bind<T>(source: ReactiveStreamSource<T>, abortSignal: AbortSignal) {
+ *     return source.reactiveStore({ abortSignal });
+ * }
+ * ```
+ *
+ * @see {@link ReactiveStreamStore}
+ * @see {@link ReactiveActionSource}
+ */
+export type ReactiveStreamSource<T> = {
+    reactiveStore(options: { abortSignal: AbortSignal }): ReactiveStreamStore<T>;
+};
+
+/**
  * Returns a {@link ReactiveStreamStore} given a data publisher.
  *
  * The store will update its state with each message published to `dataChannelName` and notify all
