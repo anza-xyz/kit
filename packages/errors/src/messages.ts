@@ -209,6 +209,8 @@ import {
     SOLANA_ERROR__PROGRAM_CLIENTS__UNEXPECTED_RESOLVED_INSTRUCTION_INPUT_TYPE,
     SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_ACCOUNT_TYPE,
     SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE,
+    SOLANA_ERROR__REACT__MISSING_CAPABILITY,
+    SOLANA_ERROR__REACT__MISSING_PROVIDER,
     SOLANA_ERROR__RPC__API_PLAN_MISSING_FOR_RPC_METHOD,
     SOLANA_ERROR__RPC__INTEGER_OVERFLOW,
     SOLANA_ERROR__RPC__TRANSPORT_HTTP_ERROR,
@@ -891,6 +893,10 @@ export const SolanaErrorMessages: Readonly<{
         "`getTransaction` responses fetched with `encoding: 'jsonParsed'` cannot be decoded. Re-fetch the transaction with `encoding: 'base64'`, `'base58'`, or `'json'`",
     [SOLANA_ERROR__TRANSACTION_INTROSPECTION__UNRECOGNIZED_GET_TRANSACTION_RESPONSE]:
         "Could not recognize the shape of this `getTransaction` response. Expected a response fetched with `encoding: 'base64'`, `'base58'`, or `'json'`",
+    [SOLANA_ERROR__REACT__MISSING_CAPABILITY]:
+        '`$hookName` requires the following capabilities to be installed on the client: [$capabilities]. $providerHint',
+    [SOLANA_ERROR__REACT__MISSING_PROVIDER]:
+        '`$hookName` was called outside of a `ClientProvider`. Mount a `<ClientProvider client={client}>` in the ancestor tree.',
     [SOLANA_ERROR__WALLET__NOT_CONNECTED]: 'Cannot $operation: no wallet connected',
     [SOLANA_ERROR__WALLET__NO_SIGNER_CONNECTED]: 'No signing wallet connected (status: $status)',
     [SOLANA_ERROR__WALLET__SIGNER_NOT_AVAILABLE]: 'Connected wallet does not support signing',
