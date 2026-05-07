@@ -52,7 +52,7 @@
         "postcss": "^8.5.14",
         "tailwindcss": "^4.2.1",
         "typescript": "^5.9.3",
-        "vercel": "^50.22.1"
+        "vercel": "^52.2.0"
     },
     "pnpm": {
         "overrides": {
