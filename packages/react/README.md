@@ -13,6 +13,85 @@
 
 This package contains React hooks for building Solana apps.
 
+## Kit client bindings
+
+The Kit client is a plugin-extensible value built outside the React tree (`createClient().use(...)`) and published to descendants by `ClientProvider`. The hooks in this section connect the React tree to that client. Higher-level hooks (live data, RPC requests, wallet actions) sit on top of these and ship from each Kit plugin's `/react` subpath.
+
+### `ClientProvider`
+
+Publishes a caller-owned Kit client to its subtree. Required for `useClient`, `useClientCapability`, and any plugin-specific hook that depends on a client capability. Generic primitives like `useAction` work against arbitrary async functions and don't need a provider.
+
+```tsx
+import { createClient } from '@solana/kit';
+import { ClientProvider } from '@solana/react';
+
+const client = createClient(); // .use(...) plugins as needed
+
+function App() {
+    return (
+        <ClientProvider client={client}>
+            <Shell />
+        </ClientProvider>
+    );
+}
+```
+
+The `client` reference must be stable across renders — build it at module scope, or memoise it with `useMemo` when its config is reactive (e.g. a cluster toggle).
+
+When a plugin's `.use()` is async, `createClient().use(...)` returns a promise. Pass it directly; the provider suspends via the nearest `<Suspense>` boundary until it resolves.
+
+```tsx
+import { Suspense, useMemo } from 'react';
+
+function Root() {
+    const clientPromise = useMemo(() => createClient().use(someAsyncPlugin()), []);
+    return (
+        <Suspense fallback={<Splash />}>
+            <ClientProvider client={clientPromise}>
+                <Shell />
+            </ClientProvider>
+        </Suspense>
+    );
+}
+```
+
+### `useClient<TClient>()`
+
+Reads the Kit client published by the nearest `ClientProvider`. Throws a `SolanaError` with code `SOLANA_ERROR__REACT__MISSING_PROVIDER` if no provider is mounted.
+
+Defaults to the base `Client` shape. Callers who know a specific plugin is installed may widen the type via the generic — this is a pure cast with no runtime check, so reach for `useClientCapability` when a missing plugin should fail loudly at mount instead of surfacing later as `undefined`.
+
+```tsx
+import { ClientWithRpc, GetEpochInfoApi } from '@solana/kit';
+import { useClient } from '@solana/react';
+
+function ManualSend() {
+    const client = useClient<ClientWithRpc<GetEpochInfoApi>>();
+    return <button onClick={() => client.rpc.getEpochInfo().send()}>Fetch</button>;
+}
+```
+
+### `useClientCapability<TClient>(config)`
+
+Reads the client and asserts at mount that the requested capability is installed, narrowing the return type via the generic. Throws a `SolanaError` with code `SOLANA_ERROR__REACT__MISSING_CAPABILITY` when the capability is absent — including `hookName` and `providerHint` so users can fix the mistake without cross-referencing docs.
+
+Use this from the implementation of plugin-specific hooks. Apps that need ad-hoc access can reach for `useClient` directly and supply their own narrowing.
+
+```tsx
+import { ClientWithRpc, GetEpochInfoApi } from '@solana/kit';
+import { useClientCapability } from '@solana/react';
+
+function useRpc() {
+    return useClientCapability<ClientWithRpc<GetEpochInfoApi>>({
+        capability: 'rpc',
+        hookName: 'useRpc',
+        providerHint: 'Install `solanaRpc()` on the client.',
+    });
+}
+```
+
+Pass an array of capability names when a hook needs more than one (e.g. `['rpc', 'rpcSubscriptions']`) — the same `providerHint` is surfaced for whichever is missing.
+
 ## Hooks
 
 ### `useSignIn(uiWalletAccount, chain)`
