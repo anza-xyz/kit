@@ -92,6 +92,43 @@ function useRpc() {
 
 Pass an array of capability names when a hook needs more than one (e.g. `['rpc', 'rpcSubscriptions']`) — the same `providerHint` is surfaced for whichever is missing.
 
+### `useAction(fn)`
+
+Bridges any async function into a tracked action with `dispatch` / `status` / `data` / `error` / `reset`. Each `dispatch(...)` runs `fn` with a fresh `AbortSignal` and tracks the lifecycle through React state; calling `dispatch` again while a prior call is in flight aborts the first.
+
+`fn` is held in a ref that always points at the latest closure — there is no `deps` array to maintain. Each `dispatch(...)` invokes the most recently rendered `fn`, so values captured inside (e.g. form state, route params) are always fresh. In-flight calls are unaffected — they continue with the closure they captured at dispatch time.
+
+```tsx
+import { useAction } from '@solana/react';
+import { isAbortError } from '@solana/promises';
+
+function PostMessageButton({ url, body }: { url: string; body: string }) {
+    const { dispatch, isRunning, error } = useAction(async (signal, content: string) => {
+        const res = await fetch(url, { body: content, method: 'POST', signal });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+    });
+
+    return (
+        <button disabled={isRunning} onClick={() => dispatch(body)}>
+            {isRunning ? 'Posting…' : error ? 'Retry' : 'Post'}
+        </button>
+    );
+}
+```
+
+`dispatch` returns `Promise<TResult>`. Fire-and-forget callers can ignore it and render from `status` / `data` / `error`. Awaiters that read the resolved value (e.g. to navigate on success) should filter superseded calls with `isAbortError` from `@solana/promises`:
+
+```tsx
+try {
+    const { id } = await dispatch(body);
+    navigate(`/messages/${id}`);
+} catch (err) {
+    if (isAbortError(err)) return; // superseded — state already reflects the newer call
+    // handle real error
+}
+```
+
 ## Hooks
 
 ### `useSignIn(uiWalletAccount, chain)`
