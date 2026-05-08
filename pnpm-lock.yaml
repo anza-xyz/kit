@@ -962,6 +962,9 @@ importers:
       '@solana/signers':
         specifier: workspace:*
         version: link:../signers
+      '@solana/subscribable':
+        specifier: workspace:*
+        version: link:../subscribable
       '@solana/transaction-messages':
         specifier: workspace:*
         version: link:../transaction-messages

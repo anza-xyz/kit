@@ -80,6 +80,7 @@
         "@solana/plugin-core": "workspace:*",
         "@solana/promises": "workspace:*",
         "@solana/signers": "workspace:*",
+        "@solana/subscribable": "workspace:*",
         "@solana/transaction-messages": "workspace:*",
         "@solana/transactions": "workspace:*",
         "@solana/wallet-standard-features": "^1.3.0",

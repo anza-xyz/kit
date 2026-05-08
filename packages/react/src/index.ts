@@ -4,6 +4,7 @@
  * @packageDocumentation
  */
 export * from './ClientProvider';
+export * from './useAction';
 export * from './useClient';
 export * from './useClientCapability';
 export * from './useSignAndSendTransaction';
