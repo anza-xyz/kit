@@ -70,7 +70,7 @@ All errors use the `SolanaError` class from `@solana/errors`. Key rules:
 - **Functional composition**: Use `pipe()` from `@solana/functional` to compose operations on transaction messages and other data structures.
 - **Platform-specific code**: Use `__BROWSER__`, `__NODEJS__`, `__REACTNATIVE__` guards. The build system will tree-shake unused branches.
 - **Dev-only code**: Guard with `__DEV__` (e.g. verbose error messages, debug assertions).
-- **Formatting**: ESLint via `@solana/eslint-config-solana`, Prettier via `@solana/prettier-config-solana`. Run `pnpm style:fix` to auto-fix.
+- **Formatting**: ESLint via `@solana-config/eslint`, Prettier via `@solana-config/prettier`. Run `pnpm style:fix` to auto-fix.
 - **All publishable packages share a fixed version** (currently in lockstep).
 - **Deferred promises**: Use `Promise.withResolvers<T>()` instead of hand-rolling a `new Promise((resolve, reject) => ...)` with captured externals. Do not reintroduce a `deferred()` helper — `Promise.withResolvers` already returns `{ promise, resolve, reject }`.
 

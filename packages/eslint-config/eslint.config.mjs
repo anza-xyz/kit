@@ -1,5 +1,5 @@
-import solanaConfig from '@solana/eslint-config-solana';
-import solanaJestConfig from '@solana/eslint-config-solana/jest';
+import solanaConfig from '@solana-config/eslint';
+import solanaJestConfig from '@solana-config/eslint/jest';
 
 export default [
     ...solanaConfig,

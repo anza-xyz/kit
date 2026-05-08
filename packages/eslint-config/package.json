@@ -9,7 +9,7 @@
     "devDependencies": {
         "@eslint/js": "^9.39.2",
         "@eslint/json": "^1.0.0",
-        "@solana/eslint-config-solana": "^6.0.0",
+        "@solana-config/eslint": "^0.1.1",
         "@typescript-eslint/eslint-plugin": "^8.54.0",
         "@typescript-eslint/parser": "^8.54.0",
         "eslint-plugin-jest": "^29.2.1",

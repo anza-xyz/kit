@@ -16,7 +16,7 @@
         "@prettier/sync": "^0.6.1",
         "@solana/build-scripts": "workspace:*",
         "@solana/eslint-config": "workspace:*",
-        "@solana/prettier-config-solana": "0.0.6",
+        "@solana-config/prettier": "0.1.1",
         "@solana/test-config": "workspace:*",
         "@solana/test-matchers": "workspace:*",
         "@solana/tsconfig": "workspace:*",
@@ -66,5 +66,5 @@
             "jest-runner-prettier@1.0.0": "patches/jest-runner-prettier@1.0.0.patch"
         }
     },
-    "prettier": "@solana/prettier-config-solana"
+    "prettier": "@solana-config/prettier"
 }

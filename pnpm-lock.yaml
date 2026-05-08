@@ -33,15 +33,15 @@ importers:
       '@prettier/sync':
         specifier: ^0.6.1
         version: 0.6.1(prettier@3.8.3)
+      '@solana-config/prettier':
+        specifier: 0.1.1
+        version: 0.1.1(prettier@3.8.3)
       '@solana/build-scripts':
         specifier: workspace:*
         version: link:packages/build-scripts
       '@solana/eslint-config':
         specifier: workspace:*
         version: link:packages/eslint-config
-      '@solana/prettier-config-solana':
-        specifier: 0.0.6
-        version: 0.0.6(prettier@3.8.3)
       '@solana/test-config':
         specifier: workspace:*
         version: link:packages/test-config
@@ -552,9 +552,9 @@ importers:
       '@eslint/json':
         specifier: ^1.0.0
         version: 1.0.0
-      '@solana/eslint-config-solana':
-        specifier: ^6.0.0
-        version: 6.0.0(37a899761090856423ab05f1097c4d83)
+      '@solana-config/eslint':
+        specifier: ^0.1.1
+        version: 0.1.1(37a899761090856423ab05f1097c4d83)
       '@typescript-eslint/eslint-plugin':
         specifier: ^8.54.0
         version: 8.54.0(@typescript-eslint/parser@8.54.0(eslint@9.39.2(jiti@1.21.7))(typescript@5.9.3))(eslint@9.39.2(jiti@1.21.7))(typescript@5.9.3)
@@ -5030,6 +5030,28 @@ packages:
   '@sinonjs/fake-timers@8.1.0':
     resolution: {integrity: sha512-OAPJUAtgeINhh/TAlUID4QTs53Njm7xzddaVlEs/SXwgtiD1tW22zAB/W1wdqfrpmikgaWQ9Fw6Ws+hsiRm5Vg==}
 
+  '@solana-config/eslint@0.1.1':
+    resolution: {integrity: sha512-DXXHEduBRNfL8tdMPuC4h5YIJTvvCyMGQxI/6ZNm2pk5UHsxJr/C5e1wdaDb0LJd3MtEjieHIaOLa8oASSD6HA==}
+    peerDependencies:
+      '@eslint/js': ^9.39.1
+      '@types/eslint': ^9.6.1
+      '@types/eslint__js': ^9.14.0
+      eslint: ^9.39.1
+      eslint-plugin-jest: ^29.2.1
+      eslint-plugin-react-hooks: ^7.0.1
+      eslint-plugin-simple-import-sort: ^12.1.1
+      eslint-plugin-sort-keys-fix: ^1.1.2
+      eslint-plugin-typescript-sort-keys: ^3.3.0
+      globals: ^16.5.0
+      jest: ^30.0.0
+      typescript: ^5.9.3
+      typescript-eslint: ^8.49.0
+
+  '@solana-config/prettier@0.1.1':
+    resolution: {integrity: sha512-3hUOAO1SvYXbBrY/dlGC5OChSTytjxpNJDK1ssGpEajApBcEqWSRdbTTrx8uA1pXwPfM72MzvvrWVv7IJOPYcA==}
+    peerDependencies:
+      prettier: ^3.7.4
+
   '@solana-program/address-lookup-table@0.11.0':
     resolution: {integrity: sha512-loC6VTEhmhYSq2ElZrv+V9uHp/Te6A7rllLIArk9c3A5+5V7sRhVsxZvsPGcv/WMXLgqmXR+Vl7WF7QSV3tXNQ==}
     peerDependencies:
@@ -5072,28 +5094,6 @@ packages:
     hasBin: true
     peerDependencies:
       typescript: '>=5.3.3'
-
-  '@solana/eslint-config-solana@6.0.0':
-    resolution: {integrity: sha512-tl3C2ZK8buItUQNVCwnveR2iiLALr5XZ8cevswbTDQN1SA29xQWPFRYR/JPyXLd7iOGNAo4HwvIoxNmkLjdZsQ==}
-    peerDependencies:
-      '@eslint/js': ^9.39.1
-      '@types/eslint': ^9.6.1
-      '@types/eslint__js': ^9.14.0
-      eslint: ^9.39.1
-      eslint-plugin-jest: ^29.2.1
-      eslint-plugin-react-hooks: ^7.0.1
-      eslint-plugin-simple-import-sort: ^12.1.1
-      eslint-plugin-sort-keys-fix: ^1.1.2
-      eslint-plugin-typescript-sort-keys: ^3.3.0
-      globals: ^16.5.0
-      jest: ^30.0.0
-      typescript: ^5.9.3
-      typescript-eslint: ^8.49.0
-
-  '@solana/prettier-config-solana@0.0.6':
-    resolution: {integrity: sha512-/s55hDoAyh5QyltQh/jjNK3AgACEq885+DnC6lYhrmYZiV6I0iHITWYnKd8d23KRKs/RBjlaQH54MiafeoI9hw==}
-    peerDependencies:
-      prettier: ^3.7.4
 
   '@solana/wallet-standard-chains@1.1.1':
     resolution: {integrity: sha512-Us3TgL4eMVoVWhuC4UrePlYnpWN+lwteCBlhZDUhFZBJ5UMGh94mYPXno3Ho7+iHPYRtuCi/ePvPcYBqCGuBOw==}
@@ -13428,6 +13428,26 @@ snapshots:
     dependencies:
       '@sinonjs/commons': 1.8.6
 
+  '@solana-config/eslint@0.1.1(37a899761090856423ab05f1097c4d83)':
+    dependencies:
+      '@eslint/js': 9.39.2
+      '@types/eslint': 9.6.1
+      '@types/eslint__js': 9.14.0
+      eslint: 9.39.2(jiti@1.21.7)
+      eslint-plugin-jest: 29.2.1(@typescript-eslint/eslint-plugin@8.54.0(@typescript-eslint/parser@8.54.0(eslint@9.39.2(jiti@1.21.7))(typescript@5.9.3))(eslint@9.39.2(jiti@1.21.7))(typescript@5.9.3))(eslint@9.39.2(jiti@1.21.7))(jest@30.4.1(@types/node@25.6.2)(ts-node@10.9.2(@swc/core@1.15.11(@swc/helpers@0.5.17))(@types/node@25.6.2)(typescript@5.9.3)))(typescript@5.9.3)
+      eslint-plugin-react-hooks: 7.0.1(eslint@9.39.2(jiti@1.21.7))
+      eslint-plugin-simple-import-sort: 13.0.0(eslint@9.39.2(jiti@1.21.7))
+      eslint-plugin-sort-keys-fix: 1.1.2
+      eslint-plugin-typescript-sort-keys: 3.3.0(@typescript-eslint/parser@8.54.0(eslint@9.39.2(jiti@1.21.7))(typescript@5.9.3))(eslint@9.39.2(jiti@1.21.7))(typescript@5.9.3)
+      globals: 17.6.0
+      jest: 30.4.1(@types/node@25.6.2)(ts-node@10.9.2(@swc/core@1.15.11(@swc/helpers@0.5.17))(@types/node@25.6.2)(typescript@5.9.3))
+      typescript: 5.9.3
+      typescript-eslint: 8.50.0(eslint@9.39.2(jiti@1.21.7))(typescript@5.9.3)
+
+  '@solana-config/prettier@0.1.1(prettier@3.8.3)':
+    dependencies:
+      prettier: 3.8.3
+
   '@solana-program/address-lookup-table@0.11.0(@solana/kit@packages+kit)':
     dependencies:
       '@solana/kit': link:packages/kit
@@ -13465,26 +13485,6 @@ snapshots:
       chalk: 5.6.2
       commander: 14.0.3
       typescript: 5.9.3
-
-  '@solana/eslint-config-solana@6.0.0(37a899761090856423ab05f1097c4d83)':
-    dependencies:
-      '@eslint/js': 9.39.2
-      '@types/eslint': 9.6.1
-      '@types/eslint__js': 9.14.0
-      eslint: 9.39.2(jiti@1.21.7)
-      eslint-plugin-jest: 29.2.1(@typescript-eslint/eslint-plugin@8.54.0(@typescript-eslint/parser@8.54.0(eslint@9.39.2(jiti@1.21.7))(typescript@5.9.3))(eslint@9.39.2(jiti@1.21.7))(typescript@5.9.3))(eslint@9.39.2(jiti@1.21.7))(jest@30.4.1(@types/node@25.6.2)(ts-node@10.9.2(@swc/core@1.15.11(@swc/helpers@0.5.17))(@types/node@25.6.2)(typescript@5.9.3)))(typescript@5.9.3)
-      eslint-plugin-react-hooks: 7.0.1(eslint@9.39.2(jiti@1.21.7))
-      eslint-plugin-simple-import-sort: 13.0.0(eslint@9.39.2(jiti@1.21.7))
-      eslint-plugin-sort-keys-fix: 1.1.2
-      eslint-plugin-typescript-sort-keys: 3.3.0(@typescript-eslint/parser@8.54.0(eslint@9.39.2(jiti@1.21.7))(typescript@5.9.3))(eslint@9.39.2(jiti@1.21.7))(typescript@5.9.3)
-      globals: 17.6.0
-      jest: 30.4.1(@types/node@25.6.2)(ts-node@10.9.2(@swc/core@1.15.11(@swc/helpers@0.5.17))(@types/node@25.6.2)(typescript@5.9.3))
-      typescript: 5.9.3
-      typescript-eslint: 8.50.0(eslint@9.39.2(jiti@1.21.7))(typescript@5.9.3)
-
-  '@solana/prettier-config-solana@0.0.6(prettier@3.8.3)':
-    dependencies:
-      prettier: 3.8.3
 
   '@solana/wallet-standard-chains@1.1.1':
     dependencies:
