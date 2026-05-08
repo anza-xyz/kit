@@ -11,7 +11,7 @@
         "test:setup": "./scripts/setup-test-validator.sh"
     },
     "devDependencies": {
-        "@changesets/changelog-github": "^0.5.2",
+        "@changesets/changelog-github": "^0.7.0",
         "@changesets/cli": "^2.31.0",
         "@prettier/sync": "^0.6.1",
         "@solana/build-scripts": "workspace:*",
