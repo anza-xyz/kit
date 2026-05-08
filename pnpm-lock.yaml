@@ -762,6 +762,9 @@ importers:
       '@solana/transaction-confirmation':
         specifier: workspace:*
         version: link:../transaction-confirmation
+      '@solana/transaction-introspection':
+        specifier: workspace:*
+        version: link:../transaction-introspection
       '@solana/transaction-messages':
         specifier: workspace:*
         version: link:../transaction-messages
@@ -1520,6 +1523,39 @@ importers:
       '@solana/instructions':
         specifier: workspace:*
         version: link:../instructions
+
+  packages/transaction-introspection:
+    dependencies:
+      '@solana/addresses':
+        specifier: workspace:*
+        version: link:../addresses
+      '@solana/codecs-core':
+        specifier: workspace:*
+        version: link:../codecs-core
+      '@solana/codecs-strings':
+        specifier: workspace:*
+        version: link:../codecs-strings
+      '@solana/errors':
+        specifier: workspace:*
+        version: link:../errors
+      '@solana/instructions':
+        specifier: workspace:*
+        version: link:../instructions
+      '@solana/rpc-api':
+        specifier: workspace:*
+        version: link:../rpc-api
+      '@solana/rpc-types':
+        specifier: workspace:*
+        version: link:../rpc-types
+      '@solana/transaction-messages':
+        specifier: workspace:*
+        version: link:../transaction-messages
+      '@solana/transactions':
+        specifier: workspace:*
+        version: link:../transactions
+      typescript:
+        specifier: '>=5.0.0'
+        version: 5.9.3
 
   packages/transaction-messages:
     dependencies:

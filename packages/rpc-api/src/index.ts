@@ -79,7 +79,13 @@ import { GetTokenAccountsByDelegateApi } from './getTokenAccountsByDelegate';
 import { GetTokenAccountsByOwnerApi } from './getTokenAccountsByOwner';
 import { GetTokenLargestAccountsApi } from './getTokenLargestAccounts';
 import { GetTokenSupplyApi } from './getTokenSupply';
-import { GetTransactionApi } from './getTransaction';
+import {
+    GetTransactionApi,
+    GetTransactionApiResponseBase58,
+    GetTransactionApiResponseBase64,
+    GetTransactionApiResponseJson,
+    GetTransactionApiResponseJsonParsed,
+} from './getTransaction';
 import { GetTransactionCountApi } from './getTransactionCount';
 import { GetVersionApi } from './getVersion';
 import { GetVoteAccountsApi } from './getVoteAccounts';
@@ -212,6 +218,10 @@ export type {
     GetTokenLargestAccountsApi,
     GetTokenSupplyApi,
     GetTransactionApi,
+    GetTransactionApiResponseBase58,
+    GetTransactionApiResponseBase64,
+    GetTransactionApiResponseJson,
+    GetTransactionApiResponseJsonParsed,
     GetTransactionCountApi,
     GetVersionApi,
     GetVoteAccountsApi,
