@@ -25,13 +25,7 @@ type Config = Readonly<{
     errorChannelName: string;
 }>;
 
-type FactoryConfig = Readonly<{
-    /**
-     * Triggering this abort signal will cause the store to stop updating and will disconnect it from
-     * any active {@link DataPublisher}. Subsequent calls to {@link ReactiveStreamStore.retry | `retry()`}
-     * are no-ops once this signal has fired.
-     */
-    abortSignal: AbortSignal;
+type FactoryConfigBase = Readonly<{
     /**
      * An async factory that produces a fresh {@link DataPublisher} each time it is invoked. Called
      * once on construction and again on every {@link ReactiveStreamStore.retry | `retry()`}. Rejections
@@ -49,6 +43,39 @@ type FactoryConfig = Readonly<{
      */
     errorChannelName: string;
 }>;
+
+type FactoryConfig = FactoryConfigBase &
+    (
+        | Readonly<{
+              /**
+               * Triggering this abort signal will cause the store to stop updating and will
+               * disconnect it from any active {@link DataPublisher}. Subsequent calls to
+               * {@link ReactiveStreamStore.retry | `retry()`} are no-ops once this signal has fired.
+               *
+               * @deprecated Use `perConnectionSignal` instead. A factory called once per connection
+               * lets each retry compose a fresh signal (useful for per-connection timeouts) while
+               * still supporting the kill-switch pattern by returning the same cancellable signal
+               * each call.
+               */
+              abortSignal: AbortSignal;
+              perConnectionSignal?: () => AbortSignal;
+          }>
+        | Readonly<{
+              abortSignal?: AbortSignal;
+              /**
+               * Factory invoked on every connection attempt — once on construction and again on
+               * every {@link ReactiveStreamStore.retry | `retry()`}. The returned signal is composed
+               * with an internal per-connection controller via `AbortSignal.any`, so aborting either
+               * tears down that connection window.
+               *
+               * - For "kill the subscription permanently": return the same cancellable signal each
+               *   call (`() => killCtrl.signal`); after `killCtrl.abort()`, every future retry sees
+               *   an already-aborted signal and short-circuits.
+               * - For "per-attempt timeout": return a fresh `AbortSignal.timeout(N)` each call.
+               */
+              perConnectionSignal: () => AbortSignal;
+          }>
+    );
 
 /**
  * The lifecycle state of a {@link ReactiveStreamStore} as a single snapshot.
@@ -132,17 +159,21 @@ export type ReactiveStreamStore<T> = {
 export type ReactiveStore<T> = ReactiveStreamStore<T>;
 
 /**
- * Duck-type for objects that build a {@link ReactiveStreamStore} on demand via a
- * `reactiveStore({ abortSignal })` method. Satisfied by `PendingRpcSubscriptionsRequest<T>`.
- * Reactive-framework bindings (e.g. React's `useSubscription`) consume this duck-type so they
- * don't have to name a concrete producer type.
+ * Duck-type for objects that build a {@link ReactiveStreamStore} on demand via `reactiveStore()`.
+ * Satisfied by `PendingRpcSubscriptionsRequest<T>`. Reactive-framework bindings (e.g. React's
+ * `useSubscription`) consume this duck-type so they don't have to name a concrete producer type.
+ *
+ * `perConnectionSignal` is a factory invoked on each connection (initial subscribe + every retry).
+ * The returned signal composes with the connection's internal controller via `AbortSignal.any`,
+ * so aborting it tears down just that connection — naturally expressing per-attempt timeouts, or a
+ * permanent kill switch when the factory returns the same cancellable signal on every call.
  *
  * @typeParam T - The value type emitted by the resulting stream store.
  *
  * @example
  * ```ts
- * function bind<T>(source: ReactiveStreamSource<T>, abortSignal: AbortSignal) {
- *     return source.reactiveStore({ abortSignal });
+ * function bindWithTimeout<T>(source: ReactiveStreamSource<T>) {
+ *     return source.reactiveStore({ perConnectionSignal: () => AbortSignal.timeout(30_000) });
  * }
  * ```
  *
@@ -150,7 +181,21 @@ export type ReactiveStore<T> = ReactiveStreamStore<T>;
  * @see {@link ReactiveActionSource}
  */
 export type ReactiveStreamSource<T> = {
-    reactiveStore(options: { abortSignal: AbortSignal }): ReactiveStreamStore<T>;
+    reactiveStore(
+        options:
+            | {
+                  /**
+                   * @deprecated Use `perConnectionSignal` instead — a factory called per connection
+                   * lets retries get fresh signals while still supporting kill-switch patterns.
+                   */
+                  abortSignal: AbortSignal;
+                  perConnectionSignal?: () => AbortSignal;
+              }
+            | {
+                  abortSignal?: AbortSignal;
+                  perConnectionSignal: () => AbortSignal;
+              },
+    ): ReactiveStreamStore<T>;
 };
 
 /**
@@ -274,41 +319,42 @@ export function createReactiveStoreFromDataPublisher<TData>({
  * // Call `store.retry()` to recover after an error — e.g. from a user-triggered "Retry" button.
  * ```
  */
-export function createReactiveStoreFromDataPublisherFactory<TData>({
-    abortSignal,
-    createDataPublisher,
-    dataChannelName,
-    errorChannelName,
-}: FactoryConfig): ReactiveStreamStore<TData> {
+export function createReactiveStoreFromDataPublisherFactory<TData>(config: FactoryConfig): ReactiveStreamStore<TData> {
+    const { createDataPublisher, dataChannelName, errorChannelName } = config;
+    const longLivedAbortSignal = config.abortSignal;
+    const perConnectionSignal = config.perConnectionSignal;
     let currentState: ReactiveState<TData> = LOADING_STATE;
     const subscribers = new Set<() => void>();
-
-    const outerController = new AbortController();
-    abortSignal.addEventListener('abort', () => outerController.abort(abortSignal.reason));
 
     function notify() {
         subscribers.forEach(cb => cb());
     }
 
     function connect() {
-        if (outerController.signal.aborted) return;
-        // Inner signal is passed to data publisher
+        if (longLivedAbortSignal?.aborted) return;
+        // Factory called per connection — fresh signal per attempt for `perConnectionSignal`,
+        // same kill-able signal returned on every call for the kill-switch pattern.
+        const perConnection = perConnectionSignal?.();
+        if (perConnection?.aborted) return;
+        // `innerController` lets the error path abort just this connection window without touching
+        // the caller's signals. The publisher subscribes via a combined signal so aborting any
+        // input tears down this connection. `AbortSignal.any` cleans up its input listeners
+        // automatically once the combined signal aborts, so retries don't accumulate listeners.
         const innerController = new AbortController();
-        // Forward an abort from the outer signal to the inner one, so that when the caller aborts, we disconnect
-        // Scope this forwarder to the inner signal so it's removed on reconnection
-        // and we don't accumulate listeners on the outer signal across retries.
-        const forwardAbort = () => innerController.abort(outerController.signal.reason);
-        outerController.signal.addEventListener('abort', forwardAbort, { signal: innerController.signal });
+        const signals: AbortSignal[] = [innerController.signal];
+        if (longLivedAbortSignal) signals.push(longLivedAbortSignal);
+        if (perConnection) signals.push(perConnection);
+        const signal = signals.length === 1 ? signals[0] : AbortSignal.any(signals);
         createDataPublisher().then(
             publisher => {
-                if (innerController.signal.aborted) return;
+                if (signal.aborted) return;
                 publisher.on(
                     dataChannelName,
                     data => {
                         currentState = { data: data as TData, error: undefined, status: 'loaded' };
                         notify();
                     },
-                    { signal: innerController.signal },
+                    { signal },
                 );
                 publisher.on(
                     errorChannelName,
@@ -318,11 +364,11 @@ export function createReactiveStoreFromDataPublisherFactory<TData>({
                         innerController.abort(err);
                         notify();
                     },
-                    { signal: innerController.signal },
+                    { signal },
                 );
             },
             err => {
-                if (innerController.signal.aborted) return;
+                if (signal.aborted) return;
                 currentState = { data: currentState.data, error: err, status: 'error' };
                 innerController.abort(err);
                 notify();
@@ -343,7 +389,7 @@ export function createReactiveStoreFromDataPublisherFactory<TData>({
             return currentState;
         },
         retry(): void {
-            if (outerController.signal.aborted) return;
+            if (longLivedAbortSignal?.aborted) return;
             if (currentState.status !== 'error') return;
             currentState = { data: currentState.data, error: undefined, status: 'retrying' };
             notify();

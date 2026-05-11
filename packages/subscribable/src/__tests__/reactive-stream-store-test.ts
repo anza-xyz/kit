@@ -675,4 +675,79 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
             expect(subscriber).not.toHaveBeenCalled();
         });
     });
+
+    describe('perConnectionSignal factory', () => {
+        it('invokes the factory on every connection (initial + each retry)', async () => {
+            expect.assertions(1);
+            const { mockRequest, publishers } = createFactory();
+            const perConnectionSignal = jest.fn(() => new AbortController().signal);
+            const store = createReactiveStoreFromDataPublisherFactory({
+                createDataPublisher: mockRequest,
+                dataChannelName: 'data',
+                errorChannelName: 'error',
+                perConnectionSignal,
+            });
+            await jest.runAllTimersAsync();
+            publishers[0].publish('error', new Error('fail'));
+            store.retry();
+            await jest.runAllTimersAsync();
+            expect(perConnectionSignal).toHaveBeenCalledTimes(2);
+        });
+        it('prevents further state updates when the factory-returned signal fires', async () => {
+            expect.assertions(1);
+            const ctrl = new AbortController();
+            const { mockRequest, publishers } = createFactory();
+            const store = createReactiveStoreFromDataPublisherFactory({
+                createDataPublisher: mockRequest,
+                dataChannelName: 'data',
+                errorChannelName: 'error',
+                perConnectionSignal: () => ctrl.signal,
+            });
+            await jest.runAllTimersAsync();
+            ctrl.abort();
+            publishers[0].publish('data', { value: 'late' });
+            expect(store.getUnifiedState().status).toBe('loading');
+        });
+        it('hands a fresh signal to retries so a prior per-connection abort does not poison new connections', async () => {
+            expect.assertions(2);
+            const controllers: AbortController[] = [];
+            const { mockRequest, publishers } = createFactory();
+            const store = createReactiveStoreFromDataPublisherFactory({
+                createDataPublisher: mockRequest,
+                dataChannelName: 'data',
+                errorChannelName: 'error',
+                perConnectionSignal: () => {
+                    const c = new AbortController();
+                    controllers.push(c);
+                    return c.signal;
+                },
+            });
+            await jest.runAllTimersAsync();
+            // Hit the error channel first so retry() is allowed to fire, then abort the signal.
+            publishers[0].publish('error', new Error('first'));
+            controllers[0].abort();
+            store.retry();
+            await jest.runAllTimersAsync();
+            expect(controllers).toHaveLength(2);
+            expect(controllers[1].signal.aborted).toBe(false);
+        });
+        it('short-circuits retry when the factory returns an already-aborted signal (kill switch)', async () => {
+            expect.assertions(1);
+            const killCtrl = new AbortController();
+            const { mockRequest, publishers } = createFactory();
+            const store = createReactiveStoreFromDataPublisherFactory({
+                createDataPublisher: mockRequest,
+                dataChannelName: 'data',
+                errorChannelName: 'error',
+                perConnectionSignal: () => killCtrl.signal,
+            });
+            await jest.runAllTimersAsync();
+            publishers[0].publish('error', new Error('fail'));
+            killCtrl.abort();
+            const callsBefore = mockRequest.mock.calls.length;
+            store.retry();
+            await jest.runAllTimersAsync();
+            expect(mockRequest).toHaveBeenCalledTimes(callsBefore);
+        });
+    });
 });

@@ -40,6 +40,10 @@ export type PendingRpcRequest<TResponse> = {
      * request (for example after an error), or `reset()` to abort the in-flight call and return to
      * `status: 'idle'`.
      *
+     * Pass a `perRequestSignal` factory to attach a fresh signal to each dispatch — useful for
+     * per-attempt timeouts (`() => AbortSignal.timeout(5_000)`). For a permanent kill switch,
+     * return the same cancellable signal from the factory on every call.
+     *
      * @example
      * ```ts
      * const store = rpc.getAccountInfo(address).reactiveStore();
@@ -49,7 +53,7 @@ export type PendingRpcRequest<TResponse> = {
      * return <View data={state.data!} />;
      * ```
      */
-    reactiveStore(): ReactiveActionStore<[], TResponse>;
+    reactiveStore(options?: { perRequestSignal?: () => AbortSignal | undefined }): ReactiveActionStore<[], TResponse>;
     send(options?: RpcSendOptions): Promise<TResponse>;
 };
 
@@ -118,8 +122,13 @@ function createPendingRpcRequest<TRpcMethods, TRpcTransport extends RpcTransport
     plan: RpcPlan<TResponse>,
 ): PendingRpcRequest<TResponse> {
     return {
-        reactiveStore(): ReactiveActionStore<[], TResponse> {
-            const store = createReactiveActionStore<[], TResponse>(signal => plan.execute({ signal, transport }));
+        reactiveStore(options?: {
+            perRequestSignal?: () => AbortSignal | undefined;
+        }): ReactiveActionStore<[], TResponse> {
+            const store = createReactiveActionStore<[], TResponse>(
+                signal => plan.execute({ signal, transport }),
+                options,
+            );
             store.dispatch();
             return store;
         },

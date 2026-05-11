@@ -174,6 +174,96 @@ describe('createReactiveActionStore', () => {
         });
     });
 
+    describe('perRequestSignal option', () => {
+        it('forwards the per-dispatch signal to `fn` when no factory is provided', async () => {
+            expect.assertions(1);
+            const fn = jest.fn((_signal: AbortSignal) => Promise.resolve('ok'));
+            const store = createReactiveActionStore(fn);
+            await store.dispatchAsync();
+            expect(fn.mock.calls[0][0].aborted).toBe(false);
+        });
+
+        it('invokes the factory on every dispatch', async () => {
+            expect.assertions(2);
+            const factory = jest.fn(() => new AbortController().signal);
+            const store = createReactiveActionStore(() => Promise.resolve('ok'), { perRequestSignal: factory });
+            await store.dispatchAsync();
+            await store.dispatchAsync();
+            expect(factory).toHaveBeenCalledTimes(2);
+            expect(factory.mock.results[0]?.value).not.toBe(factory.mock.results[1]?.value);
+        });
+
+        it('aborts the in-flight dispatch and transitions to `error` when the factory-returned signal fires', async () => {
+            expect.assertions(2);
+            const ctrl = new AbortController();
+            const reason = new Error('per-request abort');
+            const store = createReactiveActionStore(() => new Promise<string>(() => {}), {
+                perRequestSignal: () => ctrl.signal,
+            });
+            const dispatched = store.dispatchAsync();
+            ctrl.abort(reason);
+            await expect(dispatched).rejects.toBe(reason);
+            expect(store.getState()).toStrictEqual({
+                data: undefined,
+                error: reason,
+                status: 'error',
+            });
+        });
+
+        it('preserves stale data when the per-request signal aborts after a prior success', async () => {
+            expect.assertions(1);
+            const ctrl = new AbortController();
+            const reason = new Error('abort');
+            const { promise: second } = Promise.withResolvers<string>();
+            const results = [Promise.resolve('first'), second];
+            const store = createReactiveActionStore(() => results.shift()!, {
+                perRequestSignal: () => ctrl.signal,
+            });
+            await store.dispatchAsync();
+            const dispatched = store.dispatchAsync();
+            ctrl.abort(reason);
+            await dispatched.catch(() => {});
+            expect(store.getState()).toStrictEqual({
+                data: 'first',
+                error: reason,
+                status: 'error',
+            });
+        });
+
+        it('lets later dispatches recover when the factory returns a fresh signal each call', async () => {
+            expect.assertions(2);
+            const signals = [AbortSignal.abort(new Error('first')), new AbortController().signal];
+            const store = createReactiveActionStore(() => Promise.resolve('ok'), {
+                perRequestSignal: () => signals.shift(),
+            });
+            await store.dispatchAsync().catch(() => {});
+            expect(store.getState().status).toBe('error');
+            await store.dispatchAsync();
+            expect(store.getState()).toStrictEqual({
+                data: 'ok',
+                error: undefined,
+                status: 'success',
+            });
+        });
+
+        it('passes a combined signal to `fn` that fires when the factory-returned signal aborts', async () => {
+            expect.assertions(1);
+            const ctrl = new AbortController();
+            let captured: AbortSignal | undefined;
+            const store = createReactiveActionStore(
+                (signal: AbortSignal) => {
+                    captured = signal;
+                    return new Promise<string>(() => {});
+                },
+                { perRequestSignal: () => ctrl.signal },
+            );
+            store.dispatch();
+            ctrl.abort(new Error('boom'));
+            await Promise.resolve();
+            expect(captured?.aborted).toBe(true);
+        });
+    });
+
     describe('reset()', () => {
         it('returns the store to idle from a success state', async () => {
             expect.assertions(1);

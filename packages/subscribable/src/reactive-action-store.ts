@@ -49,17 +49,27 @@ export type ReactiveActionStore<TArgs extends readonly unknown[], TResult> = {
 };
 
 /**
- * Duck-type for objects that build a {@link ReactiveActionStore} on demand via a zero-argument
- * `reactiveStore()` method. Satisfied by `PendingRpcRequest<T>`. The `[]` argument tuple is
- * intentional — the operation's arguments are already baked into the pending request, so each
- * `dispatch()` re-fires the same call.
+ * Duck-type for objects that build a {@link ReactiveActionStore} on demand via `reactiveStore()`.
+ * Satisfied by `PendingRpcRequest<T>`. The `[]` argument tuple is intentional — the operation's
+ * arguments are already baked into the pending request, so each `dispatch()` re-fires the same
+ * call.
+ *
+ * The optional `perRequestSignal` factory is invoked on every dispatch to provide a fresh signal
+ * for that attempt. Combined with the store's internal per-dispatch controller via
+ * `AbortSignal.any`, so aborting either cancels the in-flight call.
+ *
+ * - For "kill the store permanently": return the same cancellable signal on every call
+ *   (`() => killCtrl.signal`); aborting `killCtrl` makes every future dispatch start with an
+ *   already-aborted signal.
+ * - For "per-attempt timeout": return a fresh `AbortSignal.timeout(N)` each call; each dispatch
+ *   gets its own clock.
  *
  * @typeParam T - The value type resolved by the wrapped operation.
  *
  * @example
  * ```ts
  * function bind<T>(source: ReactiveActionSource<T>) {
- *     return source.reactiveStore();
+ *     return source.reactiveStore({ perRequestSignal: () => AbortSignal.timeout(30_000) });
  * }
  * ```
  *
@@ -67,7 +77,7 @@ export type ReactiveActionStore<TArgs extends readonly unknown[], TResult> = {
  * @see {@link ReactiveStreamSource}
  */
 export type ReactiveActionSource<T> = {
-    reactiveStore(): ReactiveActionStore<[], T>;
+    reactiveStore(options?: { perRequestSignal?: () => AbortSignal | undefined }): ReactiveActionStore<[], T>;
 };
 
 const IDLE_STATE: ReactiveActionState<never> = Object.freeze({
@@ -82,20 +92,32 @@ const IDLE_STATE: ReactiveActionState<never> = Object.freeze({
  * so only the most recent dispatch can mutate state.
  *
  * The wrapped function receives the `AbortSignal` as its first argument, followed by whatever
- * arguments were passed to `dispatch`.
+ * arguments were passed to `dispatch`. When `options.perRequestSignal` is provided, that factory
+ * is invoked on every dispatch and the returned signal is combined with the per-dispatch
+ * controller via `AbortSignal.any`. Aborting the factory-returned signal cancels the in-flight
+ * call and transitions the store to `error` with the abort reason. Each new dispatch calls the
+ * factory again — useful for per-attempt timeouts (`() => AbortSignal.timeout(N)`) that reset on
+ * each call.
  *
  * @typeParam TArgs - Argument tuple forwarded from `dispatch` to `fn`.
  * @typeParam TResult - Resolved value type of `fn`.
  * @param fn - Async function to wrap. Receives an {@link AbortSignal} plus the dispatch arguments.
+ * @param options - Optional configuration.
+ * @param options.perRequestSignal - Factory invoked on every dispatch; returns the signal to
+ *   compose with the per-dispatch controller. Return `undefined` to skip composition for that
+ *   attempt.
  * @return A {@link ReactiveActionStore} exposing `dispatch`, `dispatchAsync`, `getState`, `subscribe`,
  * and `reset`.
  *
  * @example
  * ```ts
- * const store = createReactiveActionStore(async (signal, accountId: Address) => {
- *     const response = await fetch(`/api/accounts/${accountId}`, { signal });
- *     return response.json();
- * });
+ * const store = createReactiveActionStore(
+ *     async (signal, accountId: Address) => {
+ *         const response = await fetch(`/api/accounts/${accountId}`, { signal });
+ *         return response.json();
+ *     },
+ *     { perRequestSignal: () => AbortSignal.timeout(30_000) },
+ * );
  *
  * store.subscribe(() => console.log(store.getState()));
  * store.dispatch(someAccountId); // fire-and-forget; state is the source of truth
@@ -108,10 +130,12 @@ const IDLE_STATE: ReactiveActionState<never> = Object.freeze({
  */
 export function createReactiveActionStore<TArgs extends readonly unknown[], TResult>(
     fn: (signal: AbortSignal, ...args: TArgs) => Promise<TResult>,
+    options?: { perRequestSignal?: () => AbortSignal | undefined },
 ): ReactiveActionStore<TArgs, TResult> {
     let state: ReactiveActionState<TResult> = IDLE_STATE;
     let currentController: AbortController | undefined;
     const listeners = new Set<() => void>();
+    const perRequestSignal = options?.perRequestSignal;
 
     function setState(next: ReactiveActionState<TResult>) {
         if (state.status === next.status && state.data === next.data && state.error === next.error) {
@@ -125,7 +149,8 @@ export function createReactiveActionStore<TArgs extends readonly unknown[], TRes
         currentController?.abort();
         const controller = new AbortController();
         currentController = controller;
-        const { signal } = controller;
+        const perRequest = perRequestSignal?.();
+        const signal = perRequest ? AbortSignal.any([controller.signal, perRequest]) : controller.signal;
         const previousData = state.data;
         setState({ data: previousData, error: undefined, status: 'running' });
         try {
@@ -136,9 +161,13 @@ export function createReactiveActionStore<TArgs extends readonly unknown[], TRes
             setState({ data: result, error: undefined, status: 'success' });
             return result;
         } catch (error) {
-            if (signal.aborted) {
-                throw signal.reason;
+            // Superseded by a newer dispatch or `reset()` — drop silently so only the most recent
+            // dispatch mutates state, and reject with the abort reason rather than any underlying
+            // failure that happened to race the abort.
+            if (controller.signal.aborted) {
+                throw controller.signal.reason;
             }
+            // Real failure or `perRequestSignal` firing — surface as error state.
             setState({ data: previousData, error, status: 'error' });
             throw error;
         }
