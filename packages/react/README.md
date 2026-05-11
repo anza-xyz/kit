@@ -129,6 +129,59 @@ try {
 }
 ```
 
+### `useRequest(source, options?)`
+
+Fires a one-shot request on mount and re-fires whenever `source` changes identity. Returns `{ data, error, status, isLoading, refresh }`. Use it for RPC reads that don't have a subscription counterpart (`getLatestBlockhash`, `getBalance`, `getEpochInfo`, …) or for one-shot reads of values you'd otherwise subscribe to.
+
+`source` is any `{ reactiveStore(): ReactiveActionStore<[], T> }` — `PendingRpcRequest` is the canonical implementation. Memoize it with `useMemo` keyed on the inputs it depends on. Pass `null` to disable (the result reports `status: 'disabled'`).
+
+```tsx
+import { useClientCapability, useRequest } from '@solana/react';
+import type { ClientWithRpc, GetLatestBlockhashApi } from '@solana/kit';
+
+function LatestBlockhash() {
+    const client = useClientCapability<ClientWithRpc<GetLatestBlockhashApi>>({
+        capability: 'rpc',
+        hookName: 'useLatestBlockhash',
+        providerHint: 'Install `solanaRpc()` on the client.',
+    });
+    const source = useMemo(() => client.rpc.getLatestBlockhash(), [client]);
+    const { data, error, refresh } = useRequest(source);
+    if (error) return <button onClick={refresh}>Retry</button>;
+    return <p>{data ? `Blockhash: ${data.value.blockhash}` : 'Loading…'}</p>;
+}
+```
+
+`refresh()` re-fires the request manually — useful for a "Retry" button on an error state, or a user-initiated reload. After a prior success, a `refresh()` keeps the old `data` populated and reports `status: 'retrying'` so UIs can show stale content while revalidating.
+
+```tsx
+function Balance({ address }: { address: Address | null }) {
+    const client = useClientCapability<ClientWithRpc<GetBalanceApi>>({
+        capability: 'rpc',
+        hookName: 'useBalance',
+        providerHint: 'Install `solanaRpc()` on the client.',
+    });
+    // Disabled until an address is selected.
+    const source = useMemo(() => (address ? client.rpc.getBalance(address) : null), [client, address]);
+    const { data, status } = useRequest(source);
+    if (status === 'disabled') return <p>Select an account to see its balance.</p>;
+    return <p>{data?.value !== undefined ? `${data.value} lamports` : 'Loading…'}</p>;
+}
+```
+
+#### Per-attempt cancellation
+
+Pass `perRequestSignal` to attach a cancellation signal to each individual attempt — initial fire plus every `refresh()`. The natural use is per-attempt timeouts:
+
+```tsx
+const { data, error, refresh } = useRequest(source, {
+    // Each attempt gets a fresh 5-second clock. `refresh()` resets it.
+    perRequestSignal: () => AbortSignal.timeout(5_000),
+});
+```
+
+The factory is held in a ref synced to the latest render, so inline closures are fine — no `useCallback` needed. To kill the hook entirely (e.g. on a route change), do it the React-native way: set the memoized source to `null` (the result reports `disabled`), or let the component unmount.
+
 ## Hooks
 
 ### `useSignIn(uiWalletAccount, chain)`
