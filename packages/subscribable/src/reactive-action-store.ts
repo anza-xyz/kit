@@ -7,13 +7,13 @@ export type ReactiveActionStatus = 'error' | 'idle' | 'running' | 'success';
 /**
  * Discriminated state of a {@link ReactiveActionStore}, keyed by {@link ReactiveActionStatus}.
  *
- * `data` holds the most recent successful result and persists through subsequent `running` and
- * `error` states so call sites can keep rendering stale content while a retry is in flight. Only
- * `reset()` clears it.
+ * `data` holds the most recent successful result and `error` holds the most recent failure. Both
+ * persist through subsequent `running` states so call sites can keep rendering stale content
+ * while a retry is in flight. `success` clears `error`; only `reset()` clears `data`.
  */
 export type ReactiveActionState<TResult> =
-    | { readonly data: TResult | undefined; readonly error: undefined; readonly status: 'running' }
     | { readonly data: TResult | undefined; readonly error: unknown; readonly status: 'error' }
+    | { readonly data: TResult | undefined; readonly error: unknown; readonly status: 'running' }
     | { readonly data: TResult; readonly error: undefined; readonly status: 'success' }
     | { readonly data: undefined; readonly error: undefined; readonly status: 'idle' };
 
@@ -163,7 +163,8 @@ export function createReactiveActionStore<TArgs extends readonly unknown[], TRes
         currentController = controller;
         const signal = userSignal ? AbortSignal.any([controller.signal, userSignal]) : controller.signal;
         const previousData = state.data;
-        setState({ data: previousData, error: undefined, status: 'running' });
+        const previousError = state.error;
+        setState({ data: previousData, error: previousError, status: 'running' });
         try {
             const result = await getAbortablePromise(fn(signal, ...args), signal);
             if (signal.aborted) {
