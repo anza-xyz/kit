@@ -174,6 +174,107 @@ describe('createReactiveActionStore', () => {
         });
     });
 
+    describe('withSignal()', () => {
+        it('forwards a non-aborted internal signal to `fn` when called via the bare `dispatch`', async () => {
+            expect.assertions(1);
+            const fn = jest.fn((_signal: AbortSignal) => Promise.resolve('ok'));
+            const store = createReactiveActionStore(fn);
+            await store.dispatchAsync();
+            expect(fn.mock.calls[0][0].aborted).toBe(false);
+        });
+
+        it('aborts the in-flight dispatch and transitions to `error` when the caller-provided signal fires', async () => {
+            expect.assertions(2);
+            const ctrl = new AbortController();
+            const reason = new Error('per-request abort');
+            const store = createReactiveActionStore(() => new Promise<string>(() => {}));
+            const dispatched = store.withSignal(ctrl.signal).dispatchAsync();
+            ctrl.abort(reason);
+            await expect(dispatched).rejects.toBe(reason);
+            expect(store.getState()).toStrictEqual({
+                data: undefined,
+                error: reason,
+                status: 'error',
+            });
+        });
+
+        it('preserves stale data when the caller-provided signal aborts after a prior success', async () => {
+            expect.assertions(1);
+            const ctrl = new AbortController();
+            const reason = new Error('abort');
+            const { promise: second } = Promise.withResolvers<string>();
+            const results = [Promise.resolve('first'), second];
+            const store = createReactiveActionStore(() => results.shift()!);
+            await store.dispatchAsync();
+            const dispatched = store.withSignal(ctrl.signal).dispatchAsync();
+            ctrl.abort(reason);
+            await dispatched.catch(() => {});
+            expect(store.getState()).toStrictEqual({
+                data: 'first',
+                error: reason,
+                status: 'error',
+            });
+        });
+
+        it('lets later dispatches recover when a prior call started with an already-aborted signal', async () => {
+            expect.assertions(2);
+            const store = createReactiveActionStore(() => Promise.resolve('ok'));
+            await store
+                .withSignal(AbortSignal.abort(new Error('first')))
+                .dispatchAsync()
+                .catch(() => {});
+            expect(store.getState().status).toBe('error');
+            await store.dispatchAsync();
+            expect(store.getState()).toStrictEqual({
+                data: 'ok',
+                error: undefined,
+                status: 'success',
+            });
+        });
+
+        it('passes a combined signal to `fn` that fires when the caller-provided signal aborts', async () => {
+            expect.assertions(1);
+            const ctrl = new AbortController();
+            let captured: AbortSignal | undefined;
+            const store = createReactiveActionStore((signal: AbortSignal) => {
+                captured = signal;
+                return new Promise<string>(() => {});
+            });
+            store.withSignal(ctrl.signal).dispatch();
+            ctrl.abort(new Error('boom'));
+            await Promise.resolve();
+            expect(captured?.aborted).toBe(true);
+        });
+
+        it('lets the caller vary the signal across dispatches on the same store', async () => {
+            expect.assertions(2);
+            const fn = jest.fn((_signal: AbortSignal) => Promise.resolve('ok'));
+            const store = createReactiveActionStore(fn);
+            const ctrlA = new AbortController();
+            const ctrlB = new AbortController();
+            await store.withSignal(ctrlA.signal).dispatchAsync();
+            await store.withSignal(ctrlB.signal).dispatchAsync();
+            // Aborting one controller only fires its own dispatch's composed signal.
+            ctrlA.abort(new Error('only-A'));
+            expect(fn.mock.calls[0][0].aborted).toBe(true);
+            expect(fn.mock.calls[1][0].aborted).toBe(false);
+        });
+
+        it('lets a wrapper be reused as a "kill switch" across dispatches', async () => {
+            expect.assertions(2);
+            const killCtrl = new AbortController();
+            const fn = jest.fn((_signal: AbortSignal) => Promise.resolve('ok'));
+            const store = createReactiveActionStore(fn);
+            const killable = store.withSignal(killCtrl.signal);
+            await killable.dispatchAsync();
+            await killable.dispatchAsync();
+            killCtrl.abort(new Error('killed'));
+            // Both completed dispatches saw a signal that's now aborted.
+            expect(fn.mock.calls[0][0].aborted).toBe(true);
+            expect(fn.mock.calls[1][0].aborted).toBe(true);
+        });
+    });
+
     describe('reset()', () => {
         it('returns the store to idle from a success state', async () => {
             expect.assertions(1);
