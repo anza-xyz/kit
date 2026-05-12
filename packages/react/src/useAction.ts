@@ -11,8 +11,9 @@ const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffec
  * (and plugin-specific hooks built on top of it).
  *
  * Lifecycle: starts at `idle`. Each `dispatch(...)` flips to `running`, then to `success` or
- * `error` depending on the outcome. `data` from a prior `success` persists through subsequent
- * `running` states for stale-while-revalidate UX; only `reset()` clears it.
+ * `error` depending on the outcome. `data` from a prior `success` and `error` from a prior failure
+ * both persist through subsequent `running` states for stale-while-revalidate UX. `success` clears
+ * `error`; only `reset()` clears `data`.
  *
  * Calling `dispatch(...)` while a previous call is in flight aborts the first via its
  * `AbortSignal` and replaces it. Fire-and-forget `dispatch` callers never observe this; awaiters of
@@ -48,7 +49,11 @@ export type ActionResult<TArgs extends readonly unknown[], TResult> = {
      * `unhandledrejection`.
      */
     dispatchAsync: (...args: TArgs) => Promise<TResult>;
-    /** The error on failure, or `undefined`. */
+    /**
+     * The error from the most recent failed call, or `undefined`. Persists through a subsequent
+     * `running` state so UIs can keep showing the prior failure while a retry is in flight; a
+     * subsequent `success` clears it.
+     */
     error: unknown;
     /** `true` when `status === 'error'`. */
     isError: boolean;

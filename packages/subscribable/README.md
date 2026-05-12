@@ -72,12 +72,12 @@ The snapshot is a discriminated union:
 ```ts
 type ReactiveActionState<TResult> =
     | { status: 'idle'; data: undefined; error: undefined }
-    | { status: 'running'; data: TResult | undefined; error: undefined }
+    | { status: 'running'; data: TResult | undefined; error: unknown }
     | { status: 'success'; data: TResult; error: undefined }
     | { status: 'error'; data: TResult | undefined; error: unknown };
 ```
 
-`data` is the last successful result and survives across transitions — a `running` or `error` snapshot still carries the last value so UIs can render stale content while a retry is in flight. Only `reset()` clears it.
+`data` is the last successful result and `error` is the last failure; both survive across transitions so UIs can render stale content (data **or** error) while a retry is in flight. `success` clears `error`; only `reset()` clears `data`.
 
 Unlike `ReactiveStreamStore<T>` (which models a stream of values with a separate error channel), `ReactiveActionStore` models a one-shot-per-dispatch lifecycle where errors are part of the snapshot.
 
