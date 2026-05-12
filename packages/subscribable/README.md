@@ -134,6 +134,22 @@ Things to note:
 - Two ways to trigger the action:
     - `dispatch(...)` — fire-and-forget. Returns `undefined` synchronously and never throws; safe to call from UI event handlers without a `.catch`. Failures surface on state as `{ status: 'error' }`.
     - `dispatchAsync(...)` — returns a promise that resolves to the wrapped function's result. Rejects on failure and with an `AbortError` when superseded or `reset()`. Use from imperative code that needs the resolved value; pair with [`isAbortError`](../promises#isaborterrorerr) from `@solana/promises` to filter abort rejections.
+- Attach a caller-provided `AbortSignal` to a `dispatch` or `dispatchAsync` call via `store.withSignal(signal)`:
+
+    ```ts
+    // Per-attempt timeout — fresh signal per call:
+    store.withSignal(AbortSignal.timeout(5_000)).dispatch(someAccountId);
+
+    // Shared kill switch — bind the wrapper once, reuse everywhere:
+    const killCtrl = new AbortController();
+    const killable = store.withSignal(killCtrl.signal);
+    killable.dispatch(someAccountId);
+    killable.dispatch(someAccountId);
+    killCtrl.abort(); // cancels in-flight and short-circuits future calls
+    ```
+
+    The wrapped signal is composed with the store's internal per-dispatch controller via `AbortSignal.any`, so aborting either cancels the in-flight call and surfaces the abort reason on state. The wrapper exposes only `dispatch` / `dispatchAsync` — `getState` / `subscribe` / `reset` stay on the parent store.
+
 - Calling either dispatch while one is in flight aborts the previous call; its outcome is dropped from state regardless of which variant started it.
 - `data` survives across transitions: a fresh `running` or `error` snapshot carries the last successful result so call sites can keep rendering stale content while a retry is in flight. Only `reset()` clears it.
 - `reset()` aborts the in-flight dispatch and restores the idle snapshot, clearing both `data` and `error`.

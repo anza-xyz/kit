@@ -31,6 +31,7 @@ export type ReactiveActionStore<TArgs extends readonly unknown[], TResult> = {
      * no state update. Use from UI event handlers; there's no promise to handle or `.catch`.
      *
      * @see {@link ReactiveActionStore.dispatchAsync} when you need the resolved value or propagated errors.
+     * @see {@link ReactiveActionStore.withSignal} to attach a caller-provided `AbortSignal` to a dispatch.
      */
     readonly dispatch: (...args: TArgs) => void;
     /**
@@ -46,20 +47,49 @@ export type ReactiveActionStore<TArgs extends readonly unknown[], TResult> = {
     readonly reset: () => void;
     /** Registers a listener called on every state change. Returns an unsubscribe function. */
     readonly subscribe: (listener: () => void) => () => void;
+    /**
+     * Returns a thin wrapper exposing `dispatch` / `dispatchAsync` that compose `signal` with the
+     * store's internal per-dispatch controller via `AbortSignal.any` — aborting either cancels
+     * the in-flight call. Aborting the caller-provided signal surfaces the abort reason on state
+     * as `{ status: 'error' }`; the internal controller path (supersession by a newer dispatch or
+     * `reset()`) is silent by design so the newer dispatch owns state. Use this to attach a
+     * caller-provided cancellation source (per-attempt timeout, shared kill switch, parent-context
+     * signal) without touching the bare `dispatch` / `dispatchAsync` API.
+     *
+     * - Per-attempt timeout: `store.withSignal(AbortSignal.timeout(5_000)).dispatch(args)` — fresh
+     *   clock per call.
+     * - Permanent kill switch: hold one `AbortController`, bind the wrapper once
+     *   (`const killable = store.withSignal(killCtrl.signal)`), and use `killable.dispatch(...)`
+     *   everywhere; aborting the controller cancels in-flight and short-circuits future calls.
+     *
+     * The wrapper exposes only `dispatch` / `dispatchAsync` — `getState` / `subscribe` / `reset`
+     * remain store-level concerns on the parent.
+     */
+    readonly withSignal: (signal: AbortSignal) => {
+        readonly dispatch: (...args: TArgs) => void;
+        readonly dispatchAsync: (...args: TArgs) => Promise<TResult>;
+    };
 };
 
 /**
- * Duck-type for objects that build a {@link ReactiveActionStore} on demand via a zero-argument
- * `reactiveStore()` method. Satisfied by `PendingRpcRequest<T>`. The `[]` argument tuple is
- * intentional — the operation's arguments are already baked into the pending request, so each
- * `dispatch()` re-fires the same call.
+ * Duck-type for objects that build a {@link ReactiveActionStore} on demand via `reactiveStore()`.
+ * Satisfied by `PendingRpcRequest<T>`. The `[]` argument tuple is intentional — the operation's
+ * arguments are already baked into the pending request, so each `dispatch()` re-fires the same
+ * call.
+ *
+ * The returned store is in the `idle` state — the caller is responsible for calling `dispatch()`
+ * to fire the first attempt. Attach a caller-provided cancellation source per dispatch via
+ * `store.withSignal(signal).dispatch(...)` — see {@link ReactiveActionStore.withSignal}.
  *
  * @typeParam T - The value type resolved by the wrapped operation.
  *
  * @example
  * ```ts
  * function bind<T>(source: ReactiveActionSource<T>) {
- *     return source.reactiveStore();
+ *     const store = source.reactiveStore();
+ *     // Per-attempt timeout, fresh signal per call:
+ *     store.withSignal(AbortSignal.timeout(30_000)).dispatch();
+ *     return store;
  * }
  * ```
  *
@@ -82,13 +112,16 @@ const IDLE_STATE: ReactiveActionState<never> = Object.freeze({
  * so only the most recent dispatch can mutate state.
  *
  * The wrapped function receives the `AbortSignal` as its first argument, followed by whatever
- * arguments were passed to `dispatch`.
+ * arguments were passed to `dispatch`. Callers attach their own cancellation source per-call via
+ * {@link ReactiveActionStore.withSignal} — `store.withSignal(signal).dispatch(...)`. The caller's
+ * signal is composed with the per-dispatch controller via `AbortSignal.any`, so aborting it
+ * cancels the in-flight call and surfaces the abort reason on state.
  *
  * @typeParam TArgs - Argument tuple forwarded from `dispatch` to `fn`.
  * @typeParam TResult - Resolved value type of `fn`.
  * @param fn - Async function to wrap. Receives an {@link AbortSignal} plus the dispatch arguments.
  * @return A {@link ReactiveActionStore} exposing `dispatch`, `dispatchAsync`, `getState`, `subscribe`,
- * and `reset`.
+ * `reset`, and `withSignal`.
  *
  * @example
  * ```ts
@@ -100,7 +133,10 @@ const IDLE_STATE: ReactiveActionState<never> = Object.freeze({
  * store.subscribe(() => console.log(store.getState()));
  * store.dispatch(someAccountId); // fire-and-forget; state is the source of truth
  *
- * // Or, when you need the resolved value imperatively:
+ * // Per-attempt timeout — fresh signal per call:
+ * store.withSignal(AbortSignal.timeout(30_000)).dispatch(someAccountId);
+ *
+ * // Imperative call with the resolved value:
  * const account = await store.dispatchAsync(someAccountId);
  * ```
  *
@@ -121,11 +157,11 @@ export function createReactiveActionStore<TArgs extends readonly unknown[], TRes
         listeners.forEach(listener => listener());
     }
 
-    const dispatchAsync = async (...args: TArgs): Promise<TResult> => {
+    const dispatchAsyncWithSignal = async (userSignal: AbortSignal | undefined, ...args: TArgs): Promise<TResult> => {
         currentController?.abort();
         const controller = new AbortController();
         currentController = controller;
-        const { signal } = controller;
+        const signal = userSignal ? AbortSignal.any([controller.signal, userSignal]) : controller.signal;
         const previousData = state.data;
         setState({ data: previousData, error: undefined, status: 'running' });
         try {
@@ -136,14 +172,19 @@ export function createReactiveActionStore<TArgs extends readonly unknown[], TRes
             setState({ data: result, error: undefined, status: 'success' });
             return result;
         } catch (error) {
-            if (signal.aborted) {
-                throw signal.reason;
+            // Superseded by a newer dispatch or `reset()` — drop silently so only the most recent
+            // dispatch mutates state, and reject with the abort reason rather than any underlying
+            // failure that happened to race the abort.
+            if (controller.signal.aborted) {
+                throw controller.signal.reason;
             }
+            // Real failure or the caller-provided signal firing — surface as error state.
             setState({ data: previousData, error, status: 'error' });
             throw error;
         }
     };
 
+    const dispatchAsync = (...args: TArgs): Promise<TResult> => dispatchAsyncWithSignal(undefined, ...args);
     const dispatch = (...args: TArgs): void => {
         dispatchAsync(...args).catch(() => {});
     };
@@ -163,5 +204,11 @@ export function createReactiveActionStore<TArgs extends readonly unknown[], TRes
                 listeners.delete(listener);
             };
         },
+        withSignal: (signal: AbortSignal) => ({
+            dispatch: (...args: TArgs): void => {
+                dispatchAsyncWithSignal(signal, ...args).catch(() => {});
+            },
+            dispatchAsync: (...args: TArgs): Promise<TResult> => dispatchAsyncWithSignal(signal, ...args),
+        }),
     };
 }
