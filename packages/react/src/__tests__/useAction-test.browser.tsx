@@ -87,6 +87,30 @@ describe('useAction', () => {
         expect(result.current.data).toBeUndefined();
     });
 
+    it('keeps prior error through a subsequent running state (stale-while-revalidate)', async () => {
+        const boom = new Error('boom');
+        const { promise: secondPending, resolve: resolveSecond } = Promise.withResolvers<string>();
+        let n = 0;
+        const fn = () => (++n === 1 ? Promise.reject(boom) : secondPending);
+        const { result } = renderHook(() => useAction(fn));
+
+        await act(async () => {
+            await result.current.dispatch().catch(() => {});
+        });
+        expect(result.current.status).toBe('error');
+        expect(result.current.error).toBe(boom);
+
+        act(() => {
+            void result.current.dispatch();
+        });
+        expect(result.current.status).toBe('running');
+        expect(result.current.error).toBe(boom); // stale error preserved during revalidation
+
+        await act(async () => resolveSecond('ok'));
+        expect(result.current.status).toBe('success');
+        expect(result.current.error).toBeUndefined();
+    });
+
     it('keeps prior data through a subsequent running state (stale-while-revalidate)', async () => {
         const { promise: secondPending, resolve: resolveSecond } = Promise.withResolvers<string>();
         let n = 0;
