@@ -37,18 +37,18 @@ export type PendingRpcRequest<TResponse> = {
     /**
      * Synchronously returns a {@link ReactiveActionStore} in the `idle` state, ready to dispatch
      * the underlying request. Compatible with `useSyncExternalStore` and other reactive primitives
-     * that expect a `{ subscribe, getState }` contract. Call `dispatch()` to fire the request,
-     * again on retry, or `reset()` to abort the in-flight call and return to `status: 'idle'`.
+     * that expect a `{ subscribe, getState }` contract. Call `dispatch()` to fire the request
+     * (again on retry), or `reset()` to abort the in-flight call and return to `status: 'idle'`.
      *
      * Unlike {@link PendingRpcRequest.send}, this method does not fire the request on creation —
-     * the caller is responsible for dispatching. This makes signal handling uniform between
-     * `reactiveStore`-derived stores and stores created directly from `createReactiveActionStore`
-     * (which also do not auto-fire).
+     * the caller is responsible for dispatching. This makes signal handling uniform: attach a
+     * caller-provided cancellation source per dispatch via
+     * `store.withSignal(signal).dispatch(...)`.
      *
      * @example
      * ```ts
      * const store = rpc.getAccountInfo(address).reactiveStore();
-     * store.dispatch(); // fire the initial request
+     * store.withSignal(AbortSignal.timeout(5_000)).dispatch(); // fire with a per-attempt timeout
      * const state = useSyncExternalStore(store.subscribe, store.getState);
      * if (state.status === 'error') return <ErrorMessage error={state.error} onRetry={store.dispatch} />;
      * if (state.status === 'running' && !state.data) return <Spinner />;
