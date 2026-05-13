@@ -10,8 +10,6 @@ import {
 } from './get-instructions';
 import type { TracedInstruction } from './types';
 
-export type { TracedInstruction, InstructionTrace } from './types';
-
 /**
  * Yields every instruction in a confirmed transaction — outer first, then
  * inner instructions interleaved by their outer-instruction index — as

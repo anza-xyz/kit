@@ -13,7 +13,7 @@ import type {
     V0CompiledTransactionMessage,
 } from '@solana/transaction-messages';
 import { getCompiledTransactionMessageDecoder } from '@solana/transaction-messages';
-import type { SignaturesMap, Transaction, TransactionMessageBytes } from '@solana/transactions';
+import type { Transaction } from '@solana/transactions';
 import { getTransactionDecoder } from '@solana/transactions';
 
 import type { LoadedAddresses } from './get-all-addresses';
@@ -56,17 +56,16 @@ type AnyGetTransactionResponse =
     | JsonGetTransactionResponse;
 
 /**
- * The result of decoding a `getTransaction` response: the wire-format
- * {@link Transaction}, the {@link CompiledTransactionMessage} parsed from
- * its `messageBytes`, and the loaded ALT addresses pulled from `meta` (if
- * any).
+ * The result of decoding a `getTransaction` response: the
+ * {@link CompiledTransactionMessage} (always with a `lifetimeToken` carrying
+ * the recent blockhash), the loaded ALT addresses pulled from `meta` (if
+ * any), and — for `'base64'` and `'base58'` responses — the wire-format
+ * {@link Transaction}.
  *
- * For `encoding: 'json'` responses, `transaction.messageBytes` is empty
- * (the server already decompiled the message; there are no wire bytes to
- * carry) and `transaction.signatures` is reconstructed by mapping each
- * JSON signature slot to the corresponding signer address. If you need a
- * re-encodable {@link Transaction}, fetch the response with
- * `encoding: 'base64'`.
+ * `transaction` is omitted for `encoding: 'json'` responses: the server
+ * has already decompiled the wire format, so there are no message bytes
+ * to round-trip. If you need a re-encodable {@link Transaction}, fetch
+ * the response with `encoding: 'base64'`.
  *
  * @example
  * ```ts
@@ -75,9 +74,9 @@ type AnyGetTransactionResponse =
  * ```
  */
 export type DecodedRpcTransaction = Readonly<{
-    compiledMessage: CompiledTransactionMessage;
+    compiledMessage: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime;
     loadedAddresses: LoadedAddresses;
-    transaction: Transaction;
+    transaction?: Transaction;
 }>;
 
 const EMPTY_LOADED_ADDRESSES: LoadedAddresses = { readonly: [], writable: [] };
@@ -95,7 +94,7 @@ function getLoadedAddresses(meta: unknown): LoadedAddresses {
 }
 
 function decodeFromWire(wireBytes: Uint8Array): {
-    compiledMessage: CompiledTransactionMessage;
+    compiledMessage: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime;
     transaction: Transaction;
 } {
     const transaction = getTransactionDecoder().decode(wireBytes);
@@ -123,12 +122,12 @@ function decodeFromJson<TMaxSupportedTransactionVersion extends 0 | void>(
     rpcTx: JsonGetTransactionResponse<TMaxSupportedTransactionVersion>,
 ): DecodedRpcTransaction {
     const base58 = getBase58Encoder();
-    const { message, signatures } = rpcTx.transaction;
+    const { message } = rpcTx.transaction;
     const staticAccounts: Address[] = [...message.accountKeys];
 
     const compiledInstructions = message.instructions.map(ix => ({
         ...(ix.accounts.length ? { accountIndices: [...ix.accounts] } : null),
-        ...(ix.data ? { data: base58.encode(ix.data) } : null),
+        ...(ix.data != null ? { data: base58.encode(ix.data) } : null),
         programAddressIndex: ix.programIdIndex,
     }));
 
@@ -170,23 +169,7 @@ function decodeFromJson<TMaxSupportedTransactionVersion extends 0 | void>(
                   version: 'legacy',
               } satisfies CompiledTransactionMessageWithLifetime & LegacyCompiledTransactionMessage);
 
-    // The wire `Transaction.signatures` is keyed by signer address; the JSON
-    // response gives us a parallel array indexed by signer slot. Signers
-    // always begin at index 0 in `staticAccounts`. Any signature slot beyond
-    // `numRequiredSignatures` is a malformed response and is ignored.
-    const signaturesMap: SignaturesMap = {};
-    const numSigners = Math.min(header.numSignerAccounts, signatures.length, staticAccounts.length);
-    for (let i = 0; i < numSigners; i++) {
-        const signer = staticAccounts[i];
-        signaturesMap[signer] = base58.encode(signatures[i]) as unknown as SignaturesMap[Address];
-    }
-
-    const transaction: Transaction = {
-        messageBytes: new Uint8Array(0) as unknown as TransactionMessageBytes,
-        signatures: signaturesMap,
-    };
-
-    return { compiledMessage, loadedAddresses: getLoadedAddresses(rpcTx.meta), transaction };
+    return { compiledMessage, loadedAddresses: getLoadedAddresses(rpcTx.meta) };
 }
 
 function isBase64Response(rpcTx: AnyGetTransactionResponse): rpcTx is Base64GetTransactionResponse {
@@ -222,8 +205,10 @@ function isJsonResponse(rpcTx: AnyGetTransactionResponse): rpcTx is JsonGetTrans
 
 /**
  * Decodes a `getTransaction` response (any of `encoding: 'base64'`,
- * `'base58'`, or `'json'`) into a kit {@link Transaction} and
- * {@link CompiledTransactionMessage}.
+ * `'base58'`, or `'json'`) into a {@link CompiledTransactionMessage} plus,
+ * for `'base64'` and `'base58'`, a re-encodable {@link Transaction}. The
+ * JSON path does not produce a `Transaction`: the server has already
+ * decompiled the wire format, so there are no message bytes to carry.
  *
  * `'jsonParsed'` is **not** supported — its instructions arrive
  * pre-parsed by the server and lack raw bytes, so they cannot be
@@ -237,10 +222,8 @@ function isJsonResponse(rpcTx: AnyGetTransactionResponse): rpcTx is JsonGetTrans
  * can `parse` directly.
  *
  * Prefer `encoding: 'base64'` when bandwidth allows — it is the most
- * compact and the wire bytes round-trip cleanly through the kit codecs.
- * `encoding: 'json'` is also accepted, but the resulting `transaction`
- * carries an empty `messageBytes` (the server already decompiled the
- * wire format) and is therefore not re-encodable.
+ * compact, the wire bytes round-trip cleanly through the kit codecs, and
+ * the return type statically guarantees a re-encodable `transaction`.
  *
  * @example
  * ```ts
@@ -257,10 +240,10 @@ function isJsonResponse(rpcTx: AnyGetTransactionResponse): rpcTx is JsonGetTrans
  */
 export function decodeTransactionFromRpcResponse<TMaxSupportedTransactionVersion extends 0 | void = 0 | void>(
     rpcTx: Base64GetTransactionResponse<TMaxSupportedTransactionVersion>,
-): DecodedRpcTransaction;
+): DecodedRpcTransaction & { transaction: Transaction };
 export function decodeTransactionFromRpcResponse<TMaxSupportedTransactionVersion extends 0 | void = 0 | void>(
     rpcTx: Base58GetTransactionResponse<TMaxSupportedTransactionVersion>,
-): DecodedRpcTransaction;
+): DecodedRpcTransaction & { transaction: Transaction };
 export function decodeTransactionFromRpcResponse<TMaxSupportedTransactionVersion extends 0 | void = 0 | void>(
     rpcTx: JsonGetTransactionResponse<TMaxSupportedTransactionVersion>,
 ): DecodedRpcTransaction;
