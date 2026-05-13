@@ -103,19 +103,34 @@ describe('JSON-RPC 2.0', () => {
         afterEach(() => {
             jest.useRealTimers();
         });
-        it('fires the request on creation with a non-aborted signal', () => {
+        it('does not fire the request on creation', () => {
             rpc.someMethod(123).reactiveStore();
+            expect(execute).not.toHaveBeenCalled();
+        });
+        it('returns a store in the `idle` state', () => {
+            const store = rpc.someMethod(123).reactiveStore();
+            expect(store.getState()).toStrictEqual({
+                data: undefined,
+                error: undefined,
+                status: 'idle',
+            });
+        });
+        it('fires the request on dispatch() with a non-aborted signal', () => {
+            const store = rpc.someMethod(123).reactiveStore();
+            store.dispatch();
             expect(execute).toHaveBeenCalledTimes(1);
             const { signal } = execute.mock.calls[0][0];
             expect(signal).toBeInstanceOf(AbortSignal);
             expect(signal.aborted).toBe(false);
         });
-        it('forwards the transport to the plan on creation', () => {
-            rpc.someMethod(123).reactiveStore();
+        it('forwards the transport to the plan on dispatch()', () => {
+            const store = rpc.someMethod(123).reactiveStore();
+            store.dispatch();
             expect(execute).toHaveBeenCalledWith(expect.objectContaining({ transport: makeHttpRequest }));
         });
-        it('returns a store synchronously in the `running` status', () => {
+        it('transitions to `running` synchronously when dispatch() is called', () => {
             const store = rpc.someMethod(123).reactiveStore();
+            store.dispatch();
             expect(store.getState()).toStrictEqual({
                 data: undefined,
                 error: undefined,
@@ -127,6 +142,7 @@ describe('JSON-RPC 2.0', () => {
             const { promise, resolve } = Promise.withResolvers<number>();
             execute.mockReturnValueOnce(promise);
             const store = rpc.someMethod(123).reactiveStore();
+            store.dispatch();
             resolve(42);
             await jest.runAllTimersAsync();
             expect(store.getState()).toStrictEqual({
@@ -140,6 +156,7 @@ describe('JSON-RPC 2.0', () => {
             const { promise, reject } = Promise.withResolvers<number>();
             execute.mockReturnValueOnce(promise);
             const store = rpc.someMethod(123).reactiveStore();
+            store.dispatch();
             const error = new Error('o no');
             reject(error);
             await jest.runAllTimersAsync();
@@ -158,16 +175,19 @@ describe('JSON-RPC 2.0', () => {
             const subscriberB = jest.fn();
             store.subscribe(subscriberA);
             store.subscribe(subscriberB);
+            store.dispatch();
             resolve(42);
             await jest.runAllTimersAsync();
-            expect(subscriberA).toHaveBeenCalledTimes(1);
-            expect(subscriberB).toHaveBeenCalledTimes(1);
+            // Both subscribers see at least the running and success transitions.
+            expect(subscriberA.mock.calls.length).toBeGreaterThanOrEqual(2);
+            expect(subscriberB.mock.calls.length).toBeGreaterThanOrEqual(2);
         });
-        it('re-fires the plan when dispatch() is called', async () => {
+        it('re-fires the plan when dispatch() is called repeatedly', async () => {
             expect.assertions(1);
             // request 1: rejects
             execute.mockRejectedValueOnce(new Error('o no'));
             const store = rpc.someMethod(123).reactiveStore();
+            store.dispatch();
             await jest.runAllTimersAsync();
             // request 2: resolves
             execute.mockResolvedValueOnce(42);
@@ -177,6 +197,7 @@ describe('JSON-RPC 2.0', () => {
         });
         it('aborts the in-flight signal and returns to idle when reset() is called', () => {
             const store = rpc.someMethod(123).reactiveStore();
+            store.dispatch();
             const { signal } = execute.mock.calls[0][0];
             expect(signal.aborted).toBe(false);
             store.reset();
