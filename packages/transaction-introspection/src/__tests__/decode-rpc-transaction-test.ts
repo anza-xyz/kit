@@ -47,9 +47,7 @@ describe('decodeTransactionFromRpcResponse', () => {
         expect(result.transaction.signatures).toBeDefined();
         expect(result.loadedAddresses).toStrictEqual({ readonly: ['ro'], writable: ['w'] });
         // The wire-decoder path sets `lifetimeToken` from the encoded message.
-        expect((result.compiledMessage as { lifetimeToken?: string }).lifetimeToken).toBe(
-            '11111111111111111111111111111111',
-        );
+        expect(result.compiledMessage.lifetimeToken).toBe('11111111111111111111111111111111');
     });
 
     it('returns empty loaded addresses when meta is null', () => {
@@ -112,12 +110,10 @@ describe('decodeTransactionFromRpcResponse', () => {
         expect(ix.programAddressIndex).toBe(1);
         expect(ix.accountIndices).toStrictEqual([0]);
         expect(ix.data).toBeInstanceOf(Uint8Array);
-        // Empty messageBytes for JSON-decoded responses is documented behavior.
-        expect(result.transaction.messageBytes.byteLength).toBe(0);
+        // `transaction` is omitted for JSON responses (no re-encodable wire bytes).
+        expect(result.transaction).toBeUndefined();
         // `lifetimeToken` parity with the base64/base58 paths.
-        expect((result.compiledMessage as { lifetimeToken?: string }).lifetimeToken).toBe(
-            '11111111111111111111111111111111',
-        );
+        expect(result.compiledMessage.lifetimeToken).toBe('11111111111111111111111111111111');
     });
 
     it('decodes a JSON (v0) response with addressTableLookups + loadedAddresses', () => {
@@ -147,29 +143,6 @@ describe('decodeTransactionFromRpcResponse', () => {
         expect(v0.addressTableLookups).toStrictEqual([
             { lookupTableAddress: 'lut', readonlyIndexes: [3], writableIndexes: [2] },
         ]);
-    });
-
-    it('reconstructs `transaction.signatures` keyed by signer address from a JSON response', () => {
-        const sig0 = '11111111111111111111111111111111';
-        const rpcTx = {
-            meta: null,
-            transaction: {
-                message: {
-                    accountKeys: ['fee-payer' as Address, 'program' as Address],
-                    header: {
-                        numReadonlySignedAccounts: 0,
-                        numReadonlyUnsignedAccounts: 1,
-                        numRequiredSignatures: 1,
-                    },
-                    instructions: [],
-                    recentBlockhash: '11111111111111111111111111111111',
-                },
-                signatures: [sig0],
-            },
-        } as unknown as JsonGetTransactionResponse;
-        const result = decodeTransactionFromRpcResponse(rpcTx);
-        expect(Object.keys(result.transaction.signatures)).toStrictEqual(['fee-payer']);
-        expect(result.transaction.signatures['fee-payer' as Address]).toBeInstanceOf(Uint8Array);
     });
 
     it('throws SOLANA_ERROR__TRANSACTION__MALFORMED_MESSAGE_BYTES for an unrecognized response shape', () => {
@@ -237,50 +210,5 @@ describe('decodeTransactionFromRpcResponse', () => {
                 messageBytes: new Uint8Array(0),
             }),
         );
-    });
-
-    it('caps signature reconstruction at numRequiredSignatures when the array is too long', () => {
-        const rpcTx = {
-            meta: null,
-            transaction: {
-                message: {
-                    accountKeys: ['fee-payer' as Address, 'program' as Address],
-                    header: {
-                        numReadonlySignedAccounts: 0,
-                        numReadonlyUnsignedAccounts: 1,
-                        numRequiredSignatures: 1,
-                    },
-                    instructions: [],
-                    recentBlockhash: '11111111111111111111111111111111',
-                },
-                // RPC says numRequiredSignatures is 1, but two signatures are present. Only the
-                // first (matching the single signer slot) should be reconstructed.
-                signatures: ['11111111111111111111111111111111', '11111111111111111111111111111111'],
-            },
-        } as unknown as JsonGetTransactionResponse;
-        const result = decodeTransactionFromRpcResponse(rpcTx);
-        expect(Object.keys(result.transaction.signatures)).toStrictEqual(['fee-payer']);
-    });
-
-    it('handles signature arrays shorter than numRequiredSignatures without throwing', () => {
-        const rpcTx = {
-            meta: null,
-            transaction: {
-                message: {
-                    accountKeys: ['fee-payer' as Address, 'cosigner' as Address, 'program' as Address],
-                    header: {
-                        numReadonlySignedAccounts: 0,
-                        numReadonlyUnsignedAccounts: 1,
-                        numRequiredSignatures: 2,
-                    },
-                    instructions: [],
-                    recentBlockhash: '11111111111111111111111111111111',
-                },
-                // Only one signature provided though two are required.
-                signatures: ['11111111111111111111111111111111'],
-            },
-        } as unknown as JsonGetTransactionResponse;
-        const result = decodeTransactionFromRpcResponse(rpcTx);
-        expect(Object.keys(result.transaction.signatures)).toStrictEqual(['fee-payer']);
     });
 });

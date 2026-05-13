@@ -53,9 +53,9 @@ for (const { trace, instruction } of filterInstructionsForProgram(stream, TOKEN_
 
 ### `decodeTransactionFromRpcResponse(rpcTx)`
 
-Decodes a `getTransaction` response — `encoding: 'base64'`, `'base58'`, or `'json'` — into a `DecodedRpcTransaction`: the wire-format `Transaction`, the `CompiledTransactionMessage` parsed from its `messageBytes`, and the loaded ALT addresses pulled from `meta` (or empty arrays for legacy transactions where `meta.loadedAddresses` is not present).
+Decodes a `getTransaction` response — `encoding: 'base64'`, `'base58'`, or `'json'` — into a `DecodedRpcTransaction`: the `CompiledTransactionMessage` (always carrying the recent blockhash in `lifetimeToken`), the loaded ALT addresses pulled from `meta` (or empty arrays for legacy transactions where `meta.loadedAddresses` is not present), and — for `'base64'` and `'base58'` only — the re-encodable wire-format `Transaction`.
 
-Prefer `encoding: 'base64'` when bandwidth allows — it is the most compact and the wire bytes round-trip cleanly through the kit codecs. `encoding: 'json'` is also accepted, but the resulting `transaction` carries an empty `messageBytes` (the server already decompiled the wire format) and is therefore not re-encodable. `encoding: 'jsonParsed'` is **not** supported — its instructions arrive pre-parsed and lack raw bytes, so they cannot be round-tripped through the auto-generated `parseXInstruction` clients.
+Prefer `encoding: 'base64'` when bandwidth allows — it is the most compact, the wire bytes round-trip cleanly through the kit codecs, and the return type statically guarantees a non-undefined `transaction`. `encoding: 'json'` is also accepted, but `transaction` is omitted because the server has already decompiled the wire format and there are no message bytes to carry. `encoding: 'jsonParsed'` is **not** supported — its instructions arrive pre-parsed and lack raw bytes, so they cannot be round-tripped through the auto-generated `parseXInstruction` clients.
 
 ```ts
 import { createSolanaRpc, signature } from '@solana/kit';
@@ -112,18 +112,20 @@ for (const ix of instructions) {
 }
 ```
 
-### `getInnerInstructionsFromMeta(meta, accountMetas)`
+### `walkInnerInstructionsFromMeta(meta, accountMetas)`
 
-Normalizes the inner instructions in a `getTransaction` response into `TracedInstruction[]`. The RPC returns inner instructions in a different shape from the wire format — indices reference the same flat account list as outer instructions, but `data` is base58-encoded. This helper decodes the data, resolves the indices against the supplied `AccountMeta` list, and tags each instruction with an `inner` trace (carrying `outerIndex`, `innerIndex`, and `stackHeight` when the RPC provides one).
+Yields the inner instructions in a `getTransaction` response as `TracedInstruction`s. The RPC returns inner instructions in a different shape from the wire format — indices reference the same flat account list as outer instructions, but `data` is base58-encoded. This generator decodes the data, resolves the indices against the supplied `AccountMeta` list, and tags each instruction with an `inner` trace (carrying `outerIndex`, `innerIndex`, and `stackHeight` when the RPC provides one).
 
 ```ts
 import {
     getAccountMetasFromCompiledTransactionMessage,
-    getInnerInstructionsFromMeta,
+    walkInnerInstructionsFromMeta,
 } from '@solana/transaction-introspection';
 
 const accountMetas = getAccountMetasFromCompiledTransactionMessage(compiledMessage, loadedAddresses);
-const inner = getInnerInstructionsFromMeta(rpcTx.meta, accountMetas);
+for (const traced of walkInnerInstructionsFromMeta(rpcTx.meta, accountMetas)) {
+    // ...
+}
 ```
 
 ### `walkInstructions({ compiledMessage, meta?, loadedAddresses? })`
@@ -185,11 +187,11 @@ Same as above for `encoding: 'base58'`.
 
 ### `JsonGetTransactionResponse<TMaxSupportedTransactionVersion>`
 
-Same as above for `encoding: 'json'` (the default). Note: the `transaction` returned by `decodeTransactionFromRpcResponse` for a JSON response has empty `messageBytes` and a `signatures` map reconstructed by signer-slot mapping.
+Same as above for `encoding: 'json'` (the default). When passed to `decodeTransactionFromRpcResponse`, the result's `transaction` is `undefined` — the server has already decompiled the wire format, so there are no message bytes to carry.
 
 ### `DecodedRpcTransaction`
 
-The result of decoding a `getTransaction` response: `{ compiledMessage, loadedAddresses, transaction }`.
+`{ compiledMessage, loadedAddresses, transaction? }`. `compiledMessage` always carries a `lifetimeToken` (the recent blockhash). `transaction` is present only for `'base64'` and `'base58'` responses; the dispatcher's overloads narrow it to a non-optional `Transaction` for those encodings.
 
 ### `ResolvedInstruction<TProgramAddress>`
 

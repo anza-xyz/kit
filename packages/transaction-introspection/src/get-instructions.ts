@@ -130,14 +130,12 @@ export function getInstructionsFromCompiledTransactionMessage(
 }
 
 /**
- * Variant of {@link getInstructionsFromCompiledTransactionMessage} that takes
- * a pre-built list of {@link AccountMeta}s rather than rebuilding it from the
- * compiled message. Use this when you already have the metas resolved (e.g.
- * because you also need them for inner instructions) to avoid duplicate work.
+ * Internal variant of {@link getInstructionsFromCompiledTransactionMessage}
+ * that takes pre-built {@link AccountMeta}s. Used by {@link walkInstructions}
+ * to avoid rebuilding the meta list when it is already needed for resolving
+ * inner instructions.
  *
- * Asserts that the message carries top-level instructions; throws
- * {@link SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED} for v1+
- * messages.
+ * @internal
  */
 export function getInstructionsFromCompiledTransactionMessageWithMetas(
     compiledMessage: CompiledTransactionMessage,
