@@ -28,21 +28,27 @@ export type Rpc<TRpcMethods> = {
  * {@link PendingRpcRequest | PendingRpcRequest<TResponse>} will trigger the request and return a
  * promise for `TResponse`.
  *
- * Calling the {@link PendingRpcRequest.reactiveStore | `reactiveStore()`} method will fire the
- * request and return a {@link ReactiveActionStore} compatible with `useSyncExternalStore`, Svelte
- * stores, and other reactive primitives.
+ * Calling the {@link PendingRpcRequest.reactiveStore | `reactiveStore()`} method will return a
+ * {@link ReactiveActionStore} compatible with `useSyncExternalStore`, Svelte stores, and other
+ * reactive primitives. The store is returned in the `idle` state — call `dispatch()` to fire the
+ * request.
  */
 export type PendingRpcRequest<TResponse> = {
     /**
-     * Synchronously returns a {@link ReactiveActionStore} that fires the request on construction
-     * and holds its lifecycle state. Compatible with `useSyncExternalStore` and other reactive
-     * primitives that expect a `{ subscribe, getState }` contract. Call `dispatch()` to re-fire the
-     * request (for example after an error), or `reset()` to abort the in-flight call and return to
-     * `status: 'idle'`.
+     * Synchronously returns a {@link ReactiveActionStore} in the `idle` state, ready to dispatch
+     * the underlying request. Compatible with `useSyncExternalStore` and other reactive primitives
+     * that expect a `{ subscribe, getState }` contract. Call `dispatch()` to fire the request,
+     * again on retry, or `reset()` to abort the in-flight call and return to `status: 'idle'`.
+     *
+     * Unlike {@link PendingRpcRequest.send}, this method does not fire the request on creation —
+     * the caller is responsible for dispatching. This makes signal handling uniform between
+     * `reactiveStore`-derived stores and stores created directly from `createReactiveActionStore`
+     * (which also do not auto-fire).
      *
      * @example
      * ```ts
      * const store = rpc.getAccountInfo(address).reactiveStore();
+     * store.dispatch(); // fire the initial request
      * const state = useSyncExternalStore(store.subscribe, store.getState);
      * if (state.status === 'error') return <ErrorMessage error={state.error} onRetry={store.dispatch} />;
      * if (state.status === 'running' && !state.data) return <Spinner />;
@@ -119,9 +125,7 @@ function createPendingRpcRequest<TRpcMethods, TRpcTransport extends RpcTransport
 ): PendingRpcRequest<TResponse> {
     return {
         reactiveStore(): ReactiveActionStore<[], TResponse> {
-            const store = createReactiveActionStore<[], TResponse>(signal => plan.execute({ signal, transport }));
-            store.dispatch();
-            return store;
+            return createReactiveActionStore<[], TResponse>(signal => plan.execute({ signal, transport }));
         },
         async send(options?: RpcSendOptions): Promise<TResponse> {
             return await plan.execute({ signal: options?.abortSignal, transport });

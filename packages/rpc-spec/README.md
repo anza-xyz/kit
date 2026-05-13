@@ -34,10 +34,11 @@ Pending requests are the result of calling a supported method on a `Rpc` object.
 
 Calling the `send(options)` method on a `PendingRpcRequest<TResponse>` will trigger the request and return a promise for `TResponse`.
 
-Calling the `reactiveStore()` method fires the request immediately and synchronously returns a [`ReactiveActionStore`](https://github.com/anza-xyz/kit/tree/main/packages/subscribable) compatible with `useSyncExternalStore`, Svelte stores, and other reactive primitives. The store starts in `status: 'running'`, transitions to `success` or `error` when the request settles, and can be re-fired via `dispatch()` or cancelled via `reset()`.
+Calling the `reactiveStore()` method synchronously returns a [`ReactiveActionStore`](https://github.com/anza-xyz/kit/tree/main/packages/subscribable) in the `idle` state, compatible with `useSyncExternalStore`, Svelte stores, and other reactive primitives. The caller is responsible for firing the request via `dispatch()`; subsequent `dispatch()` calls re-fire (e.g. for retries), and `reset()` aborts the in-flight call and returns the store to `idle`.
 
 ```ts
 const store = rpc.getAccountInfo(address).reactiveStore();
+store.dispatch();
 const state = useSyncExternalStore(store.subscribe, store.getState);
 if (state.status === 'error') return <ErrorMessage error={state.error} onRetry={store.dispatch} />;
 if (state.status === 'running' && !state.data) return <Spinner />;
