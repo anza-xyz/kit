@@ -1,10 +1,7 @@
 import { createReactiveActionStore } from '@solana/subscribable';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 
-// `useLayoutEffect` warns on the server. The ref-sync only needs to be in place by the time an
-// event handler can fire, which can't happen during SSR — so on the server, plain `useEffect`
-// is functionally equivalent and silent.
-const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
+import { useIsomorphicLayoutEffect } from './useIsomorphicLayoutEffect';
 
 /**
  * Reactive state and controls for an async action managed by {@link useAction}
