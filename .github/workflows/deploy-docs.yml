@@ -58,7 +58,7 @@ jobs:
           vercel deploy --token="$VERCEL_TOKEN" --archive=tgz --prebuilt --prod
 
       - name: Synchronize InKeep Search Index
-        uses: inkeep/pr-commenter-action@84ccc7c74b72f628ec7e2b572e0cb7afd5898594 # v10
+        uses: inkeep/pr-commenter-action@bac203359f0328cbb89cca8f9ead7a7176f39a61 # v11
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         with:
