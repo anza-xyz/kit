@@ -129,6 +129,76 @@ try {
 }
 ```
 
+### `useRequest(source, options?)`
+
+Fires a one-shot request on mount and re-fires whenever `source` changes identity. Returns `{ data, error, status, refresh }` where `status` is one of `'fetching' | 'success' | 'error' | 'disabled'`. Use it for RPC reads, or for any other one-shot async work an app needs (a `fetch`, a third-party SDK call, etc.).
+
+`source` is either an async function `(signal: AbortSignal) => Promise<T>` (most general), or any reactive store source `{ reactiveStore(): ReactiveActionStore<[], T> }` — `PendingRpcRequest` is the canonical implementation. Pass `null` to disable (the result reports `status: 'disabled'`).
+
+> Unlike `useAction`, `useRequest` needs the input to have stable identity across renders — it's how the hook knows when to re-fire. Memoize with `useMemo` (for a reactive store source) or `useCallback` (for a function), keyed on whatever inputs your call depends on.
+
+```tsx
+import { useClient, useRequest } from '@solana/react';
+import type { ClientWithRpc, GetLatestBlockhashApi } from '@solana/kit';
+
+function LatestBlockhash() {
+    const client = useClient<ClientWithRpc<GetLatestBlockhashApi>>();
+    const source = useMemo(() => client.rpc.getLatestBlockhash(), [client]);
+    const { data, error, refresh } = useRequest(source);
+    if (error) return <button onClick={refresh}>Retry</button>;
+    return <p>{data ? `Blockhash: ${data.value.blockhash}` : 'Loading…'}</p>;
+}
+```
+
+`refresh()` re-fires the request manually. While a refresh is in flight, `status` returns to `'fetching'` and `data` / `error` from the prior outcome stay populated until the new attempt resolves (stale-while-revalidate). On the first attempt both are `undefined`.
+
+```tsx
+function Balance({ address }: { address: Address | null }) {
+    const client = useClient<ClientWithRpc<GetBalanceApi>>();
+    // Disabled until an address is selected.
+    const source = useMemo(() => (address ? client.rpc.getBalance(address) : null), [client, address]);
+    const { data, status } = useRequest(source);
+    if (status === 'disabled') return <p>Select an account to see its balance.</p>;
+    return <p>{data?.value !== undefined ? `${data.value} lamports` : 'Loading…'}</p>;
+}
+```
+
+For any other one-shot async work — `fetch`, a third-party SDK call, or anything that isn't a `ReactiveActionSource` — pass an async function instead of a source. The `signal` argument fires when the request is superseded, the source changes, or the component unmounts; thread it into your call's own abort plumbing:
+
+```tsx
+function Profile({ userId }: { userId: string }) {
+    const fetcher = useCallback(
+        (signal: AbortSignal) => fetch(`/api/users/${userId}`, { signal }).then(r => r.json()),
+        [userId],
+    );
+    const { data, error, refresh } = useRequest(fetcher);
+    if (error) return <button onClick={refresh}>Retry</button>;
+    return <p>{data ? data.name : 'Loading…'}</p>;
+}
+```
+
+#### Per-attempt cancellation
+
+Pass `getAbortSignal` to attach a cancellation signal to each individual attempt — initial fire plus every `refresh()`. The natural use is per-attempt timeouts:
+
+```tsx
+const { data, error, refresh } = useRequest(source, {
+    // Each attempt gets a fresh 5-second clock. `refresh()` resets it.
+    getAbortSignal: () => AbortSignal.timeout(5_000),
+});
+```
+
+The factory is held in a ref synced to the latest render, so inline closures are fine — no `useCallback` needed. To kill the hook entirely (e.g. on a route change), set the memoized source to `null` (the result reports `disabled`), or let the component unmount.
+
+`refresh()` accepts an optional `{ abortSignal }` override that replaces the configured factory for just that attempt — useful when one specific refresh needs different cancellation semantics:
+
+```tsx
+const userInitiatedCtrl = new AbortController();
+refresh({ abortSignal: userInitiatedCtrl.signal }); // override: use this signal, ignore the factory
+refresh({ abortSignal: undefined }); // no abort signal for this attempt
+refresh(); // omit the key to use the factory (default)
+```
+
 ## Hooks
 
 ### `useSignIn(uiWalletAccount, chain)`
