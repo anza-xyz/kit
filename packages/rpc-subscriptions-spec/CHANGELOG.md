@@ -1,5 +1,27 @@
 # @solana/rpc-subscriptions-spec
 
+## 6.10.0
+
+### Minor Changes
+
+- [#1553](https://github.com/anza-xyz/kit/pull/1553) [`15b610d`](https://github.com/anza-xyz/kit/commit/15b610deb88ba0a49b8fdab7dec7085ad3f4cb6e) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add a `reactiveStore()` method to `PendingRpcSubscriptionsRequest`. Unlike `reactive()`, this variant returns a `ReactiveStore` synchronously and supports `retry()` to reconnect after an error. `reactive()` is now `@deprecated` in favour of `reactiveStore()`.
+
+    ```ts
+    const store = rpc.accountNotifications(address).reactiveStore({ abortSignal });
+    const state = useSyncExternalStore(store.subscribe, store.getUnifiedState);
+    if (state.status === 'error') return <ErrorMessage error={state.error} onRetry={store.retry} />;
+    ```
+
+- [#1554](https://github.com/anza-xyz/kit/pull/1554) [`47a785b`](https://github.com/anza-xyz/kit/commit/47a785bdb47f89443cccb69151650974d0f57f65) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Rename `ReactiveStore<T>` to `ReactiveStreamStore<T>`. The old name remains exported as a deprecated alias and will be removed in a future major release.
+
+### Patch Changes
+
+- Updated dependencies [[`c318d7f`](https://github.com/anza-xyz/kit/commit/c318d7f2e16fec92859503af41102792be01cece), [`da868aa`](https://github.com/anza-xyz/kit/commit/da868aafa3aec49dc5984d768c65adb471fb71de), [`47a785b`](https://github.com/anza-xyz/kit/commit/47a785bdb47f89443cccb69151650974d0f57f65), [`82a1ac5`](https://github.com/anza-xyz/kit/commit/82a1ac56131ebc2ad43f948feb862172418f8b3d)]:
+    - @solana/subscribable@6.10.0
+    - @solana/errors@6.10.0
+    - @solana/promises@6.10.0
+    - @solana/rpc-spec-types@6.10.0
+
 ## 6.9.0
 
 ### Minor Changes

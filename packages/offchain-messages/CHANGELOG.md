@@ -1,5 +1,19 @@
 # @solana/offchain-messages
 
+## 6.10.0
+
+### Patch Changes
+
+- Updated dependencies [[`c318d7f`](https://github.com/anza-xyz/kit/commit/c318d7f2e16fec92859503af41102792be01cece), [`47a785b`](https://github.com/anza-xyz/kit/commit/47a785bdb47f89443cccb69151650974d0f57f65)]:
+    - @solana/errors@6.10.0
+    - @solana/addresses@6.10.0
+    - @solana/codecs-core@6.10.0
+    - @solana/codecs-data-structures@6.10.0
+    - @solana/codecs-numbers@6.10.0
+    - @solana/codecs-strings@6.10.0
+    - @solana/keys@6.10.0
+    - @solana/nominal-types@6.10.0
+
 ## 6.9.0
 
 ### Minor Changes

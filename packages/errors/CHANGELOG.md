@@ -1,5 +1,17 @@
 # @solana/errors
 
+## 6.10.0
+
+### Minor Changes
+
+- [#1552](https://github.com/anza-xyz/kit/pull/1552) [`c318d7f`](https://github.com/anza-xyz/kit/commit/c318d7f2e16fec92859503af41102792be01cece) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `retry()` and `getUnifiedState()` to `ReactiveStore`. The new `getUnifiedState()` returns a discriminated `{ data, error, status }` snapshot with stable identity, so stores can be passed directly to `useSyncExternalStore` without an intermediate wrapper. `getState()` and `getError()` remain on the type but are now `@deprecated` in favour of the unified snapshot.
+
+    A new `createReactiveStoreFromDataPublisherFactory` function is also introduced. It accepts a `createDataPublisher: () => Promise<DataPublisher>` factory rather than a ready-made publisher, which lets the store reconnect via `retry()` after an error. The existing `createReactiveStoreFromDataPublisher` is now `@deprecated`; calling `retry()` on a store it produced throws a new `SolanaError` with code `SOLANA_ERROR__SUBSCRIBABLE__RETRY_NOT_SUPPORTED`.
+
+    `createReactiveStoreWithInitialValueAndSlotTracking` (from `@solana/kit`) now supports `retry()`, which re-sends the RPC request and re-subscribes to the subscription with a fresh abort signal while preserving the last known slot and value.
+
+- [#1554](https://github.com/anza-xyz/kit/pull/1554) [`47a785b`](https://github.com/anza-xyz/kit/commit/47a785bdb47f89443cccb69151650974d0f57f65) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Rename `ReactiveStore<T>` to `ReactiveStreamStore<T>`. The old name remains exported as a deprecated alias and will be removed in a future major release.
+
 ## 6.9.0
 
 ### Minor Changes
