@@ -9,11 +9,12 @@ import { ReactiveStreamStore } from '@solana/subscribable';
  * {@link PendingRpcSubscriptionsRequest | PendingRpcSubscriptionsRequest<TNotification>} will
  * trigger the subscription and return a promise for an async iterable that vends `TNotifications`.
  *
- * Calling the {@link PendingRpcSubscriptionsRequest.reactiveStore | `reactiveStore(options)`}
- * method will return a {@link ReactiveStreamStore} compatible with `useSyncExternalStore`, Svelte
+ * Calling the {@link PendingRpcSubscriptionsRequest.reactiveStore | `reactiveStore()`} method
+ * will return a {@link ReactiveStreamStore} compatible with `useSyncExternalStore`, Svelte
  * stores, and other reactive primitives. The returned store is in `status: 'idle'`; the caller
  * is responsible for invoking {@link ReactiveStreamStore.connect | `connect()`} to open the
- * underlying stream.
+ * underlying stream. Attach a caller-provided cancellation source via
+ * {@link ReactiveStreamStore.withSignal | `withSignal()`}.
  */
 export type PendingRpcSubscriptionsRequest<TNotification> = {
     /**
@@ -21,12 +22,14 @@ export type PendingRpcSubscriptionsRequest<TNotification> = {
      * Compatible with `useSyncExternalStore` and other reactive primitives that expect a
      * `{ subscribe, getUnifiedState }` contract. The returned store is in `status: 'idle'` — call
      * {@link ReactiveStreamStore.connect | `connect()`} to open the subscription; a follow-up
-     * `connect()` after an error reopens it.
+     * `connect()` after an error reopens it. Attach a caller-provided cancellation source via
+     * {@link ReactiveStreamStore.withSignal | `withSignal()`}.
      *
      * @example
      * ```ts
-     * const store = rpc.accountNotifications(address).reactiveStore({ abortSignal });
-     * store.connect();
+     * const store = rpc.accountNotifications(address).reactiveStore();
+     * // Per-connection timeout — fresh clock per attempt:
+     * store.withSignal(AbortSignal.timeout(30_000)).connect();
      * // React — the unified snapshot has stable identity per update.
      * const state = useSyncExternalStore(store.subscribe, store.getUnifiedState);
      * if (state.status === 'error') return <ErrorMessage error={state.error} onRetry={store.connect} />;
@@ -34,7 +37,7 @@ export type PendingRpcSubscriptionsRequest<TNotification> = {
      * return <View data={state.data} />;
      * ```
      */
-    reactiveStore(options: RpcSubscribeOptions): ReactiveStreamStore<TNotification>;
+    reactiveStore(): ReactiveStreamStore<TNotification>;
     /**
      * Triggers the subscription and returns a promise for an async iterable of notifications.
      * Use `for await...of` to consume notifications as they arrive. Abort the signal to
