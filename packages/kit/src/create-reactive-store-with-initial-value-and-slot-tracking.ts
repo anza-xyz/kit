@@ -16,12 +16,6 @@ import type { ReactiveState, ReactiveStreamStore } from '@solana/subscribable';
  */
 export type CreateReactiveStoreWithInitialValueAndSlotTrackingConfig<TRpcValue, TSubscriptionValue, TItem> = Readonly<{
     /**
-     * Triggering this abort signal will cancel any in-flight RPC request and subscription, and
-     * permanently disconnect the store from further updates. Subsequent
-     * {@link ReactiveStreamStore.connect | `connect()`} calls become no-ops.
-     */
-    abortSignal: AbortSignal;
-    /**
      * A pending RPC request whose response will be used to set the store's initial state.
      * The response must be a {@link SolanaRpcResponse} so that its slot can be compared with
      * subscription notifications.
@@ -73,8 +67,10 @@ const IDLE_STATE: ReactiveState<never> = Object.freeze({
  *   subscription with a fresh inner abort signal.
  * - {@link ReactiveStreamStore.reset | `reset()`} aborts the current connection and returns the
  *   store to `idle`, clearing `data` and `error`.
- * - Triggering the caller's `abortSignal` disconnects the store permanently; subsequent `connect()`
- *   calls are no-ops.
+ * - Attach a caller-provided cancellation source via
+ *   {@link ReactiveStreamStore.withSignal | `withSignal()`} — `store.withSignal(signal).connect()`
+ *   composes the signal with the per-connection controller. Aborting the caller's signal
+ *   transitions the store to `error` with that abort reason.
  *
  * @param config
  *
@@ -92,7 +88,6 @@ const IDLE_STATE: ReactiveState<never> = Object.freeze({
  * const myAddress = address('FnHyam9w4NZoWR6mKN1CuGBritdsEWZQa4Z4oawLZGxa');
  *
  * const balanceStore = createReactiveStoreWithInitialValueAndSlotTracking({
- *     abortSignal: AbortSignal.timeout(60_000),
  *     rpcRequest: rpc.getBalance(myAddress, { commitment: 'confirmed' }),
  *     rpcValueMapper: lamports => lamports,
  *     rpcSubscriptionRequest: rpcSubscriptions.accountNotifications(myAddress),
@@ -108,13 +103,12 @@ const IDLE_STATE: ReactiveState<never> = Object.freeze({
  *         console.log(`Balance at slot ${state.data.context.slot}:`, state.data.value);
  *     }
  * });
- * balanceStore.connect();
+ * balanceStore.withSignal(AbortSignal.timeout(60_000)).connect();
  * ```
  *
  * @see {@link ReactiveStreamStore}
  */
 export function createReactiveStoreWithInitialValueAndSlotTracking<TRpcValue, TSubscriptionValue, TItem>({
-    abortSignal,
     rpcRequest,
     rpcValueMapper,
     rpcSubscriptionRequest,
@@ -126,9 +120,6 @@ export function createReactiveStoreWithInitialValueAndSlotTracking<TRpcValue, TS
     let lastUpdateSlot = -1n;
     let currentInnerController: AbortController | undefined;
     const subscribers = new Set<() => void>();
-
-    const outerController = new AbortController();
-    abortSignal.addEventListener('abort', () => outerController.abort(abortSignal.reason));
 
     function notify() {
         subscribers.forEach(cb => cb());
@@ -146,10 +137,14 @@ export function createReactiveStoreWithInitialValueAndSlotTracking<TRpcValue, TS
         notify();
     }
 
-    function performConnect() {
-        if (outerController.signal.aborted) return;
+    function performConnect(callerSignal: AbortSignal | undefined) {
         // Abort any currently active connection before starting a fresh one.
         currentInnerController?.abort();
+        // If the caller's signal is already aborted, surface as error and bail.
+        if (callerSignal?.aborted) {
+            setState({ data: currentState.data, error: callerSignal.reason, status: 'error' });
+            return;
+        }
         // Transition based on whether we have prior data/error to preserve.
         if (currentState.status === 'idle') {
             setState({ data: undefined, error: undefined, status: 'loading' });
@@ -159,12 +154,25 @@ export function createReactiveStoreWithInitialValueAndSlotTracking<TRpcValue, TS
 
         const innerController = new AbortController();
         currentInnerController = innerController;
-        const forwardAbort = () => innerController.abort(outerController.signal.reason);
-        outerController.signal.addEventListener('abort', forwardAbort, { signal: innerController.signal });
         const innerSignal = innerController.signal;
+        const signal = callerSignal ? AbortSignal.any([innerSignal, callerSignal]) : innerSignal;
+        // Caller's signal aborting (not just supersede via the inner controller) transitions the
+        // store to error with the caller's abort reason. Scoped to the inner signal so the
+        // listener is removed on reconnect / reset.
+        if (callerSignal) {
+            callerSignal.addEventListener(
+                'abort',
+                () => {
+                    if (innerSignal.aborted) return;
+                    setState({ data: currentState.data, error: callerSignal.reason, status: 'error' });
+                    innerController.abort(callerSignal.reason);
+                },
+                { signal: innerSignal },
+            );
+        }
 
         function handleError(err: unknown) {
-            if (innerSignal.aborted) return;
+            if (signal.aborted) return;
             if (currentState.status === 'error') return;
             setState({ data: currentState.data, error: err, status: 'error' });
             innerController.abort(err);
@@ -175,9 +183,9 @@ export function createReactiveStoreWithInitialValueAndSlotTracking<TRpcValue, TS
         }
 
         rpcRequest
-            .send({ abortSignal: innerSignal })
+            .send({ abortSignal: signal })
             .then(({ context: { slot }, value }) => {
-                if (innerSignal.aborted) return;
+                if (signal.aborted) return;
                 // `lastUpdateSlot` persists across retries so the store never regresses. If the
                 // retried RPC returns a slot older than one we've already seen, we wait for the
                 // subscription to deliver something newer before leaving `retrying`.
@@ -188,13 +196,13 @@ export function createReactiveStoreWithInitialValueAndSlotTracking<TRpcValue, TS
             .catch(handleError);
 
         rpcSubscriptionRequest
-            .subscribe({ abortSignal: innerSignal })
+            .subscribe({ abortSignal: signal })
             .then(async notifications => {
                 for await (const {
                     context: { slot },
                     value,
                 } of notifications) {
-                    if (innerSignal.aborted) return;
+                    if (signal.aborted) return;
                     if (slot < lastUpdateSlot) continue;
                     lastUpdateSlot = slot;
                     handleValue({ context: { slot }, value: rpcSubscriptionValueMapper(value) });
@@ -212,7 +220,9 @@ export function createReactiveStoreWithInitialValueAndSlotTracking<TRpcValue, TS
     }
 
     return {
-        connect: performConnect,
+        connect(): void {
+            performConnect(undefined);
+        },
         getError(): unknown {
             return currentState.error;
         },
@@ -225,12 +235,19 @@ export function createReactiveStoreWithInitialValueAndSlotTracking<TRpcValue, TS
         reset: performReset,
         retry(): void {
             if (currentState.status !== 'error') return;
-            performConnect();
+            performConnect(undefined);
         },
         subscribe(callback: () => void): () => void {
             subscribers.add(callback);
             return () => {
                 subscribers.delete(callback);
+            };
+        },
+        withSignal(signal: AbortSignal) {
+            return {
+                connect(): void {
+                    performConnect(signal);
+                },
             };
         },
     };
