@@ -15,6 +15,14 @@ type GetSignaturesForAddressTransaction = Readonly<{
     signature: Signature;
     /** The slot that contains the block with the transaction */
     slot: Slot;
+    /**
+     * The 0 based index of the transaction within its block.
+     *
+     * This field was added in Agave 4.0
+     * (see https://github.com/anza-xyz/agave/pull/9683) and is omitted by
+     * older versions of the RPC server.
+     */
+    transactionIndex?: number;
 }>;
 
 type GetSignaturesForAddressApiResponse = readonly GetSignaturesForAddressTransaction[];
