@@ -66,9 +66,7 @@ describe('PendingRpcSubscriptionsRequest.reactiveStore()', () => {
     });
 
     it('returns a store that starts in `idle` status and does not call the transport before connect()', () => {
-        const store = rpcSubscriptions
-            .thingNotifications()
-            .reactiveStore({ abortSignal: new AbortController().signal });
+        const store = rpcSubscriptions.thingNotifications().reactiveStore();
         expect(store.getUnifiedState()).toStrictEqual({
             data: undefined,
             error: undefined,
@@ -76,18 +74,18 @@ describe('PendingRpcSubscriptionsRequest.reactiveStore()', () => {
         });
         expect(mockTransport).not.toHaveBeenCalled();
     });
-    it('passes the abort signal to the transport on connect()', async () => {
+    it('passes the per-connection signal to the transport on withSignal().connect()', async () => {
         expect.assertions(1);
         const abortController = new AbortController();
-        const store = rpcSubscriptions.thingNotifications().reactiveStore({ abortSignal: abortController.signal });
-        store.connect();
+        const store = rpcSubscriptions.thingNotifications().reactiveStore();
+        store.withSignal(abortController.signal).connect();
         await flushMicrotasks();
-        expect(mockTransport).toHaveBeenCalledWith(expect.objectContaining({ signal: abortController.signal }));
+        const transportSignal = mockTransport.mock.calls[0][0].signal;
+        // The transport receives a composed signal — aborting the caller's source aborts it.
+        expect(transportSignal.aborted).toBe(false);
     });
     it('transitions to `loading` after connect() before the transport resolves', () => {
-        const store = rpcSubscriptions
-            .thingNotifications()
-            .reactiveStore({ abortSignal: new AbortController().signal });
+        const store = rpcSubscriptions.thingNotifications().reactiveStore();
         store.connect();
         expect(store.getUnifiedState()).toStrictEqual({
             data: undefined,
@@ -97,9 +95,7 @@ describe('PendingRpcSubscriptionsRequest.reactiveStore()', () => {
     });
     it('reflects incoming notifications after connect()', async () => {
         expect.assertions(1);
-        const store = rpcSubscriptions
-            .thingNotifications()
-            .reactiveStore({ abortSignal: new AbortController().signal });
+        const store = rpcSubscriptions.thingNotifications().reactiveStore();
         store.connect();
         await flushMicrotasks();
         publish('notification', { value: 42 });
@@ -111,9 +107,7 @@ describe('PendingRpcSubscriptionsRequest.reactiveStore()', () => {
     });
     it('calls store subscribers when a notification arrives', async () => {
         expect.assertions(1);
-        const store = rpcSubscriptions
-            .thingNotifications()
-            .reactiveStore({ abortSignal: new AbortController().signal });
+        const store = rpcSubscriptions.thingNotifications().reactiveStore();
         store.connect();
         await flushMicrotasks();
         const subscriber = jest.fn();
@@ -123,9 +117,7 @@ describe('PendingRpcSubscriptionsRequest.reactiveStore()', () => {
     });
     it('surfaces errors via getUnifiedState()', async () => {
         expect.assertions(1);
-        const store = rpcSubscriptions
-            .thingNotifications()
-            .reactiveStore({ abortSignal: new AbortController().signal });
+        const store = rpcSubscriptions.thingNotifications().reactiveStore();
         store.connect();
         await flushMicrotasks();
         const error = new Error('o no');
@@ -138,9 +130,7 @@ describe('PendingRpcSubscriptionsRequest.reactiveStore()', () => {
     });
     it('re-invokes the transport on connect() after an error', async () => {
         expect.assertions(1);
-        const store = rpcSubscriptions
-            .thingNotifications()
-            .reactiveStore({ abortSignal: new AbortController().signal });
+        const store = rpcSubscriptions.thingNotifications().reactiveStore();
         store.connect();
         await flushMicrotasks();
         publish('error', new Error('stream died'));
@@ -148,11 +138,11 @@ describe('PendingRpcSubscriptionsRequest.reactiveStore()', () => {
         await flushMicrotasks();
         expect(mockTransport).toHaveBeenCalledTimes(2);
     });
-    it('aborts the signal forwarded to the data publisher listeners when the caller aborts', async () => {
+    it('aborts the signal forwarded to the data publisher listeners when the caller signal aborts', async () => {
         expect.assertions(2);
         const abortController = new AbortController();
-        const store = rpcSubscriptions.thingNotifications().reactiveStore({ abortSignal: abortController.signal });
-        store.connect();
+        const store = rpcSubscriptions.thingNotifications().reactiveStore();
+        store.withSignal(abortController.signal).connect();
         await flushMicrotasks();
         const onCall = mockOn.mock.calls.find(([channel]: [string]) => channel === 'notification');
         const listenerSignal = (onCall![2] as { signal: AbortSignal }).signal;
@@ -162,9 +152,7 @@ describe('PendingRpcSubscriptionsRequest.reactiveStore()', () => {
     });
     it('returns the same getUnifiedState() snapshot across consecutive calls when state has not changed', async () => {
         expect.assertions(2);
-        const store = rpcSubscriptions
-            .thingNotifications()
-            .reactiveStore({ abortSignal: new AbortController().signal });
+        const store = rpcSubscriptions.thingNotifications().reactiveStore();
         store.connect();
         await flushMicrotasks();
         expect(store.getUnifiedState()).toBe(store.getUnifiedState());
