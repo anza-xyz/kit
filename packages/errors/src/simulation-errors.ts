@@ -1,6 +1,7 @@
 import {
     SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE,
     SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT,
+    SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_RESOURCE_LIMITS,
     SolanaErrorCode,
 } from './codes';
 import { isSolanaError } from './error';
@@ -18,6 +19,7 @@ import { isSolanaError } from './error';
  * The following error codes are considered simulation errors:
  * - {@link SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE}
  * - {@link SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT}
+ * - {@link SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_RESOURCE_LIMITS}
  *
  * @param error - The error to unwrap.
  * @return The underlying cause if the error is a simulation error, otherwise the original error.
@@ -39,6 +41,7 @@ export function unwrapSimulationError(error: unknown): unknown {
     const simulationCodes: SolanaErrorCode[] = [
         SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE,
         SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT,
+        SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_RESOURCE_LIMITS,
     ];
     if (isSolanaError(error) && !!error.cause && simulationCodes.includes(error.context.__code)) {
         return error.cause;

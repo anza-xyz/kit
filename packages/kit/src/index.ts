@@ -30,6 +30,7 @@ export * from './create-reactive-store-with-initial-value-and-slot-tracking';
 export * from './airdrop';
 export * from './compute-unit-limit-estimation';
 export * from './decompile-transaction-message-fetching-lookup-tables';
+export * from './resource-limit-estimation';
 export * from './fetch-lookup-tables';
 export * from './get-minimum-balance-for-rent-exemption';
 export * from './send-and-confirm-durable-nonce-transaction';

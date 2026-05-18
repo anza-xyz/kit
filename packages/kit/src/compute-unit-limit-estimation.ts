@@ -55,6 +55,10 @@ type EstimateComputeUnitLimitFunction = (
  * const estimateComputeUnitLimit = estimateComputeUnitLimitFactory({ rpc });
  * const estimatedUnits = await estimateComputeUnitLimit(transactionMessage);
  * ```
+ *
+ * @deprecated Use {@link estimateResourceLimitsFactory} instead. The resource-limits estimator
+ *   returns both the compute unit limit and (for version 1 transactions) the loaded accounts data
+ *   size limit from a single simulation call.
  */
 export function estimateComputeUnitLimitFactory({
     rpc,
@@ -133,6 +137,9 @@ export function estimateComputeUnitLimitFactory({
  * const estimateAndSet = estimateAndSetComputeUnitLimitFactory(estimator);
  * const updatedMessage = await estimateAndSet(transactionMessage);
  * ```
+ *
+ * @deprecated Use {@link estimateAndSetResourceLimitsFactory} instead, which additionally sets the
+ *   loaded accounts data size limit for version 1 transactions.
  */
 export function estimateAndSetComputeUnitLimitFactory(
     estimateComputeUnitLimit: EstimateComputeUnitLimitFunction,
@@ -172,6 +179,9 @@ export function estimateAndSetComputeUnitLimitFactory(
  *
  * const messageWithProvisoryLimit = fillTransactionMessageProvisoryComputeUnitLimit(transactionMessage);
  * ```
+ *
+ * @deprecated Use {@link fillTransactionMessageProvisoryResourceLimits} instead, which additionally
+ *   reserves space for the loaded accounts data size limit on version 1 transactions.
  */
 export function fillTransactionMessageProvisoryComputeUnitLimit<TTransactionMessage extends TransactionMessage>(
     transactionMessage: TTransactionMessage,
