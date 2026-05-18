@@ -1,352 +1,7 @@
-import { SOLANA_ERROR__SUBSCRIBABLE__RETRY_NOT_SUPPORTED, SolanaError } from '@solana/errors';
-
 import { DataPublisher } from '../data-publisher';
-import {
-    createReactiveStoreFromDataPublisher,
-    createReactiveStoreFromDataPublisherFactory,
-} from '../reactive-stream-store';
+import { createReactiveStoreFromDataPublisherFactory } from '../reactive-stream-store';
 
 jest.useFakeTimers();
-
-describe('createReactiveStoreFromDataPublisher', () => {
-    let mockDataPublisher: DataPublisher;
-    let mockOn: jest.Mock;
-    function publish(type: string, payload: unknown) {
-        mockOn.mock.calls.filter(([actualType]) => actualType === type).forEach(([_, listener]) => listener(payload));
-    }
-    beforeEach(() => {
-        mockOn = jest.fn().mockReturnValue(function unsubscribe() {});
-        mockDataPublisher = {
-            on: mockOn,
-        };
-    });
-
-    describe('getState()', () => {
-        it('returns `undefined` before any notification arrives', () => {
-            const store = createReactiveStoreFromDataPublisher({
-                abortSignal: new AbortController().signal,
-                dataChannelName: 'data',
-                dataPublisher: mockDataPublisher,
-                errorChannelName: 'error',
-            });
-            expect(store.getState()).toBeUndefined();
-        });
-        it('returns the latest notification after one arrives', () => {
-            const store = createReactiveStoreFromDataPublisher({
-                abortSignal: new AbortController().signal,
-                dataChannelName: 'data',
-                dataPublisher: mockDataPublisher,
-                errorChannelName: 'error',
-            });
-            publish('data', { value: 42 });
-            expect(store.getState()).toStrictEqual({ value: 42 });
-        });
-        it('returns the most recent notification when multiple arrive', () => {
-            const store = createReactiveStoreFromDataPublisher({
-                abortSignal: new AbortController().signal,
-                dataChannelName: 'data',
-                dataPublisher: mockDataPublisher,
-                errorChannelName: 'error',
-            });
-            publish('data', { value: 1 });
-            publish('data', { value: 2 });
-            publish('data', { value: 3 });
-            expect(store.getState()).toStrictEqual({ value: 3 });
-        });
-        it('preserves the last known value after an error', () => {
-            const store = createReactiveStoreFromDataPublisher({
-                abortSignal: new AbortController().signal,
-                dataChannelName: 'data',
-                dataPublisher: mockDataPublisher,
-                errorChannelName: 'error',
-            });
-            publish('data', { value: 42 });
-            publish('error', new Error('o no'));
-            expect(store.getState()).toStrictEqual({ value: 42 });
-        });
-        it('returns `undefined` after an error when no notification has arrived', () => {
-            const store = createReactiveStoreFromDataPublisher({
-                abortSignal: new AbortController().signal,
-                dataChannelName: 'data',
-                dataPublisher: mockDataPublisher,
-                errorChannelName: 'error',
-            });
-            publish('error', new Error('o no'));
-            expect(store.getState()).toBeUndefined();
-        });
-    });
-
-    describe('getError()', () => {
-        it('returns `undefined` before any error', () => {
-            const store = createReactiveStoreFromDataPublisher({
-                abortSignal: new AbortController().signal,
-                dataChannelName: 'data',
-                dataPublisher: mockDataPublisher,
-                errorChannelName: 'error',
-            });
-            expect(store.getError()).toBeUndefined();
-        });
-        it('returns the error after one arrives', () => {
-            const store = createReactiveStoreFromDataPublisher({
-                abortSignal: new AbortController().signal,
-                dataChannelName: 'data',
-                dataPublisher: mockDataPublisher,
-                errorChannelName: 'error',
-            });
-            const error = new Error('o no');
-            publish('error', error);
-            expect(store.getError()).toBe(error);
-        });
-        it('preserves the first error when multiple errors arrive', () => {
-            const store = createReactiveStoreFromDataPublisher({
-                abortSignal: new AbortController().signal,
-                dataChannelName: 'data',
-                dataPublisher: mockDataPublisher,
-                errorChannelName: 'error',
-            });
-            const firstError = new Error('first');
-            const secondError = new Error('second');
-            publish('error', firstError);
-            publish('error', secondError);
-            expect(store.getError()).toBe(firstError);
-        });
-        it('remains `undefined` when only data notifications arrive', () => {
-            const store = createReactiveStoreFromDataPublisher({
-                abortSignal: new AbortController().signal,
-                dataChannelName: 'data',
-                dataPublisher: mockDataPublisher,
-                errorChannelName: 'error',
-            });
-            publish('data', { value: 1 });
-            publish('data', { value: 2 });
-            expect(store.getError()).toBeUndefined();
-        });
-    });
-
-    describe('getUnifiedState()', () => {
-        it('starts in `loading` status with no data or error', () => {
-            const store = createReactiveStoreFromDataPublisher({
-                abortSignal: new AbortController().signal,
-                dataChannelName: 'data',
-                dataPublisher: mockDataPublisher,
-                errorChannelName: 'error',
-            });
-            expect(store.getUnifiedState()).toStrictEqual({
-                data: undefined,
-                error: undefined,
-                status: 'loading',
-            });
-        });
-        it('transitions to `loaded` with the value when a notification arrives', () => {
-            const store = createReactiveStoreFromDataPublisher({
-                abortSignal: new AbortController().signal,
-                dataChannelName: 'data',
-                dataPublisher: mockDataPublisher,
-                errorChannelName: 'error',
-            });
-            publish('data', { value: 42 });
-            expect(store.getUnifiedState()).toStrictEqual({
-                data: { value: 42 },
-                error: undefined,
-                status: 'loaded',
-            });
-        });
-        it('transitions to `error` preserving the last known value', () => {
-            const store = createReactiveStoreFromDataPublisher({
-                abortSignal: new AbortController().signal,
-                dataChannelName: 'data',
-                dataPublisher: mockDataPublisher,
-                errorChannelName: 'error',
-            });
-            const error = new Error('o no');
-            publish('data', { value: 42 });
-            publish('error', error);
-            expect(store.getUnifiedState()).toStrictEqual({
-                data: { value: 42 },
-                error,
-                status: 'error',
-            });
-        });
-        it('transitions to `error` with undefined data when no value arrived first', () => {
-            const store = createReactiveStoreFromDataPublisher({
-                abortSignal: new AbortController().signal,
-                dataChannelName: 'data',
-                dataPublisher: mockDataPublisher,
-                errorChannelName: 'error',
-            });
-            const error = new Error('o no');
-            publish('error', error);
-            expect(store.getUnifiedState()).toStrictEqual({
-                data: undefined,
-                error,
-                status: 'error',
-            });
-        });
-    });
-
-    describe('retry()', () => {
-        it('throws a SolanaError because a raw DataPublisher cannot be restarted', () => {
-            const store = createReactiveStoreFromDataPublisher({
-                abortSignal: new AbortController().signal,
-                dataChannelName: 'data',
-                dataPublisher: mockDataPublisher,
-                errorChannelName: 'error',
-            });
-            expect(() => store.retry()).toThrow(new SolanaError(SOLANA_ERROR__SUBSCRIBABLE__RETRY_NOT_SUPPORTED));
-        });
-    });
-
-    describe('subscribe()', () => {
-        it('calls the subscriber when a notification arrives', () => {
-            const store = createReactiveStoreFromDataPublisher({
-                abortSignal: new AbortController().signal,
-                dataChannelName: 'data',
-                dataPublisher: mockDataPublisher,
-                errorChannelName: 'error',
-            });
-            const subscriber = jest.fn();
-            store.subscribe(subscriber);
-            publish('data', { value: 1 });
-            expect(subscriber).toHaveBeenCalledTimes(1);
-        });
-        it('calls the subscriber on each new notification', () => {
-            const store = createReactiveStoreFromDataPublisher({
-                abortSignal: new AbortController().signal,
-                dataChannelName: 'data',
-                dataPublisher: mockDataPublisher,
-                errorChannelName: 'error',
-            });
-            const subscriber = jest.fn();
-            store.subscribe(subscriber);
-            publish('data', { value: 1 });
-            publish('data', { value: 2 });
-            publish('data', { value: 3 });
-            expect(subscriber).toHaveBeenCalledTimes(3);
-        });
-        it('calls the subscriber when an error arrives', () => {
-            const store = createReactiveStoreFromDataPublisher({
-                abortSignal: new AbortController().signal,
-                dataChannelName: 'data',
-                dataPublisher: mockDataPublisher,
-                errorChannelName: 'error',
-            });
-            const subscriber = jest.fn();
-            store.subscribe(subscriber);
-            publish('error', new Error('o no'));
-            expect(subscriber).toHaveBeenCalledTimes(1);
-        });
-        it('does not notify subscribers on subsequent errors', () => {
-            const store = createReactiveStoreFromDataPublisher({
-                abortSignal: new AbortController().signal,
-                dataChannelName: 'data',
-                dataPublisher: mockDataPublisher,
-                errorChannelName: 'error',
-            });
-            const subscriber = jest.fn();
-            store.subscribe(subscriber);
-            publish('error', new Error('first'));
-            publish('error', new Error('second'));
-            expect(subscriber).toHaveBeenCalledTimes(1);
-        });
-        it('calls multiple concurrent subscribers on each notification', () => {
-            const store = createReactiveStoreFromDataPublisher({
-                abortSignal: new AbortController().signal,
-                dataChannelName: 'data',
-                dataPublisher: mockDataPublisher,
-                errorChannelName: 'error',
-            });
-            const subscriberA = jest.fn();
-            const subscriberB = jest.fn();
-            store.subscribe(subscriberA);
-            store.subscribe(subscriberB);
-            publish('data', { value: 1 });
-            expect(subscriberA).toHaveBeenCalledTimes(1);
-            expect(subscriberB).toHaveBeenCalledTimes(1);
-        });
-        it('stops calling the subscriber after the returned unsubscribe is called', () => {
-            const store = createReactiveStoreFromDataPublisher({
-                abortSignal: new AbortController().signal,
-                dataChannelName: 'data',
-                dataPublisher: mockDataPublisher,
-                errorChannelName: 'error',
-            });
-            const subscriber = jest.fn();
-            const unsubscribe = store.subscribe(subscriber);
-            unsubscribe();
-            publish('data', { value: 1 });
-            expect(subscriber).not.toHaveBeenCalled();
-        });
-        it('only unsubscribes the subscriber whose unsubscribe function was called', () => {
-            const store = createReactiveStoreFromDataPublisher({
-                abortSignal: new AbortController().signal,
-                dataChannelName: 'data',
-                dataPublisher: mockDataPublisher,
-                errorChannelName: 'error',
-            });
-            const subscriberA = jest.fn();
-            const subscriberB = jest.fn();
-            const unsubscribeA = store.subscribe(subscriberA);
-            store.subscribe(subscriberB);
-            unsubscribeA();
-            publish('data', { value: 1 });
-            expect(subscriberA).not.toHaveBeenCalled();
-            expect(subscriberB).toHaveBeenCalledTimes(1);
-        });
-        it('the unsubscribe function is idempotent', () => {
-            const store = createReactiveStoreFromDataPublisher({
-                abortSignal: new AbortController().signal,
-                dataChannelName: 'data',
-                dataPublisher: mockDataPublisher,
-                errorChannelName: 'error',
-            });
-            const unsubscribe = store.subscribe(jest.fn());
-            expect(() => {
-                unsubscribe();
-                unsubscribe();
-            }).not.toThrow();
-        });
-    });
-
-    describe('abort signal', () => {
-        it('aborts the signals forwarded to dataPublisher.on() when the caller aborts', () => {
-            const abortController = new AbortController();
-            createReactiveStoreFromDataPublisher({
-                abortSignal: abortController.signal,
-                dataChannelName: 'data',
-                dataPublisher: mockDataPublisher,
-                errorChannelName: 'error',
-            });
-            const dataChannelSignal = mockOn.mock.calls.find(([type]: [string]) => type === 'data')![2].signal;
-            const errorChannelSignal = mockOn.mock.calls.find(([type]: [string]) => type === 'error')![2].signal;
-            expect(dataChannelSignal.aborted).toBe(false);
-            expect(errorChannelSignal.aborted).toBe(false);
-            const reason = new Error('go away');
-            abortController.abort(reason);
-            expect(dataChannelSignal.aborted).toBe(true);
-            expect(dataChannelSignal.reason).toBe(reason);
-            expect(errorChannelSignal.aborted).toBe(true);
-            expect(errorChannelSignal.reason).toBe(reason);
-        });
-        it('aborts the signals forwarded to dataPublisher.on() when an error arrives', () => {
-            createReactiveStoreFromDataPublisher({
-                abortSignal: new AbortController().signal,
-                dataChannelName: 'data',
-                dataPublisher: mockDataPublisher,
-                errorChannelName: 'error',
-            });
-            const dataChannelSignal = mockOn.mock.calls.find(([type]: [string]) => type === 'data')![2].signal;
-            const errorChannelSignal = mockOn.mock.calls.find(([type]: [string]) => type === 'error')![2].signal;
-            expect(dataChannelSignal.aborted).toBe(false);
-            expect(errorChannelSignal.aborted).toBe(false);
-            const error = new Error('o no');
-            publish('error', error);
-            expect(dataChannelSignal.aborted).toBe(true);
-            expect(dataChannelSignal.reason).toBe(error);
-            expect(errorChannelSignal.aborted).toBe(true);
-            expect(errorChannelSignal.reason).toBe(error);
-        });
-    });
-});
 
 describe('createReactiveStoreFromDataPublisherFactory', () => {
     function createMockDataPublisher(): {
@@ -381,8 +36,8 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
         return { mockRequest, publishers };
     }
 
-    describe('initial connection', () => {
-        it('starts in `loading` before the factory resolves', () => {
+    describe('initial state', () => {
+        it('starts in `idle` status and does not invoke the factory before connect()', () => {
             const { mockRequest } = createFactory();
             const store = createReactiveStoreFromDataPublisherFactory({
                 abortSignal: new AbortController().signal,
@@ -393,8 +48,28 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
             expect(store.getUnifiedState()).toStrictEqual({
                 data: undefined,
                 error: undefined,
+                status: 'idle',
+            });
+            expect(mockRequest).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('connect()', () => {
+        it('transitions from idle to `loading` and invokes the factory', () => {
+            const { mockRequest } = createFactory();
+            const store = createReactiveStoreFromDataPublisherFactory({
+                abortSignal: new AbortController().signal,
+                createDataPublisher: mockRequest,
+                dataChannelName: 'data',
+                errorChannelName: 'error',
+            });
+            store.connect();
+            expect(store.getUnifiedState()).toStrictEqual({
+                data: undefined,
+                error: undefined,
                 status: 'loading',
             });
+            expect(mockRequest).toHaveBeenCalledTimes(1);
         });
         it('transitions to `loaded` once the factory resolves and data arrives', async () => {
             expect.assertions(1);
@@ -405,6 +80,7 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
                 dataChannelName: 'data',
                 errorChannelName: 'error',
             });
+            store.connect();
             await jest.runAllTimersAsync();
             publishers[0].publish('data', { value: 42 });
             expect(store.getUnifiedState()).toStrictEqual({
@@ -423,6 +99,7 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
                 dataChannelName: 'data',
                 errorChannelName: 'error',
             });
+            store.connect();
             await jest.runAllTimersAsync();
             expect(store.getUnifiedState()).toStrictEqual({
                 data: undefined,
@@ -439,6 +116,7 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
                 dataChannelName: 'data',
                 errorChannelName: 'error',
             });
+            store.connect();
             await jest.runAllTimersAsync();
             publishers[0].publish('data', { value: 42 });
             const failure = new Error('stream died');
@@ -449,25 +127,7 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
                 status: 'error',
             });
         });
-    });
-
-    describe('retry()', () => {
-        it('is a no-op when the store is not in `error` state', async () => {
-            expect.assertions(2);
-            const { mockRequest } = createFactory();
-            const store = createReactiveStoreFromDataPublisherFactory({
-                abortSignal: new AbortController().signal,
-                createDataPublisher: mockRequest,
-                dataChannelName: 'data',
-                errorChannelName: 'error',
-            });
-            await jest.runAllTimersAsync();
-            const callsBefore = mockRequest.mock.calls.length;
-            store.retry();
-            expect(mockRequest).toHaveBeenCalledTimes(callsBefore);
-            expect(store.getUnifiedState().status).toBe('loading');
-        });
-        it('transitions to `retrying` and preserves stale data', async () => {
+        it('from `error`, transitions through `retrying` preserving stale data', async () => {
             expect.assertions(1);
             const { mockRequest, publishers } = createFactory();
             const store = createReactiveStoreFromDataPublisherFactory({
@@ -476,17 +136,18 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
                 dataChannelName: 'data',
                 errorChannelName: 'error',
             });
+            store.connect();
             await jest.runAllTimersAsync();
             publishers[0].publish('data', { value: 42 });
             publishers[0].publish('error', new Error('fail'));
-            store.retry();
+            store.connect();
             expect(store.getUnifiedState()).toStrictEqual({
                 data: { value: 42 },
                 error: undefined,
                 status: 'retrying',
             });
         });
-        it('invokes the factory a second time', async () => {
+        it('from `loaded`, transitions through `retrying` preserving the last value', async () => {
             expect.assertions(1);
             const { mockRequest, publishers } = createFactory();
             const store = createReactiveStoreFromDataPublisherFactory({
@@ -495,12 +156,32 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
                 dataChannelName: 'data',
                 errorChannelName: 'error',
             });
+            store.connect();
+            await jest.runAllTimersAsync();
+            publishers[0].publish('data', { value: 42 });
+            store.connect();
+            expect(store.getUnifiedState()).toStrictEqual({
+                data: { value: 42 },
+                error: undefined,
+                status: 'retrying',
+            });
+        });
+        it('invokes the factory again on each connect()', async () => {
+            expect.assertions(1);
+            const { mockRequest, publishers } = createFactory();
+            const store = createReactiveStoreFromDataPublisherFactory({
+                abortSignal: new AbortController().signal,
+                createDataPublisher: mockRequest,
+                dataChannelName: 'data',
+                errorChannelName: 'error',
+            });
+            store.connect();
             await jest.runAllTimersAsync();
             publishers[0].publish('error', new Error('fail'));
-            store.retry();
+            store.connect();
             expect(mockRequest).toHaveBeenCalledTimes(2);
         });
-        it('transitions back to `loaded` when the retried stream publishes a value', async () => {
+        it('transitions back to `loaded` when the reconnected stream publishes a value', async () => {
             expect.assertions(1);
             const { mockRequest, publishers } = createFactory();
             const store = createReactiveStoreFromDataPublisherFactory({
@@ -509,9 +190,10 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
                 dataChannelName: 'data',
                 errorChannelName: 'error',
             });
+            store.connect();
             await jest.runAllTimersAsync();
             publishers[0].publish('error', new Error('fail'));
-            store.retry();
+            store.connect();
             await jest.runAllTimersAsync();
             publishers[1].publish('data', { value: 'recovered' });
             expect(store.getUnifiedState()).toStrictEqual({
@@ -529,14 +211,15 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
                 dataChannelName: 'data',
                 errorChannelName: 'error',
             });
+            store.connect();
             await jest.runAllTimersAsync();
             publishers[0].publish('error', new Error('fail'));
             const subscriber = jest.fn();
             store.subscribe(subscriber);
-            store.retry();
+            store.connect();
             expect(subscriber).toHaveBeenCalledTimes(1);
         });
-        it('can recover from a factory-rejection error by retrying', async () => {
+        it('can recover from a factory-rejection error by calling connect() again', async () => {
             expect.assertions(2);
             const publisher = createMockDataPublisher();
             const mockRequest = jest
@@ -549,9 +232,10 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
                 dataChannelName: 'data',
                 errorChannelName: 'error',
             });
+            store.connect();
             await jest.runAllTimersAsync();
             expect(store.getUnifiedState().status).toBe('error');
-            store.retry();
+            store.connect();
             await jest.runAllTimersAsync();
             publisher.publish('data', { value: 99 });
             expect(store.getUnifiedState()).toStrictEqual({
@@ -560,7 +244,7 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
                 status: 'loaded',
             });
         });
-        it('transitions back to `error` when the retried factory rejects again', async () => {
+        it('transitions back to `error` when the reconnected factory rejects again', async () => {
             expect.assertions(1);
             const firstFailure = new Error('first');
             const secondFailure = new Error('second');
@@ -571,14 +255,227 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
                 dataChannelName: 'data',
                 errorChannelName: 'error',
             });
+            store.connect();
             await jest.runAllTimersAsync();
-            store.retry();
+            store.connect();
             await jest.runAllTimersAsync();
             expect(store.getUnifiedState()).toStrictEqual({
                 data: undefined,
                 error: secondFailure,
                 status: 'error',
             });
+        });
+        it('stays in `loading` when called again before the first connection resolves', () => {
+            const { mockRequest } = createFactory();
+            const store = createReactiveStoreFromDataPublisherFactory({
+                abortSignal: new AbortController().signal,
+                createDataPublisher: mockRequest,
+                dataChannelName: 'data',
+                errorChannelName: 'error',
+            });
+            store.connect();
+            store.connect();
+            expect(store.getUnifiedState()).toStrictEqual({
+                data: undefined,
+                error: undefined,
+                status: 'loading',
+            });
+            expect(mockRequest).toHaveBeenCalledTimes(2);
+        });
+        it('does not notify subscribers on the loading → loading re-entry', () => {
+            const { mockRequest } = createFactory();
+            const store = createReactiveStoreFromDataPublisherFactory({
+                abortSignal: new AbortController().signal,
+                createDataPublisher: mockRequest,
+                dataChannelName: 'data',
+                errorChannelName: 'error',
+            });
+            store.connect();
+            const subscriber = jest.fn();
+            store.subscribe(subscriber);
+            store.connect();
+            expect(subscriber).not.toHaveBeenCalled();
+        });
+        it('aborts the prior connection when called again before data arrives', async () => {
+            expect.assertions(2);
+            const { mockRequest, publishers } = createFactory();
+            const store = createReactiveStoreFromDataPublisherFactory({
+                abortSignal: new AbortController().signal,
+                createDataPublisher: mockRequest,
+                dataChannelName: 'data',
+                errorChannelName: 'error',
+            });
+            store.connect();
+            await jest.runAllTimersAsync();
+            const firstSignal = publishers[0].mockOn.mock.calls.find(([channel]: [string]) => channel === 'data')![2]
+                .signal;
+            expect(firstSignal.aborted).toBe(false);
+            store.connect();
+            expect(firstSignal.aborted).toBe(true);
+        });
+    });
+
+    describe('reset()', () => {
+        it('returns to `idle` and clears prior data', async () => {
+            expect.assertions(1);
+            const { mockRequest, publishers } = createFactory();
+            const store = createReactiveStoreFromDataPublisherFactory({
+                abortSignal: new AbortController().signal,
+                createDataPublisher: mockRequest,
+                dataChannelName: 'data',
+                errorChannelName: 'error',
+            });
+            store.connect();
+            await jest.runAllTimersAsync();
+            publishers[0].publish('data', { value: 42 });
+            store.reset();
+            expect(store.getUnifiedState()).toStrictEqual({
+                data: undefined,
+                error: undefined,
+                status: 'idle',
+            });
+        });
+        it('aborts the in-flight connection', async () => {
+            expect.assertions(2);
+            const { mockRequest, publishers } = createFactory();
+            const store = createReactiveStoreFromDataPublisherFactory({
+                abortSignal: new AbortController().signal,
+                createDataPublisher: mockRequest,
+                dataChannelName: 'data',
+                errorChannelName: 'error',
+            });
+            store.connect();
+            await jest.runAllTimersAsync();
+            const listenerSignal = publishers[0].mockOn.mock.calls.find(([channel]: [string]) => channel === 'data')![2]
+                .signal;
+            expect(listenerSignal.aborted).toBe(false);
+            store.reset();
+            expect(listenerSignal.aborted).toBe(true);
+        });
+        it('notifies subscribers when state changes from non-idle', async () => {
+            expect.assertions(1);
+            const { mockRequest, publishers } = createFactory();
+            const store = createReactiveStoreFromDataPublisherFactory({
+                abortSignal: new AbortController().signal,
+                createDataPublisher: mockRequest,
+                dataChannelName: 'data',
+                errorChannelName: 'error',
+            });
+            store.connect();
+            await jest.runAllTimersAsync();
+            publishers[0].publish('data', { value: 42 });
+            const subscriber = jest.fn();
+            store.subscribe(subscriber);
+            store.reset();
+            expect(subscriber).toHaveBeenCalledTimes(1);
+        });
+        it('is a no-op when already idle (subscribers not notified)', () => {
+            const { mockRequest } = createFactory();
+            const store = createReactiveStoreFromDataPublisherFactory({
+                abortSignal: new AbortController().signal,
+                createDataPublisher: mockRequest,
+                dataChannelName: 'data',
+                errorChannelName: 'error',
+            });
+            const subscriber = jest.fn();
+            store.subscribe(subscriber);
+            store.reset();
+            expect(subscriber).not.toHaveBeenCalled();
+        });
+        it('allows a follow-up connect() to open a fresh stream', async () => {
+            expect.assertions(2);
+            const { mockRequest, publishers } = createFactory();
+            const store = createReactiveStoreFromDataPublisherFactory({
+                abortSignal: new AbortController().signal,
+                createDataPublisher: mockRequest,
+                dataChannelName: 'data',
+                errorChannelName: 'error',
+            });
+            store.connect();
+            await jest.runAllTimersAsync();
+            store.reset();
+            store.connect();
+            await jest.runAllTimersAsync();
+            publishers[1].publish('data', { value: 'fresh' });
+            expect(mockRequest).toHaveBeenCalledTimes(2);
+            expect(store.getUnifiedState()).toStrictEqual({
+                data: { value: 'fresh' },
+                error: undefined,
+                status: 'loaded',
+            });
+        });
+    });
+
+    describe('retry() (deprecated)', () => {
+        it('is a no-op when the store is not in `error` state', async () => {
+            expect.assertions(2);
+            const { mockRequest } = createFactory();
+            const store = createReactiveStoreFromDataPublisherFactory({
+                abortSignal: new AbortController().signal,
+                createDataPublisher: mockRequest,
+                dataChannelName: 'data',
+                errorChannelName: 'error',
+            });
+            store.connect();
+            await jest.runAllTimersAsync();
+            const callsBefore = mockRequest.mock.calls.length;
+            store.retry();
+            expect(mockRequest).toHaveBeenCalledTimes(callsBefore);
+            expect(store.getUnifiedState().status).toBe('loading');
+        });
+        it('transitions to `retrying` from `error`', async () => {
+            expect.assertions(1);
+            const { mockRequest, publishers } = createFactory();
+            const store = createReactiveStoreFromDataPublisherFactory({
+                abortSignal: new AbortController().signal,
+                createDataPublisher: mockRequest,
+                dataChannelName: 'data',
+                errorChannelName: 'error',
+            });
+            store.connect();
+            await jest.runAllTimersAsync();
+            publishers[0].publish('data', { value: 42 });
+            publishers[0].publish('error', new Error('fail'));
+            store.retry();
+            expect(store.getUnifiedState()).toStrictEqual({
+                data: { value: 42 },
+                error: undefined,
+                status: 'retrying',
+            });
+        });
+    });
+
+    describe('subscribe()', () => {
+        it('stops calling the subscriber after the returned unsubscribe is called', async () => {
+            expect.assertions(1);
+            const { mockRequest, publishers } = createFactory();
+            const store = createReactiveStoreFromDataPublisherFactory({
+                abortSignal: new AbortController().signal,
+                createDataPublisher: mockRequest,
+                dataChannelName: 'data',
+                errorChannelName: 'error',
+            });
+            store.connect();
+            await jest.runAllTimersAsync();
+            const subscriber = jest.fn();
+            const unsubscribe = store.subscribe(subscriber);
+            unsubscribe();
+            publishers[0].publish('data', { value: 1 });
+            expect(subscriber).not.toHaveBeenCalled();
+        });
+        it('the unsubscribe function is idempotent', () => {
+            const { mockRequest } = createFactory();
+            const store = createReactiveStoreFromDataPublisherFactory({
+                abortSignal: new AbortController().signal,
+                createDataPublisher: mockRequest,
+                dataChannelName: 'data',
+                errorChannelName: 'error',
+            });
+            const unsubscribe = store.subscribe(jest.fn());
+            expect(() => {
+                unsubscribe();
+                unsubscribe();
+            }).not.toThrow();
         });
     });
 
@@ -593,6 +490,7 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
                 dataChannelName: 'data',
                 errorChannelName: 'error',
             });
+            store.connect();
             await jest.runAllTimersAsync();
             abortController.abort();
             publishers[0].publish('data', { value: 'late' });
@@ -602,18 +500,48 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
             expect.assertions(2);
             const abortController = new AbortController();
             const { mockRequest, publishers } = createFactory();
-            createReactiveStoreFromDataPublisherFactory({
+            const store = createReactiveStoreFromDataPublisherFactory({
                 abortSignal: abortController.signal,
                 createDataPublisher: mockRequest,
                 dataChannelName: 'data',
                 errorChannelName: 'error',
             });
+            store.connect();
             await jest.runAllTimersAsync();
             const dataSignal = publishers[0].mockOn.mock.calls.find(([channel]: [string]) => channel === 'data')![2]
                 .signal;
             expect(dataSignal.aborted).toBe(false);
             abortController.abort();
             expect(dataSignal.aborted).toBe(true);
+        });
+        it('connect() before the caller aborts works as normal', async () => {
+            expect.assertions(1);
+            const abortController = new AbortController();
+            const { mockRequest } = createFactory();
+            const store = createReactiveStoreFromDataPublisherFactory({
+                abortSignal: abortController.signal,
+                createDataPublisher: mockRequest,
+                dataChannelName: 'data',
+                errorChannelName: 'error',
+            });
+            store.connect();
+            await jest.runAllTimersAsync();
+            expect(mockRequest).toHaveBeenCalledTimes(1);
+        });
+        it('connect() after abort does not invoke the factory', async () => {
+            expect.assertions(1);
+            const abortController = new AbortController();
+            const { mockRequest } = createFactory();
+            const store = createReactiveStoreFromDataPublisherFactory({
+                abortSignal: abortController.signal,
+                createDataPublisher: mockRequest,
+                dataChannelName: 'data',
+                errorChannelName: 'error',
+            });
+            abortController.abort();
+            store.connect();
+            await jest.runAllTimersAsync();
+            expect(mockRequest).not.toHaveBeenCalled();
         });
         it('retry() after abort does not re-invoke the factory', async () => {
             expect.assertions(1);
@@ -625,6 +553,7 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
                 dataChannelName: 'data',
                 errorChannelName: 'error',
             });
+            store.connect();
             await jest.runAllTimersAsync();
             publishers[0].publish('error', new Error('fail'));
             abortController.abort();
@@ -632,47 +561,6 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
             store.retry();
             await jest.runAllTimersAsync();
             expect(mockRequest).toHaveBeenCalledTimes(callsBefore);
-        });
-        it('retry() after abort leaves the store in `error` state', async () => {
-            expect.assertions(1);
-            const abortController = new AbortController();
-            const { mockRequest, publishers } = createFactory();
-            const store = createReactiveStoreFromDataPublisherFactory({
-                abortSignal: abortController.signal,
-                createDataPublisher: mockRequest,
-                dataChannelName: 'data',
-                errorChannelName: 'error',
-            });
-            await jest.runAllTimersAsync();
-            const failure = new Error('fail');
-            publishers[0].publish('error', failure);
-            abortController.abort();
-            store.retry();
-            await jest.runAllTimersAsync();
-            expect(store.getUnifiedState()).toStrictEqual({
-                data: undefined,
-                error: failure,
-                status: 'error',
-            });
-        });
-        it('retry() after abort does not notify subscribers', async () => {
-            expect.assertions(1);
-            const abortController = new AbortController();
-            const { mockRequest, publishers } = createFactory();
-            const store = createReactiveStoreFromDataPublisherFactory({
-                abortSignal: abortController.signal,
-                createDataPublisher: mockRequest,
-                dataChannelName: 'data',
-                errorChannelName: 'error',
-            });
-            await jest.runAllTimersAsync();
-            publishers[0].publish('error', new Error('fail'));
-            abortController.abort();
-            const subscriber = jest.fn();
-            store.subscribe(subscriber);
-            store.retry();
-            await jest.runAllTimersAsync();
-            expect(subscriber).not.toHaveBeenCalled();
         });
     });
 });

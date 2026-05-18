@@ -93,7 +93,6 @@ function createMockSubscriptionRequest(): {
         complete,
         error,
         mockRequest: {
-            reactive: jest.fn().mockRejectedValue(new Error('not implemented')),
             reactiveStore: jest.fn().mockImplementation(() => {
                 throw new Error('not implemented');
             }),
@@ -131,6 +130,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             expect(store.getState()).toBeUndefined();
         });
         it('updates with the RPC response value', async () => {
@@ -144,6 +144,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             resolve(rpcResponse(100, { count: 42 }));
             await jest.runAllTimersAsync();
             expect(store.getState()).toEqual({ context: { slot: 100n }, value: 42 });
@@ -159,6 +160,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             await jest.runAllTimersAsync();
             pushNotification(rpcResponse(100, { count: 99 }));
             await jest.runAllTimersAsync();
@@ -175,6 +177,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             await jest.runAllTimersAsync();
             pushNotification(rpcResponse(200, { count: 99 }));
             await jest.runAllTimersAsync();
@@ -194,6 +197,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             resolve(rpcResponse(200, { count: 42 }));
             await jest.runAllTimersAsync();
             pushNotification(rpcResponse(100, { count: 99 }));
@@ -211,6 +215,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             resolve(rpcResponse(100, { count: 42 }));
             await jest.runAllTimersAsync();
             error(new Error('subscription failed'));
@@ -230,6 +235,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             expect(store.getError()).toBeUndefined();
         });
         it('captures an error from the RPC request', async () => {
@@ -243,6 +249,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             const error = new Error('rpc failed');
             reject(error);
             await jest.runAllTimersAsync();
@@ -259,6 +266,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             await jest.runAllTimersAsync();
             const subscriptionError = new Error('subscription failed');
             error(subscriptionError);
@@ -276,6 +284,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             await jest.runAllTimersAsync();
             rejectRpc(new Error('rpc error'));
             await jest.runAllTimersAsync();
@@ -294,6 +303,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             await jest.runAllTimersAsync();
             errorSubscription(new Error('subscription error'));
             await jest.runAllTimersAsync();
@@ -315,6 +325,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             const subscriber = jest.fn();
             store.subscribe(subscriber);
             resolve(rpcResponse(100, { count: 42 }));
@@ -332,6 +343,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             const subscriber = jest.fn();
             store.subscribe(subscriber);
             await jest.runAllTimersAsync();
@@ -350,6 +362,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             const subscriber = jest.fn();
             store.subscribe(subscriber);
             resolve(rpcResponse(200, { count: 42 }));
@@ -372,6 +385,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             const subscriber = jest.fn();
             store.subscribe(subscriber);
             reject(new Error('fail'));
@@ -389,6 +403,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             const subscriber = jest.fn();
             store.subscribe(subscriber);
             await jest.runAllTimersAsync();
@@ -407,6 +422,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             const subscriber = jest.fn();
             const unsubscribe = store.subscribe(subscriber);
             unsubscribe();
@@ -424,6 +440,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             const unsubscribe = store.subscribe(jest.fn());
             expect(() => {
                 unsubscribe();
@@ -436,13 +453,14 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
         it('aborts the signal passed to the RPC request when the caller aborts', () => {
             const { mockRequest: rpcRequest } = createMockRpcRequest();
             const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
-            createReactiveStoreWithInitialValueAndSlotTracking({
+            const store = createReactiveStoreWithInitialValueAndSlotTracking({
                 abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             const rpcSignal = (rpcRequest.send as jest.Mock).mock.calls[0][0].abortSignal;
             expect(rpcSignal.aborted).toBe(false);
             abortController.abort('test reason');
@@ -452,13 +470,14 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
         it('aborts the signal passed to the subscription request when the caller aborts', () => {
             const { mockRequest: rpcRequest } = createMockRpcRequest();
             const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
-            createReactiveStoreWithInitialValueAndSlotTracking({
+            const store = createReactiveStoreWithInitialValueAndSlotTracking({
                 abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             const subscriptionSignal = (rpcSubscriptionRequest.subscribe as jest.Mock).mock.calls[0][0].abortSignal;
             expect(subscriptionSignal.aborted).toBe(false);
             abortController.abort('test reason');
@@ -476,6 +495,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             abortController.abort();
             reject(new Error('aborted'));
             await jest.runAllTimersAsync();
@@ -492,6 +512,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             await jest.runAllTimersAsync();
             abortController.abort();
             error(new Error('aborted'));
@@ -509,6 +530,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             const subscriber = jest.fn();
             store.subscribe(subscriber);
             abortController.abort();
@@ -528,6 +550,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             const subscriber = jest.fn();
             store.subscribe(subscriber);
             await jest.runAllTimersAsync();
@@ -550,6 +573,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             expect(store.getUnifiedState()).toStrictEqual({
                 data: undefined,
                 error: undefined,
@@ -567,6 +591,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             resolve(rpcResponse(100, { count: 42 }));
             await jest.runAllTimersAsync();
             expect(store.getUnifiedState()).toStrictEqual({
@@ -586,6 +611,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             const failure = new Error('rpc failed');
             reject(failure);
             await jest.runAllTimersAsync();
@@ -606,6 +632,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             resolve(rpcResponse(100, { count: 42 }));
             await jest.runAllTimersAsync();
             const failure = new Error('subscription failed');
@@ -643,7 +670,6 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 }),
             };
             const rpcSubscriptionRequest: PendingRpcSubscriptionsRequest<SolanaRpcResponse<TestValue>> = {
-                reactive: jest.fn().mockRejectedValue(new Error('not implemented')),
                 reactiveStore: jest.fn().mockImplementation(() => {
                     throw new Error('not implemented');
                 }),
@@ -669,6 +695,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             await jest.runAllTimersAsync();
             store.retry();
             expect(rpcRequest.send).toHaveBeenCalledTimes(1);
@@ -683,6 +710,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             rpcInstances[0].resolve(rpcResponse(100, { count: 42 }));
             await jest.runAllTimersAsync();
             subscriptionInstances[0].error(new Error('stream died'));
@@ -704,6 +732,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             rpcInstances[0].reject(new Error('boom'));
             await jest.runAllTimersAsync();
             store.retry();
@@ -721,6 +750,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             rpcInstances[0].reject(new Error('first failure'));
             await jest.runAllTimersAsync();
             store.retry();
@@ -743,6 +773,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             rpcInstances[0].reject(new Error('first'));
             await jest.runAllTimersAsync();
             store.retry();
@@ -766,6 +797,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             rpcInstances[0].reject(new Error('fail'));
             await jest.runAllTimersAsync();
             const subscriber = jest.fn();
@@ -783,6 +815,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             rpcInstances[0].reject(new Error('fail'));
             await jest.runAllTimersAsync();
             abortController.abort();
@@ -800,6 +833,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             const failure = new Error('fail');
             rpcInstances[0].reject(failure);
             await jest.runAllTimersAsync();
@@ -822,6 +856,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
+            store.connect();
             rpcInstances[0].reject(new Error('fail'));
             await jest.runAllTimersAsync();
             abortController.abort();

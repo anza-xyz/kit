@@ -93,7 +93,6 @@ function createMockSubscriptionRequest(): {
         complete,
         error,
         mockRequest: {
-            reactive: jest.fn().mockRejectedValue(new Error('not implemented')),
             reactiveStore: jest.fn().mockImplementation(() => {
                 throw new Error('not implemented');
             }),
