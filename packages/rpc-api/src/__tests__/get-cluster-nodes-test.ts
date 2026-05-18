@@ -9,7 +9,7 @@ import { createLocalhostSolanaRpc } from './__setup__';
 const logFilePath = path.resolve(__dirname, '../../../../test-ledger/validator.log');
 
 // TPU does not seem to be reliably matchable from the log file
-const featureSetPattern = /feat:([\d]+)/;
+const featureSetPattern = /feat:([0-9a-f]+)/;
 const gossipPattern = /local gossip address: [\d.]+:([\d]+)/;
 const pubkeyPattern = /identity pubkey: ([\w]{32,})/;
 const rpcPattern = /rpc bound to [\d.]+:([\d]+)/;
@@ -28,7 +28,7 @@ async function getNodeInfoFromLogFile() {
         for await (const line of file.readLines({ encoding: 'utf-8' })) {
             const featureSetMatch = line.match(featureSetPattern);
             if (featureSetMatch) {
-                featureSet = parseInt(featureSetMatch[1]);
+                featureSet = parseInt(featureSetMatch[1], 16);
             }
             const gossipMatch = line.match(gossipPattern);
             if (gossipMatch) {
@@ -72,6 +72,7 @@ describe('getClusterNodes', () => {
             const [featureSet, gossip, pubkey, rpc, shredVersion, version] = await getNodeInfoFromLogFile();
             const res = await mockRpc.getClusterNodes().send();
             expect(res[0]).toStrictEqual({
+                clientId: 'Agave',
                 featureSet,
                 gossip,
                 pubkey,
@@ -79,8 +80,8 @@ describe('getClusterNodes', () => {
                 rpc,
                 serveRepair: expect.stringMatching(/127.0.0.1(:\d+)?/),
                 shredVersion,
-                tpu: expect.stringMatching(/127.0.0.1(:\d+)?/),
-                tpuForwards: expect.stringMatching(/127.0.0.1(:\d+)?/),
+                tpu: null,
+                tpuForwards: null,
                 tpuForwardsQuic: expect.stringMatching(/127.0.0.1(:\d+)?/),
                 tpuQuic: expect.stringMatching(/127.0.0.1(:\d+)?/),
                 tpuVote: expect.stringMatching(/127.0.0.1(:\d+)?/),

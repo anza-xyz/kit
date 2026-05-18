@@ -7,7 +7,7 @@ import { GetVersionApi } from '../index';
 import { createLocalhostSolanaRpc } from './__setup__';
 
 const logFilePath = path.resolve(__dirname, '../../../../test-ledger/validator.log');
-const featureSetPattern = /feat:([\d]+)/;
+const featureSetPattern = /feat:([0-9a-f]+)/;
 const versionPattern = /agave-validator ([\d.]+)/;
 
 async function getVersionFromLogFile() {
@@ -18,7 +18,7 @@ async function getVersionFromLogFile() {
         for await (const line of file.readLines({ encoding: 'utf-8' })) {
             const featureSetMatch = line.match(featureSetPattern);
             if (featureSetMatch) {
-                featureSet = parseInt(featureSetMatch[1]);
+                featureSet = parseInt(featureSetMatch[1], 16);
             }
             const versionMatch = line.match(versionPattern);
             if (versionMatch) {

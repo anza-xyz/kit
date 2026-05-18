@@ -2,6 +2,11 @@ import { Address } from '@solana/addresses';
 
 type ClusterNode = Readonly<{
     /**
+     * The name of the validator client software the node is running,
+     * or `null` if the client identifier is not advertised.
+     */
+    clientId: string | null;
+    /**
      * The unique identifier of the node's feature set.
      *
      * This value is computed by sorting all feature addresses' byte arrays lexicographically,
@@ -21,9 +26,19 @@ type ClusterNode = Readonly<{
     serveRepair: string | null;
     /** The shred version the node has been configured to use */
     shredVersion: number | null;
-    /** TPU network address for the node (host:port) */
+    /**
+     * TPU UDP network address for the node (host:port).
+     *
+     * @deprecated TPU UDP is phased out in favor of QUIC. Use {@link tpuQuic} instead.
+     * Validators may report this as `null`.
+     */
     tpu: string | null;
-    /** Tpu UDP forwards network address for the node (host:port) */
+    /**
+     * TPU UDP forwards network address for the node (host:port).
+     *
+     * @deprecated TPU UDP is phased out in favor of QUIC. Use {@link tpuForwardsQuic} instead.
+     * Validators may report this as `null`.
+     */
     tpuForwards: string | null;
     /** Tpu QUIC forwards network address for the node (host:port) */
     tpuForwardsQuic: string | null;

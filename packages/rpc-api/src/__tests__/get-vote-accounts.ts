@@ -26,7 +26,7 @@ describe('getVoteAccounts', () => {
                             activatedStake: expect.any(BigInt), // Changes
                             commission: 50,
                             epochCredits: expect.any(Array), // Changes
-                            epochVoteAccount: true,
+                            epochVoteAccount: expect.any(Boolean), // Changes
                             lastVote: expect.any(BigInt), // Changes
                             nodePubkey: 'HMU77m6WSL9Xew9YvVCgz1hLuhzamz74eD9avi4XPdr',
                             rootSlot: expect.any(BigInt), // Changes
