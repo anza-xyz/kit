@@ -1,41 +1,22 @@
-import { SOLANA_ERROR__SUBSCRIBABLE__RETRY_NOT_SUPPORTED, SolanaError } from '@solana/errors';
 import { AbortController } from '@solana/event-target-impl';
 
 import { DataPublisher } from './data-publisher';
 
-type Config = Readonly<{
+type FactoryConfig = Readonly<{
     /**
-     * Triggering this abort signal will cause the store to stop updating and will disconnect it from
-     * the underlying data publisher.
+     * Triggering this abort signal will cause the store to stop updating and permanently
+     * disconnect it from any active {@link DataPublisher}. Once the signal has fired,
+     * {@link ReactiveStreamStore.connect | `connect()`} becomes a no-op.
      */
     abortSignal: AbortSignal;
-    /**
-     * Messages from this channel of `dataPublisher` will be used to update the store's state.
-     */
-    dataChannelName: string;
-    // FIXME: It would be nice to be able to constrain the type of `dataPublisher` to one that
+    // FIXME: It would be nice to be able to constrain the type returned by `createDataPublisher` to one that
     //        definitely supports the `dataChannelName` and `errorChannelName` channels, and
     //        furthermore publishes `TData` on the `dataChannelName` channel. This is more difficult
     //        than it should be: https://tsplay.dev/NlZelW
-    dataPublisher: DataPublisher;
-    /**
-     * Messages from this channel of `dataPublisher` will cause subscribers to be notified without
-     * updating the state, so that they can respond to the error condition.
-     */
-    errorChannelName: string;
-}>;
-
-type FactoryConfig = Readonly<{
-    /**
-     * Triggering this abort signal will cause the store to stop updating and will disconnect it from
-     * any active {@link DataPublisher}. Subsequent calls to {@link ReactiveStreamStore.retry | `retry()`}
-     * are no-ops once this signal has fired.
-     */
-    abortSignal: AbortSignal;
     /**
      * An async factory that produces a fresh {@link DataPublisher} each time it is invoked. Called
-     * once on construction and again on every {@link ReactiveStreamStore.retry | `retry()`}. Rejections
-     * surface as a store error.
+     * on every {@link ReactiveStreamStore.connect | `connect()`}. Rejections surface as a store
+     * error.
      */
     createDataPublisher: () => Promise<DataPublisher>;
     /**
@@ -53,23 +34,27 @@ type FactoryConfig = Readonly<{
 /**
  * The lifecycle state of a {@link ReactiveStreamStore} as a single snapshot.
  *
- * - `loading`: the store is waiting for its first value. `data` is `undefined`.
- * - `loaded`: a value has been received and no error is active. `data` is defined.
- * - `error`: the stream failed. `data` is the last known value (or `undefined` if no value ever
- *   arrived), and `error` holds the failure.
- * - `retrying`: a {@link ReactiveStreamStore.retry | `retry()`} is in progress after a previous error.
- *   `error` is cleared; `data` is preserved from before the failure if present.
+ * - `idle`: the store has not yet been connected, or has been reset via
+ *   {@link ReactiveStreamStore.reset | `reset()`}. Call
+ *   {@link ReactiveStreamStore.connect | `connect()`} to open the underlying stream.
+ * - `loading`: a first connection is in progress; no data has arrived yet.
+ * - `loaded`: a value has been received and no error is active.
+ * - `error`: the stream failed. `data` holds the last known value (or `undefined` if none ever
+ *   arrived) and `error` holds the failure.
+ * - `retrying`: a follow-up `connect()` is in progress after a previous outcome. `error` is
+ *   cleared; `data` is preserved from the previous connection if any.
  */
 export type ReactiveState<T> =
     | { readonly data: T | undefined; readonly error: undefined; readonly status: 'retrying' }
     | { readonly data: T | undefined; readonly error: unknown; readonly status: 'error' }
     | { readonly data: T; readonly error: undefined; readonly status: 'loaded' }
+    | { readonly data: undefined; readonly error: undefined; readonly status: 'idle' }
     | { readonly data: undefined; readonly error: undefined; readonly status: 'loading' };
 
-const LOADING_STATE: ReactiveState<never> = Object.freeze({
+const IDLE_STATE: ReactiveState<never> = Object.freeze({
     data: undefined,
     error: undefined,
-    status: 'loading',
+    status: 'idle',
 });
 
 /**
@@ -77,19 +62,38 @@ const LOADING_STATE: ReactiveState<never> = Object.freeze({
  * systems to subscribe to changes. Compatible with `useSyncExternalStore`, Svelte stores, Solid's
  * `from()`, and other reactive primitives that expect a `{ subscribe, getUnifiedState }` contract.
  *
+ * The store starts in `status: 'idle'`. Call {@link ReactiveStreamStore.connect | `connect()`}
+ * to open the underlying stream; the store will then transition through `loading` → `loaded` (or
+ * `error`). A subsequent `connect()` after `loaded` or `error` transitions through `retrying`
+ * while preserving the last known value.
+ *
  * @example
  * ```ts
  * // React — the unified state snapshot has stable identity per update, making it suitable as
  * // the second argument to `useSyncExternalStore`.
  * const state = useSyncExternalStore(store.subscribe, store.getUnifiedState);
- * if (state.status === 'error') return <ErrorMessage error={state.error} onRetry={store.retry} />;
- * if (state.status === 'loading') return <Spinner />;
+ * useEffect(() => {
+ *     store.connect();
+ *     return () => store.reset();
+ * }, [store]);
+ * if (state.status === 'error') return <ErrorMessage error={state.error} onRetry={store.connect} />;
+ * if (state.status === 'loading' || state.status === 'idle') return <Spinner />;
  * return <View data={state.data} />;
  * ```
  *
  * @see {@link createReactiveStoreFromDataPublisherFactory}
  */
 export type ReactiveStreamStore<T> = {
+    /**
+     * Open the underlying stream. Aborts any currently active connection, invokes the configured
+     * factory, and transitions the store through `loading` (when called from `idle` or while a
+     * connection is already in flight) or `retrying` (when called after a previous outcome —
+     * i.e. `loaded` or `error`) before settling into `loaded` (on data) or `error` (on failure).
+     *
+     * Idempotent after the caller's `abortSignal` has fired — a no-op once the store has been
+     * permanently killed.
+     */
+    connect(): void;
     /**
      * Returns the error published to the error channel, or `undefined` if no error has occurred.
      *
@@ -115,7 +119,18 @@ export type ReactiveStreamStore<T> = {
      */
     getUnifiedState(): ReactiveState<T>;
     /**
-     * Re-opens the stream after an error. No-op when the store is not in the `error` state.
+     * Aborts any currently active connection and resets the store to `{ status: 'idle' }`. Both
+     * `data` and `error` are cleared. Use this to tear down the connection without permanently
+     * killing the store — a follow-up {@link ReactiveStreamStore.connect | `connect()`} will open
+     * a fresh stream.
+     */
+    reset(): void;
+    /**
+     * Re-opens the stream after an error. No-op when the store is not in `status: 'error'`.
+     *
+     * @deprecated Use {@link ReactiveStreamStore.connect | `connect()`} instead. `connect()`
+     * always (re)connects, regardless of current status — wrap with a status guard at the call
+     * site if you need the error-only behaviour.
      */
     retry(): void;
     /**
@@ -137,12 +152,17 @@ export type ReactiveStore<T> = ReactiveStreamStore<T>;
  * Reactive-framework bindings (e.g. React's `useSubscription`) consume this duck-type so they
  * don't have to name a concrete producer type.
  *
+ * The returned store is in `status: 'idle'` — the caller is responsible for invoking
+ * {@link ReactiveStreamStore.connect | `connect()`} to open the underlying stream.
+ *
  * @typeParam T - The value type emitted by the resulting stream store.
  *
  * @example
  * ```ts
  * function bind<T>(source: ReactiveStreamSource<T>, abortSignal: AbortSignal) {
- *     return source.reactiveStore({ abortSignal });
+ *     const store = source.reactiveStore({ abortSignal });
+ *     store.connect();
+ *     return store;
  * }
  * ```
  *
@@ -154,104 +174,24 @@ export type ReactiveStreamSource<T> = {
 };
 
 /**
- * Returns a {@link ReactiveStreamStore} given a data publisher.
- *
- * The store will update its state with each message published to `dataChannelName` and notify all
- * subscribers. When a message is published to `errorChannelName`, subscribers are notified so they
- * can react to the error condition, but the last-known state is preserved. Triggering the abort
- * signal disconnects the store from the data publisher.
- *
- * Things to note:
- *
- * - `getUnifiedState()` starts in `status: 'loading'` until the first notification arrives.
- * - On error, `getUnifiedState().data` continues to return the last known value and `error` holds
- *   the failure. Only the first error is captured.
- * - The function returned by `subscribe` is idempotent — calling it multiple times is safe.
- * - Because a `DataPublisher` instance cannot be restarted, {@link ReactiveStreamStore.retry | `retry()`}
- *   on the returned store throws a
- *   {@link SOLANA_ERROR__SUBSCRIBABLE__RETRY_NOT_SUPPORTED | `SolanaError`}.
- *
- * @param config
- *
- * @deprecated Use {@link createReactiveStoreFromDataPublisherFactory} instead. That variant accepts
- * a factory function for the underlying {@link DataPublisher} and can therefore support
- * {@link ReactiveStreamStore.retry | `retry()`}.
- */
-export function createReactiveStoreFromDataPublisher<TData>({
-    abortSignal,
-    dataChannelName,
-    dataPublisher,
-    errorChannelName,
-}: Config): ReactiveStreamStore<TData> {
-    let currentState: ReactiveState<TData> = LOADING_STATE;
-    const subscribers = new Set<() => void>();
-
-    const abortController = new AbortController();
-    abortSignal.addEventListener('abort', () => abortController.abort(abortSignal.reason));
-
-    function notify() {
-        subscribers.forEach(cb => cb());
-    }
-
-    dataPublisher.on(
-        dataChannelName,
-        data => {
-            currentState = { data: data as TData, error: undefined, status: 'loaded' };
-            notify();
-        },
-        { signal: abortController.signal },
-    );
-    dataPublisher.on(
-        errorChannelName,
-        err => {
-            if (currentState.status === 'error') return;
-            currentState = { data: currentState.data, error: err, status: 'error' };
-            abortController.abort(err);
-            notify();
-        },
-        { signal: abortController.signal },
-    );
-
-    return {
-        getError(): unknown {
-            return currentState.error;
-        },
-        getState(): TData | undefined {
-            return currentState.data;
-        },
-        getUnifiedState(): ReactiveState<TData> {
-            return currentState;
-        },
-        retry(): void {
-            throw new SolanaError(SOLANA_ERROR__SUBSCRIBABLE__RETRY_NOT_SUPPORTED);
-        },
-        subscribe(callback: () => void): () => void {
-            subscribers.add(callback);
-            return () => {
-                subscribers.delete(callback);
-            };
-        },
-    };
-}
-
-/**
  * Returns a {@link ReactiveStreamStore} that wires itself to a fresh {@link DataPublisher} on
- * construction and on every {@link ReactiveStreamStore.retry | `retry()`}.
+ * every {@link ReactiveStreamStore.connect | `connect()`}.
  *
- * Unlike {@link createReactiveStoreFromDataPublisher}, this variant accepts a `createDataPublisher`
- * factory rather than a ready-made publisher. That lets the store tear down a broken stream and
- * open a new one without losing subscribers or the last known value.
+ * The store accepts a `createDataPublisher` factory rather than a ready-made publisher — that
+ * lets the store tear down a broken stream and open a new one without losing subscribers or the
+ * last known value.
  *
  * Things to note:
  *
- * - `getUnifiedState()` starts in `status: 'loading'` until the first notification arrives.
+ * - The returned store starts in `status: 'idle'`. Call `connect()` to open the first stream.
  * - On error, the store transitions to `status: 'error'` preserving the last known value. Only the
- *   first error per connection window is captured — a subsequent `retry()` resets that window.
- * - `retry()` is a no-op unless the store is currently in `status: 'error'`. When it fires, the
- *   store transitions to `status: 'retrying'` (preserving stale data), invokes
- *   `createDataPublisher()`, and wires up a fresh connection. If the factory rejects, the store
- *   transitions to `status: 'error'` with the rejection reason.
- * - Triggering the caller's `abortSignal` disconnects the store permanently; subsequent `retry()`
+ *   first error per connection window is captured — a subsequent `connect()` resets that window.
+ * - `connect()` aborts any currently active connection and invokes the factory again, transitioning
+ *   through `retrying` (preserving stale data) when called from a non-idle state. If the factory
+ *   rejects, the store transitions to `status: 'error'` with the rejection reason.
+ * - {@link ReactiveStreamStore.reset | `reset()`} aborts the current connection and returns to
+ *   `idle`, clearing both `data` and `error`.
+ * - Triggering the caller's `abortSignal` disconnects the store permanently; subsequent `connect()`
  *   calls are no-ops.
  *
  * @param config
@@ -271,7 +211,7 @@ export function createReactiveStoreFromDataPublisher<TData>({
  *     if (snapshot.status === 'error') console.error('Connection failed:', snapshot.error);
  *     else if (snapshot.status === 'loaded') console.log('Latest:', snapshot.data);
  * });
- * // Call `store.retry()` to recover after an error — e.g. from a user-triggered "Retry" button.
+ * store.connect();
  * ```
  */
 export function createReactiveStoreFromDataPublisherFactory<TData>({
@@ -280,7 +220,8 @@ export function createReactiveStoreFromDataPublisherFactory<TData>({
     dataChannelName,
     errorChannelName,
 }: FactoryConfig): ReactiveStreamStore<TData> {
-    let currentState: ReactiveState<TData> = LOADING_STATE;
+    let currentState: ReactiveState<TData> = IDLE_STATE;
+    let currentInnerController: AbortController | undefined;
     const subscribers = new Set<() => void>();
 
     const outerController = new AbortController();
@@ -290,13 +231,37 @@ export function createReactiveStoreFromDataPublisherFactory<TData>({
         subscribers.forEach(cb => cb());
     }
 
-    function connect() {
+    function setState(next: ReactiveState<TData>) {
+        if (
+            currentState.status === next.status &&
+            currentState.data === next.data &&
+            currentState.error === next.error
+        ) {
+            return;
+        }
+        currentState = next;
+        notify();
+    }
+
+    function performConnect() {
         if (outerController.signal.aborted) return;
-        // Inner signal is passed to data publisher
+        // Abort any currently active connection before starting a fresh one.
+        currentInnerController?.abort();
+        // Transition based on whether we have a prior outcome to preserve. If already `loading`,
+        // a connection is in flight — we've just aborted it and will rewire to a fresh factory
+        // invocation below, but there's no user-visible value yet, so stay in `loading` rather
+        // than detour through `retrying`.
+        if (currentState.status === 'idle') {
+            setState({ data: undefined, error: undefined, status: 'loading' });
+        } else if (currentState.status !== 'loading') {
+            setState({ data: currentState.data, error: undefined, status: 'retrying' });
+        }
+        // Inner signal is passed to data publisher.
         const innerController = new AbortController();
-        // Forward an abort from the outer signal to the inner one, so that when the caller aborts, we disconnect
-        // Scope this forwarder to the inner signal so it's removed on reconnection
-        // and we don't accumulate listeners on the outer signal across retries.
+        currentInnerController = innerController;
+        // Forward an abort from the outer signal to the inner one so a permanent kill propagates.
+        // Scope this forwarder to the inner signal so it's removed on reconnection and we don't
+        // accumulate listeners on the outer signal across connects.
         const forwardAbort = () => innerController.abort(outerController.signal.reason);
         outerController.signal.addEventListener('abort', forwardAbort, { signal: innerController.signal });
         createDataPublisher().then(
@@ -305,8 +270,7 @@ export function createReactiveStoreFromDataPublisherFactory<TData>({
                 publisher.on(
                     dataChannelName,
                     data => {
-                        currentState = { data: data as TData, error: undefined, status: 'loaded' };
-                        notify();
+                        setState({ data: data as TData, error: undefined, status: 'loaded' });
                     },
                     { signal: innerController.signal },
                 );
@@ -314,25 +278,28 @@ export function createReactiveStoreFromDataPublisherFactory<TData>({
                     errorChannelName,
                     err => {
                         if (currentState.status === 'error') return;
-                        currentState = { data: currentState.data, error: err, status: 'error' };
+                        setState({ data: currentState.data, error: err, status: 'error' });
                         innerController.abort(err);
-                        notify();
                     },
                     { signal: innerController.signal },
                 );
             },
             err => {
                 if (innerController.signal.aborted) return;
-                currentState = { data: currentState.data, error: err, status: 'error' };
+                setState({ data: currentState.data, error: err, status: 'error' });
                 innerController.abort(err);
-                notify();
             },
         );
     }
 
-    connect();
+    function performReset() {
+        currentInnerController?.abort();
+        currentInnerController = undefined;
+        setState(IDLE_STATE);
+    }
 
     return {
+        connect: performConnect,
         getError(): unknown {
             return currentState.error;
         },
@@ -342,12 +309,10 @@ export function createReactiveStoreFromDataPublisherFactory<TData>({
         getUnifiedState(): ReactiveState<TData> {
             return currentState;
         },
+        reset: performReset,
         retry(): void {
-            if (outerController.signal.aborted) return;
             if (currentState.status !== 'error') return;
-            currentState = { data: currentState.data, error: undefined, status: 'retrying' };
-            notify();
-            connect();
+            performConnect();
         },
         subscribe(callback: () => void): () => void {
             subscribers.add(callback);
