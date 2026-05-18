@@ -38,18 +38,25 @@ type ReactiveState<T> =
     | { data: undefined; error: undefined; status: 'loading' }
     | { data: T; error: undefined; status: 'loaded' }
     | { data: T | undefined; error: unknown; status: 'error' }
-    | { data: T | undefined; error: undefined; status: 'retrying' };
+    | { data: T | undefined; error: undefined; status: 'retrying' }
+    | { data: undefined; error: undefined; status: 'idle' };
 ```
 
 > Also exported as `ReactiveStore<T>` for backwards compatibility. That alias is deprecated and will be removed in a future major release.
+
+The store starts in `status: 'idle'`. Call `connect()` to open the underlying stream; the store will transition through `loading` → `loaded` (or `error`). A subsequent `connect()` after `loaded` or `error` transitions through `retrying` while preserving the last known value. Call `reset()` to tear down the connection and return to `idle` without permanently killing the store.
 
 ```ts
 const store: ReactiveStreamStore<AccountInfo> = /* ... */;
 
 // React — snapshot identity is stable between updates, so it can be passed directly.
 const state = useSyncExternalStore(store.subscribe, store.getUnifiedState);
-if (state.status === 'error') return <ErrorMessage error={state.error} onRetry={store.retry} />;
-if (state.status === 'loading') return <Spinner />;
+useEffect(() => {
+    store.connect();
+    return () => store.reset();
+}, [store]);
+if (state.status === 'error') return <ErrorMessage error={state.error} onRetry={store.connect} />;
+if (state.status === 'loading' || state.status === 'idle') return <Spinner />;
 return <View data={state.data} />;
 
 // Vue
@@ -57,9 +64,10 @@ const snapshot = shallowRef(store.getUnifiedState());
 store.subscribe(() => {
     snapshot.value = store.getUnifiedState();
 });
+store.connect();
 ```
 
-`retry()` re-opens the stream after an error. When the underlying store supports restart (see [`createReactiveStoreFromDataPublisherFactory`](#createreactivestorefromdatapublisherfactory-abortsignal-createdatapublisher-datachannelname-errorchannelname-)), the store transitions to `status: 'retrying'` and reconnects. Stores that cannot be restarted throw a `SolanaError` with code `SOLANA_ERROR__SUBSCRIBABLE__RETRY_NOT_SUPPORTED` instead.
+`retry()` is a deprecated alias for the error-recovery case — prefer calling `connect()` directly. `connect()` always reopens the stream, regardless of current status; wrap with a status guard at the call site if you need the error-only behaviour.
 
 The individual `getState()` and `getError()` getters on `ReactiveStreamStore<T>` are `@deprecated` &mdash; prefer `getUnifiedState()`, which exposes the same information with a stable snapshot identity and `status` discriminator.
 
@@ -187,33 +195,9 @@ Things to note:
 - If there are messages in the queue and the abort signal fires, all queued messages will be vended to the iterator after which it will return.
 - Any new iterators created after the first error is encountered will reject with that error when polled.
 
-### `createReactiveStoreFromDataPublisher({ abortSignal, dataChannelName, dataPublisher, errorChannelName })`
-
-> **Deprecated.** Prefer [`createReactiveStoreFromDataPublisherFactory`](#createreactivestorefromdatapublisherfactory-abortsignal-createdatapublisher-datachannelname-errorchannelname-) &mdash; it supports `retry()`. Because this function accepts a ready-made `DataPublisher` rather than a factory, it cannot restart the underlying source, and calling `retry()` on the returned store throws a `SolanaError` with code `SOLANA_ERROR__SUBSCRIBABLE__RETRY_NOT_SUPPORTED`.
-
-Returns a `ReactiveStreamStore` given a data publisher. The store holds the most recent message published to `dataChannelName` and notifies subscribers on each update. When a message is published to `errorChannelName`, the store transitions to `status: 'error'` preserving the last known value. Triggering the abort signal disconnects the store from the data publisher.
-
-```ts
-const store = createReactiveStoreFromDataPublisher({
-    abortSignal: AbortSignal.timeout(10_000),
-    dataChannelName: 'notification',
-    dataPublisher,
-    errorChannelName: 'error',
-});
-const unsubscribe = store.subscribe(() => {
-    console.log('State updated:', store.getUnifiedState());
-});
-```
-
-Things to note:
-
-- `getUnifiedState()` starts in `status: 'loading'` until the first notification arrives.
-- On error, `status` becomes `'error'` with the last known value preserved on `data`. Only the first error is captured.
-- The function returned by `subscribe` is idempotent &mdash; calling it multiple times is safe.
-
 ### `createReactiveStoreFromDataPublisherFactory({ abortSignal, createDataPublisher, dataChannelName, errorChannelName })`
 
-Returns a `ReactiveStreamStore` that wires itself to a fresh `DataPublisher` on construction and on every `retry()`. Unlike `createReactiveStoreFromDataPublisher`, this variant accepts an async factory so the store can tear down a broken stream and open a new one without losing subscribers or the last known value.
+Returns a `ReactiveStreamStore` that wires itself to a fresh `DataPublisher` on every `connect()`. Accepts an async factory so the store can tear down a broken stream and open a new one without losing subscribers or the last known value.
 
 ```ts
 const store = createReactiveStoreFromDataPublisherFactory({
@@ -226,16 +210,18 @@ const store = createReactiveStoreFromDataPublisherFactory({
 });
 store.subscribe(() => {
     const snapshot = store.getUnifiedState();
-    if (snapshot.status === 'error') store.retry();
+    if (snapshot.status === 'error') store.connect();
 });
+store.connect();
 ```
 
 Things to note:
 
-- `createDataPublisher` is called once on construction and again on every `retry()`.
-- `retry()` is a no-op unless the store is in `status: 'error'`; otherwise the store transitions to `status: 'retrying'` (preserving stale data) and reconnects.
-- If `createDataPublisher` rejects, the store transitions to `status: 'error'` with the rejection as the error. Call `retry()` to try again.
-- Triggering the caller's `abortSignal` disconnects the store permanently; subsequent `retry()` calls are no-ops.
+- The returned store starts in `status: 'idle'`. Call `connect()` to open the first stream.
+- `createDataPublisher` is invoked on every `connect()`. From `idle`, the store transitions through `loading`; from any other status, through `retrying` while preserving the last known value.
+- If `createDataPublisher` rejects, the store transitions to `status: 'error'` with the rejection as the error. Call `connect()` to try again.
+- `reset()` aborts the current connection and returns the store to `idle`, clearing `data` and `error`. A follow-up `connect()` opens a fresh stream.
+- Triggering the caller's `abortSignal` disconnects the store permanently; subsequent `connect()` calls are no-ops.
 
 ### `demultiplexDataPublisher(publisher, sourceChannelName, messageTransformer)`
 
