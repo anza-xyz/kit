@@ -124,7 +124,6 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             const { mockRequest: rpcRequest } = createMockRpcRequest();
             const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
@@ -138,7 +137,6 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
             const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
@@ -154,7 +152,6 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             const { mockRequest: rpcRequest } = createMockRpcRequest();
             const { mockRequest: rpcSubscriptionRequest, pushNotification } = createMockSubscriptionRequest();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
@@ -171,7 +168,6 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
             const { mockRequest: rpcSubscriptionRequest, pushNotification } = createMockSubscriptionRequest();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
@@ -191,7 +187,6 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
             const { mockRequest: rpcSubscriptionRequest, pushNotification } = createMockSubscriptionRequest();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
@@ -209,7 +204,6 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
             const { mockRequest: rpcSubscriptionRequest, error } = createMockSubscriptionRequest();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
@@ -229,7 +223,6 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             const { mockRequest: rpcRequest } = createMockRpcRequest();
             const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
@@ -243,7 +236,6 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             const { mockRequest: rpcRequest, reject } = createMockRpcRequest();
             const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
@@ -260,7 +252,6 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             const { mockRequest: rpcRequest } = createMockRpcRequest();
             const { mockRequest: rpcSubscriptionRequest, error } = createMockSubscriptionRequest();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
@@ -278,7 +269,6 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             const { mockRequest: rpcRequest, reject: rejectRpc } = createMockRpcRequest();
             const { mockRequest: rpcSubscriptionRequest, error: errorSubscription } = createMockSubscriptionRequest();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
@@ -297,7 +287,6 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             const { mockRequest: rpcRequest, reject: rejectRpc } = createMockRpcRequest();
             const { mockRequest: rpcSubscriptionRequest, error: errorSubscription } = createMockSubscriptionRequest();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
@@ -319,7 +308,6 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
             const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
@@ -337,7 +325,6 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             const { mockRequest: rpcRequest } = createMockRpcRequest();
             const { mockRequest: rpcSubscriptionRequest, pushNotification } = createMockSubscriptionRequest();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
@@ -356,7 +343,6 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
             const { mockRequest: rpcSubscriptionRequest, pushNotification } = createMockSubscriptionRequest();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
@@ -379,7 +365,6 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             const { mockRequest: rpcRequest, reject } = createMockRpcRequest();
             const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
@@ -397,7 +382,6 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             const { mockRequest: rpcRequest } = createMockRpcRequest();
             const { mockRequest: rpcSubscriptionRequest, error } = createMockSubscriptionRequest();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
@@ -416,7 +400,6 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
             const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
@@ -434,7 +417,6 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             const { mockRequest: rpcRequest } = createMockRpcRequest();
             const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
@@ -449,116 +431,106 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
         });
     });
 
-    describe('abort signal', () => {
-        it('aborts the signal passed to the RPC request when the caller aborts', () => {
+    describe('withSignal()', () => {
+        it('forwards the composed signal to the RPC request', () => {
             const { mockRequest: rpcRequest } = createMockRpcRequest();
             const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
-            store.connect();
+            store.withSignal(abortController.signal).connect();
             const rpcSignal = (rpcRequest.send as jest.Mock).mock.calls[0][0].abortSignal;
             expect(rpcSignal.aborted).toBe(false);
             abortController.abort('test reason');
             expect(rpcSignal.aborted).toBe(true);
             expect(rpcSignal.reason).toBe('test reason');
         });
-        it('aborts the signal passed to the subscription request when the caller aborts', () => {
+        it('forwards the composed signal to the subscription request', () => {
             const { mockRequest: rpcRequest } = createMockRpcRequest();
             const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
-            store.connect();
+            store.withSignal(abortController.signal).connect();
             const subscriptionSignal = (rpcSubscriptionRequest.subscribe as jest.Mock).mock.calls[0][0].abortSignal;
             expect(subscriptionSignal.aborted).toBe(false);
             abortController.abort('test reason');
             expect(subscriptionSignal.aborted).toBe(true);
             expect(subscriptionSignal.reason).toBe('test reason');
         });
-        it('swallows errors from the RPC request when the caller aborts', async () => {
+        it('transitions to `error` with the caller signal abort reason', () => {
+            const { mockRequest: rpcRequest } = createMockRpcRequest();
+            const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
+            const store = createReactiveStoreWithInitialValueAndSlotTracking({
+                rpcRequest,
+                rpcSubscriptionRequest,
+                rpcSubscriptionValueMapper: v => v.count,
+                rpcValueMapper: v => v.count,
+            });
+            store.withSignal(abortController.signal).connect();
+            const reason = new Error('timed out');
+            abortController.abort(reason);
+            expect(store.getUnifiedState()).toStrictEqual({
+                data: undefined,
+                error: reason,
+                status: 'error',
+            });
+        });
+        it('does not overwrite the abort-reason error with a late RPC rejection', async () => {
             expect.assertions(1);
             const { mockRequest: rpcRequest, reject } = createMockRpcRequest();
             const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
-            store.connect();
-            abortController.abort();
-            reject(new Error('aborted'));
+            store.withSignal(abortController.signal).connect();
+            const reason = new Error('cancelled');
+            abortController.abort(reason);
+            reject(new Error('rpc-late'));
             await jest.runAllTimersAsync();
-            expect(store.getError()).toBeUndefined();
-        });
-        it('swallows errors from the subscription when the caller aborts', async () => {
-            expect.assertions(1);
-            const { mockRequest: rpcRequest } = createMockRpcRequest();
-            const { mockRequest: rpcSubscriptionRequest, error } = createMockSubscriptionRequest();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
-            store.connect();
-            await jest.runAllTimersAsync();
-            abortController.abort();
-            error(new Error('aborted'));
-            await jest.runAllTimersAsync();
-            expect(store.getError()).toBeUndefined();
+            expect(store.getError()).toBe(reason);
         });
         it('does not update state when the RPC response arrives after abort', async () => {
-            expect.assertions(2);
+            expect.assertions(1);
             const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
             const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
-            store.connect();
-            const subscriber = jest.fn();
-            store.subscribe(subscriber);
+            store.withSignal(abortController.signal).connect();
             abortController.abort();
             resolve(rpcResponse(100, { count: 42 }));
             await jest.runAllTimersAsync();
             expect(store.getState()).toBeUndefined();
-            expect(subscriber).not.toHaveBeenCalled();
         });
         it('does not update state when a subscription notification arrives after abort', async () => {
-            expect.assertions(2);
+            expect.assertions(1);
             const { mockRequest: rpcRequest } = createMockRpcRequest();
             const { mockRequest: rpcSubscriptionRequest, pushNotification } = createMockSubscriptionRequest();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
                 rpcValueMapper: v => v.count,
             });
-            store.connect();
-            const subscriber = jest.fn();
-            store.subscribe(subscriber);
+            store.withSignal(abortController.signal).connect();
             await jest.runAllTimersAsync();
             abortController.abort();
             pushNotification(rpcResponse(100, { count: 99 }));
             await jest.runAllTimersAsync();
             expect(store.getState()).toBeUndefined();
-            expect(subscriber).not.toHaveBeenCalled();
         });
     });
 
@@ -567,7 +539,6 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             const { mockRequest: rpcRequest } = createMockRpcRequest();
             const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
@@ -585,7 +556,6 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
             const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
@@ -605,7 +575,6 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             const { mockRequest: rpcRequest, reject } = createMockRpcRequest();
             const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
@@ -626,7 +595,6 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
             const { mockRequest: rpcSubscriptionRequest, error } = createMockSubscriptionRequest();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
@@ -689,7 +657,6 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             expect.assertions(1);
             const { rpcRequest, rpcSubscriptionRequest } = createRetryableMocks();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
@@ -704,7 +671,6 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             expect.assertions(1);
             const { rpcInstances, rpcRequest, rpcSubscriptionRequest, subscriptionInstances } = createRetryableMocks();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
@@ -726,7 +692,6 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             expect.assertions(2);
             const { rpcInstances, rpcRequest, rpcSubscriptionRequest } = createRetryableMocks();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
@@ -744,7 +709,6 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             expect.assertions(1);
             const { rpcInstances, rpcRequest, rpcSubscriptionRequest } = createRetryableMocks();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
@@ -767,7 +731,6 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             expect.assertions(1);
             const { rpcInstances, rpcRequest, rpcSubscriptionRequest } = createRetryableMocks();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
@@ -791,7 +754,6 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             expect.assertions(1);
             const { rpcInstances, rpcRequest, rpcSubscriptionRequest } = createRetryableMocks();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
                 rpcRequest,
                 rpcSubscriptionRequest,
                 rpcSubscriptionValueMapper: v => v.count,
@@ -804,67 +766,6 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             store.subscribe(subscriber);
             store.retry();
             expect(subscriber).toHaveBeenCalledTimes(1);
-        });
-        it('does not re-invoke the RPC request after the caller has aborted', async () => {
-            expect.assertions(1);
-            const { rpcInstances, rpcRequest, rpcSubscriptionRequest } = createRetryableMocks();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
-            store.connect();
-            rpcInstances[0].reject(new Error('fail'));
-            await jest.runAllTimersAsync();
-            abortController.abort();
-            store.retry();
-            await jest.runAllTimersAsync();
-            expect(rpcRequest.send).toHaveBeenCalledTimes(1);
-        });
-        it('leaves the store in `error` state after the caller has aborted', async () => {
-            expect.assertions(1);
-            const { rpcInstances, rpcRequest, rpcSubscriptionRequest } = createRetryableMocks();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
-            store.connect();
-            const failure = new Error('fail');
-            rpcInstances[0].reject(failure);
-            await jest.runAllTimersAsync();
-            abortController.abort();
-            store.retry();
-            await jest.runAllTimersAsync();
-            expect(store.getUnifiedState()).toStrictEqual({
-                data: undefined,
-                error: failure,
-                status: 'error',
-            });
-        });
-        it('does not notify subscribers after the caller has aborted', async () => {
-            expect.assertions(1);
-            const { rpcInstances, rpcRequest, rpcSubscriptionRequest } = createRetryableMocks();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                abortSignal: abortController.signal,
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
-            store.connect();
-            rpcInstances[0].reject(new Error('fail'));
-            await jest.runAllTimersAsync();
-            abortController.abort();
-            const subscriber = jest.fn();
-            store.subscribe(subscriber);
-            store.retry();
-            await jest.runAllTimersAsync();
-            expect(subscriber).not.toHaveBeenCalled();
         });
     });
 });
