@@ -35,6 +35,22 @@ This type represents a number which has been encoded as a string for transit ove
 
 This type represents a Unix timestamp in _seconds_. It is represented as a `bigint` in client code and an `i64` in server code.
 
+### `UnwrapRpcResponse<T>`
+
+A conditional type that unwraps `SolanaRpcResponse<U>` → `U` at the type level so callers can surface the inner value without losing static type information. Values that are not wrapped in a `SolanaRpcResponse` envelope pass through unchanged.
+
+```ts
+import type { SolanaRpcResponse, UnwrapRpcResponse } from '@solana/rpc-types';
+
+type AccountValue = UnwrapRpcResponse<SolanaRpcResponse<{ lamports: bigint }>>;
+//   ^? { lamports: bigint }
+
+type AccountValue = UnwrapRpcResponse<{ lamports: bigint }>;
+//   ^? { lamports: bigint }
+```
+
+Pairs with [`splitSolanaRpcResponse()`](#splitsolanarpcresponse) for runtime detection.
+
 ## Functions
 
 ### `assertIsLamports()`
@@ -139,6 +155,27 @@ import { lamports } from '@solana/rpc-types';
 
 await transfer(address(fromAddress), address(toAddress), lamports(100000n));
 ```
+
+### `splitSolanaRpcResponse()`
+
+Decomposes a response that may or may not be wrapped in a `SolanaRpcResponse` envelope into its `value` and `slot` halves. Runtime-detects the envelope shape via duck-type (`'context' in x && 'value' in x`); raw responses without the envelope pass through with `slot: undefined`.
+
+Accepts `T | undefined` so callers can pipe a possibly-`undefined` source straight through without an external null-check. Overloads narrow the return type to match the input.
+
+```ts
+import { splitSolanaRpcResponse } from '@solana/rpc-types';
+
+splitSolanaRpcResponse({ context: { slot: 99n }, value: { lamports: 5n } });
+// → { value: { lamports: 5n }, slot: 99n }
+
+splitSolanaRpcResponse({ slot: 10n, parent: 9n, root: 8n });
+// → { value: { slot: 10n, parent: 9n, root: 8n }, slot: undefined }
+
+splitSolanaRpcResponse(undefined);
+// → { value: undefined, slot: undefined }
+```
+
+Pairs with [`UnwrapRpcResponse<T>`](#unwraprpcresponset) for the type-level counterpart.
 
 ### `stringifiedBigInt()`
 
