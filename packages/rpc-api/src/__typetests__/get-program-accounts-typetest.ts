@@ -1,6 +1,6 @@
 import type { Address } from '@solana/addresses';
 import type { PendingRpcRequest, Rpc } from '@solana/rpc-spec';
-import type { Base58EncodedBytes, Base64EncodedBytes } from '@solana/rpc-types';
+import type { Base58EncodedBytes, Base64EncodedBytes, GetProgramAccountsMemcmpFilter } from '@solana/rpc-types';
 
 import type { GetProgramAccountsApi } from '../getProgramAccounts';
 
@@ -56,5 +56,17 @@ const filterAddress = null as unknown as Address;
                 },
             ],
         }) satisfies PendingRpcRequest<unknown>;
+    }
+    // It rejects an `Address` as the bytes of a base64 memcmp filter.
+    {
+        const filter = {
+            memcmp: {
+                bytes: filterAddress,
+                encoding: 'base64' as const,
+                offset: 0n,
+            },
+        };
+        // @ts-expect-error An `Address` is base-58 encoded, so it cannot serve as the bytes of a base-64 filter.
+        filter satisfies GetProgramAccountsMemcmpFilter;
     }
 }
