@@ -1,4 +1,4 @@
-import { disabledActionStore } from '../staticStores';
+import { disabledActionStore, disabledStreamStore } from '../staticStores';
 
 describe('disabledActionStore', () => {
     it('reports a frozen `idle` state with no data or error', () => {
@@ -51,5 +51,62 @@ describe('disabledActionStore', () => {
     it('`dispatchAsync()` rejects with an AbortError so accidental awaits surface, not silently hang', async () => {
         const store = disabledActionStore<string>();
         await expect(store.dispatchAsync()).rejects.toMatchObject({ name: 'AbortError' });
+    });
+});
+
+describe('disabledStreamStore', () => {
+    it('reports a frozen `idle` state with no data or error', () => {
+        const store = disabledStreamStore<string>();
+        const state = store.getUnifiedState();
+        expect(state).toEqual({ data: undefined, error: undefined, status: 'idle' });
+        expect(Object.isFrozen(state)).toBe(true);
+    });
+
+    it('returns the same getUnifiedState() reference across calls', () => {
+        const store = disabledStreamStore<string>();
+        expect(store.getUnifiedState()).toBe(store.getUnifiedState());
+    });
+
+    it('`connect()` is a no-op — state does not change', () => {
+        const store = disabledStreamStore<string>();
+        const before = store.getUnifiedState();
+        store.connect();
+        store.connect();
+        expect(store.getUnifiedState()).toBe(before);
+    });
+
+    it('`reset()` is a no-op — state does not change', () => {
+        const store = disabledStreamStore<string>();
+        const before = store.getUnifiedState();
+        store.reset();
+        expect(store.getUnifiedState()).toBe(before);
+    });
+
+    it('`retry()` is a no-op — state does not change', () => {
+        const store = disabledStreamStore<string>();
+        const before = store.getUnifiedState();
+        store.retry();
+        expect(store.getUnifiedState()).toBe(before);
+    });
+
+    it('`withSignal(signal).connect()` is a no-op — state does not change, signal is not observed', () => {
+        const store = disabledStreamStore<string>();
+        const ctrl = new AbortController();
+        const before = store.getUnifiedState();
+        store.withSignal(ctrl.signal).connect();
+        ctrl.abort(new Error('would-be-cancellation'));
+        expect(store.getUnifiedState()).toBe(before);
+    });
+
+    it('`subscribe()` never notifies (connect + reset produce no state change to observe)', () => {
+        const store = disabledStreamStore<string>();
+        const listener = jest.fn();
+        const unsubscribe = store.subscribe(listener);
+        store.connect();
+        store.reset();
+        store.retry();
+        store.withSignal(new AbortController().signal).connect();
+        expect(listener).not.toHaveBeenCalled();
+        unsubscribe();
     });
 });

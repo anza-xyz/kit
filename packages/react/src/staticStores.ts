@@ -1,9 +1,15 @@
-import { ReactiveActionStore } from '@solana/subscribable';
+import { ReactiveActionStore, ReactiveState, ReactiveStreamStore } from '@solana/subscribable';
 
 const DISABLED_ACTION_STATE = Object.freeze({
     data: undefined,
     error: undefined,
     status: 'idle' as const,
+});
+
+const IDLE_STREAM_STATE: ReactiveState<never> = Object.freeze({
+    data: undefined,
+    error: undefined,
+    status: 'idle',
 });
 
 const noopUnsubscribe = () => {};
@@ -30,5 +36,27 @@ export function disabledActionStore<T>(): ReactiveActionStore<[], T> {
             dispatch: noopUnsubscribe,
             dispatchAsync: rejectedAbortError,
         }),
+    };
+}
+
+/**
+ * A {@link ReactiveStreamStore} that never transitions out of `idle` and ignores every
+ * `connect` / `retry` / `reset` / `subscribe` call. Returned by `useSubscription` when its
+ * source is `null`, signalling that the subscription should be gated off — for example because
+ * a required input (an address) is not yet known.
+ *
+ * The hook's result bridge maps this store's `idle` state to a `disabled` status so call sites
+ * can distinguish "not enabled" from "loading" without an extra flag.
+ */
+export function disabledStreamStore<T>(): ReactiveStreamStore<T> {
+    return {
+        connect: noopUnsubscribe,
+        getError: () => undefined,
+        getState: () => undefined,
+        getUnifiedState: () => IDLE_STREAM_STATE,
+        reset: noopUnsubscribe,
+        retry: noopUnsubscribe,
+        subscribe: noopSubscribe,
+        withSignal: () => ({ connect: noopUnsubscribe }),
     };
 }
