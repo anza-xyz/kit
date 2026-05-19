@@ -49,7 +49,7 @@
         "@types/react-dom": "^19.2.3",
         "eslint": "^10",
         "eslint-config-next": "^16.1.6",
-        "postcss": "^8.5.14",
+        "postcss": "^8.5.15",
         "tailwindcss": "^4.2.1",
         "typescript": "^5.9.3",
         "vercel": "^52.2.0"
