@@ -35,6 +35,22 @@ This type represents a number which has been encoded as a string for transit ove
 
 This type represents a Unix timestamp in _seconds_. It is represented as a `bigint` in client code and an `i64` in server code.
 
+### `UnwrapRpcResponse<T>`
+
+A conditional type that unwraps `SolanaRpcResponse<U>` → `U` at the type level so callers can surface the inner value without losing static type information. Values that are not wrapped in a `SolanaRpcResponse` envelope pass through unchanged.
+
+```ts
+import type { SolanaRpcResponse, UnwrapRpcResponse } from '@solana/rpc-types';
+
+type AccountValue = UnwrapRpcResponse<SolanaRpcResponse<{ lamports: bigint }>>;
+//   ^? { lamports: bigint }
+
+type AccountValue = UnwrapRpcResponse<{ lamports: bigint }>;
+//   ^? { lamports: bigint }
+```
+
+Pairs with [`isSolanaRpcResponse()`](#issolanarpcresponse) for runtime detection.
+
 ## Functions
 
 ### `assertIsLamports()`
@@ -139,6 +155,23 @@ import { lamports } from '@solana/rpc-types';
 
 await transfer(address(fromAddress), address(toAddress), lamports(100000n));
 ```
+
+### `isSolanaRpcResponse()`
+
+Type-guards a notification as a `SolanaRpcResponse` envelope. Validates `context.slot: bigint` and the presence of `value`, so adding new fields to the envelope in the future doesn't change the guard's contract — only the load-bearing fields are checked. The narrowed type is `SolanaRpcResponse<UnwrapRpcResponse<T>>`, so callers don't need to spell out the inner type separately.
+
+```ts
+import { isSolanaRpcResponse, type SolanaRpcResponse } from '@solana/rpc-types';
+
+function lift<T>(notification: T) {
+    if (isSolanaRpcResponse(notification)) {
+        return { slot: notification.context.slot, value: notification.value };
+    }
+    return { slot: undefined, value: notification };
+}
+```
+
+Pairs with [`UnwrapRpcResponse<T>`](#unwraprpcresponset) for the type-level counterpart.
 
 ### `stringifiedBigInt()`
 
