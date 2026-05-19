@@ -667,7 +667,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             store.retry();
             expect(rpcRequest.send).toHaveBeenCalledTimes(1);
         });
-        it('transitions to `retrying` with preserved data and clears the error', async () => {
+        it('transitions back to `loading` with preserved data AND error (SWR)', async () => {
             expect.assertions(1);
             const { rpcInstances, rpcRequest, rpcSubscriptionRequest, subscriptionInstances } = createRetryableMocks();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
@@ -679,13 +679,14 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             store.connect();
             rpcInstances[0].resolve(rpcResponse(100, { count: 42 }));
             await jest.runAllTimersAsync();
-            subscriptionInstances[0].error(new Error('stream died'));
+            const fail = new Error('stream died');
+            subscriptionInstances[0].error(fail);
             await jest.runAllTimersAsync();
             store.retry();
             expect(store.getUnifiedState()).toStrictEqual({
                 data: { context: { slot: 100n }, value: 42 },
-                error: undefined,
-                status: 'retrying',
+                error: fail,
+                status: 'loading',
             });
         });
         it('re-invokes the RPC request and subscription on retry', async () => {
@@ -750,7 +751,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 status: 'error',
             });
         });
-        it('notifies subscribers on the retrying transition', async () => {
+        it('notifies subscribers on the error → loading transition after retry', async () => {
             expect.assertions(1);
             const { rpcInstances, rpcRequest, rpcSubscriptionRequest } = createRetryableMocks();
             const store = createReactiveStoreWithInitialValueAndSlotTracking({
