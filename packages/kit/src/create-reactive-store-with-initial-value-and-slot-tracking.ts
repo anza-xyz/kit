@@ -57,14 +57,14 @@ const IDLE_STATE: ReactiveState<never> = Object.freeze({
  * - The returned store starts in `status: 'idle'`. Call
  *   {@link ReactiveStreamStore.connect | `connect()`} to fire the RPC request and open the
  *   subscription.
- * - From `idle`, the store transitions through `loading` until the first response or notification
- *   arrives, then to `loaded` with a {@link SolanaRpcResponse} containing the value and the slot
- *   context at which it was observed.
+ * - The store transitions through `loading` until the first response or notification arrives,
+ *   then to `loaded` with a {@link SolanaRpcResponse} containing the value and the slot context
+ *   at which it was observed.
  * - On error from either source, the store transitions to `status: 'error'` preserving the last
  *   known value. Only the first error per connection window is captured.
- * - A subsequent `connect()` after `loaded` or `error` aborts the current connection, transitions
- *   through `status: 'retrying'` (preserving stale data), and re-fires the RPC request and
- *   subscription with a fresh inner abort signal.
+ * - A subsequent `connect()` aborts the current connection, transitions back to
+ *   `status: 'loading'` (preserving the last known `data` and `error` for stale-while-revalidate),
+ *   and re-fires the RPC request and subscription with a fresh inner abort signal.
  * - {@link ReactiveStreamStore.reset | `reset()`} aborts the current connection and returns the
  *   store to `idle`, clearing `data` and `error`.
  * - Attach a caller-provided cancellation source via
@@ -145,12 +145,9 @@ export function createReactiveStoreWithInitialValueAndSlotTracking<TRpcValue, TS
             setState({ data: currentState.data, error: callerSignal.reason, status: 'error' });
             return;
         }
-        // Transition based on whether we have prior data/error to preserve.
-        if (currentState.status === 'idle') {
-            setState({ data: undefined, error: undefined, status: 'loading' });
-        } else {
-            setState({ data: currentState.data, error: undefined, status: 'retrying' });
-        }
+        // Transition to `loading`, preserving the last known `data` and `error` for SWR. If
+        // already `loading` with the same data/error, `setState` no-ops — no spurious notify.
+        setState({ data: currentState.data, error: currentState.error, status: 'loading' });
 
         const innerController = new AbortController();
         currentInnerController = innerController;
@@ -186,9 +183,9 @@ export function createReactiveStoreWithInitialValueAndSlotTracking<TRpcValue, TS
             .send({ abortSignal: signal })
             .then(({ context: { slot }, value }) => {
                 if (signal.aborted) return;
-                // `lastUpdateSlot` persists across retries so the store never regresses. If the
-                // retried RPC returns a slot older than one we've already seen, we wait for the
-                // subscription to deliver something newer before leaving `retrying`.
+                // `lastUpdateSlot` persists across reconnects so the store never regresses. If
+                // the re-fetched RPC returns a slot older than one we've already seen, we wait
+                // for the subscription to deliver something newer before leaving `loading`.
                 if (slot < lastUpdateSlot) return;
                 lastUpdateSlot = slot;
                 handleValue({ context: { slot }, value: rpcValueMapper(value) });

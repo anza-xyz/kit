@@ -35,18 +35,17 @@ This type represents a reactive store that holds the latest value published to a
 
 ```ts
 type ReactiveState<T> =
-    | { data: undefined; error: undefined; status: 'loading' }
+    | { data: T | undefined; error: unknown; status: 'loading' }
     | { data: T; error: undefined; status: 'loaded' }
     | { data: T | undefined; error: unknown; status: 'error' }
-    | { data: T | undefined; error: undefined; status: 'retrying' }
     | { data: undefined; error: undefined; status: 'idle' };
 ```
 
 > Also exported as `ReactiveStore<T>` for backwards compatibility. That alias is deprecated and will be removed in a future major release.
 
-The store starts in `status: 'idle'`. Call `connect()` to open the underlying stream; the store will transition through `loading` → `loaded` (or `error`). A subsequent `connect()` after `loaded` or `error` transitions through `retrying` while preserving the last known value. Call `reset()` to tear down the connection and return to `idle` without permanently killing the store.
+The store starts in `status: 'idle'`. Call `connect()` to open the underlying stream; the store will transition through `loading` → `loaded` (or `error`). Every subsequent `connect()` transitions back through `loading`, preserving the last known `data` and `error` (stale-while-revalidate). A subsequent `loaded` clears the error; a subsequent `error` replaces it. Call `reset()` to tear down the connection and return to `idle` without permanently killing the store.
 
-```ts
+```tsx
 const store: ReactiveStreamStore<AccountInfo> = /* ... */;
 
 // React — snapshot identity is stable between updates, so it can be passed directly.
@@ -55,9 +54,14 @@ useEffect(() => {
     store.connect();
     return () => store.reset();
 }, [store]);
-if (state.status === 'error') return <ErrorMessage error={state.error} onRetry={store.connect} />;
-if (state.status === 'loading' || state.status === 'idle') return <Spinner />;
-return <View data={state.data} />;
+// Stale-while-revalidate: keep showing the last value while a reconnect is in flight.
+return (
+    <>
+        {state.data !== undefined && <View data={state.data} />}
+        {state.status === 'loading' && state.data === undefined && <Spinner />}
+        {state.status === 'error' && <RetryBanner error={state.error} onRetry={store.connect} />}
+    </>
+);
 
 // Vue
 const snapshot = shallowRef(store.getUnifiedState());
@@ -195,33 +199,32 @@ Things to note:
 - If there are messages in the queue and the abort signal fires, all queued messages will be vended to the iterator after which it will return.
 - Any new iterators created after the first error is encountered will reject with that error when polled.
 
-### `createReactiveStoreFromDataPublisherFactory({ abortSignal, createDataPublisher, dataChannelName, errorChannelName })`
+### `createReactiveStoreFromDataPublisherFactory({ createDataPublisher, dataChannelName, errorChannelName })`
 
-Returns a `ReactiveStreamStore` that wires itself to a fresh `DataPublisher` on every `connect()`. Accepts an async factory so the store can tear down a broken stream and open a new one without losing subscribers or the last known value.
+Returns a `ReactiveStreamStore` that wires itself to a fresh `DataPublisher` on every `connect()`. Accepts an async factory so the store can tear down a broken stream and open a new one without losing subscribers or the last known value. The factory receives the per-connection `AbortSignal` so the underlying transport can stop when the connection window closes.
 
 ```ts
 const store = createReactiveStoreFromDataPublisherFactory({
-    abortSignal: AbortSignal.timeout(60_000),
-    async createDataPublisher() {
-        return await openMyConnection();
-    },
-    dataChannelName: 'notification',
+    createDataPublisher: signal => getDataPublisherFromEventEmitter(new WebSocket(url, { signal })),
+    dataChannelName: 'message',
     errorChannelName: 'error',
 });
-store.subscribe(() => {
+const unsubscribe = store.subscribe(() => {
     const snapshot = store.getUnifiedState();
-    if (snapshot.status === 'error') store.connect();
+    if (snapshot.status === 'error') console.error('Connection failed:', snapshot.error);
+    else if (snapshot.status === 'loaded') console.log('Latest:', snapshot.data);
 });
-store.connect();
+// Fresh 30-second clock per connection attempt:
+store.withSignal(AbortSignal.timeout(30_000)).connect();
 ```
 
 Things to note:
 
 - The returned store starts in `status: 'idle'`. Call `connect()` to open the first stream.
-- `createDataPublisher` is invoked on every `connect()`. From `idle`, the store transitions through `loading`; from any other status, through `retrying` while preserving the last known value.
+- `createDataPublisher` is invoked on every `connect()`. The store transitions through `loading`, preserving the last known `data` and `error` (stale-while-revalidate).
 - If `createDataPublisher` rejects, the store transitions to `status: 'error'` with the rejection as the error. Call `connect()` to try again.
 - `reset()` aborts the current connection and returns the store to `idle`, clearing `data` and `error`. A follow-up `connect()` opens a fresh stream.
-- Triggering the caller's `abortSignal` disconnects the store permanently; subsequent `connect()` calls are no-ops.
+- Attach a caller-provided cancellation source via `store.withSignal(signal).connect()` — the signal is composed with the per-connection controller via `AbortSignal.any`. Aborting the caller's signal transitions the store to `error` with that abort reason.
 
 ### `demultiplexDataPublisher(publisher, sourceChannelName, messageTransformer)`
 
