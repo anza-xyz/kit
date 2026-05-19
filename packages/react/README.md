@@ -199,6 +199,51 @@ refresh({ abortSignal: undefined }); // no abort signal for this attempt
 refresh(); // omit the key to use the factory (default)
 ```
 
+### `useSubscription(source, options?)`
+
+Subscribe to a stream-store source and surface the latest notification as reactive state. Returns `{ data, error, reconnect, status }` where `status` is one of `'loading' | 'loaded' | 'error' | 'disabled'`. Use it for any RPC subscription (`accountNotifications`, `slotNotifications`, `logsNotifications`, etc.) or any plugin-authored stream that satisfies `ReactiveStreamSource<T>`.
+
+`source` is any `ReactiveStreamSource<T>` — the `{ reactiveStore() }` duck-type satisfied by `PendingRpcSubscriptionsRequest`. Pass `null` to disable. Memoize the source with `useMemo` keyed on whatever inputs it depends on; stable identity is how the hook knows when to tear down and re-open.
+
+`data` is the notification as the source emits it. For RPC subscriptions that emit `SolanaRpcResponse<U>`, read the inner value at `data.value` and the slot at `data.context.slot`. For raw notifications, `data` is the raw shape.
+
+```tsx
+import { useClient, useSubscription } from '@solana/react';
+import type { Address, AccountNotificationsApi, ClientWithRpcSubscriptions } from '@solana/kit';
+
+function AccountBalance({ address }: { address: Address }) {
+    const client = useClient<ClientWithRpcSubscriptions<AccountNotificationsApi>>();
+    const source = useMemo(() => client.rpcSubscriptions.accountNotifications(address), [client, address]);
+    const { data, error, reconnect } = useSubscription(source);
+    if (error) return <button onClick={reconnect}>Reconnect</button>;
+    return <p>{data ? `${data.value.lamports} lamports at slot ${data.context.slot}` : 'Connecting…'}</p>;
+}
+```
+
+`reconnect()` re-opens the connection. After a `loaded` outcome that transitions to `error`, calling `reconnect()` returns `status` to `'loading'` while preserving the stale `data` and `error` (stale-while-revalidate) → `'loaded'` (or `'error'` again). The hook tears the connection down on unmount via the store's `reset()`; StrictMode's mount → unmount → mount cycle re-opens cleanly.
+
+#### Per-connection cancellation
+
+Pass `getAbortSignal` to attach a cancellation signal to each individual connection — initial subscribe plus every `reconnect()`. The natural use is per-connection timeouts:
+
+```tsx
+const { data, error, reconnect } = useSubscription(source, {
+    // Each connection gets a fresh 30-second clock. `reconnect()` resets it.
+    getAbortSignal: () => AbortSignal.timeout(30_000),
+});
+```
+
+The factory is held in a ref synced to the latest render, so inline closures are fine — no `useCallback` needed. To kill the subscription entirely (e.g. on a route change), set the memoized source to `null` (the result reports `disabled`), or let the component unmount.
+
+`reconnect()` accepts an optional `{ abortSignal }` override that replaces the configured factory for just that attempt — useful when one specific reconnect needs different cancellation semantics:
+
+```tsx
+const userInitiatedCtrl = new AbortController();
+reconnect({ abortSignal: userInitiatedCtrl.signal }); // override: use this signal, ignore the factory
+reconnect({ abortSignal: undefined }); // no abort signal for this attempt
+reconnect(); // omit the key to use the factory (default)
+```
+
 ## Hooks
 
 ### `useSignIn(uiWalletAccount, chain)`
