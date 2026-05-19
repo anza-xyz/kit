@@ -37,19 +37,18 @@ type FactoryConfig = Readonly<{
  * - `idle`: the store has not yet been connected, or has been reset via
  *   {@link ReactiveStreamStore.reset | `reset()`}. Call
  *   {@link ReactiveStreamStore.connect | `connect()`} to open the underlying stream.
- * - `loading`: a first connection is in progress; no data has arrived yet.
+ * - `loading`: a connection is in progress. `data` and `error` are preserved from the previous
+ *   connection (if any) — stale-while-revalidate UX. A subsequent `loaded` clears `error`; a
+ *   subsequent `error` replaces it.
  * - `loaded`: a value has been received and no error is active.
  * - `error`: the stream failed. `data` holds the last known value (or `undefined` if none ever
  *   arrived) and `error` holds the failure.
- * - `retrying`: a follow-up `connect()` is in progress after a previous outcome. `error` is
- *   cleared; `data` is preserved from the previous connection if any.
  */
 export type ReactiveState<T> =
-    | { readonly data: T | undefined; readonly error: undefined; readonly status: 'retrying' }
     | { readonly data: T | undefined; readonly error: unknown; readonly status: 'error' }
+    | { readonly data: T | undefined; readonly error: unknown; readonly status: 'loading' }
     | { readonly data: T; readonly error: undefined; readonly status: 'loaded' }
-    | { readonly data: undefined; readonly error: undefined; readonly status: 'idle' }
-    | { readonly data: undefined; readonly error: undefined; readonly status: 'loading' };
+    | { readonly data: undefined; readonly error: undefined; readonly status: 'idle' };
 
 const IDLE_STATE: ReactiveState<never> = Object.freeze({
     data: undefined,
@@ -63,9 +62,9 @@ const IDLE_STATE: ReactiveState<never> = Object.freeze({
  * `from()`, and other reactive primitives that expect a `{ subscribe, getUnifiedState }` contract.
  *
  * The store starts in `status: 'idle'`. Call {@link ReactiveStreamStore.connect | `connect()`}
- * to open the underlying stream; the store will then transition through `loading` → `loaded` (or
- * `error`). A subsequent `connect()` after `loaded` or `error` transitions through `retrying`
- * while preserving the last known value.
+ * to open the underlying stream; the store transitions through `loading` → `loaded` (or `error`).
+ * Subsequent `connect()` calls also pass through `loading` while preserving the last known
+ * `data` and `error` (stale-while-revalidate).
  *
  * @example
  * ```ts
@@ -86,9 +85,9 @@ const IDLE_STATE: ReactiveState<never> = Object.freeze({
 export type ReactiveStreamStore<T> = {
     /**
      * Open the underlying stream. Aborts any currently active connection, invokes the configured
-     * factory, and transitions the store through `loading` (when called from `idle` or while a
-     * connection is already in flight) or `retrying` (when called after a previous outcome —
-     * i.e. `loaded` or `error`) before settling into `loaded` (on data) or `error` (on failure).
+     * factory, and transitions the store to `loading` (preserving the last known `data` and
+     * `error` for stale-while-revalidate) before settling into `loaded` (on data) or `error`
+     * (on failure).
      */
     connect(): void;
     /**
@@ -104,7 +103,7 @@ export type ReactiveStreamStore<T> = {
      * notification has arrived yet. On error, continues to return the last known value.
      *
      * @deprecated Use {@link ReactiveStreamStore.getUnifiedState | `getUnifiedState()`} instead. This
-     * getter returns only the value field and does not surface lifecycle status (e.g. `retrying`).
+     * getter returns only the value field and does not surface lifecycle status (e.g. `loading`).
      */
     getState(): T | undefined;
     /**
@@ -204,9 +203,8 @@ export type ReactiveStreamSource<T> = {
  * Things to note:
  *
  * - The returned store starts in `status: 'idle'`. Call `connect()` to open the first stream.
- * - `createDataPublisher` is invoked on every `connect()`. From `idle`, the store transitions
- *   through `loading`; from any other status, through `retrying` while preserving the last
- *   known value.
+ * - `createDataPublisher` is invoked on every `connect()`. The store transitions through
+ *   `loading`, preserving the last known `data` and `error` (stale-while-revalidate).
  * - If `createDataPublisher` rejects, the store transitions to `status: 'error'` with the
  *   rejection as the error. Call `connect()` to try again.
  * - `reset()` aborts the current connection and returns the store to `idle`, clearing `data`
@@ -267,15 +265,9 @@ export function createReactiveStoreFromDataPublisherFactory<TData>({
             setState({ data: currentState.data, error: callerSignal.reason, status: 'error' });
             return;
         }
-        // Transition based on whether we have a prior outcome to preserve. If already `loading`,
-        // a connection is in flight — we've just aborted it and will rewire to a fresh factory
-        // invocation below, but there's no user-visible value yet, so stay in `loading` rather
-        // than detour through `retrying`.
-        if (currentState.status === 'idle') {
-            setState({ data: undefined, error: undefined, status: 'loading' });
-        } else if (currentState.status !== 'loading') {
-            setState({ data: currentState.data, error: undefined, status: 'retrying' });
-        }
+        // Transition to `loading`, preserving the last known `data` and `error` for SWR. If
+        // already `loading` with the same data/error, `setState` no-ops — no spurious notify.
+        setState({ data: currentState.data, error: currentState.error, status: 'loading' });
         // Inner signal is passed to the data publisher (composed with caller signal if any).
         const innerController = new AbortController();
         currentInnerController = innerController;
