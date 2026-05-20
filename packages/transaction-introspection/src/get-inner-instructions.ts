@@ -6,7 +6,6 @@ import {
 import type { AccountMeta } from '@solana/instructions';
 import type { GetTransactionApiResponseBase64 } from '@solana/rpc-api';
 
-import type { ResolvedInstruction } from './get-instructions';
 import type { TracedInstruction } from './types';
 
 /**
@@ -25,9 +24,7 @@ type RpcInnerInstructionsGroup = NonNullable<
  *
  * @example
  * ```ts
- * for (const traced of walkInnerInstructionsFromMeta(rpcResponse.meta, accountMetas)) {
- *     // ...
- * }
+ * const inner = getInnerInstructionsFromMeta(rpcResponse.meta, accountMetas);
  * ```
  */
 export type MetaWithInnerInstructions = Readonly<{
@@ -35,24 +32,31 @@ export type MetaWithInnerInstructions = Readonly<{
 }>;
 
 /**
- * Yields the inner instructions in a `getTransaction` response as traced
- * kit {@link Instruction} objects.
+ * Returns the inner instructions in a `getTransaction` response as
+ * {@link TracedInstruction}s.
  *
  * The RPC returns inner instructions in a different shape from the wire
  * format: indices reference the same flat account list as the outer
  * instructions, but `data` is a base58-encoded string. This helper decodes
  * the data, resolves the indices against the supplied {@link AccountMeta}
- * list, and yields one {@link TracedInstruction} per inner instruction.
+ * list, and tags each instruction with an `inner` trace.
  *
  * Throws if any `programIdIndex` or account index falls outside the
  * supplied `accountMetas` list.
+ *
+ * @example
+ * ```ts
+ * const accountMetas = getAccountMetasFromCompiledTransactionMessage(compiledMessage, loadedAddresses);
+ * const inner = getInnerInstructionsFromMeta(rpcResponse.meta, accountMetas);
+ * ```
  */
-export function* walkInnerInstructionsFromMeta(
+export function getInnerInstructionsFromMeta(
     meta: MetaWithInnerInstructions,
     accountMetas: readonly AccountMeta[],
-): Generator<TracedInstruction, void, void> {
-    if (!meta.innerInstructions) return;
+): TracedInstruction[] {
+    if (!meta.innerInstructions) return [];
     const base58 = getBase58Encoder();
+    const result: TracedInstruction[] = [];
     for (const group of meta.innerInstructions) {
         for (let innerIndex = 0; innerIndex < group.instructions.length; innerIndex++) {
             const ix = group.instructions[innerIndex];
@@ -73,20 +77,18 @@ export function* walkInnerInstructionsFromMeta(
                 }
                 return meta;
             });
-            const instruction: ResolvedInstruction = {
+            result.push({
                 accounts,
                 data: base58.encode(ix.data),
                 programAddress: programMeta.address,
-            };
-            yield {
-                instruction,
                 trace: {
                     innerIndex,
                     kind: 'inner',
                     outerIndex: group.index,
                     ...(ix.stackHeight !== undefined ? { stackHeight: ix.stackHeight } : {}),
                 },
-            };
+            });
         }
     }
+    return result;
 }

@@ -4,7 +4,7 @@ import type { ResolvedInstruction } from './get-instructions';
  * The location of an instruction within a transaction.
  *
  * - `kind: 'outer'` — a top-level instruction in the transaction message.
- *   `index` is its position in `compiled.instructions`.
+ *   `index` is its position in the compiled message's instructions.
  * - `kind: 'inner'` — an instruction emitted via cross-program invocation.
  *   `outerIndex` is the index of the outer instruction that triggered the
  *   CPI chain; `innerIndex` is the position within that outer instruction's
@@ -37,16 +37,27 @@ export type InstructionTrace =
       }>;
 
 /**
- * An instruction together with its location within a transaction.
+ * A {@link ResolvedInstruction} carrying its location in the transaction
+ * as a `trace` property.
+ *
+ * Because a `TracedInstruction` is itself a {@link ResolvedInstruction},
+ * it can be passed directly to the auto-generated `@solana-program/*`
+ * `identifyXInstruction` / `parseXInstruction` helpers, and to
+ * `isInstructionForProgram` from `@solana/instructions`.
  *
  * @example
  * ```ts
- * for (const { instruction, trace }: TracedInstruction of walkInstructions(args)) {
- *     console.log(trace.kind, instruction.programAddress);
+ * import { isInstructionForProgram } from '@solana/instructions';
+ * import { TOKEN_PROGRAM_ADDRESS, identifyTokenInstruction } from '@solana-program/token';
+ *
+ * for (const ix of walkInstructions({ compiledMessage, meta, loadedAddresses })) {
+ *     if (isInstructionForProgram(ix, TOKEN_PROGRAM_ADDRESS)) {
+ *         // `ix.programAddress` is narrowed to TOKEN_PROGRAM_ADDRESS.
+ *         identifyTokenInstruction(ix);
+ *         console.log(ix.trace.kind);
+ *     }
  * }
  * ```
  */
-export type TracedInstruction = Readonly<{
-    instruction: ResolvedInstruction;
-    trace: InstructionTrace;
-}>;
+export type TracedInstruction<TProgramAddress extends string = string> = Readonly<{ trace: InstructionTrace }> &
+    ResolvedInstruction<TProgramAddress>;
