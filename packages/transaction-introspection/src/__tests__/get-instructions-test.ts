@@ -107,12 +107,44 @@ describe('getInstructionsFromCompiledTransactionMessage', () => {
         );
     });
 
-    it('throws SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED for v1 messages', () => {
-        const v1 = { ...compiled, version: 1 } as unknown as CompiledTransactionMessage;
-        const err = getThrownError(() => getInstructionsFromCompiledTransactionMessage(v1));
+    it('resolves v1 messages by zipping instructionHeaders + instructionPayloads', () => {
+        const v1 = {
+            configMask: 0,
+            configValues: [],
+            header: {
+                numReadonlyNonSignerAccounts: 1,
+                numReadonlySignerAccounts: 0,
+                numSignerAccounts: 1,
+            },
+            instructionHeaders: [{ numInstructionAccounts: 2, numInstructionDataBytes: 3, programAccountIndex: 1 }],
+            instructionPayloads: [{ instructionAccountIndices: [0, 2], instructionData: new Uint8Array([1, 2, 3]) }],
+            numInstructions: 1,
+            numStaticAccounts: 2,
+            staticAccounts: ['fee-payer' as Address, 'program' as Address],
+            version: 1,
+        } as unknown as CompiledTransactionMessage;
+
+        const result = getInstructionsFromCompiledTransactionMessage(v1, {
+            readonly: [],
+            writable: ['alt-w' as Address],
+        });
+        expect(result).toHaveLength(1);
+        expect(result[0]).toMatchObject({
+            accounts: [
+                { address: 'fee-payer', role: AccountRole.WRITABLE_SIGNER },
+                { address: 'alt-w', role: AccountRole.WRITABLE },
+            ],
+            programAddress: 'program',
+        });
+        expect(Array.from(result[0].data)).toStrictEqual([1, 2, 3]);
+    });
+
+    it('throws SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED for unknown versions', () => {
+        const vN = { ...compiled, version: 99 } as unknown as CompiledTransactionMessage;
+        const err = getThrownError(() => getInstructionsFromCompiledTransactionMessage(vN));
         expect(err).toBeInstanceOf(SolanaError);
         expect((err as SolanaError).context.__code).toBe(SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED);
-        expect((err as SolanaError).context).toMatchObject({ unsupportedVersion: 1 });
+        expect((err as SolanaError).context).toMatchObject({ unsupportedVersion: 99 });
     });
 });
 
