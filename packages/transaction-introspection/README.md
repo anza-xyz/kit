@@ -13,7 +13,7 @@
 
 This package contains helpers for inspecting a confirmed Solana transaction's instructions — both top-level and inner CPI — in a form that the auto-generated `@solana-program/*` clients can `identify` and `parse` directly. It can be used standalone, but it is also exported as part of Kit [`@solana/kit`](https://github.com/anza-xyz/kit/tree/main/packages/kit).
 
-The kit codecs decode a `getTransaction` response down to a `CompiledTransactionMessage`. The per-program clients (`identifyTokenInstruction`, `parseSyncNativeInstruction`, etc.) accept kit `Instruction` objects. This package fills the gap between them: it decodes the wire transaction, resolves account indices against static keys plus ALT-loaded addresses, normalizes the JSON-shape inner instructions from `meta.innerInstructions`, and returns a single list of traced instructions directly usable with the auto-generated `@solana-program/*` clients and with `isInstructionForProgram` from `@solana/instructions`.
+The kit codecs decode a `getTransaction` response down to a `CompiledTransactionMessage`. The per-program clients (`identifyTokenInstruction`, `parseSyncNativeInstruction`, etc.) accept kit `Instruction` objects. This package fills the gap between them: it decodes the wire transaction, resolves account indices against static keys plus ALT-loaded addresses, normalizes the JSON-shape inner instructions from `meta.innerInstructions`, and returns a single list of traced instructions directly usable with the auto-generated `@solana-program/*` clients and with `isInstructionForProgram` from `@solana/instructions`. Supports `legacy`, `v0`, and `v1` compiled transaction messages.
 
 ## Quick start
 
@@ -200,5 +200,5 @@ A structural type capturing the minimum shape of `getTransaction`'s `meta` field
 
 ## Notes
 
-- V1 transaction messages are not currently supported. The helpers throw a `SolanaError` with code `SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED` for them. Pin `maxSupportedTransactionVersion: 0` when calling `getTransaction`.
+- Supports `legacy`, `v0`, and `v1` compiled transaction messages. Pass any version through `decodeTransactionFromRpcResponse` and `walkInstructions` — account indices, inner instructions, and ALT-loaded addresses resolve identically across versions. To actually receive `v0` or `v1` from the RPC you still need to set `maxSupportedTransactionVersion` on the `getTransaction` call — without it, the server downgrades anything past legacy to an error.
 - `decodeTransactionFromRpcResponse` accepts `encoding: 'base64'`, `'base58'`, or `'json'`. `'jsonParsed'` is not supported — its instructions arrive pre-parsed by the server and lack raw bytes.

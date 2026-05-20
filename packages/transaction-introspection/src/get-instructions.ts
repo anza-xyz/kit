@@ -17,13 +17,6 @@ import type { CompiledTransactionMessage } from '@solana/transaction-messages';
 import type { LoadedAddresses } from './get-all-addresses';
 
 /**
- * A version-agnostic compiled transaction message that has top-level
- * instructions. (V1 messages don't carry instructions directly and are
- * out of scope here.)
- */
-type CompiledTransactionMessageWithInstructions = Extract<CompiledTransactionMessage, { version: 'legacy' | 0 }>;
-
-/**
  * An outer transaction instruction with its account indices resolved to
  * full {@link AccountMeta}s and its data exposed as a `ReadonlyUint8Array`.
  *
@@ -31,7 +24,8 @@ type CompiledTransactionMessageWithInstructions = Extract<CompiledTransactionMes
  * ```ts
  * for (const ix of getInstructionsFromCompiledTransactionMessage(compiled)) {
  *     // `ix` is a `ResolvedInstruction` — directly usable with auto-generated
- *     // `parseXInstruction` / `identifyXInstruction` helpers.
+ *     // `parseXInstruction` / `identifyXInstruction` helpers, and with
+ *     // `isInstructionForProgram` from `@solana/instructions`.
  *     identifyTokenInstruction(ix);
  * }
  * ```
@@ -42,6 +36,17 @@ export type ResolvedInstruction<TProgramAddress extends string = string> = Instr
 > &
     InstructionWithAccounts<readonly AccountMeta[]> &
     InstructionWithData<ReadonlyUint8Array>;
+
+/**
+ * The normalized shape of an instruction inside a compiled transaction
+ * message — `legacy`, `0`, and `1` are all reduced to this form before
+ * resolution.
+ */
+type NormalizedCompiledInstruction = Readonly<{
+    accountIndices: readonly number[];
+    data: ReadonlyUint8Array;
+    programAddressIndex: number;
+}>;
 
 /**
  * Builds the full ordered list of {@link AccountMeta}s for a compiled
@@ -98,12 +103,15 @@ export function getAccountMetasFromCompiledTransactionMessage(
  * Returns the outer instructions of a compiled transaction message as kit
  * {@link Instruction} objects.
  *
- * Each yielded instruction has its account indices resolved to
+ * Each returned instruction has its account indices resolved to
  * {@link AccountMeta}s (with the proper signer/writable bits) and its data
  * exposed as a `ReadonlyUint8Array` — the form the auto-generated
  * `@solana-program/*` `parseXInstruction` functions expect.
  *
- * Throws {@link SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_PROGRAM_ADDRESS_NOT_FOUND}
+ * Supports `legacy`, `v0`, and `v1` compiled messages. Throws
+ * {@link SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED} for any
+ * other version, and
+ * {@link SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_PROGRAM_ADDRESS_NOT_FOUND}
  * if a `programAddressIndex` falls outside the resolved account list.
  *
  * @example
@@ -124,9 +132,8 @@ export function getInstructionsFromCompiledTransactionMessage(
     compiledMessage: CompiledTransactionMessage,
     loadedAddresses?: LoadedAddresses | null,
 ): ResolvedInstruction[] {
-    const message = assertCompiledMessageVersionIsSupported(compiledMessage);
-    const metas = getAccountMetasFromCompiledTransactionMessage(message, loadedAddresses);
-    return message.instructions.map(ix => resolveInstruction(ix, metas));
+    const metas = getAccountMetasFromCompiledTransactionMessage(compiledMessage, loadedAddresses);
+    return normalizeCompiledInstructions(compiledMessage).map(ix => resolveInstruction(ix, metas));
 }
 
 /**
@@ -141,32 +148,43 @@ export function getInstructionsFromCompiledTransactionMessageWithMetas(
     compiledMessage: CompiledTransactionMessage,
     accountMetas: readonly AccountMeta[],
 ): ResolvedInstruction[] {
-    const message = assertCompiledMessageVersionIsSupported(compiledMessage);
-    return message.instructions.map(ix => resolveInstruction(ix, accountMetas));
+    return normalizeCompiledInstructions(compiledMessage).map(ix => resolveInstruction(ix, accountMetas));
 }
 
-function assertCompiledMessageVersionIsSupported(
-    compiledMessage: CompiledTransactionMessage,
-): CompiledTransactionMessageWithInstructions {
-    if (compiledMessage.version !== 'legacy' && compiledMessage.version !== 0) {
-        throw new SolanaError(SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED, {
-            unsupportedVersion: compiledMessage.version,
-        });
+function normalizeCompiledInstructions(compiledMessage: CompiledTransactionMessage): NormalizedCompiledInstruction[] {
+    if (compiledMessage.version === 'legacy' || compiledMessage.version === 0) {
+        return compiledMessage.instructions.map(ix => ({
+            accountIndices: ix.accountIndices ?? [],
+            data: ix.data ?? new Uint8Array(),
+            programAddressIndex: ix.programAddressIndex,
+        }));
     }
-    return compiledMessage as CompiledTransactionMessageWithInstructions;
+    if (compiledMessage.version === 1) {
+        const { instructionHeaders, instructionPayloads } = compiledMessage;
+        return instructionHeaders.map((header, i) => ({
+            accountIndices: instructionPayloads[i].instructionAccountIndices,
+            data: instructionPayloads[i].instructionData,
+            programAddressIndex: header.programAccountIndex,
+        }));
+    }
+    // Compile-time exhaustiveness: if a future `CompiledTransactionMessage`
+    // variant is added, `compiledMessage` will no longer narrow to `never`
+    // here and this assignment will fail to typecheck — forcing us to handle
+    // the new version explicitly.
+    const _exhaustiveCheck: never = compiledMessage;
+    throw new SolanaError(SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED, {
+        unsupportedVersion: (_exhaustiveCheck as { version: number }).version,
+    });
 }
 
-function resolveInstruction(
-    ix: CompiledTransactionMessageWithInstructions['instructions'][number],
-    metas: readonly AccountMeta[],
-): ResolvedInstruction {
+function resolveInstruction(ix: NormalizedCompiledInstruction, metas: readonly AccountMeta[]): ResolvedInstruction {
     const programMeta = metas[ix.programAddressIndex];
     if (!programMeta) {
         throw new SolanaError(SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_PROGRAM_ADDRESS_NOT_FOUND, {
             index: ix.programAddressIndex,
         });
     }
-    const accounts: AccountMeta[] = (ix.accountIndices ?? []).map(i => {
+    const accounts: AccountMeta[] = ix.accountIndices.map(i => {
         const meta = metas[i];
         if (!meta) {
             throw new SolanaError(
@@ -176,10 +194,9 @@ function resolveInstruction(
         }
         return meta;
     });
-    const data: ReadonlyUint8Array = ix.data ?? new Uint8Array();
     return {
         accounts,
-        data,
+        data: ix.data,
         programAddress: programMeta.address as Address,
     };
 }

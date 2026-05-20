@@ -99,6 +99,58 @@ describe('walkInstructions over a JSON-decoded transaction', () => {
     });
 });
 
+describe('walkInstructions over a v1 transaction', () => {
+    const v1Compiled = {
+        configMask: 0,
+        configValues: [],
+        header: {
+            numReadonlyNonSignerAccounts: 1,
+            numReadonlySignerAccounts: 0,
+            numSignerAccounts: 1,
+        },
+        instructionHeaders: [
+            { numInstructionAccounts: 1, numInstructionDataBytes: 1, programAccountIndex: 1 },
+            { numInstructionAccounts: 1, numInstructionDataBytes: 1, programAccountIndex: 2 },
+        ],
+        instructionPayloads: [
+            { instructionAccountIndices: [0], instructionData: new Uint8Array([1]) },
+            { instructionAccountIndices: [0], instructionData: new Uint8Array([2]) },
+        ],
+        numInstructions: 2,
+        numStaticAccounts: 3,
+        staticAccounts: ['fee-payer' as Address, 'program-a' as Address, 'program-b' as Address],
+        version: 1,
+    } as unknown as CompiledTransactionMessage;
+
+    it('returns v1 outer instructions in order', () => {
+        const out = walkInstructions({ compiledMessage: v1Compiled });
+        expect(out).toHaveLength(2);
+        expect(out[0].trace).toStrictEqual({ index: 0, kind: 'outer' });
+        expect(out[0].programAddress).toBe('program-a');
+        expect(Array.from(out[0].data)).toStrictEqual([1]);
+        expect(out[1].trace).toStrictEqual({ index: 1, kind: 'outer' });
+        expect(out[1].programAddress).toBe('program-b');
+    });
+
+    it('walks v1 inner instructions alongside outer', () => {
+        const innerData = asB58(new Uint8Array([42]));
+        const out = walkInstructions({
+            compiledMessage: v1Compiled,
+            meta: {
+                innerInstructions: [
+                    {
+                        index: 0,
+                        instructions: [{ accounts: [0], data: innerData, programIdIndex: 2, stackHeight: 2 }],
+                    },
+                ],
+            },
+        });
+        expect(out).toHaveLength(3);
+        expect(out[2].trace).toStrictEqual({ innerIndex: 0, kind: 'inner', outerIndex: 0, stackHeight: 2 });
+        expect(out[2].programAddress).toBe('program-b');
+    });
+});
+
 describe('walkInstructions over an ALT-loaded v0 transaction', () => {
     const v0Compiled = {
         header: {
