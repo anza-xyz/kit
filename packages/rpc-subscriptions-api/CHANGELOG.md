@@ -1,5 +1,22 @@
 # @solana/rpc-subscriptions-api
 
+## 6.9.0
+
+### Minor Changes
+
+- [#1562](https://github.com/anza-xyz/kit/pull/1562) [`096c48e`](https://github.com/anza-xyz/kit/commit/096c48e6771ad7ea833cb4ca51206b7cc827a3d7) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Bump the TypeScript peer dependency floor from `>=5.0.0` to `>=5.4.0`.
+
+### Patch Changes
+
+- Updated dependencies [[`096c48e`](https://github.com/anza-xyz/kit/commit/096c48e6771ad7ea833cb4ca51206b7cc827a3d7), [`0e8fd3f`](https://github.com/anza-xyz/kit/commit/0e8fd3f62b2cdb8e5082700096ce011883a60578)]:
+    - @solana/addresses@6.9.0
+    - @solana/keys@6.9.0
+    - @solana/rpc-subscriptions-spec@6.9.0
+    - @solana/rpc-transformers@6.9.0
+    - @solana/rpc-types@6.9.0
+    - @solana/transaction-messages@6.9.0
+    - @solana/transactions@6.9.0
+
 ## 6.8.0
 
 ### Patch Changes

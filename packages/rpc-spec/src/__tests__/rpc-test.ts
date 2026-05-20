@@ -80,6 +80,114 @@ describe('JSON-RPC 2.0', () => {
             expect(rpc).not.toHaveProperty('then');
         });
     });
+    describe('when calling reactiveStore() on a pending request', () => {
+        let execute: jest.Mock;
+        let rpc: Rpc<TestRpcMethods>;
+        beforeEach(() => {
+            jest.useFakeTimers();
+            execute = jest.fn(
+                () =>
+                    new Promise(() => {
+                        /* never resolve */
+                    }),
+            );
+            rpc = createRpc({
+                api: new Proxy({} as RpcApi<TestRpcMethods>, {
+                    get() {
+                        return (..._params: unknown[]): RpcPlan<unknown> => ({ execute });
+                    },
+                }),
+                transport: makeHttpRequest,
+            });
+        });
+        afterEach(() => {
+            jest.useRealTimers();
+        });
+        it('fires the request on creation with a non-aborted signal', () => {
+            rpc.someMethod(123).reactiveStore();
+            expect(execute).toHaveBeenCalledTimes(1);
+            const { signal } = execute.mock.calls[0][0];
+            expect(signal).toBeInstanceOf(AbortSignal);
+            expect(signal.aborted).toBe(false);
+        });
+        it('forwards the transport to the plan on creation', () => {
+            rpc.someMethod(123).reactiveStore();
+            expect(execute).toHaveBeenCalledWith(expect.objectContaining({ transport: makeHttpRequest }));
+        });
+        it('returns a store synchronously in the `running` status', () => {
+            const store = rpc.someMethod(123).reactiveStore();
+            expect(store.getState()).toStrictEqual({
+                data: undefined,
+                error: undefined,
+                status: 'running',
+            });
+        });
+        it('transitions to `success` with resolved data once the plan resolves', async () => {
+            expect.assertions(1);
+            const { promise, resolve } = Promise.withResolvers<number>();
+            execute.mockReturnValueOnce(promise);
+            const store = rpc.someMethod(123).reactiveStore();
+            resolve(42);
+            await jest.runAllTimersAsync();
+            expect(store.getState()).toStrictEqual({
+                data: 42,
+                error: undefined,
+                status: 'success',
+            });
+        });
+        it('transitions to `error` when the plan rejects', async () => {
+            expect.assertions(1);
+            const { promise, reject } = Promise.withResolvers<number>();
+            execute.mockReturnValueOnce(promise);
+            const store = rpc.someMethod(123).reactiveStore();
+            const error = new Error('o no');
+            reject(error);
+            await jest.runAllTimersAsync();
+            expect(store.getState()).toStrictEqual({
+                data: undefined,
+                error,
+                status: 'error',
+            });
+        });
+        it('notifies subscribers when state changes', async () => {
+            expect.assertions(2);
+            const { promise, resolve } = Promise.withResolvers<number>();
+            execute.mockReturnValueOnce(promise);
+            const store = rpc.someMethod(123).reactiveStore();
+            const subscriberA = jest.fn();
+            const subscriberB = jest.fn();
+            store.subscribe(subscriberA);
+            store.subscribe(subscriberB);
+            resolve(42);
+            await jest.runAllTimersAsync();
+            expect(subscriberA).toHaveBeenCalledTimes(1);
+            expect(subscriberB).toHaveBeenCalledTimes(1);
+        });
+        it('re-fires the plan when dispatch() is called', async () => {
+            expect.assertions(1);
+            // request 1: rejects
+            execute.mockRejectedValueOnce(new Error('o no'));
+            const store = rpc.someMethod(123).reactiveStore();
+            await jest.runAllTimersAsync();
+            // request 2: resolves
+            execute.mockResolvedValueOnce(42);
+            store.dispatch();
+            await jest.runAllTimersAsync();
+            expect(execute).toHaveBeenCalledTimes(2);
+        });
+        it('aborts the in-flight signal and returns to idle when reset() is called', () => {
+            const store = rpc.someMethod(123).reactiveStore();
+            const { signal } = execute.mock.calls[0][0];
+            expect(signal.aborted).toBe(false);
+            store.reset();
+            expect(signal.aborted).toBe(true);
+            expect(store.getState()).toStrictEqual({
+                data: undefined,
+                error: undefined,
+                status: 'idle',
+            });
+        });
+    });
     describe('when calling a method having a concrete implementation', () => {
         let rpc: Rpc<TestRpcMethods>;
         beforeEach(() => {

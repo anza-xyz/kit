@@ -1,6 +1,6 @@
 {
     "name": "@solana/rpc-subscriptions-spec",
-    "version": "6.8.0",
+    "version": "6.9.0",
     "description": "A generic implementation of JSON RPC Subscriptions using proxies",
     "homepage": "https://www.solanakit.com/api#solanarpc-subscriptions-spec",
     "exports": {
@@ -83,7 +83,7 @@
         "@solana/event-target-impl": "workspace:*"
     },
     "peerDependencies": {
-        "typescript": ">=5.0.0"
+        "typescript": ">=5.4.0"
     },
     "peerDependenciesMeta": {
         "typescript": {

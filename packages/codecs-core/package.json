@@ -1,6 +1,6 @@
 {
     "name": "@solana/codecs-core",
-    "version": "6.8.0",
+    "version": "6.9.0",
     "description": "Core types and helpers for encoding and decoding byte arrays on Solana",
     "homepage": "https://www.solanakit.com/api#solanacodecs-core",
     "exports": {
@@ -78,10 +78,10 @@
         "@solana/errors": "workspace:*"
     },
     "devDependencies": {
-        "tinybench": "^6.0.0"
+        "tinybench": "^6.0.2"
     },
     "peerDependencies": {
-        "typescript": ">=5.0.0"
+        "typescript": ">=5.4.0"
     },
     "peerDependenciesMeta": {
         "typescript": {

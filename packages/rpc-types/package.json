@@ -1,6 +1,6 @@
 {
     "name": "@solana/rpc-types",
-    "version": "6.8.0",
+    "version": "6.9.0",
     "description": "Type definitions for values used in the Solana RPC, and helper functions for working with them",
     "homepage": "https://www.solanakit.com/api#solanarpc-types",
     "exports": {
@@ -79,10 +79,11 @@
         "@solana/codecs-numbers": "workspace:*",
         "@solana/codecs-strings": "workspace:*",
         "@solana/errors": "workspace:*",
+        "@solana/fixed-points": "workspace:*",
         "@solana/nominal-types": "workspace:*"
     },
     "peerDependencies": {
-        "typescript": ">=5.0.0"
+        "typescript": ">=5.4.0"
     },
     "peerDependenciesMeta": {
         "typescript": {

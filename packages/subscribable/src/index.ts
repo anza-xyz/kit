@@ -6,8 +6,9 @@
  *
  * @packageDocumentation
  */
+export * from './reactive-action-store';
 export * from './async-iterable';
 export * from './data-publisher';
 export * from './demultiplex';
 export * from './event-emitter';
-export * from './reactive-store';
+export * from './reactive-stream-store';

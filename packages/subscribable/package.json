@@ -1,6 +1,6 @@
 {
     "name": "@solana/subscribable",
-    "version": "6.8.0",
+    "version": "6.9.0",
     "description": "Helpers for creating subscription-based event emitters",
     "homepage": "https://www.solanakit.com/api#solanasubscribable",
     "exports": {
@@ -74,13 +74,14 @@
         "maintained node versions"
     ],
     "dependencies": {
-        "@solana/errors": "workspace:*"
+        "@solana/errors": "workspace:*",
+        "@solana/promises": "workspace:*"
     },
     "devDependencies": {
         "@solana/event-target-impl": "workspace:*"
     },
     "peerDependencies": {
-        "typescript": ">=5.0.0"
+        "typescript": ">=5.4.0"
     },
     "peerDependenciesMeta": {
         "typescript": {

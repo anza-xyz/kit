@@ -1,6 +1,6 @@
 {
     "name": "@solana/programs",
-    "version": "6.8.0",
+    "version": "6.9.0",
     "description": "Helpers for defining programs and resolving program errors",
     "homepage": "https://www.solanakit.com/api#solanaprograms",
     "exports": {
@@ -82,7 +82,7 @@
         "@solana/transaction-messages": "workspace:*"
     },
     "peerDependencies": {
-        "typescript": ">=5.0.0"
+        "typescript": ">=5.4.0"
     },
     "peerDependenciesMeta": {
         "typescript": {

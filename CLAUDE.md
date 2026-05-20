@@ -50,6 +50,8 @@ Four private "impl" packages (`@solana/crypto-impl`, `@solana/text-encoding-impl
 - **Lint/prettier**: Also run through Jest runners (`jest-runner-eslint`, `jest-runner-prettier`).
 - **Commands**: `pnpm test` runs all unit tests. `pnpm lint` runs lint checks. `pnpm style:fix` auto-fixes formatting.
 - **`expect.assertions`**: Only use `expect.assertions(n)` in **async** tests (where you need to guarantee the expected number of assertions ran). Synchronous tests do not need it.
+- **Flushing async state**: When a test needs to wait for queued microtasks or promise chains to settle, prefer `jest.useFakeTimers()` + `await jest.runAllTimersAsync()` over hand-rolled `flushMicrotasks` helpers that `await Promise.resolve()` in a loop. The loop count is fragile and breaks as soon as an extra `.then` is introduced. When enabling fake timers in a scoped `beforeEach` (i.e. not at the top of the file), pair it with an `afterEach(() => { jest.useRealTimers(); })` so subsequent describes don't inherit fake timers.
+- **Placeholder mocks**: When a test mock must satisfy an interface but a particular method shouldn't be called in that test, make the stub throw/reject rather than using a bare `jest.fn()` that silently returns `undefined`. For sync methods use `jest.fn().mockImplementation(() => { throw new Error('not implemented'); })`; for async methods use `jest.fn().mockRejectedValue(new Error('not implemented'))`. An accidental call then fails the test loudly instead of producing `undefined` and a confusing downstream assertion error.
 
 ## Error System
 
@@ -68,8 +70,9 @@ All errors use the `SolanaError` class from `@solana/errors`. Key rules:
 - **Functional composition**: Use `pipe()` from `@solana/functional` to compose operations on transaction messages and other data structures.
 - **Platform-specific code**: Use `__BROWSER__`, `__NODEJS__`, `__REACTNATIVE__` guards. The build system will tree-shake unused branches.
 - **Dev-only code**: Guard with `__DEV__` (e.g. verbose error messages, debug assertions).
-- **Formatting**: ESLint via `@solana/eslint-config-solana`, Prettier via `@solana/prettier-config-solana`. Run `pnpm style:fix` to auto-fix.
+- **Formatting**: ESLint via `@solana-config/eslint`, Prettier via `@solana-config/prettier`. Run `pnpm style:fix` to auto-fix.
 - **All publishable packages share a fixed version** (currently in lockstep).
+- **Deferred promises**: Use `Promise.withResolvers<T>()` instead of hand-rolling a `new Promise((resolve, reject) => ...)` with captured externals. Do not reintroduce a `deferred()` helper — `Promise.withResolvers` already returns `{ promise, resolve, reject }`.
 
 ## Changesets & Releases
 

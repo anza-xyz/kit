@@ -1,6 +1,6 @@
 {
     "name": "@solana/options",
-    "version": "6.8.0",
+    "version": "6.9.0",
     "description": "Managing and serializing Rust-like Option types in JavaScript",
     "homepage": "https://www.solanakit.com/api#solanaoptions",
     "exports": {
@@ -81,7 +81,7 @@
         "@solana/errors": "workspace:*"
     },
     "peerDependencies": {
-        "typescript": ">=5.0.0"
+        "typescript": ">=5.4.0"
     },
     "peerDependenciesMeta": {
         "typescript": {

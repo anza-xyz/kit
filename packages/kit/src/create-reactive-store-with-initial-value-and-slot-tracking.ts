@@ -1,9 +1,20 @@
 import type { PendingRpcRequest } from '@solana/rpc';
 import type { PendingRpcSubscriptionsRequest } from '@solana/rpc-subscriptions';
 import type { SolanaRpcResponse } from '@solana/rpc-types';
-import type { ReactiveStore } from '@solana/subscribable';
+import type { ReactiveState, ReactiveStreamStore } from '@solana/subscribable';
 
-type CreateReactiveStoreWithInitialValueAndSlotTrackingConfig<TRpcValue, TSubscriptionValue, TItem> = Readonly<{
+/**
+ * Configuration for {@link createReactiveStoreWithInitialValueAndSlotTracking}. Pairs a one-shot
+ * RPC fetch with an ongoing subscription so the resulting store can hydrate from the initial
+ * response and keep up to date with notifications, slot-deduplicating the two streams.
+ *
+ * @typeParam TRpcValue - The value type returned by `rpcRequest` (inside the {@link SolanaRpcResponse} envelope).
+ * @typeParam TSubscriptionValue - The value type emitted by `rpcSubscriptionRequest` (inside the {@link SolanaRpcResponse} envelope).
+ * @typeParam TItem - The unified item type the store holds, produced by the two value mappers.
+ *
+ * @see {@link createReactiveStoreWithInitialValueAndSlotTracking}
+ */
+export type CreateReactiveStoreWithInitialValueAndSlotTrackingConfig<TRpcValue, TSubscriptionValue, TItem> = Readonly<{
     /**
      * Triggering this abort signal will cancel the pending RPC request and subscription, and
      * disconnect the store from further updates.
@@ -31,8 +42,14 @@ type CreateReactiveStoreWithInitialValueAndSlotTrackingConfig<TRpcValue, TSubscr
     rpcValueMapper: (value: TRpcValue) => TItem;
 }>;
 
+const LOADING_STATE: ReactiveState<never> = Object.freeze({
+    data: undefined,
+    error: undefined,
+    status: 'loading',
+});
+
 /**
- * Creates a {@link ReactiveStore} that combines an initial RPC fetch with an ongoing subscription
+ * Creates a {@link ReactiveStreamStore} that combines an initial RPC fetch with an ongoing subscription
  * to keep its state up to date.
  *
  * The store uses slot-based comparison to ensure that only the most recent value is kept,
@@ -42,14 +59,16 @@ type CreateReactiveStoreWithInitialValueAndSlotTrackingConfig<TRpcValue, TSubscr
  *
  * Things to note:
  *
- * - `getState()` returns `undefined` until the first response or notification arrives. Once
- *   data arrives, it returns a {@link SolanaRpcResponse} containing the value and the slot
- *   context at which it was observed.
- * - On error from either source, `getState()` continues to return the last known value and
- *   `getError()` returns the error. Only the first error is captured.
- * - When an error occurs, the abort signal is triggered, cancelling both the RPC request and
- *   the subscription.
- * - Triggering the caller's abort signal disconnects the store from both sources.
+ * - `getUnifiedState()` starts in `status: 'loading'` until the first response or notification
+ *   arrives. Once data arrives it transitions to `status: 'loaded'` with a
+ *   {@link SolanaRpcResponse} containing the value and the slot context at which it was observed.
+ * - On error from either source, the store transitions to `status: 'error'` preserving the last
+ *   known value. Only the first error per connection window is captured.
+ * - Calling {@link ReactiveStreamStore.retry | `retry()`} while in `status: 'error'` re-sends the RPC
+ *   request and re-subscribes to the subscription using a fresh inner abort signal. The store
+ *   transitions through `status: 'retrying'` back to `loaded`/`error`.
+ * - Triggering the caller's abort signal disconnects the store permanently; subsequent `retry()`
+ *   calls are no-ops.
  *
  * @param config
  *
@@ -75,16 +94,17 @@ type CreateReactiveStoreWithInitialValueAndSlotTrackingConfig<TRpcValue, TSubscr
  * });
  *
  * const unsubscribe = balanceStore.subscribe(() => {
- *     const error = balanceStore.getError();
- *     if (error) console.error('Error:', error);
- *     else {
- *         const state = balanceStore.getState();
- *         if (state) console.log(`Balance at slot ${state.context.slot}:`, state.value);
+ *     const state = balanceStore.getUnifiedState();
+ *     if (state.status === 'error') {
+ *         console.error('Error:', state.error);
+ *         balanceStore.retry();
+ *     } else if (state.status === 'loaded') {
+ *         console.log(`Balance at slot ${state.data.context.slot}:`, state.data.value);
  *     }
  * });
  * ```
  *
- * @see {@link ReactiveStore}
+ * @see {@link ReactiveStreamStore}
  */
 export function createReactiveStoreWithInitialValueAndSlotTracking<TRpcValue, TSubscriptionValue, TItem>({
     abortSignal,
@@ -92,68 +112,87 @@ export function createReactiveStoreWithInitialValueAndSlotTracking<TRpcValue, TS
     rpcValueMapper,
     rpcSubscriptionRequest,
     rpcSubscriptionValueMapper,
-}: CreateReactiveStoreWithInitialValueAndSlotTrackingConfig<TRpcValue, TSubscriptionValue, TItem>): ReactiveStore<
+}: CreateReactiveStoreWithInitialValueAndSlotTrackingConfig<TRpcValue, TSubscriptionValue, TItem>): ReactiveStreamStore<
     SolanaRpcResponse<TItem>
 > {
-    let currentState: SolanaRpcResponse<TItem> | undefined;
-    let currentError: unknown;
+    let currentState: ReactiveState<SolanaRpcResponse<TItem>> = LOADING_STATE;
     let lastUpdateSlot = -1n;
     const subscribers = new Set<() => void>();
 
-    const abortController = new AbortController();
-    abortSignal.addEventListener('abort', () => abortController.abort(abortSignal.reason));
-    const signal = abortController.signal;
+    const outerController = new AbortController();
+    abortSignal.addEventListener('abort', () => outerController.abort(abortSignal.reason));
 
-    function notifySubscribers() {
+    function notify() {
         subscribers.forEach(cb => cb());
     }
 
-    function handleError(err: unknown) {
-        // Ignore if the signal has already been aborted
-        if (signal.aborted) return;
-        // Only capture the first error
-        if (currentError !== undefined) return;
-        currentError = err;
-        abortController.abort(err);
-        notifySubscribers();
+    function connect() {
+        if (outerController.signal.aborted) return;
+        const innerController = new AbortController();
+        const forwardAbort = () => innerController.abort(outerController.signal.reason);
+        outerController.signal.addEventListener('abort', forwardAbort, { signal: innerController.signal });
+        const innerSignal = innerController.signal;
+
+        function handleError(err: unknown) {
+            if (innerSignal.aborted) return;
+            if (currentState.status === 'error') return;
+            currentState = { data: currentState.data, error: err, status: 'error' };
+            innerController.abort(err);
+            notify();
+        }
+
+        function handleValue(value: SolanaRpcResponse<TItem>) {
+            currentState = { data: value, error: undefined, status: 'loaded' };
+            notify();
+        }
+
+        rpcRequest
+            .send({ abortSignal: innerSignal })
+            .then(({ context: { slot }, value }) => {
+                if (innerSignal.aborted) return;
+                // `lastUpdateSlot` persists across retries so the store never regresses. If the
+                // retried RPC returns a slot older than one we've already seen, we wait for the
+                // subscription to deliver something newer before leaving `retrying`.
+                if (slot < lastUpdateSlot) return;
+                lastUpdateSlot = slot;
+                handleValue({ context: { slot }, value: rpcValueMapper(value) });
+            })
+            .catch(handleError);
+
+        rpcSubscriptionRequest
+            .subscribe({ abortSignal: innerSignal })
+            .then(async notifications => {
+                for await (const {
+                    context: { slot },
+                    value,
+                } of notifications) {
+                    if (innerSignal.aborted) return;
+                    if (slot < lastUpdateSlot) continue;
+                    lastUpdateSlot = slot;
+                    handleValue({ context: { slot }, value: rpcSubscriptionValueMapper(value) });
+                }
+            })
+            .catch(handleError);
     }
 
-    rpcRequest
-        .send({ abortSignal: signal })
-        .then(({ context: { slot }, value }) => {
-            if (signal.aborted) return;
-            if (slot < lastUpdateSlot) return;
-            lastUpdateSlot = slot;
-            currentState = { context: { slot }, value: rpcValueMapper(value) };
-            notifySubscribers();
-        })
-        .catch(handleError);
-
-    rpcSubscriptionRequest
-        .subscribe({ abortSignal: signal })
-        .then(async notifications => {
-            for await (const {
-                context: { slot },
-                value,
-            } of notifications) {
-                if (signal.aborted) return;
-                if (slot < lastUpdateSlot) continue;
-                lastUpdateSlot = slot;
-                currentState = {
-                    context: { slot },
-                    value: rpcSubscriptionValueMapper(value),
-                };
-                notifySubscribers();
-            }
-        })
-        .catch(handleError);
+    connect();
 
     return {
         getError(): unknown {
-            return currentError;
+            return currentState.error;
         },
         getState(): SolanaRpcResponse<TItem> | undefined {
+            return currentState.data;
+        },
+        getUnifiedState(): ReactiveState<SolanaRpcResponse<TItem>> {
             return currentState;
+        },
+        retry(): void {
+            if (outerController.signal.aborted) return;
+            if (currentState.status !== 'error') return;
+            currentState = { data: currentState.data, error: undefined, status: 'retrying' };
+            notify();
+            connect();
         },
         subscribe(callback: () => void): () => void {
             subscribers.add(callback);

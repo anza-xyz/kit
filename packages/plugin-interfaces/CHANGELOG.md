@@ -1,5 +1,24 @@
 # @solana/plugin-interfaces
 
+## 6.9.0
+
+### Minor Changes
+
+- [#1551](https://github.com/anza-xyz/kit/pull/1551) [`d24f908`](https://github.com/anza-xyz/kit/commit/d24f908a4fbbddddd9e8bacc57485de6d8e022b4) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `ClientWithSubscribeToPayer` and `ClientWithSubscribeToIdentity` interfaces. These are a framework-agnostic convention for plugins that mutate `client.payer` / `client.identity` reactively — they install a sibling `subscribeToPayer` / `subscribeToIdentity` function so consumers can observe changes without naming the specific plugin that provides them.
+
+- [#1562](https://github.com/anza-xyz/kit/pull/1562) [`096c48e`](https://github.com/anza-xyz/kit/commit/096c48e6771ad7ea833cb4ca51206b7cc827a3d7) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Bump the TypeScript peer dependency floor from `>=5.0.0` to `>=5.4.0`.
+
+### Patch Changes
+
+- Updated dependencies [[`096c48e`](https://github.com/anza-xyz/kit/commit/096c48e6771ad7ea833cb4ca51206b7cc827a3d7), [`0e8fd3f`](https://github.com/anza-xyz/kit/commit/0e8fd3f62b2cdb8e5082700096ce011883a60578)]:
+    - @solana/addresses@6.9.0
+    - @solana/instruction-plans@6.9.0
+    - @solana/keys@6.9.0
+    - @solana/rpc-spec@6.9.0
+    - @solana/rpc-subscriptions-spec@6.9.0
+    - @solana/rpc-types@6.9.0
+    - @solana/signers@6.9.0
+
 ## 6.8.0
 
 ### Minor Changes

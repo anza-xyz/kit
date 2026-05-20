@@ -1,6 +1,6 @@
 {
     "name": "@solana/compat",
-    "version": "6.8.0",
+    "version": "6.9.0",
     "description": "Helpers for converting from legacy web3js classes",
     "homepage": "https://www.solanakit.com/api#solanacompat",
     "exports": {
@@ -85,7 +85,7 @@
         "@solana/web3.js": "^1"
     },
     "peerDependencies": {
-        "typescript": ">=5.0.0"
+        "typescript": ">=5.4.0"
     },
     "peerDependenciesMeta": {
         "typescript": {

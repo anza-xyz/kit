@@ -214,12 +214,44 @@ function createAsyncClient<TSelf extends object>(promise: Promise<TSelf>): Async
 }
 
 /**
+ * The result of extending a client of type `TClient` with additional properties of type `TAdditions`.
+ *
+ * Structurally equivalent to `Omit<TClient, keyof TAdditions> & TAdditions` — keys present
+ * on both `TClient` and `TAdditions` are replaced by the `TAdditions` version — but expressed
+ * as a single homomorphic mapped type so the inferred type displays as a flat object literal
+ * rather than a deeply nested chain of `Omit<...>` intersections. Optional (`?`) and `readonly`
+ * modifiers from both sides are preserved.
+ *
+ * Plugin authors who write their own merging helpers can reuse this type to keep the
+ * inferred shape of their plugin's output legible in editor tooltips and error messages.
+ *
+ * @typeParam TClient - The type of the client being extended.
+ * @typeParam TAdditions - The type of the properties being merged in.
+ *
+ * @example
+ * ```ts
+ * function withRpc<TClient extends object>(client: TClient, endpoint: string): ExtendedClient<TClient, { rpc: Rpc }> {
+ *     return extendClient(client, { rpc: createSolanaRpc(endpoint) });
+ * }
+ * ```
+ *
+ * @see {@link extendClient}
+ */
+export type ExtendedClient<TClient extends object, TAdditions extends object> = {
+    [K in keyof (Omit<TClient, keyof TAdditions> & TAdditions)]: (Omit<TClient, keyof TAdditions> & TAdditions)[K];
+} & {};
+
+/**
  * Extends a client object with additional properties, preserving property descriptors
  * (getters, symbol-keyed properties, and non-enumerable properties) from both objects.
  *
  * Use this inside plugins instead of plain object spread (`{...client, ...additions}`)
  * when the client may carry getters or symbol-keyed properties that spread would flatten or lose.
  * When the same key exists on both, `additions` wins.
+ *
+ * The return type is an {@link ExtendedClient}, which flattens the merged shape into a single
+ * object literal so chained `extendClient` calls do not accumulate nested `Omit<...>` wrappers
+ * in editor tooltips and error messages.
  *
  * @typeParam TClient - The type of the original client.
  * @typeParam TAdditions - The type of the properties being added.
@@ -236,14 +268,15 @@ function createAsyncClient<TSelf extends object>(promise: Promise<TSelf>): Async
  * ```
  *
  * @see {@link ClientPlugin}
+ * @see {@link ExtendedClient}
  */
 export function extendClient<TClient extends object, TAdditions extends object>(
     client: TClient,
     additions: TAdditions,
-): Omit<TClient, keyof TAdditions> & TAdditions {
+): ExtendedClient<TClient, TAdditions> {
     const result = Object.defineProperties({}, toConfigurableDescriptors(Object.getOwnPropertyDescriptors(client)));
     Object.defineProperties(result, Object.getOwnPropertyDescriptors(additions));
-    return Object.freeze(result) as Omit<TClient, keyof TAdditions> & TAdditions;
+    return Object.freeze(result) as ExtendedClient<TClient, TAdditions>;
 }
 
 function toConfigurableDescriptors<T extends PropertyDescriptorMap>(descriptors: T): T {
@@ -261,6 +294,10 @@ function toConfigurableDescriptors<T extends PropertyDescriptorMap>(descriptors:
  * connections or clearing timers) that runs when the client is disposed.
  * If the client already implements `Symbol.dispose`, the existing dispose
  * logic is chained so that it runs after the new `cleanup` function.
+ *
+ * The return type is an {@link ExtendedClient}, which flattens the merged shape into a
+ * single object literal so chained calls do not accumulate nested intersections in editor
+ * tooltips and error messages.
  *
  * @typeParam TClient - The type of the original client.
  * @param client - The client to wrap.
@@ -286,8 +323,12 @@ function toConfigurableDescriptors<T extends PropertyDescriptorMap>(descriptors:
  * ```
  *
  * @see {@link extendClient}
+ * @see {@link ExtendedClient}
  */
-export function withCleanup<TClient extends object>(client: TClient, cleanup: () => void): Disposable & TClient {
+export function withCleanup<TClient extends object>(
+    client: TClient,
+    cleanup: () => void,
+): ExtendedClient<TClient, Disposable> {
     if (DISPOSABLE_STACK_PROPERTY in client) {
         return addCleanupToClientWithExistingStack(
             client as Record<typeof DISPOSABLE_STACK_PROPERTY, DisposableStack> & TClient,
@@ -303,17 +344,17 @@ const DISPOSABLE_STACK_PROPERTY = '__PRIVATE__DISPOSABLE_STACK' as const;
 function addCleanupToClientWithExistingStack<TClient extends Record<typeof DISPOSABLE_STACK_PROPERTY, DisposableStack>>(
     client: TClient,
     cleanup: () => void,
-): Disposable & TClient {
+): ExtendedClient<TClient, Disposable> {
     // If we already have the stack, add the new cleanup to it
     client[DISPOSABLE_STACK_PROPERTY].defer(cleanup);
     // We assume we already added a dispose method when we added the stack
-    return client as Disposable & TClient;
+    return client as unknown as ExtendedClient<TClient, Disposable>;
 }
 
 function addCleanupToClientWithoutExistingStack<TClient extends object>(
     client: TClient,
     cleanup: () => void,
-): Disposable & TClient {
+): ExtendedClient<TClient, Disposable> {
     const stack = new DisposableStack();
 
     // If the client has an existing dispose method but not our stack, we maintain this existing cleanup by deferring it to the new stack
@@ -333,5 +374,5 @@ function addCleanupToClientWithoutExistingStack<TClient extends object>(
         },
     };
 
-    return extendClient(client, additions) as unknown as Disposable & TClient;
+    return extendClient(client, additions) as unknown as ExtendedClient<TClient, Disposable>;
 }

@@ -27,27 +27,59 @@ dataPublisher.on('error', e => {
 }); // OK.
 ```
 
-### `ReactiveStore<T>`
+### `ReactiveStreamStore<T>`
 
-This type represents a reactive store that holds the latest value published to a data channel. It exposes a `{ getState, getError, subscribe }` contract compatible with `useSyncExternalStore`, Svelte stores, and other reactive primitives.
+This type represents a reactive store that holds the latest value published to a data channel. It exposes a `{ getUnifiedState, retry, subscribe }` contract compatible with `useSyncExternalStore`, Svelte stores, and other reactive primitives.
+
+`getUnifiedState()` returns a discriminated snapshot of the store's lifecycle:
 
 ```ts
-const store: ReactiveStore<AccountInfo> = /* ... */;
+type ReactiveState<T> =
+    | { data: undefined; error: undefined; status: 'loading' }
+    | { data: T; error: undefined; status: 'loaded' }
+    | { data: T | undefined; error: unknown; status: 'error' }
+    | { data: T | undefined; error: undefined; status: 'retrying' };
+```
 
-// React
-const state = useSyncExternalStore(store.subscribe, () => {
-    if (store.getError()) throw store.getError();
-    return store.getState();
-});
+> Also exported as `ReactiveStore<T>` for backwards compatibility. That alias is deprecated and will be removed in a future major release.
+
+```ts
+const store: ReactiveStreamStore<AccountInfo> = /* ... */;
+
+// React — snapshot identity is stable between updates, so it can be passed directly.
+const state = useSyncExternalStore(store.subscribe, store.getUnifiedState);
+if (state.status === 'error') return <ErrorMessage error={state.error} onRetry={store.retry} />;
+if (state.status === 'loading') return <Spinner />;
+return <View data={state.data} />;
 
 // Vue
-const data = shallowRef(store.getState());
-const error = shallowRef(store.getError());
+const snapshot = shallowRef(store.getUnifiedState());
 store.subscribe(() => {
-    data.value = store.getState();
-    error.value = store.getError();
+    snapshot.value = store.getUnifiedState();
 });
 ```
+
+`retry()` re-opens the stream after an error. When the underlying store supports restart (see [`createReactiveStoreFromDataPublisherFactory`](#createreactivestorefromdatapublisherfactory-abortsignal-createdatapublisher-datachannelname-errorchannelname-)), the store transitions to `status: 'retrying'` and reconnects. Stores that cannot be restarted throw a `SolanaError` with code `SOLANA_ERROR__SUBSCRIBABLE__RETRY_NOT_SUPPORTED` instead.
+
+The individual `getState()` and `getError()` getters on `ReactiveStreamStore<T>` are `@deprecated` &mdash; prefer `getUnifiedState()`, which exposes the same information with a stable snapshot identity and `status` discriminator.
+
+### `ReactiveActionStore<TArgs, TResult>`
+
+A framework-agnostic state machine for wrapping an async action (a function you dispatch on demand — like a form submission, a mutation, or an on-click fetch). It exposes a `{ dispatch, getState, subscribe, reset }` contract that bridges trivially into `useSyncExternalStore`, Svelte stores, Vue's `shallowRef`, and similar reactive primitives.
+
+The snapshot is a discriminated union:
+
+```ts
+type ReactiveActionState<TResult> =
+    | { status: 'idle'; data: undefined; error: undefined }
+    | { status: 'running'; data: TResult | undefined; error: undefined }
+    | { status: 'success'; data: TResult; error: undefined }
+    | { status: 'error'; data: TResult | undefined; error: unknown };
+```
+
+`data` is the last successful result and survives across transitions — a `running` or `error` snapshot still carries the last value so UIs can render stale content while a retry is in flight. Only `reset()` clears it.
+
+Unlike `ReactiveStreamStore<T>` (which models a stream of values with a separate error channel), `ReactiveActionStore` models a one-shot-per-dispatch lifecycle where errors are part of the snapshot.
 
 ### `TypedEventEmitter<TEventMap>`
 
@@ -72,6 +104,42 @@ target.dispatchEvent(new CustomEvent('candyVended', { detail: { flavor: 'raspber
 ```
 
 ## Functions
+
+### `createReactiveActionStore(fn)`
+
+Wraps an async function in a `ReactiveActionStore`. Each `dispatch` creates a fresh `AbortController` and aborts the previous one, so a rapid succession of dispatches only produces one final state transition — the outcome of the most recent call. The wrapped function receives the `AbortSignal` as its first argument, followed by the arguments passed to `dispatch`.
+
+```tsx
+const store = createReactiveActionStore(async (signal: AbortSignal, accountId: Address) => {
+    const response = await fetch(`/api/accounts/${accountId}`, { signal });
+    return response.json();
+});
+
+// React — stale-while-revalidate: keep showing the card during retries.
+const { data, error, status } = useSyncExternalStore(store.subscribe, store.getState);
+return (
+    <>
+        {data !== undefined && <AccountCard account={data} />}
+        {status === 'running' && <InlineSpinner />}
+        {status === 'error' && <RetryBanner error={error} onRetry={() => store.dispatch(someAccountId)} />}
+        {status === 'idle' && data === undefined && <button onClick={() => store.dispatch(someAccountId)}>Load</button>}
+    </>
+);
+```
+
+Things to note:
+
+- Starts at `{ status: 'idle' }`. `getState()` always returns a defined snapshot.
+- `dispatch` is a stable reference — safe to pass into memoized callbacks without re-renders.
+- Two ways to trigger the action:
+    - `dispatch(...)` — fire-and-forget. Returns `undefined` synchronously and never throws; safe to call from UI event handlers without a `.catch`. Failures surface on state as `{ status: 'error' }`.
+    - `dispatchAsync(...)` — returns a promise that resolves to the wrapped function's result. Rejects on failure and with an `AbortError` when superseded or `reset()`. Use from imperative code that needs the resolved value; pair with [`isAbortError`](../promises#isaborterrorerr) from `@solana/promises` to filter abort rejections.
+- Calling either dispatch while one is in flight aborts the previous call; its outcome is dropped from state regardless of which variant started it.
+- `data` survives across transitions: a fresh `running` or `error` snapshot carries the last successful result so call sites can keep rendering stale content while a retry is in flight. Only `reset()` clears it.
+- `reset()` aborts the in-flight dispatch and restores the idle snapshot, clearing both `data` and `error`.
+- Subscribers are notified only when the snapshot's `status`, `data`, or `error` actually changes, so redundant transitions (`dispatch` while already `running` with the same `data`, `reset` while already `idle`) are silent.
+- `fn` is captured at construction, so the store holds a closure over whatever `fn` referenced at that moment. In React, create the store once (`useState(() => createReactiveActionStore(...))` or `useRef`) and read the latest closure through a ref if you need it to change between renders — don't call `createReactiveActionStore` directly in a render body.
+- The store holds strong references to its subscribers. Non-framework consumers that subscribe without unsubscribing will keep their listeners (and anything the listeners close over) alive for the lifetime of the store.
 
 ### `createAsyncIterableFromDataPublisher({ abortSignal, dataChannelName, dataPublisher, errorChannelName })`
 
@@ -105,7 +173,9 @@ Things to note:
 
 ### `createReactiveStoreFromDataPublisher({ abortSignal, dataChannelName, dataPublisher, errorChannelName })`
 
-Returns a `ReactiveStore` given a data publisher. The store holds the most recent message published to `dataChannelName` and notifies subscribers on each update. When a message is published to `errorChannelName`, the error is captured in `getError()` and subscribers are notified. Triggering the abort signal disconnects the store from the data publisher.
+> **Deprecated.** Prefer [`createReactiveStoreFromDataPublisherFactory`](#createreactivestorefromdatapublisherfactory-abortsignal-createdatapublisher-datachannelname-errorchannelname-) &mdash; it supports `retry()`. Because this function accepts a ready-made `DataPublisher` rather than a factory, it cannot restart the underlying source, and calling `retry()` on the returned store throws a `SolanaError` with code `SOLANA_ERROR__SUBSCRIBABLE__RETRY_NOT_SUPPORTED`.
+
+Returns a `ReactiveStreamStore` given a data publisher. The store holds the most recent message published to `dataChannelName` and notifies subscribers on each update. When a message is published to `errorChannelName`, the store transitions to `status: 'error'` preserving the last known value. Triggering the abort signal disconnects the store from the data publisher.
 
 ```ts
 const store = createReactiveStoreFromDataPublisher({
@@ -115,15 +185,41 @@ const store = createReactiveStoreFromDataPublisher({
     errorChannelName: 'error',
 });
 const unsubscribe = store.subscribe(() => {
-    console.log('State updated:', store.getState());
+    console.log('State updated:', store.getUnifiedState());
 });
 ```
 
 Things to note:
 
-- `getState()` returns `undefined` until the first notification arrives.
-- On error, `getState()` continues to return the last known value and `getError()` returns the error. Only the first error is captured.
+- `getUnifiedState()` starts in `status: 'loading'` until the first notification arrives.
+- On error, `status` becomes `'error'` with the last known value preserved on `data`. Only the first error is captured.
 - The function returned by `subscribe` is idempotent &mdash; calling it multiple times is safe.
+
+### `createReactiveStoreFromDataPublisherFactory({ abortSignal, createDataPublisher, dataChannelName, errorChannelName })`
+
+Returns a `ReactiveStreamStore` that wires itself to a fresh `DataPublisher` on construction and on every `retry()`. Unlike `createReactiveStoreFromDataPublisher`, this variant accepts an async factory so the store can tear down a broken stream and open a new one without losing subscribers or the last known value.
+
+```ts
+const store = createReactiveStoreFromDataPublisherFactory({
+    abortSignal: AbortSignal.timeout(60_000),
+    async createDataPublisher() {
+        return await openMyConnection();
+    },
+    dataChannelName: 'notification',
+    errorChannelName: 'error',
+});
+store.subscribe(() => {
+    const snapshot = store.getUnifiedState();
+    if (snapshot.status === 'error') store.retry();
+});
+```
+
+Things to note:
+
+- `createDataPublisher` is called once on construction and again on every `retry()`.
+- `retry()` is a no-op unless the store is in `status: 'error'`; otherwise the store transitions to `status: 'retrying'` (preserving stale data) and reconnects.
+- If `createDataPublisher` rejects, the store transitions to `status: 'error'` with the rejection as the error. Call `retry()` to try again.
+- Triggering the caller's `abortSignal` disconnects the store permanently; subsequent `retry()` calls are no-ops.
 
 ### `demultiplexDataPublisher(publisher, sourceChannelName, messageTransformer)`
 

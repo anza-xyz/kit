@@ -1,6 +1,6 @@
 {
     "name": "@solana/keys",
-    "version": "6.8.0",
+    "version": "6.9.0",
     "description": "Helpers for generating and transforming key material",
     "homepage": "https://www.solanakit.com/api#solanakeys",
     "exports": {
@@ -83,7 +83,7 @@
         "@solana/promises": "workspace:*"
     },
     "peerDependencies": {
-        "typescript": ">=5.0.0"
+        "typescript": ">=5.4.0"
     },
     "peerDependenciesMeta": {
         "typescript": {
@@ -92,7 +92,7 @@
     },
     "devDependencies": {
         "@solana/fs-impl": "workspace:*",
-        "tinybench": "^6.0.0"
+        "tinybench": "^6.0.2"
     },
     "engines": {
         "node": ">=20.18.0"

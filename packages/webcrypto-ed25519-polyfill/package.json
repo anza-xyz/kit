@@ -1,6 +1,6 @@
 {
     "name": "@solana/webcrypto-ed25519-polyfill",
-    "version": "6.8.0",
+    "version": "6.9.0",
     "description": "A polyfill that adds Ed25519 key manipulation capabilities to `SubtleCrypto` in environments where it is not yet supported",
     "homepage": "https://www.solanakit.com/api#solanawebcrypto-ed25519-polyfill",
     "exports": {
@@ -71,13 +71,13 @@
         "maintained node versions"
     ],
     "dependencies": {
-        "@noble/ed25519": "^3.0.0"
+        "@noble/ed25519": "^3.1.0"
     },
     "devDependencies": {
         "@solana/crypto-impl": "workspace:*"
     },
     "peerDependencies": {
-        "typescript": ">=5.0.0"
+        "typescript": ">=5.4.0"
     },
     "peerDependenciesMeta": {
         "typescript": {

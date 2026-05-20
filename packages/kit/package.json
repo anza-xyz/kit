@@ -1,6 +1,6 @@
 {
     "name": "@solana/kit",
-    "version": "6.8.0",
+    "version": "6.9.0",
     "description": "Solana Javascript API",
     "homepage": "https://www.solanakit.com",
     "exports": {
@@ -129,7 +129,7 @@
         "@solana/transactions": "workspace:*"
     },
     "peerDependencies": {
-        "typescript": ">=5.0.0"
+        "typescript": ">=5.4.0"
     },
     "peerDependenciesMeta": {
         "typescript": {

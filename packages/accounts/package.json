@@ -1,6 +1,6 @@
 {
     "name": "@solana/accounts",
-    "version": "6.8.0",
+    "version": "6.9.0",
     "description": "Helpers for representing, fetching and decoding Solana accounts",
     "homepage": "https://www.solanakit.com/api#solanaaccounts",
     "exports": {
@@ -82,7 +82,7 @@
         "@solana/rpc-types": "workspace:*"
     },
     "peerDependencies": {
-        "typescript": ">=5.0.0"
+        "typescript": ">=5.4.0"
     },
     "peerDependenciesMeta": {
         "typescript": {

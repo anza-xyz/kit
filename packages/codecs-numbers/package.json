@@ -1,6 +1,6 @@
 {
     "name": "@solana/codecs-numbers",
-    "version": "6.8.0",
+    "version": "6.9.0",
     "description": "Codecs for numbers of different sizes and endianness",
     "homepage": "https://www.solanakit.com/api#solanacodecs-numbers",
     "exports": {
@@ -78,7 +78,7 @@
         "@solana/errors": "workspace:*"
     },
     "peerDependencies": {
-        "typescript": ">=5.0.0"
+        "typescript": ">=5.4.0"
     },
     "peerDependenciesMeta": {
         "typescript": {

@@ -13,7 +13,12 @@ function createMockRpcRequest(): {
 } {
     const { promise, resolve, reject } = Promise.withResolvers<SolanaRpcResponse<TestValue>>();
     return {
-        mockRequest: { send: jest.fn().mockReturnValue(promise) },
+        mockRequest: {
+            reactiveStore: jest.fn().mockImplementation(() => {
+                throw new Error('not implemented');
+            }),
+            send: jest.fn().mockReturnValue(promise),
+        },
         reject,
         resolve,
     };
@@ -89,6 +94,9 @@ function createMockSubscriptionRequest(): {
         error,
         mockRequest: {
             reactive: jest.fn().mockRejectedValue(new Error('not implemented')),
+            reactiveStore: jest.fn().mockImplementation(() => {
+                throw new Error('not implemented');
+            }),
             subscribe: jest.fn().mockResolvedValue(asyncIterable),
         },
         pushNotification,

@@ -1,6 +1,6 @@
 {
     "name": "@solana/rpc-parsed-types",
-    "version": "6.8.0",
+    "version": "6.9.0",
     "description": "Type definitions for parsed types used in the Solana RPC",
     "homepage": "https://www.solanakit.com/api#solanarpc-parsed-types",
     "exports": {
@@ -76,7 +76,7 @@
         "@solana/rpc-types": "workspace:*"
     },
     "peerDependencies": {
-        "typescript": ">=5.0.0"
+        "typescript": ">=5.4.0"
     },
     "peerDependenciesMeta": {
         "typescript": {

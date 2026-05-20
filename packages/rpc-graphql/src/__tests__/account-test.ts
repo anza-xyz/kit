@@ -132,7 +132,7 @@ describe('account', () => {
                             address: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
                             executable: true,
                             lamports: expect.any(BigInt),
-                            space: 133352n,
+                            space: 36n,
                         },
                     },
                 },
@@ -169,10 +169,10 @@ describe('account', () => {
                         ownerProgram: {
                             address: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
                             ownerProgram: {
-                                address: 'BPFLoader2111111111111111111111111111111111',
+                                address: 'BPFLoaderUpgradeab1e11111111111111111111111',
                                 executable: true,
                                 lamports: expect.any(BigInt),
-                                space: 25n,
+                                space: 37n,
                             },
                         },
                     },
@@ -210,7 +210,7 @@ describe('account', () => {
                         ownerProgram: {
                             address: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
                             ownerProgram: {
-                                address: 'BPFLoader2111111111111111111111111111111111',
+                                address: 'BPFLoaderUpgradeab1e11111111111111111111111',
                                 ownerProgram: {
                                     address: 'NativeLoader1111111111111111111111111111111',
                                 },

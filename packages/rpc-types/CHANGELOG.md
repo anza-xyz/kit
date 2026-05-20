@@ -1,5 +1,24 @@
 # @solana/rpc-types
 
+## 6.9.0
+
+### Minor Changes
+
+- [#1562](https://github.com/anza-xyz/kit/pull/1562) [`096c48e`](https://github.com/anza-xyz/kit/commit/096c48e6771ad7ea833cb4ca51206b7cc827a3d7) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Bump the TypeScript peer dependency floor from `>=5.0.0` to `>=5.4.0`.
+
+- [#1578](https://github.com/anza-xyz/kit/pull/1578) [`0e8fd3f`](https://github.com/anza-xyz/kit/commit/0e8fd3f62b2cdb8e5082700096ce011883a60578) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add `Sol`, `sol()`, `solToLamports`, and `lamportsToSol` helpers for converting between SOL amounts expressed as `@solana/fixed-points` values and `Lamports` branded bigints. Also add `getSolEncoder`, `getSolDecoder`, and `getSolCodec` for serializing SOL amounts to bytes (the encoder accepts both `Sol` and `Lamports` inputs; the decoder always returns `Sol`). Finally, update `getLamportsEncoder`/`getDefaultLamportsEncoder` and their codec counterparts to also accept `Sol` as input.
+
+### Patch Changes
+
+- Updated dependencies [[`92126f4`](https://github.com/anza-xyz/kit/commit/92126f438afff8b7521f827cf0e92b1d2cd69c55), [`a5ef97b`](https://github.com/anza-xyz/kit/commit/a5ef97b17fe747de1e2bee0189ed44e20c0f6c40), [`e82e03e`](https://github.com/anza-xyz/kit/commit/e82e03eb0e982db74f96d11b9aa8fefb4f0038c3), [`c5e0e14`](https://github.com/anza-xyz/kit/commit/c5e0e1444ae420390047d5e37a13650edf042954), [`096c48e`](https://github.com/anza-xyz/kit/commit/096c48e6771ad7ea833cb4ca51206b7cc827a3d7)]:
+    - @solana/errors@6.9.0
+    - @solana/fixed-points@6.9.0
+    - @solana/addresses@6.9.0
+    - @solana/codecs-core@6.9.0
+    - @solana/codecs-numbers@6.9.0
+    - @solana/codecs-strings@6.9.0
+    - @solana/nominal-types@6.9.0
+
 ## 6.8.0
 
 ### Patch Changes
