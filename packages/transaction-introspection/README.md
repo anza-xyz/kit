@@ -13,7 +13,7 @@
 
 This package contains helpers for inspecting a confirmed Solana transaction's instructions — both top-level and inner CPI — in a form that the auto-generated `@solana-program/*` clients can `identify` and `parse` directly. It can be used standalone, but it is also exported as part of Kit [`@solana/kit`](https://github.com/anza-xyz/kit/tree/main/packages/kit).
 
-The kit codecs decode a `getTransaction` response down to a `CompiledTransactionMessage`. The per-program clients (`identifyTokenInstruction`, `parseSyncNativeInstruction`, etc.) accept kit `Instruction` objects. This package fills the gap between them: it decodes the wire transaction, resolves account indices against static keys plus ALT-loaded addresses, normalizes the JSON-shape inner instructions from `meta.innerInstructions`, and yields a single stream of traced instructions you can filter by program.
+The kit codecs decode a `getTransaction` response down to a `CompiledTransactionMessage`. The per-program clients (`identifyTokenInstruction`, `parseSyncNativeInstruction`, etc.) accept kit `Instruction` objects. This package fills the gap between them: it decodes the wire transaction, resolves account indices against static keys plus ALT-loaded addresses, normalizes the JSON-shape inner instructions from `meta.innerInstructions`, and returns a single list of traced instructions directly usable with the auto-generated `@solana-program/*` clients and with `isInstructionForProgram` from `@solana/instructions`.
 
 ## Quick start
 
@@ -21,11 +21,8 @@ Audit every Token-Program `SyncNative` instruction — outer or inner CPI — in
 
 ```ts
 import { createSolanaRpc, signature } from '@solana/kit';
-import {
-    decodeTransactionFromRpcResponse,
-    filterInstructionsForProgram,
-    walkInstructions,
-} from '@solana/transaction-introspection';
+import { isInstructionForProgram } from '@solana/instructions';
+import { decodeTransactionFromRpcResponse, walkInstructions } from '@solana/transaction-introspection';
 import { identifyTokenInstruction, TOKEN_PROGRAM_ADDRESS, TokenInstruction } from '@solana-program/token';
 
 const rpc = createSolanaRpc('https://api.mainnet-beta.solana.com');
@@ -40,11 +37,11 @@ if (!rpcTx) throw new Error(`Transaction ${txid} not found`);
 
 const { compiledMessage, loadedAddresses } = decodeTransactionFromRpcResponse(rpcTx);
 
-const stream = walkInstructions({ compiledMessage, loadedAddresses, meta: rpcTx.meta });
-for (const { trace, instruction } of filterInstructionsForProgram(stream, TOKEN_PROGRAM_ADDRESS)) {
-    if (identifyTokenInstruction(instruction) !== TokenInstruction.SyncNative) continue;
+for (const ix of walkInstructions({ compiledMessage, loadedAddresses, meta: rpcTx.meta })) {
+    if (!isInstructionForProgram(ix, TOKEN_PROGRAM_ADDRESS)) continue;
+    if (identifyTokenInstruction(ix) !== TokenInstruction.SyncNative) continue;
     console.log(
-        `SyncNative at ${trace.kind === 'outer' ? `outer[${trace.index}]` : `inner[${trace.outerIndex}/${trace.innerIndex}]`}`,
+        `SyncNative at ${ix.trace.kind === 'outer' ? `outer[${ix.trace.index}]` : `inner[${ix.trace.outerIndex}/${ix.trace.innerIndex}]`}`,
     );
 }
 ```
@@ -112,42 +109,31 @@ for (const ix of instructions) {
 }
 ```
 
-### `walkInnerInstructionsFromMeta(meta, accountMetas)`
+### `getInnerInstructionsFromMeta(meta, accountMetas)`
 
-Yields the inner instructions in a `getTransaction` response as `TracedInstruction`s. The RPC returns inner instructions in a different shape from the wire format — indices reference the same flat account list as outer instructions, but `data` is base58-encoded. This generator decodes the data, resolves the indices against the supplied `AccountMeta` list, and tags each instruction with an `inner` trace (carrying `outerIndex`, `innerIndex`, and `stackHeight` when the RPC provides one).
+Returns the inner instructions in a `getTransaction` response as `TracedInstruction`s. The RPC returns inner instructions in a different shape from the wire format — indices reference the same flat account list as outer instructions, but `data` is base58-encoded. This helper decodes the data, resolves the indices against the supplied `AccountMeta` list, and tags each instruction with an `inner` trace (carrying `outerIndex`, `innerIndex`, and `stackHeight` when the RPC provides one).
 
 ```ts
 import {
     getAccountMetasFromCompiledTransactionMessage,
-    walkInnerInstructionsFromMeta,
+    getInnerInstructionsFromMeta,
 } from '@solana/transaction-introspection';
 
 const accountMetas = getAccountMetasFromCompiledTransactionMessage(compiledMessage, loadedAddresses);
-for (const traced of walkInnerInstructionsFromMeta(rpcTx.meta, accountMetas)) {
-    // ...
-}
+const inner = getInnerInstructionsFromMeta(rpcTx.meta, accountMetas);
 ```
 
 ### `walkInstructions({ compiledMessage, meta?, loadedAddresses? })`
 
-Yields every instruction in a confirmed transaction — outer first, then inner instructions interleaved by their outer-instruction index — as `TracedInstruction`s. Each yielded value is `{ trace, instruction }`: `trace` records whether the instruction is outer or inner (with stack height when the RPC provides it), and `instruction` is a `ResolvedInstruction` with addresses and roles already resolved.
+Returns every instruction in a confirmed transaction — outer first, then inner instructions grouped by their outer-instruction index — as an array of `TracedInstruction`s. Each entry is itself a `ResolvedInstruction` (with addresses and roles already resolved) carrying a `trace` property that records whether the instruction is outer or inner (with stack height when the RPC provides it).
 
-If `meta` is omitted, only outer instructions are yielded. If `loadedAddresses` is omitted, only static accounts are used to resolve indices — pass `meta?.loadedAddresses` for v0 transactions that load accounts from address lookup tables.
+Because each entry is a `ResolvedInstruction`, you can pass it directly to `isInstructionForProgram` from `@solana/instructions` (which narrows the `programAddress` type) and to the auto-generated `identifyXInstruction` / `parseXInstruction` helpers — no separate filter helper is needed.
+
+If `meta` is omitted, only outer instructions are returned. If `loadedAddresses` is omitted, only static accounts are used to resolve indices — pass `meta?.loadedAddresses` for v0 transactions that load accounts from address lookup tables.
 
 ```ts
+import { isInstructionForProgram } from '@solana/instructions';
 import { walkInstructions } from '@solana/transaction-introspection';
-
-for (const { trace, instruction } of walkInstructions({ compiledMessage, loadedAddresses, meta: rpcTx.meta })) {
-    console.log(trace.kind, instruction.programAddress);
-}
-```
-
-### `filterInstructionsForProgram(instructions, programAddress)`
-
-Filters a stream of `TracedInstruction`s to those invoking a specific program, narrowing the yielded instruction's `programAddress` type accordingly. It does not read the transaction itself — it consumes the stream you pass in. Compose it with `walkInstructions` to build the stream once and chain any number of filters or transformations on it without re-walking the transaction.
-
-```ts
-import { filterInstructionsForProgram, walkInstructions } from '@solana/transaction-introspection';
 import {
     identifyTokenInstruction,
     parseSyncNativeInstruction,
@@ -155,12 +141,12 @@ import {
     TokenInstruction,
 } from '@solana-program/token';
 
-const stream = walkInstructions({ compiledMessage, loadedAddresses, meta: rpcTx.meta });
-for (const { trace, instruction } of filterInstructionsForProgram(stream, TOKEN_PROGRAM_ADDRESS)) {
-    // `instruction.programAddress` is narrowed to TOKEN_PROGRAM_ADDRESS.
-    if (identifyTokenInstruction(instruction) === TokenInstruction.SyncNative) {
-        const parsed = parseSyncNativeInstruction(instruction);
-        console.log(trace, parsed);
+for (const ix of walkInstructions({ compiledMessage, loadedAddresses, meta: rpcTx.meta })) {
+    if (!isInstructionForProgram(ix, TOKEN_PROGRAM_ADDRESS)) continue;
+    // `ix.programAddress` is narrowed to TOKEN_PROGRAM_ADDRESS.
+    if (identifyTokenInstruction(ix) === TokenInstruction.SyncNative) {
+        const parsed = parseSyncNativeInstruction(ix);
+        console.log(ix.trace, parsed);
     }
 }
 ```
@@ -195,7 +181,7 @@ Same as above for `encoding: 'json'` (the default). When passed to `decodeTransa
 
 ### `ResolvedInstruction<TProgramAddress>`
 
-An `Instruction` whose account indices have been resolved to `AccountMeta`s and whose data is exposed as a `ReadonlyUint8Array`. Directly usable with the auto-generated `@solana-program/*` `parseXInstruction` and `identifyXInstruction` functions. The `TProgramAddress` parameter is narrowed by `filterInstructionsForProgram`.
+An `Instruction` whose account indices have been resolved to `AccountMeta`s and whose data is exposed as a `ReadonlyUint8Array`. Directly usable with the auto-generated `@solana-program/*` `parseXInstruction` and `identifyXInstruction` functions, and with `isInstructionForProgram` from `@solana/instructions` (which narrows the `TProgramAddress` parameter).
 
 ### `InstructionTrace`
 
@@ -204,9 +190,9 @@ A discriminated union recording an instruction's location within a transaction:
 - `{ kind: 'outer', index }` — a top-level instruction in the compiled message.
 - `{ kind: 'inner', outerIndex, innerIndex, stackHeight? }` — an instruction emitted via cross-program invocation. `stackHeight` is included only when reported by the RPC.
 
-### `TracedInstruction`
+### `TracedInstruction<TProgramAddress>`
 
-`{ instruction: ResolvedInstruction, trace: InstructionTrace }` — one entry yielded by `walkInstructions`.
+A `ResolvedInstruction<TProgramAddress>` with an extra `trace: InstructionTrace` property — one entry returned by `walkInstructions`. Because it is itself a `ResolvedInstruction`, it can be passed directly to `isInstructionForProgram` and to the auto-generated `identifyXInstruction` / `parseXInstruction` helpers.
 
 ### `MetaWithInnerInstructions`
 

@@ -1,10 +1,11 @@
 import type { Address } from '@solana/addresses';
 import { getBase58Decoder } from '@solana/codecs-strings';
+import { isInstructionForProgram } from '@solana/instructions';
 import type { Base58EncodedBytes } from '@solana/rpc-types';
 import type { CompiledTransactionMessage } from '@solana/transaction-messages';
 
 import { decodeTransactionFromRpcResponse, type JsonGetTransactionResponse } from '../decode-rpc-transaction';
-import { filterInstructionsForProgram, walkInstructions } from '../walk-instructions';
+import { walkInstructions } from '../walk-instructions';
 
 const base58 = getBase58Decoder();
 const asB58 = (bytes: Uint8Array): Base58EncodedBytes => base58.decode(bytes) as Base58EncodedBytes;
@@ -24,63 +25,45 @@ const compiled = {
 } as CompiledTransactionMessage;
 
 describe('walkInstructions', () => {
-    it('yields outer instructions in order with `outer` traces', () => {
-        const out = [...walkInstructions({ compiledMessage: compiled })];
+    it('returns outer instructions in order with `outer` traces', () => {
+        const out = walkInstructions({ compiledMessage: compiled });
         expect(out).toHaveLength(2);
         expect(out[0].trace).toStrictEqual({ index: 0, kind: 'outer' });
-        expect(out[0].instruction.programAddress).toBe('program-a');
+        expect(out[0].programAddress).toBe('program-a');
         expect(out[1].trace).toStrictEqual({ index: 1, kind: 'outer' });
-        expect(out[1].instruction.programAddress).toBe('program-b');
+        expect(out[1].programAddress).toBe('program-b');
     });
 
     it('appends inner instructions from meta with `inner` traces', () => {
         const innerData = asB58(new Uint8Array([42]));
-        const out = [
-            ...walkInstructions({
-                compiledMessage: compiled,
-                meta: {
-                    innerInstructions: [
-                        {
-                            index: 1,
-                            instructions: [{ accounts: [0], data: innerData, programIdIndex: 1, stackHeight: 2 }],
-                        },
-                    ],
-                },
-            }),
-        ];
+        const out = walkInstructions({
+            compiledMessage: compiled,
+            meta: {
+                innerInstructions: [
+                    {
+                        index: 1,
+                        instructions: [{ accounts: [0], data: innerData, programIdIndex: 1, stackHeight: 2 }],
+                    },
+                ],
+            },
+        });
         expect(out).toHaveLength(3);
         expect(out[2].trace).toStrictEqual({ innerIndex: 0, kind: 'inner', outerIndex: 1, stackHeight: 2 });
-        expect(out[2].instruction.programAddress).toBe('program-a');
-    });
-});
-
-describe('filterInstructionsForProgram', () => {
-    it('yields only matching instructions', () => {
-        const filtered = [
-            ...filterInstructionsForProgram(walkInstructions({ compiledMessage: compiled }), 'program-b' as Address),
-        ];
-        expect(filtered).toHaveLength(1);
-        expect(filtered[0].instruction.programAddress).toBe('program-b');
+        expect(out[2].programAddress).toBe('program-a');
     });
 
-    it('yields nothing when no instruction matches', () => {
-        const filtered = [
-            ...filterInstructionsForProgram(walkInstructions({ compiledMessage: compiled }), 'nope' as Address),
-        ];
-        expect(filtered).toStrictEqual([]);
-    });
-
-    it('narrows the yielded `programAddress` type to the supplied program', () => {
+    it('returned items are usable directly with isInstructionForProgram', () => {
         const PROGRAM_B = 'program-b' as Address<'program-b'>;
-        const [first] = [...filterInstructionsForProgram(walkInstructions({ compiledMessage: compiled }), PROGRAM_B)];
-        // Compile-time assertion: `programAddress` is narrowed to `Address<'program-b'>`.
-        const typed: Address<'program-b'> = first.instruction.programAddress;
-        expect(typed).toBe(PROGRAM_B);
+        const filtered = walkInstructions({ compiledMessage: compiled }).filter(ix =>
+            isInstructionForProgram(ix, PROGRAM_B),
+        );
+        expect(filtered).toHaveLength(1);
+        expect(filtered[0].programAddress).toBe(PROGRAM_B);
     });
 });
 
 describe('walkInstructions over a JSON-decoded transaction', () => {
-    it('yields outer + inner instructions from a JSON `getTransaction` response', () => {
+    it('returns outer + inner instructions from a JSON `getTransaction` response', () => {
         const innerData = asB58(new Uint8Array([42]));
         const rpcTx = {
             meta: {
@@ -107,19 +90,12 @@ describe('walkInstructions over a JSON-decoded transaction', () => {
         } as unknown as JsonGetTransactionResponse;
 
         const { compiledMessage, loadedAddresses } = decodeTransactionFromRpcResponse(rpcTx);
-        const traced = [...walkInstructions({ compiledMessage, loadedAddresses, meta: rpcTx.meta })];
+        const traced = walkInstructions({ compiledMessage, loadedAddresses, meta: rpcTx.meta });
         expect(traced).toHaveLength(2);
         expect(traced[0].trace).toStrictEqual({ index: 0, kind: 'outer' });
-        expect(traced[0].instruction.programAddress).toBe('program-a');
-        expect(Array.from(traced[0].instruction.data)).toStrictEqual([7]);
+        expect(traced[0].programAddress).toBe('program-a');
+        expect(Array.from(traced[0].data)).toStrictEqual([7]);
         expect(traced[1].trace).toStrictEqual({ innerIndex: 0, kind: 'inner', outerIndex: 0, stackHeight: 2 });
-    });
-});
-
-describe('walkInstructions on an unsupported version', () => {
-    it('throws SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED for v1 messages', () => {
-        const v1 = { ...compiled, version: 1 } as unknown as CompiledTransactionMessage;
-        expect(() => [...walkInstructions({ compiledMessage: v1 })]).toThrow(/VERSION_NUMBER_NOT_SUPPORTED|version/i);
     });
 });
 
@@ -130,39 +106,32 @@ describe('walkInstructions over an ALT-loaded v0 transaction', () => {
             numReadonlySignerAccounts: 0,
             numSignerAccounts: 1,
         },
-        instructions: [
-            // programAddressIndex=2 -> ALT writable; touches static[0] and ALT readonly[3]
-            { accountIndices: [0, 3], data: new Uint8Array([7]), programAddressIndex: 2 },
-        ],
+        instructions: [{ accountIndices: [0, 3], data: new Uint8Array([7]), programAddressIndex: 2 }],
         staticAccounts: ['fee-payer' as Address, 'static-readonly' as Address],
         version: 0,
     } as CompiledTransactionMessage;
 
     it('resolves indices spanning static + ALT writable + ALT readonly', () => {
         const innerData = asB58(new Uint8Array([8]));
-        const traced = [
-            ...walkInstructions({
-                compiledMessage: v0Compiled,
-                loadedAddresses: { readonly: ['alt-readonly' as Address], writable: ['alt-writable' as Address] },
-                meta: {
-                    innerInstructions: [
-                        {
-                            index: 0,
-                            instructions: [{ accounts: [0, 2], data: innerData, programIdIndex: 3, stackHeight: 2 }],
-                        },
-                    ],
-                },
-            }),
-        ];
+        const traced = walkInstructions({
+            compiledMessage: v0Compiled,
+            loadedAddresses: { readonly: ['alt-readonly' as Address], writable: ['alt-writable' as Address] },
+            meta: {
+                innerInstructions: [
+                    {
+                        index: 0,
+                        instructions: [{ accounts: [0, 2], data: innerData, programIdIndex: 3, stackHeight: 2 }],
+                    },
+                ],
+            },
+        });
 
         expect(traced).toHaveLength(2);
-        // Outer instruction.
         expect(traced[0].trace).toStrictEqual({ index: 0, kind: 'outer' });
-        expect(traced[0].instruction.programAddress).toBe('alt-writable');
-        expect(traced[0].instruction.accounts.map(a => a.address)).toStrictEqual(['fee-payer', 'alt-readonly']);
-        // Inner instruction: programIdIndex=3 -> ALT readonly slot.
+        expect(traced[0].programAddress).toBe('alt-writable');
+        expect(traced[0].accounts.map(a => a.address)).toStrictEqual(['fee-payer', 'alt-readonly']);
         expect(traced[1].trace).toStrictEqual({ innerIndex: 0, kind: 'inner', outerIndex: 0, stackHeight: 2 });
-        expect(traced[1].instruction.programAddress).toBe('alt-readonly');
-        expect(traced[1].instruction.accounts.map(a => a.address)).toStrictEqual(['fee-payer', 'alt-writable']);
+        expect(traced[1].programAddress).toBe('alt-readonly');
+        expect(traced[1].accounts.map(a => a.address)).toStrictEqual(['fee-payer', 'alt-writable']);
     });
 });

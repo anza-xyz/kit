@@ -14,11 +14,11 @@ export {
     type JsonGetTransactionResponse,
 } from './decode-rpc-transaction';
 export { getAllAddressesFromCompiledTransactionMessage, type LoadedAddresses } from './get-all-addresses';
-export { type MetaWithInnerInstructions, walkInnerInstructionsFromMeta } from './get-inner-instructions';
+export { getInnerInstructionsFromMeta, type MetaWithInnerInstructions } from './get-inner-instructions';
 export {
     getAccountMetasFromCompiledTransactionMessage,
     getInstructionsFromCompiledTransactionMessage,
     type ResolvedInstruction,
 } from './get-instructions';
 export type { InstructionTrace, TracedInstruction } from './types';
-export { filterInstructionsForProgram, walkInstructions } from './walk-instructions';
+export { walkInstructions } from './walk-instructions';
