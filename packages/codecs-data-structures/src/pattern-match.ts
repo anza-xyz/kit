@@ -26,23 +26,35 @@ type PatternMatchEncoderEntry<TNarrowed, TFrom = TNarrowed> = TNarrowed extends 
           | readonly [(value: TFrom) => value is TNarrowed, Encoder<TNarrowed>]
     : never;
 
+type IsUnion<T, U = T> = [T] extends [never] ? false : T extends unknown ? ([U] extends [T] ? false : true) : false;
+
 type FixedSizePatternMatchEncoderEntry<
     TNarrowed,
     TFrom = TNarrowed,
     TSize extends number = number,
 > = TNarrowed extends TFrom
-    ? // Boolean predicate with original encoder
+    ?
           | readonly [(value: TFrom) => boolean, FixedSizeEncoder<TFrom, TSize>]
-          // Type predicate with narrowed encoder
           | readonly [(value: TFrom) => value is TNarrowed, FixedSizeEncoder<TNarrowed, TSize>]
     : never;
 
 type VariableSizePatternMatchEncoderEntry<TNarrowed, TFrom = TNarrowed> = TNarrowed extends TFrom
-    ? // Boolean predicate with original encoder
+    ?
           | readonly [(value: TFrom) => boolean, VariableSizeEncoder<TFrom>]
-          // Type predicate with narrowed encoder
           | readonly [(value: TFrom) => value is TNarrowed, VariableSizeEncoder<TNarrowed>]
     : never;
+
+type PatternMatchFixedSizeEncoder<TFrom, TSize extends number> = number extends TSize
+    ? Encoder<TFrom>
+    : IsUnion<TSize> extends true
+      ? Encoder<TFrom>
+      : FixedSizeEncoder<TFrom, TSize>;
+
+type PatternMatchFixedSizeDecoder<TTo, TSize extends number> = number extends TSize
+    ? Decoder<TTo>
+    : IsUnion<TSize> extends true
+      ? Decoder<TTo>
+      : FixedSizeDecoder<TTo, TSize>;
 
 /**
  * Returns an encoder that selects which variant encoder to use based on pattern matching.
@@ -91,10 +103,7 @@ type VariableSizePatternMatchEncoderEntry<TNarrowed, TFrom = TNarrowed> = TNarro
  */
 export function getPatternMatchEncoder<TFrom, TSize extends number>(
     patterns: FixedSizePatternMatchEncoderEntry<TFrom, TFrom, TSize>[],
-): FixedSizeEncoder<TFrom, TSize>;
-export function getPatternMatchEncoder<TFrom>(
-    patterns: FixedSizePatternMatchEncoderEntry<TFrom>[],
-): FixedSizeEncoder<TFrom>;
+): PatternMatchFixedSizeEncoder<TFrom, TSize>;
 export function getPatternMatchEncoder<TFrom>(
     patterns: VariableSizePatternMatchEncoderEntry<TFrom>[],
 ): VariableSizeEncoder<TFrom>;
@@ -148,10 +157,7 @@ export function getPatternMatchEncoder<TFrom>(patterns: PatternMatchEncoderEntry
  */
 export function getPatternMatchDecoder<TTo, TSize extends number>(
     patterns: [(value: ReadonlyUint8Array) => boolean, FixedSizeDecoder<TTo, TSize>][],
-): FixedSizeDecoder<TTo, TSize>;
-export function getPatternMatchDecoder<TTo>(
-    patterns: [(value: ReadonlyUint8Array) => boolean, FixedSizeDecoder<TTo>][],
-): FixedSizeDecoder<TTo>;
+): PatternMatchFixedSizeDecoder<TTo, TSize>;
 export function getPatternMatchDecoder<TTo>(
     patterns: [(value: ReadonlyUint8Array) => boolean, VariableSizeDecoder<TTo>][],
 ): VariableSizeDecoder<TTo>;
@@ -228,6 +234,12 @@ type VariableSizePatternMatchCodecEntry<
         : never
     : never;
 
+type PatternMatchFixedSizeCodec<TFrom, TTo extends TFrom, TSize extends number> = number extends TSize
+    ? Codec<TFrom, TTo>
+    : IsUnion<TSize> extends true
+      ? Codec<TFrom, TTo>
+      : FixedSizeCodec<TFrom, TTo, TSize>;
+
 /**
  * Returns a codec that selects which variant codec to use based on pattern matching.
  *
@@ -290,10 +302,7 @@ type VariableSizePatternMatchCodecEntry<
  */
 export function getPatternMatchCodec<TFrom, TTo extends TFrom = TFrom, TSize extends number = number>(
     patterns: FixedSizePatternMatchCodecEntry<TFrom, TFrom, TTo, TSize>[],
-): FixedSizeCodec<TFrom, TTo, TSize>;
-export function getPatternMatchCodec<TFrom, TTo extends TFrom = TFrom>(
-    patterns: FixedSizePatternMatchCodecEntry<TFrom, TFrom, TTo>[],
-): FixedSizeCodec<TFrom, TTo>;
+): PatternMatchFixedSizeCodec<TFrom, TTo, TSize>;
 export function getPatternMatchCodec<TFrom, TTo extends TFrom = TFrom>(
     patterns: VariableSizePatternMatchCodecEntry<TFrom, TFrom, TTo>[],
 ): VariableSizeCodec<TFrom, TTo>;

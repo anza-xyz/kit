@@ -27,17 +27,35 @@ const stringTypePredicate = null as unknown as (value: number | string) => value
         // It returns an encoder for the same type as the inputs
         getPatternMatchEncoder([[numberValuePredicate, {} as Encoder<number>]]) satisfies Encoder<number>;
 
-        // It returns a FixedSizeEncoder if all encoders are FixedSizeEncoder
-        getPatternMatchEncoder([
-            [numberValuePredicate, {} as FixedSizeEncoder<number>],
-            [numberValuePredicate, {} as FixedSizeEncoder<number>],
-        ]) satisfies FixedSizeEncoder<number>;
+        // It returns an encoder if all fixed-size encoders have unknown sizes.
+        {
+            const encoder = getPatternMatchEncoder([
+                [numberValuePredicate, {} as FixedSizeEncoder<number>],
+                [numberValuePredicate, {} as FixedSizeEncoder<number>],
+            ]);
+            encoder satisfies Encoder<number>;
+            // @ts-expect-error The runtime sizes may differ between matched branches.
+            encoder satisfies FixedSizeEncoder<number>;
+        }
 
         // It maintains the size if all encoders are FixedSizeEncoder with the same size
         getPatternMatchEncoder([
             [stringValuePredicate, {} as FixedSizeEncoder<string, 4>],
             [stringValuePredicate, {} as FixedSizeEncoder<string, 4>],
         ]) satisfies FixedSizeEncoder<string, 4>;
+
+        // It returns an encoder when branch-size precision is represented as a TSize union.
+        {
+            const encoder = getPatternMatchEncoder([
+                [numberValuePredicate, {} as FixedSizeEncoder<number, 1>],
+                [numberValuePredicate, {} as FixedSizeEncoder<number, 4>],
+            ]);
+            encoder satisfies Encoder<number>;
+            // @ts-expect-error The same TSize union can also come from ambiguous branch sizes.
+            encoder satisfies FixedSizeEncoder<number>;
+            // @ts-expect-error The same TSize union can also come from ambiguous branch sizes.
+            encoder satisfies VariableSizeEncoder<number>;
+        }
 
         // It returns a VariableSizeEncoder if all encoders are VariableSizeEncoder
         getPatternMatchEncoder([
@@ -70,11 +88,16 @@ const stringTypePredicate = null as unknown as (value: number | string) => value
             [stringTypePredicate, {} as Encoder<string>],
         ]) satisfies Encoder<number | string>;
 
-        // It returns a FixedSizeEncoder if all encoders are FixedSizeEncoder
-        getPatternMatchEncoder<number | string>([
-            [numberTypePredicate, {} as FixedSizeEncoder<number>],
-            [stringTypePredicate, {} as FixedSizeEncoder<string>],
-        ]) satisfies FixedSizeEncoder<number | string>;
+        // It returns an encoder if all fixed-size encoders have unknown sizes.
+        {
+            const encoder = getPatternMatchEncoder<number | string>([
+                [numberTypePredicate, {} as FixedSizeEncoder<number>],
+                [stringTypePredicate, {} as FixedSizeEncoder<string>],
+            ]);
+            encoder satisfies Encoder<number | string>;
+            // @ts-expect-error The runtime sizes may differ between narrowed branches.
+            encoder satisfies FixedSizeEncoder<number | string>;
+        }
 
         // It maintains the size if all encoders are FixedSizeEncoder with the same size
         getPatternMatchEncoder<number | string, 4>([
@@ -111,17 +134,33 @@ const stringTypePredicate = null as unknown as (value: number | string) => value
     // It returns a decoder for the same type as the inputs
     getPatternMatchDecoder([[bytesPredicate, {} as Decoder<number>]]) satisfies Decoder<number>;
 
-    // It returns a FixedSizeDecoder if all decoders are FixedSizeDecoder
-    getPatternMatchDecoder([
-        [bytesPredicate, {} as FixedSizeDecoder<number>],
-        [bytesPredicate, {} as FixedSizeDecoder<number>],
-    ]) satisfies FixedSizeDecoder<number>;
+    // It returns a decoder if all fixed-size decoders have unknown sizes.
+    {
+        const decoder = getPatternMatchDecoder([
+            [bytesPredicate, {} as FixedSizeDecoder<number>],
+            [bytesPredicate, {} as FixedSizeDecoder<number>],
+        ]);
+        decoder satisfies Decoder<number>;
+        // @ts-expect-error The runtime sizes may differ between matched branches.
+        decoder satisfies FixedSizeDecoder<number>;
+    }
 
     // It maintains the size if all decoders are FixedSizeDecoder with the same size
     getPatternMatchDecoder([
         [bytesPredicate, {} as FixedSizeDecoder<string, 4>],
         [bytesPredicate, {} as FixedSizeDecoder<string, 4>],
     ]) satisfies FixedSizeDecoder<string, 4>;
+
+    // It returns a decoder when branch-size precision is represented as a TSize union.
+    {
+        const decoder = getPatternMatchDecoder([
+            [bytesPredicate, {} as FixedSizeDecoder<number, 1>],
+            [bytesPredicate, {} as FixedSizeDecoder<number, 4>],
+        ]);
+        decoder satisfies Decoder<number>;
+        // @ts-expect-error The same TSize union can also come from ambiguous branch sizes.
+        decoder satisfies FixedSizeDecoder<number>;
+    }
 
     // It returns a VariableSizeDecoder if all decoders are VariableSizeDecoder
     getPatternMatchDecoder([
@@ -153,17 +192,35 @@ const stringTypePredicate = null as unknown as (value: number | string) => value
         // It returns a codec for the same type as the inputs
         getPatternMatchCodec([[numberValuePredicate, bytesPredicate, {} as Codec<number>]]) satisfies Codec<number>;
 
-        // It returns a FixedSizeCodec if all codecs are FixedSizeCodec
-        getPatternMatchCodec([
-            [numberValuePredicate, bytesPredicate, {} as FixedSizeCodec<number>],
-            [numberValuePredicate, bytesPredicate, {} as FixedSizeCodec<number>],
-        ]) satisfies FixedSizeCodec<number>;
+        // It returns a codec if all fixed-size codecs have unknown sizes.
+        {
+            const codec = getPatternMatchCodec([
+                [numberValuePredicate, bytesPredicate, {} as FixedSizeCodec<number>],
+                [numberValuePredicate, bytesPredicate, {} as FixedSizeCodec<number>],
+            ]);
+            codec satisfies Codec<number>;
+            // @ts-expect-error The runtime sizes may differ between matched branches.
+            codec satisfies FixedSizeCodec<number>;
+        }
 
         // It maintains the size if all codecs are FixedSizeCodec with the same size
         getPatternMatchCodec([
             [stringValuePredicate, bytesPredicate, {} as FixedSizeCodec<string, string, 4>],
             [stringValuePredicate, bytesPredicate, {} as FixedSizeCodec<string, string, 4>],
         ]) satisfies FixedSizeCodec<string, string, 4>;
+
+        // It returns a codec when branch-size precision is represented as a TSize union.
+        {
+            const codec = getPatternMatchCodec([
+                [numberValuePredicate, bytesPredicate, {} as FixedSizeCodec<number, number, 1>],
+                [numberValuePredicate, bytesPredicate, {} as FixedSizeCodec<number, number, 4>],
+            ]);
+            codec satisfies Codec<number>;
+            // @ts-expect-error The same TSize union can also come from ambiguous branch sizes.
+            codec satisfies FixedSizeCodec<number>;
+            // @ts-expect-error The same TSize union can also come from ambiguous branch sizes.
+            codec satisfies VariableSizeCodec<number>;
+        }
 
         // It returns a VariableSizeCodec if all codecs are VariableSizeCodec
         getPatternMatchCodec([
@@ -196,11 +253,16 @@ const stringTypePredicate = null as unknown as (value: number | string) => value
             [stringTypePredicate, bytesPredicate, {} as Codec<string>],
         ]) satisfies Codec<number | string>;
 
-        // It returns a FixedSizeCodec if all codecs are FixedSizeCodec
-        getPatternMatchCodec<number | string>([
-            [numberTypePredicate, bytesPredicate, {} as FixedSizeCodec<number>],
-            [stringTypePredicate, bytesPredicate, {} as FixedSizeCodec<string>],
-        ]) satisfies FixedSizeCodec<number | string>;
+        // It returns a codec if all fixed-size codecs have unknown sizes.
+        {
+            const codec = getPatternMatchCodec<number | string>([
+                [numberTypePredicate, bytesPredicate, {} as FixedSizeCodec<number>],
+                [stringTypePredicate, bytesPredicate, {} as FixedSizeCodec<string>],
+            ]);
+            codec satisfies Codec<number | string>;
+            // @ts-expect-error The runtime sizes may differ between narrowed branches.
+            codec satisfies FixedSizeCodec<number | string>;
+        }
 
         // It maintains the size if all codecs are FixedSizeCodec with the same size
         getPatternMatchCodec<number | string, number | string, 4>([
