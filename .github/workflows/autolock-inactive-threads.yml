@@ -17,7 +17,7 @@ jobs:
   autolock-inactive-threads:
     runs-on: ubuntu-latest
     steps:
-      - uses: dessant/lock-threads@7266a7ce5c1df01b1c6db85bf8cd86c737dadbe7
+      - uses: dessant/lock-threads@851cffe46851ddd2051ea7147ebdc995113241c3
         with:
           github-token: ${{ github.token }}
           issue-inactive-days: '7'
