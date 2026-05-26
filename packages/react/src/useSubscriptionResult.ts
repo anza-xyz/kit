@@ -1,4 +1,4 @@
-import { splitSolanaRpcResponse, UnwrapRpcResponse } from '@solana/rpc-types';
+import { splitSolanaRpcResponse, UnwrapRpcResponse } from '@solana/kit';
 import { ReactiveStreamStore } from '@solana/subscribable';
 import { useMemo, useSyncExternalStore } from 'react';
 

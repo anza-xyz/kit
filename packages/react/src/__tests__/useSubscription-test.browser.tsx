@@ -1,4 +1,4 @@
-import { SolanaRpcResponse } from '@solana/rpc-types';
+import { SolanaRpcResponse } from '@solana/kit';
 import { createReactiveStoreFromDataPublisherFactory, DataPublisher, ReactiveStreamSource } from '@solana/subscribable';
 import { act } from '@testing-library/react';
 import React from 'react';

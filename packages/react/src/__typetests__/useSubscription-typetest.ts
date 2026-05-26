@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 
-import { SolanaRpcResponse } from '@solana/rpc-types';
+import { SolanaRpcResponse } from '@solana/kit';
 import { ReactiveStreamSource } from '@solana/subscribable';
 
 import { SubscriptionResult, useSubscription } from '../useSubscription';

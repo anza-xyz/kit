@@ -1,4 +1,4 @@
-import { Slot, UnwrapRpcResponse } from '@solana/rpc-types';
+import { Slot, UnwrapRpcResponse } from '@solana/kit';
 import { ReactiveStreamSource } from '@solana/subscribable';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 

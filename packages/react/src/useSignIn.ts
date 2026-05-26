@@ -1,4 +1,4 @@
-import { Address } from '@solana/addresses';
+import { Address } from '@solana/kit';
 import {
     SolanaSignIn,
     SolanaSignInFeature,

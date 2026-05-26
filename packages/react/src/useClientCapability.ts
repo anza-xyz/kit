@@ -1,5 +1,4 @@
-import { SOLANA_ERROR__REACT__MISSING_CAPABILITY, SolanaError } from '@solana/errors';
-import type { Client } from '@solana/plugin-core';
+import { type Client, SOLANA_ERROR__REACT__MISSING_CAPABILITY, SolanaError } from '@solana/kit';
 
 import { useClient } from './useClient';
 
