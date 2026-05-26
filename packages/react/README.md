@@ -244,6 +244,63 @@ reconnect({ abortSignal: undefined }); // no abort signal for this attempt
 reconnect(); // omit the key to use the factory (default)
 ```
 
+### `useTrackedData(spec, options?)`
+
+Render reactive state for an RPC subscription seeded by a one-shot RPC fetch, slot-deduped. The subscription (e.g. `accountNotifications`) is the primary source of live updates; the initial fetch (e.g. `getBalance`, `getAccountInfo`) provides a value to surface as soon as it resolves — typically before the first subscription notification arrives — so the `loading` paint is shorter than subscription-only would give you. Surfaces a unified `{ data, slot, error, refresh, status }` view where `status` is one of `'loading' | 'loaded' | 'error' | 'disabled'`. The underlying store slot-dedupes between the two sources — out-of-order arrivals never regress the surfaced value.
+
+`spec` is a `TrackedDataSpec<TRpcValue, TSubscriptionValue, TItem>` with four fields: a pending RPC request, a pending RPC subscription request, and two mappers that unify their value shapes into a common `TItem`. Both RPC responses and subscription notifications must have shape `SolanaRpcResponse` for slot de-dupe. Pass `null` to disable (the result reports `status: 'disabled'`). Memoize the spec with `useMemo` keyed on its inputs — stable identity is how the hook knows when to tear down and re-run.
+
+```tsx
+import { useClient, useTrackedData } from '@solana/react';
+import type {
+    Address,
+    AccountNotificationsApi,
+    ClientWithRpc,
+    ClientWithRpcSubscriptions,
+    GetBalanceApi,
+} from '@solana/kit';
+
+function AccountBalance({ address }: { address: Address }) {
+    const client = useClient<ClientWithRpc<GetBalanceApi> & ClientWithRpcSubscriptions<AccountNotificationsApi>>();
+    const spec = useMemo(
+        () => ({
+            rpcRequest: client.rpc.getBalance(address),
+            rpcSubscriptionRequest: client.rpcSubscriptions.accountNotifications(address),
+            rpcValueMapper: (lamports: bigint) => lamports,
+            rpcSubscriptionValueMapper: ({ lamports }: { lamports: bigint }) => lamports,
+        }),
+        [client, address],
+    );
+    const { data, slot, error, refresh } = useTrackedData(spec);
+    if (error) return <button onClick={refresh}>Retry</button>;
+    return <p>{data !== undefined ? `${data} lamports at slot ${slot}` : 'Loading…'}</p>;
+}
+```
+
+`refresh()` re-runs both the initial RPC and the subscription. While a refresh is in flight, `status` returns to `'loading'` and `data` / `error` from the prior outcome stay populated until the new attempt resolves (stale-while-revalidate). The result's `slot` field is lifted from the underlying `SolanaRpcResponse` envelope and reflects the slot at which `data` was observed — useful for "data as of slot X" UIs.
+
+#### Per-attempt cancellation
+
+Pass `getAbortSignal` to attach a cancellation signal to each attempt — initial run plus every `refresh()`. The natural use is per-attempt timeouts:
+
+```tsx
+const { data, error, refresh } = useTrackedData(spec, {
+    // Each attempt gets a fresh 30-second clock. `refresh()` resets it.
+    getAbortSignal: () => AbortSignal.timeout(30_000),
+});
+```
+
+The factory is held in a ref synced to the latest render, so inline closures are fine — no `useCallback` needed. To kill the hook entirely (e.g. on a route change), set the memoized spec to `null` (the result reports `disabled`), or let the component unmount.
+
+`refresh()` accepts an optional `{ abortSignal }` override that replaces the configured factory for just that attempt:
+
+```tsx
+const userInitiatedCtrl = new AbortController();
+refresh({ abortSignal: userInitiatedCtrl.signal }); // override: use this signal, ignore the factory
+refresh({ abortSignal: undefined }); // no abort signal for this attempt
+refresh(); // omit the key to use the factory (default)
+```
+
 ## Hooks
 
 ### `useSignIn(uiWalletAccount, chain)`
