@@ -1,4 +1,4 @@
-import { createReactiveActionStore, ReactiveActionSource } from '@solana/subscribable';
+import { createReactiveActionStore, ReactiveActionSource } from '@solana/kit';
 import { act } from '@testing-library/react';
 import React from 'react';
 import { renderToString } from 'react-dom/server';

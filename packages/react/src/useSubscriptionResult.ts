@@ -1,4 +1,4 @@
-import { ReactiveStreamStore } from '@solana/subscribable';
+import { ReactiveStreamStore } from '@solana/kit';
 import { useMemo, useSyncExternalStore } from 'react';
 
 import { SubscriptionResult } from './useSubscription';

@@ -1,12 +1,11 @@
-import { isSolanaError, SOLANA_ERROR__REACT__MISSING_PROVIDER } from '@solana/errors';
-import { Client, createClient } from '@solana/plugin-core';
+import { Client, createClient, isSolanaError, SOLANA_ERROR__REACT__MISSING_PROVIDER } from '@solana/kit';
 import { act } from '@testing-library/react';
 import React, { Suspense } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 
+import { render, renderHook } from '../__test-utils__/render';
 import { ClientProvider } from '../ClientProvider';
 import { useClient } from '../useClient';
-import { render, renderHook } from '../__test-utils__/render';
 
 describe('ClientProvider + useClient', () => {
     it('publishes the client to descendants and returns the same reference across renders', () => {
@@ -110,7 +109,7 @@ describe('ClientProvider + useClient', () => {
             const clientPromise = Promise.reject<Client<object>>(boom);
             // Pre-attach a catch so the rejection isn't flagged as unhandled before React's
             // error-boundary subscription runs.
-            clientPromise.catch(() => {});
+            clientPromise.catch(() => { });
             const onError = jest.fn();
             function Probe() {
                 useClient();

@@ -947,18 +947,6 @@ importers:
 
   packages/react:
     dependencies:
-      '@solana/addresses':
-        specifier: workspace:*
-        version: link:../addresses
-      '@solana/errors':
-        specifier: workspace:*
-        version: link:../errors
-      '@solana/keys':
-        specifier: workspace:*
-        version: link:../keys
-      '@solana/plugin-core':
-        specifier: workspace:*
-        version: link:../plugin-core
       '@solana/promises':
         specifier: workspace:*
         version: link:../promises
@@ -993,15 +981,12 @@ importers:
         specifier: ^1.0.1
         version: 1.0.1
     devDependencies:
-      '@solana/codecs-core':
-        specifier: workspace:*
-        version: link:../codecs-core
       '@solana/eslint-config':
         specifier: workspace:*
         version: link:../eslint-config
-      '@solana/rpc-types':
+      '@solana/kit':
         specifier: workspace:*
-        version: link:../rpc-types
+        version: link:../kit
       '@testing-library/react':
         specifier: ^16.3.2
         version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)

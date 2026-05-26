@@ -1,31 +1,33 @@
-import { Address } from '@solana/addresses';
-import type { VariableSizeCodec, VariableSizeDecoder } from '@solana/codecs-core';
 import {
-    SOLANA_ERROR__SIGNER__WALLET_MULTISIGN_UNIMPLEMENTED,
-    SOLANA_ERROR__TRANSACTION__NONCE_ACCOUNT_CANNOT_BE_IN_LOOKUP_TABLE,
-    SolanaError,
-} from '@solana/errors';
-import { SignatureBytes } from '@solana/keys';
-import { Blockhash } from '@solana/rpc-types';
-import {
+    Address,
+    Blockhash,
     CompiledTransactionMessage,
     CompiledTransactionMessageWithLifetime,
     getCompiledTransactionMessageDecoder,
-} from '@solana/transaction-messages';
-import {
+    getTransactionCodec,
     getTransactionLifetimeConstraintFromCompiledTransactionMessage,
+    SignatureBytes,
+    SOLANA_ERROR__SIGNER__WALLET_MULTISIGN_UNIMPLEMENTED,
+    SOLANA_ERROR__TRANSACTION__NONCE_ACCOUNT_CANNOT_BE_IN_LOOKUP_TABLE,
+    SolanaError,
     Transaction,
     TransactionMessageBytes,
-} from '@solana/transactions';
-import { getTransactionCodec } from '@solana/transactions';
+    type VariableSizeCodec,
+    type VariableSizeDecoder,
+} from '@solana/kit';
 import type { UiWalletAccount } from '@wallet-standard/ui';
 
 import { renderHook } from '../test-renderer';
 import { useSignTransaction } from '../useSignTransaction';
 import { useWalletAccountTransactionSigner } from '../useWalletAccountTransactionSigner';
 
-jest.mock('@solana/transaction-messages');
-jest.mock('@solana/transactions');
+jest.mock('@solana/kit', () => ({
+    ...jest.requireActual('@solana/kit'),
+    assertIsTransactionWithinSizeLimit: jest.fn(),
+    getCompiledTransactionMessageDecoder: jest.fn(),
+    getTransactionCodec: jest.fn(),
+    getTransactionLifetimeConstraintFromCompiledTransactionMessage: jest.fn(),
+}));
 jest.mock('../useSignTransaction');
 
 describe('useWalletAccountTransactionSigner', () => {
