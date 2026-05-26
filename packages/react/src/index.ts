@@ -13,6 +13,7 @@ export * from './useSubscription';
 export * from './useSignIn';
 export * from './useSignMessage';
 export * from './useSignTransaction';
+export * from './useTrackedData';
 export * from './useWalletAccountMessageSigner';
 export * from './useWalletAccountTransactionSigner';
 export * from './useWalletAccountTransactionSendingSigner';
