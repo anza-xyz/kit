@@ -1,4 +1,4 @@
-import { createReactiveActionStore } from '@solana/subscribable';
+import { createReactiveActionStore } from '@solana/kit';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 
 import { useIsomorphicLayoutEffect } from './useIsomorphicLayoutEffect';

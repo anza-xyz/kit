@@ -1,9 +1,14 @@
-import { Address, address } from '@solana/addresses';
-import { bytesEqual } from '@solana/codecs-core';
-import { SOLANA_ERROR__SIGNER__WALLET_MULTISIGN_UNIMPLEMENTED, SolanaError } from '@solana/errors';
-import { SignatureBytes } from '@solana/keys';
+import {
+    Address,
+    address,
+    bytesEqual,
+    MessageModifyingSigner,
+    SignableMessage,
+    SignatureBytes,
+    SOLANA_ERROR__SIGNER__WALLET_MULTISIGN_UNIMPLEMENTED,
+    SolanaError,
+} from '@solana/kit';
 import { getAbortablePromise } from '@solana/promises';
-import { MessageModifyingSigner, SignableMessage } from '@solana/signers';
 import type { UiWalletAccount } from '@wallet-standard/ui';
 import { useMemo } from 'react';
 
@@ -21,7 +26,7 @@ import { useSignMessage } from './useSignMessage';
  * @example
  * ```tsx
  * import { useWalletAccountMessageSigner } from '@solana/react';
- * import { createSignableMessage } from '@solana/signers';
+ * import { createSignableMessage } from '@solana/kit';
  *
  * function SignMessageButton({ account, text }) {
  *     const messageSigner = useWalletAccountMessageSigner(account);

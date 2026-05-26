@@ -74,15 +74,7 @@
         "maintained node versions"
     ],
     "dependencies": {
-        "@solana/addresses": "workspace:*",
-        "@solana/errors": "workspace:*",
-        "@solana/keys": "workspace:*",
-        "@solana/plugin-core": "workspace:*",
         "@solana/promises": "workspace:*",
-        "@solana/signers": "workspace:*",
-        "@solana/subscribable": "workspace:*",
-        "@solana/transaction-messages": "workspace:*",
-        "@solana/transactions": "workspace:*",
         "@solana/wallet-standard-features": "^1.3.0",
         "@wallet-standard/base": "^1.1.0",
         "@wallet-standard/errors": "^0.1.1",
@@ -91,9 +83,8 @@
         "@wallet-standard/ui-registry": "^1.0.1"
     },
     "devDependencies": {
-        "@solana/codecs-core": "workspace:*",
         "@solana/eslint-config": "workspace:*",
-        "@solana/rpc-types": "workspace:*",
+        "@solana/kit": "workspace:*",
         "@testing-library/react": "^16.3.2",
         "@types/react": "^19.2.15",
         "@types/react-dom": "^19.2.3",
@@ -104,6 +95,7 @@
         "react-test-renderer": "^19.2.6"
     },
     "peerDependencies": {
+        "@solana/kit": "workspace:*",
         "react": ">=18"
     },
     "peerDependenciesMeta": {

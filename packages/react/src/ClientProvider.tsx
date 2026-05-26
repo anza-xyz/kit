@@ -1,4 +1,4 @@
-import type { Client } from '@solana/plugin-core';
+import type { Client } from '@solana/kit';
 import React from 'react';
 
 import { usePromise } from './usePromise';

@@ -1,4 +1,4 @@
-import { ReactiveActionStore, ReactiveState, ReactiveStreamStore } from '@solana/subscribable';
+import { ReactiveActionStore, ReactiveState, ReactiveStreamStore } from '@solana/kit';
 
 const DISABLED_ACTION_STATE = Object.freeze({
     data: undefined,

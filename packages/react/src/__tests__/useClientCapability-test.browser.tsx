@@ -1,15 +1,15 @@
 import {
+    createClient,
     isSolanaError,
     SOLANA_ERROR__REACT__MISSING_CAPABILITY,
     SOLANA_ERROR__REACT__MISSING_PROVIDER,
-} from '@solana/errors';
-import { createClient } from '@solana/plugin-core';
+} from '@solana/kit';
 import React from 'react';
 
+import { renderHook } from '../__test-utils__/render';
 import { ClientProvider } from '../ClientProvider';
 import { useClient } from '../useClient';
 import { useClientCapability } from '../useClientCapability';
-import { renderHook } from '../__test-utils__/render';
 
 type ClientWithFoo = { foo: { hello(): string } };
 

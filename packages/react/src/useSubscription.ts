@@ -1,4 +1,4 @@
-import { ReactiveStreamSource } from '@solana/subscribable';
+import { ReactiveStreamSource } from '@solana/kit';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { disabledStreamStore } from './staticStores';
