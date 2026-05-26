@@ -126,26 +126,21 @@ describe('createHttpTransport', () => {
                 }),
             );
         });
-        it('sets the content length header to the length of the JSON-stringified payload', () => {
+        it('does not set a `content-length` header (fetch derives it from the body)', () => {
+            // Regression test: undici 8.3+ rejects requests that include a `content-length` header
+            // because it computes one from the body itself. The transport must not emit one.
             makeHttpRequest({
                 payload:
-                    // Shruggie: https://emojipedia.org/person-shrugging/
+                    // A payload containing multi-byte UTF-8 sequences (`body.length` would have
+                    // returned a wrong byte count for these): Shruggie + waving hand + family ZWJ.
                     '\xAF\\\x5F\x28\u30C4\x29\x5F\x2F\xAF' +
                     ' ' +
-                    // https://emojipedia.org/waving-hand-medium-skin-tone/
                     '\u{1F44B}\u{1F3FD}' +
                     ' ' +
-                    // https://tinyurl.com/bdemuf3r
                     '\u{1F469}\u{1F3FB}\u200D\u2764\uFE0F\u200D\u{1F469}\u{1F3FF}',
             }).catch(() => {});
-            expect(fetchSpy).toHaveBeenCalledWith(
-                expect.anything(),
-                expect.objectContaining({
-                    headers: expect.objectContaining({
-                        'content-length': '30',
-                    }),
-                }),
-            );
+            const [, requestInfo] = fetchSpy.mock.calls[0];
+            expect(requestInfo.headers).not.toHaveProperty('content-length');
         });
         it('sets the `method` to `POST`', () => {
             makeHttpRequest({ payload: 123 }).catch(() => {});

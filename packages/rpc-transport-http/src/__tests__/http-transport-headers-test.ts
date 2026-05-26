@@ -111,21 +111,6 @@ describe('createHttpRequest with custom headers', () => {
             }),
         );
     });
-    it('is impossible to override the `Content-Length` header', () => {
-        const makeHttpRequest = createHttpTransport({
-            headers: { 'cOnTeNt-LeNgTh': '420' },
-            url: 'http://localhost',
-        });
-        makeHttpRequest({ payload: 123 }).catch(() => {});
-        expect(fetchSpy).toHaveBeenCalledWith(
-            expect.anything(),
-            expect.objectContaining({
-                headers: expect.objectContaining({
-                    'content-length': '3',
-                }),
-            }),
-        );
-    });
     it('is impossible to override the `Content-Type` header', () => {
         const makeHttpRequest = createHttpTransport({
             headers: { 'cOnTeNt-TyPe': 'text/html' },
