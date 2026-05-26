@@ -1,17 +1,18 @@
-import { address } from '@solana/addresses';
-import { bytesEqual } from '@solana/codecs-core';
-import { SOLANA_ERROR__SIGNER__WALLET_MULTISIGN_UNIMPLEMENTED, SolanaError } from '@solana/errors';
-import { getAbortablePromise } from '@solana/promises';
-import { TransactionModifyingSigner } from '@solana/signers';
-import { getCompiledTransactionMessageDecoder } from '@solana/transaction-messages';
 import {
+    address,
     assertIsTransactionWithinSizeLimit,
+    bytesEqual,
+    getCompiledTransactionMessageDecoder,
     getTransactionCodec,
     getTransactionLifetimeConstraintFromCompiledTransactionMessage,
+    SOLANA_ERROR__SIGNER__WALLET_MULTISIGN_UNIMPLEMENTED,
+    SolanaError,
     Transaction,
+    TransactionModifyingSigner,
     TransactionWithinSizeLimit,
     TransactionWithLifetime,
-} from '@solana/transactions';
+} from '@solana/kit';
+import { getAbortablePromise } from '@solana/promises';
 import { UiWalletAccount } from '@wallet-standard/ui';
 import { useMemo, useRef } from 'react';
 

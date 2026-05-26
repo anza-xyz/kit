@@ -1,4 +1,4 @@
-import { ReactiveActionStore } from '@solana/subscribable';
+import { ReactiveActionStore } from '@solana/kit';
 import { useMemo, useSyncExternalStore } from 'react';
 
 import { RequestResult } from './useRequest';

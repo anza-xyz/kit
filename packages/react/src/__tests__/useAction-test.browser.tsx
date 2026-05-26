@@ -4,7 +4,6 @@ import React from 'react';
 import { renderToString } from 'react-dom/server';
 
 import { renderHook } from '../__test-utils__/render';
-
 import { useAction } from '../useAction';
 
 describe('useAction', () => {

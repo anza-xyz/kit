@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 
-import { address } from '@solana/addresses';
+import { address } from '@solana/kit';
 import { UiWalletAccount } from '@wallet-standard/ui';
 
 import { useSignTransaction, useSignTransactions } from '../useSignTransaction';

@@ -1,4 +1,4 @@
-import { createReactiveActionStore, ReactiveActionSource } from '@solana/subscribable';
+import { createReactiveActionStore, ReactiveActionSource } from '@solana/kit';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { disabledActionStore } from './staticStores';
