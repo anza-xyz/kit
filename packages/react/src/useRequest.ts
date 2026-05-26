@@ -1,4 +1,4 @@
-import { createReactiveActionStore, ReactiveActionSource, ReactiveActionStore } from '@solana/subscribable';
+import { createReactiveActionStore, ReactiveActionSource, ReactiveActionStore } from '@solana/kit';
 import { useMemo } from 'react';
 
 import { disabledActionStore } from './staticStores';

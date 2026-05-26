@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 
-import { ReactiveActionSource } from '@solana/subscribable';
+import { ReactiveActionSource } from '@solana/kit';
 
 import { RequestResult, useRequest } from '../useRequest';
 
