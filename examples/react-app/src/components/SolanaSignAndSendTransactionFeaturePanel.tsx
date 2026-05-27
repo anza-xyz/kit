@@ -41,7 +41,7 @@ function solStringToLamports(solQuantityString: string) {
 
 export function SolanaSignAndSendTransactionFeaturePanel({ account }: Props) {
     const { mutate } = useSWRConfig();
-    const { current: NO_ERROR } = useRef(Symbol());
+    const { current: NO_ERROR } = useRef<unknown>(Symbol());
     const { rpc } = useContext(RpcContext);
     const wallets = useWallets();
     const [isSendingTransaction, setIsSendingTransaction] = useState(false);

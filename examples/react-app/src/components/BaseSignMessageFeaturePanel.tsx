@@ -12,7 +12,7 @@ type Props = Readonly<{
 }>;
 
 export function BaseSignMessageFeaturePanel({ signMessage }: Props) {
-    const { current: NO_ERROR } = useRef(Symbol());
+    const { current: NO_ERROR } = useRef<unknown>(Symbol());
     const [isSigningMessage, setIsSigningMessage] = useState(false);
     const [error, setError] = useState(NO_ERROR);
     const [lastSignature, setLastSignature] = useState<ReadonlyUint8Array | undefined>();
