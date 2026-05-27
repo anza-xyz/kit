@@ -301,6 +301,63 @@ refresh({ abortSignal: undefined }); // no abort signal for this attempt
 refresh(); // omit the key to use the factory (default)
 ```
 
+## SWR adapter (`@solana/react/swr`)
+
+Opt-in subpath that bridges Kit's reactive primitives into SWR's cache. Import from `@solana/react/swr`; `swr@^2` is an optional peer dependency. Hooks carry the `Swr` suffix to keep the cache backing visible at the call site.
+
+### `useRequestSWR(key, source, options?)`
+
+SWR-backed counterpart to `useRequest`. Same `source` shape (a `ReactiveActionSource<T>` or `(signal: AbortSignal) => Promise<T>`). Returns SWR's native `SWRResponse<T>`. Pass `null` for either `key` or `source` to disable — useful when one of the source's inputs isn't yet known.
+
+```tsx
+import { useClient } from '@solana/react';
+import { useRequestSWR } from '@solana/react/swr';
+import type { ClientWithRpc, GetLatestBlockhashApi } from '@solana/kit';
+
+function LatestBlockhash() {
+    const client = useClient<ClientWithRpc<GetLatestBlockhashApi>>();
+    const { data, error, isLoading, mutate } = useRequestSWR(['latestBlockhash'], client.rpc.getLatestBlockhash());
+    if (error) return <button onClick={() => mutate()}>Retry</button>;
+    if (isLoading) return <p>Loading…</p>;
+    return <p>Blockhash: {data!.value.blockhash}</p>;
+}
+```
+
+`mutate()` is SWR's revalidate verb — call it to re-fire the request manually (the equivalent of `refresh()` from `useRequest`).
+
+Pass any SWR `SWRConfiguration` field in options. The Kit-only `getAbortSignal: () => AbortSignal` factory is invoked on every attempt SWR makes — initial fire, focus / reconnect / poll revalidation, and `mutate()` — and the returned signal is threaded into the source. Typically a per-attempt timeout. SWR won't specifically handle the abort but will surface the rejection via `error`.
+
+```tsx
+useRequestSWR(['latestBlockhash'], source, {
+    getAbortSignal: () => AbortSignal.timeout(5_000),
+});
+```
+
+Unlike `useRequest.refresh({ abortSignal })`, SWR's `mutate()` has no per-attempt override for the abort signal so `getAbortSignal` will be used on every call.
+
+For any one-shot async work that isn't a `ReactiveActionSource` — `fetch`, a third-party SDK call, etc. — you can pass an async function instead of a source. This can be any function of shape `(signal: AbortSignal) => Promise<T>`. The signal from `getAbortSignal` is passed to this function on each request. Other than this signal, this is the equivalent of `useSWR(key, fetcher)` and both are interoperable.
+
+```tsx
+function Profile({ userId }: { userId: string }) {
+    const fetcher = useCallback(
+        (signal: AbortSignal) => fetch(`/api/users/${userId}`, { signal }).then(r => r.json()),
+        [userId],
+    );
+    const { data, error, isLoading, mutate } = useRequestSWR(['users', userId], fetcher, {
+        getAbortSignal: () => AbortSignal.timeout(5_000),
+    });
+    if (error) return <button onClick={() => mutate()}>Retry</button>;
+    if (isLoading) return <p>Loading…</p>;
+    return <p>{data!.name}</p>;
+}
+```
+
+When `getAbortSignal` isn't configured the signal is a fresh never-aborting `AbortSignal` (so the function's signature is satisfied) — it does **not** fire on unmount or when SWR supersedes the request. SWR's model is to discard the stale result rather than cancel the network call.
+
+### Why no `useActionSWR`?
+
+It would just be a wrapper around SWR's built-in [`useSWRMutation`](https://swr.vercel.app/docs/mutation#useswrmutation) with no additional functionality. Either use `useSWRMutation` or, if you don't need the SWR integration, use `useAction`.
+
 ## Hooks
 
 ### `useSignIn(uiWalletAccount, chain)`
