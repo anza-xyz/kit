@@ -40,7 +40,7 @@ await airdrop({
 
 ### `createReactiveStoreWithInitialValueAndSlotTracking(config)`
 
-Creates a `ReactiveStreamStore` that combines an initial RPC fetch with an ongoing subscription to keep its state up to date. Uses slot-based comparison to ensure only the most recent value is kept, regardless of whether it came from the RPC response or a subscription notification.
+Creates a `ReactiveStreamStore` that combines an initial-value source with an ongoing stream source to keep its state up to date. Uses slot-based comparison to ensure only the most recent value is kept, regardless of whether it came from the initial value or a stream notification.
 
 The returned store is compatible with React's `useSyncExternalStore`, Svelte stores, Solid's `from()`, and any other reactive primitive that expects a `{ subscribe, getState }` contract.
 
@@ -57,18 +57,20 @@ const rpcSubscriptions = createSolanaRpcSubscriptions('ws://127.0.0.1:8900');
 const myAddress = address('FnHyam9w4NZoWR6mKN1CuGBritdsEWZQa4Z4oawLZGxa');
 
 const balanceStore = createReactiveStoreWithInitialValueAndSlotTracking({
-    abortSignal: AbortSignal.timeout(60_000),
-    rpcRequest: rpc.getBalance(myAddress, { commitment: 'confirmed' }),
-    rpcValueMapper: lamports => lamports,
-    rpcSubscriptionRequest: rpcSubscriptions.accountNotifications(myAddress),
-    rpcSubscriptionValueMapper: ({ lamports }) => lamports,
+    initialValueSource: rpc.getBalance(myAddress, { commitment: 'confirmed' }),
+    initialValueMapper: lamports => lamports,
+    streamSource: rpcSubscriptions.accountNotifications(myAddress),
+    streamValueMapper: ({ lamports }) => lamports,
 });
 
 const unsubscribe = balanceStore.subscribe(() => {
-    const error = balanceStore.getError();
-    if (error) console.error('Error:', error);
-    else console.log('Balance:', balanceStore.getState());
+    const state = balanceStore.getUnifiedState();
+    if (state.status === 'error') console.error('Error:', state.error);
+    else if (state.status === 'loaded') console.log('Balance:', state.data.value);
 });
+
+// Start fetching, cancelling after 60 seconds:
+balanceStore.withSignal(AbortSignal.timeout(60_000)).connect();
 ```
 
 ### `decompileTransactionMessageFetchingLookupTables(compiledTransactionMessage, rpc, config)`

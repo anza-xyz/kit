@@ -1,109 +1,94 @@
-import type { PendingRpcRequest } from '@solana/rpc';
-import type { PendingRpcSubscriptionsRequest } from '@solana/rpc-subscriptions';
 import type { SolanaRpcResponse } from '@solana/rpc-types';
+import {
+    createReactiveActionStore,
+    createReactiveStoreFromDataPublisherFactory,
+    ReactiveActionSource,
+    ReactiveStreamSource,
+} from '@solana/subscribable';
 
 import { createReactiveStoreWithInitialValueAndSlotTracking } from '../create-reactive-store-with-initial-value-and-slot-tracking';
 
 type TestValue = { count: number };
 
-function createMockRpcRequest(): {
-    mockRequest: PendingRpcRequest<SolanaRpcResponse<TestValue>>;
-    reject(error: unknown): void;
-    resolve(response: SolanaRpcResponse<TestValue>): void;
+// Backs the `initialValueSource` with a real `ReactiveActionStore`. The wrapped function hands out
+// a fresh controllable promise on every dispatch, so a retry (which builds a new store and
+// dispatches again) gets its own instance. `instances[i]` captures the resolve/reject and the
+// per-dispatch signal for the i-th dispatch.
+function createMockInitialValueSource(): {
+    fn: jest.Mock;
+    instances: {
+        reject(error: unknown): void;
+        resolve(response: SolanaRpcResponse<TestValue>): void;
+        signal: AbortSignal | undefined;
+    }[];
+    source: ReactiveActionSource<SolanaRpcResponse<TestValue>>;
 } {
-    const { promise, resolve, reject } = Promise.withResolvers<SolanaRpcResponse<TestValue>>();
-    return {
-        mockRequest: {
-            reactiveStore: jest.fn().mockImplementation(() => {
-                throw new Error('not implemented');
-            }),
-            send: jest.fn().mockReturnValue(promise),
-        },
-        reject,
-        resolve,
+    const instances: {
+        reject(error: unknown): void;
+        resolve(response: SolanaRpcResponse<TestValue>): void;
+        signal: AbortSignal | undefined;
+    }[] = [];
+    const fn = jest.fn().mockImplementation((signal?: AbortSignal) => {
+        const { promise, resolve, reject } = Promise.withResolvers<SolanaRpcResponse<TestValue>>();
+        instances.push({ reject, resolve, signal });
+        return promise;
+    });
+    const source: ReactiveActionSource<SolanaRpcResponse<TestValue>> = {
+        reactiveStore: () => createReactiveActionStore(fn),
     };
+    return { fn, instances, source };
 }
 
-function createMockSubscriptionRequest(): {
-    complete(): void;
-    error(err: unknown): void;
-    mockRequest: PendingRpcSubscriptionsRequest<SolanaRpcResponse<TestValue>>;
-    pushNotification(notification: SolanaRpcResponse<TestValue>): void;
+// Backs the `streamSource` with a real `ReactiveStreamStore` built from a mock `DataPublisher`
+// factory. The factory hands out a fresh publisher per connection, so a retry gets its own
+// instance. `publishers[i]` lets the test publish data/error onto the i-th connection and exposes
+// the per-connection signal.
+function createMockStreamSource(): {
+    createDataPublisher: jest.Mock;
+    publishers: { publish(channel: string, payload: unknown): void; signal: AbortSignal | undefined }[];
+    source: ReactiveStreamSource<SolanaRpcResponse<TestValue>>;
 } {
-    const notifications: SolanaRpcResponse<TestValue>[] = [];
-    let waitingResolve: ((value: IteratorResult<SolanaRpcResponse<TestValue>>) => void) | null = null;
-    let waitingReject: ((reason: unknown) => void) | null = null;
-    let done = false;
-    let errorValue: unknown;
-    let hasError = false;
-
-    const asyncIterable: AsyncIterable<SolanaRpcResponse<TestValue>> = {
-        [Symbol.asyncIterator]() {
-            return {
-                next() {
-                    if (notifications.length > 0) {
-                        return Promise.resolve({ done: false, value: notifications.shift()! } as const);
-                    }
-                    if (done) {
-                        return Promise.resolve({ done: true, value: undefined } as const);
-                    }
-                    if (hasError) {
-                        return Promise.reject(errorValue as Error);
-                    }
-                    return new Promise<IteratorResult<SolanaRpcResponse<TestValue>>>((resolve, reject) => {
-                        waitingResolve = resolve;
-                        waitingReject = reject;
-                    });
-                },
-            };
-        },
-    };
-
-    const pushNotification = (notification: SolanaRpcResponse<TestValue>) => {
-        if (waitingResolve) {
-            const resolve = waitingResolve;
-            waitingResolve = null;
-            resolve({ done: false, value: notification });
-        } else {
-            notifications.push(notification);
-        }
-    };
-
-    const error = (err: unknown) => {
-        hasError = true;
-        errorValue = err;
-        if (waitingReject) {
-            const reject = waitingReject;
-            waitingResolve = null;
-            waitingReject = null;
-            reject(err);
-        }
-    };
-
-    const complete = () => {
-        done = true;
-        if (waitingResolve) {
-            const resolve = waitingResolve;
-            waitingResolve = null;
-            resolve({ done: true, value: undefined });
-        }
-    };
-
-    return {
-        complete,
-        error,
-        mockRequest: {
-            reactiveStore: jest.fn().mockImplementation(() => {
-                throw new Error('not implemented');
+    const publishers: { publish(channel: string, payload: unknown): void; signal: AbortSignal | undefined }[] = [];
+    const createDataPublisher = jest.fn().mockImplementation((signal?: AbortSignal) => {
+        const mockOn = jest.fn().mockReturnValue(function unsubscribe() {});
+        publishers.push({
+            publish(channel: string, payload: unknown) {
+                mockOn.mock.calls
+                    .filter(
+                        ([actualChannel, , options]: [string, unknown, { signal?: AbortSignal } | undefined]) =>
+                            actualChannel === channel && !options?.signal?.aborted,
+                    )
+                    .forEach(([, listener]) => listener(payload));
+            },
+            signal,
+        });
+        return Promise.resolve({ on: mockOn });
+    });
+    const source: ReactiveStreamSource<SolanaRpcResponse<TestValue>> = {
+        reactiveStore: () =>
+            createReactiveStoreFromDataPublisherFactory<SolanaRpcResponse<TestValue>>({
+                createDataPublisher,
+                dataChannelName: 'data',
+                errorChannelName: 'error',
             }),
-            subscribe: jest.fn().mockResolvedValue(asyncIterable),
-        },
-        pushNotification,
     };
+    return { createDataPublisher, publishers, source };
 }
 
 function rpcResponse(slot: number, value: TestValue): SolanaRpcResponse<TestValue> {
     return { context: { slot: BigInt(slot) }, value };
+}
+
+function createStore(
+    initialValueSource: ReactiveActionSource<SolanaRpcResponse<TestValue>>,
+    streamSource: ReactiveStreamSource<SolanaRpcResponse<TestValue>>,
+) {
+    return createReactiveStoreWithInitialValueAndSlotTracking({
+        initialValueMapper: (v: TestValue) => v.count,
+        initialValueSource,
+        streamSource,
+        streamValueMapper: (v: TestValue) => v.count,
+    });
 }
 
 jest.useFakeTimers();
@@ -121,98 +106,68 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
 
     describe('getState()', () => {
         it('returns `undefined` before any data arrives', () => {
-            const { mockRequest: rpcRequest } = createMockRpcRequest();
-            const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
+            const { source: initialValueSource } = createMockInitialValueSource();
+            const { source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
             store.connect();
             expect(store.getState()).toBeUndefined();
         });
-        it('updates with the RPC response value', async () => {
+        it('updates with the initial-value source response', async () => {
             expect.assertions(1);
-            const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
-            const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
+            const { instances, source: initialValueSource } = createMockInitialValueSource();
+            const { source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
             store.connect();
-            resolve(rpcResponse(100, { count: 42 }));
+            instances[0].resolve(rpcResponse(100, { count: 42 }));
             await jest.runAllTimersAsync();
             expect(store.getState()).toEqual({ context: { slot: 100n }, value: 42 });
         });
-        it('updates with a subscription notification value', async () => {
+        it('updates with a stream notification value', async () => {
             expect.assertions(1);
-            const { mockRequest: rpcRequest } = createMockRpcRequest();
-            const { mockRequest: rpcSubscriptionRequest, pushNotification } = createMockSubscriptionRequest();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
+            const { source: initialValueSource } = createMockInitialValueSource();
+            const { publishers, source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
             store.connect();
             await jest.runAllTimersAsync();
-            pushNotification(rpcResponse(100, { count: 99 }));
+            publishers[0].publish('data', rpcResponse(100, { count: 99 }));
             await jest.runAllTimersAsync();
             expect(store.getState()).toEqual({ context: { slot: 100n }, value: 99 });
         });
-        it('ignores the RPC response when a newer subscription notification has already arrived', async () => {
+        it('ignores the initial value when a newer stream notification has already arrived', async () => {
             expect.assertions(1);
-            const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
-            const { mockRequest: rpcSubscriptionRequest, pushNotification } = createMockSubscriptionRequest();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
+            const { instances, source: initialValueSource } = createMockInitialValueSource();
+            const { publishers, source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
             store.connect();
             await jest.runAllTimersAsync();
-            pushNotification(rpcResponse(200, { count: 99 }));
+            publishers[0].publish('data', rpcResponse(200, { count: 99 }));
             await jest.runAllTimersAsync();
-            // RPC response arrives later at an older slot
-            resolve(rpcResponse(100, { count: 42 }));
+            // Initial value arrives later at an older slot
+            instances[0].resolve(rpcResponse(100, { count: 42 }));
             await jest.runAllTimersAsync();
             expect(store.getState()).toEqual({ context: { slot: 200n }, value: 99 });
         });
-        it('ignores a subscription notification when the RPC response was at a newer slot', async () => {
+        it('ignores a stream notification when the initial value was at a newer slot', async () => {
             expect.assertions(1);
-            const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
-            const { mockRequest: rpcSubscriptionRequest, pushNotification } = createMockSubscriptionRequest();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
+            const { instances, source: initialValueSource } = createMockInitialValueSource();
+            const { publishers, source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
             store.connect();
-            resolve(rpcResponse(200, { count: 42 }));
+            instances[0].resolve(rpcResponse(200, { count: 42 }));
             await jest.runAllTimersAsync();
-            pushNotification(rpcResponse(100, { count: 99 }));
+            publishers[0].publish('data', rpcResponse(100, { count: 99 }));
             await jest.runAllTimersAsync();
             expect(store.getState()).toEqual({ context: { slot: 200n }, value: 42 });
         });
         it('preserves the last known value after an error', async () => {
             expect.assertions(1);
-            const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
-            const { mockRequest: rpcSubscriptionRequest, error } = createMockSubscriptionRequest();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
+            const { instances, source: initialValueSource } = createMockInitialValueSource();
+            const { publishers, source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
             store.connect();
-            resolve(rpcResponse(100, { count: 42 }));
+            instances[0].resolve(rpcResponse(100, { count: 42 }));
             await jest.runAllTimersAsync();
-            error(new Error('subscription failed'));
+            publishers[0].publish('error', new Error('stream failed'));
             await jest.runAllTimersAsync();
             expect(store.getState()).toEqual({ context: { slot: 100n }, value: 42 });
         });
@@ -220,208 +175,147 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
 
     describe('getError()', () => {
         it('returns `undefined` before any error', () => {
-            const { mockRequest: rpcRequest } = createMockRpcRequest();
-            const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
+            const { source: initialValueSource } = createMockInitialValueSource();
+            const { source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
             store.connect();
             expect(store.getError()).toBeUndefined();
         });
-        it('captures an error from the RPC request', async () => {
+        it('captures an error from the initial-value source', async () => {
             expect.assertions(1);
-            const { mockRequest: rpcRequest, reject } = createMockRpcRequest();
-            const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
+            const { instances, source: initialValueSource } = createMockInitialValueSource();
+            const { source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
             store.connect();
-            const error = new Error('rpc failed');
-            reject(error);
+            const error = new Error('initial value failed');
+            instances[0].reject(error);
             await jest.runAllTimersAsync();
             expect(store.getError()).toBe(error);
         });
-        it('captures an error from the subscription', async () => {
+        it('captures an error from the stream', async () => {
             expect.assertions(1);
-            const { mockRequest: rpcRequest } = createMockRpcRequest();
-            const { mockRequest: rpcSubscriptionRequest, error } = createMockSubscriptionRequest();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
+            const { source: initialValueSource } = createMockInitialValueSource();
+            const { publishers, source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
             store.connect();
             await jest.runAllTimersAsync();
-            const subscriptionError = new Error('subscription failed');
-            error(subscriptionError);
+            const streamError = new Error('stream failed');
+            publishers[0].publish('error', streamError);
             await jest.runAllTimersAsync();
-            expect(store.getError()).toBe(subscriptionError);
+            expect(store.getError()).toBe(streamError);
         });
-        it('only captures the first error when RPC fails then subscription fails', async () => {
+        it('only captures the first error when the initial value fails then the stream fails', async () => {
             expect.assertions(1);
-            const { mockRequest: rpcRequest, reject: rejectRpc } = createMockRpcRequest();
-            const { mockRequest: rpcSubscriptionRequest, error: errorSubscription } = createMockSubscriptionRequest();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
+            const { instances, source: initialValueSource } = createMockInitialValueSource();
+            const { publishers, source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
             store.connect();
             await jest.runAllTimersAsync();
-            rejectRpc(new Error('rpc error'));
+            instances[0].reject(new Error('initial value error'));
             await jest.runAllTimersAsync();
-            errorSubscription(new Error('subscription error'));
+            publishers[0].publish('error', new Error('stream error'));
             await jest.runAllTimersAsync();
-            expect(store.getError()).toEqual(new Error('rpc error'));
+            expect(store.getError()).toEqual(new Error('initial value error'));
         });
-        it('only captures the first error when subscription fails then RPC fails', async () => {
+        it('only captures the first error when the stream fails then the initial value fails', async () => {
             expect.assertions(1);
-            const { mockRequest: rpcRequest, reject: rejectRpc } = createMockRpcRequest();
-            const { mockRequest: rpcSubscriptionRequest, error: errorSubscription } = createMockSubscriptionRequest();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
+            const { instances, source: initialValueSource } = createMockInitialValueSource();
+            const { publishers, source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
             store.connect();
             await jest.runAllTimersAsync();
-            errorSubscription(new Error('subscription error'));
+            publishers[0].publish('error', new Error('stream error'));
             await jest.runAllTimersAsync();
-            rejectRpc(new Error('rpc error'));
+            instances[0].reject(new Error('initial value error'));
             await jest.runAllTimersAsync();
-            expect(store.getError()).toEqual(new Error('subscription error'));
+            expect(store.getError()).toEqual(new Error('stream error'));
         });
     });
 
     describe('subscribe()', () => {
-        it('calls the subscriber when the RPC response arrives', async () => {
+        it('calls the subscriber when the initial value arrives', async () => {
             expect.assertions(1);
-            const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
-            const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
+            const { instances, source: initialValueSource } = createMockInitialValueSource();
+            const { source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
             store.connect();
             const subscriber = jest.fn();
             store.subscribe(subscriber);
-            resolve(rpcResponse(100, { count: 42 }));
+            instances[0].resolve(rpcResponse(100, { count: 42 }));
             await jest.runAllTimersAsync();
             expect(subscriber).toHaveBeenCalledTimes(1);
         });
-        it('calls the subscriber when a subscription notification arrives', async () => {
+        it('calls the subscriber when a stream notification arrives', async () => {
             expect.assertions(1);
-            const { mockRequest: rpcRequest } = createMockRpcRequest();
-            const { mockRequest: rpcSubscriptionRequest, pushNotification } = createMockSubscriptionRequest();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
+            const { source: initialValueSource } = createMockInitialValueSource();
+            const { publishers, source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
             store.connect();
             const subscriber = jest.fn();
             store.subscribe(subscriber);
             await jest.runAllTimersAsync();
-            pushNotification(rpcResponse(100, { count: 99 }));
+            publishers[0].publish('data', rpcResponse(100, { count: 99 }));
             await jest.runAllTimersAsync();
             expect(subscriber).toHaveBeenCalledTimes(1);
         });
         it('does not call the subscriber when an out-of-order notification is skipped', async () => {
             expect.assertions(1);
-            const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
-            const { mockRequest: rpcSubscriptionRequest, pushNotification } = createMockSubscriptionRequest();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
+            const { instances, source: initialValueSource } = createMockInitialValueSource();
+            const { publishers, source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
             store.connect();
             const subscriber = jest.fn();
             store.subscribe(subscriber);
-            resolve(rpcResponse(200, { count: 42 }));
+            instances[0].resolve(rpcResponse(200, { count: 42 }));
             await jest.runAllTimersAsync();
             subscriber.mockClear();
-            await jest.runAllTimersAsync();
             // This notification is at an older slot and should be skipped
-            pushNotification(rpcResponse(100, { count: 99 }));
+            publishers[0].publish('data', rpcResponse(100, { count: 99 }));
             await jest.runAllTimersAsync();
             expect(subscriber).not.toHaveBeenCalled();
         });
         it('calls the subscriber when an error occurs', async () => {
             expect.assertions(1);
-            const { mockRequest: rpcRequest, reject } = createMockRpcRequest();
-            const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
+            const { instances, source: initialValueSource } = createMockInitialValueSource();
+            const { source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
             store.connect();
             const subscriber = jest.fn();
             store.subscribe(subscriber);
-            reject(new Error('fail'));
+            instances[0].reject(new Error('fail'));
             await jest.runAllTimersAsync();
             expect(subscriber).toHaveBeenCalledTimes(1);
         });
-        it('calls the subscriber when a subscription error occurs', async () => {
+        it('calls the subscriber when a stream error occurs', async () => {
             expect.assertions(1);
-            const { mockRequest: rpcRequest } = createMockRpcRequest();
-            const { mockRequest: rpcSubscriptionRequest, error } = createMockSubscriptionRequest();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
+            const { source: initialValueSource } = createMockInitialValueSource();
+            const { publishers, source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
             store.connect();
             const subscriber = jest.fn();
             store.subscribe(subscriber);
             await jest.runAllTimersAsync();
-            error(new Error('fail'));
+            publishers[0].publish('error', new Error('fail'));
             await jest.runAllTimersAsync();
             expect(subscriber).toHaveBeenCalledTimes(1);
         });
         it('stops calling the subscriber after unsubscribe', async () => {
             expect.assertions(1);
-            const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
-            const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
+            const { instances, source: initialValueSource } = createMockInitialValueSource();
+            const { source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
             store.connect();
             const subscriber = jest.fn();
             const unsubscribe = store.subscribe(subscriber);
             unsubscribe();
-            resolve(rpcResponse(100, { count: 42 }));
+            instances[0].resolve(rpcResponse(100, { count: 42 }));
             await jest.runAllTimersAsync();
             expect(subscriber).not.toHaveBeenCalled();
         });
         it('the unsubscribe function is idempotent', () => {
-            const { mockRequest: rpcRequest } = createMockRpcRequest();
-            const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
+            const { source: initialValueSource } = createMockInitialValueSource();
+            const { source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
             store.connect();
             const unsubscribe = store.subscribe(jest.fn());
             expect(() => {
@@ -432,47 +326,32 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
     });
 
     describe('withSignal()', () => {
-        it('forwards the composed signal to the RPC request', () => {
-            const { mockRequest: rpcRequest } = createMockRpcRequest();
-            const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
+        it('forwards the composed signal to the initial-value source', () => {
+            const { instances, source: initialValueSource } = createMockInitialValueSource();
+            const { source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
             store.withSignal(abortController.signal).connect();
-            const rpcSignal = (rpcRequest.send as jest.Mock).mock.calls[0][0].abortSignal;
-            expect(rpcSignal.aborted).toBe(false);
+            const signal = instances[0].signal!;
+            expect(signal.aborted).toBe(false);
             abortController.abort('test reason');
-            expect(rpcSignal.aborted).toBe(true);
-            expect(rpcSignal.reason).toBe('test reason');
+            expect(signal.aborted).toBe(true);
+            expect(signal.reason).toBe('test reason');
         });
-        it('forwards the composed signal to the subscription request', () => {
-            const { mockRequest: rpcRequest } = createMockRpcRequest();
-            const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
+        it('forwards the composed signal to the stream source', () => {
+            const { source: initialValueSource } = createMockInitialValueSource();
+            const { publishers, source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
             store.withSignal(abortController.signal).connect();
-            const subscriptionSignal = (rpcSubscriptionRequest.subscribe as jest.Mock).mock.calls[0][0].abortSignal;
-            expect(subscriptionSignal.aborted).toBe(false);
+            const signal = publishers[0].signal!;
+            expect(signal.aborted).toBe(false);
             abortController.abort('test reason');
-            expect(subscriptionSignal.aborted).toBe(true);
-            expect(subscriptionSignal.reason).toBe('test reason');
+            expect(signal.aborted).toBe(true);
+            expect(signal.reason).toBe('test reason');
         });
         it('transitions to `error` with the caller signal abort reason', () => {
-            const { mockRequest: rpcRequest } = createMockRpcRequest();
-            const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
+            const { source: initialValueSource } = createMockInitialValueSource();
+            const { source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
             store.withSignal(abortController.signal).connect();
             const reason = new Error('timed out');
             abortController.abort(reason);
@@ -482,53 +361,38 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 status: 'error',
             });
         });
-        it('does not overwrite the abort-reason error with a late RPC rejection', async () => {
+        it('does not overwrite the abort-reason error with a late initial-value rejection', async () => {
             expect.assertions(1);
-            const { mockRequest: rpcRequest, reject } = createMockRpcRequest();
-            const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
+            const { instances, source: initialValueSource } = createMockInitialValueSource();
+            const { source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
             store.withSignal(abortController.signal).connect();
             const reason = new Error('cancelled');
             abortController.abort(reason);
-            reject(new Error('rpc-late'));
+            instances[0].reject(new Error('late'));
             await jest.runAllTimersAsync();
             expect(store.getError()).toBe(reason);
         });
-        it('does not update state when the RPC response arrives after abort', async () => {
+        it('does not update state when the initial value arrives after abort', async () => {
             expect.assertions(1);
-            const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
-            const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
+            const { instances, source: initialValueSource } = createMockInitialValueSource();
+            const { source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
             store.withSignal(abortController.signal).connect();
             abortController.abort();
-            resolve(rpcResponse(100, { count: 42 }));
+            instances[0].resolve(rpcResponse(100, { count: 42 }));
             await jest.runAllTimersAsync();
             expect(store.getState()).toBeUndefined();
         });
-        it('does not update state when a subscription notification arrives after abort', async () => {
+        it('does not update state when a stream notification arrives after abort', async () => {
             expect.assertions(1);
-            const { mockRequest: rpcRequest } = createMockRpcRequest();
-            const { mockRequest: rpcSubscriptionRequest, pushNotification } = createMockSubscriptionRequest();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
+            const { source: initialValueSource } = createMockInitialValueSource();
+            const { publishers, source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
             store.withSignal(abortController.signal).connect();
             await jest.runAllTimersAsync();
             abortController.abort();
-            pushNotification(rpcResponse(100, { count: 99 }));
+            publishers[0].publish('data', rpcResponse(100, { count: 99 }));
             await jest.runAllTimersAsync();
             expect(store.getState()).toBeUndefined();
         });
@@ -536,14 +400,9 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
 
     describe('getUnifiedState()', () => {
         it('starts in `loading` status', () => {
-            const { mockRequest: rpcRequest } = createMockRpcRequest();
-            const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
+            const { source: initialValueSource } = createMockInitialValueSource();
+            const { source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
             store.connect();
             expect(store.getUnifiedState()).toStrictEqual({
                 data: undefined,
@@ -551,18 +410,13 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 status: 'loading',
             });
         });
-        it('transitions to `loaded` after the RPC response arrives', async () => {
+        it('transitions to `loaded` after the initial value arrives', async () => {
             expect.assertions(1);
-            const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
-            const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
+            const { instances, source: initialValueSource } = createMockInitialValueSource();
+            const { source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
             store.connect();
-            resolve(rpcResponse(100, { count: 42 }));
+            instances[0].resolve(rpcResponse(100, { count: 42 }));
             await jest.runAllTimersAsync();
             expect(store.getUnifiedState()).toStrictEqual({
                 data: { context: { slot: 100n }, value: 42 },
@@ -570,19 +424,14 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 status: 'loaded',
             });
         });
-        it('transitions to `error` on RPC failure, preserving nothing (no prior data)', async () => {
+        it('transitions to `error` on initial-value failure, preserving nothing (no prior data)', async () => {
             expect.assertions(1);
-            const { mockRequest: rpcRequest, reject } = createMockRpcRequest();
-            const { mockRequest: rpcSubscriptionRequest } = createMockSubscriptionRequest();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
+            const { instances, source: initialValueSource } = createMockInitialValueSource();
+            const { source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
             store.connect();
-            const failure = new Error('rpc failed');
-            reject(failure);
+            const failure = new Error('initial value failed');
+            instances[0].reject(failure);
             await jest.runAllTimersAsync();
             expect(store.getUnifiedState()).toStrictEqual({
                 data: undefined,
@@ -590,21 +439,16 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 status: 'error',
             });
         });
-        it('transitions to `error` on subscription failure, preserving the RPC value', async () => {
+        it('transitions to `error` on stream failure, preserving the initial value', async () => {
             expect.assertions(1);
-            const { mockRequest: rpcRequest, resolve } = createMockRpcRequest();
-            const { mockRequest: rpcSubscriptionRequest, error } = createMockSubscriptionRequest();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
+            const { instances, source: initialValueSource } = createMockInitialValueSource();
+            const { publishers, source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
             store.connect();
-            resolve(rpcResponse(100, { count: 42 }));
+            instances[0].resolve(rpcResponse(100, { count: 42 }));
             await jest.runAllTimersAsync();
-            const failure = new Error('subscription failed');
-            error(failure);
+            const failure = new Error('stream failed');
+            publishers[0].publish('error', failure);
             await jest.runAllTimersAsync();
             expect(store.getUnifiedState()).toStrictEqual({
                 data: { context: { slot: 100n }, value: 42 },
@@ -612,75 +456,115 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 status: 'error',
             });
         });
+        it('transitions to `loaded` after a stream notification arrives', async () => {
+            expect.assertions(1);
+            const { source: initialValueSource } = createMockInitialValueSource();
+            const { publishers, source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
+            store.connect();
+            await jest.runAllTimersAsync();
+            publishers[0].publish('data', rpcResponse(100, { count: 99 }));
+            await jest.runAllTimersAsync();
+            expect(store.getUnifiedState()).toStrictEqual({
+                data: { context: { slot: 100n }, value: 99 },
+                error: undefined,
+                status: 'loaded',
+            });
+        });
+        it('keeps the newer stream value when an older initial value arrives later', async () => {
+            expect.assertions(1);
+            const { instances, source: initialValueSource } = createMockInitialValueSource();
+            const { publishers, source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
+            store.connect();
+            await jest.runAllTimersAsync();
+            publishers[0].publish('data', rpcResponse(200, { count: 99 }));
+            await jest.runAllTimersAsync();
+            // Initial value arrives later at an older slot and should be ignored
+            instances[0].resolve(rpcResponse(100, { count: 42 }));
+            await jest.runAllTimersAsync();
+            expect(store.getUnifiedState()).toStrictEqual({
+                data: { context: { slot: 200n }, value: 99 },
+                error: undefined,
+                status: 'loaded',
+            });
+        });
+        it('keeps the newer initial value when an older stream notification arrives later', async () => {
+            expect.assertions(1);
+            const { instances, source: initialValueSource } = createMockInitialValueSource();
+            const { publishers, source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
+            store.connect();
+            instances[0].resolve(rpcResponse(200, { count: 42 }));
+            await jest.runAllTimersAsync();
+            // Stream notification arrives at an older slot and should be ignored
+            publishers[0].publish('data', rpcResponse(100, { count: 99 }));
+            await jest.runAllTimersAsync();
+            expect(store.getUnifiedState()).toStrictEqual({
+                data: { context: { slot: 200n }, value: 42 },
+                error: undefined,
+                status: 'loaded',
+            });
+        });
+        it('captures only the first error when the initial value fails then the stream fails', async () => {
+            expect.assertions(1);
+            const { instances, source: initialValueSource } = createMockInitialValueSource();
+            const { publishers, source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
+            store.connect();
+            await jest.runAllTimersAsync();
+            const firstError = new Error('initial value error');
+            instances[0].reject(firstError);
+            await jest.runAllTimersAsync();
+            publishers[0].publish('error', new Error('stream error'));
+            await jest.runAllTimersAsync();
+            expect(store.getUnifiedState()).toStrictEqual({
+                data: undefined,
+                error: firstError,
+                status: 'error',
+            });
+        });
+        it('captures only the first error when the stream fails then the initial value fails', async () => {
+            expect.assertions(1);
+            const { instances, source: initialValueSource } = createMockInitialValueSource();
+            const { publishers, source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
+            store.connect();
+            await jest.runAllTimersAsync();
+            const firstError = new Error('stream error');
+            publishers[0].publish('error', firstError);
+            await jest.runAllTimersAsync();
+            instances[0].reject(new Error('initial value error'));
+            await jest.runAllTimersAsync();
+            expect(store.getUnifiedState()).toStrictEqual({
+                data: undefined,
+                error: firstError,
+                status: 'error',
+            });
+        });
     });
 
     describe('retry()', () => {
-        // Helper: returns mocks where each invocation of rpcRequest.send() /
-        // rpcSubscriptionRequest.subscribe() yields a fresh controllable instance — needed to
-        // exercise retry, which re-invokes both.
-        function createRetryableMocks() {
-            const rpcInstances: {
-                reject(error: unknown): void;
-                resolve(response: SolanaRpcResponse<TestValue>): void;
-            }[] = [];
-            const subscriptionInstances: {
-                error(err: unknown): void;
-                pushNotification(notification: SolanaRpcResponse<TestValue>): void;
-            }[] = [];
-            const rpcRequest: PendingRpcRequest<SolanaRpcResponse<TestValue>> = {
-                reactiveStore: jest.fn().mockImplementation(() => {
-                    throw new Error('not implemented');
-                }),
-                send: jest.fn().mockImplementation(() => {
-                    const { promise, resolve, reject } = Promise.withResolvers<SolanaRpcResponse<TestValue>>();
-                    rpcInstances.push({ reject, resolve });
-                    return promise;
-                }),
-            };
-            const rpcSubscriptionRequest: PendingRpcSubscriptionsRequest<SolanaRpcResponse<TestValue>> = {
-                reactiveStore: jest.fn().mockImplementation(() => {
-                    throw new Error('not implemented');
-                }),
-                subscribe: jest.fn().mockImplementation(() => {
-                    const instance = createMockSubscriptionRequest();
-                    subscriptionInstances.push({
-                        error: instance.error,
-                        pushNotification: instance.pushNotification,
-                    });
-                    return (instance.mockRequest.subscribe as jest.Mock)();
-                }),
-            };
-            return { rpcInstances, rpcRequest, rpcSubscriptionRequest, subscriptionInstances };
-        }
-
         it('is a no-op when the store is not in error state', async () => {
             expect.assertions(1);
-            const { rpcRequest, rpcSubscriptionRequest } = createRetryableMocks();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
+            const { fn, source: initialValueSource } = createMockInitialValueSource();
+            const { source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
             store.connect();
             await jest.runAllTimersAsync();
             store.retry();
-            expect(rpcRequest.send).toHaveBeenCalledTimes(1);
+            expect(fn).toHaveBeenCalledTimes(1);
         });
         it('transitions back to `loading` with preserved data AND error (SWR)', async () => {
             expect.assertions(1);
-            const { rpcInstances, rpcRequest, rpcSubscriptionRequest, subscriptionInstances } = createRetryableMocks();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
+            const { instances, source: initialValueSource } = createMockInitialValueSource();
+            const { publishers, source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
             store.connect();
-            rpcInstances[0].resolve(rpcResponse(100, { count: 42 }));
+            instances[0].resolve(rpcResponse(100, { count: 42 }));
             await jest.runAllTimersAsync();
             const fail = new Error('stream died');
-            subscriptionInstances[0].error(fail);
+            publishers[0].publish('error', fail);
             await jest.runAllTimersAsync();
             store.retry();
             expect(store.getUnifiedState()).toStrictEqual({
@@ -689,38 +573,30 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 status: 'loading',
             });
         });
-        it('re-invokes the RPC request and subscription on retry', async () => {
+        it('re-builds both inner stores on retry', async () => {
             expect.assertions(2);
-            const { rpcInstances, rpcRequest, rpcSubscriptionRequest } = createRetryableMocks();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
+            const { fn, instances, source: initialValueSource } = createMockInitialValueSource();
+            const { createDataPublisher, source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
             store.connect();
-            rpcInstances[0].reject(new Error('boom'));
+            instances[0].reject(new Error('boom'));
             await jest.runAllTimersAsync();
             store.retry();
             await jest.runAllTimersAsync();
-            expect(rpcRequest.send).toHaveBeenCalledTimes(2);
-            expect(rpcSubscriptionRequest.subscribe).toHaveBeenCalledTimes(2);
+            expect(fn).toHaveBeenCalledTimes(2);
+            expect(createDataPublisher).toHaveBeenCalledTimes(2);
         });
-        it('recovers to `loaded` when the retried RPC succeeds', async () => {
+        it('recovers to `loaded` when the retried initial value succeeds', async () => {
             expect.assertions(1);
-            const { rpcInstances, rpcRequest, rpcSubscriptionRequest } = createRetryableMocks();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
+            const { instances, source: initialValueSource } = createMockInitialValueSource();
+            const { source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
             store.connect();
-            rpcInstances[0].reject(new Error('first failure'));
+            instances[0].reject(new Error('first failure'));
             await jest.runAllTimersAsync();
             store.retry();
             await jest.runAllTimersAsync();
-            rpcInstances[1].resolve(rpcResponse(200, { count: 99 }));
+            instances[1].resolve(rpcResponse(200, { count: 99 }));
             await jest.runAllTimersAsync();
             expect(store.getUnifiedState()).toStrictEqual({
                 data: { context: { slot: 200n }, value: 99 },
@@ -728,22 +604,18 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
                 status: 'loaded',
             });
         });
-        it('transitions to `error` again when the retried RPC also fails', async () => {
+        it('transitions to `error` again when the retried initial value also fails', async () => {
             expect.assertions(1);
-            const { rpcInstances, rpcRequest, rpcSubscriptionRequest } = createRetryableMocks();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
+            const { instances, source: initialValueSource } = createMockInitialValueSource();
+            const { source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
             store.connect();
-            rpcInstances[0].reject(new Error('first'));
+            instances[0].reject(new Error('first'));
             await jest.runAllTimersAsync();
             store.retry();
             await jest.runAllTimersAsync();
             const secondFailure = new Error('second');
-            rpcInstances[1].reject(secondFailure);
+            instances[1].reject(secondFailure);
             await jest.runAllTimersAsync();
             expect(store.getUnifiedState()).toStrictEqual({
                 data: undefined,
@@ -753,15 +625,11 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
         });
         it('notifies subscribers on the error → loading transition after retry', async () => {
             expect.assertions(1);
-            const { rpcInstances, rpcRequest, rpcSubscriptionRequest } = createRetryableMocks();
-            const store = createReactiveStoreWithInitialValueAndSlotTracking({
-                rpcRequest,
-                rpcSubscriptionRequest,
-                rpcSubscriptionValueMapper: v => v.count,
-                rpcValueMapper: v => v.count,
-            });
+            const { instances, source: initialValueSource } = createMockInitialValueSource();
+            const { source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
             store.connect();
-            rpcInstances[0].reject(new Error('fail'));
+            instances[0].reject(new Error('fail'));
             await jest.runAllTimersAsync();
             const subscriber = jest.fn();
             store.subscribe(subscriber);
