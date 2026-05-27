@@ -331,6 +331,21 @@ useRequestSwr(['epochInfo'], source, {
 });
 ```
 
+### `useSubscriptionSwr(key, source, options?)`
+
+SWR-backed counterpart to `useSubscription`. Routes a `ReactiveStreamSource<T>` through SWR's subscription cache (`useSWRSubscription`). Returns SWR's native `{ data, error }` shape where `data` is a `SlotTaggedValue` — `data.value` is the unwrapped notification and `data.slot` is lifted from the envelope's `context.slot` (or `undefined` for raw notifications). Pass `null` for either `key` or `source` to disable. Options accept SWR's config plus `getAbortSignal` for per-connection signals.
+
+```tsx
+function AccountBalance({ address }: { address: Address }) {
+    const client = useClient<ClientWithRpcSubscriptions<AccountNotificationsApi>>();
+    const { data } = useSubscriptionSwr(
+        address ? ['account', address] : null,
+        address ? client.rpcSubscriptions.accountNotifications(address) : null,
+    );
+    return <p>{data ? `${data.value.lamports} lamports at slot ${data.slot}` : 'Connecting…'}</p>;
+}
+```
+
 ## Hooks
 
 ### `useSignIn(uiWalletAccount, chain)`
