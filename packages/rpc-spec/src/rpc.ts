@@ -67,6 +67,16 @@ export type RpcSendOptions = Readonly<{
     abortSignal?: AbortSignal;
 }>;
 
+/**
+ * Structural duck-type for anything fireable via `send({ abortSignal })`. Satisfied by
+ * {@link PendingRpcRequest | PendingRpcRequest<TResponse>}.
+ *
+ * @typeParam TResponse - The value `send()` resolves to.
+ */
+export type RpcSendable<TResponse> = {
+    send(options?: RpcSendOptions): Promise<TResponse>;
+};
+
 type PendingRpcRequestBuilder<TMethodImplementations> = UnionToIntersection<
     Flatten<{
         [P in keyof TMethodImplementations]: PendingRpcRequestReturnTypeMapper<TMethodImplementations[P]>;

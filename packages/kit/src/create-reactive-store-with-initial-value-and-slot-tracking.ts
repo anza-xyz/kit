@@ -1,5 +1,5 @@
-import type { PendingRpcRequest } from '@solana/rpc';
-import type { PendingRpcSubscriptionsRequest } from '@solana/rpc-subscriptions';
+import type { RpcSendable } from '@solana/rpc';
+import type { RpcSubscribable } from '@solana/rpc-subscriptions';
 import type { SolanaRpcResponse } from '@solana/rpc-types';
 import type { ReactiveState, ReactiveStreamStore } from '@solana/subscribable';
 
@@ -16,17 +16,17 @@ import type { ReactiveState, ReactiveStreamStore } from '@solana/subscribable';
  */
 export type CreateReactiveStoreWithInitialValueAndSlotTrackingConfig<TRpcValue, TSubscriptionValue, TItem> = Readonly<{
     /**
-     * A pending RPC request whose response will be used to set the store's initial state.
+     * A one-shot RPC request whose response will be used to set the store's initial state.
      * The response must be a {@link SolanaRpcResponse} so that its slot can be compared with
      * subscription notifications.
      */
-    rpcRequest: PendingRpcRequest<SolanaRpcResponse<TRpcValue>>;
+    rpcRequest: RpcSendable<SolanaRpcResponse<TRpcValue>>;
     /**
-     * A pending RPC subscription request whose notifications will be used to keep the store
-     * up to date. Each notification must be a {@link SolanaRpcResponse} so that its slot can be
+     * An RPC subscription request whose notifications will be used to keep the store up to
+     * date. Each notification must be a {@link SolanaRpcResponse} so that its slot can be
      * compared with the initial RPC response and other notifications.
      */
-    rpcSubscriptionRequest: PendingRpcSubscriptionsRequest<SolanaRpcResponse<TSubscriptionValue>>;
+    rpcSubscriptionRequest: RpcSubscribable<SolanaRpcResponse<TSubscriptionValue>>;
     /**
      * Maps the value from a subscription notification to the item type stored in the reactive store.
      */

@@ -1,5 +1,5 @@
-import type { PendingRpcRequest } from '@solana/rpc';
-import type { PendingRpcSubscriptionsRequest } from '@solana/rpc-subscriptions';
+import type { RpcSendable } from '@solana/rpc';
+import type { RpcSubscribable } from '@solana/rpc-subscriptions';
 import type { SolanaRpcResponse } from '@solana/rpc-types';
 
 import { createAsyncGeneratorWithInitialValueAndSlotTracking } from '../create-async-generator-with-initial-value-and-slot-tracking';
@@ -7,16 +7,13 @@ import { createAsyncGeneratorWithInitialValueAndSlotTracking } from '../create-a
 type TestValue = { count: number };
 
 function createMockRpcRequest(): {
-    mockRequest: PendingRpcRequest<SolanaRpcResponse<TestValue>>;
+    mockRequest: RpcSendable<SolanaRpcResponse<TestValue>>;
     reject(error: unknown): void;
     resolve(response: SolanaRpcResponse<TestValue>): void;
 } {
     const { promise, resolve, reject } = Promise.withResolvers<SolanaRpcResponse<TestValue>>();
     return {
         mockRequest: {
-            reactiveStore: jest.fn().mockImplementation(() => {
-                throw new Error('not implemented');
-            }),
             send: jest.fn().mockReturnValue(promise),
         },
         reject,
@@ -27,7 +24,7 @@ function createMockRpcRequest(): {
 function createMockSubscriptionRequest(): {
     complete(): void;
     error(err: unknown): void;
-    mockRequest: PendingRpcSubscriptionsRequest<SolanaRpcResponse<TestValue>>;
+    mockRequest: RpcSubscribable<SolanaRpcResponse<TestValue>>;
     pushNotification(notification: SolanaRpcResponse<TestValue>): void;
 } {
     const notifications: SolanaRpcResponse<TestValue>[] = [];
@@ -93,9 +90,6 @@ function createMockSubscriptionRequest(): {
         complete,
         error,
         mockRequest: {
-            reactiveStore: jest.fn().mockImplementation(() => {
-                throw new Error('not implemented');
-            }),
             subscribe: jest.fn().mockResolvedValue(asyncIterable),
         },
         pushNotification,

@@ -58,3 +58,13 @@ export type RpcSubscribeOptions = Readonly<{
     /** An `AbortSignal` to fire when you want to unsubscribe */
     abortSignal: AbortSignal;
 }>;
+
+/**
+ * Structural duck-type for anything subscribable via `subscribe({ abortSignal })`. Satisfied by
+ * {@link PendingRpcSubscriptionsRequest | PendingRpcSubscriptionsRequest<TNotification>}.
+ *
+ * @typeParam TNotification - The notification type yielded by the returned async iterable.
+ */
+export type RpcSubscribable<TNotification> = {
+    subscribe(options: RpcSubscribeOptions): Promise<AsyncIterable<TNotification>>;
+};
