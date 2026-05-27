@@ -25,11 +25,10 @@ export function balanceSubscribe(
     const [{ address }, { next }] = subscriptionArgs;
     const abortController = new AbortController();
     const store = createReactiveStoreWithInitialValueAndSlotTracking({
-        abortSignal: abortController.signal,
-        rpcRequest: rpc.getBalance(address, { commitment: 'confirmed' }),
-        rpcSubscriptionRequest: rpcSubscriptions.accountNotifications(address),
-        rpcSubscriptionValueMapper: ({ lamports }) => lamports,
-        rpcValueMapper: lamports => lamports,
+        initialValueMapper: lamports => lamports,
+        initialValueSource: rpc.getBalance(address, { commitment: 'confirmed' }),
+        streamSource: rpcSubscriptions.accountNotifications(address),
+        streamValueMapper: ({ lamports }) => lamports,
     });
     store.subscribe(() => {
         const error = store.getError();
@@ -39,6 +38,7 @@ export function balanceSubscribe(
             next(null, store.getState()?.value);
         }
     });
+    store.withSignal(abortController.signal).connect();
     return () => {
         abortController.abort();
     };
