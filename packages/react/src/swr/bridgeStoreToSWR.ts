@@ -11,7 +11,7 @@ import type { SWRSubscriptionOptions } from 'swr/subscription';
  * `useTrackedDataSWR` built on the same shape) so the store-to-`next` plumbing lives in one place.
  *
  * Subscribes to the store, connects it, and forwards its unified lifecycle to SWR's `next`:
- * - `loaded` → `next(null, data)`,
+ * - `loaded` → `next(null, data)`, unless an optional `shouldForward` predicate rejects the value
  * - `error` → `next(error)`, substituting a
  *   {@link SOLANA_ERROR__REACT__SUBSCRIPTION_CLOSED_WITHOUT_ERROR} sentinel when the store reports
  *   an error with a nullish payload. SWR treats a nullish first argument to `next` as a *success*
@@ -26,6 +26,9 @@ import type { SWRSubscriptionOptions } from 'swr/subscription';
  *
  * @param store - An idle stream store to drive.
  * @param next - SWR's `next` callback, from {@link SWRSubscriptionOptions}.
+ * @param shouldForward - Optional gate run against each `loaded` value before it reaches `next`.
+ *   Return `false` to drop the value (e.g. a data freshness check). When omitted, every loaded value
+ *   is forwarded.
  *
  * @returns The unsubscribe/reset cleanup for SWR's `subscribe` to return.
  *
@@ -34,10 +37,12 @@ import type { SWRSubscriptionOptions } from 'swr/subscription';
 export function bridgeStoreToSWR<T, TError>(
     store: ReactiveStreamStore<T>,
     next: SWRSubscriptionOptions<T, TError>['next'],
+    shouldForward?: (data: T) => boolean,
 ): () => void {
     const unsubscribe = store.subscribe(() => {
         const state = store.getUnifiedState();
         if (state.status === 'loaded') {
+            if (shouldForward && !shouldForward(state.data)) return;
             next(null, state.data);
         } else if (state.status === 'error') {
             // SWR's `next` treats a nullish error as a *success* update. If our store has
