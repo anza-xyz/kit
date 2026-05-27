@@ -999,6 +999,9 @@ importers:
       react-test-renderer:
         specifier: ^19.2.6
         version: 19.2.6(react@19.2.6)
+      swr:
+        specifier: ^2.4.1
+        version: 2.4.1(react@19.2.6)
 
   packages/rpc:
     dependencies:
