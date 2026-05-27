@@ -4,28 +4,52 @@
     "description": "React hooks for building Solana apps",
     "homepage": "https://www.solanakit.com/api#solanareact",
     "exports": {
-        "edge-light": {
-            "import": "./dist/index.node.mjs",
-            "require": "./dist/index.node.cjs"
+        ".": {
+            "edge-light": {
+                "import": "./dist/index.node.mjs",
+                "require": "./dist/index.node.cjs"
+            },
+            "workerd": {
+                "import": "./dist/index.node.mjs",
+                "require": "./dist/index.node.cjs"
+            },
+            "browser": {
+                "import": "./dist/index.browser.mjs",
+                "require": "./dist/index.browser.cjs"
+            },
+            "node": {
+                "import": "./dist/index.node.mjs",
+                "require": "./dist/index.node.cjs"
+            },
+            "react-native": "./dist/index.native.mjs",
+            "types": "./dist/types/index.d.ts"
         },
-        "workerd": {
-            "import": "./dist/index.node.mjs",
-            "require": "./dist/index.node.cjs"
-        },
-        "browser": {
-            "import": "./dist/index.browser.mjs",
-            "require": "./dist/index.browser.cjs"
-        },
-        "node": {
-            "import": "./dist/index.node.mjs",
-            "require": "./dist/index.node.cjs"
-        },
-        "react-native": "./dist/index.native.mjs",
-        "types": "./dist/types/index.d.ts"
+        "./swr": {
+            "edge-light": {
+                "import": "./dist/swr.node.mjs",
+                "require": "./dist/swr.node.cjs"
+            },
+            "workerd": {
+                "import": "./dist/swr.node.mjs",
+                "require": "./dist/swr.node.cjs"
+            },
+            "browser": {
+                "import": "./dist/swr.browser.mjs",
+                "require": "./dist/swr.browser.cjs"
+            },
+            "node": {
+                "import": "./dist/swr.node.mjs",
+                "require": "./dist/swr.node.cjs"
+            },
+            "react-native": "./dist/swr.native.mjs",
+            "types": "./dist/types/swr.d.ts"
+        }
     },
     "browser": {
         "./dist/index.node.cjs": "./dist/index.browser.cjs",
-        "./dist/index.node.mjs": "./dist/index.browser.mjs"
+        "./dist/index.node.mjs": "./dist/index.browser.mjs",
+        "./dist/swr.node.cjs": "./dist/swr.browser.cjs",
+        "./dist/swr.node.mjs": "./dist/swr.browser.mjs"
     },
     "main": "./dist/index.node.cjs",
     "module": "./dist/index.node.mjs",
@@ -53,9 +77,9 @@
         "style:fix": "pnpm eslint --fix src && pnpm prettier --log-level warn --ignore-unknown --write ./*",
         "test:lint": "TERM_OVERRIDE=\"${TURBO_HASH:+dumb}\" TERM=${TERM_OVERRIDE:-$TERM} jest -c ../../node_modules/@solana/test-config/jest-lint.config.js --rootDir . --silent",
         "test:prettier": "TERM_OVERRIDE=\"${TURBO_HASH:+dumb}\" TERM=${TERM_OVERRIDE:-$TERM} jest -c ../../node_modules/@solana/test-config/jest-prettier.config.js --rootDir . --silent",
-        "test:treeshakability:browser": "agadoo dist/index.browser.mjs",
-        "test:treeshakability:native": "agadoo dist/index.native.mjs",
-        "test:treeshakability:node": "agadoo dist/index.node.mjs",
+        "test:treeshakability:browser": "agadoo dist/index.browser.mjs && agadoo dist/swr.browser.mjs",
+        "test:treeshakability:native": "agadoo dist/index.native.mjs && agadoo dist/swr.native.mjs",
+        "test:treeshakability:node": "agadoo dist/index.node.mjs && agadoo dist/swr.node.mjs",
         "test:typecheck": "tsc --noEmit",
         "test:unit:browser": "NODE_OPTIONS=\"--no-experimental-webstorage\" TERM_OVERRIDE=\"${TURBO_HASH:+dumb}\" TERM=${TERM_OVERRIDE:-$TERM} jest -c ../../node_modules/@solana/test-config/jest-unit.config.browser.js --rootDir . --silent",
         "test:unit:node": "NODE_OPTIONS=\"--no-experimental-webstorage\" TERM_OVERRIDE=\"${TURBO_HASH:+dumb}\" TERM=${TERM_OVERRIDE:-$TERM} jest -c ../../node_modules/@solana/test-config/jest-unit.config.node.js --rootDir . --silent"
@@ -96,14 +120,19 @@
         "react": "^19.2.7",
         "react-dom": "^19.2.7",
         "react-error-boundary": "^5.0.0",
-        "react-test-renderer": "^19.2.7"
+        "react-test-renderer": "^19.2.7",
+        "swr": "^2.0.0"
     },
     "peerDependencies": {
         "@solana/kit": "workspace:*",
-        "react": ">=18"
+        "react": ">=18",
+        "swr": "^2.0.0"
     },
     "peerDependenciesMeta": {
         "react": {
+            "optional": true
+        },
+        "swr": {
             "optional": true
         }
     },
