@@ -301,6 +301,36 @@ refresh({ abortSignal: undefined }); // no abort signal for this attempt
 refresh(); // omit the key to use the factory (default)
 ```
 
+## SWR adapter (`@solana/react/swr`)
+
+Opt-in subpath that bridges Kit's reactive primitives into SWR's cache. Import from `@solana/react/swr`; `swr@^2` is an optional peer dependency. Hooks carry the `Swr` suffix to keep the cache backing visible at the call site.
+
+### `useRequestSwr(key, source, options?)`
+
+SWR-backed counterpart to `useRequest`. Same `source` shape (a `ReactiveActionSource<T>` or `(signal: AbortSignal) => Promise<T>`). Returns SWR's native `SWRResponse<T>`. Pass `null` for either `key` or `source` to disable — useful when one of the source's inputs isn't yet known.
+
+```tsx
+import { useClient } from '@solana/react';
+import { useRequestSwr } from '@solana/react/swr';
+import type { ClientWithRpc, GetEpochInfoApi } from '@solana/kit';
+
+function EpochInfo() {
+    const client = useClient<ClientWithRpc<GetEpochInfoApi>>();
+    const { data } = useRequestSwr(['epochInfo'], client.rpc.getEpochInfo());
+    return <p>{data ? `Epoch ${data.epoch}` : 'Loading…'}</p>;
+}
+```
+
+Pass any SWR `SWRConfiguration` field in the options bag (`revalidateOnFocus`, `refreshInterval`, `suspense`, etc.). Use `result.mutate()` to re-fire on demand — SWR owns the revalidate verb.
+
+The Kit-only `getAbortSignal: () => AbortSignal` option threads a per-attempt signal into the source (typically a timeout). SWR doesn't know about the abort; if the source respects the signal and rejects, SWR surfaces the rejection via `result.error`.
+
+```tsx
+useRequestSwr(['epochInfo'], source, {
+    getAbortSignal: () => AbortSignal.timeout(5_000),
+});
+```
+
 ## Hooks
 
 ### `useSignIn(uiWalletAccount, chain)`
