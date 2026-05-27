@@ -4,28 +4,52 @@
     "description": "React hooks for building Solana apps",
     "homepage": "https://www.solanakit.com/api#solanareact",
     "exports": {
-        "edge-light": {
-            "import": "./dist/index.node.mjs",
-            "require": "./dist/index.node.cjs"
+        ".": {
+            "edge-light": {
+                "import": "./dist/index.node.mjs",
+                "require": "./dist/index.node.cjs"
+            },
+            "workerd": {
+                "import": "./dist/index.node.mjs",
+                "require": "./dist/index.node.cjs"
+            },
+            "browser": {
+                "import": "./dist/index.browser.mjs",
+                "require": "./dist/index.browser.cjs"
+            },
+            "node": {
+                "import": "./dist/index.node.mjs",
+                "require": "./dist/index.node.cjs"
+            },
+            "react-native": "./dist/index.native.mjs",
+            "types": "./dist/types/index.d.ts"
         },
-        "workerd": {
-            "import": "./dist/index.node.mjs",
-            "require": "./dist/index.node.cjs"
-        },
-        "browser": {
-            "import": "./dist/index.browser.mjs",
-            "require": "./dist/index.browser.cjs"
-        },
-        "node": {
-            "import": "./dist/index.node.mjs",
-            "require": "./dist/index.node.cjs"
-        },
-        "react-native": "./dist/index.native.mjs",
-        "types": "./dist/types/index.d.ts"
+        "./swr": {
+            "edge-light": {
+                "import": "./dist/swr.node.mjs",
+                "require": "./dist/swr.node.cjs"
+            },
+            "workerd": {
+                "import": "./dist/swr.node.mjs",
+                "require": "./dist/swr.node.cjs"
+            },
+            "browser": {
+                "import": "./dist/swr.browser.mjs",
+                "require": "./dist/swr.browser.cjs"
+            },
+            "node": {
+                "import": "./dist/swr.node.mjs",
+                "require": "./dist/swr.node.cjs"
+            },
+            "react-native": "./dist/swr.native.mjs",
+            "types": "./dist/types/swr.d.ts"
+        }
     },
     "browser": {
         "./dist/index.node.cjs": "./dist/index.browser.cjs",
-        "./dist/index.node.mjs": "./dist/index.browser.mjs"
+        "./dist/index.node.mjs": "./dist/index.browser.mjs",
+        "./dist/swr.node.cjs": "./dist/swr.browser.cjs",
+        "./dist/swr.node.mjs": "./dist/swr.browser.mjs"
     },
     "main": "./dist/index.node.cjs",
     "module": "./dist/index.node.mjs",
@@ -92,14 +116,19 @@
         "react": "^19.2.6",
         "react-dom": "^19.2.6",
         "react-error-boundary": "^5.0.0",
-        "react-test-renderer": "^19.2.6"
+        "react-test-renderer": "^19.2.6",
+        "swr": "^2.4.1"
     },
     "peerDependencies": {
         "@solana/kit": "workspace:*",
-        "react": ">=18"
+        "react": ">=18",
+        "swr": "^2.4.1"
     },
     "peerDependenciesMeta": {
         "react": {
+            "optional": true
+        },
+        "swr": {
             "optional": true
         }
     },

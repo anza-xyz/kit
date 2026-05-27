@@ -14,11 +14,15 @@ type Platform =
 const BROWSERSLIST_TARGETS = browsersListToEsBuild();
 
 export function getBaseConfig(platform: Platform, formats: Format[], _options: Options): Options[] {
-    // `@solana/kit` has an additional subpath entry point that should be published separately.
+    // Packages with additional subpath entry points list them here so each subpath gets its own
+    // platform-specific bundle (`dist/<entry>.<platform>.<format>`). Consumers import the subpath
+    // via the package.json `exports` map.
     const moduleEntry =
         env.npm_package_name === '@solana/kit'
             ? ['./src/index.ts', './src/program-client-core.ts']
-            : ['./src/index.ts'];
+            : env.npm_package_name === '@solana/react'
+              ? ['./src/index.ts', './src/swr.ts']
+              : ['./src/index.ts'];
 
     return [true, false]
         .flatMap<Options | null>(isDebugBuild =>
