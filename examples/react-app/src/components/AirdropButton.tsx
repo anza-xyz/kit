@@ -8,7 +8,7 @@ import { ErrorDialog } from './ErrorDialog';
 
 export function AirdropButton({ address }: { address: Address }) {
     const { current: NO_ERROR } = useRef<unknown>(Symbol());
-    const { chain } = useContext(ChainContext);
+    const { chain, solanaExplorerClusterName } = useContext(ChainContext);
     const { rpc, rpcSubscriptions } = useContext(RpcContext);
     const [error, setError] = useState(NO_ERROR);
     const [lastSignature, setLastSignature] = useState<Signature | undefined>();

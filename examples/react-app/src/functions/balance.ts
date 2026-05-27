@@ -30,7 +30,7 @@ export function balanceSubscribe(
         streamSource: rpcSubscriptions.accountNotifications(address),
         streamValueMapper: ({ lamports }) => lamports,
     });
-    store.subscribe(() => {
+    const unsubscribe = store.subscribe(() => {
         const error = store.getError();
         if (error) {
             next(error as Error);
@@ -40,6 +40,8 @@ export function balanceSubscribe(
     });
     store.withSignal(abortController.signal).connect();
     return () => {
+        unsubscribe();
         abortController.abort();
+        store.reset();
     };
 }
