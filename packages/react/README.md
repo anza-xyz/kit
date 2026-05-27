@@ -346,6 +346,30 @@ function AccountBalance({ address }: { address: Address }) {
 }
 ```
 
+### `useTrackedDataSwr(key, spec, options?)`
+
+SWR-backed counterpart to `useTrackedData`. Takes the same `TrackedDataSpec` (RPC fetch + subscription pair + value mappers) and routes the unified, slot-deduped stream through SWR. Returns the same `SlotTaggedValue` shape as `useSubscriptionSwr` — `data.value` is the unified item produced by the mappers, `data.slot` is the envelope's `context.slot`. Pass `null` for `key` or `spec` to disable.
+
+```tsx
+function AccountBalance({ address }: { address: Address }) {
+    const client = useClient<ClientWithRpc<GetBalanceApi> & ClientWithRpcSubscriptions<AccountNotificationsApi>>();
+    const spec = useMemo(
+        () =>
+            address
+                ? {
+                      rpcRequest: client.rpc.getBalance(address),
+                      rpcSubscriptionRequest: client.rpcSubscriptions.accountNotifications(address),
+                      rpcValueMapper: (lamports: bigint) => lamports,
+                      rpcSubscriptionValueMapper: ({ lamports }: { lamports: bigint }) => lamports,
+                  }
+                : null,
+        [client, address],
+    );
+    const { data } = useTrackedDataSwr(address ? ['balance', address] : null, spec);
+    return <p>{data ? `${data.value} lamports at slot ${data.slot}` : 'Loading…'}</p>;
+}
+```
+
 ## Hooks
 
 ### `useSignIn(uiWalletAccount, chain)`
