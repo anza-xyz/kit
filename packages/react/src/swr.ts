@@ -11,3 +11,4 @@
  */
 export * from './swr/useRequestSwr';
 export * from './swr/useSubscriptionSwr';
+export * from './swr/useTrackedDataSwr';
