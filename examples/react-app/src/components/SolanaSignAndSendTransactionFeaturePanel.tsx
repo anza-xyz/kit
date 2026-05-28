@@ -11,12 +11,11 @@ import {
     setTransactionMessageLifetimeUsingBlockhash,
     signAndSendTransactionMessageWithSigners,
 } from '@solana/kit';
-import { useWalletAccountTransactionSendingSigner } from '@solana/react';
+import { useAction, useWalletAccountTransactionSendingSigner } from '@solana/react';
 import { getTransferSolInstruction } from '@solana-program/system';
 import { getUiWalletAccountStorageKey, type UiWalletAccount, useWallets } from '@wallet-standard/react';
 import type { SyntheticEvent } from 'react';
-import { useContext, useId, useMemo, useRef, useState } from 'react';
-import { useSWRConfig } from 'swr';
+import { useContext, useId, useMemo, useState } from 'react';
 
 import { ChainContext } from '../context/ChainContext';
 import { RpcContext } from '../context/RpcContext';
@@ -40,13 +39,8 @@ function solStringToLamports(solQuantityString: string) {
 }
 
 export function SolanaSignAndSendTransactionFeaturePanel({ account }: Props) {
-    const { mutate } = useSWRConfig();
-    const { current: NO_ERROR } = useRef<unknown>(Symbol());
     const { rpc } = useContext(RpcContext);
     const wallets = useWallets();
-    const [isSendingTransaction, setIsSendingTransaction] = useState(false);
-    const [error, setError] = useState(NO_ERROR);
-    const [lastSignature, setLastSignature] = useState<Uint8Array | undefined>();
     const [solQuantityString, setSolQuantityString] = useState<string>('');
     const [recipientAccountStorageKey, setRecipientAccountStorageKey] = useState<string | undefined>();
     const recipientAccount = useMemo(() => {
@@ -64,46 +58,49 @@ export function SolanaSignAndSendTransactionFeaturePanel({ account }: Props) {
     const transactionSendingSigner = useWalletAccountTransactionSendingSigner(account, currentChain);
     const lamportsInputId = useId();
     const recipientSelectId = useId();
+
+    const {
+        data: lastSignature,
+        dispatchAsync,
+        error,
+        isRunning: isSendingTransaction,
+        reset,
+    } = useAction(async signal => {
+        const amount = solStringToLamports(solQuantityString);
+        if (!recipientAccount) {
+            throw new Error('The address of the recipient could not be found');
+        }
+        const { value: latestBlockhash } = await rpc
+            .getLatestBlockhash({ commitment: 'confirmed' })
+            .send({ abortSignal: signal });
+        const message = pipe(
+            createTransactionMessage({ version: 0 }),
+            m => setTransactionMessageFeePayerSigner(transactionSendingSigner, m),
+            m => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, m),
+            m =>
+                appendTransactionMessageInstruction(
+                    getTransferSolInstruction({
+                        amount,
+                        destination: address(recipientAccount.address),
+                        source: transactionSendingSigner,
+                    }),
+                    m,
+                ),
+        );
+        assertIsTransactionMessageWithSingleSendingSigner(message);
+        return await signAndSendTransactionMessageWithSigners(message);
+    });
+
     return (
         <Flex asChild gap="2" direction={{ initial: 'column', sm: 'row' }} style={{ width: '100%' }}>
             <form
                 onSubmit={async e => {
                     e.preventDefault();
-                    setError(NO_ERROR);
-                    setIsSendingTransaction(true);
                     try {
-                        const amount = solStringToLamports(solQuantityString);
-                        if (!recipientAccount) {
-                            throw new Error('The address of the recipient could not be found');
-                        }
-                        const { value: latestBlockhash } = await rpc
-                            .getLatestBlockhash({ commitment: 'confirmed' })
-                            .send();
-                        const message = pipe(
-                            createTransactionMessage({ version: 0 }),
-                            m => setTransactionMessageFeePayerSigner(transactionSendingSigner, m),
-                            m => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, m),
-                            m =>
-                                appendTransactionMessageInstruction(
-                                    getTransferSolInstruction({
-                                        amount,
-                                        destination: address(recipientAccount.address),
-                                        source: transactionSendingSigner,
-                                    }),
-                                    m,
-                                ),
-                        );
-                        assertIsTransactionMessageWithSingleSendingSigner(message);
-                        const signature = await signAndSendTransactionMessageWithSigners(message);
-                        void mutate({ address: transactionSendingSigner.address, chain: currentChain });
-                        void mutate({ address: recipientAccount.address, chain: currentChain });
-                        setLastSignature(signature);
+                        await dispatchAsync();
                         setSolQuantityString('');
-                    } catch (e) {
-                        setLastSignature(undefined);
-                        setError(e);
-                    } finally {
-                        setIsSendingTransaction(false);
+                    } catch {
+                        // Error is surfaced by `useAction`'s `error` field
                     }
                 }}
             >
@@ -121,7 +118,7 @@ export function SolanaSignAndSendTransactionFeaturePanel({ account }: Props) {
                                 type="number"
                                 value={solQuantityString}
                             >
-                                <TextField.Slot side="right">{'\u25ce'}</TextField.Slot>
+                                <TextField.Slot side="right">{'◎'}</TextField.Slot>
                             </TextField.Root>
                         </Box>
                         <Box flexShrink="0">
@@ -161,13 +158,13 @@ export function SolanaSignAndSendTransactionFeaturePanel({ account }: Props) {
                     open={!!lastSignature}
                     onOpenChange={open => {
                         if (!open) {
-                            setLastSignature(undefined);
+                            reset();
                         }
                     }}
                 >
                     <Dialog.Trigger>
                         <Button
-                            color={error ? undefined : 'red'}
+                            color={error ? 'red' : 'green'}
                             disabled={solQuantityString === '' || !recipientAccount}
                             loading={isSendingTransaction}
                             type="submit"
@@ -205,9 +202,7 @@ export function SolanaSignAndSendTransactionFeaturePanel({ account }: Props) {
                         </Dialog.Content>
                     ) : null}
                 </Dialog.Root>
-                {error !== NO_ERROR ? (
-                    <ErrorDialog error={error} onClose={() => setError(NO_ERROR)} title="Transfer failed" />
-                ) : null}
+                {error ? <ErrorDialog error={error} onClose={reset} title="Transfer failed" /> : null}
             </form>
         </Flex>
     );

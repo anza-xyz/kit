@@ -1,7 +1,7 @@
+import { Theme } from '@radix-ui/themes';
 import type { Rpc, RpcSubscriptions, SolanaRpcApiMainnet, SolanaRpcSubscriptionsApi } from '@solana/kit';
 import { act, waitFor } from '@testing-library/react';
 import React from 'react';
-import { ErrorBoundary } from 'react-error-boundary';
 
 import { render } from '../../__test-utils__/render';
 import { ChainContext, DEFAULT_CHAIN_CONFIG } from '../../context/ChainContext';
@@ -58,9 +58,11 @@ function makeWrapper(rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsAp
     const rpc = {} as Rpc<SolanaRpcApiMainnet>;
     return function Wrapper({ children }: { children: React.ReactNode }) {
         return (
-            <ChainContext.Provider value={DEFAULT_CHAIN_CONFIG}>
-                <RpcContext.Provider value={{ rpc, rpcSubscriptions }}>{children}</RpcContext.Provider>
-            </ChainContext.Provider>
+            <Theme>
+                <ChainContext.Provider value={DEFAULT_CHAIN_CONFIG}>
+                    <RpcContext.Provider value={{ rpc, rpcSubscriptions }}>{children}</RpcContext.Provider>
+                </ChainContext.Provider>
+            </Theme>
         );
     };
 }
@@ -100,24 +102,31 @@ describe('SlotIndicator', () => {
         expect(link?.getAttribute('href')).toContain('cluster=devnet');
     });
 
-    it('throws a stream error to the nearest error boundary', async () => {
+    it('keeps showing the last known slot and offers reconnect when the stream errors', async () => {
         const harness = makeReactiveStreamStore();
         const rpcSubscriptions = makeMockRpcSubscriptions(jest.fn().mockReturnValue(harness.store));
-        const rpc = {} as Rpc<SolanaRpcApiMainnet>;
-        function Wrapper({ children }: { children: React.ReactNode }) {
-            return (
-                <ChainContext.Provider value={DEFAULT_CHAIN_CONFIG}>
-                    <RpcContext.Provider value={{ rpc, rpcSubscriptions }}>
-                        <ErrorBoundary fallback={<span>boundary-caught</span>}>{children}</ErrorBoundary>
-                    </RpcContext.Provider>
-                </ChainContext.Provider>
-            );
-        }
-        const { container } = render(<SlotIndicator />, { wrapper: Wrapper });
+        const { container } = render(<SlotIndicator />, { wrapper: makeWrapper(rpcSubscriptions) });
 
+        act(() => {
+            harness.publish({ parent: 122n, root: 100n, slot: 123n });
+        });
+        await waitFor(() => expect(container.textContent).toContain('123'));
+
+        const connectsBeforeError = harness.connectCalls();
         act(() => {
             harness.publishError(new Error('slot-stream-down'));
         });
-        await waitFor(() => expect(container.textContent).toContain('boundary-caught'));
+        // Stale-while-error: the last slot stays visible and a reconnect control appears beside it,
+        // rather than the error tearing down to the surrounding error boundary's fallback.
+        await waitFor(() => expect(container.querySelector('svg')).not.toBeNull());
+        expect(container.textContent).toContain('123');
+
+        // Clicking the reconnect control re-opens the stream.
+        const reconnectButton = container.querySelector('button');
+        expect(reconnectButton).not.toBeNull();
+        act(() => {
+            reconnectButton?.click();
+        });
+        expect(harness.connectCalls()).toBeGreaterThan(connectsBeforeError);
     });
 });

@@ -1,6 +1,5 @@
 import { Blockquote, Box, Button, Dialog, Flex, Link, Select, Text, TextField } from '@radix-ui/themes';
 import {
-    Address,
     address,
     appendTransactionMessageInstruction,
     assertIsSendableTransaction,
@@ -9,21 +8,16 @@ import {
     getSignatureFromTransaction,
     lamports,
     pipe,
-    SendableTransaction,
     sendAndConfirmTransactionFactory,
     setTransactionMessageFeePayerSigner,
     setTransactionMessageLifetimeUsingBlockhash,
-    Signature,
     signTransactionMessageWithSigners,
-    Transaction,
-    TransactionWithBlockhashLifetime,
 } from '@solana/kit';
-import { useWalletAccountTransactionSigner } from '@solana/react';
+import { useAction, useWalletAccountTransactionSigner } from '@solana/react';
 import { getTransferSolInstruction } from '@solana-program/system';
 import { getUiWalletAccountStorageKey, type UiWalletAccount, useWallets } from '@wallet-standard/react';
 import type { SyntheticEvent } from 'react';
-import { useContext, useId, useMemo, useRef, useState } from 'react';
-import { useSWRConfig } from 'swr';
+import { useContext, useId, useMemo, useState } from 'react';
 
 import { ChainContext } from '../context/ChainContext';
 import { RpcContext } from '../context/RpcContext';
@@ -46,33 +40,13 @@ function solStringToLamports(solQuantityString: string) {
     return lamports(bigIntLamports);
 }
 
-type SignTransactionState =
-    | {
-          kind: 'creating-transaction';
-      }
-    | {
-          kind: 'inputs-form-active';
-      }
-    | {
-          kind: 'ready-to-send';
-          recipientAddress: Address;
-          transaction: SendableTransaction & Transaction & TransactionWithBlockhashLifetime;
-      }
-    | {
-          kind: 'sending-transaction';
-      };
-
 export function SolanaSignTransactionFeaturePanel({ account }: Props) {
-    const { mutate } = useSWRConfig();
-    const { current: NO_ERROR } = useRef(Symbol());
     const { rpc, rpcSubscriptions } = useContext(RpcContext);
     const sendAndConfirmTransaction = useMemo(
         () => sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions }),
         [rpc, rpcSubscriptions],
     );
     const wallets = useWallets();
-    const [error, setError] = useState<unknown>(NO_ERROR);
-    const [lastSignature, setLastSignature] = useState<Signature | undefined>();
     const [solQuantityString, setSolQuantityString] = useState<string>('');
     const [recipientAccountStorageKey, setRecipientAccountStorageKey] = useState<string | undefined>();
     const recipientAccount = useMemo(() => {
@@ -90,90 +64,72 @@ export function SolanaSignTransactionFeaturePanel({ account }: Props) {
     const transactionSigner = useWalletAccountTransactionSigner(account, currentChain);
     const lamportsInputId = useId();
     const recipientSelectId = useId();
-    const [signTransactionState, setSignTransactionState] = useState<SignTransactionState>({
-        kind: 'inputs-form-active',
+
+    // Step one: build and sign the transaction
+    const signAction = useAction(async signal => {
+        const amount = solStringToLamports(solQuantityString);
+        if (!recipientAccount) {
+            throw new Error('The address of the recipient could not be found');
+        }
+        const { value: latestBlockhash } = await rpc
+            .getLatestBlockhash({ commitment: 'confirmed' })
+            .send({ abortSignal: signal });
+        const message = pipe(
+            createTransactionMessage({ version: 0 }),
+            m => setTransactionMessageFeePayerSigner(transactionSigner, m),
+            m => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, m),
+            m =>
+                appendTransactionMessageInstruction(
+                    getTransferSolInstruction({
+                        amount,
+                        destination: address(recipientAccount.address),
+                        source: transactionSigner,
+                    }),
+                    m,
+                ),
+        );
+        const transaction = await signTransactionMessageWithSigners(message);
+        assertIsSendableTransaction(transaction);
+        assertIsTransactionWithBlockhashLifetime(transaction);
+        return transaction;
     });
-    const formDisabled = signTransactionState.kind !== 'inputs-form-active';
-    const formLoading =
-        signTransactionState.kind === 'creating-transaction' || signTransactionState.kind === 'sending-transaction';
 
-    async function handleCreateTransaction(event: React.FormEvent<HTMLFormElement>) {
-        event.preventDefault();
-        setError(NO_ERROR);
-        setSignTransactionState({ kind: 'creating-transaction' });
-        try {
-            const amount = solStringToLamports(solQuantityString);
-            if (!recipientAccount) {
-                throw new Error('The address of the recipient could not be found');
-            }
-            const { value: latestBlockhash } = await rpc.getLatestBlockhash({ commitment: 'confirmed' }).send();
-            const message = pipe(
-                createTransactionMessage({ version: 0 }),
-                m => setTransactionMessageFeePayerSigner(transactionSigner, m),
-                m => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, m),
-                m =>
-                    appendTransactionMessageInstruction(
-                        getTransferSolInstruction({
-                            amount,
-                            destination: address(recipientAccount.address),
-                            source: transactionSigner,
-                        }),
-                        m,
-                    ),
-            );
-            const transaction = await signTransactionMessageWithSigners(message);
-            assertIsSendableTransaction(transaction);
-            assertIsTransactionWithBlockhashLifetime(transaction);
-            setSignTransactionState({
-                kind: 'ready-to-send',
-                recipientAddress: recipientAccount.address as Address,
-                transaction,
-            });
-        } catch (e) {
-            setLastSignature(undefined);
-            setError(e);
-            setSignTransactionState({ kind: 'inputs-form-active' });
-        }
-    }
+    // Step two: send the already-signed transaction and wait for confirmation. The on-chain balance
+    // refreshes itself through the `useTrackedDataSWR` subscription in `Balance`, so there's no
+    // cache to invalidate here.
+    const sendAction = useAction(async (signal, transaction: NonNullable<typeof signAction.data>) => {
+        await sendAndConfirmTransaction(transaction, { abortSignal: signal, commitment: 'confirmed' });
+        return getSignatureFromTransaction(transaction);
+    });
 
-    async function handleSendTransaction(
-        {
-            recipientAddress,
-            transaction,
-        }: {
-            recipientAddress: Address;
-            transaction: SendableTransaction & Transaction & TransactionWithBlockhashLifetime;
-        },
-        event: React.FormEvent<HTMLFormElement>,
-    ) {
-        event.preventDefault();
-        setError(NO_ERROR);
-        setSignTransactionState({ kind: 'sending-transaction' });
-        try {
-            const signature = getSignatureFromTransaction(transaction);
-            await sendAndConfirmTransaction(transaction, { commitment: 'confirmed' });
-            void mutate({ address: transactionSigner.address, chain: currentChain });
-            void mutate({ address: recipientAddress, chain: currentChain });
-            setLastSignature(signature);
-            setSolQuantityString('');
-            setSignTransactionState({ kind: 'inputs-form-active' });
-        } catch (e) {
-            setLastSignature(undefined);
-            setError(e);
-            setSignTransactionState({ kind: 'inputs-form-active' });
-        }
+    const signedTransaction = signAction.data;
+    const lastSignature = sendAction.data;
+    const readyToSend = signedTransaction != null && lastSignature == null;
+    const formLoading = signAction.isRunning || sendAction.isRunning;
+    const formDisabled = formLoading || readyToSend;
+    const error = signAction.error ?? sendAction.error;
+
+    function reset() {
+        signAction.reset();
+        sendAction.reset();
     }
 
     return (
         <Flex asChild gap="2" direction={{ initial: 'column', sm: 'row' }} style={{ width: '100%' }}>
             <form
-                onSubmit={
-                    signTransactionState.kind === 'inputs-form-active'
-                        ? handleCreateTransaction
-                        : signTransactionState.kind === 'ready-to-send'
-                          ? handleSendTransaction.bind(null, signTransactionState)
-                          : undefined
-                }
+                onSubmit={async e => {
+                    e.preventDefault();
+                    try {
+                        if (readyToSend) {
+                            await sendAction.dispatchAsync(signedTransaction);
+                            setSolQuantityString('');
+                        } else {
+                            await signAction.dispatchAsync();
+                        }
+                    } catch {
+                        // Error state is surfaced via the actions' `error` fields; nothing else to do here.
+                    }
+                }}
             >
                 <Box flexGrow="1" overflow="hidden">
                     <Flex gap="3" align="center">
@@ -189,7 +145,7 @@ export function SolanaSignTransactionFeaturePanel({ account }: Props) {
                                 type="number"
                                 value={solQuantityString}
                             >
-                                <TextField.Slot side="right">{'\u25ce'}</TextField.Slot>
+                                <TextField.Slot side="right">{'◎'}</TextField.Slot>
                             </TextField.Root>
                         </Box>
                         <Box flexShrink="0">
@@ -229,20 +185,18 @@ export function SolanaSignTransactionFeaturePanel({ account }: Props) {
                     open={!!lastSignature}
                     onOpenChange={open => {
                         if (!open) {
-                            setLastSignature(undefined);
+                            reset();
                         }
                     }}
                 >
                     <Dialog.Trigger>
                         <Button
-                            color={
-                                error ? (signTransactionState.kind === 'ready-to-send' ? 'green' : undefined) : 'red'
-                            }
+                            color={error ? 'red' : readyToSend ? 'green' : undefined}
                             disabled={solQuantityString === '' || !recipientAccount}
                             loading={formLoading}
                             type="submit"
                         >
-                            {signTransactionState.kind === 'ready-to-send' ? 'Send' : 'Sign'}
+                            {readyToSend ? 'Send' : 'Sign'}
                         </Button>
                     </Dialog.Trigger>
                     {lastSignature ? (
@@ -273,9 +227,7 @@ export function SolanaSignTransactionFeaturePanel({ account }: Props) {
                         </Dialog.Content>
                     ) : null}
                 </Dialog.Root>
-                {error !== NO_ERROR ? (
-                    <ErrorDialog error={error} onClose={() => setError(NO_ERROR)} title="Transfer failed" />
-                ) : null}
+                {error ? <ErrorDialog error={error} onClose={reset} title="Transfer failed" /> : null}
             </form>
         </Flex>
     );

@@ -80,13 +80,19 @@ function makeMockSubscriptions() {
                 }),
         }),
     } as unknown as RpcSubscriptions<AccountNotificationsApi & SolanaRpcSubscriptionsApi>;
+    function latestPublisher(action: string) {
+        const publisher = publishers[publishers.length - 1];
+        if (!publisher) {
+            throw new Error(`No active account-notifications publisher to ${action}`);
+        }
+        return publisher;
+    }
     return {
+        pushError(error: unknown) {
+            latestPublisher('push an error through').publish('error', error);
+        },
         pushNotification(notification: AccountNotification) {
-            const publisher = publishers[publishers.length - 1];
-            if (!publisher) {
-                throw new Error('No active account-notifications publisher to push a notification through');
-            }
-            publisher.publish('notification', notification);
+            latestPublisher('push a notification through').publish('notification', notification);
         },
         rpcSubscriptions,
     };
@@ -175,5 +181,27 @@ describe('Balance', () => {
             await jest.runAllTimersAsync();
         });
         await waitFor(() => expect(container.querySelector('svg')).not.toBeNull());
+    });
+
+    it('keeps showing the last known balance when the subscription later errors', async () => {
+        const { rpc, resolveGetBalance } = makeMockRpc();
+        const { rpcSubscriptions, pushError } = makeMockSubscriptions();
+        const { container } = render(<Balance account={makeAccount()} />, {
+            wrapper: makeWrapper({ rpc, rpcSubscriptions }),
+        });
+        await act(async () => {
+            resolveGetBalance(lamportsResponse(100, 1_000_000_000n));
+            await jest.runAllTimersAsync();
+        });
+        await waitFor(() => expect(container.textContent).toBe('1 ◎'));
+
+        await act(async () => {
+            pushError(new Error('subscription-dropped'));
+            await jest.runAllTimersAsync();
+        });
+        // Stale-while-error: the cached balance stays visible and a warning glyph appears beside it,
+        // rather than the error wiping out the last known value.
+        await waitFor(() => expect(container.querySelector('svg')).not.toBeNull());
+        expect(container.textContent).toBe('1 ◎');
     });
 });
