@@ -1,17 +1,15 @@
 import { Blockquote, Button, Dialog, Flex, Link, Text } from '@radix-ui/themes';
-import { Address, airdropFactory, lamports, Rpc, Signature, SolanaRpcApi } from '@solana/kit';
-import { useCallback, useContext, useMemo, useRef, useState } from 'react';
+import { Address, airdropFactory, lamports, Rpc, SolanaRpcApi } from '@solana/kit';
+import { useAction } from '@solana/react';
+import { useContext, useMemo } from 'react';
 
 import { ChainContext } from '../context/ChainContext';
 import { RpcContext } from '../context/RpcContext';
 import { ErrorDialog } from './ErrorDialog';
 
 export function AirdropButton({ address }: { address: Address }) {
-    const { current: NO_ERROR } = useRef<unknown>(Symbol());
     const { chain, solanaExplorerClusterName } = useContext(ChainContext);
     const { rpc, rpcSubscriptions } = useContext(RpcContext);
-    const [error, setError] = useState(NO_ERROR);
-    const [lastSignature, setLastSignature] = useState<Signature | undefined>();
 
     const isMainnet = chain === 'solana:mainnet';
 
@@ -20,25 +18,21 @@ export function AirdropButton({ address }: { address: Address }) {
         () => airdropFactory({ rpc: rpc as Rpc<SolanaRpcApi>, rpcSubscriptions }),
         [rpc, rpcSubscriptions],
     );
-    const [loading, setLoading] = useState(false);
 
-    const handleAirdrop = useCallback(async () => {
-        try {
-            if (isMainnet) throw new Error('Airdrops are not available on mainnet');
-            setLoading(true);
-            const signature = await airdrop({
-                commitment: 'confirmed',
-                lamports: lamports(1_000_000_000n),
-                recipientAddress: address,
-            });
-            setLastSignature(signature);
-            setError(NO_ERROR);
-        } catch (e) {
-            setError(e);
-        } finally {
-            setLoading(false);
-        }
-    }, [airdrop, address, setLoading, NO_ERROR, isMainnet]);
+    const {
+        data: lastSignature,
+        dispatch,
+        error,
+        isRunning,
+        reset,
+    } = useAction(async () => {
+        if (isMainnet) throw new Error('Airdrops are not available on mainnet');
+        return await airdrop({
+            commitment: 'confirmed',
+            lamports: lamports(1_000_000_000n),
+            recipientAddress: address,
+        });
+    });
 
     return (
         <>
@@ -46,7 +40,7 @@ export function AirdropButton({ address }: { address: Address }) {
                 open={!!lastSignature}
                 onOpenChange={open => {
                     if (!open) {
-                        setLastSignature(undefined);
+                        reset();
                     }
                 }}
             >
@@ -55,9 +49,9 @@ export function AirdropButton({ address }: { address: Address }) {
                         variant="outline"
                         color={error ? undefined : 'red'}
                         disabled={isMainnet}
-                        loading={loading}
+                        loading={isRunning}
                         type="button"
-                        onClick={handleAirdrop}
+                        onClick={() => void dispatch()}
                     >
                         Airdrop to fee payer
                     </Button>
@@ -91,10 +85,10 @@ export function AirdropButton({ address }: { address: Address }) {
                 ) : null}
             </Dialog.Root>
 
-            {error !== NO_ERROR ? (
+            {error ? (
                 <ErrorDialog
                     error={{ message: `This is usually because of rate limiting. Address: ${address}` }}
-                    onClose={() => setError(NO_ERROR)}
+                    onClose={reset}
                     title="Airdrop failed"
                 />
             ) : null}

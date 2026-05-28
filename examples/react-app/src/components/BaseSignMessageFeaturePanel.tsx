@@ -1,9 +1,10 @@
 import { Pencil1Icon } from '@radix-ui/react-icons';
 import { Blockquote, Box, Button, Code, DataList, Dialog, Flex, TextField } from '@radix-ui/themes';
 import { getBase64Decoder } from '@solana/kit';
+import { useAction } from '@solana/react';
 import type { ReadonlyUint8Array } from '@wallet-standard/core';
 import type { SyntheticEvent } from 'react';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 
 import { ErrorDialog } from '../components/ErrorDialog';
 
@@ -12,27 +13,22 @@ type Props = Readonly<{
 }>;
 
 export function BaseSignMessageFeaturePanel({ signMessage }: Props) {
-    const { current: NO_ERROR } = useRef<unknown>(Symbol());
-    const [isSigningMessage, setIsSigningMessage] = useState(false);
-    const [error, setError] = useState(NO_ERROR);
-    const [lastSignature, setLastSignature] = useState<ReadonlyUint8Array | undefined>();
     const [text, setText] = useState<string>();
+
+    const {
+        data: lastSignature,
+        dispatch,
+        error,
+        isRunning: isSigningMessage,
+        reset,
+    } = useAction(async () => await signMessage(new TextEncoder().encode(text)));
+
     return (
         <Flex asChild gap="2" direction={{ initial: 'column', sm: 'row' }} style={{ width: '100%' }}>
             <form
-                onSubmit={async e => {
+                onSubmit={e => {
                     e.preventDefault();
-                    setError(NO_ERROR);
-                    setIsSigningMessage(true);
-                    try {
-                        const signature = await signMessage(new TextEncoder().encode(text));
-                        setLastSignature(signature);
-                    } catch (e) {
-                        setLastSignature(undefined);
-                        setError(e);
-                    } finally {
-                        setIsSigningMessage(false);
-                    }
+                    void dispatch();
                 }}
             >
                 <Box flexGrow="1">
@@ -50,7 +46,7 @@ export function BaseSignMessageFeaturePanel({ signMessage }: Props) {
                     open={!!lastSignature}
                     onOpenChange={open => {
                         if (!open) {
-                            setLastSignature(undefined);
+                            reset();
                         }
                     }}
                 >
@@ -93,9 +89,7 @@ export function BaseSignMessageFeaturePanel({ signMessage }: Props) {
                         </Dialog.Content>
                     ) : null}
                 </Dialog.Root>
-                {error !== NO_ERROR ? (
-                    <ErrorDialog error={error} onClose={() => setError(NO_ERROR)} title="Failed to sign message" />
-                ) : null}
+                {error ? <ErrorDialog error={error} onClose={reset} title="Failed to sign message" /> : null}
             </form>
         </Flex>
     );
