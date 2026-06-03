@@ -14,6 +14,9 @@ describe('getRpcSubscriptionsTransportWithSubscriptionCoalescing', () => {
         mockInnerTransport = jest.fn().mockResolvedValue({ on: mockOn });
         coalescedTransport = getRpcSubscriptionsTransportWithSubscriptionCoalescing(mockInnerTransport);
     });
+    afterEach(() => {
+        jest.useRealTimers();
+    });
     it('returns the inner transport', async () => {
         expect.assertions(1);
         const expectedDataPublisher = { on: mockOn };
@@ -119,7 +122,8 @@ describe('getRpcSubscriptionsTransportWithSubscriptionCoalescing', () => {
         const publisherB = await coalescedTransport(config);
         expect(publisherA).toBe(publisherB);
     });
-    it('does not fire the inner abort signal if fewer than all subscribers abort, in the same runloop', () => {
+    it('does not fire the inner abort signal if fewer than all subscribers abort, in the same runloop', async () => {
+        expect.assertions(1);
         jest.useFakeTimers();
         const config = {
             execute: jest.fn(),
@@ -129,10 +133,11 @@ describe('getRpcSubscriptionsTransportWithSubscriptionCoalescing', () => {
         coalescedTransport({ ...config, signal: new AbortController().signal }).catch(() => {});
         coalescedTransport({ ...config, signal: abortControllerB.signal }).catch(() => {});
         abortControllerB.abort();
-        jest.runAllTicks();
+        await jest.runAllTimersAsync();
         expect(mockInnerTransport.mock.lastCall?.[0].signal).toHaveProperty('aborted', false);
     });
-    it('fires the inner abort signal if all subscribers abort, in the same runloop', () => {
+    it('fires the inner abort signal if all subscribers abort, in the same runloop', async () => {
+        expect.assertions(1);
         jest.useFakeTimers();
         const config = {
             execute: jest.fn(),
@@ -144,7 +149,7 @@ describe('getRpcSubscriptionsTransportWithSubscriptionCoalescing', () => {
         coalescedTransport({ ...config, signal: abortControllerB.signal }).catch(() => {});
         abortControllerA.abort();
         abortControllerB.abort();
-        jest.runAllTicks();
+        await jest.runAllTimersAsync();
         expect(mockInnerTransport.mock.lastCall?.[0].signal).toHaveProperty('aborted', true);
     });
     it('fires the inner abort signal if all subscribers abort, in different runloops', async () => {
@@ -161,10 +166,12 @@ describe('getRpcSubscriptionsTransportWithSubscriptionCoalescing', () => {
         await jest.runAllTimersAsync();
         abortControllerA.abort();
         abortControllerB.abort();
-        jest.runAllTicks();
+        await jest.runAllTimersAsync();
         expect(mockInnerTransport.mock.lastCall?.[0].signal).toHaveProperty('aborted', true);
     });
-    it('does not fire the inner abort signal if the subscriber count is non zero at the end of the runloop, despite having aborted all in the middle of it', () => {
+    it('does not fire the inner abort signal if the subscriber count is non zero at the end of the runloop, despite having aborted all in the middle of it', async () => {
+        expect.assertions(1);
+        jest.useFakeTimers();
         const config = {
             execute: jest.fn(),
             request: { methodName: 'foo', params: [] },
@@ -173,7 +180,7 @@ describe('getRpcSubscriptionsTransportWithSubscriptionCoalescing', () => {
         coalescedTransport({ ...config, signal: abortControllerA.signal }).catch(() => {});
         abortControllerA.abort();
         coalescedTransport({ ...config, signal: new AbortController().signal }).catch(() => {});
-        jest.runAllTicks();
+        await jest.runAllTimersAsync();
         expect(mockInnerTransport.mock.lastCall?.[0].signal).toHaveProperty('aborted', false);
     });
     it('does not re-coalesce new requests behind an errored transport', async () => {
@@ -214,7 +221,7 @@ describe('getRpcSubscriptionsTransportWithSubscriptionCoalescing', () => {
          * Abort the original subscriber
          */
         abortControllerA.abort();
-        jest.runAllTicks();
+        await jest.runAllTimersAsync();
         /**
          * PHASE 4
          * Create a new transport and expect it to coalesce behind the one in phase 2

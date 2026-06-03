@@ -1,3 +1,8 @@
 import { fetch as undiciFetch } from 'undici';
 
-globalThis.fetch = undiciFetch as unknown as typeof globalThis.fetch;
+function installFetch() {
+    globalThis.fetch = undiciFetch as unknown as typeof globalThis.fetch;
+}
+
+installFetch();
+beforeEach(installFetch);
