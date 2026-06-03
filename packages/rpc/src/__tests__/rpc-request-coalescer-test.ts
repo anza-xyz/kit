@@ -22,10 +22,10 @@ describe('RPC request coalescer', () => {
             coalescedTransport({ payload: null }).catch(() => {});
             expect(mockTransport).toHaveBeenCalledTimes(1);
         });
-        it('multiple requests in different ticks each produce their own transport request', () => {
+        it('multiple requests in different ticks each produce their own transport request', async () => {
             expect.assertions(1);
             coalescedTransport({ payload: null }).catch(() => {});
-            jest.runAllTicks();
+            await jest.runAllTimersAsync();
             coalescedTransport({ payload: null }).catch(() => {});
             expect(mockTransport).toHaveBeenCalledTimes(2);
         });
@@ -47,7 +47,7 @@ describe('RPC request coalescer', () => {
             mockTransport.mockResolvedValueOnce(mockResponseA);
             mockTransport.mockResolvedValueOnce(mockResponseB);
             const responsePromiseA = coalescedTransport({ payload: null });
-            jest.runAllTicks();
+            await jest.runAllTimersAsync();
             const responsePromiseB = coalescedTransport({ payload: null });
             await Promise.all([
                 expect(responsePromiseA).resolves.toBe(mockResponseA),
@@ -74,13 +74,13 @@ describe('RPC request coalescer', () => {
             const responsePromiseA = coalescedTransport({ payload: null });
             // eslint-disable-next-line jest/valid-expect
             const expectationA = expect(responsePromiseA).rejects.toBe(mockErrorA);
-            jest.runAllTicks();
+            await jest.runAllTimersAsync();
             const responsePromiseB = coalescedTransport({ payload: null });
             // eslint-disable-next-line jest/valid-expect
             const expectationB = expect(responsePromiseB).rejects.toBe(mockErrorB);
             await Promise.all([expectationA, expectationB]);
         });
-        it('does not abort the transport when the number of consumers increases, falls to zero, then increases again in the same runloop', () => {
+        it('does not abort the transport when the number of consumers increases, falls to zero, then increases again in the same runloop', async () => {
             expect.assertions(2);
             const abortControllerA = new AbortController();
             const abortControllerB = new AbortController();
@@ -91,7 +91,7 @@ describe('RPC request coalescer', () => {
             abortControllerB.abort('o no B');
             // New request comes in at the last moment before the end of the runloop.
             coalescedTransport({ payload: null }).catch(() => {});
-            jest.runAllTicks();
+            await jest.runAllTimersAsync();
             expect(mockTransport).toHaveBeenCalledTimes(1);
             const transportAbortSignal = mockTransport.mock.lastCall![0].signal!;
             expect(transportAbortSignal.aborted).toBe(false);
@@ -138,13 +138,13 @@ describe('RPC request coalescer', () => {
                 abortControllerA.abort('o no');
                 await expect(responsePromiseA).rejects.toBe('o no');
             });
-            it('aborts the transport at the end of the runloop when all of the requests abort', () => {
+            it('aborts the transport at the end of the runloop when all of the requests abort', async () => {
                 expect.assertions(1);
                 responsePromiseA.catch(() => {});
                 responsePromiseB.catch(() => {});
                 abortControllerA.abort('o no A');
                 abortControllerB.abort('o no B');
-                jest.runAllTicks();
+                await jest.runAllTimersAsync();
                 const transportAbortSignal = mockTransport.mock.lastCall![0].signal!;
                 expect(transportAbortSignal.aborted).toBe(true);
             });
