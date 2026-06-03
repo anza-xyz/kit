@@ -50,7 +50,7 @@ jobs:
         uses: ./.github/workflows/actions/setup-validator
 
       - name: Build & Test
-        run: pnpm build # Don't add --concurrency here; it's already baked in
+        run: pnpm build --force # Don't add --concurrency here; it's already baked in
 
       - name: Stop Test Validator
         if: always() && steps.start-test-validator.outcome == 'success'
