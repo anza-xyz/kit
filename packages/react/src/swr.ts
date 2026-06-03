@@ -10,3 +10,4 @@
  * @packageDocumentation
  */
 export * from './swr/useRequestSWR';
+export * from './swr/useSubscriptionSWR';
