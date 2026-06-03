@@ -354,6 +354,29 @@ function Profile({ userId }: { userId: string }) {
 
 When `getAbortSignal` isn't configured the signal is a fresh never-aborting `AbortSignal` (so the function's signature is satisfied) — it does **not** fire on unmount or when SWR supersedes the request. SWR's model is to discard the stale result rather than cancel the network call.
 
+### `useSubscriptionSWR(key, source, options?)`
+
+SWR-backed counterpart to `useSubscription`. Routes a `ReactiveStreamSource<T>` through SWR's subscription cache (`useSWRSubscription`). Returns SWR's native `{ data, error }` shape — `data` is the notification exactly as the source emits it. Pass `null` for either `key` or `source` to disable. Options accept SWR's config. SWR subscriptions surface only `{ data, error }`, so there is no `reconnect` function like `useSubscription` has — reach for `useSubscription` when you need manual reconnection. For the same reason `getAbortSignal` is not available.
+
+```tsx
+function AccountBalance({ address }: { address: Address }) {
+    const client = useClient<ClientWithRpcSubscriptions<AccountNotificationsApi>>();
+    const { data, error } = useSubscriptionSWR(
+        address ? ['account', address] : null,
+        address ? client.rpcSubscriptions.accountNotifications(address) : null,
+    );
+    if (error) return <p>Failed to connect.</p>;
+    if (!data) return <p>Connecting…</p>;
+    return (
+        <p>
+            {data.value.lamports} lamports at slot {data.context.slot}
+        </p>
+    );
+}
+```
+
+If the `source` changes (new address, new notification type) but the SWR `key` is stable, the existing connection stays bound to the original source — SWR caches on `key`, and `subscribe` reads the source from a ref. Bump the `key` to swap sources.
+
 ### Why no `useActionSWR`?
 
 It would just be a wrapper around SWR's built-in [`useSWRMutation`](https://swr.vercel.app/docs/mutation#useswrmutation) with no additional functionality. Either use `useSWRMutation` or, if you don't need the SWR integration, use `useAction`.

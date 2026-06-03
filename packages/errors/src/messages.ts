@@ -211,6 +211,7 @@ import {
     SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE,
     SOLANA_ERROR__REACT__MISSING_CAPABILITY,
     SOLANA_ERROR__REACT__MISSING_PROVIDER,
+    SOLANA_ERROR__REACT__SUBSCRIPTION_CLOSED_WITHOUT_ERROR,
     SOLANA_ERROR__RPC__API_PLAN_MISSING_FOR_RPC_METHOD,
     SOLANA_ERROR__RPC__INTEGER_OVERFLOW,
     SOLANA_ERROR__RPC__TRANSPORT_HTTP_ERROR,
@@ -897,6 +898,8 @@ export const SolanaErrorMessages: Readonly<{
         '`$hookName` requires the following capabilities to be installed on the client: [$capabilities]. $providerHint',
     [SOLANA_ERROR__REACT__MISSING_PROVIDER]:
         '`$hookName` was called outside of a `ClientProvider`. Mount a `<ClientProvider client={client}>` in the ancestor tree.',
+    [SOLANA_ERROR__REACT__SUBSCRIPTION_CLOSED_WITHOUT_ERROR]:
+        'The subscription closed in an error state but did not report an error.',
     [SOLANA_ERROR__WALLET__NOT_CONNECTED]: 'Cannot $operation: no wallet connected',
     [SOLANA_ERROR__WALLET__NO_SIGNER_CONNECTED]: 'No signing wallet connected (status: $status)',
     [SOLANA_ERROR__WALLET__SIGNER_NOT_AVAILABLE]: 'Connected wallet does not support signing',
