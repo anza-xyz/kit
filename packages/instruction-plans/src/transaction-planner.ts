@@ -1,6 +1,7 @@
 import {
     isSolanaError,
     SOLANA_ERROR__INSTRUCTION_PLANS__EMPTY_INSTRUCTION_PLAN,
+    SOLANA_ERROR__INSTRUCTION_PLANS__MAX_INSTRUCTIONS_PER_TRANSACTION_EXCEEDED,
     SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN,
     SOLANA_ERROR__INVARIANT_VIOLATION__INVALID_INSTRUCTION_PLAN_KIND,
     SOLANA_ERROR__INVARIANT_VIOLATION__INVALID_TRANSACTION_PLAN_KIND,
@@ -26,6 +27,11 @@ import {
     SingleInstructionPlan,
 } from './instruction-plan';
 import {
+    assertMaxInstructionsPerTransaction,
+    assertValidMaxInstructionsPerTransaction,
+    resolveMaxInstructions,
+} from './max-instructions';
+import {
     flattenTransactionPlan,
     nonDivisibleSequentialTransactionPlan,
     parallelTransactionPlan,
@@ -39,14 +45,25 @@ import {
  * Plans one or more transactions according to the provided instruction plan.
  *
  * @param instructionPlan - The instruction plan to be planned and executed.
- * @param config - Optional configuration object that can include an `AbortSignal` to cancel the planning process.
+ * @param config - Optional configuration object for the planning process.
  *
  * @see {@link InstructionPlan}
  * @see {@link TransactionPlan}
  */
 export type TransactionPlanner = (
     instructionPlan: InstructionPlan,
-    config?: { abortSignal?: AbortSignal },
+    config?: {
+        abortSignal?: AbortSignal;
+        /**
+         * Maximum number of instructions allowed in each planned transaction.
+         *
+         * Must be a positive integer no greater than `64` — the number of top-level instructions
+         * the transaction format can encode. Larger values throw
+         * {@link SOLANA_ERROR__INSTRUCTION_PLANS__INVALID_MAX_INSTRUCTIONS_PER_TRANSACTION}.
+         * Defaults to 16.
+         */
+        maxInstructionsPerTransaction?: number;
+    },
 ) => Promise<TransactionPlan>;
 
 type Mutable<T> = { -readonly [P in keyof T]: T[P] };
@@ -73,6 +90,19 @@ export type TransactionPlannerConfig = {
     /** Called whenever a new transaction message is needed. */
     createTransactionMessage: CreateTransactionMessage;
     /**
+     * Maximum number of instructions allowed in each planned transaction.
+     *
+     * This includes any instructions already present in messages returned by
+     * `createTransactionMessage` and any instructions added by
+     * `onTransactionMessageUpdated`.
+     *
+     * Must be a positive integer no greater than `64` — the number of top-level instructions
+     * the transaction format can encode. Larger values throw
+     * {@link SOLANA_ERROR__INSTRUCTION_PLANS__INVALID_MAX_INSTRUCTIONS_PER_TRANSACTION}.
+     * Defaults to 16.
+     */
+    maxInstructionsPerTransaction?: number;
+    /**
      * Called whenever a transaction message is updated — e.g. new instructions were added.
      * This function must return the updated transaction message back — even if no changes were made.
      */
@@ -91,6 +121,13 @@ export type TransactionPlannerConfig = {
  * are added to a transaction message. It accepts the updated transaction message
  * and must return a transaction message back, even if no changes were made.
  *
+ * You may also provide `maxInstructionsPerTransaction` to limit the number of
+ * instructions in each planned transaction message. This limit includes any
+ * instructions already present in messages returned by `createTransactionMessage`
+ * and any instructions added by `onTransactionMessageUpdated`. It must be a positive
+ * integer no greater than the hard limit of `64` instructions per transaction; larger
+ * values throw. Defaults to 16.
+ *
  * @example
  * ```ts
  * const transactionPlanner = createTransactionPlanner({
@@ -104,10 +141,16 @@ export type TransactionPlannerConfig = {
  * @see {@link TransactionPlannerConfig}
  */
 export function createTransactionPlanner(config: TransactionPlannerConfig): TransactionPlanner {
-    return async (instructionPlan, { abortSignal } = {}): Promise<TransactionPlan> => {
+    return async (instructionPlan, { abortSignal, maxInstructionsPerTransaction } = {}): Promise<TransactionPlan> => {
+        const resolvedMaxInstructionsPerTransaction =
+            maxInstructionsPerTransaction ?? config.maxInstructionsPerTransaction;
+        // Reject up front any configured maximum the transaction format could never satisfy, rather
+        // than discovering it mid-plan when a message fails to compile.
+        assertValidMaxInstructionsPerTransaction(resolvedMaxInstructionsPerTransaction);
         const plan = await traverse(instructionPlan, {
             abortSignal,
             createTransactionMessage: config.createTransactionMessage,
+            maxInstructionsPerTransaction: resolvedMaxInstructionsPerTransaction,
             onTransactionMessageUpdated: config.onTransactionMessageUpdated ?? (msg => msg),
             parent: null,
             parentCandidates: [],
@@ -127,6 +170,7 @@ type MutableSingleTransactionPlan = Mutable<SingleTransactionPlan>;
 type TraverseContext = {
     abortSignal?: AbortSignal;
     createTransactionMessage: CreateTransactionMessage;
+    maxInstructionsPerTransaction: number | undefined;
     onTransactionMessageUpdated: OnTransactionMessageUpdated;
     parent: InstructionPlan | null;
     parentCandidates: MutableSingleTransactionPlan[];
@@ -167,7 +211,7 @@ async function traverseSequential(
     // If so, try to fit the entire plan inside one of the parent candidates.
     if (mustEntirelyFitInParentCandidate) {
         const candidate = await selectAndMutateCandidate(context, context.parentCandidates, message =>
-            fitEntirePlanInsideMessage(instructionPlan, message),
+            fitEntirePlanInsideMessage(context, instructionPlan, message),
         );
         // If that's possible, we the candidate is mutated and we can return null.
         // Otherwise, we proceed with the normal traversal and no parent candidate.
@@ -268,11 +312,15 @@ async function traverseMessagePacker(
     const messagePacker = instructionPlan.getMessagePacker();
     const transactionPlans: SingleTransactionPlan[] = [];
     const candidates = [...context.parentCandidates];
+    const packMessageToCapacity = (message: TransactionMessage & TransactionMessageWithFeePayer) =>
+        messagePacker.packMessageToCapacity(message, {
+            maxInstructions: context.maxInstructionsPerTransaction,
+        });
 
     while (!messagePacker.done()) {
-        const candidate = await selectAndMutateCandidate(context, candidates, messagePacker.packMessageToCapacity);
+        const candidate = await selectAndMutateCandidate(context, candidates, packMessageToCapacity);
         if (!candidate) {
-            const message = await createNewMessage(context, messagePacker.packMessageToCapacity);
+            const message = await createNewMessage(context, packMessageToCapacity);
             const newPlan: MutableSingleTransactionPlan = { kind: 'single', message, planType: 'transactionPlan' };
             transactionPlans.push(newPlan);
         }
@@ -310,7 +358,7 @@ function getParallelCandidates(latestPlan: TransactionPlan): MutableSingleTransa
 }
 
 async function selectAndMutateCandidate(
-    context: Pick<TraverseContext, 'abortSignal' | 'onTransactionMessageUpdated'>,
+    context: Pick<TraverseContext, 'abortSignal' | 'maxInstructionsPerTransaction' | 'onTransactionMessageUpdated'>,
     candidates: MutableSingleTransactionPlan[],
     predicate: (
         message: TransactionMessage & TransactionMessageWithFeePayer,
@@ -327,11 +375,16 @@ async function selectAndMutateCandidate(
                 context.abortSignal,
             );
             if (getTransactionMessageSize(message) <= getTransactionMessageSizeLimit(message)) {
+                assertMaxInstructionsPerTransaction(
+                    message.instructions.length,
+                    resolveMaxInstructions(context.maxInstructionsPerTransaction),
+                );
                 candidate.message = message;
                 return candidate;
             }
         } catch (error) {
             if (
+                isSolanaError(error, SOLANA_ERROR__INSTRUCTION_PLANS__MAX_INSTRUCTIONS_PER_TRANSACTION_EXCEEDED) ||
                 isSolanaError(error, SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN) ||
                 isSolanaError(error, SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNT_ADDRESSES) ||
                 isSolanaError(error, SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNTS_IN_INSTRUCTION) ||
@@ -348,7 +401,10 @@ async function selectAndMutateCandidate(
 }
 
 async function createNewMessage(
-    context: Pick<TraverseContext, 'abortSignal' | 'createTransactionMessage' | 'onTransactionMessageUpdated'>,
+    context: Pick<
+        TraverseContext,
+        'abortSignal' | 'createTransactionMessage' | 'maxInstructionsPerTransaction' | 'onTransactionMessageUpdated'
+    >,
     predicate: (
         message: TransactionMessage & TransactionMessageWithFeePayer,
     ) => TransactionMessage & TransactionMessageWithFeePayer,
@@ -371,6 +427,10 @@ async function createNewMessage(
             numFreeBytes: getTransactionMessageSizeLimit(newMessage) - newMessageSize,
         });
     }
+    assertMaxInstructionsPerTransaction(
+        updatedMessage.instructions.length,
+        resolveMaxInstructions(context.maxInstructionsPerTransaction),
+    );
     return updatedMessage;
 }
 
@@ -392,6 +452,7 @@ function freezeTransactionPlan(plan: MutableTransactionPlan): TransactionPlan {
 }
 
 function fitEntirePlanInsideMessage(
+    context: Pick<TraverseContext, 'maxInstructionsPerTransaction'>,
     instructionPlan: InstructionPlan,
     message: TransactionMessage & TransactionMessageWithFeePayer,
 ): TransactionMessage & TransactionMessageWithFeePayer {
@@ -402,7 +463,7 @@ function fitEntirePlanInsideMessage(
         case 'sequential':
         case 'parallel':
             for (const plan of instructionPlan.plans) {
-                newMessage = fitEntirePlanInsideMessage(plan, newMessage);
+                newMessage = fitEntirePlanInsideMessage(context, plan, newMessage);
             }
             return newMessage;
         case 'single':
@@ -416,12 +477,22 @@ function fitEntirePlanInsideMessage(
                     numFreeBytes: getTransactionMessageSizeLimit(message) - baseMessageSize,
                 });
             }
+            assertMaxInstructionsPerTransaction(
+                newMessage.instructions.length,
+                resolveMaxInstructions(context.maxInstructionsPerTransaction),
+            );
             return newMessage;
         case 'messagePacker':
             // eslint-disable-next-line no-case-declarations
             const messagePacker = instructionPlan.getMessagePacker();
             while (!messagePacker.done()) {
-                newMessage = messagePacker.packMessageToCapacity(newMessage);
+                newMessage = messagePacker.packMessageToCapacity(newMessage, {
+                    maxInstructions: context.maxInstructionsPerTransaction,
+                });
+                assertMaxInstructionsPerTransaction(
+                    newMessage.instructions.length,
+                    resolveMaxInstructions(context.maxInstructionsPerTransaction),
+                );
             }
             return newMessage;
         default:
