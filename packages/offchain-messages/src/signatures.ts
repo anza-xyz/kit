@@ -1,7 +1,8 @@
 import { Address, getAddressFromPublicKey, getPublicKeyFromAddress } from '@solana/addresses';
-import { bytesEqual } from '@solana/codecs-core';
+import { bytesEqual, ReadonlyUint8Array } from '@solana/codecs-core';
 import {
     SOLANA_ERROR__OFFCHAIN_MESSAGE__ADDRESSES_CANNOT_SIGN_OFFCHAIN_MESSAGE,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__CONTENT_DOES_NOT_MATCH_EXPECTED,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURE_VERIFICATION_FAILURE,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURES_MISSING,
     SolanaError,
@@ -9,8 +10,10 @@ import {
 import { SignatureBytes, signBytes, verifySignature } from '@solana/keys';
 import { NominalType } from '@solana/nominal-types';
 
+import { getOffchainMessageV1Encoder } from './codecs/message-v1';
 import { decodeRequiredSignatoryAddresses } from './codecs/preamble-common';
 import { OffchainMessageEnvelope } from './envelope';
+import { OffchainMessageV1 } from './message-v1';
 
 /**
  * Represents an offchain message envelope that is signed by all of its required signers.
@@ -262,5 +265,107 @@ export async function verifyOffchainMessageEnvelope(offchainMessageEnvelope: Off
     );
     if (errorContext) {
         throw new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURE_VERIFICATION_FAILURE, errorContext);
+    }
+}
+
+/**
+ * The inputs required to verify a signed offchain message returned by a signer (eg. a wallet).
+ *
+ * @see {@link verifyOffchainMessage}
+ */
+export type VerifyOffchainMessageInput = Readonly<{
+    /** The text content of the message you asked the signer to sign. */
+    message: string;
+    /**
+     * The complete set of addresses you required to sign the message. You may list them in any
+     * order; they are reordered as the spec mandates when reconstructing the expected message.
+     *
+     * @defaultValue `[signer]` — the common case of a message that only the connected wallet needs
+     * to sign.
+     */
+    requiredSigners?: readonly Address[];
+    /** The 64-byte Ed25519 signature returned by the signer. */
+    signature: SignatureBytes;
+    /** The bytes that the signer reports having signed. */
+    signedMessageBytes: ReadonlyUint8Array;
+    /** The address whose private key is claimed to have produced {@link signature}. */
+    signer: Address;
+}>;
+
+/**
+ * Verifies a signed offchain message returned by an untrusted signer (eg. a wallet).
+ *
+ * Verifying the signature alone is not enough: a compromised signer could return a valid signature
+ * over data you never asked it to sign. From the `message` and `requiredSigners` you requested,
+ * this function reconstructs the version 1 offchain message you expected, asserts that it matches
+ * the bytes the signer reports having signed, then asserts that the signature is a valid Ed25519
+ * signature of those bytes by the signer.
+ *
+ * Only version 1 offchain messages are supported, since that is the only version the
+ * `solana:signOffchainMessage` wallet feature produces. The signer returns one signature per
+ * signer, so call this once per signature you collect; `requiredSigners` defaults to `[signer]`.
+ *
+ * @throws A {@link SolanaError} with code
+ * {@link SOLANA_ERROR__OFFCHAIN_MESSAGE__ADDRESSES_CANNOT_SIGN_OFFCHAIN_MESSAGE} if `signer` is not
+ * one of the `requiredSigners`, {@link SOLANA_ERROR__OFFCHAIN_MESSAGE__CONTENT_DOES_NOT_MATCH_EXPECTED}
+ * if the signed bytes do not match the expected message, or
+ * {@link SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURE_VERIFICATION_FAILURE} if the signature is
+ * invalid. It can also surface an error raised while encoding the expected message if `message` and
+ * `requiredSigners` do not form a structurally valid offchain message.
+ *
+ * @example
+ * ```ts
+ * import { address } from '@solana/addresses';
+ * import { isSolanaError, SOLANA_ERROR__OFFCHAIN_MESSAGE__CONTENT_DOES_NOT_MATCH_EXPECTED } from '@solana/errors';
+ * import { verifyOffchainMessage } from '@solana/offchain-messages';
+ *
+ * try {
+ *     await verifyOffchainMessage({
+ *         message,
+ *         signature,
+ *         signedMessageBytes: signedOffchainMessage,
+ *         signer: address(account.address),
+ *     });
+ *     // The wallet signed exactly the message you expected, and the signature is valid.
+ * } catch (e) {
+ *     if (isSolanaError(e, SOLANA_ERROR__OFFCHAIN_MESSAGE__CONTENT_DOES_NOT_MATCH_EXPECTED)) {
+ *         // The signer signed something other than what you asked for.
+ *     }
+ *     throw e;
+ * }
+ * ```
+ *
+ * @see {@link verifyOffchainMessageEnvelope} if you instead hold an {@link OffchainMessageEnvelope}
+ * and want to verify that it is signed by all of its required signatories.
+ */
+export async function verifyOffchainMessage({
+    message,
+    requiredSigners,
+    signature,
+    signedMessageBytes,
+    signer,
+}: VerifyOffchainMessageInput): Promise<void> {
+    const resolvedRequiredSigners = requiredSigners ?? [signer];
+    const expectedMessage: OffchainMessageV1 = {
+        content: message,
+        requiredSignatories: resolvedRequiredSigners.map(address => ({ address })),
+        version: 1,
+    };
+    const expectedMessageBytes = getOffchainMessageV1Encoder().encode(expectedMessage);
+    if (!resolvedRequiredSigners.includes(signer)) {
+        throw new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__ADDRESSES_CANNOT_SIGN_OFFCHAIN_MESSAGE, {
+            expectedAddresses: resolvedRequiredSigners,
+            unexpectedAddresses: [signer],
+        });
+    }
+    if (!bytesEqual(expectedMessageBytes, signedMessageBytes)) {
+        throw new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__CONTENT_DOES_NOT_MATCH_EXPECTED);
+    }
+    const publicKey = await getPublicKeyFromAddress(signer);
+    if (!(await verifySignature(publicKey, signature, signedMessageBytes))) {
+        throw new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURE_VERIFICATION_FAILURE, {
+            signatoriesWithInvalidSignatures: [signer],
+            signatoriesWithMissingSignatures: [],
+        });
     }
 }
