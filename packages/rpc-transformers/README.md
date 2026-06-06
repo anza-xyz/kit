@@ -17,7 +17,7 @@ This package contains helpers for transforming Solana JSON RPC and RPC Subscript
 
 ### `getDefaultRequestTransformerForSolanaRpc(config)`
 
-Returns the default request transformer for the Solana RPC API. Under the hood, this function composes multiple `RpcRequestTransformers` together such as the `getDefaultCommitmentTransformer`, the `getIntegerOverflowRequestTransformer` and the `getBigIntDowncastRequestTransformer`.
+Returns the default request transformer for the Solana RPC API. Under the hood, this function composes multiple `RpcRequestTransformers` together such as the `getDefaultCommitmentTransformer` and the `getIntegerOverflowRequestTransformer`.
 
 ```ts
 import { getDefaultRequestTransformerForSolanaRpc } from '@solana/rpc-transformers';
@@ -56,6 +56,8 @@ const requestTransformer = getIntegerOverflowRequestTransformer((request, keyPat
 ```
 
 ### `getBigIntDowncastRequestTransformer()`
+
+> **Deprecated.** No longer used by the default Solana RPC request transformer — the transport serializes `bigint`s losslessly and Agave parses the full `u64` range. Slated for removal in a future major version.
 
 Creates a transformer that downcasts all `BigInt` values to `Number`.
 

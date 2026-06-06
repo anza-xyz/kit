@@ -14,25 +14,23 @@ describe('getDefaultRequestTransformerForSolanaRpc', () => {
         });
         describe('given an array as input', () => {
             const input = [10n, 10, '10', ['10', [10, 10n], 10n]] as const;
-            it('casts the bigints in the array to a `number`, recursively', () => {
+            it('leaves bigints in the array untouched, to be serialized losslessly downstream', () => {
                 const request = createRequest(input);
-                expect(requestTransformer(request).params).toStrictEqual([
-                    Number(input[0]),
-                    input[1],
-                    input[2],
-                    [input[3][0], [input[3][1][0], Number(input[3][1][0])], Number(input[3][2])],
-                ]);
+                expect(requestTransformer(request).params).toStrictEqual(input);
             });
         });
         describe('given an object as input', () => {
             const input = { a: 10n, b: 10, c: { c1: '10', c2: 10n } } as const;
-            it('casts the bigints in the array to a `number`, recursively', () => {
+            it('leaves bigints in the object untouched, to be serialized losslessly downstream', () => {
                 const request = createRequest(input);
-                expect(requestTransformer(request).params).toStrictEqual({
-                    a: Number(input.a),
-                    b: input.b,
-                    c: { c1: input.c.c1, c2: Number(input.c.c2) },
-                });
+                expect(requestTransformer(request).params).toStrictEqual(input);
+            });
+        });
+        describe('given a `bigint` larger than `Number.MAX_SAFE_INTEGER` and no overflow handler', () => {
+            it('preserves the `bigint` losslessly rather than downcasting it to a `number`', () => {
+                const input = BigInt(Number.MAX_SAFE_INTEGER) + 2n; // 9007199254740993
+                const request = createRequest([input]);
+                expect((requestTransformer(request).params as readonly unknown[])[0]).toBe(input);
             });
         });
     });
