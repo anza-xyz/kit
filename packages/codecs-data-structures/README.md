@@ -176,6 +176,33 @@ const bytes = personEncoder.encode({ name: 'alice', age: 42 });
 const person = personDecoder.decode(bytes);
 ```
 
+## Dependent struct decoder
+
+The `createDependentStructDecoder` function returns a fluent builder for a struct decoder whose later fields may depend on the decoded values of earlier ones. This is useful for binary formats where a count, version, or discriminator that appears near the start of the struct controls how a later field must be parsed.
+
+Each call to `field` returns a new builder whose accumulated type is widened by the newly added field. The factory form receives a frozen snapshot of every field that has already been decoded.
+
+```ts
+const decoder = createDependentStructDecoder()
+    .field('count', getU8Decoder())
+    .field('values', fields => getArrayDecoder(getU32Decoder(), { size: fields.count }))
+    .finish();
+
+const struct = decoder.decode(new Uint8Array([0x02, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00]));
+// { count: 2, values: [1, 2] }
+```
+
+Static and dependent fields can be mixed freely, and a factory may pick the decoder based on the value of any prior field.
+
+```ts
+const decoder = createDependentStructDecoder()
+    .field('version', getU8Decoder())
+    .field('payload', fields => (fields.version === 0 ? getU16Decoder() : getU32Decoder()))
+    .finish();
+```
+
+The resulting decoder is always a `VariableSizeDecoder` because the size of any factory-provided field cannot be known ahead of time. Use `getStructDecoder` when every field's decoder is independent of the values that precede it.
+
 ## Enum codec
 
 The `getEnumCodec` function accepts a JavaScript enum constructor and returns a codec for encoding and decoding values of that enum.
