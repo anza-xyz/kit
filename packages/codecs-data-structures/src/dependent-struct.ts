@@ -86,6 +86,18 @@ export type DependentStructDecoderBuilder<TFields extends Record<string, unknown
  * newly added field. Call {@link DependentStructDecoderBuilder.finish | `finish`}
  * to produce the final decoder.
  *
+ * @remarks
+ * Prefer {@link getStructDecoder} when every field's decoder is independent of
+ * the values that precede it. Reach for this builder only when at least one
+ * field needs to be parameterised by another. The resulting decoder is always
+ * variable size because the byte length of a factory-provided field cannot be
+ * known ahead of time.
+ *
+ * The encoder direction does not need a dependent variant. An encoder already
+ * has access to the entire value when serialising, so the existing
+ * {@link getStructEncoder} can be paired with the decoder returned by this
+ * builder and combined with `combineCodec` to obtain a full codec.
+ *
  * @example
  * Decoding a struct whose array length is read from an earlier field.
  * ```ts
@@ -102,7 +114,7 @@ export type DependentStructDecoderBuilder<TFields extends Record<string, unknown
  * ```
  *
  * @example
- * Mixing static and dependent fields.
+ * Mixing static and dependent fields, with a discriminator selecting the payload decoder.
  * ```ts
  * const decoder = createDependentStructDecoder()
  *     .field('version', getU8Decoder())
@@ -110,7 +122,24 @@ export type DependentStructDecoderBuilder<TFields extends Record<string, unknown
  *     .finish();
  * ```
  *
+ * @example
+ * Combining the dependent decoder with a static encoder to obtain a full codec.
+ * ```ts
+ * import { combineCodec } from '@solana/codecs-core';
+ *
+ * const encoder = getStructEncoder([
+ *     ['count', getU8Encoder()],
+ *     ['values', getArrayEncoder(getU32Encoder())],
+ * ]);
+ * const decoder = createDependentStructDecoder()
+ *     .field('count', getU8Decoder())
+ *     .field('values', fields => getArrayDecoder(getU32Decoder(), { size: fields.count }))
+ *     .finish();
+ * const codec = combineCodec(encoder, decoder);
+ * ```
+ *
  * @see {@link getStructDecoder}
+ * @see {@link getStructEncoder}
  */
 export function createDependentStructDecoder(): DependentStructDecoderBuilder<Record<never, never>> {
     return buildFromEntries([]);

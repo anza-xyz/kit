@@ -108,4 +108,89 @@ describe('createDependentStructDecoder', () => {
             label: 'ABC',
         });
     });
+
+    it('threads decoded values across more than two dependent fields', () => {
+        const decoder = dependentStruct()
+            .field('numStaticAccounts', u8())
+            .field('numInstructions', u8())
+            .field('staticAccounts', fields => getArrayDecoder(u32(), { size: fields.numStaticAccounts }))
+            .field('instructionLengths', fields => getArrayDecoder(u8(), { size: fields.numInstructions }))
+            .finish();
+        expect(decoder.decode(b('020201000000020000000305'))).toStrictEqual({
+            instructionLengths: [3, 5],
+            numInstructions: 2,
+            numStaticAccounts: 2,
+            staticAccounts: [1, 2],
+        });
+    });
+
+    it('lets a factory return a dependent struct decoder, allowing nested dependence', () => {
+        const inner = dependentStruct()
+            .field('innerCount', u8())
+            .field('innerItems', fields => getArrayDecoder(u8(), { size: fields.innerCount }))
+            .finish();
+        const outer = dependentStruct()
+            .field('tag', u8())
+            .field('inner', () => inner)
+            .finish();
+        expect(outer.decode(b('ff020a0b'))).toStrictEqual({
+            inner: { innerCount: 2, innerItems: [10, 11] },
+            tag: 255,
+        });
+    });
+
+    it('invokes each factory exactly once per `decode` call', () => {
+        const factoryCalls: string[] = [];
+        const decoder = dependentStruct()
+            .field('count', u8())
+            .field('items', fields => {
+                factoryCalls.push(`items(count=${fields.count})`);
+                return getArrayDecoder(u8(), { size: fields.count });
+            })
+            .finish();
+        decoder.decode(b('020a0b'));
+        decoder.decode(b('010c'));
+        expect(factoryCalls).toStrictEqual(['items(count=2)', 'items(count=1)']);
+    });
+
+    it('exposes the same snapshot to a factory that the decoded object will contain', () => {
+        let snapshotSeenByFactory: unknown;
+        const decoder = dependentStruct()
+            .field('a', u8())
+            .field('b', u16())
+            .field('c', fields => {
+                snapshotSeenByFactory = { ...fields };
+                return u8();
+            })
+            .finish();
+        const result = decoder.decode(b('01020003'));
+        expect(snapshotSeenByFactory).toStrictEqual({ a: result.a, b: result.b });
+    });
+
+    it('propagates the underlying decoder error when a dependent decoder runs past the buffer', () => {
+        const decoder = dependentStruct()
+            .field('count', u8())
+            .field('items', fields => getArrayDecoder(u32(), { size: fields.count }))
+            .finish();
+        // Claims four u32 items but only provides bytes for one.
+        expect(() => decoder.decode(b('0401000000'))).toThrow();
+    });
+
+    it('models a v0 transaction message header style struct with three dependent counts', () => {
+        const header = dependentStruct()
+            .field('numRequiredSignatures', u8())
+            .field('numReadonlySignedAccounts', u8())
+            .field('numReadonlyUnsignedAccounts', u8())
+            .field('numAccounts', u8())
+            .field('accounts', fields => getArrayDecoder(fixDecoderSize(u8(), 1), { size: fields.numAccounts }))
+            .finish();
+        const bytes = b('01010103aabbcc');
+        expect(header.decode(bytes)).toStrictEqual({
+            accounts: [0xaa, 0xbb, 0xcc],
+            numAccounts: 3,
+            numReadonlySignedAccounts: 1,
+            numReadonlyUnsignedAccounts: 1,
+            numRequiredSignatures: 1,
+        });
+    });
 });

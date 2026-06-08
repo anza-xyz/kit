@@ -201,7 +201,17 @@ const decoder = createDependentStructDecoder()
     .finish();
 ```
 
-The resulting decoder is always a `VariableSizeDecoder` because the size of any factory-provided field cannot be known ahead of time. Use `getStructDecoder` when every field's decoder is independent of the values that precede it.
+The resulting decoder is always a `VariableSizeDecoder` because the size of any factory-provided field cannot be known ahead of time.
+
+### When to use `createDependentStructDecoder` vs `getStructDecoder`
+
+| Situation                                                                                              | Recommended                                                                                                 |
+| ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| Every field's decoder is fixed at construction time.                                                   | `getStructDecoder`                                                                                          |
+| One field's decoder needs the value of a previously decoded field (count, version, discriminator ...). | `createDependentStructDecoder`                                                                              |
+| You need both a `Codec` (encoder + decoder).                                                           | Combine `getStructEncoder` with the result of `createDependentStructDecoder().finish()` via `combineCodec`. |
+
+The builder is intentionally limited to the decoder side. The encoder direction already has access to the entire value when serialising, so the existing `getStructEncoder` already supports the same shape; pair it with `createDependentStructDecoder` and `combineCodec` to obtain a full codec.
 
 ## Enum codec
 

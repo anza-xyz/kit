@@ -70,3 +70,46 @@ import { createDependentStructDecoder } from '../dependent-struct';
     const decoder = createDependentStructDecoder().field('a', getU8Decoder()).finish();
     decoder satisfies VariableSizeDecoder<{ a: number }>;
 }
+
+{
+    // [createDependentStructDecoder]: The accumulator widens correctly across many `field` calls.
+    createDependentStructDecoder()
+        .field('a', getU8Decoder())
+        .field('b', getU8Decoder())
+        .field('c', getU8Decoder())
+        .field('d', getU8Decoder())
+        .field('e', getU8Decoder())
+        .field('f', getU8Decoder())
+        .finish() satisfies VariableSizeDecoder<{ a: number; b: number; c: number; d: number; e: number; f: number }>;
+}
+
+{
+    // [createDependentStructDecoder]: A factory's `fields` parameter is read only.
+    createDependentStructDecoder()
+        .field('first', getU8Decoder())
+        .field('second', fields => {
+            // @ts-expect-error `fields.first` is read only and cannot be reassigned from inside a factory.
+            fields.first = 0;
+            return getU8Decoder();
+        })
+        .finish();
+}
+
+{
+    // [createDependentStructDecoder]: A factory can be typed in advance for its prior fields and still type check.
+    const buildPayload = (fields: Readonly<{ version: number }>) =>
+        fields.version === 0 ? getU16Decoder() : getU32Decoder();
+    createDependentStructDecoder()
+        .field('version', getU8Decoder())
+        .field('payload', buildPayload)
+        .finish() satisfies VariableSizeDecoder<{ payload: number; version: number }>;
+}
+
+{
+    // [createDependentStructDecoder]: The accumulator type is exact; unknown keys are not part of the finished decoder.
+    const decoder = createDependentStructDecoder().field('a', getU8Decoder()).finish();
+    decoder satisfies VariableSizeDecoder<{ a: number }>;
+    const value = null as unknown as Awaited<ReturnType<typeof decoder.decode>>;
+    // @ts-expect-error `b` was never declared on the builder.
+    void value.b;
+}
