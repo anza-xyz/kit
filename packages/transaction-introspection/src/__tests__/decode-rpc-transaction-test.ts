@@ -17,7 +17,11 @@ import { getTransactionEncoder } from '@solana/transactions';
 import { decodeTransactionFromRpcResponse } from '../decode-rpc-transaction';
 
 describe('decodeTransactionFromRpcResponse', () => {
-    function buildBase64Tx() {
+    type EncodableCompiledMessage = Parameters<ReturnType<typeof getCompiledTransactionMessageEncoder>['encode']>[0];
+
+    function buildBase64Tx(
+        compiledOverrides: Partial<EncodableCompiledMessage> = { version: 'legacy' } as EncodableCompiledMessage,
+    ) {
         const compiled = {
             header: {
                 numReadonlyNonSignerAccounts: 0,
@@ -27,8 +31,8 @@ describe('decodeTransactionFromRpcResponse', () => {
             instructions: [],
             lifetimeToken: '11111111111111111111111111111111',
             staticAccounts: ['11111111111111111111111111111112' as Address],
-            version: 'legacy',
-        } as Parameters<ReturnType<typeof getCompiledTransactionMessageEncoder>['encode']>[0];
+            ...compiledOverrides,
+        } as EncodableCompiledMessage;
         const messageBytes = getCompiledTransactionMessageEncoder().encode(compiled);
         const transactionBytes = getTransactionEncoder().encode({
             messageBytes: messageBytes as Parameters<
@@ -55,10 +59,28 @@ describe('decodeTransactionFromRpcResponse', () => {
         expect(result.compiledMessage.lifetimeToken).toBe('11111111111111111111111111111111');
     });
 
-    it('returns empty loaded addresses when meta is null', () => {
-        const b64 = buildBase64Tx();
+    it('decodes a base64 (v0) response into a v0 CompiledTransactionMessage, with empty loaded addresses when meta is null', () => {
+        const b64 = buildBase64Tx({
+            addressTableLookups: [
+                {
+                    lookupTableAddress: '11111111111111111111111111111113' as Address,
+                    readonlyIndexes: [1],
+                    writableIndexes: [0],
+                },
+            ],
+            version: 0,
+        } as Partial<EncodableCompiledMessage>);
         const rpcTx = { meta: null, transaction: [b64, 'base64'] } as unknown as GetTransactionApiResponseBase64<0>;
         const result = decodeTransactionFromRpcResponse(rpcTx);
+        expect(result.compiledMessage.version).toBe(0);
+        const v0 = result.compiledMessage as Extract<typeof result.compiledMessage, { version: 0 }>;
+        expect(v0.addressTableLookups).toStrictEqual([
+            {
+                lookupTableAddress: '11111111111111111111111111111113',
+                readonlyIndexes: [1],
+                writableIndexes: [0],
+            },
+        ]);
         expect(result.loadedAddresses).toStrictEqual({ readonly: [], writable: [] });
     });
 
