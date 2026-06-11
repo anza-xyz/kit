@@ -1,6 +1,7 @@
 import type { Address } from '@solana/addresses';
 import { getBase58Decoder } from '@solana/codecs-strings';
 import {
+    SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_ACCOUNT_INDEX_OUT_OF_RANGE,
     SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_PROGRAM_ADDRESS_NOT_FOUND,
     SolanaError,
 } from '@solana/errors';
@@ -93,7 +94,7 @@ describe('getInnerInstructionsFromMeta', () => {
                 accountMetas,
             ),
         ).toThrow(
-            new SolanaError(SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_PROGRAM_ADDRESS_NOT_FOUND, {
+            new SolanaError(SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_ACCOUNT_INDEX_OUT_OF_RANGE, {
                 index: 42,
             }),
         );

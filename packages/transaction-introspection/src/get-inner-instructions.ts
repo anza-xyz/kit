@@ -1,5 +1,6 @@
 import { getBase58Encoder } from '@solana/codecs-strings';
 import {
+    SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_ACCOUNT_INDEX_OUT_OF_RANGE,
     SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_PROGRAM_ADDRESS_NOT_FOUND,
     SolanaError,
 } from '@solana/errors';
@@ -71,7 +72,7 @@ export function getInnerInstructionsFromMeta(
                 const meta = accountMetas[i];
                 if (!meta) {
                     throw new SolanaError(
-                        SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_PROGRAM_ADDRESS_NOT_FOUND,
+                        SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_ACCOUNT_INDEX_OUT_OF_RANGE,
                         { index: i },
                     );
                 }

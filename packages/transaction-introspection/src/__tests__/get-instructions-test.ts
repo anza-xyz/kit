@@ -1,5 +1,6 @@
 import type { Address } from '@solana/addresses';
 import {
+    SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_ACCOUNT_INDEX_OUT_OF_RANGE,
     SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_PROGRAM_ADDRESS_NOT_FOUND,
     SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED,
     SolanaError,
@@ -105,6 +106,19 @@ describe('getInstructionsFromCompiledTransactionMessage', () => {
         expect((err as SolanaError).context.__code).toBe(
             SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_PROGRAM_ADDRESS_NOT_FOUND,
         );
+    });
+
+    it('throws if an account index is out of range', () => {
+        const broken = {
+            ...compiled,
+            instructions: [{ accountIndices: [42], data: new Uint8Array([1]), programAddressIndex: 1 }],
+        } as CompiledTransactionMessage;
+        const err = getThrownError(() => getInstructionsFromCompiledTransactionMessage(broken));
+        expect(err).toBeInstanceOf(SolanaError);
+        expect((err as SolanaError).context.__code).toBe(
+            SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_ACCOUNT_INDEX_OUT_OF_RANGE,
+        );
+        expect((err as SolanaError).context).toMatchObject({ index: 42 });
     });
 
     it('resolves v1 messages by zipping instructionHeaders + instructionPayloads', () => {

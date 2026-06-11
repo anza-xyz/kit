@@ -1,6 +1,10 @@
 import type { Address } from '@solana/addresses';
 import { getBase58Decoder, getBase64Decoder, getBase64Encoder } from '@solana/codecs-strings';
-import { SOLANA_ERROR__TRANSACTION__MALFORMED_MESSAGE_BYTES, SolanaError } from '@solana/errors';
+import {
+    SOLANA_ERROR__TRANSACTION_INTROSPECTION__CANNOT_DECODE_JSON_PARSED_TRANSACTION,
+    SOLANA_ERROR__TRANSACTION_INTROSPECTION__UNRECOGNIZED_GET_TRANSACTION_RESPONSE,
+    SolanaError,
+} from '@solana/errors';
 import { getCompiledTransactionMessageEncoder } from '@solana/transaction-messages';
 import { getTransactionEncoder } from '@solana/transactions';
 
@@ -145,12 +149,10 @@ describe('decodeTransactionFromRpcResponse', () => {
         ]);
     });
 
-    it('throws SOLANA_ERROR__TRANSACTION__MALFORMED_MESSAGE_BYTES for an unrecognized response shape', () => {
+    it('throws SOLANA_ERROR__TRANSACTION_INTROSPECTION__UNRECOGNIZED_GET_TRANSACTION_RESPONSE for an unrecognized response shape', () => {
         const rpcTx = { meta: null, transaction: 'totally bogus' } as unknown as Base64GetTransactionResponse;
         expect(() => decodeTransactionFromRpcResponse(rpcTx)).toThrow(
-            new SolanaError(SOLANA_ERROR__TRANSACTION__MALFORMED_MESSAGE_BYTES, {
-                messageBytes: new Uint8Array(0),
-            }),
+            new SolanaError(SOLANA_ERROR__TRANSACTION_INTROSPECTION__UNRECOGNIZED_GET_TRANSACTION_RESPONSE),
         );
     });
 
@@ -178,9 +180,7 @@ describe('decodeTransactionFromRpcResponse', () => {
             },
         } as unknown as JsonGetTransactionResponse;
         expect(() => decodeTransactionFromRpcResponse(rpcTx)).toThrow(
-            new SolanaError(SOLANA_ERROR__TRANSACTION__MALFORMED_MESSAGE_BYTES, {
-                messageBytes: new Uint8Array(0),
-            }),
+            new SolanaError(SOLANA_ERROR__TRANSACTION_INTROSPECTION__CANNOT_DECODE_JSON_PARSED_TRANSACTION),
         );
     });
 
@@ -206,9 +206,7 @@ describe('decodeTransactionFromRpcResponse', () => {
             },
         } as unknown as JsonGetTransactionResponse;
         expect(() => decodeTransactionFromRpcResponse(rpcTx)).toThrow(
-            new SolanaError(SOLANA_ERROR__TRANSACTION__MALFORMED_MESSAGE_BYTES, {
-                messageBytes: new Uint8Array(0),
-            }),
+            new SolanaError(SOLANA_ERROR__TRANSACTION_INTROSPECTION__CANNOT_DECODE_JSON_PARSED_TRANSACTION),
         );
     });
 });

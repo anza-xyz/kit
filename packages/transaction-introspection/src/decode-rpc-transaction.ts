@@ -1,6 +1,10 @@
 import type { Address } from '@solana/addresses';
 import { getBase58Encoder, getBase64Encoder } from '@solana/codecs-strings';
-import { SOLANA_ERROR__TRANSACTION__MALFORMED_MESSAGE_BYTES, SolanaError } from '@solana/errors';
+import {
+    SOLANA_ERROR__TRANSACTION_INTROSPECTION__CANNOT_DECODE_JSON_PARSED_TRANSACTION,
+    SOLANA_ERROR__TRANSACTION_INTROSPECTION__UNRECOGNIZED_GET_TRANSACTION_RESPONSE,
+    SolanaError,
+} from '@solana/errors';
 import type {
     GetTransactionApiResponseBase58,
     GetTransactionApiResponseBase64,
@@ -186,6 +190,14 @@ function isBase58Response(rpcTx: AnyGetTransactionResponse): rpcTx is Base58GetT
     return Array.isArray(t) && t[1] === 'base58';
 }
 
+function getJsonMessageInstructions(rpcTx: AnyGetTransactionResponse): readonly unknown[] | undefined {
+    const t = rpcTx.transaction;
+    if (typeof t !== 'object' || t === null || Array.isArray(t) || !('message' in t)) return undefined;
+    const message = (t as { message?: { instructions?: readonly unknown[] } }).message;
+    if (!message || !Array.isArray(message.instructions)) return undefined;
+    return message.instructions;
+}
+
 /**
  * Detects an `encoding: 'json'` response specifically — i.e. one whose
  * instructions carry numeric account indices and a `programIdIndex`. A
@@ -196,15 +208,25 @@ function isBase58Response(rpcTx: AnyGetTransactionResponse): rpcTx is Base58GetT
  * are rejected.
  */
 function isJsonResponse(rpcTx: AnyGetTransactionResponse): rpcTx is JsonGetTransactionResponse {
-    const t = rpcTx.transaction;
-    if (typeof t !== 'object' || t === null || Array.isArray(t) || !('message' in t)) return false;
-    const message = (t as { message?: { instructions?: readonly unknown[] } }).message;
-    if (!message || !Array.isArray(message.instructions)) return false;
+    const instructions = getJsonMessageInstructions(rpcTx);
+    if (!instructions) return false;
     // No instructions: either `json` or `jsonParsed` could produce this shape, but
     // there's nothing to decode incorrectly either way — accept it as `json`.
-    if (message.instructions.length === 0) return true;
-    const first = message.instructions[0] as Record<string, unknown>;
+    if (instructions.length === 0) return true;
+    const first = instructions[0] as Record<string, unknown>;
     return typeof first.programIdIndex === 'number' && Array.isArray(first.accounts);
+}
+
+/**
+ * Detects an `encoding: 'jsonParsed'` response: its instructions carry a
+ * `programId` address rather than the `programIdIndex` that the `'json'`
+ * encoding uses.
+ */
+function isJsonParsedResponse(rpcTx: AnyGetTransactionResponse): boolean {
+    const instructions = getJsonMessageInstructions(rpcTx);
+    if (!instructions || instructions.length === 0) return false;
+    const first = instructions[0] as Record<string, unknown>;
+    return typeof first.programId === 'string' && !('programIdIndex' in first);
 }
 
 /**
@@ -218,7 +240,9 @@ function isJsonResponse(rpcTx: AnyGetTransactionResponse): rpcTx is JsonGetTrans
  * pre-parsed by the server and lack raw bytes, so they cannot be
  * round-tripped through the auto-generated `parseXInstruction` clients.
  * Passing a `'jsonParsed'` response throws
- * {@link SOLANA_ERROR__TRANSACTION__MALFORMED_MESSAGE_BYTES}.
+ * {@link SOLANA_ERROR__TRANSACTION_INTROSPECTION__CANNOT_DECODE_JSON_PARSED_TRANSACTION};
+ * any other unrecognized input throws
+ * {@link SOLANA_ERROR__TRANSACTION_INTROSPECTION__UNRECOGNIZED_GET_TRANSACTION_RESPONSE}.
  *
  * Use this together with {@link getInstructionsFromCompiledTransactionMessage}
  * (or {@link walkInstructions}) to inspect a confirmed transaction's
@@ -267,7 +291,8 @@ export function decodeTransactionFromRpcResponse<
     if (isBase64Response(tx)) return decodeFromBase64(tx);
     if (isBase58Response(tx)) return decodeFromBase58(tx);
     if (isJsonResponse(tx)) return decodeFromJson(tx);
-    throw new SolanaError(SOLANA_ERROR__TRANSACTION__MALFORMED_MESSAGE_BYTES, {
-        messageBytes: new Uint8Array(0),
-    });
+    if (isJsonParsedResponse(tx)) {
+        throw new SolanaError(SOLANA_ERROR__TRANSACTION_INTROSPECTION__CANNOT_DECODE_JSON_PARSED_TRANSACTION);
+    }
+    throw new SolanaError(SOLANA_ERROR__TRANSACTION_INTROSPECTION__UNRECOGNIZED_GET_TRANSACTION_RESPONSE);
 }

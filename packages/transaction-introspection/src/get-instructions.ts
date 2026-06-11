@@ -1,6 +1,7 @@
 import type { Address } from '@solana/addresses';
 import type { ReadonlyUint8Array } from '@solana/codecs-core';
 import {
+    SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_ACCOUNT_INDEX_OUT_OF_RANGE,
     SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_PROGRAM_ADDRESS_NOT_FOUND,
     SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED,
     SolanaError,
@@ -110,9 +111,11 @@ export function getAccountMetasFromCompiledTransactionMessage(
  *
  * Supports `legacy`, `v0`, and `v1` compiled messages. Throws
  * {@link SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED} for any
- * other version, and
+ * other version,
  * {@link SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_PROGRAM_ADDRESS_NOT_FOUND}
- * if a `programAddressIndex` falls outside the resolved account list.
+ * if a `programAddressIndex` falls outside the resolved account list, and
+ * {@link SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_ACCOUNT_INDEX_OUT_OF_RANGE}
+ * if an account index does.
  *
  * @example
  * ```ts
@@ -187,10 +190,9 @@ function resolveInstruction(ix: NormalizedCompiledInstruction, metas: readonly A
     const accounts: AccountMeta[] = ix.accountIndices.map(i => {
         const meta = metas[i];
         if (!meta) {
-            throw new SolanaError(
-                SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_PROGRAM_ADDRESS_NOT_FOUND,
-                { index: i },
-            );
+            throw new SolanaError(SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_ACCOUNT_INDEX_OUT_OF_RANGE, {
+                index: i,
+            });
         }
         return meta;
     });
