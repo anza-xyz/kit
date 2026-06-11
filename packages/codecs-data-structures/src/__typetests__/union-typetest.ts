@@ -96,6 +96,17 @@ const getIndex = () => 0;
         encoder satisfies VariableSizeEncoder<number>;
     }
 
+    // It returns an encoder for dynamic arrays of variable-size variants.
+    {
+        const variants = [] as VariableSizeEncoder<number>[];
+        const encoder = getUnionEncoder(variants, getIndex);
+        encoder satisfies Encoder<number>;
+        // @ts-expect-error The array may be empty, whose runtime fixedSize is 0.
+        encoder satisfies FixedSizeEncoder<number>;
+        // @ts-expect-error The array may be non-empty, whose runtime is variable size.
+        encoder satisfies VariableSizeEncoder<number>;
+    }
+
     // It returns a variable size encoder if any known variant is variable size.
     {
         const encoder = getUnionEncoder([{} as VariableSizeEncoder<number>, {} as FixedSizeEncoder<number>], getIndex);
@@ -161,6 +172,15 @@ const getIndex = () => 0;
         );
         decoder satisfies Decoder<number>;
         // @ts-expect-error Each branch may resolve to different runtime sizes.
+        decoder satisfies FixedSizeDecoder<number>;
+    }
+
+    // It returns a decoder for dynamic arrays of variable-size variants.
+    {
+        const variants = [] as VariableSizeDecoder<number>[];
+        const decoder = getUnionDecoder(variants, getIndex);
+        decoder satisfies Decoder<number>;
+        // @ts-expect-error The array may be non-empty, whose runtime is variable size.
         decoder satisfies FixedSizeDecoder<number>;
     }
 
@@ -241,6 +261,17 @@ const getIndex = () => 0;
         codec satisfies VariableSizeCodec<number>;
         // @ts-expect-error Each branch may resolve to different runtime sizes.
         codec satisfies FixedSizeCodec<number>;
+    }
+
+    // It returns a codec for dynamic arrays of variable-size variants.
+    {
+        const variants = [] as VariableSizeCodec<number>[];
+        const codec = getUnionCodec(variants, getIndex, getIndex);
+        codec satisfies Codec<number>;
+        // @ts-expect-error The array may be empty, whose runtime fixedSize is 0.
+        codec satisfies FixedSizeCodec<number>;
+        // @ts-expect-error The array may be non-empty, whose runtime is variable size.
+        codec satisfies VariableSizeCodec<number>;
     }
 
     // It returns a variable size codec if any known variant is variable size.

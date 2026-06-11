@@ -33,9 +33,10 @@ type IsPreciseNumberLiteral<TSize extends number> = number extends TSize
       : true;
 
 type ContainsVariableSizeCodec<TItems extends readonly unknown[], TVariableSizeCodec> = number extends TItems['length']
-    ? [TItems[number]] extends [TVariableSizeCodec]
-        ? true
-        : false
+    ? // A dynamic array may be empty, in which case the union is fixed-size (`fixedSize: 0`) at
+      // runtime. We therefore cannot promise a variable-size result even if every element is
+      // variable-size, so we widen to the broad codec type instead.
+      false
     : TItems extends readonly [infer THead, ...infer TTail]
       ? [THead] extends [TVariableSizeCodec]
           ? true
