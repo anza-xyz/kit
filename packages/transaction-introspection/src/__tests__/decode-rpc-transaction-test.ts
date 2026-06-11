@@ -1,6 +1,7 @@
 import type { Address } from '@solana/addresses';
 import { getBase58Decoder, getBase64Decoder, getBase64Encoder } from '@solana/codecs-strings';
 import {
+    SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED,
     SOLANA_ERROR__TRANSACTION_INTROSPECTION__CANNOT_DECODE_JSON_PARSED_TRANSACTION,
     SOLANA_ERROR__TRANSACTION_INTROSPECTION__UNRECOGNIZED_GET_TRANSACTION_RESPONSE,
     SolanaError,
@@ -147,6 +148,66 @@ describe('decodeTransactionFromRpcResponse', () => {
         expect(v0.addressTableLookups).toStrictEqual([
             { lookupTableAddress: 'lut', readonlyIndexes: [3], writableIndexes: [2] },
         ]);
+    });
+
+    it('decodes a JSON (v1) response into a synthesized V1CompiledTransactionMessage', () => {
+        const innerData = '3Bxs411Dtc7pkFQj'; // arbitrary base58
+        const rpcTx = {
+            meta: null,
+            transaction: {
+                message: {
+                    accountKeys: ['fee-payer' as Address, 'program' as Address],
+                    header: {
+                        numReadonlySignedAccounts: 0,
+                        numReadonlyUnsignedAccounts: 1,
+                        numRequiredSignatures: 1,
+                    },
+                    instructions: [{ accounts: [0], data: innerData, programIdIndex: 1 }],
+                    recentBlockhash: '11111111111111111111111111111111',
+                },
+                signatures: [],
+            },
+            version: 1,
+        } as unknown as JsonGetTransactionResponse<1>;
+        const result = decodeTransactionFromRpcResponse(rpcTx);
+
+        expect(result.compiledMessage.version).toBe(1);
+        const v1 = result.compiledMessage as Extract<typeof result.compiledMessage, { version: 1 }>;
+        expect(v1.staticAccounts).toStrictEqual(['fee-payer', 'program']);
+        expect(v1.numStaticAccounts).toBe(2);
+        expect(v1.numInstructions).toBe(1);
+        expect(v1.instructionHeaders).toHaveLength(1);
+        expect(v1.instructionHeaders[0].programAccountIndex).toBe(1);
+        expect(v1.instructionHeaders[0].numInstructionAccounts).toBe(1);
+        expect(v1.instructionPayloads[0].instructionAccountIndices).toStrictEqual([0]);
+        expect(v1.instructionHeaders[0].numInstructionDataBytes).toBe(
+            v1.instructionPayloads[0].instructionData.byteLength,
+        );
+        expect(result.compiledMessage.lifetimeToken).toBe('11111111111111111111111111111111');
+        expect(result.transaction).toBeUndefined();
+    });
+
+    it('throws SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED for an unknown JSON transaction version', () => {
+        const rpcTx = {
+            meta: null,
+            transaction: {
+                message: {
+                    accountKeys: ['fee-payer' as Address, 'program' as Address],
+                    header: {
+                        numReadonlySignedAccounts: 0,
+                        numReadonlyUnsignedAccounts: 1,
+                        numRequiredSignatures: 1,
+                    },
+                    instructions: [{ accounts: [0], data: '3Bxs411Dtc7pkFQj', programIdIndex: 1 }],
+                    recentBlockhash: '11111111111111111111111111111111',
+                },
+                signatures: [],
+            },
+            version: 99,
+        } as unknown as JsonGetTransactionResponse;
+        expect(() => decodeTransactionFromRpcResponse(rpcTx)).toThrow(
+            new SolanaError(SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED, { unsupportedVersion: 99 }),
+        );
     });
 
     it('throws SOLANA_ERROR__TRANSACTION_INTROSPECTION__UNRECOGNIZED_GET_TRANSACTION_RESPONSE for an unrecognized response shape', () => {

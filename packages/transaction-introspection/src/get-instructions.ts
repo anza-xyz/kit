@@ -190,9 +190,12 @@ function resolveInstruction(ix: NormalizedCompiledInstruction, metas: readonly A
     const accounts: AccountMeta[] = ix.accountIndices.map(i => {
         const meta = metas[i];
         if (!meta) {
-            throw new SolanaError(SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_ACCOUNT_INDEX_OUT_OF_RANGE, {
-                index: i,
-            });
+            throw new SolanaError(
+                SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_ACCOUNT_INDEX_OUT_OF_RANGE,
+                {
+                    index: i,
+                },
+            );
         }
         return meta;
     });

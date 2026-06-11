@@ -1,6 +1,7 @@
 import type { Address } from '@solana/addresses';
 import { getBase58Encoder, getBase64Encoder } from '@solana/codecs-strings';
 import {
+    SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED,
     SOLANA_ERROR__TRANSACTION_INTROSPECTION__CANNOT_DECODE_JSON_PARSED_TRANSACTION,
     SOLANA_ERROR__TRANSACTION_INTROSPECTION__UNRECOGNIZED_GET_TRANSACTION_RESPONSE,
     SolanaError,
@@ -16,6 +17,7 @@ import type {
     LegacyCompiledTransactionMessage,
     TransactionVersion,
     V0CompiledTransactionMessage,
+    V1CompiledTransactionMessage,
 } from '@solana/transaction-messages';
 import { getCompiledTransactionMessageDecoder } from '@solana/transaction-messages';
 import type { Transaction } from '@solana/transactions';
@@ -133,9 +135,12 @@ function decodeFromJson<TMaxSupportedTransactionVersion extends TransactionVersi
     const { message } = rpcTx.transaction;
     const staticAccounts: Address[] = [...message.accountKeys];
 
+    // The wire decoder omits `accountIndices` and `data` when they are
+    // empty; do the same here so a JSON-derived message has the same shape
+    // as a wire-derived one.
     const compiledInstructions = message.instructions.map(ix => ({
         ...(ix.accounts.length ? { accountIndices: [...ix.accounts] } : null),
-        ...(ix.data != null ? { data: base58.encode(ix.data) } : null),
+        ...(ix.data.length ? { data: base58.encode(ix.data) } : null),
         programAddressIndex: ix.programIdIndex,
     }));
 
@@ -147,35 +152,78 @@ function decodeFromJson<TMaxSupportedTransactionVersion extends TransactionVersi
 
     // The envelope only carries `version` when `maxSupportedTransactionVersion`
     // was set on the request; otherwise the response is necessarily legacy.
-    const version: 'legacy' | 0 = 'version' in rpcTx ? (rpcTx.version as 0) : 'legacy';
+    const version: TransactionVersion = 'version' in rpcTx ? rpcTx.version : 'legacy';
 
-    // Mirror the wire-decoder path, which produces a message intersected with
-    // `CompiledTransactionMessageWithLifetime`. The recent-blockhash lives in
-    // `lifetimeToken` so consumers see the same field on both encodings.
-    const compiledMessage: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime =
-        version === 0
-            ? ({
-                  addressTableLookups:
-                      'addressTableLookups' in message
-                          ? message.addressTableLookups.map(l => ({
-                                lookupTableAddress: l.accountKey,
-                                readonlyIndexes: l.readonlyIndexes,
-                                writableIndexes: l.writableIndexes,
-                            }))
-                          : [],
-                  header,
-                  instructions: compiledInstructions,
-                  lifetimeToken: message.recentBlockhash,
-                  staticAccounts,
-                  version: 0,
-              } satisfies CompiledTransactionMessageWithLifetime & V0CompiledTransactionMessage)
-            : ({
-                  header,
-                  instructions: compiledInstructions,
-                  lifetimeToken: message.recentBlockhash,
-                  staticAccounts,
-                  version: 'legacy',
-              } satisfies CompiledTransactionMessageWithLifetime & LegacyCompiledTransactionMessage);
+    // For transactions whose lifetime is specified by a durable nonce,
+    // `message.recentBlockhash` is the nonce value, not a blockhash (see
+    // `GetTransactionApi`). Either way it is the message's lifetime token,
+    // so it maps onto `lifetimeToken` below — the same field the
+    // wire-decoder path produces — and consumers see the same shape on
+    // both encodings.
+    let compiledMessage: CompiledTransactionMessage & CompiledTransactionMessageWithLifetime;
+    switch (version) {
+        case 'legacy':
+            compiledMessage = {
+                header,
+                instructions: compiledInstructions,
+                lifetimeToken: message.recentBlockhash,
+                staticAccounts,
+                version: 'legacy',
+            } satisfies CompiledTransactionMessageWithLifetime & LegacyCompiledTransactionMessage;
+            break;
+        case 0:
+            compiledMessage = {
+                addressTableLookups:
+                    'addressTableLookups' in message
+                        ? message.addressTableLookups.map(l => ({
+                              lookupTableAddress: l.accountKey,
+                              readonlyIndexes: l.readonlyIndexes,
+                              writableIndexes: l.writableIndexes,
+                          }))
+                        : [],
+                header,
+                instructions: compiledInstructions,
+                lifetimeToken: message.recentBlockhash,
+                staticAccounts,
+                version: 0,
+            } satisfies CompiledTransactionMessageWithLifetime & V0CompiledTransactionMessage;
+            break;
+        case 1: {
+            const instructionData = message.instructions.map(ix => base58.encode(ix.data));
+            compiledMessage = {
+                // The `'json'` encoding does not carry the v1 transaction
+                // config, so the synthesized message always reports an
+                // empty one.
+                configMask: 0,
+                configValues: [],
+                header,
+                instructionHeaders: message.instructions.map((ix, i) => ({
+                    numInstructionAccounts: ix.accounts.length,
+                    numInstructionDataBytes: instructionData[i].byteLength,
+                    programAccountIndex: ix.programIdIndex,
+                })),
+                instructionPayloads: message.instructions.map((ix, i) => ({
+                    instructionAccountIndices: [...ix.accounts],
+                    instructionData: instructionData[i],
+                })),
+                lifetimeToken: message.recentBlockhash,
+                numInstructions: message.instructions.length,
+                numStaticAccounts: staticAccounts.length,
+                staticAccounts,
+                version: 1,
+            } satisfies CompiledTransactionMessageWithLifetime & V1CompiledTransactionMessage;
+            break;
+        }
+        default: {
+            // Compile-time exhaustiveness: a new `TransactionVersion`
+            // member will fail to typecheck here, forcing this switch to
+            // handle it explicitly.
+            const _exhaustiveCheck: never = version;
+            throw new SolanaError(SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED, {
+                unsupportedVersion: _exhaustiveCheck as number,
+            });
+        }
+    }
 
     return { compiledMessage, loadedAddresses: getLoadedAddresses(rpcTx.meta) };
 }
