@@ -15,7 +15,7 @@ import {
 } from '@solana/instructions';
 import type { CompiledTransactionMessage } from '@solana/transaction-messages';
 
-import type { LoadedAddresses } from './get-all-addresses';
+import type { LoadedAddresses } from './loaded-addresses';
 
 /**
  * An outer transaction instruction with its account indices resolved to

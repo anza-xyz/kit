@@ -7,7 +7,7 @@
  * @packageDocumentation
  */
 export { type DecodedRpcTransaction, decodeTransactionFromRpcResponse } from './decode-rpc-transaction';
-export { getAllAddressesFromCompiledTransactionMessage, type LoadedAddresses } from './get-all-addresses';
+export type { LoadedAddresses } from './loaded-addresses';
 export { getInnerInstructionsFromMeta, type MetaWithInnerInstructions } from './get-inner-instructions';
 export {
     getAccountMetasFromCompiledTransactionMessage,

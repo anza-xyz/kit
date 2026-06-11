@@ -71,20 +71,9 @@ if (!rpcTx) throw new Error('not found');
 const { compiledMessage, loadedAddresses, transaction } = decodeTransactionFromRpcResponse(rpcTx);
 ```
 
-### `getAllAddressesFromCompiledTransactionMessage(compiledMessage, loadedAddresses?)`
-
-Returns a flat `Address[]` indexable by every account-index appearing in the compiled message's instructions. The Solana runtime resolves indices in the order: static accounts, then ALT-loaded writable, then ALT-loaded readonly — and this helper preserves that order.
-
-```ts
-import { getAllAddressesFromCompiledTransactionMessage } from '@solana/transaction-introspection';
-
-const allKeys = getAllAddressesFromCompiledTransactionMessage(compiledMessage, loadedAddresses);
-const programAddress = allKeys[ix.programAddressIndex];
-```
-
 ### `getAccountMetasFromCompiledTransactionMessage(compiledMessage, loadedAddresses?)`
 
-Builds the full ordered list of `AccountMeta`s for the message. Roles are derived from the message header: writable signers, readonly signers, writable non-signers, readonly non-signers — followed by ALT-loaded writable (non-signer, writable) and ALT-loaded readonly (non-signer, readonly). Inner-instruction account indices reference the same flat list, so the result is also useful for resolving inner instructions.
+Builds the full ordered list of `AccountMeta`s for the message. If you only need the flat ordered `Address[]`, map over the result: `accountMetas.map(m => m.address)`. Roles are derived from the message header: writable signers, readonly signers, writable non-signers, readonly non-signers — followed by ALT-loaded writable (non-signer, writable) and ALT-loaded readonly (non-signer, readonly). Inner-instruction account indices reference the same flat list, so the result is also useful for resolving inner instructions.
 
 ```ts
 import { getAccountMetasFromCompiledTransactionMessage } from '@solana/transaction-introspection';

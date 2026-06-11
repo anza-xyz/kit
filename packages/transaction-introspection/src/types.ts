@@ -1,5 +1,4 @@
 import type { ResolvedInstruction } from './get-instructions';
-
 /**
  * The location of an instruction within a transaction.
  *

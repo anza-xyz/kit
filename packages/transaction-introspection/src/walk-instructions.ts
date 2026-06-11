@@ -1,11 +1,11 @@
 import type { CompiledTransactionMessage } from '@solana/transaction-messages';
 
-import type { LoadedAddresses } from './get-all-addresses';
 import { getInnerInstructionsFromMeta, type MetaWithInnerInstructions } from './get-inner-instructions';
 import {
     getAccountMetasFromCompiledTransactionMessage,
     getInstructionsFromCompiledTransactionMessageWithMetas,
 } from './get-instructions';
+import type { LoadedAddresses } from './loaded-addresses';
 import type { TracedInstruction } from './types';
 
 /**

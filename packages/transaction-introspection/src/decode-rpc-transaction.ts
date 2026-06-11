@@ -23,7 +23,7 @@ import { getCompiledTransactionMessageDecoder } from '@solana/transaction-messag
 import type { Transaction } from '@solana/transactions';
 import { getTransactionDecoder } from '@solana/transactions';
 
-import type { LoadedAddresses } from './get-all-addresses';
+import type { LoadedAddresses } from './loaded-addresses';
 
 type AnyGetTransactionResponse =
     | GetTransactionApiResponseBase58<TransactionVersion | void>
