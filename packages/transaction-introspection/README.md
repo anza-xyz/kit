@@ -163,21 +163,11 @@ import type { LoadedAddresses } from '@solana/transaction-introspection';
 const loaded: LoadedAddresses = rpcTx.meta?.loadedAddresses ?? { readonly: [], writable: [] };
 ```
 
-### `Base64GetTransactionResponse<TMaxSupportedTransactionVersion>`
-
-The shape of a non-null `getTransaction` response when called with `encoding: 'base64'`. Re-exported from `@solana/rpc-api` for convenience — one of the input types accepted by `decodeTransactionFromRpcResponse`.
-
-### `Base58GetTransactionResponse<TMaxSupportedTransactionVersion>`
-
-Same as above for `encoding: 'base58'`.
-
-### `JsonGetTransactionResponse<TMaxSupportedTransactionVersion>`
-
-Same as above for `encoding: 'json'` (the default). When passed to `decodeTransactionFromRpcResponse`, the result's `transaction` is `undefined` — the server has already decompiled the wire format, so there are no message bytes to carry.
-
 ### `DecodedRpcTransaction`
 
 `{ compiledMessage, loadedAddresses, transaction? }`. `compiledMessage` always carries a `lifetimeToken` (the recent blockhash). `transaction` is present only for `'base64'` and `'base58'` responses; the dispatcher's overloads narrow it to a non-optional `Transaction` for those encodings.
+
+The input side of `decodeTransactionFromRpcResponse` is typed with the `GetTransactionApiResponseBase64`, `GetTransactionApiResponseBase58`, and `GetTransactionApiResponseJson` types from `@solana/rpc-api` — the non-null response shapes of the corresponding `getTransaction` encodings.
 
 ### `ResolvedInstruction<TProgramAddress>`
 

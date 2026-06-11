@@ -1,10 +1,11 @@
 import type { Address } from '@solana/addresses';
 import { getBase58Decoder } from '@solana/codecs-strings';
 import { isInstructionForProgram } from '@solana/instructions';
+import type { GetTransactionApiResponseJson } from '@solana/rpc-api';
 import type { Base58EncodedBytes } from '@solana/rpc-types';
 import type { CompiledTransactionMessage } from '@solana/transaction-messages';
 
-import { decodeTransactionFromRpcResponse, type JsonGetTransactionResponse } from '../decode-rpc-transaction';
+import { decodeTransactionFromRpcResponse } from '../decode-rpc-transaction';
 import { walkInstructions } from '../walk-instructions';
 
 const base58 = getBase58Decoder();
@@ -87,7 +88,7 @@ describe('walkInstructions over a JSON-decoded transaction', () => {
                 },
                 signatures: [],
             },
-        } as unknown as JsonGetTransactionResponse;
+        } as unknown as GetTransactionApiResponseJson;
 
         const { compiledMessage, loadedAddresses } = decodeTransactionFromRpcResponse(rpcTx);
         const traced = walkInstructions({ compiledMessage, loadedAddresses, meta: rpcTx.meta });

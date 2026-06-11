@@ -25,45 +25,10 @@ import { getTransactionDecoder } from '@solana/transactions';
 
 import type { LoadedAddresses } from './get-all-addresses';
 
-/**
- * The shape of a non-null `getTransaction` response when called with
- * `encoding: 'base64'`. Re-exported from `@solana/rpc-api` for convenience
- * — one of the input types accepted by {@link decodeTransactionFromRpcResponse}.
- *
- * @example
- * ```ts
- * const rpcResponse: Base64GetTransactionResponse<0> = await rpc
- *     .getTransaction(sig, { encoding: 'base64', maxSupportedTransactionVersion: 0 })
- *     .send();
- * ```
- */
-export type Base64GetTransactionResponse<
-    TMaxSupportedTransactionVersion extends TransactionVersion | void = TransactionVersion | void,
-> = GetTransactionApiResponseBase64<TMaxSupportedTransactionVersion>;
-
-/**
- * The shape of a non-null `getTransaction` response when called with
- * `encoding: 'base58'`. Re-exported from `@solana/rpc-api` for convenience
- * — one of the input types accepted by {@link decodeTransactionFromRpcResponse}.
- */
-export type Base58GetTransactionResponse<
-    TMaxSupportedTransactionVersion extends TransactionVersion | void = TransactionVersion | void,
-> = GetTransactionApiResponseBase58<TMaxSupportedTransactionVersion>;
-
-/**
- * The shape of a non-null `getTransaction` response when called with
- * `encoding: 'json'` (the default). Re-exported from `@solana/rpc-api` for
- * convenience — one of the input types accepted by
- * {@link decodeTransactionFromRpcResponse}.
- */
-export type JsonGetTransactionResponse<
-    TMaxSupportedTransactionVersion extends TransactionVersion | void = TransactionVersion | void,
-> = GetTransactionApiResponseJson<TMaxSupportedTransactionVersion>;
-
 type AnyGetTransactionResponse =
-    | Base58GetTransactionResponse
-    | Base64GetTransactionResponse
-    | JsonGetTransactionResponse;
+    | GetTransactionApiResponseBase58<TransactionVersion | void>
+    | GetTransactionApiResponseBase64<TransactionVersion | void>
+    | GetTransactionApiResponseJson<TransactionVersion | void>;
 
 /**
  * The result of decoding a `getTransaction` response: the
@@ -113,7 +78,7 @@ function decodeFromWire(wireBytes: Uint8Array): {
 }
 
 function decodeFromBase64<TMaxSupportedTransactionVersion extends TransactionVersion | void>(
-    rpcTx: Base64GetTransactionResponse<TMaxSupportedTransactionVersion>,
+    rpcTx: GetTransactionApiResponseBase64<TMaxSupportedTransactionVersion>,
 ): DecodedRpcTransaction {
     const [b64] = rpcTx.transaction;
     const { compiledMessage, transaction } = decodeFromWire(getBase64Encoder().encode(b64) as Uint8Array);
@@ -121,7 +86,7 @@ function decodeFromBase64<TMaxSupportedTransactionVersion extends TransactionVer
 }
 
 function decodeFromBase58<TMaxSupportedTransactionVersion extends TransactionVersion | void>(
-    rpcTx: Base58GetTransactionResponse<TMaxSupportedTransactionVersion>,
+    rpcTx: GetTransactionApiResponseBase58<TMaxSupportedTransactionVersion>,
 ): DecodedRpcTransaction {
     const [b58] = rpcTx.transaction;
     const { compiledMessage, transaction } = decodeFromWire(getBase58Encoder().encode(b58) as Uint8Array);
@@ -129,7 +94,7 @@ function decodeFromBase58<TMaxSupportedTransactionVersion extends TransactionVer
 }
 
 function decodeFromJson<TMaxSupportedTransactionVersion extends TransactionVersion | void>(
-    rpcTx: JsonGetTransactionResponse<TMaxSupportedTransactionVersion>,
+    rpcTx: GetTransactionApiResponseJson<TMaxSupportedTransactionVersion>,
 ): DecodedRpcTransaction {
     const base58 = getBase58Encoder();
     const { message } = rpcTx.transaction;
@@ -228,12 +193,12 @@ function decodeFromJson<TMaxSupportedTransactionVersion extends TransactionVersi
     return { compiledMessage, loadedAddresses: getLoadedAddresses(rpcTx.meta) };
 }
 
-function isBase64Response(rpcTx: AnyGetTransactionResponse): rpcTx is Base64GetTransactionResponse {
+function isBase64Response(rpcTx: AnyGetTransactionResponse): rpcTx is GetTransactionApiResponseBase64 {
     const t = rpcTx.transaction;
     return Array.isArray(t) && t[1] === 'base64';
 }
 
-function isBase58Response(rpcTx: AnyGetTransactionResponse): rpcTx is Base58GetTransactionResponse {
+function isBase58Response(rpcTx: AnyGetTransactionResponse): rpcTx is GetTransactionApiResponseBase58 {
     const t = rpcTx.transaction;
     return Array.isArray(t) && t[1] === 'base58';
 }
@@ -255,7 +220,7 @@ function getJsonMessageInstructions(rpcTx: AnyGetTransactionResponse): readonly 
  * `programId`. Those are not round-trippable through the kit codecs and
  * are rejected.
  */
-function isJsonResponse(rpcTx: AnyGetTransactionResponse): rpcTx is JsonGetTransactionResponse {
+function isJsonResponse(rpcTx: AnyGetTransactionResponse): rpcTx is GetTransactionApiResponseJson {
     const instructions = getJsonMessageInstructions(rpcTx);
     if (!instructions) return false;
     // No instructions: either `json` or `jsonParsed` could produce this shape, but
@@ -317,23 +282,23 @@ function isJsonParsedResponse(rpcTx: AnyGetTransactionResponse): boolean {
 export function decodeTransactionFromRpcResponse<
     TMaxSupportedTransactionVersion extends TransactionVersion | void = TransactionVersion | void,
 >(
-    rpcTx: Base64GetTransactionResponse<TMaxSupportedTransactionVersion>,
+    rpcTx: GetTransactionApiResponseBase64<TMaxSupportedTransactionVersion>,
 ): DecodedRpcTransaction & { transaction: Transaction };
 export function decodeTransactionFromRpcResponse<
     TMaxSupportedTransactionVersion extends TransactionVersion | void = TransactionVersion | void,
 >(
-    rpcTx: Base58GetTransactionResponse<TMaxSupportedTransactionVersion>,
+    rpcTx: GetTransactionApiResponseBase58<TMaxSupportedTransactionVersion>,
 ): DecodedRpcTransaction & { transaction: Transaction };
 export function decodeTransactionFromRpcResponse<
     TMaxSupportedTransactionVersion extends TransactionVersion | void = TransactionVersion | void,
->(rpcTx: JsonGetTransactionResponse<TMaxSupportedTransactionVersion>): DecodedRpcTransaction;
+>(rpcTx: GetTransactionApiResponseJson<TMaxSupportedTransactionVersion>): DecodedRpcTransaction;
 export function decodeTransactionFromRpcResponse<
     TMaxSupportedTransactionVersion extends TransactionVersion | void = TransactionVersion | void,
 >(
     rpcTx:
-        | Base58GetTransactionResponse<TMaxSupportedTransactionVersion>
-        | Base64GetTransactionResponse<TMaxSupportedTransactionVersion>
-        | JsonGetTransactionResponse<TMaxSupportedTransactionVersion>,
+        | GetTransactionApiResponseBase58<TMaxSupportedTransactionVersion>
+        | GetTransactionApiResponseBase64<TMaxSupportedTransactionVersion>
+        | GetTransactionApiResponseJson<TMaxSupportedTransactionVersion>,
 ): DecodedRpcTransaction {
     const tx = rpcTx as AnyGetTransactionResponse;
     if (isBase64Response(tx)) return decodeFromBase64(tx);

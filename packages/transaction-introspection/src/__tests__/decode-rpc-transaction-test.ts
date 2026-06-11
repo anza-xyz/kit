@@ -6,15 +6,15 @@ import {
     SOLANA_ERROR__TRANSACTION_INTROSPECTION__UNRECOGNIZED_GET_TRANSACTION_RESPONSE,
     SolanaError,
 } from '@solana/errors';
+import type {
+    GetTransactionApiResponseBase58,
+    GetTransactionApiResponseBase64,
+    GetTransactionApiResponseJson,
+} from '@solana/rpc-api';
 import { getCompiledTransactionMessageEncoder } from '@solana/transaction-messages';
 import { getTransactionEncoder } from '@solana/transactions';
 
-import {
-    type Base58GetTransactionResponse,
-    type Base64GetTransactionResponse,
-    decodeTransactionFromRpcResponse,
-    type JsonGetTransactionResponse,
-} from '../decode-rpc-transaction';
+import { decodeTransactionFromRpcResponse } from '../decode-rpc-transaction';
 
 describe('decodeTransactionFromRpcResponse', () => {
     function buildBase64Tx() {
@@ -44,7 +44,7 @@ describe('decodeTransactionFromRpcResponse', () => {
         const rpcTx = {
             meta: { loadedAddresses: { readonly: ['ro' as Address], writable: ['w' as Address] } },
             transaction: [b64, 'base64'],
-        } as unknown as Base64GetTransactionResponse<0>;
+        } as unknown as GetTransactionApiResponseBase64<0>;
         const result = decodeTransactionFromRpcResponse(rpcTx);
 
         expect(result.compiledMessage.version).toBe('legacy');
@@ -57,7 +57,7 @@ describe('decodeTransactionFromRpcResponse', () => {
 
     it('returns empty loaded addresses when meta is null', () => {
         const b64 = buildBase64Tx();
-        const rpcTx = { meta: null, transaction: [b64, 'base64'] } as unknown as Base64GetTransactionResponse<0>;
+        const rpcTx = { meta: null, transaction: [b64, 'base64'] } as unknown as GetTransactionApiResponseBase64<0>;
         const result = decodeTransactionFromRpcResponse(rpcTx);
         expect(result.loadedAddresses).toStrictEqual({ readonly: [], writable: [] });
     });
@@ -68,7 +68,7 @@ describe('decodeTransactionFromRpcResponse', () => {
         const rpcTx = {
             meta: { fee: 5000n },
             transaction: [b64, 'base64'],
-        } as unknown as Base64GetTransactionResponse;
+        } as unknown as GetTransactionApiResponseBase64;
         const result = decodeTransactionFromRpcResponse(rpcTx);
         expect(result.loadedAddresses).toStrictEqual({ readonly: [], writable: [] });
     });
@@ -80,7 +80,7 @@ describe('decodeTransactionFromRpcResponse', () => {
         const rpcTx = {
             meta: null,
             transaction: [b58, 'base58'],
-        } as unknown as Base58GetTransactionResponse<0>;
+        } as unknown as GetTransactionApiResponseBase58<0>;
         const result = decodeTransactionFromRpcResponse(rpcTx);
 
         expect(result.compiledMessage.version).toBe('legacy');
@@ -104,7 +104,7 @@ describe('decodeTransactionFromRpcResponse', () => {
                 },
                 signatures: [],
             },
-        } as unknown as JsonGetTransactionResponse;
+        } as unknown as GetTransactionApiResponseJson;
         const result = decodeTransactionFromRpcResponse(rpcTx);
 
         expect(result.compiledMessage.version).toBe('legacy');
@@ -139,7 +139,7 @@ describe('decodeTransactionFromRpcResponse', () => {
                 signatures: [],
             },
             version: 0,
-        } as unknown as JsonGetTransactionResponse<0>;
+        } as unknown as GetTransactionApiResponseJson<0>;
         const result = decodeTransactionFromRpcResponse(rpcTx);
 
         expect(result.compiledMessage.version).toBe(0);
@@ -168,7 +168,7 @@ describe('decodeTransactionFromRpcResponse', () => {
                 signatures: [],
             },
             version: 1,
-        } as unknown as JsonGetTransactionResponse<1>;
+        } as unknown as GetTransactionApiResponseJson<1>;
         const result = decodeTransactionFromRpcResponse(rpcTx);
 
         expect(result.compiledMessage.version).toBe(1);
@@ -204,14 +204,14 @@ describe('decodeTransactionFromRpcResponse', () => {
                 signatures: [],
             },
             version: 99,
-        } as unknown as JsonGetTransactionResponse;
+        } as unknown as GetTransactionApiResponseJson;
         expect(() => decodeTransactionFromRpcResponse(rpcTx)).toThrow(
             new SolanaError(SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED, { unsupportedVersion: 99 }),
         );
     });
 
     it('throws SOLANA_ERROR__TRANSACTION_INTROSPECTION__UNRECOGNIZED_GET_TRANSACTION_RESPONSE for an unrecognized response shape', () => {
-        const rpcTx = { meta: null, transaction: 'totally bogus' } as unknown as Base64GetTransactionResponse;
+        const rpcTx = { meta: null, transaction: 'totally bogus' } as unknown as GetTransactionApiResponseBase64;
         expect(() => decodeTransactionFromRpcResponse(rpcTx)).toThrow(
             new SolanaError(SOLANA_ERROR__TRANSACTION_INTROSPECTION__UNRECOGNIZED_GET_TRANSACTION_RESPONSE),
         );
@@ -239,7 +239,7 @@ describe('decodeTransactionFromRpcResponse', () => {
                 },
                 signatures: [],
             },
-        } as unknown as JsonGetTransactionResponse;
+        } as unknown as GetTransactionApiResponseJson;
         expect(() => decodeTransactionFromRpcResponse(rpcTx)).toThrow(
             new SolanaError(SOLANA_ERROR__TRANSACTION_INTROSPECTION__CANNOT_DECODE_JSON_PARSED_TRANSACTION),
         );
@@ -265,7 +265,7 @@ describe('decodeTransactionFromRpcResponse', () => {
                 },
                 signatures: [],
             },
-        } as unknown as JsonGetTransactionResponse;
+        } as unknown as GetTransactionApiResponseJson;
         expect(() => decodeTransactionFromRpcResponse(rpcTx)).toThrow(
             new SolanaError(SOLANA_ERROR__TRANSACTION_INTROSPECTION__CANNOT_DECODE_JSON_PARSED_TRANSACTION),
         );

@@ -1,16 +1,16 @@
+import type {
+    GetTransactionApiResponseBase58,
+    GetTransactionApiResponseBase64,
+    GetTransactionApiResponseJson,
+} from '@solana/rpc-api';
 import type { Transaction } from '@solana/transactions';
 
-import {
-    type Base58GetTransactionResponse,
-    type Base64GetTransactionResponse,
-    decodeTransactionFromRpcResponse,
-    type JsonGetTransactionResponse,
-} from '../decode-rpc-transaction';
+import { decodeTransactionFromRpcResponse } from '../decode-rpc-transaction';
 
 void (() => {
-    const b64 = null as unknown as Base64GetTransactionResponse;
-    const b58 = null as unknown as Base58GetTransactionResponse;
-    const j = null as unknown as JsonGetTransactionResponse;
+    const b64 = null as unknown as GetTransactionApiResponseBase64;
+    const b58 = null as unknown as GetTransactionApiResponseBase58;
+    const j = null as unknown as GetTransactionApiResponseJson;
 
     // base64 / base58 narrow `transaction` to a guaranteed `Transaction`.
     decodeTransactionFromRpcResponse(b64).transaction satisfies Transaction;

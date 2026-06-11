@@ -6,13 +6,7 @@
  *
  * @packageDocumentation
  */
-export {
-    type Base58GetTransactionResponse,
-    type Base64GetTransactionResponse,
-    type DecodedRpcTransaction,
-    decodeTransactionFromRpcResponse,
-    type JsonGetTransactionResponse,
-} from './decode-rpc-transaction';
+export { type DecodedRpcTransaction, decodeTransactionFromRpcResponse } from './decode-rpc-transaction';
 export { getAllAddressesFromCompiledTransactionMessage, type LoadedAddresses } from './get-all-addresses';
 export { getInnerInstructionsFromMeta, type MetaWithInnerInstructions } from './get-inner-instructions';
 export {
