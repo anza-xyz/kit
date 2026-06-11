@@ -27,3 +27,8 @@ test-ledger/
 
 # ignore JetBrains IDE
 .idea
+
+# LLM files
+.claude/worktrees
+.claude/settings.local.json
+.codex/config.toml
