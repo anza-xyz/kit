@@ -114,6 +114,16 @@ const getIndex = () => 0;
         // @ts-expect-error The runtime helper cannot expose fixedSize in this case.
         encoder satisfies FixedSizeEncoder<number>;
     }
+
+    // It returns a plain encoder when a variant's size is entirely unknown.
+    {
+        const encoder = getUnionEncoder([{} as Encoder<number>, {} as FixedSizeEncoder<number>], getIndex);
+        encoder satisfies Encoder<number>;
+        // @ts-expect-error An unknown-size variant may be fixed or variable at runtime.
+        encoder satisfies FixedSizeEncoder<number>;
+        // @ts-expect-error An unknown-size variant may be fixed or variable at runtime.
+        encoder satisfies VariableSizeEncoder<number>;
+    }
 }
 
 // [DESCRIBE] getUnionDecoder.
@@ -284,5 +294,15 @@ const getIndex = () => 0;
         codec satisfies VariableSizeCodec<number>;
         // @ts-expect-error The runtime helper cannot expose fixedSize in this case.
         codec satisfies FixedSizeCodec<number>;
+    }
+
+    // It returns a plain codec when a variant's size is entirely unknown.
+    {
+        const codec = getUnionCodec([{} as Codec<number>, {} as FixedSizeCodec<number>], getIndex, getIndex);
+        codec satisfies Codec<number>;
+        // @ts-expect-error An unknown-size variant may be fixed or variable at runtime.
+        codec satisfies FixedSizeCodec<number>;
+        // @ts-expect-error An unknown-size variant may be fixed or variable at runtime.
+        codec satisfies VariableSizeCodec<number>;
     }
 }

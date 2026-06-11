@@ -236,7 +236,6 @@ export function getPatternMatchCodec<TFrom, TTo extends TFrom = TFrom>(
 ): Codec<TFrom, TTo> {
     return combineCodec(
         getPatternMatchEncoder(patterns.map(([valuePredicate, , codec]) => [valuePredicate, codec]) as any),
-
         getPatternMatchDecoder(patterns.map(([, bytesPredicate, codec]) => [bytesPredicate, codec]) as any),
     );
 }

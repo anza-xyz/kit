@@ -85,21 +85,51 @@ const stringTypePredicate = null as unknown as (value: number | string) => value
             [numberValuePredicate, {} as VariableSizeEncoder<number>],
         ]) satisfies VariableSizeEncoder<number>;
 
-        // It returns an Encoder if some input encoders are VariableSizeEncoder
-        getPatternMatchEncoder([
-            [numberValuePredicate, {} as VariableSizeEncoder<number>],
-            [numberValuePredicate, {} as VariableSizeEncoder<number>],
-        ]) satisfies Encoder<number>;
+        // It returns a variable size encoder if any known variant is variable size.
+        {
+            const encoder = getPatternMatchEncoder([
+                [numberValuePredicate, {} as FixedSizeEncoder<number>],
+                [numberValuePredicate, {} as VariableSizeEncoder<number>],
+            ]);
+            encoder satisfies VariableSizeEncoder<number>;
+            // @ts-expect-error A variable-size branch makes the union variable at runtime.
+            encoder satisfies FixedSizeEncoder<number>;
+        }
+        {
+            const encoder = getPatternMatchEncoder([
+                [numberValuePredicate, {} as VariableSizeEncoder<number>],
+                [numberValuePredicate, {} as FixedSizeEncoder<number>],
+            ]);
+            encoder satisfies VariableSizeEncoder<number>;
+            // @ts-expect-error A variable-size branch makes the union variable at runtime.
+            encoder satisfies FixedSizeEncoder<number>;
+        }
 
-        getPatternMatchEncoder([
-            [numberValuePredicate, {} as FixedSizeEncoder<number>],
-            [numberValuePredicate, {} as VariableSizeEncoder<number>],
-        ]) satisfies Encoder<number>;
+        // It returns a plain encoder when a branch's size is entirely unknown.
+        {
+            const encoder = getPatternMatchEncoder([
+                [numberValuePredicate, {} as Encoder<number>],
+                [numberValuePredicate, {} as FixedSizeEncoder<number>],
+            ]);
+            encoder satisfies Encoder<number>;
+            // @ts-expect-error An unknown-size branch may be fixed or variable at runtime.
+            encoder satisfies FixedSizeEncoder<number>;
+            // @ts-expect-error An unknown-size branch may be fixed or variable at runtime.
+            encoder satisfies VariableSizeEncoder<number>;
+        }
 
-        getPatternMatchEncoder([
-            [numberValuePredicate, {} as VariableSizeEncoder<number>],
-            [numberValuePredicate, {} as FixedSizeEncoder<number>],
-        ]) satisfies Encoder<number>;
+        // It infers the union value type from inline arrow predicates over distinct per-branch
+        // encoders (mirroring real call sites such as getCompiledTransactionMessageEncoder, whose
+        // branches each encode a different member of a discriminated union).
+        {
+            type Legacy = { data: number; version: 'legacy' };
+            type V0 = { data: string; version: 0 };
+            const encoder = getPatternMatchEncoder([
+                [(m: Legacy | V0) => m.version === 'legacy', {} as VariableSizeEncoder<Legacy>],
+                [(m: Legacy | V0) => m.version === 0, {} as VariableSizeEncoder<V0>],
+            ]);
+            encoder satisfies VariableSizeEncoder<Legacy | V0>;
+        }
     }
 
     // [DESCRIBE] For type guard predicates
@@ -144,21 +174,38 @@ const stringTypePredicate = null as unknown as (value: number | string) => value
             [stringTypePredicate, {} as VariableSizeEncoder<string>],
         ]) satisfies VariableSizeEncoder<number | string>;
 
-        // It returns an Encoder if some input encoders are VariableSizeEncoder
-        getPatternMatchEncoder([
-            [numberTypePredicate, {} as VariableSizeEncoder<number>],
-            [stringTypePredicate, {} as VariableSizeEncoder<string>],
-        ]) satisfies Encoder<number | string>;
+        // It returns a variable size encoder if any known variant is variable size.
+        {
+            const encoder = getPatternMatchEncoder([
+                [numberTypePredicate, {} as FixedSizeEncoder<number>],
+                [stringTypePredicate, {} as VariableSizeEncoder<string>],
+            ]);
+            encoder satisfies VariableSizeEncoder<number | string>;
+            // @ts-expect-error A variable-size branch makes the union variable at runtime.
+            encoder satisfies FixedSizeEncoder<number | string>;
+        }
+        {
+            const encoder = getPatternMatchEncoder([
+                [numberTypePredicate, {} as VariableSizeEncoder<number>],
+                [numberTypePredicate, {} as FixedSizeEncoder<number>],
+            ]);
+            encoder satisfies VariableSizeEncoder<number>;
+            // @ts-expect-error A variable-size branch makes the union variable at runtime.
+            encoder satisfies FixedSizeEncoder<number>;
+        }
 
-        getPatternMatchEncoder([
-            [numberTypePredicate, {} as FixedSizeEncoder<number>],
-            [stringTypePredicate, {} as VariableSizeEncoder<string>],
-        ]) satisfies Encoder<number | string>;
-
-        getPatternMatchEncoder([
-            [numberTypePredicate, {} as VariableSizeEncoder<number>],
-            [numberTypePredicate, {} as FixedSizeEncoder<number>],
-        ]) satisfies Encoder<number>;
+        // It returns a plain encoder when a branch's size is entirely unknown.
+        {
+            const encoder = getPatternMatchEncoder([
+                [numberTypePredicate, {} as Encoder<number>],
+                [stringTypePredicate, {} as FixedSizeEncoder<string>],
+            ]);
+            encoder satisfies Encoder<number | string>;
+            // @ts-expect-error An unknown-size branch may be fixed or variable at runtime.
+            encoder satisfies FixedSizeEncoder<number | string>;
+            // @ts-expect-error An unknown-size branch may be fixed or variable at runtime.
+            encoder satisfies VariableSizeEncoder<number | string>;
+        }
     }
 }
 
@@ -212,21 +259,25 @@ const stringTypePredicate = null as unknown as (value: number | string) => value
         [bytesPredicate, {} as VariableSizeDecoder<number>],
     ]) satisfies VariableSizeDecoder<number>;
 
-    // It returns a Decoder if some input decoders are VariableSizeDecoder
-    getPatternMatchDecoder([
-        [bytesPredicate, {} as VariableSizeDecoder<number>],
-        [bytesPredicate, {} as VariableSizeDecoder<number>],
-    ]) satisfies Decoder<number>;
-
-    getPatternMatchDecoder([
-        [bytesPredicate, {} as FixedSizeDecoder<number>],
-        [bytesPredicate, {} as VariableSizeDecoder<number>],
-    ]) satisfies Decoder<number>;
-
-    getPatternMatchDecoder([
-        [bytesPredicate, {} as VariableSizeDecoder<number>],
-        [bytesPredicate, {} as FixedSizeDecoder<number>],
-    ]) satisfies Decoder<number>;
+    // It returns a variable size decoder if any known variant is variable size.
+    {
+        const decoder = getPatternMatchDecoder([
+            [bytesPredicate, {} as FixedSizeDecoder<number>],
+            [bytesPredicate, {} as VariableSizeDecoder<number>],
+        ]);
+        decoder satisfies VariableSizeDecoder<number>;
+        // @ts-expect-error A variable-size branch makes the union variable at runtime.
+        decoder satisfies FixedSizeDecoder<number>;
+    }
+    {
+        const decoder = getPatternMatchDecoder([
+            [bytesPredicate, {} as VariableSizeDecoder<number>],
+            [bytesPredicate, {} as FixedSizeDecoder<number>],
+        ]);
+        decoder satisfies VariableSizeDecoder<number>;
+        // @ts-expect-error A variable-size branch makes the union variable at runtime.
+        decoder satisfies FixedSizeDecoder<number>;
+    }
 }
 
 // [DESCRIBE] getPatternMatchCodec
@@ -292,21 +343,38 @@ const stringTypePredicate = null as unknown as (value: number | string) => value
             [numberValuePredicate, bytesPredicate, {} as VariableSizeCodec<number>],
         ]) satisfies VariableSizeCodec<number>;
 
-        // It returns a Codec if some input codecs are VariableSizeCodec
-        getPatternMatchCodec([
-            [numberValuePredicate, bytesPredicate, {} as VariableSizeCodec<number>],
-            [numberValuePredicate, bytesPredicate, {} as VariableSizeCodec<number>],
-        ]) satisfies Codec<number>;
+        // It returns a variable size codec if any known variant is variable size.
+        {
+            const codec = getPatternMatchCodec([
+                [numberValuePredicate, bytesPredicate, {} as FixedSizeCodec<number>],
+                [numberValuePredicate, bytesPredicate, {} as VariableSizeCodec<number>],
+            ]);
+            codec satisfies VariableSizeCodec<number>;
+            // @ts-expect-error A variable-size branch makes the union variable at runtime.
+            codec satisfies FixedSizeCodec<number>;
+        }
+        {
+            const codec = getPatternMatchCodec([
+                [numberValuePredicate, bytesPredicate, {} as VariableSizeCodec<number>],
+                [numberValuePredicate, bytesPredicate, {} as FixedSizeCodec<number>],
+            ]);
+            codec satisfies VariableSizeCodec<number>;
+            // @ts-expect-error A variable-size branch makes the union variable at runtime.
+            codec satisfies FixedSizeCodec<number>;
+        }
 
-        getPatternMatchCodec([
-            [numberValuePredicate, bytesPredicate, {} as FixedSizeCodec<number>],
-            [numberValuePredicate, bytesPredicate, {} as VariableSizeCodec<number>],
-        ]) satisfies Codec<number>;
-
-        getPatternMatchCodec([
-            [numberValuePredicate, bytesPredicate, {} as VariableSizeCodec<number>],
-            [numberValuePredicate, bytesPredicate, {} as FixedSizeCodec<number>],
-        ]) satisfies Codec<number>;
+        // It returns a plain codec when a branch's size is entirely unknown.
+        {
+            const codec = getPatternMatchCodec([
+                [numberValuePredicate, bytesPredicate, {} as Codec<number>],
+                [numberValuePredicate, bytesPredicate, {} as FixedSizeCodec<number>],
+            ]);
+            codec satisfies Codec<number>;
+            // @ts-expect-error An unknown-size branch may be fixed or variable at runtime.
+            codec satisfies FixedSizeCodec<number>;
+            // @ts-expect-error An unknown-size branch may be fixed or variable at runtime.
+            codec satisfies VariableSizeCodec<number>;
+        }
     }
 
     // [DESCRIBE] For type guard predicates
@@ -351,20 +419,37 @@ const stringTypePredicate = null as unknown as (value: number | string) => value
             [stringTypePredicate, bytesPredicate, {} as VariableSizeCodec<string>],
         ]) satisfies VariableSizeCodec<number | string>;
 
-        // It returns a Codec if some input codecs are VariableSizeCodec
-        getPatternMatchCodec([
-            [numberTypePredicate, bytesPredicate, {} as VariableSizeCodec<number>],
-            [stringTypePredicate, bytesPredicate, {} as VariableSizeCodec<string>],
-        ]) satisfies Codec<number | string>;
+        // It returns a variable size codec if any known variant is variable size.
+        {
+            const codec = getPatternMatchCodec([
+                [numberTypePredicate, bytesPredicate, {} as FixedSizeCodec<number>],
+                [stringTypePredicate, bytesPredicate, {} as VariableSizeCodec<string>],
+            ]);
+            codec satisfies VariableSizeCodec<number | string>;
+            // @ts-expect-error A variable-size branch makes the union variable at runtime.
+            codec satisfies FixedSizeCodec<number | string>;
+        }
+        {
+            const codec = getPatternMatchCodec([
+                [numberTypePredicate, bytesPredicate, {} as VariableSizeCodec<number>],
+                [stringTypePredicate, bytesPredicate, {} as FixedSizeCodec<string>],
+            ]);
+            codec satisfies VariableSizeCodec<number | string>;
+            // @ts-expect-error A variable-size branch makes the union variable at runtime.
+            codec satisfies FixedSizeCodec<number | string>;
+        }
 
-        getPatternMatchCodec([
-            [numberTypePredicate, bytesPredicate, {} as FixedSizeCodec<number>],
-            [stringTypePredicate, bytesPredicate, {} as VariableSizeCodec<string>],
-        ]) satisfies Codec<number | string>;
-
-        getPatternMatchCodec([
-            [numberTypePredicate, bytesPredicate, {} as VariableSizeCodec<number>],
-            [stringTypePredicate, bytesPredicate, {} as FixedSizeCodec<string>],
-        ]) satisfies Codec<number | string>;
+        // It returns a plain codec when a branch's size is entirely unknown.
+        {
+            const codec = getPatternMatchCodec([
+                [numberTypePredicate, bytesPredicate, {} as Codec<number>],
+                [stringTypePredicate, bytesPredicate, {} as FixedSizeCodec<string>],
+            ]);
+            codec satisfies Codec<number | string>;
+            // @ts-expect-error An unknown-size branch may be fixed or variable at runtime.
+            codec satisfies FixedSizeCodec<number | string>;
+            // @ts-expect-error An unknown-size branch may be fixed or variable at runtime.
+            codec satisfies VariableSizeCodec<number | string>;
+        }
     }
 }

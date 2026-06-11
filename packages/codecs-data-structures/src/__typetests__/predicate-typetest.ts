@@ -82,6 +82,16 @@ const predicate = null as unknown as () => boolean;
         {} as FixedSizeEncoder<number>,
     ) satisfies VariableSizeEncoder<number>;
 
+    // It returns a plain encoder when an input encoder's size is entirely unknown.
+    {
+        const encoder = getPredicateEncoder(predicate, {} as Encoder<number>, {} as FixedSizeEncoder<number>);
+        encoder satisfies Encoder<number>;
+        // @ts-expect-error An unknown-size encoder may be fixed or variable at runtime.
+        encoder satisfies FixedSizeEncoder<number>;
+        // @ts-expect-error An unknown-size encoder may be fixed or variable at runtime.
+        encoder satisfies VariableSizeEncoder<number>;
+    }
+
     // It does not allow different encoder types
     {
         // @ts-expect-error Different encoder types
@@ -238,6 +248,16 @@ const predicate = null as unknown as () => boolean;
         {} as VariableSizeCodec<number>,
         {} as FixedSizeCodec<number>,
     ) satisfies VariableSizeCodec<number>;
+
+    // It returns a plain codec when an input codec's size is entirely unknown.
+    {
+        const codec = getPredicateCodec(predicate, predicate, {} as Codec<number>, {} as FixedSizeCodec<number>);
+        codec satisfies Codec<number>;
+        // @ts-expect-error An unknown-size codec may be fixed or variable at runtime.
+        codec satisfies FixedSizeCodec<number>;
+        // @ts-expect-error An unknown-size codec may be fixed or variable at runtime.
+        codec satisfies VariableSizeCodec<number>;
+    }
 
     // It does not allow different codec types
     {
