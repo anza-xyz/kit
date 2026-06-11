@@ -114,7 +114,7 @@ const inner = getInnerInstructionsFromMeta(rpcTx.meta, accountMetas);
 
 ### `walkInstructions({ compiledMessage, meta?, loadedAddresses? })`
 
-Returns every instruction in a confirmed transaction — outer first, then inner instructions grouped by their outer-instruction index — as an array of `TracedInstruction`s. Each entry is itself a `ResolvedInstruction` (with addresses and roles already resolved) carrying a `trace` property that records whether the instruction is outer or inner (with stack height when the RPC provides it).
+Returns every instruction in a confirmed transaction as an array of `TracedInstruction`s, in the order an explorer displays them: each outer instruction followed immediately by the inner instructions its CPIs produced. Each entry is itself a `ResolvedInstruction` (with addresses and roles already resolved) carrying a `trace` property that records whether the instruction is outer or inner (with stack height when the RPC provides it).
 
 Because each entry is a `ResolvedInstruction`, you can pass it directly to `isInstructionForProgram` from `@solana/instructions` (which narrows the `programAddress` type) and to the auto-generated `identifyXInstruction` / `parseXInstruction` helpers — no separate filter helper is needed.
 

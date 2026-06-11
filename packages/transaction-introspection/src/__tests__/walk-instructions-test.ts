@@ -35,22 +35,37 @@ describe('walkInstructions', () => {
         expect(out[1].programAddress).toBe('program-b');
     });
 
-    it('appends inner instructions from meta with `inner` traces', () => {
-        const innerData = asB58(new Uint8Array([42]));
+    it('interleaves inner instructions after their outer instruction', () => {
         const out = walkInstructions({
             compiledMessage: compiled,
             meta: {
                 innerInstructions: [
                     {
                         index: 1,
-                        instructions: [{ accounts: [0], data: innerData, programIdIndex: 1, stackHeight: 2 }],
+                        instructions: [
+                            { accounts: [0], data: asB58(new Uint8Array([43])), programIdIndex: 2, stackHeight: 2 },
+                        ],
+                    },
+                    {
+                        index: 0,
+                        instructions: [
+                            { accounts: [0], data: asB58(new Uint8Array([42])), programIdIndex: 1, stackHeight: 2 },
+                            { accounts: [0], data: asB58(new Uint8Array([44])), programIdIndex: 1, stackHeight: 3 },
+                        ],
                     },
                 ],
             },
         });
-        expect(out).toHaveLength(3);
-        expect(out[2].trace).toStrictEqual({ innerIndex: 0, kind: 'inner', outerIndex: 1, stackHeight: 2 });
-        expect(out[2].programAddress).toBe('program-a');
+        // Display order: outer[0], its inner instructions, outer[1], its inner instructions.
+        expect(out.map(ix => ix.trace)).toStrictEqual([
+            { index: 0, kind: 'outer' },
+            { innerIndex: 0, kind: 'inner', outerIndex: 0, stackHeight: 2 },
+            { innerIndex: 1, kind: 'inner', outerIndex: 0, stackHeight: 3 },
+            { index: 1, kind: 'outer' },
+            { innerIndex: 0, kind: 'inner', outerIndex: 1, stackHeight: 2 },
+        ]);
+        expect(out[1].programAddress).toBe('program-a');
+        expect(out[4].programAddress).toBe('program-b');
     });
 
     it('returned items are usable directly with isInstructionForProgram', () => {
@@ -147,8 +162,9 @@ describe('walkInstructions over a v1 transaction', () => {
             },
         });
         expect(out).toHaveLength(3);
-        expect(out[2].trace).toStrictEqual({ innerIndex: 0, kind: 'inner', outerIndex: 0, stackHeight: 2 });
-        expect(out[2].programAddress).toBe('program-b');
+        expect(out[1].trace).toStrictEqual({ innerIndex: 0, kind: 'inner', outerIndex: 0, stackHeight: 2 });
+        expect(out[1].programAddress).toBe('program-b');
+        expect(out[2].trace).toStrictEqual({ index: 1, kind: 'outer' });
     });
 });
 

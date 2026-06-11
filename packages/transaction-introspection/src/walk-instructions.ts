@@ -9,9 +9,10 @@ import type { LoadedAddresses } from './loaded-addresses';
 import type { TracedInstruction } from './types';
 
 /**
- * Returns every instruction in a confirmed transaction — outer first, then
- * inner instructions grouped by their outer-instruction index — as
- * {@link TracedInstruction}s.
+ * Returns every instruction in a confirmed transaction as
+ * {@link TracedInstruction}s, in the order an explorer displays them: each
+ * outer instruction followed immediately by the inner instructions its CPIs
+ * produced.
  *
  * Each returned instruction has its account indices resolved to
  * {@link AccountMeta}s and its data exposed as a `ReadonlyUint8Array`
@@ -46,12 +47,24 @@ export function walkInstructions(args: {
     const { compiledMessage, loadedAddresses, meta } = args;
     const accountMetas = getAccountMetasFromCompiledTransactionMessage(compiledMessage, loadedAddresses);
     const outerInstructions = getInstructionsFromCompiledTransactionMessageWithMetas(compiledMessage, accountMetas);
-    const result: TracedInstruction[] = outerInstructions.map((instruction, index) => ({
-        ...instruction,
-        trace: { index, kind: 'outer' },
-    }));
+
+    const innerByOuterIndex = new Map<number, TracedInstruction[]>();
     if (meta) {
-        result.push(...getInnerInstructionsFromMeta(meta, accountMetas));
+        for (const inner of getInnerInstructionsFromMeta(meta, accountMetas)) {
+            if (inner.trace.kind !== 'inner') continue;
+            const group = innerByOuterIndex.get(inner.trace.outerIndex);
+            if (group) {
+                group.push(inner);
+            } else {
+                innerByOuterIndex.set(inner.trace.outerIndex, [inner]);
+            }
+        }
     }
+
+    const result: TracedInstruction[] = [];
+    outerInstructions.forEach((instruction, index) => {
+        result.push({ ...instruction, trace: { index, kind: 'outer' } });
+        result.push(...(innerByOuterIndex.get(index) ?? []));
+    });
     return result;
 }
