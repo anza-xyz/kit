@@ -78,9 +78,10 @@ export function getInnerInstructionsFromMeta(
                 }
                 return meta;
             });
+            const data = base58.encode(ix.data);
             result.push({
-                accounts,
-                data: base58.encode(ix.data),
+                ...(accounts.length ? { accounts } : null),
+                ...(data.byteLength ? { data } : null),
                 programAddress: programMeta.address,
                 trace: {
                     innerIndex,

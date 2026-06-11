@@ -55,7 +55,7 @@ describe('getInnerInstructionsFromMeta', () => {
             { address: 'fee-payer', role: AccountRole.WRITABLE_SIGNER },
             { address: 'data-account', role: AccountRole.WRITABLE },
         ]);
-        expect(Array.from(out[0].data)).toStrictEqual([9, 8, 7]);
+        expect(out[0].data).toStrictEqual(new Uint8Array([9, 8, 7]));
     });
 
     it('throws when an inner programIdIndex is out of range', () => {
@@ -98,6 +98,22 @@ describe('getInnerInstructionsFromMeta', () => {
                 index: 42,
             }),
         );
+    });
+
+    it('omits `accounts` and `data` when an inner instruction has none', () => {
+        const [traced] = getInnerInstructionsFromMeta(
+            {
+                innerInstructions: [
+                    {
+                        index: 0,
+                        instructions: [{ accounts: [], data: asB58(new Uint8Array()), programIdIndex: 1 }],
+                    },
+                ],
+            },
+            accountMetas,
+        );
+        expect(traced).not.toHaveProperty('accounts');
+        expect(traced).not.toHaveProperty('data');
     });
 
     it('omits stackHeight from the trace when the RPC did not report one', () => {

@@ -83,7 +83,7 @@ const accountMetas = getAccountMetasFromCompiledTransactionMessage(compiledMessa
 
 ### `getInstructionsFromCompiledTransactionMessage(compiledMessage, loadedAddresses?)`
 
-Returns the outer instructions of a compiled transaction message as `ResolvedInstruction[]`. Each instruction has its account indices resolved to `AccountMeta`s (with proper signer/writable bits) and its data exposed as a `ReadonlyUint8Array` — the form the auto-generated `@solana-program/*` `parseXInstruction` and `identifyXInstruction` functions expect.
+Returns the outer instructions of a compiled transaction message as `ResolvedInstruction[]`. Each instruction has its account indices resolved to `AccountMeta`s (with proper signer/writable bits) and its data exposed as a `ReadonlyUint8Array` — the form the auto-generated `@solana-program/*` `parseXInstruction` and `identifyXInstruction` functions expect. Following the kit `Instruction` conventions, `accounts` and `data` are present only when non-empty, so `isInstructionWithAccounts` and `isInstructionWithData` behave as expected.
 
 ```ts
 import { getInstructionsFromCompiledTransactionMessage } from '@solana/transaction-introspection';
@@ -160,7 +160,7 @@ The input side of `decodeTransactionFromRpcResponse` is typed with the `GetTrans
 
 ### `ResolvedInstruction<TProgramAddress>`
 
-An `Instruction` whose account indices have been resolved to `AccountMeta`s and whose data is exposed as a `ReadonlyUint8Array`. Directly usable with the auto-generated `@solana-program/*` `parseXInstruction` and `identifyXInstruction` functions, and with `isInstructionForProgram` from `@solana/instructions` (which narrows the `TProgramAddress` parameter).
+An `Instruction` whose account indices have been resolved to `AccountMeta`s and whose data is exposed as a `ReadonlyUint8Array`. Directly usable with the auto-generated `@solana-program/*` `parseXInstruction` and `identifyXInstruction` functions, and with `isInstructionForProgram` from `@solana/instructions` (which narrows the `TProgramAddress` parameter). `accounts` and `data` are present only when non-empty — use `isInstructionWithAccounts` / `isInstructionWithData` to narrow.
 
 ### `InstructionTrace`
 

@@ -93,7 +93,7 @@ describe('getInstructionsFromCompiledTransactionMessage', () => {
             ],
             programAddress: 'program',
         });
-        expect(Array.from(result[0].data)).toStrictEqual([1, 2, 3]);
+        expect(result[0].data).toStrictEqual(new Uint8Array([1, 2, 3]));
     });
 
     it('throws if a program address index is out of range', () => {
@@ -119,6 +119,16 @@ describe('getInstructionsFromCompiledTransactionMessage', () => {
             SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_ACCOUNT_INDEX_OUT_OF_RANGE,
         );
         expect((err as SolanaError).context).toMatchObject({ index: 42 });
+    });
+
+    it('omits `accounts` and `data` when the compiled instruction has none', () => {
+        const noArgs = {
+            ...compiled,
+            instructions: [{ programAddressIndex: 1 }],
+        } as CompiledTransactionMessage;
+        const [ix] = getInstructionsFromCompiledTransactionMessage(noArgs);
+        expect(ix).not.toHaveProperty('accounts');
+        expect(ix).not.toHaveProperty('data');
     });
 
     it('resolves v1 messages by zipping instructionHeaders + instructionPayloads', () => {
@@ -150,7 +160,7 @@ describe('getInstructionsFromCompiledTransactionMessage', () => {
             ],
             programAddress: 'program',
         });
-        expect(Array.from(result[0].data)).toStrictEqual([1, 2, 3]);
+        expect(result[0].data).toStrictEqual(new Uint8Array([1, 2, 3]));
     });
 
     it('throws SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED for unknown versions', () => {

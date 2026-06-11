@@ -95,7 +95,7 @@ describe('walkInstructions over a JSON-decoded transaction', () => {
         expect(traced).toHaveLength(2);
         expect(traced[0].trace).toStrictEqual({ index: 0, kind: 'outer' });
         expect(traced[0].programAddress).toBe('program-a');
-        expect(Array.from(traced[0].data)).toStrictEqual([7]);
+        expect(traced[0].data).toStrictEqual(new Uint8Array([7]));
         expect(traced[1].trace).toStrictEqual({ innerIndex: 0, kind: 'inner', outerIndex: 0, stackHeight: 2 });
     });
 });
@@ -128,7 +128,7 @@ describe('walkInstructions over a v1 transaction', () => {
         expect(out).toHaveLength(2);
         expect(out[0].trace).toStrictEqual({ index: 0, kind: 'outer' });
         expect(out[0].programAddress).toBe('program-a');
-        expect(Array.from(out[0].data)).toStrictEqual([1]);
+        expect(out[0].data).toStrictEqual(new Uint8Array([1]));
         expect(out[1].trace).toStrictEqual({ index: 1, kind: 'outer' });
         expect(out[1].programAddress).toBe('program-b');
     });
@@ -182,9 +182,9 @@ describe('walkInstructions over an ALT-loaded v0 transaction', () => {
         expect(traced).toHaveLength(2);
         expect(traced[0].trace).toStrictEqual({ index: 0, kind: 'outer' });
         expect(traced[0].programAddress).toBe('alt-writable');
-        expect(traced[0].accounts.map(a => a.address)).toStrictEqual(['fee-payer', 'alt-readonly']);
+        expect(traced[0].accounts?.map(a => a.address)).toStrictEqual(['fee-payer', 'alt-readonly']);
         expect(traced[1].trace).toStrictEqual({ innerIndex: 0, kind: 'inner', outerIndex: 0, stackHeight: 2 });
         expect(traced[1].programAddress).toBe('alt-readonly');
-        expect(traced[1].accounts.map(a => a.address)).toStrictEqual(['fee-payer', 'alt-writable']);
+        expect(traced[1].accounts?.map(a => a.address)).toStrictEqual(['fee-payer', 'alt-writable']);
     });
 });

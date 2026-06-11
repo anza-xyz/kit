@@ -6,13 +6,7 @@ import {
     SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED,
     SolanaError,
 } from '@solana/errors';
-import {
-    type AccountMeta,
-    AccountRole,
-    type Instruction,
-    type InstructionWithAccounts,
-    type InstructionWithData,
-} from '@solana/instructions';
+import { type AccountMeta, AccountRole, type Instruction } from '@solana/instructions';
 import type { CompiledTransactionMessage } from '@solana/transaction-messages';
 
 import type { LoadedAddresses } from './loaded-addresses';
@@ -21,12 +15,18 @@ import type { LoadedAddresses } from './loaded-addresses';
  * An outer transaction instruction with its account indices resolved to
  * full {@link AccountMeta}s and its data exposed as a `ReadonlyUint8Array`.
  *
+ * Following the kit `Instruction` conventions, `accounts` and `data` are
+ * present only when non-empty, so `isInstructionWithAccounts` and
+ * `isInstructionWithData` from `@solana/instructions` behave as expected
+ * and can be used to narrow before passing the instruction to the
+ * auto-generated `parseXInstruction` helpers.
+ *
  * @example
  * ```ts
  * for (const ix of getInstructionsFromCompiledTransactionMessage(compiled)) {
  *     // `ix` is a `ResolvedInstruction` — directly usable with auto-generated
- *     // `parseXInstruction` / `identifyXInstruction` helpers, and with
- *     // `isInstructionForProgram` from `@solana/instructions`.
+ *     // `identifyXInstruction` helpers, and with `isInstructionForProgram`
+ *     // from `@solana/instructions`.
  *     identifyTokenInstruction(ix);
  * }
  * ```
@@ -34,9 +34,7 @@ import type { LoadedAddresses } from './loaded-addresses';
 export type ResolvedInstruction<TProgramAddress extends string = string> = Instruction<
     TProgramAddress,
     readonly AccountMeta[]
-> &
-    InstructionWithAccounts<readonly AccountMeta[]> &
-    InstructionWithData<ReadonlyUint8Array>;
+>;
 
 /**
  * The normalized shape of an instruction inside a compiled transaction
@@ -107,7 +105,8 @@ export function getAccountMetasFromCompiledTransactionMessage(
  * Each returned instruction has its account indices resolved to
  * {@link AccountMeta}s (with the proper signer/writable bits) and its data
  * exposed as a `ReadonlyUint8Array` — the form the auto-generated
- * `@solana-program/*` `parseXInstruction` functions expect.
+ * `@solana-program/*` `parseXInstruction` functions expect. `accounts` and
+ * `data` are omitted when empty.
  *
  * Supports `legacy`, `v0`, and `v1` compiled messages. Throws
  * {@link SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED} for any
@@ -200,8 +199,8 @@ function resolveInstruction(ix: NormalizedCompiledInstruction, metas: readonly A
         return meta;
     });
     return {
-        accounts,
-        data: ix.data,
+        ...(accounts.length ? { accounts } : null),
+        ...(ix.data.byteLength ? { data: ix.data } : null),
         programAddress: programMeta.address as Address,
     };
 }

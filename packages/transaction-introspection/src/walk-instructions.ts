@@ -14,10 +14,10 @@ import type { TracedInstruction } from './types';
  * {@link TracedInstruction}s.
  *
  * Each returned instruction has its account indices resolved to
- * {@link AccountMeta}s and its data exposed as a `ReadonlyUint8Array`,
- * making it directly usable with the auto-generated `@solana-program/*`
- * `identifyXInstruction` and `parseXInstruction` functions, and with
- * `isInstructionForProgram` from `@solana/instructions`.
+ * {@link AccountMeta}s and its data exposed as a `ReadonlyUint8Array`
+ * (omitted when empty), making it directly usable with the auto-generated
+ * `@solana-program/*` `identifyXInstruction` and `parseXInstruction`
+ * functions, and with `isInstructionForProgram` from `@solana/instructions`.
  *
  * If `meta` is omitted, only outer instructions are returned. If
  * `loadedAddresses` is omitted, only static accounts are used to resolve
