@@ -1,5 +1,26 @@
 # @solana/rpc-spec
 
+## 6.10.0
+
+### Minor Changes
+
+- [#1555](https://github.com/anza-xyz/kit/pull/1555) [`5e1644d`](https://github.com/anza-xyz/kit/commit/5e1644db15cfe6828d382041e10bf7e58bd7f825) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add a `reactiveStore()` method to `PendingRpcRequest`. It fires the request on construction and synchronously returns a `ReactiveActionStore` that holds the request's `idle`/`running`/`success`/`error` lifecycle state. Compatible with `useSyncExternalStore`, Svelte stores, and other reactive primitives. Call `dispatch()` to re-fire the request (e.g. after an error), or `reset()` to abort the in-flight call and return to idle.
+
+    ```ts
+    const store = rpc.getAccountInfo(address).reactiveStore();
+    const state = useSyncExternalStore(store.subscribe, store.getState);
+    if (state.status === 'error') return <ErrorMessage error={state.error} onRetry={store.dispatch} />;
+    if (state.status === 'running' && !state.data) return <Spinner />;
+    return <View data={state.data!} />;
+    ```
+
+### Patch Changes
+
+- Updated dependencies [[`c318d7f`](https://github.com/anza-xyz/kit/commit/c318d7f2e16fec92859503af41102792be01cece), [`da868aa`](https://github.com/anza-xyz/kit/commit/da868aafa3aec49dc5984d768c65adb471fb71de), [`47a785b`](https://github.com/anza-xyz/kit/commit/47a785bdb47f89443cccb69151650974d0f57f65), [`82a1ac5`](https://github.com/anza-xyz/kit/commit/82a1ac56131ebc2ad43f948feb862172418f8b3d)]:
+    - @solana/subscribable@6.10.0
+    - @solana/errors@6.10.0
+    - @solana/rpc-spec-types@6.10.0
+
 ## 6.9.0
 
 ### Minor Changes

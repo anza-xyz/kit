@@ -1,5 +1,7 @@
 # @solana/nominal-types
 
+## 6.10.0
+
 ## 6.9.0
 
 ### Minor Changes
