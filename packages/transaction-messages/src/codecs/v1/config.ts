@@ -1,4 +1,4 @@
-import { transformDecoder, VariableSizeDecoder, VariableSizeEncoder } from '@solana/codecs-core';
+import { transformDecoder, transformEncoder, VariableSizeDecoder, VariableSizeEncoder } from '@solana/codecs-core';
 import {
     getArrayEncoder,
     getPatternMatchEncoder,
@@ -16,16 +16,28 @@ import {
     transactionConfigMaskHasPriorityFee,
 } from '../../v1-transaction-config';
 
-/* TODO issue #1143 - we have a type error on `getPatternMatchEncoder` where it incorrectly
- * types the return as FixedSizeEncoder when used with differently sized FixedSizEencoder
- * inputs. For now we cast to VariableSizeEncoder, which is what the underlying union codec
- * actually returns.
+type U32Value = Extract<CompiledTransactionConfigValue, { kind: 'u32' }>;
+type U64Value = Extract<CompiledTransactionConfigValue, { kind: 'u64' }>;
+
+/* `getPatternMatchEncoder` correctly infers a variable-size encoder when its branches are
+ * fixed-size encoders of *differing* sizes. It cannot do so here, however, because
+ * `getStructEncoder` types its `fixedSize` as the broad `number` rather than a literal (`4` vs
+ * `8`), so the two branches look like identically-sized fixed encoders and the union widens to a
+ * plain `Encoder`. The runtime result is genuinely variable-size, so we cast accordingly. Once
+ * `getStructEncoder` preserves literal sizes, this cast can be removed.
+ * See https://github.com/anza-xyz/kit/issues/1738
  */
 function getCompiledTransactionConfigValueEncoder(): VariableSizeEncoder<CompiledTransactionConfigValue> {
-    return getPatternMatchEncoder<CompiledTransactionConfigValue>([
-        [value => value.kind === 'u32', getStructEncoder([['value', getU32Encoder()]])],
-        [value => value.kind === 'u64', getStructEncoder([['value', getU64Encoder()]])],
-    ]) as unknown as VariableSizeEncoder<CompiledTransactionConfigValue>;
+    return getPatternMatchEncoder([
+        [
+            (value: CompiledTransactionConfigValue) => value.kind === 'u32',
+            transformEncoder(getStructEncoder([['value', getU32Encoder()]]), (value: U32Value) => value),
+        ],
+        [
+            (value: CompiledTransactionConfigValue) => value.kind === 'u64',
+            transformEncoder(getStructEncoder([['value', getU64Encoder()]]), (value: U64Value) => value),
+        ],
+    ]) as VariableSizeEncoder<CompiledTransactionConfigValue>;
 }
 
 /**
