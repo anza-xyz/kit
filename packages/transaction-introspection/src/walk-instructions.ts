@@ -65,7 +65,17 @@ export function walkInstructions(args: {
     const result: TracedInstruction[] = [];
     outerInstructions.forEach((instruction, index) => {
         result.push({ ...instruction, trace: { index, kind: 'outer' } });
-        result.push(...(innerByOuterIndex.get(index) ?? []));
+        const group = innerByOuterIndex.get(index);
+        if (group) {
+            result.push(...group);
+            innerByOuterIndex.delete(index);
+        }
     });
+    // Inner groups whose index matches no outer instruction can only come
+    // from malformed input (e.g. `meta` paired with the wrong message).
+    // Append them rather than dropping them so no instruction is ever lost.
+    for (const group of innerByOuterIndex.values()) {
+        result.push(...group);
+    }
     return result;
 }

@@ -3,6 +3,7 @@ import type { ReadonlyUint8Array } from '@solana/codecs-core';
 import {
     SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_ACCOUNT_INDEX_OUT_OF_RANGE,
     SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_PROGRAM_ADDRESS_NOT_FOUND,
+    SOLANA_ERROR__TRANSACTION__INSTRUCTION_HEADERS_PAYLOADS_MISMATCH,
     SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED,
     SolanaError,
 } from '@solana/errors';
@@ -165,6 +166,12 @@ function normalizeCompiledInstructions(compiledMessage: CompiledTransactionMessa
     }
     if (compiledMessage.version === 1) {
         const { instructionHeaders, instructionPayloads } = compiledMessage;
+        if (instructionHeaders.length !== instructionPayloads.length) {
+            throw new SolanaError(SOLANA_ERROR__TRANSACTION__INSTRUCTION_HEADERS_PAYLOADS_MISMATCH, {
+                numInstructionHeaders: instructionHeaders.length,
+                numInstructionPayloads: instructionPayloads.length,
+            });
+        }
         return instructionHeaders.map((header, i) => ({
             accountIndices: instructionPayloads[i].instructionAccountIndices,
             data: instructionPayloads[i].instructionData,

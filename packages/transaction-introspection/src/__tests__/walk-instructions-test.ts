@@ -68,6 +68,24 @@ describe('walkInstructions', () => {
         expect(out[4].programAddress).toBe('program-b');
     });
 
+    it('appends inner groups whose index matches no outer instruction', () => {
+        const out = walkInstructions({
+            compiledMessage: compiled,
+            meta: {
+                innerInstructions: [
+                    {
+                        index: 99,
+                        instructions: [
+                            { accounts: [0], data: asB58(new Uint8Array([42])), programIdIndex: 1, stackHeight: 2 },
+                        ],
+                    },
+                ],
+            },
+        });
+        expect(out).toHaveLength(3);
+        expect(out[2].trace).toStrictEqual({ innerIndex: 0, kind: 'inner', outerIndex: 99, stackHeight: 2 });
+    });
+
     it('returned items are usable directly with isInstructionForProgram', () => {
         const PROGRAM_B = 'program-b' as Address<'program-b'>;
         const filtered = walkInstructions({ compiledMessage: compiled }).filter(ix =>

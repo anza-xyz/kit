@@ -2,6 +2,7 @@ import type { Address } from '@solana/addresses';
 import {
     SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_ACCOUNT_INDEX_OUT_OF_RANGE,
     SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_PROGRAM_ADDRESS_NOT_FOUND,
+    SOLANA_ERROR__TRANSACTION__INSTRUCTION_HEADERS_PAYLOADS_MISMATCH,
     SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED,
     SolanaError,
 } from '@solana/errors';
@@ -161,6 +162,31 @@ describe('getInstructionsFromCompiledTransactionMessage', () => {
             programAddress: 'program',
         });
         expect(result[0].data).toStrictEqual(new Uint8Array([1, 2, 3]));
+    });
+
+    it('throws SOLANA_ERROR__TRANSACTION__INSTRUCTION_HEADERS_PAYLOADS_MISMATCH for mismatched v1 messages', () => {
+        const v1 = {
+            configMask: 0,
+            configValues: [],
+            header: {
+                numReadonlyNonSignerAccounts: 1,
+                numReadonlySignerAccounts: 0,
+                numSignerAccounts: 1,
+            },
+            instructionHeaders: [{ numInstructionAccounts: 0, numInstructionDataBytes: 0, programAccountIndex: 1 }],
+            instructionPayloads: [],
+            numInstructions: 1,
+            numStaticAccounts: 2,
+            staticAccounts: ['fee-payer' as Address, 'program' as Address],
+            version: 1,
+        } as unknown as CompiledTransactionMessage;
+        const err = getThrownError(() => getInstructionsFromCompiledTransactionMessage(v1));
+        expect(err).toBeInstanceOf(SolanaError);
+        expect((err as SolanaError).context).toMatchObject({
+            __code: SOLANA_ERROR__TRANSACTION__INSTRUCTION_HEADERS_PAYLOADS_MISMATCH,
+            numInstructionHeaders: 1,
+            numInstructionPayloads: 0,
+        });
     });
 
     it('throws SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED for unknown versions', () => {

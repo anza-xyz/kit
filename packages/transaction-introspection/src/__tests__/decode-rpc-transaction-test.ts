@@ -95,6 +95,40 @@ describe('decodeTransactionFromRpcResponse', () => {
         expect(result.loadedAddresses).toStrictEqual({ readonly: [], writable: [] });
     });
 
+    it('decodes a base64 (v1) response into a v1 CompiledTransactionMessage', () => {
+        const b64 = buildBase64Tx({
+            configMask: 0,
+            configValues: [],
+            header: {
+                numReadonlyNonSignerAccounts: 1,
+                numReadonlySignerAccounts: 0,
+                numSignerAccounts: 1,
+            },
+            instructionHeaders: [{ numInstructionAccounts: 1, numInstructionDataBytes: 1, programAccountIndex: 1 }],
+            instructionPayloads: [{ instructionAccountIndices: [0], instructionData: new Uint8Array([7]) }],
+            numInstructions: 1,
+            numStaticAccounts: 2,
+            staticAccounts: [
+                '11111111111111111111111111111112' as Address,
+                '11111111111111111111111111111113' as Address,
+            ],
+            version: 1,
+        } as Partial<EncodableCompiledMessage>);
+        const rpcTx = { meta: null, transaction: [b64, 'base64'] } as unknown as GetTransactionApiResponseBase64<1>;
+        const result = decodeTransactionFromRpcResponse(rpcTx);
+
+        expect(result.compiledMessage.version).toBe(1);
+        const v1 = result.compiledMessage as Extract<typeof result.compiledMessage, { version: 1 }>;
+        expect(v1.staticAccounts).toStrictEqual([
+            '11111111111111111111111111111112',
+            '11111111111111111111111111111113',
+        ]);
+        expect(v1.instructionHeaders[0].programAccountIndex).toBe(1);
+        expect(v1.instructionPayloads[0].instructionData).toStrictEqual(new Uint8Array([7]));
+        expect(result.compiledMessage.lifetimeToken).toBe('11111111111111111111111111111111');
+        expect(result.transaction.signatures).toBeDefined();
+    });
+
     it('decodes a valid base58 response into a Transaction + CompiledTransactionMessage', () => {
         const b64 = buildBase64Tx();
         const wireBytes = getBase64Encoder().encode(b64) as Uint8Array;
