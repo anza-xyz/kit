@@ -530,6 +530,9 @@ importers:
 
   packages/errors:
     dependencies:
+      '@solana/errors-core':
+        specifier: workspace:*
+        version: link:../errors-core
       chalk:
         specifier: 5.6.2
         version: 5.6.2
@@ -538,6 +541,12 @@ importers:
         version: 15.0.0
       typescript:
         specifier: '>=5.4.0'
+        version: 5.9.3
+
+  packages/errors-core:
+    dependencies:
+      typescript:
+        specifier: '>=5.0.0'
         version: 5.9.3
 
   packages/eslint-config:
