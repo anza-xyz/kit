@@ -203,43 +203,36 @@ function isBase58Response(rpcTx: AnyGetTransactionResponse): rpcTx is GetTransac
     return Array.isArray(t) && t[1] === 'base58';
 }
 
-function getJsonMessageInstructions(rpcTx: AnyGetTransactionResponse): readonly unknown[] | undefined {
+function getJsonShapedMessage(rpcTx: AnyGetTransactionResponse): Record<string, unknown> | undefined {
     const t = rpcTx.transaction;
     if (typeof t !== 'object' || t === null || Array.isArray(t) || !('message' in t)) return undefined;
     const message = (t as { message?: { instructions?: readonly unknown[] } }).message;
-    if (!message || !Array.isArray(message.instructions)) return undefined;
-    return message.instructions;
+    if (!message || typeof message !== 'object' || !Array.isArray(message.instructions)) return undefined;
+    return message as Record<string, unknown>;
 }
 
 /**
- * Detects an `encoding: 'json'` response specifically — i.e. one whose
- * instructions carry numeric account indices and a `programIdIndex`. A
- * `jsonParsed` response also has a `transaction.message.instructions`
- * shape but its instructions carry `programId` (an `Address`, not an
- * index) and either a `parsed` blob or `accounts: Address[]` with
- * `programId`. Those are not round-trippable through the kit codecs and
- * are rejected.
+ * Detects an `encoding: 'json'` response specifically: its message carries
+ * the compiled-message `header` (signer/readonly counts). A `jsonParsed`
+ * message has no `header` — the server has already resolved the roles onto
+ * each of its `accountKeys` — so checking for it distinguishes the two
+ * encodings regardless of how many instructions the transaction has.
  */
 function isJsonResponse(rpcTx: AnyGetTransactionResponse): rpcTx is GetTransactionApiResponseJson {
-    const instructions = getJsonMessageInstructions(rpcTx);
-    if (!instructions) return false;
-    // No instructions: either `json` or `jsonParsed` could produce this shape, but
-    // there's nothing to decode incorrectly either way — accept it as `json`.
-    if (instructions.length === 0) return true;
-    const first = instructions[0] as Record<string, unknown>;
-    return typeof first.programIdIndex === 'number' && Array.isArray(first.accounts);
+    const message = getJsonShapedMessage(rpcTx);
+    return message != null && typeof message.header === 'object' && message.header !== null;
 }
 
 /**
- * Detects an `encoding: 'jsonParsed'` response: its instructions carry a
- * `programId` address rather than the `programIdIndex` that the `'json'`
- * encoding uses.
+ * Detects an `encoding: 'jsonParsed'` response: structurally a JSON message
+ * but without the compiled-message `header` that the `'json'` encoding
+ * carries. Its instructions arrive pre-parsed (with a `programId` address
+ * rather than a `programIdIndex`) and are not round-trippable through the
+ * kit codecs, so these responses are rejected.
  */
 function isJsonParsedResponse(rpcTx: AnyGetTransactionResponse): boolean {
-    const instructions = getJsonMessageInstructions(rpcTx);
-    if (!instructions || instructions.length === 0) return false;
-    const first = instructions[0] as Record<string, unknown>;
-    return typeof first.programId === 'string' && !('programIdIndex' in first);
+    const message = getJsonShapedMessage(rpcTx);
+    return message != null && !('header' in message);
 }
 
 /**

@@ -267,6 +267,27 @@ describe('decodeTransactionFromRpcResponse', () => {
         );
     });
 
+    it('rejects a `jsonParsed` response with no instructions', () => {
+        // A fee-only transaction has no instructions to sniff, but the absence
+        // of `message.header` still identifies the response as `jsonParsed`.
+        const rpcTx = {
+            meta: null,
+            transaction: {
+                message: {
+                    accountKeys: [
+                        { pubkey: 'fee-payer' as Address, signer: true, source: 'transaction', writable: true },
+                    ],
+                    instructions: [],
+                    recentBlockhash: '11111111111111111111111111111111',
+                },
+                signatures: [],
+            },
+        } as unknown as GetTransactionApiResponseJson;
+        expect(() => decodeTransactionFromRpcResponse(rpcTx)).toThrow(
+            new SolanaError(SOLANA_ERROR__TRANSACTION_INTROSPECTION__CANNOT_DECODE_JSON_PARSED_TRANSACTION),
+        );
+    });
+
     it('rejects a `jsonParsed` response with `partiallyDecoded` instructions', () => {
         // Partially-decoded jsonParsed instructions lack programIdIndex/accounts:number[] too.
         const rpcTx = {
