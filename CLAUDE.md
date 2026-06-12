@@ -46,7 +46,7 @@ Four private "impl" packages (`@solana/crypto-impl`, `@solana/text-encoding-impl
 - **Framework**: Jest v30 with `@swc/jest` for TypeScript transformation.
 - **Shared config**: `packages/test-config/` (`@solana/test-config`).
 - **File naming**: `*-test.ts` (runs in both environments), `*-test.node.ts` (Node only), `*-test.browser.ts` (browser/jsdom only). Tests live in `src/__tests__/`.
-- **Type tests**: `src/__typetests__/` directories contain compile-time type tests using `satisfies` and `@ts-expect-error`.
+- **Type tests**: `src/__typetests__/` directories contain compile-time type tests using `satisfies` and `@ts-expect-error`. Structure each file as one or more `// [DESCRIBE] <name>` blocks, with each individual test wrapped in its own nested `{ ... }` block (preceded by a one-line `// comment` describing the test) so that variable scopes don't leak between tests.
 - **Lint/prettier**: Also run through Jest runners (`jest-runner-eslint`, `jest-runner-prettier`).
 - **Commands**: `pnpm test` runs all unit tests. `pnpm lint` runs lint checks. `pnpm style:fix` auto-fixes formatting.
 - **`expect.assertions`**: Only use `expect.assertions(n)` in **async** tests (where you need to guarantee the expected number of assertions ran). Synchronous tests do not need it.
