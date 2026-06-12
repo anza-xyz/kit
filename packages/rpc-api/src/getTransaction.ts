@@ -295,6 +295,71 @@ type TransactionAddressTableLookups = Readonly<{
     }>;
 }>;
 
+/**
+ * Common envelope for every non-null `getTransaction` response, regardless of
+ * encoding. The conditional shape mirrors the API: when
+ * `TMaxSupportedTransactionVersion` is unset (`void`), the response carries no
+ * `version` field; when set, the resolved `TransactionVersion` is included.
+ */
+type GetTransactionApiResponseEnvelope<TMaxSupportedTransactionVersion extends TransactionVersion | void = void> =
+    GetTransactionApiResponseBase &
+        (TMaxSupportedTransactionVersion extends void ? Record<string, never> : { version: TransactionVersion });
+
+/**
+ * The non-parsed `meta` shape returned with `encoding: 'base64'`, `'base58'`, or
+ * `'json'`. `loadedAddresses` is only populated when
+ * `TMaxSupportedTransactionVersion` is set on the request.
+ */
+type TransactionMetaNotParsed<TMaxSupportedTransactionVersion extends TransactionVersion | void = void> =
+    | (TransactionMetaBase &
+          TransactionMetaInnerInstructionsNotParsed &
+          (TMaxSupportedTransactionVersion extends void ? Record<string, never> : TransactionMetaLoadedAddresses))
+    | null;
+
+/**
+ * The shape of a non-null `getTransaction` response when called with
+ * `encoding: 'base64'`.
+ */
+export type GetTransactionApiResponseBase64<TMaxSupportedTransactionVersion extends TransactionVersion | void = void> =
+    GetTransactionApiResponseEnvelope<TMaxSupportedTransactionVersion> & {
+        meta: TransactionMetaNotParsed<TMaxSupportedTransactionVersion>;
+        transaction: Base64EncodedDataResponse;
+    };
+
+/**
+ * The shape of a non-null `getTransaction` response when called with
+ * `encoding: 'base58'`.
+ */
+export type GetTransactionApiResponseBase58<TMaxSupportedTransactionVersion extends TransactionVersion | void = void> =
+    GetTransactionApiResponseEnvelope<TMaxSupportedTransactionVersion> & {
+        meta: TransactionMetaNotParsed<TMaxSupportedTransactionVersion>;
+        transaction: Base58EncodedDataResponse;
+    };
+
+/**
+ * The shape of a non-null `getTransaction` response when called with
+ * `encoding: 'json'` (the default).
+ */
+export type GetTransactionApiResponseJson<TMaxSupportedTransactionVersion extends TransactionVersion | void = void> =
+    GetTransactionApiResponseEnvelope<TMaxSupportedTransactionVersion> & {
+        meta: TransactionMetaNotParsed<TMaxSupportedTransactionVersion>;
+        transaction: TransactionJson &
+            (TMaxSupportedTransactionVersion extends void ? Record<string, never> : TransactionAddressTableLookups);
+    };
+
+/**
+ * The shape of a non-null `getTransaction` response when called with
+ * `encoding: 'jsonParsed'`. Inner instructions and instruction data are
+ * parsed by the server when a parser is registered for the program.
+ */
+export type GetTransactionApiResponseJsonParsed<
+    TMaxSupportedTransactionVersion extends TransactionVersion | void = void,
+> = GetTransactionApiResponseEnvelope<TMaxSupportedTransactionVersion> & {
+    meta: (TransactionMetaBase & TransactionMetaInnerInstructionsParsed) | null;
+    transaction: TransactionJsonParsed &
+        (TMaxSupportedTransactionVersion extends void ? Record<string, never> : TransactionAddressTableLookups);
+};
+
 export type GetTransactionApi = {
     /**
      * Returns details of the confirmed transaction identified by the given signature.
@@ -318,18 +383,7 @@ export type GetTransactionApi = {
             Readonly<{
                 encoding: 'jsonParsed';
             }>,
-    ):
-        | (GetTransactionApiResponseBase &
-              (TMaxSupportedTransactionVersion extends void
-                  ? Record<string, never>
-                  : { version: TransactionVersion }) & {
-                  meta: (TransactionMetaBase & TransactionMetaInnerInstructionsParsed) | null;
-                  transaction: TransactionJsonParsed &
-                      (TMaxSupportedTransactionVersion extends void
-                          ? Record<string, never>
-                          : TransactionAddressTableLookups);
-              })
-        | null;
+    ): GetTransactionApiResponseJsonParsed<TMaxSupportedTransactionVersion> | null;
     /**
      * Returns details of the confirmed transaction identified by the given signature.
      *
@@ -349,21 +403,7 @@ export type GetTransactionApi = {
             Readonly<{
                 encoding: 'base64';
             }>,
-    ):
-        | (GetTransactionApiResponseBase &
-              (TMaxSupportedTransactionVersion extends void
-                  ? Record<string, never>
-                  : { version: TransactionVersion }) & {
-                  meta:
-                      | (TransactionMetaBase &
-                            TransactionMetaInnerInstructionsNotParsed &
-                            (TMaxSupportedTransactionVersion extends void
-                                ? Record<string, never>
-                                : TransactionMetaLoadedAddresses))
-                      | null;
-                  transaction: Base64EncodedDataResponse;
-              })
-        | null;
+    ): GetTransactionApiResponseBase64<TMaxSupportedTransactionVersion> | null;
     /**
      * Returns details of the confirmed transaction identified by the given signature.
      *
@@ -383,21 +423,7 @@ export type GetTransactionApi = {
             Readonly<{
                 encoding: 'base58';
             }>,
-    ):
-        | (GetTransactionApiResponseBase &
-              (TMaxSupportedTransactionVersion extends void
-                  ? Record<string, never>
-                  : { version: TransactionVersion }) & {
-                  meta:
-                      | (TransactionMetaBase &
-                            TransactionMetaInnerInstructionsNotParsed &
-                            (TMaxSupportedTransactionVersion extends void
-                                ? Record<string, never>
-                                : TransactionMetaLoadedAddresses))
-                      | null;
-                  transaction: Base58EncodedDataResponse;
-              })
-        | null;
+    ): GetTransactionApiResponseBase58<TMaxSupportedTransactionVersion> | null;
     /**
      * Returns details of the confirmed transaction identified by the given signature.
      *
@@ -416,22 +442,5 @@ export type GetTransactionApi = {
             Readonly<{
                 encoding?: 'json';
             }>,
-    ):
-        | (GetTransactionApiResponseBase &
-              (TMaxSupportedTransactionVersion extends void
-                  ? Record<string, never>
-                  : { version: TransactionVersion }) & {
-                  meta:
-                      | (TransactionMetaBase &
-                            TransactionMetaInnerInstructionsNotParsed &
-                            (TMaxSupportedTransactionVersion extends void
-                                ? Record<string, never>
-                                : TransactionMetaLoadedAddresses))
-                      | null;
-                  transaction: TransactionJson &
-                      (TMaxSupportedTransactionVersion extends void
-                          ? Record<string, never>
-                          : TransactionAddressTableLookups);
-              })
-        | null;
+    ): GetTransactionApiResponseJson<TMaxSupportedTransactionVersion> | null;
 };
