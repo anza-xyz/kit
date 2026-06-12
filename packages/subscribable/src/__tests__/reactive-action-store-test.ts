@@ -463,6 +463,37 @@ describe('createReactiveActionStore', () => {
             resolveSecond('second');
         });
 
+        it('preserves the last `error` across a subsequent `running` state', async () => {
+            expect.assertions(1);
+            const failure = new Error('boom');
+            const { promise: second } = Promise.withResolvers<string>();
+            const results = [Promise.reject(failure), second];
+            const store = createReactiveActionStore(() => results.shift()!);
+            await store.dispatchAsync().catch(() => {});
+            store.dispatch();
+            expect(store.getState()).toStrictEqual({
+                data: undefined,
+                error: failure,
+                status: 'running',
+            });
+        });
+
+        it('preserves both stale `data` and stale `error` across a subsequent `running` state', async () => {
+            expect.assertions(1);
+            const failure = new Error('boom');
+            const { promise: third } = Promise.withResolvers<string>();
+            const results = [Promise.resolve('first'), Promise.reject(failure), third];
+            const store = createReactiveActionStore(() => results.shift()!);
+            await store.dispatchAsync();
+            await store.dispatchAsync().catch(() => {});
+            store.dispatch();
+            expect(store.getState()).toStrictEqual({
+                data: 'first',
+                error: failure,
+                status: 'running',
+            });
+        });
+
         it('preserves the last successful `data` across a subsequent `error` state', async () => {
             expect.assertions(1);
             const failure = new Error('boom');
