@@ -12,6 +12,12 @@ import {
 } from '@solana/transaction-messages';
 import { getTransactionMessageSize, getTransactionMessageSizeLimit } from '@solana/transactions';
 
+import {
+    assertMaxInstructionsPerTransaction,
+    assertValidMaxInstructionsPerTransaction,
+    resolveMaxInstructions,
+} from './max-instructions';
+
 /**
  * A set of instructions with constraints on how they can be executed.
  *
@@ -217,8 +223,9 @@ export type MessagePackerInstructionPlan = Readonly<{
  *
  * It offers a `packMessageToCapacity(transactionMessage)` method that packs as many instructions
  * as possible into the provided transaction message, while still being able to fit into the
- * transaction size limit. It returns the updated transaction message with the packed instructions
- * or throws an error if the current transaction message cannot accommodate this plan.
+ * transaction size limit and the default or configured instruction-count limit. It returns the updated
+ * transaction message with the packed instructions or throws an error if the current transaction
+ * message cannot accommodate this plan.
  *
  * The `done()` method checks whether there are more instructions to pack into
  * transaction messages.
@@ -250,9 +257,26 @@ export type MessagePacker = Readonly<{
      *   if the provided transaction message cannot be used to fill the next instructions.
      * @throws {@link SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_PACKER_ALREADY_COMPLETE}
      *   if the message packer is already done and no more instructions can be packed.
+     * @throws {@link SOLANA_ERROR__INSTRUCTION_PLANS__MAX_INSTRUCTIONS_PER_TRANSACTION_EXCEEDED}
+     *   if the provided transaction message has already reached the configured `maxInstructions`
+     *   ceiling, so no further instruction can be packed into it.
+     * @throws {@link SOLANA_ERROR__INSTRUCTION_PLANS__INVALID_MAX_INSTRUCTIONS_PER_TRANSACTION}
+     *   if `maxInstructions` exceeds the number of top-level instructions the transaction format
+     *   can encode.
      */
     packMessageToCapacity: (
         transactionMessage: TransactionMessage & TransactionMessageWithFeePayer,
+        config?: {
+            /**
+             * Maximum number of instructions allowed in the returned transaction message.
+             *
+             * Must be a positive integer no greater than `64` — the number of top-level instructions
+             * the transaction format can encode. Larger values throw. Defaults to 16. This is the
+             * message-packer equivalent of the transaction planner's `maxInstructionsPerTransaction`
+             * option.
+             */
+            maxInstructions?: number;
+        },
     ) => TransactionMessage & TransactionMessageWithFeePayer;
 }>;
 
@@ -925,10 +949,16 @@ export function getLinearMessagePackerInstructionPlan({
             let offset = 0;
             return Object.freeze({
                 done: () => offset >= totalBytes,
-                packMessageToCapacity: (message: TransactionMessage & TransactionMessageWithFeePayer) => {
+                packMessageToCapacity: (
+                    message: TransactionMessage & TransactionMessageWithFeePayer,
+                    config?: { maxInstructions?: number },
+                ) => {
                     if (offset >= totalBytes) {
                         throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_PACKER_ALREADY_COMPLETE);
                     }
+                    assertValidMaxInstructionsPerTransaction(config?.maxInstructions);
+                    const maxInstructions = resolveMaxInstructions(config?.maxInstructions);
+                    assertMaxInstructionsPerTransaction(message.instructions.length + 1, maxInstructions);
 
                     const messageSizeWithBaseInstruction = getTransactionMessageSize(
                         appendTransactionMessageInstruction(getInstruction(offset, 0), message),
@@ -995,30 +1025,50 @@ export function getMessagePackerInstructionPlanFromInstructions<TInstruction ext
             let instructionIndex = 0;
             return Object.freeze({
                 done: () => instructionIndex >= instructions.length,
-                packMessageToCapacity: (message: TransactionMessage & TransactionMessageWithFeePayer) => {
+                packMessageToCapacity: (
+                    message: TransactionMessage & TransactionMessageWithFeePayer,
+                    config?: { maxInstructions?: number },
+                ) => {
                     if (instructionIndex >= instructions.length) {
                         throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_PACKER_ALREADY_COMPLETE);
                     }
 
                     const originalMessageSize = getTransactionMessageSize(message);
+                    assertValidMaxInstructionsPerTransaction(config?.maxInstructions);
+                    const maxInstructions = resolveMaxInstructions(config?.maxInstructions);
+
+                    // We must be able to fit at least the next instruction; throw otherwise. Once at
+                    // least one has been packed, hitting the limit simply stops packing into this message.
+                    assertMaxInstructionsPerTransaction(message.instructions.length + 1, maxInstructions);
 
                     for (let index = instructionIndex; index < instructions.length; index++) {
-                        message = appendTransactionMessageInstruction(instructions[index], message);
-                        const messageSize = getTransactionMessageSize(message);
+                        // Stop once the message is full, before compiling a message that exceeds the
+                        // instruction limit (which would throw). The assertion above guarantees at least
+                        // the first instruction fits, so reaching the limit here means a graceful stop.
+                        if (message.instructions.length >= maxInstructions) {
+                            instructionIndex = index;
+                            return message;
+                        }
 
-                        if (messageSize > getTransactionMessageSizeLimit(message)) {
+                        const nextMessage = appendTransactionMessageInstruction(instructions[index], message);
+                        const messageSize = getTransactionMessageSize(nextMessage);
+
+                        if (messageSize > getTransactionMessageSizeLimit(nextMessage)) {
                             if (index === instructionIndex) {
+                                // The count was already asserted above, so reaching here on the first
+                                // instruction can only be due to the transaction size limit.
                                 throw new SolanaError(
                                     SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN,
                                     {
                                         numBytesRequired: messageSize - originalMessageSize,
-                                        numFreeBytes: getTransactionMessageSizeLimit(message) - originalMessageSize,
+                                        numFreeBytes: getTransactionMessageSizeLimit(nextMessage) - originalMessageSize,
                                     },
                                 );
                             }
                             instructionIndex = index;
                             return message;
                         }
+                        message = nextMessage;
                     }
 
                     instructionIndex = instructions.length;

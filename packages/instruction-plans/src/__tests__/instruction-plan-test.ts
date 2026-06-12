@@ -2,6 +2,8 @@ import '@solana/test-matchers/toBeFrozenObject';
 
 import { Address } from '@solana/addresses';
 import {
+    SOLANA_ERROR__INSTRUCTION_PLANS__INVALID_MAX_INSTRUCTIONS_PER_TRANSACTION,
+    SOLANA_ERROR__INSTRUCTION_PLANS__MAX_INSTRUCTIONS_PER_TRANSACTION_EXCEEDED,
     SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN,
     SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_PACKER_ALREADY_COMPLETE,
     SolanaError,
@@ -279,6 +281,35 @@ describe('getLinearMessagePackerInstructionPlan', () => {
             }),
         );
     });
+    it('throws if the provided message has already reached the maximum number of instructions', () => {
+        const fullMessage = pipe(message, m => appendTransactionMessageInstruction(createInstruction('existing'), m));
+        const plan = getLinearMessagePackerInstructionPlan({
+            getInstruction: (offset: number, length: number) => createInstruction(`[${offset},${offset + length})`),
+            totalLength: 2000,
+        });
+
+        const messagePacker = plan.getMessagePacker();
+        expect(() => messagePacker.packMessageToCapacity(fullMessage, { maxInstructions: 1 })).toThrow(
+            new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__MAX_INSTRUCTIONS_PER_TRANSACTION_EXCEEDED, {
+                maxInstructions: 1,
+                numInstructions: 2,
+            }),
+        );
+    });
+    it('throws if the configured maximum exceeds the transaction instruction limit', () => {
+        const plan = getLinearMessagePackerInstructionPlan({
+            getInstruction: (offset: number, length: number) => createInstruction(`[${offset},${offset + length})`),
+            totalLength: 2000,
+        });
+
+        const messagePacker = plan.getMessagePacker();
+        expect(() => messagePacker.packMessageToCapacity(message, { maxInstructions: 65 })).toThrow(
+            new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__INVALID_MAX_INSTRUCTIONS_PER_TRANSACTION, {
+                maxInstructions: 65,
+                transactionInstructionLimit: 64,
+            }),
+        );
+    });
     it('freezes the messagePacker returned by getMessagePacker', () => {
         const plan = getLinearMessagePackerInstructionPlan({
             getInstruction: (offset: number, length: number) => createInstruction(`[${offset},${offset + length})`),
@@ -307,6 +338,49 @@ describe('getMessagePackerInstructionPlanFromInstructions', () => {
         expect(messagePacker.done()).toBe(true);
         expect(() => messagePacker.packMessageToCapacity(message)).toThrow(
             new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_PACKER_ALREADY_COMPLETE),
+        );
+    });
+    it('packs at most 16 instructions into a message by default', () => {
+        const instructions = Array.from({ length: 17 }, (_, index) => createInstruction(`I${index}`));
+        const plan = getMessagePackerInstructionPlanFromInstructions(instructions);
+
+        const messagePacker = plan.getMessagePacker();
+        expect(messagePacker.packMessageToCapacity(message).instructions).toStrictEqual(instructions.slice(0, 16));
+        expect(messagePacker.done()).toBe(false);
+        expect(messagePacker.packMessageToCapacity(message).instructions).toStrictEqual(instructions.slice(16));
+        expect(messagePacker.done()).toBe(true);
+    });
+    it('supports overriding the default maximum number of instructions', () => {
+        const instructions = Array.from({ length: 17 }, (_, index) => createInstruction(`I${index}`));
+        const plan = getMessagePackerInstructionPlanFromInstructions(instructions);
+
+        const messagePacker = plan.getMessagePacker();
+        expect(messagePacker.packMessageToCapacity(message, { maxInstructions: 32 }).instructions).toStrictEqual(
+            instructions,
+        );
+        expect(messagePacker.done()).toBe(true);
+    });
+    it('throws if the provided message has already reached the maximum number of instructions', () => {
+        const fullMessage = pipe(message, m => appendTransactionMessageInstruction(createInstruction('existing'), m));
+        const plan = getMessagePackerInstructionPlanFromInstructions([createInstruction('A'), createInstruction('B')]);
+
+        const messagePacker = plan.getMessagePacker();
+        expect(() => messagePacker.packMessageToCapacity(fullMessage, { maxInstructions: 1 })).toThrow(
+            new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__MAX_INSTRUCTIONS_PER_TRANSACTION_EXCEEDED, {
+                maxInstructions: 1,
+                numInstructions: 2,
+            }),
+        );
+    });
+    it('throws if the configured maximum exceeds the transaction instruction limit', () => {
+        const plan = getMessagePackerInstructionPlanFromInstructions([createInstruction('A'), createInstruction('B')]);
+
+        const messagePacker = plan.getMessagePacker();
+        expect(() => messagePacker.packMessageToCapacity(message, { maxInstructions: 65 })).toThrow(
+            new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__INVALID_MAX_INSTRUCTIONS_PER_TRANSACTION, {
+                maxInstructions: 65,
+                transactionInstructionLimit: 64,
+            }),
         );
     });
     it("throws if there isn't enough space on the provided message", () => {

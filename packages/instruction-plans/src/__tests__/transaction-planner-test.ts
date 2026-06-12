@@ -2,6 +2,8 @@ import '@solana/test-matchers/toBeFrozenObject';
 
 import { Address, getAddressDecoder } from '@solana/addresses';
 import {
+    SOLANA_ERROR__INSTRUCTION_PLANS__INVALID_MAX_INSTRUCTIONS_PER_TRANSACTION,
+    SOLANA_ERROR__INSTRUCTION_PLANS__MAX_INSTRUCTIONS_PER_TRANSACTION_EXCEEDED,
     SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN,
     SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNT_ADDRESSES,
     SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNTS_IN_INSTRUCTION,
@@ -19,6 +21,7 @@ import { getTransactionMessageSize, TRANSACTION_SIZE_LIMIT } from '@solana/trans
 
 import {
     createTransactionPlanner,
+    getMessagePackerInstructionPlanFromInstructions,
     InstructionPlan,
     nonDivisibleSequentialInstructionPlan,
     nonDivisibleSequentialTransactionPlan,
@@ -119,7 +122,7 @@ describe('createTransactionPlanner', () => {
             expect.assertions(1);
             const createTransactionMessage = createMockTransactionMessage;
             const { singleTransactionPlan } = getHelpers(createTransactionMessage);
-            const planner = createTransactionPlanner({ createTransactionMessage });
+            const planner = createTransactionPlanner({ createTransactionMessage, maxInstructionsPerTransaction: 64 });
 
             // All 65 instructions share the same program address so they don't add
             // to the unique-account count. The 65th triggers TOO_MANY_INSTRUCTIONS.
@@ -133,6 +136,311 @@ describe('createTransactionPlanner', () => {
                     singleTransactionPlan(instructions.slice(0, 64)),
                     singleTransactionPlan([instruction]),
                 ]),
+            );
+        });
+
+        it('throws if the configured maximum exceeds the hard 64-instruction transaction limit', async () => {
+            expect.assertions(1);
+            const createTransactionMessage = createMockTransactionMessage;
+            const planner = createTransactionPlanner({ createTransactionMessage, maxInstructionsPerTransaction: 65 });
+            const instruction: Instruction = { programAddress: makeAddress(1) };
+            const instructions = Array.from({ length: 66 }, () => instruction);
+
+            await expect(
+                planner(sequentialInstructionPlan(instructions.map(i => singleInstructionPlan(i)))),
+            ).rejects.toThrow(
+                new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__INVALID_MAX_INSTRUCTIONS_PER_TRANSACTION, {
+                    maxInstructions: 65,
+                    transactionInstructionLimit: 64,
+                }),
+            );
+        });
+
+        it('throws if a per-call maximum override exceeds the hard 64-instruction transaction limit', async () => {
+            expect.assertions(1);
+            const createTransactionMessage = createMockTransactionMessage;
+            const planner = createTransactionPlanner({ createTransactionMessage });
+            const instruction: Instruction = { programAddress: makeAddress(1) };
+
+            await expect(
+                planner(singleInstructionPlan(instruction), { maxInstructionsPerTransaction: 100 }),
+            ).rejects.toThrow(
+                new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__INVALID_MAX_INSTRUCTIONS_PER_TRANSACTION, {
+                    maxInstructions: 100,
+                    transactionInstructionLimit: 64,
+                }),
+            );
+        });
+
+        it.each([0, -1, 1.5])(
+            'throws if the configured maximum is not a positive integer (%p)',
+            async maxInstructionsPerTransaction => {
+                expect.assertions(1);
+                const createTransactionMessage = createMockTransactionMessage;
+                const planner = createTransactionPlanner({
+                    createTransactionMessage,
+                    maxInstructionsPerTransaction,
+                });
+                const instruction: Instruction = { programAddress: makeAddress(1) };
+
+                await expect(planner(singleInstructionPlan(instruction))).rejects.toThrow(
+                    new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__INVALID_MAX_INSTRUCTIONS_PER_TRANSACTION, {
+                        maxInstructions: maxInstructionsPerTransaction,
+                        transactionInstructionLimit: 64,
+                    }),
+                );
+            },
+        );
+
+        /**
+         *  [MessagePacker]   ────────────────────────────────────▶   [Seq]
+         *   (70 instructions, same program address, max 64)             │
+         *                                                               ├── [Tx: I0…I63]
+         *                                                               └── [Tx: I64…I69]
+         */
+        it('caps a message packer at the configured maximum of 64 instructions', async () => {
+            expect.assertions(1);
+            const createTransactionMessage = createMockTransactionMessage;
+            const { singleTransactionPlan } = getHelpers(createTransactionMessage);
+            const planner = createTransactionPlanner({
+                createTransactionMessage,
+                maxInstructionsPerTransaction: 64,
+            });
+            const instruction: Instruction = { programAddress: makeAddress(1) };
+            const instructions = Array.from({ length: 70 }, () => instruction);
+
+            await expect(planner(getMessagePackerInstructionPlanFromInstructions(instructions))).resolves.toEqual(
+                sequentialTransactionPlan([
+                    singleTransactionPlan(instructions.slice(0, 64)),
+                    singleTransactionPlan(instructions.slice(64)),
+                ]),
+            );
+        });
+
+        it('throws if the configured maximum exceeds the transaction instruction limit when packing a message', async () => {
+            expect.assertions(1);
+            const createTransactionMessage = createMockTransactionMessage;
+            const planner = createTransactionPlanner({
+                createTransactionMessage,
+                maxInstructionsPerTransaction: 100,
+            });
+            const instruction: Instruction = { programAddress: makeAddress(1) };
+            const instructions = Array.from({ length: 70 }, () => instruction);
+
+            await expect(planner(getMessagePackerInstructionPlanFromInstructions(instructions))).rejects.toThrow(
+                new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__INVALID_MAX_INSTRUCTIONS_PER_TRANSACTION, {
+                    maxInstructions: 100,
+                    transactionInstructionLimit: 64,
+                }),
+            );
+        });
+
+        /**
+         *  [Seq]           ──────────────────────────────────────▶   [Seq]
+         *   │  (17 instructions, same program address)                  │
+         *   ├── [I0]                                                    ├── [Tx: I0…I15]
+         *   ├── …                                                       └── [Tx: I16]
+         *   └── [I16]
+         */
+        it('splits into a new transaction after 16 instructions by default', async () => {
+            expect.assertions(1);
+            const createTransactionMessage = createMockTransactionMessage;
+            const { singleTransactionPlan } = getHelpers(createTransactionMessage);
+            const planner = createTransactionPlanner({ createTransactionMessage });
+            const instruction: Instruction = { programAddress: makeAddress(1) };
+            const instructions = Array.from({ length: 17 }, () => instruction);
+
+            await expect(
+                planner(sequentialInstructionPlan(instructions.map(i => singleInstructionPlan(i)))),
+            ).resolves.toEqual(
+                sequentialTransactionPlan([
+                    singleTransactionPlan(instructions.slice(0, 16)),
+                    singleTransactionPlan([instruction]),
+                ]),
+            );
+        });
+
+        /**
+         *  [Seq]           ──────────────────────────────────────▶   [Seq]
+         *   │  (3 instructions, max 2)                              │
+         *   ├── [A]                                                 ├── [Tx: A + B]
+         *   ├── [B]                                                 └── [Tx: C]
+         *   └── [C]
+         */
+        it('supports a max instruction override on the planner config', async () => {
+            expect.assertions(1);
+            const createTransactionMessage = createMockTransactionMessage;
+            const { instruction, singleTransactionPlan } = getHelpers(createTransactionMessage);
+            const planner = createTransactionPlanner({ createTransactionMessage, maxInstructionsPerTransaction: 2 });
+            const instructionA = instruction('A', 42);
+            const instructionB = instruction('B', 42);
+            const instructionC = instruction('C', 42);
+
+            await expect(
+                planner(
+                    sequentialInstructionPlan([
+                        singleInstructionPlan(instructionA),
+                        singleInstructionPlan(instructionB),
+                        singleInstructionPlan(instructionC),
+                    ]),
+                ),
+            ).resolves.toEqual(
+                sequentialTransactionPlan([
+                    singleTransactionPlan([instructionA, instructionB]),
+                    singleTransactionPlan([instructionC]),
+                ]),
+            );
+        });
+
+        it('supports a max instruction override on an individual planner call', async () => {
+            expect.assertions(1);
+            const createTransactionMessage = createMockTransactionMessage;
+            const { instruction, singleTransactionPlan } = getHelpers(createTransactionMessage);
+            const planner = createTransactionPlanner({ createTransactionMessage, maxInstructionsPerTransaction: 2 });
+            const instructionA = instruction('A', 42);
+            const instructionB = instruction('B', 42);
+            const instructionC = instruction('C', 42);
+
+            await expect(
+                planner(
+                    sequentialInstructionPlan([
+                        singleInstructionPlan(instructionA),
+                        singleInstructionPlan(instructionB),
+                        singleInstructionPlan(instructionC),
+                    ]),
+                    { maxInstructionsPerTransaction: 3 },
+                ),
+            ).resolves.toEqual(singleTransactionPlan([instructionA, instructionB, instructionC]));
+        });
+
+        it('counts instructions added by createTransactionMessage against the max instruction limit', async () => {
+            expect.assertions(1);
+            const instruction = instructionFactory();
+            const structuralInstruction = instruction('structural', 42);
+            const createTransactionMessage = () =>
+                appendTransactionMessageInstructions([structuralInstruction], createMockTransactionMessage());
+            const { singleTransactionPlan } = getHelpers(createTransactionMessage);
+            const planner = createTransactionPlanner({ createTransactionMessage, maxInstructionsPerTransaction: 2 });
+            const instructionA = instruction('A', 42);
+            const instructionB = instruction('B', 42);
+
+            await expect(
+                planner(
+                    sequentialInstructionPlan([
+                        singleInstructionPlan(instructionA),
+                        singleInstructionPlan(instructionB),
+                    ]),
+                ),
+            ).resolves.toEqual(
+                sequentialTransactionPlan([
+                    singleTransactionPlan([instructionA]),
+                    singleTransactionPlan([instructionB]),
+                ]),
+            );
+        });
+
+        it('counts instructions added by onTransactionMessageUpdated against the max instruction limit', async () => {
+            expect.assertions(1);
+            const createTransactionMessage = createMockTransactionMessage;
+            const { instruction, singleTransactionPlan } = getHelpers(createTransactionMessage);
+            const structuralInstruction = instruction('structural', 42);
+            const planner = createTransactionPlanner({
+                createTransactionMessage,
+                maxInstructionsPerTransaction: 2,
+                onTransactionMessageUpdated: message =>
+                    appendTransactionMessageInstructions([structuralInstruction], message),
+            });
+            const instructionA = instruction('A', 42);
+            const instructionB = instruction('B', 42);
+
+            await expect(
+                planner(
+                    sequentialInstructionPlan([
+                        singleInstructionPlan(instructionA),
+                        singleInstructionPlan(instructionB),
+                    ]),
+                ),
+            ).resolves.toEqual(
+                sequentialTransactionPlan([
+                    singleTransactionPlan([instructionA, structuralInstruction]),
+                    singleTransactionPlan([instructionB, structuralInstruction]),
+                ]),
+            );
+        });
+
+        it('uses the max instruction limit when packing message packer plans', async () => {
+            expect.assertions(1);
+            const createTransactionMessage = createMockTransactionMessage;
+            const { instruction, singleTransactionPlan } = getHelpers(createTransactionMessage);
+            const planner = createTransactionPlanner({ createTransactionMessage, maxInstructionsPerTransaction: 2 });
+            const instructionA = instruction('A', 42);
+            const instructionB = instruction('B', 42);
+            const instructionC = instruction('C', 42);
+            const instructionPlan = getMessagePackerInstructionPlanFromInstructions([
+                instructionA,
+                instructionB,
+                instructionC,
+            ]);
+
+            await expect(planner(instructionPlan)).resolves.toEqual(
+                sequentialTransactionPlan([
+                    singleTransactionPlan([instructionA, instructionB]),
+                    singleTransactionPlan([instructionC]),
+                ]),
+            );
+        });
+
+        /**
+         *  [Par]           ──────────────────────────────────────▶   [Par]
+         *   │  (3 instructions, max 2, all fit size-wise)            │
+         *   ├── [A]                                                  ├── [Tx: A + B]
+         *   ├── [B]                                                  └── [Tx: C]
+         *   └── [C]
+         */
+        it('opens a new transaction for a parallel sibling that overflows the max instruction limit', async () => {
+            expect.assertions(1);
+            const createTransactionMessage = createMockTransactionMessage;
+            const { instruction, singleTransactionPlan } = getHelpers(createTransactionMessage);
+            const planner = createTransactionPlanner({ createTransactionMessage, maxInstructionsPerTransaction: 2 });
+            const instructionA = instruction('A', 42);
+            const instructionB = instruction('B', 42);
+            const instructionC = instruction('C', 42);
+
+            // C overflows the per-transaction instruction count (not the size limit), so it must
+            // open a new transaction rather than be silently dropped during candidate selection.
+            await expect(
+                planner(
+                    parallelInstructionPlan([
+                        singleInstructionPlan(instructionA),
+                        singleInstructionPlan(instructionB),
+                        singleInstructionPlan(instructionC),
+                    ]),
+                ),
+            ).resolves.toEqual(
+                parallelTransactionPlan([
+                    singleTransactionPlan([instructionA, instructionB]),
+                    singleTransactionPlan([instructionC]),
+                ]),
+            );
+        });
+
+        it('rejects with MAX_INSTRUCTIONS_PER_TRANSACTION_EXCEEDED when a fresh message already exceeds the limit', async () => {
+            expect.assertions(1);
+            const instruction = instructionFactory();
+            const structuralA = instruction('structuralA', 42);
+            const structuralB = instruction('structuralB', 42);
+            // The fresh message already contains two structural instructions, so a single planned
+            // instruction cannot be added without exceeding the configured maximum of one.
+            const createTransactionMessage = () =>
+                appendTransactionMessageInstructions([structuralA, structuralB], createMockTransactionMessage());
+            const planner = createTransactionPlanner({ createTransactionMessage, maxInstructionsPerTransaction: 1 });
+            const instructionA = instruction('A', 42);
+
+            await expect(planner(singleInstructionPlan(instructionA))).rejects.toThrow(
+                new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__MAX_INSTRUCTIONS_PER_TRANSACTION_EXCEEDED, {
+                    maxInstructions: 1,
+                    numInstructions: 3,
+                }),
             );
         });
 

@@ -23,6 +23,14 @@ import {
         const transactionPlan = planner(instructionPlan);
         transactionPlan satisfies Promise<TransactionPlan>;
     }
+
+    // Its config may override the maximum number of instructions per transaction.
+    {
+        const instructionPlan = null as unknown as InstructionPlan;
+        const planner = null as unknown as TransactionPlanner;
+        const transactionPlan = planner(instructionPlan, { maxInstructionsPerTransaction: 32 });
+        transactionPlan satisfies Promise<TransactionPlan>;
+    }
 }
 
 // [DESCRIBE] createTransactionPlanner
@@ -49,6 +57,16 @@ import {
             onTransactionMessageUpdated: message => {
                 return appendTransactionMessageInstruction({} as unknown as Instruction, message);
             },
+        });
+    }
+
+    // `maxInstructionsPerTransaction` may be configured for all plans created by a planner.
+    {
+        createTransactionPlanner({
+            createTransactionMessage: {} as unknown as Parameters<
+                typeof createTransactionPlanner
+            >[0]['createTransactionMessage'],
+            maxInstructionsPerTransaction: 32,
         });
     }
 }
