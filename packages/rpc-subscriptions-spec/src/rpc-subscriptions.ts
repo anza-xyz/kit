@@ -82,11 +82,10 @@ function createPendingRpcSubscription<TNotification>(
     subscriptionsPlan: RpcSubscriptionsPlan<TNotification>,
 ): PendingRpcSubscriptionsRequest<TNotification> {
     return {
-        reactiveStore({ abortSignal }: RpcSubscribeOptions) {
+        reactiveStore() {
             return createReactiveStoreFromDataPublisherFactory<TNotification>({
-                abortSignal,
-                createDataPublisher() {
-                    return transport({ signal: abortSignal, ...subscriptionsPlan });
+                createDataPublisher(signal) {
+                    return transport({ signal, ...subscriptionsPlan });
                 },
                 dataChannelName: 'notification',
                 errorChannelName: 'error',
