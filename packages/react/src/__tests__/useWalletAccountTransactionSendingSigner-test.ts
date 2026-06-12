@@ -1,16 +1,23 @@
-import { Address } from '@solana/addresses';
-import type { VariableSizeEncoder } from '@solana/codecs-core';
-import { SOLANA_ERROR__SIGNER__WALLET_MULTISIGN_UNIMPLEMENTED, SolanaError } from '@solana/errors';
-import { SignatureBytes } from '@solana/keys';
-import { Transaction, TransactionMessageBytes } from '@solana/transactions';
-import { getTransactionEncoder } from '@solana/transactions';
+import {
+    Address,
+    getTransactionEncoder,
+    SignatureBytes,
+    SOLANA_ERROR__SIGNER__WALLET_MULTISIGN_UNIMPLEMENTED,
+    SolanaError,
+    Transaction,
+    TransactionMessageBytes,
+    type VariableSizeEncoder,
+} from '@solana/kit';
 import type { UiWalletAccount } from '@wallet-standard/ui';
 
 import { renderHook } from '../test-renderer';
 import { useSignAndSendTransaction } from '../useSignAndSendTransaction';
 import { useWalletAccountTransactionSendingSigner } from '../useWalletAccountTransactionSendingSigner';
 
-jest.mock('@solana/transactions');
+jest.mock('@solana/kit', () => ({
+    ...jest.requireActual('@solana/kit'),
+    getTransactionEncoder: jest.fn(),
+}));
 jest.mock('../useSignAndSendTransaction');
 
 describe('useWalletAccountTransactionSendingSigner', () => {

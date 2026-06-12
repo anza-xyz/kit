@@ -1,9 +1,12 @@
-import { address } from '@solana/addresses';
-import { SOLANA_ERROR__SIGNER__WALLET_MULTISIGN_UNIMPLEMENTED, SolanaError } from '@solana/errors';
-import { SignatureBytes } from '@solana/keys';
+import {
+    address,
+    getTransactionEncoder,
+    SignatureBytes,
+    SOLANA_ERROR__SIGNER__WALLET_MULTISIGN_UNIMPLEMENTED,
+    SolanaError,
+    TransactionSendingSigner,
+} from '@solana/kit';
 import { getAbortablePromise } from '@solana/promises';
-import { TransactionSendingSigner } from '@solana/signers';
-import { getTransactionEncoder } from '@solana/transactions';
 import { UiWalletAccount } from '@wallet-standard/ui';
 import { useMemo, useRef } from 'react';
 

@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 
-import type { Client } from '@solana/plugin-core';
+import type { Client } from '@solana/kit';
 
 import { useClient } from '../useClient';
 

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 /* eslint-disable react-hooks/rules-of-hooks */
 
-import { address } from '@solana/addresses';
+import { address } from '@solana/kit';
 import { WalletVersion } from '@wallet-standard/base';
 import { UiWalletAccount } from '@wallet-standard/ui';
 
