@@ -183,12 +183,16 @@ export function createReactiveStoreWithInitialValueAndSlotTracking<TInitialValue
             innerController.abort(err);
         }
 
-        // `lastUpdateSlot` persists across reconnects so the store never regresses. If a source
-        // delivers a value at a slot older than one we've already seen, we keep waiting for
-        // something newer before leaving `loading`.
+        // `lastUpdateSlot` persists across reconnects so the surfaced value never regresses.
         function handleSlottedValue({ context: { slot }, value }: SolanaRpcResponse<TItem>) {
             if (signal.aborted) return;
-            if (slot < lastUpdateSlot) return;
+            if (slot < lastUpdateSlot) {
+                // Stale slot: keep the newer `data` we already hold, but still set `loaded`.
+                if (currentState.data !== undefined) {
+                    setState({ data: currentState.data, error: undefined, status: 'loaded' });
+                }
+                return;
+            }
             lastUpdateSlot = slot;
             setState({ data: { context: { slot }, value }, error: undefined, status: 'loaded' });
         }
