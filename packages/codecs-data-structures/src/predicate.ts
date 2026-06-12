@@ -1,17 +1,37 @@
-import {
-    Codec,
-    Decoder,
-    Encoder,
-    FixedSizeCodec,
-    FixedSizeDecoder,
-    FixedSizeEncoder,
-    ReadonlyUint8Array,
-    VariableSizeCodec,
-    VariableSizeDecoder,
-    VariableSizeEncoder,
-} from '@solana/codecs-core';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { Codec, Decoder, Encoder, ReadonlyUint8Array } from '@solana/codecs-core';
 
 import { getUnionCodec, getUnionDecoder, getUnionEncoder } from './union';
+import {
+    GetDecoderTypeFromVariants,
+    GetEncoderTypeFromVariants,
+    GetUnionCodecType,
+    GetUnionDecoderType,
+    GetUnionEncoderType,
+} from './utils';
+
+// Keep predicate branches on one value type. Pattern matching supports type guards for narrowed branches.
+type SameType<TExpected, TActual> = [TExpected] extends [TActual]
+    ? [TActual] extends [TExpected]
+        ? unknown
+        : never
+    : never;
+
+type SameEncoderType<TIfTrue extends Encoder<any>, TIfFalse extends Encoder<any>> = SameType<
+    GetEncoderTypeFromVariants<readonly [TIfTrue]>,
+    GetEncoderTypeFromVariants<readonly [TIfFalse]>
+>;
+
+type SameDecoderType<TIfTrue extends Decoder<any>, TIfFalse extends Decoder<any>> = SameType<
+    GetDecoderTypeFromVariants<readonly [TIfTrue]>,
+    GetDecoderTypeFromVariants<readonly [TIfFalse]>
+>;
+
+type SameCodecType<TIfTrue extends Codec<any>, TIfFalse extends Codec<any>> = SameType<
+    GetEncoderTypeFromVariants<readonly [TIfTrue]>,
+    GetEncoderTypeFromVariants<readonly [TIfFalse]>
+> &
+    SameType<GetDecoderTypeFromVariants<readonly [TIfTrue]>, GetDecoderTypeFromVariants<readonly [TIfFalse]>>;
 
 /**
  * Returns an encoder that selects between two encoders based on a predicate.
@@ -47,32 +67,18 @@ import { getUnionCodec, getUnionDecoder, getUnionEncoder } from './union';
  *
  * @see {@link getPredicateCodec}
  */
-export function getPredicateEncoder<TFrom, TSize extends number>(
+export function getPredicateEncoder<
+    TFrom = any,
+    const TIfTrue extends Encoder<TFrom> = Encoder<TFrom>,
+    const TIfFalse extends Encoder<TFrom> = Encoder<TFrom>,
+>(
     predicate: (value: TFrom) => boolean,
-    ifTrue: FixedSizeEncoder<TFrom, TSize>,
-    ifFalse: FixedSizeEncoder<TFrom, TSize>,
-): FixedSizeEncoder<TFrom, TSize>;
-export function getPredicateEncoder<TFrom>(
-    predicate: (value: TFrom) => boolean,
-    ifTrue: FixedSizeEncoder<TFrom>,
-    ifFalse: FixedSizeEncoder<TFrom>,
-): FixedSizeEncoder<TFrom>;
-export function getPredicateEncoder<TFrom>(
-    predicate: (value: TFrom) => boolean,
-    ifTrue: VariableSizeEncoder<TFrom>,
-    ifFalse: VariableSizeEncoder<TFrom>,
-): VariableSizeEncoder<TFrom>;
-export function getPredicateEncoder<TFrom>(
-    predicate: (value: TFrom) => boolean,
-    ifTrue: Encoder<TFrom>,
-    ifFalse: Encoder<TFrom>,
-): Encoder<TFrom>;
-export function getPredicateEncoder<TFrom>(
-    predicate: (value: TFrom) => boolean,
-    ifTrue: Encoder<TFrom>,
-    ifFalse: Encoder<TFrom>,
-): Encoder<TFrom> {
-    return getUnionEncoder([ifTrue, ifFalse], (value: TFrom) => (predicate(value) ? 0 : 1));
+    ifTrue: TIfTrue,
+    ifFalse: SameEncoderType<TIfTrue, TIfFalse> & TIfFalse,
+): GetUnionEncoderType<readonly [TIfTrue, TIfFalse]> {
+    return getUnionEncoder([ifTrue, ifFalse], (value: GetEncoderTypeFromVariants<readonly [TIfTrue, TIfFalse]>) =>
+        predicate(value as TFrom) ? 0 : 1,
+    ) as GetUnionEncoderType<readonly [TIfTrue, TIfFalse]>;
 }
 
 /**
@@ -107,32 +113,18 @@ export function getPredicateEncoder<TFrom>(
  *
  * @see {@link getPredicateCodec}
  */
-export function getPredicateDecoder<TTo, TSize extends number>(
+export function getPredicateDecoder<
+    TTo = any,
+    const TIfTrue extends Decoder<TTo> = Decoder<TTo>,
+    const TIfFalse extends Decoder<TTo> = Decoder<TTo>,
+>(
     predicate: (value: ReadonlyUint8Array) => boolean,
-    ifTrue: FixedSizeDecoder<TTo, TSize>,
-    ifFalse: FixedSizeDecoder<TTo, TSize>,
-): FixedSizeDecoder<TTo, TSize>;
-export function getPredicateDecoder<TTo>(
-    predicate: (value: ReadonlyUint8Array) => boolean,
-    ifTrue: FixedSizeDecoder<TTo>,
-    ifFalse: FixedSizeDecoder<TTo>,
-): FixedSizeDecoder<TTo>;
-export function getPredicateDecoder<TTo>(
-    predicate: (value: ReadonlyUint8Array) => boolean,
-    ifTrue: VariableSizeDecoder<TTo>,
-    ifFalse: VariableSizeDecoder<TTo>,
-): VariableSizeDecoder<TTo>;
-export function getPredicateDecoder<TTo>(
-    predicate: (value: ReadonlyUint8Array) => boolean,
-    ifTrue: Decoder<TTo>,
-    ifFalse: Decoder<TTo>,
-): Decoder<TTo>;
-export function getPredicateDecoder<TTo>(
-    predicate: (value: ReadonlyUint8Array) => boolean,
-    ifTrue: Decoder<TTo>,
-    ifFalse: Decoder<TTo>,
-): Decoder<TTo> {
-    return getUnionDecoder([ifTrue, ifFalse], (value: ReadonlyUint8Array) => (predicate(value) ? 0 : 1));
+    ifTrue: TIfTrue,
+    ifFalse: SameDecoderType<TIfTrue, TIfFalse> & TIfFalse,
+): GetUnionDecoderType<readonly [TIfTrue, TIfFalse]> {
+    return getUnionDecoder([ifTrue, ifFalse], (value: ReadonlyUint8Array) =>
+        predicate(value) ? 0 : 1,
+    ) as GetUnionDecoderType<readonly [TIfTrue, TIfFalse]>;
 }
 
 /**
@@ -176,39 +168,20 @@ export function getPredicateDecoder<TTo>(
  * @see {@link getPredicateEncoder}
  * @see {@link getPredicateDecoder}
  */
-export function getPredicateCodec<TFrom, TTo extends TFrom, TSize extends number>(
+export function getPredicateCodec<
+    TFrom = any,
+    TTo extends TFrom = TFrom,
+    const TIfTrue extends Codec<TFrom, TTo> = Codec<TFrom, TTo>,
+    const TIfFalse extends Codec<TFrom, TTo> = Codec<TFrom, TTo>,
+>(
     encodePredicate: (value: TFrom) => boolean,
     decodePredicate: (value: ReadonlyUint8Array) => boolean,
-    ifTrue: FixedSizeCodec<TFrom, TTo, TSize>,
-    ifFalse: FixedSizeCodec<TFrom, TTo, TSize>,
-): FixedSizeCodec<TFrom, TTo, TSize>;
-export function getPredicateCodec<TFrom, TTo extends TFrom>(
-    encodePredicate: (value: TFrom) => boolean,
-    decodePredicate: (value: ReadonlyUint8Array) => boolean,
-    ifTrue: FixedSizeCodec<TFrom, TTo>,
-    ifFalse: FixedSizeCodec<TFrom, TTo>,
-): FixedSizeCodec<TFrom, TTo>;
-export function getPredicateCodec<TFrom, TTo extends TFrom>(
-    encodePredicate: (value: TFrom) => boolean,
-    decodePredicate: (value: ReadonlyUint8Array) => boolean,
-    ifTrue: VariableSizeCodec<TFrom, TTo>,
-    ifFalse: VariableSizeCodec<TFrom, TTo>,
-): VariableSizeCodec<TFrom, TTo>;
-export function getPredicateCodec<TFrom, TTo extends TFrom>(
-    encodePredicate: (value: TFrom) => boolean,
-    decodePredicate: (value: ReadonlyUint8Array) => boolean,
-    ifTrue: Codec<TFrom, TTo>,
-    ifFalse: Codec<TFrom, TTo>,
-): Codec<TFrom, TTo>;
-export function getPredicateCodec<TFrom, TTo extends TFrom>(
-    encodePredicate: (value: TFrom) => boolean,
-    decodePredicate: (value: ReadonlyUint8Array) => boolean,
-    ifTrue: Codec<TFrom, TTo>,
-    ifFalse: Codec<TFrom, TTo>,
-): Codec<TFrom, TTo> {
+    ifTrue: TIfTrue,
+    ifFalse: SameCodecType<TIfTrue, TIfFalse> & TIfFalse,
+): GetUnionCodecType<readonly [TIfTrue, TIfFalse]> {
     return getUnionCodec(
         [ifTrue, ifFalse],
-        (value: TFrom) => (encodePredicate(value) ? 0 : 1),
+        (value: GetEncoderTypeFromVariants<readonly [TIfTrue, TIfFalse]>) => (encodePredicate(value as TFrom) ? 0 : 1),
         (value: ReadonlyUint8Array) => (decodePredicate(value) ? 0 : 1),
-    );
+    ) as GetUnionCodecType<readonly [TIfTrue, TIfFalse]>;
 }

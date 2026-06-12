@@ -29,13 +29,12 @@ import { getMessageDecoder as getV1MessageDecoder, getMessageEncoder as getV1Mes
 export function getCompiledTransactionMessageEncoder(): VariableSizeEncoder<
     CompiledTransactionMessage | (CompiledTransactionMessage & CompiledTransactionMessageWithLifetime)
 > {
+    type Value = CompiledTransactionMessage | (CompiledTransactionMessage & CompiledTransactionMessageWithLifetime);
     return transformEncoder(
-        getPatternMatchEncoder<
-            CompiledTransactionMessage | (CompiledTransactionMessage & CompiledTransactionMessageWithLifetime)
-        >([
-            [m => m.version === 'legacy', getLegacyMessageEncoder()],
-            [m => m.version === 0, getV0MessageEncoder()],
-            [m => m.version === 1, getV1MessageEncoder()],
+        getPatternMatchEncoder([
+            [(m: Value) => m.version === 'legacy', getLegacyMessageEncoder()],
+            [(m: Value) => m.version === 0, getV0MessageEncoder()],
+            [(m: Value) => m.version === 1, getV1MessageEncoder()],
         ]),
         value => {
             // check version is valid before encoding, so we don't get the generic pattern match error
