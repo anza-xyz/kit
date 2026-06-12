@@ -5,10 +5,9 @@ title: Transactions Example
 {/* Please keep visible code between 4 to 8 lines of code. */}
 
 ```ts
-const transactionMessage = pipe(
-    createTransactionMessage({ version: 0 }),
-    (tx) => setTransactionMessageFeePayerSigner(payer, tx),
-    (tx) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx),
-    (tx) => appendTransactionMessageInstructions([createAccountIx, initializeMintIx], tx),
-);
+const client = await createClient()
+    .use(signerFromFile('./my-keypair.json'))
+    .use(solanaRpc());
+const createMintResult = await client.sendTransaction([createAccountIx, initializeMintIx]);
+const createMintSignature = createMintResult.context.signature;
 ```
