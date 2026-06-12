@@ -7,6 +7,7 @@ export * from './ClientProvider';
 export * from './useAction';
 export * from './useClient';
 export * from './useClientCapability';
+export * from './useRequest';
 export * from './useSignAndSendTransaction';
 export * from './useSignIn';
 export * from './useSignMessage';
