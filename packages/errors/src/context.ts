@@ -178,6 +178,8 @@ import {
     SOLANA_ERROR__PROGRAM_CLIENTS__UNEXPECTED_RESOLVED_INSTRUCTION_INPUT_TYPE,
     SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_ACCOUNT_TYPE,
     SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE,
+    SOLANA_ERROR__REACT__MISSING_CAPABILITY,
+    SOLANA_ERROR__REACT__MISSING_PROVIDER,
     SOLANA_ERROR__RPC__API_PLAN_MISSING_FOR_RPC_METHOD,
     SOLANA_ERROR__RPC__INTEGER_OVERFLOW,
     SOLANA_ERROR__RPC__TRANSPORT_HTTP_ERROR,
@@ -788,6 +790,14 @@ export type SolanaErrorContext = ReadonlyContextValue<
             [SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE]: {
                 instructionType: number | string;
                 programName: string;
+            };
+            [SOLANA_ERROR__REACT__MISSING_CAPABILITY]: {
+                capabilities: readonly string[];
+                hookName: string;
+                providerHint: string;
+            };
+            [SOLANA_ERROR__REACT__MISSING_PROVIDER]: {
+                hookName: string;
             };
             [SOLANA_ERROR__RPC_SUBSCRIPTIONS__CANNOT_CREATE_SUBSCRIPTION_PLAN]: {
                 notificationName: string;
