@@ -137,8 +137,8 @@ importers:
         version: link:../../packages/kit
     devDependencies:
       start-server-and-test:
-        specifier: ^3.0.5
-        version: 3.0.5
+        specifier: ^3.0.11
+        version: 3.0.11
       tsx:
         specifier: ^4.22.3
         version: 4.22.3
@@ -236,8 +236,8 @@ importers:
         version: link:../../packages/kit
     devDependencies:
       start-server-and-test:
-        specifier: ^3.0.5
-        version: 3.0.5
+        specifier: ^3.0.11
+        version: 3.0.11
       tsx:
         specifier: ^4.22.3
         version: 4.22.3
@@ -255,8 +255,8 @@ importers:
         version: link:../../packages/kit
     devDependencies:
       start-server-and-test:
-        specifier: ^3.0.5
-        version: 3.0.5
+        specifier: ^3.0.11
+        version: 3.0.11
       tsx:
         specifier: ^4.22.3
         version: 4.22.3
@@ -277,8 +277,8 @@ importers:
         version: link:../../packages/kit
     devDependencies:
       start-server-and-test:
-        specifier: ^3.0.5
-        version: 3.0.5
+        specifier: ^3.0.11
+        version: 3.0.11
       tsx:
         specifier: ^4.22.3
         version: 4.22.3
@@ -296,8 +296,8 @@ importers:
         version: link:../../packages/kit
     devDependencies:
       start-server-and-test:
-        specifier: ^3.0.5
-        version: 3.0.5
+        specifier: ^3.0.11
+        version: 3.0.11
       tsx:
         specifier: ^4.22.3
         version: 4.22.3
@@ -3106,8 +3106,8 @@ packages:
   '@hapi/pinpoint@2.0.1':
     resolution: {integrity: sha512-EKQmr16tM8s16vTT3cA5L0kZZcTMU5DUOZTuvpnY738m+jyP3JIUj+Mm1xc1rsLkGBQ/gVnfKYPwOmPg1tUR4Q==}
 
-  '@hapi/tlds@1.1.6':
-    resolution: {integrity: sha512-xdi7A/4NZokvV0ewovme3aUO5kQhW9pQ2YD1hRqZGhhSi5rBv4usHYidVocXSi9eihYsznZxLtAiEYYUL6VBGw==}
+  '@hapi/tlds@1.1.7':
+    resolution: {integrity: sha512-MgNjRwy9Ti92yVAixLmDc8dd1bJIKwO9qlWCfFQRwRmUEDPQHYn4G6hwPFvFGUTzAa0FsS+inMjLin7GnyBRhA==}
     engines: {node: '>=14.0.0'}
 
   '@hapi/topo@5.1.0':
@@ -5881,6 +5881,9 @@ packages:
   axios@1.16.1:
     resolution: {integrity: sha512-caYkukvroVPO8KrzuJEb50Hm07KwfBZPEC3VeFHTsqWHvKTsy54hjJz9BS/cdaypROE2rH6xvm9mHX4fgWkr3A==}
 
+  axios@1.17.0:
+    resolution: {integrity: sha512-J8SwNxprqqpbfenehxWYXE7CW+wM1BB4w3+N+g+/Wx40xM4rsLrfPmHHxSWIxJLYDgSY/HqlFPIYb2/S3rxafw==}
+
   babel-jest@30.0.0-alpha.6:
     resolution: {integrity: sha512-WOQkqpBz2q8d/AT6D6rZXW5xnKHDmk3kIukaXlzUyoBBIvLh1SEvi2RGS4fboEtS0kNkyL+zf1rSfkt5OCIgmw==}
     engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
@@ -5993,9 +5996,6 @@ packages:
   better-path-resolve@1.0.0:
     resolution: {integrity: sha512-pbnl5XzGBdrFU/wT4jqmJVPn2B6UHPBOhzMQkY/SPUPB6QtUXtmBHBIwCbXJol93mOpGMnQyP/+BB19q04xj7g==}
     engines: {node: '>=4'}
-
-  bluebird@3.7.2:
-    resolution: {integrity: sha512-XpNj6GDQzdfW+r2Wnn7xiSAd7TM3jzkxGXBGTtWKuSXv1xUV+azxAm8jdWZN06QTQk+2N2XB9jRDkvbmQmcRtg==}
 
   bn.js@5.2.3:
     resolution: {integrity: sha512-EAcmnPkxpntVL+DS7bO1zhcZNvCkxqtkd0ZY53h06GNQ3DEkkGZ/gKgmDv6DdZQGj9BgfSPKtJJ7Dp1GPP8f7w==}
@@ -7830,8 +7830,8 @@ packages:
     resolution: {integrity: sha512-eTIzlVOSUR+JxdDFepEYcBMtZ9Qqdef+rnzWdRZuMbOywu5tO2w2N7rqjoANZ5k9vywhL6Br1VRjUIgTQx4E8w==}
     engines: {node: '>=6'}
 
-  lazy-ass@1.6.0:
-    resolution: {integrity: sha512-cc8oEVoctTvsFZ/Oje/kGnHbpWHYBe8IAJe4C0QNc3t8uM/0Y8+erSz/7Y1ALuXTEZTMvxXwO6YbX1ey3ujiZw==}
+  lazy-ass@2.0.3:
+    resolution: {integrity: sha512-/O3/DoQmI1XAhklDvF1dAjFf/epE8u3lzOZegQfLZ8G7Ud5bTRSZiFOpukHCu6jODrCA4gtIdwUCC7htxcDACA==}
     engines: {node: '> 0.8'}
 
   leven@3.1.0:
@@ -8798,8 +8798,8 @@ packages:
     resolution: {integrity: sha512-XlkWvfIm6RmsWtNJx+uqtKLS8eqFbxUg0ZzLXqY0caEy9l7hruX8IpiDnjsLavoBgqCCR71TqWO8MaXYheJ3RQ==}
     engines: {node: '>=10'}
 
-  start-server-and-test@3.0.5:
-    resolution: {integrity: sha512-2SvI2UR+rVM4FQ3GqEnjjfVATln6JgJGsZjRRyAqgl1EI6fJFH5zVCawqJLcmU9vBxwI0ZX9i3M+GFpY+sxWcw==}
+  start-server-and-test@3.0.11:
+    resolution: {integrity: sha512-NRapOwJl6jr1DNSaQ+SRukHI2OKcFZA2Iv2tfTW9fI/S+6YmJGiwacR+0MG3o5p39lY4xWUOE5JFkKJBZUjxuQ==}
     engines: {node: ^22 || >=24}
     hasBin: true
 
@@ -11378,7 +11378,7 @@ snapshots:
 
   '@hapi/pinpoint@2.0.1': {}
 
-  '@hapi/tlds@1.1.6': {}
+  '@hapi/tlds@1.1.7': {}
 
   '@hapi/topo@5.1.0':
     dependencies:
@@ -14488,7 +14488,7 @@ snapshots:
 
   axios-retry@4.5.0(axios@1.16.1):
     dependencies:
-      axios: 1.16.1(debug@4.4.3)
+      axios: 1.16.1
       is-retry-allowed: 2.2.0
 
   axios@1.12.2:
@@ -14499,7 +14499,17 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  axios@1.16.1(debug@4.4.3):
+  axios@1.16.1:
+    dependencies:
+      follow-redirects: 1.16.0(debug@4.4.3)
+      form-data: 4.0.5
+      https-proxy-agent: 5.0.1
+      proxy-from-env: 2.1.0
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+
+  axios@1.17.0(debug@4.4.3):
     dependencies:
       follow-redirects: 1.16.0(debug@4.4.3)
       form-data: 4.0.5
@@ -14715,8 +14725,6 @@ snapshots:
     dependencies:
       is-windows: 1.0.2
 
-  bluebird@3.7.2: {}
-
   bn.js@5.2.3: {}
 
   borsh@0.7.0:
@@ -14802,7 +14810,7 @@ snapshots:
 
   bundlemon@3.1.0(typescript@5.9.3):
     dependencies:
-      axios: 1.16.1(debug@4.4.3)
+      axios: 1.16.1
       axios-retry: 4.5.0(axios@1.16.1)
       brotli-size: 4.0.0
       bundlemon-utils: 2.0.1
@@ -17277,7 +17285,7 @@ snapshots:
       '@hapi/formula': 3.0.2
       '@hapi/hoek': 11.0.7
       '@hapi/pinpoint': 2.0.1
-      '@hapi/tlds': 1.1.6
+      '@hapi/tlds': 1.1.7
       '@hapi/topo': 6.0.2
       '@standard-schema/spec': 1.1.0
 
@@ -17393,7 +17401,7 @@ snapshots:
 
   kleur@3.0.3: {}
 
-  lazy-ass@1.6.0: {}
+  lazy-ass@2.0.3: {}
 
   leven@3.1.0: {}
 
@@ -18464,14 +18472,13 @@ snapshots:
     dependencies:
       escape-string-regexp: 2.0.0
 
-  start-server-and-test@3.0.5:
+  start-server-and-test@3.0.11:
     dependencies:
       arg: 5.0.2
-      bluebird: 3.7.2
       check-more-types: 2.24.0
       debug: 4.4.3
       execa: 5.1.1
-      lazy-ass: 1.6.0
+      lazy-ass: 2.0.3
       tree-kill: 1.2.2
       wait-on: 9.0.10(debug@4.4.3)
     transitivePeerDependencies:
@@ -19038,7 +19045,7 @@ snapshots:
 
   wait-on@9.0.10(debug@4.4.3):
     dependencies:
-      axios: 1.16.1(debug@4.4.3)
+      axios: 1.17.0(debug@4.4.3)
       joi: 18.2.1
       lodash: 4.18.1
       minimist: 1.2.8
