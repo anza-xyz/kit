@@ -172,6 +172,30 @@ describe('decodeTransactionFromRpcResponse', () => {
         ]);
     });
 
+    it('omits `addressTableLookups` from a JSON (v0) response that has none', () => {
+        const rpcTx = {
+            meta: null,
+            transaction: {
+                message: {
+                    accountKeys: ['fee-payer' as Address, 'program' as Address],
+                    addressTableLookups: [],
+                    header: {
+                        numReadonlySignedAccounts: 0,
+                        numReadonlyUnsignedAccounts: 1,
+                        numRequiredSignatures: 1,
+                    },
+                    instructions: [{ accounts: [0], data: '3Bxs411Dtc7pkFQj', programIdIndex: 1 }],
+                    recentBlockhash: '11111111111111111111111111111111',
+                },
+                signatures: [],
+            },
+            version: 0,
+        } as unknown as GetTransactionApiResponseJson<0>;
+        const result = decodeTransactionFromRpcResponse(rpcTx);
+        expect(result.compiledMessage.version).toBe(0);
+        expect(result.compiledMessage).not.toHaveProperty('addressTableLookups');
+    });
+
     it('decodes a JSON (v1) response into a synthesized V1CompiledTransactionMessage', () => {
         const innerData = '3Bxs411Dtc7pkFQj'; // arbitrary base58
         const rpcTx = {

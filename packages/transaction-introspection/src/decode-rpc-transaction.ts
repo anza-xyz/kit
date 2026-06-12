@@ -102,12 +102,14 @@ function decodeFromJson<TMaxSupportedTransactionVersion extends TransactionVersi
 
     // The wire decoder omits `accountIndices` and `data` when they are
     // empty; do the same here so a JSON-derived message has the same shape
-    // as a wire-derived one.
-    const compiledInstructions = message.instructions.map(ix => ({
-        ...(ix.accounts.length ? { accountIndices: [...ix.accounts] } : null),
-        ...(ix.data.length ? { data: base58.encode(ix.data) } : null),
-        programAddressIndex: ix.programIdIndex,
-    }));
+    // as a wire-derived one. Only the legacy/v0 shapes use this form — the
+    // v1 branch builds instruction headers and payloads instead.
+    const getCompiledInstructions = () =>
+        message.instructions.map(ix => ({
+            ...(ix.accounts.length ? { accountIndices: [...ix.accounts] } : null),
+            ...(ix.data.length ? { data: base58.encode(ix.data) } : null),
+            programAddressIndex: ix.programIdIndex,
+        }));
 
     const header = {
         numReadonlyNonSignerAccounts: message.header.numReadonlyUnsignedAccounts,
@@ -130,29 +132,33 @@ function decodeFromJson<TMaxSupportedTransactionVersion extends TransactionVersi
         case 'legacy':
             compiledMessage = {
                 header,
-                instructions: compiledInstructions,
+                instructions: getCompiledInstructions(),
                 lifetimeToken: message.recentBlockhash,
                 staticAccounts,
                 version: 'legacy',
             } satisfies CompiledTransactionMessageWithLifetime & LegacyCompiledTransactionMessage;
             break;
-        case 0:
+        case 0: {
+            // The wire decoder omits `addressTableLookups` when the message
+            // has none; match that here for shape parity.
+            const addressTableLookups =
+                'addressTableLookups' in message
+                    ? message.addressTableLookups.map(l => ({
+                          lookupTableAddress: l.accountKey,
+                          readonlyIndexes: l.readonlyIndexes,
+                          writableIndexes: l.writableIndexes,
+                      }))
+                    : [];
             compiledMessage = {
-                addressTableLookups:
-                    'addressTableLookups' in message
-                        ? message.addressTableLookups.map(l => ({
-                              lookupTableAddress: l.accountKey,
-                              readonlyIndexes: l.readonlyIndexes,
-                              writableIndexes: l.writableIndexes,
-                          }))
-                        : [],
+                ...(addressTableLookups.length ? { addressTableLookups } : null),
                 header,
-                instructions: compiledInstructions,
+                instructions: getCompiledInstructions(),
                 lifetimeToken: message.recentBlockhash,
                 staticAccounts,
                 version: 0,
             } satisfies CompiledTransactionMessageWithLifetime & V0CompiledTransactionMessage;
             break;
+        }
         case 1: {
             const instructionData = message.instructions.map(ix => base58.encode(ix.data));
             compiledMessage = {
