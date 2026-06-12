@@ -11,43 +11,26 @@ import { ReactiveStreamStore } from '@solana/subscribable';
  *
  * Calling the {@link PendingRpcSubscriptionsRequest.reactiveStore | `reactiveStore(options)`}
  * method will return a {@link ReactiveStreamStore} compatible with `useSyncExternalStore`, Svelte
- * stores, and other reactive primitives.
+ * stores, and other reactive primitives. The returned store is in `status: 'idle'`; the caller
+ * is responsible for invoking {@link ReactiveStreamStore.connect | `connect()`} to open the
+ * underlying stream.
  */
 export type PendingRpcSubscriptionsRequest<TNotification> = {
     /**
-     * Triggers the subscription and returns a promise for a {@link ReactiveStreamStore} that holds
-     * the latest notification. Compatible with `useSyncExternalStore` and other reactive primitives
-     * that expect a `{ subscribe, getState }` contract.
-     *
-     * @example
-     * ```ts
-     * const store = await rpc.accountNotifications(address).reactive({ abortSignal });
-     * // React — throw error from snapshot to surface via Error Boundary
-     * const state = useSyncExternalStore(store.subscribe, () => {
-     *     if (store.getError()) throw store.getError();
-     *     return store.getState();
-     * });
-     * ```
-     *
-     * @deprecated Use {@link PendingRpcSubscriptionsRequest.reactiveStore | `reactiveStore()`}
-     * instead. The synchronous variant returns a store that reconnects on
-     * {@link ReactiveStreamStore.retry | `retry()`} after an error, whereas the store returned by
-     * `reactive()` cannot recover once its underlying `DataPublisher` has failed.
-     */
-    reactive(options: RpcSubscribeOptions): Promise<ReactiveStreamStore<TNotification>>;
-    /**
-     * Synchronously returns a {@link ReactiveStreamStore} that subscribes in the background and
-     * holds the latest notification. Compatible with `useSyncExternalStore` and other reactive
-     * primitives that expect a `{ subscribe, getUnifiedState }` contract. The store opens a fresh
-     * subscription on construction and on every {@link ReactiveStreamStore.retry | `retry()`}.
+     * Synchronously returns a {@link ReactiveStreamStore} that holds the latest notification.
+     * Compatible with `useSyncExternalStore` and other reactive primitives that expect a
+     * `{ subscribe, getUnifiedState }` contract. The returned store is in `status: 'idle'` — call
+     * {@link ReactiveStreamStore.connect | `connect()`} to open the subscription; a follow-up
+     * `connect()` after an error reopens it.
      *
      * @example
      * ```ts
      * const store = rpc.accountNotifications(address).reactiveStore({ abortSignal });
+     * store.connect();
      * // React — the unified snapshot has stable identity per update.
      * const state = useSyncExternalStore(store.subscribe, store.getUnifiedState);
-     * if (state.status === 'error') return <ErrorMessage error={state.error} onRetry={store.retry} />;
-     * if (state.status === 'loading') return <Spinner />;
+     * if (state.status === 'error') return <ErrorMessage error={state.error} onRetry={store.connect} />;
+     * if (state.status === 'loading' || state.status === 'idle') return <Spinner />;
      * return <View data={state.data} />;
      * ```
      */
