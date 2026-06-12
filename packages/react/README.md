@@ -377,6 +377,32 @@ function AccountBalance({ address }: { address: Address }) {
 
 If the `source` changes (new address, new notification type) but the SWR `key` is stable, the existing connection stays bound to the original source — SWR caches on `key`, and `subscribe` reads the source from a ref. Bump the `key` to swap sources.
 
+### `useTrackedDataSWR(key, spec, options?)`
+
+SWR-backed counterpart to `useTrackedData`. Takes the same `TrackedDataSpec` (RPC fetch + subscription pair + value mappers) and routes the unified, slot-deduped stream through SWR. Returns SWR's native `{ data, error }` shape — `data` is the `SolanaRpcResponse<TItem>` envelope emitted by the underlying kit primitive, so callers can read `data.value` (the unified item produced by the mappers) and `data.context.slot` (the slot the store dedup'd on) directly. Pass `null` for `key` or `spec` to disable. SWR subscriptions surface only `{ data, error }`, so there is no `refresh` function like `useTrackedData` has — reach for `useTrackedData` when you need manual refresh. For the same reason `getAbortSignal` is not available.
+
+```tsx
+function AccountBalance({ address }: { address: Address }) {
+    const client = useClient<ClientWithRpc<GetBalanceApi> & ClientWithRpcSubscriptions<AccountNotificationsApi>>();
+    const spec = useMemo(
+        () =>
+            address
+                ? {
+                      initialValueSource: client.rpc.getBalance(address),
+                      initialValueMapper: (lamports: bigint) => lamports,
+                      streamSource: client.rpcSubscriptions.accountNotifications(address),
+                      streamValueMapper: ({ lamports }: { lamports: bigint }) => lamports,
+                  }
+                : null,
+        [client, address],
+    );
+    const { data } = useTrackedDataSWR(address ? ['balance', address] : null, spec);
+    return <p>{data ? `${data.value} lamports at slot ${data.context.slot}` : 'Loading…'}</p>;
+}
+```
+
+If the `spec` changes (new mappers, new source) but the SWR `key` is stable, the existing connection stays bound to the original spec — SWR caches on `key`, and `subscribe` reads the spec from a ref. Bump the `key` to swap specs.
+
 ### Why no `useActionSWR`?
 
 It would just be a wrapper around SWR's built-in [`useSWRMutation`](https://swr.vercel.app/docs/mutation#useswrmutation) with no additional functionality. Either use `useSWRMutation` or, if you don't need the SWR integration, use `useAction`.
