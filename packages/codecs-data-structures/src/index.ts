@@ -14,6 +14,7 @@ export * from './bit-array';
 export * from './boolean';
 export * from './bytes';
 export * from './constant';
+export * from './dependent-struct';
 export * from './discriminated-union';
 export * from './enum';
 export * from './hidden-prefix';
