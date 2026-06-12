@@ -122,7 +122,7 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
                 status: 'error',
             });
         });
-        it('from `error`, transitions through `retrying` preserving stale data', async () => {
+        it('from `error`, transitions back through `loading` preserving stale data AND error (SWR)', async () => {
             expect.assertions(1);
             const { mockRequest, publishers } = createFactory();
             const store = createReactiveStoreFromDataPublisherFactory({
@@ -133,15 +133,16 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
             store.connect();
             await jest.runAllTimersAsync();
             publishers[0].publish('data', { value: 42 });
-            publishers[0].publish('error', new Error('fail'));
+            const fail = new Error('fail');
+            publishers[0].publish('error', fail);
             store.connect();
             expect(store.getUnifiedState()).toStrictEqual({
                 data: { value: 42 },
-                error: undefined,
-                status: 'retrying',
+                error: fail,
+                status: 'loading',
             });
         });
-        it('from `loaded`, transitions through `retrying` preserving the last value', async () => {
+        it('from `loaded`, transitions back through `loading` preserving the last value', async () => {
             expect.assertions(1);
             const { mockRequest, publishers } = createFactory();
             const store = createReactiveStoreFromDataPublisherFactory({
@@ -156,7 +157,7 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
             expect(store.getUnifiedState()).toStrictEqual({
                 data: { value: 42 },
                 error: undefined,
-                status: 'retrying',
+                status: 'loading',
             });
         });
         it('invokes the factory again on each connect()', async () => {
@@ -193,7 +194,7 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
                 status: 'loaded',
             });
         });
-        it('notifies subscribers on the retrying transition', async () => {
+        it('notifies subscribers on the loaded → loading transition after reconnect', async () => {
             expect.assertions(1);
             const { mockRequest, publishers } = createFactory();
             const store = createReactiveStoreFromDataPublisherFactory({
@@ -402,7 +403,7 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
             expect(mockRequest).toHaveBeenCalledTimes(callsBefore);
             expect(store.getUnifiedState().status).toBe('loading');
         });
-        it('transitions to `retrying` from `error`', async () => {
+        it('transitions back to `loading` from `error`, preserving stale data and error (SWR)', async () => {
             expect.assertions(1);
             const { mockRequest, publishers } = createFactory();
             const store = createReactiveStoreFromDataPublisherFactory({
@@ -413,12 +414,13 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
             store.connect();
             await jest.runAllTimersAsync();
             publishers[0].publish('data', { value: 42 });
-            publishers[0].publish('error', new Error('fail'));
+            const fail = new Error('fail');
+            publishers[0].publish('error', fail);
             store.retry();
             expect(store.getUnifiedState()).toStrictEqual({
                 data: { value: 42 },
-                error: undefined,
-                status: 'retrying',
+                error: fail,
+                status: 'loading',
             });
         });
     });
