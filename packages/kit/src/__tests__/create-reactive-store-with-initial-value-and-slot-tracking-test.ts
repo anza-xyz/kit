@@ -637,4 +637,73 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             expect(subscriber).toHaveBeenCalledTimes(1);
         });
     });
+
+    // `lastUpdateSlot` persists across `connect()` windows so the surfaced value never regresses.
+    // But a fresh connect window must still be able to *settle* `loading` when a source answers
+    // successfully — even at an older slot — otherwise a refresh answered by a lagging node leaves
+    // a quiet account (whose subscription emits nothing) stuck in `loading` forever.
+    describe('reconnecting after a value was already loaded', () => {
+        it('settles to `loaded` with the retained newer data when a stale-slot initial value arrives on the new window', async () => {
+            expect.assertions(1);
+            const { instances, source: initialValueSource } = createMockInitialValueSource();
+            const { source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
+            // Window 1: settle at slot 100.
+            store.connect();
+            instances[0].resolve(rpcResponse(100, { count: 42 }));
+            await jest.runAllTimersAsync();
+            // Window 2 (refresh): a lagging node answers the re-fetch at an older slot, and the
+            // quiet account's subscription emits nothing — so this stale value is the only proof
+            // of liveness.
+            store.connect();
+            instances[1].resolve(rpcResponse(99, { count: 7 }));
+            await jest.runAllTimersAsync();
+            // The store must leave `loading`, retaining the newer slot-100 data rather than
+            // regressing to the stale slot-99 value.
+            expect(store.getUnifiedState()).toStrictEqual({
+                data: { context: { slot: 100n }, value: 42 },
+                error: undefined,
+                status: 'loaded',
+            });
+        });
+        it('settles to `loaded` with the retained newer data when a stale-slot stream notification arrives on the new window', async () => {
+            expect.assertions(1);
+            const { source: initialValueSource } = createMockInitialValueSource();
+            const { publishers, source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
+            // Window 1: settle at slot 100 via a stream notification.
+            store.connect();
+            await jest.runAllTimersAsync();
+            publishers[0].publish('data', rpcResponse(100, { count: 42 }));
+            await jest.runAllTimersAsync();
+            // Window 2 (refresh): the new subscription replays an older slot before catching up.
+            store.connect();
+            await jest.runAllTimersAsync();
+            publishers[1].publish('data', rpcResponse(99, { count: 7 }));
+            await jest.runAllTimersAsync();
+            expect(store.getUnifiedState()).toStrictEqual({
+                data: { context: { slot: 100n }, value: 42 },
+                error: undefined,
+                status: 'loaded',
+            });
+        });
+        it('notifies subscribers when a stale-slot value settles the new window back to `loaded`', async () => {
+            expect.assertions(1);
+            const { instances, source: initialValueSource } = createMockInitialValueSource();
+            const { source: streamSource } = createMockStreamSource();
+            const store = createStore(initialValueSource, streamSource);
+            store.connect();
+            instances[0].resolve(rpcResponse(100, { count: 42 }));
+            await jest.runAllTimersAsync();
+            store.connect();
+            await jest.runAllTimersAsync();
+            // Subscribe after the `loaded → loading` reconnect transition so we only observe the
+            // settle caused by the stale value.
+            const subscriber = jest.fn();
+            store.subscribe(subscriber);
+            instances[1].resolve(rpcResponse(99, { count: 7 }));
+            await jest.runAllTimersAsync();
+            expect(subscriber).toHaveBeenCalledTimes(1);
+        });
+    });
 });
