@@ -1,5 +1,11 @@
 import type { Address } from '@solana/addresses';
-import { isInstructionForProgram } from '@solana/instructions';
+import type { ReadonlyUint8Array } from '@solana/codecs-core';
+import {
+    type AccountMeta,
+    isInstructionForProgram,
+    isInstructionWithAccounts,
+    isInstructionWithData,
+} from '@solana/instructions';
 
 import type { TracedInstruction } from '../types';
 import { walkInstructions } from '../walk-instructions';
@@ -30,6 +36,23 @@ void (() => {
             ix.programAddress satisfies Address<string>;
             // @ts-expect-error — `Address<string>` should not narrow to a specific program.
             ix.programAddress satisfies Address<'MyProgram1111111111111111111111111111111111'>;
+        }
+    }
+
+    {
+        // `accounts` and `data` are optional until narrowed; the narrows keep
+        // `trace` accessible, as the auto-generated `parseXInstruction`
+        // helpers (which require both) rely on.
+        for (const ix of instructions) {
+            // @ts-expect-error — `data` is optional until narrowed.
+            ix.data satisfies ReadonlyUint8Array;
+            // @ts-expect-error — `accounts` is optional until narrowed.
+            ix.accounts satisfies readonly AccountMeta[];
+            if (isInstructionWithData(ix) && isInstructionWithAccounts<readonly AccountMeta[]>(ix)) {
+                ix.data satisfies ReadonlyUint8Array;
+                ix.accounts satisfies readonly AccountMeta[];
+                ix.trace.kind satisfies 'inner' | 'outer';
+            }
         }
     }
 });

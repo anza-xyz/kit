@@ -24,10 +24,12 @@ import type { LoadedAddresses } from './loaded-addresses';
  * @example
  * ```ts
  * for (const ix of getInstructionsFromCompiledTransactionMessage(compiled)) {
- *     // `ix` is a `ResolvedInstruction` — directly usable with auto-generated
- *     // `identifyXInstruction` helpers, and with `isInstructionForProgram`
- *     // from `@solana/instructions`.
- *     identifyTokenInstruction(ix);
+ *     // `ix` is a `ResolvedInstruction` — usable with `isInstructionForProgram`
+ *     // directly, and with the auto-generated `identifyXInstruction` helpers
+ *     // after narrowing `data`.
+ *     if (isInstructionWithData(ix)) {
+ *         identifyTokenInstruction(ix);
+ *     }
  * }
  * ```
  */
@@ -123,7 +125,7 @@ export function getAccountMetasFromCompiledTransactionMessage(
  *     rpcResponse.meta?.loadedAddresses,
  * );
  * for (const ix of instructions) {
- *     if (ix.programAddress === TOKEN_PROGRAM_ADDRESS) {
+ *     if (ix.programAddress === TOKEN_PROGRAM_ADDRESS && isInstructionWithData(ix)) {
  *         const kind = identifyTokenInstruction(ix);
  *         // ...
  *     }

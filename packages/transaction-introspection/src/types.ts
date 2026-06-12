@@ -46,12 +46,12 @@ export type InstructionTrace =
  *
  * @example
  * ```ts
- * import { isInstructionForProgram } from '@solana/instructions';
+ * import { isInstructionForProgram, isInstructionWithData } from '@solana/instructions';
  * import { TOKEN_PROGRAM_ADDRESS, identifyTokenInstruction } from '@solana-program/token';
  *
  * for (const ix of walkInstructions({ compiledMessage, meta, loadedAddresses })) {
- *     if (isInstructionForProgram(ix, TOKEN_PROGRAM_ADDRESS)) {
- *         // `ix.programAddress` is narrowed to TOKEN_PROGRAM_ADDRESS.
+ *     if (isInstructionForProgram(ix, TOKEN_PROGRAM_ADDRESS) && isInstructionWithData(ix)) {
+ *         // `ix.programAddress` is narrowed to TOKEN_PROGRAM_ADDRESS and `ix.data` is present.
  *         identifyTokenInstruction(ix);
  *         console.log(ix.trace.kind);
  *     }

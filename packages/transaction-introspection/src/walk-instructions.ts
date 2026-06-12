@@ -27,12 +27,13 @@ import type { TracedInstruction } from './types';
  *
  * @example
  * ```ts
- * import { isInstructionForProgram } from '@solana/instructions';
+ * import { isInstructionForProgram, isInstructionWithData } from '@solana/instructions';
  * import { TOKEN_PROGRAM_ADDRESS, identifyTokenInstruction, TokenInstruction } from '@solana-program/token';
  *
  * const instructions = walkInstructions({ compiledMessage, meta, loadedAddresses });
  * for (const ix of instructions) {
  *     if (isInstructionForProgram(ix, TOKEN_PROGRAM_ADDRESS) &&
+ *         isInstructionWithData(ix) &&
  *         identifyTokenInstruction(ix) === TokenInstruction.SyncNative) {
  *         console.log(ix.trace);
  *     }

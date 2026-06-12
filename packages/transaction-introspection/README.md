@@ -21,7 +21,7 @@ Audit every Token-Program `SyncNative` instruction — outer or inner CPI — in
 
 ```ts
 import { createSolanaRpc, signature } from '@solana/kit';
-import { isInstructionForProgram } from '@solana/instructions';
+import { isInstructionForProgram, isInstructionWithData } from '@solana/instructions';
 import { decodeTransactionFromRpcResponse, walkInstructions } from '@solana/transaction-introspection';
 import { identifyTokenInstruction, TOKEN_PROGRAM_ADDRESS, TokenInstruction } from '@solana-program/token';
 
@@ -38,7 +38,7 @@ if (!rpcTx) throw new Error(`Transaction ${txid} not found`);
 const { compiledMessage, loadedAddresses } = decodeTransactionFromRpcResponse(rpcTx);
 
 for (const ix of walkInstructions({ compiledMessage, loadedAddresses, meta: rpcTx.meta })) {
-    if (!isInstructionForProgram(ix, TOKEN_PROGRAM_ADDRESS)) continue;
+    if (!isInstructionForProgram(ix, TOKEN_PROGRAM_ADDRESS) || !isInstructionWithData(ix)) continue;
     if (identifyTokenInstruction(ix) !== TokenInstruction.SyncNative) continue;
     console.log(
         `SyncNative at ${ix.trace.kind === 'outer' ? `outer[${ix.trace.index}]` : `inner[${ix.trace.outerIndex}/${ix.trace.innerIndex}]`}`,
@@ -86,12 +86,13 @@ const accountMetas = getAccountMetasFromCompiledTransactionMessage(compiledMessa
 Returns the outer instructions of a compiled transaction message as `ResolvedInstruction[]`. Each instruction has its account indices resolved to `AccountMeta`s (with proper signer/writable bits) and its data exposed as a `ReadonlyUint8Array` — the form the auto-generated `@solana-program/*` `parseXInstruction` and `identifyXInstruction` functions expect. Following the kit `Instruction` conventions, `accounts` and `data` are present only when non-empty, so `isInstructionWithAccounts` and `isInstructionWithData` behave as expected.
 
 ```ts
+import { isInstructionWithData } from '@solana/instructions';
 import { getInstructionsFromCompiledTransactionMessage } from '@solana/transaction-introspection';
 import { identifyTokenInstruction, TOKEN_PROGRAM_ADDRESS } from '@solana-program/token';
 
 const instructions = getInstructionsFromCompiledTransactionMessage(compiledMessage, loadedAddresses);
 for (const ix of instructions) {
-    if (ix.programAddress === TOKEN_PROGRAM_ADDRESS) {
+    if (ix.programAddress === TOKEN_PROGRAM_ADDRESS && isInstructionWithData(ix)) {
         const kind = identifyTokenInstruction(ix);
         // ...
     }
@@ -121,7 +122,7 @@ Because each entry is a `ResolvedInstruction`, you can pass it directly to `isIn
 If `meta` is omitted, only outer instructions are returned. If `loadedAddresses` is omitted, only static accounts are used to resolve indices — pass `meta?.loadedAddresses` for v0 transactions that load accounts from address lookup tables.
 
 ```ts
-import { isInstructionForProgram } from '@solana/instructions';
+import { isInstructionForProgram, isInstructionWithAccounts, isInstructionWithData } from '@solana/instructions';
 import { walkInstructions } from '@solana/transaction-introspection';
 import {
     identifyTokenInstruction,
@@ -133,6 +134,7 @@ import {
 for (const ix of walkInstructions({ compiledMessage, loadedAddresses, meta: rpcTx.meta })) {
     if (!isInstructionForProgram(ix, TOKEN_PROGRAM_ADDRESS)) continue;
     // `ix.programAddress` is narrowed to TOKEN_PROGRAM_ADDRESS.
+    if (!isInstructionWithData(ix) || !isInstructionWithAccounts(ix)) continue;
     if (identifyTokenInstruction(ix) === TokenInstruction.SyncNative) {
         const parsed = parseSyncNativeInstruction(ix);
         console.log(ix.trace, parsed);
