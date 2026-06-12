@@ -52,6 +52,18 @@ const SIGNER_B_BYTES = new Uint8Array([
     0x94, 0x8f, 0xd8, 0xbb, 0x2c, 0x10, 0xa1, 0x01, 0x02, 0xce, 0x98, 0xb3, 0xa6,
 ]);
 
+const PREAMBLE_LENGTH_WITH_TWO_SIGNERS_BYTES =
+    OFFCHAIN_MESSAGE_SIGNING_DOMAIN_BYTES.length +
+    1 + // Version
+    APPLICATION_DOMAIN_BYTES.length +
+    1 + // Message format
+    1 + // Signer count
+    SIGNER_A_BYTES.length +
+    SIGNER_B_BYTES.length +
+    2; // Message length
+const MAX_BODY_LENGTH_WITH_TWO_SIGNERS_BYTES = 1232 - PREAMBLE_LENGTH_WITH_TWO_SIGNERS_BYTES;
+const BODY_LENGTH_EXCEEDING_TWO_SIGNER_PREAMBLE_BYTES = MAX_BODY_LENGTH_WITH_TWO_SIGNERS_BYTES + 1;
+
 describe('getOffchainMessageV0Decoder()', () => {
     let decoder: VariableSizeDecoder<OffchainMessageV0>;
     beforeEach(() => {
@@ -423,6 +435,39 @@ describe('getOffchainMessageV0Decoder()', () => {
             }),
         );
     });
+    it.each([
+        [OffchainMessageContentFormat.RESTRICTED_ASCII_1232_BYTES_MAX, 'ASCII'],
+        [OffchainMessageContentFormat.UTF8_1232_BYTES_MAX, '1232-byte-max UTF-8'],
+    ])('throws when decoding a %s message whose preamble plus body is too long', messageFormat => {
+        const text = '!'.repeat(BODY_LENGTH_EXCEEDING_TWO_SIGNER_PREAMBLE_BYTES);
+        const encodedMessage =
+            // prettier-ignore
+            new Uint8Array([
+                // Signing domain
+                ...OFFCHAIN_MESSAGE_SIGNING_DOMAIN_BYTES,
+                // Version
+                0x00,
+                // Application domain
+                ...APPLICATION_DOMAIN_BYTES,
+                // Message format
+                messageFormat,
+                // Signer count
+                0x02,
+                    // Signer addresses
+                    ...SIGNER_A_BYTES,
+                    ...SIGNER_B_BYTES,
+                // Message length
+                text.length & 0xff, text.length >> 8,
+                    // Message
+                    ...Array.from(text, character => character.charCodeAt(0)),
+            ]);
+        expect(() => decoder.decode(encodedMessage)).toThrow(
+            new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__MAXIMUM_LENGTH_EXCEEDED, {
+                actualBytes: BODY_LENGTH_EXCEEDING_TWO_SIGNER_PREAMBLE_BYTES,
+                maxBytes: MAX_BODY_LENGTH_WITH_TWO_SIGNERS_BYTES,
+            }),
+        );
+    });
     it('throws when decoding a 1232-byte-max UTF-8 message whose message content does not match the length specified in the preamble', () => {
         const encodedMessage =
             // prettier-ignore
@@ -789,6 +834,26 @@ describe('getOffchainMessageEncoder()', () => {
             new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__MAXIMUM_LENGTH_EXCEEDED, {
                 actualBytes: 1232 + 1,
                 maxBytes: 1232,
+            }),
+        );
+    });
+    it.each([
+        [OffchainMessageContentFormat.RESTRICTED_ASCII_1232_BYTES_MAX, 'ASCII'],
+        [OffchainMessageContentFormat.UTF8_1232_BYTES_MAX, '1232-byte-max UTF-8'],
+    ])('throws when encoding a %s message whose preamble plus body is too long', format => {
+        const offchainMessage = {
+            applicationDomain: APPLICATION_DOMAIN,
+            content: {
+                format,
+                text: '!'.repeat(BODY_LENGTH_EXCEEDING_TWO_SIGNER_PREAMBLE_BYTES),
+            },
+            requiredSignatories: [{ address: SIGNER_A }, { address: SIGNER_B }],
+            version: 0,
+        } as unknown as OffchainMessageV0;
+        expect(() => encoder.encode(offchainMessage)).toThrow(
+            new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__MAXIMUM_LENGTH_EXCEEDED, {
+                actualBytes: BODY_LENGTH_EXCEEDING_TWO_SIGNER_PREAMBLE_BYTES,
+                maxBytes: MAX_BODY_LENGTH_WITH_TWO_SIGNERS_BYTES,
             }),
         );
     });
