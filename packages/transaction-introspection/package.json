@@ -1,6 +1,6 @@
 {
     "name": "@solana/transaction-introspection",
-    "version": "6.8.0",
+    "version": "6.9.0",
     "description": "Helpers for inspecting confirmed Solana transactions and walking their instructions",
     "homepage": "https://www.solanakit.com/api#solanatransaction-introspection",
     "exports": {
@@ -79,12 +79,14 @@
         "@solana/errors": "workspace:*",
         "@solana/instructions": "workspace:*",
         "@solana/rpc-api": "workspace:*",
-        "@solana/rpc-types": "workspace:*",
         "@solana/transaction-messages": "workspace:*",
         "@solana/transactions": "workspace:*"
     },
+    "devDependencies": {
+        "@solana/rpc-types": "workspace:*"
+    },
     "peerDependencies": {
-        "typescript": ">=5.0.0"
+        "typescript": ">=5.4.0"
     },
     "peerDependenciesMeta": {
         "typescript": {

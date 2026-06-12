@@ -1568,9 +1568,6 @@ importers:
       '@solana/rpc-api':
         specifier: workspace:*
         version: link:../rpc-api
-      '@solana/rpc-types':
-        specifier: workspace:*
-        version: link:../rpc-types
       '@solana/transaction-messages':
         specifier: workspace:*
         version: link:../transaction-messages
@@ -1578,8 +1575,12 @@ importers:
         specifier: workspace:*
         version: link:../transactions
       typescript:
-        specifier: '>=5.0.0'
+        specifier: '>=5.4.0'
         version: 5.9.3
+    devDependencies:
+      '@solana/rpc-types':
+        specifier: workspace:*
+        version: link:../rpc-types
 
   packages/transaction-messages:
     dependencies:
