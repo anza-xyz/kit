@@ -1,5 +1,37 @@
 # @solana/subscribable
 
+## 6.10.0
+
+### Minor Changes
+
+- [#1552](https://github.com/anza-xyz/kit/pull/1552) [`c318d7f`](https://github.com/anza-xyz/kit/commit/c318d7f2e16fec92859503af41102792be01cece) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `retry()` and `getUnifiedState()` to `ReactiveStore`. The new `getUnifiedState()` returns a discriminated `{ data, error, status }` snapshot with stable identity, so stores can be passed directly to `useSyncExternalStore` without an intermediate wrapper. `getState()` and `getError()` remain on the type but are now `@deprecated` in favour of the unified snapshot.
+
+    A new `createReactiveStoreFromDataPublisherFactory` function is also introduced. It accepts a `createDataPublisher: () => Promise<DataPublisher>` factory rather than a ready-made publisher, which lets the store reconnect via `retry()` after an error. The existing `createReactiveStoreFromDataPublisher` is now `@deprecated`; calling `retry()` on a store it produced throws a new `SolanaError` with code `SOLANA_ERROR__SUBSCRIBABLE__RETRY_NOT_SUPPORTED`.
+
+    `createReactiveStoreWithInitialValueAndSlotTracking` (from `@solana/kit`) now supports `retry()`, which re-sends the RPC request and re-subscribes to the subscription with a fresh abort signal while preserving the last known slot and value.
+
+- [#1606](https://github.com/anza-xyz/kit/pull/1606) [`da868aa`](https://github.com/anza-xyz/kit/commit/da868aafa3aec49dc5984d768c65adb471fb71de) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add framework-agnostic source duck-types for reactive bindings.
+
+    `@solana/subscribable` now exports two new types:
+    - `ReactiveStreamSource<T>` — anything with a `reactiveStore({ abortSignal })` method that returns a `ReactiveStreamStore<T>`. `PendingRpcSubscriptionsRequest<T>` satisfies this by design.
+    - `ReactiveActionSource<T>` — anything with a zero-argument `reactiveStore()` method that returns a `ReactiveActionStore<[], T>`. `PendingRpcRequest<T>` satisfies this by design.
+
+    These let reactive-framework bindings consume a single duck-type instead of naming concrete producer types — and let plugin authors expose their own pending-request objects to those bindings without modification.
+
+    Both source types live in `@solana/subscribable` and are not re-exported from `@solana/kit`, matching the existing convention for their parent `ReactiveStreamStore` / `ReactiveActionStore` types — anyone consuming a source duck-type is already in the reactive-primitives layer and will already be importing the related store types from the same package.
+
+    `@solana/kit` now publicly exports the previously-private `CreateReactiveStoreWithInitialValueAndSlotTrackingConfig` type so non-React consumers (e.g. plugins) can declare function return shapes based on it without taking a dependency on `@solana/react`.
+
+- [#1554](https://github.com/anza-xyz/kit/pull/1554) [`47a785b`](https://github.com/anza-xyz/kit/commit/47a785bdb47f89443cccb69151650974d0f57f65) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Rename `ReactiveStore<T>` to `ReactiveStreamStore<T>`. The old name remains exported as a deprecated alias and will be removed in a future major release.
+
+- [#1550](https://github.com/anza-xyz/kit/pull/1550) [`82a1ac5`](https://github.com/anza-xyz/kit/commit/82a1ac56131ebc2ad43f948feb862172418f8b3d) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Added `createReactiveActionStore` — a framework-agnostic state machine that wraps an async function and exposes a `{ dispatch, dispatchAsync, getState, subscribe, reset }` contract compatible with `useSyncExternalStore`, Svelte stores, Vue's `shallowRef`, and similar reactive primitives. `dispatch` is synchronous and fire-and-forget (safe from UI event handlers); `dispatchAsync` returns a promise that resolves to the wrapped function's result and rejects on failure or supersede — use `isAbortError` from `@solana/promises` to filter aborts. Each call creates a fresh `AbortController` and aborts the previous one, so rapid successive dispatches only produce one final state transition — the outcome of the most recent call.
+
+### Patch Changes
+
+- Updated dependencies [[`c318d7f`](https://github.com/anza-xyz/kit/commit/c318d7f2e16fec92859503af41102792be01cece), [`460557b`](https://github.com/anza-xyz/kit/commit/460557b9f706f22aa384cb175deeb45c30081166), [`40e0848`](https://github.com/anza-xyz/kit/commit/40e084878ca49f37f38065c8b2f64f1b62454f36), [`47a785b`](https://github.com/anza-xyz/kit/commit/47a785bdb47f89443cccb69151650974d0f57f65), [`6b499ee`](https://github.com/anza-xyz/kit/commit/6b499ee38a3f695951a8505f23964839fd308b3d), [`74b8d3d`](https://github.com/anza-xyz/kit/commit/74b8d3d5166b4857ab722eae0ec5e2843e480a4b)]:
+    - @solana/errors@6.10.0
+    - @solana/promises@6.10.0
+
 ## 6.9.0
 
 ### Minor Changes

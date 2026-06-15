@@ -1,5 +1,28 @@
 # @solana/rpc-api
 
+## 6.10.0
+
+### Minor Changes
+
+- [#1660](https://github.com/anza-xyz/kit/pull/1660) [`0d5aa7f`](https://github.com/anza-xyz/kit/commit/0d5aa7f23e3dbc42f974484e1212cdca737b8e91) Thanks [@kh0ra](https://github.com/kh0ra)! - Add the optional `transactionIndex` field to each element of the `getSignaturesForAddress` response. Agave 4.0 (anza-xyz/agave#9683) included the 0 based transaction index inside the block alongside each returned signature. The field is omitted by older RPC servers, so the new property is optional and existing call sites continue to compile without modification.
+
+- [#1658](https://github.com/anza-xyz/kit/pull/1658) [`d655bef`](https://github.com/anza-xyz/kit/commit/d655bef59c7ed6c8150802951a0d2d1b0c6b472c) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Added the `clientId` field to the `getClusterNodes` response type, exposing the name of the validator client software advertised by each node. Also marked the `tpu` and `tpuForwards` fields as `@deprecated` in favor of their QUIC equivalents (`tpuQuic` and `tpuForwardsQuic`); validators may report the UDP fields as `null`.
+
+### Patch Changes
+
+- Updated dependencies [[`5e1644d`](https://github.com/anza-xyz/kit/commit/5e1644db15cfe6828d382041e10bf7e58bd7f825), [`c318d7f`](https://github.com/anza-xyz/kit/commit/c318d7f2e16fec92859503af41102792be01cece), [`460557b`](https://github.com/anza-xyz/kit/commit/460557b9f706f22aa384cb175deeb45c30081166), [`93191af`](https://github.com/anza-xyz/kit/commit/93191af2fd088cd1c56cbed65b2ba1acd2a49ff6), [`40e0848`](https://github.com/anza-xyz/kit/commit/40e084878ca49f37f38065c8b2f64f1b62454f36), [`47a785b`](https://github.com/anza-xyz/kit/commit/47a785bdb47f89443cccb69151650974d0f57f65), [`6b499ee`](https://github.com/anza-xyz/kit/commit/6b499ee38a3f695951a8505f23964839fd308b3d), [`74b8d3d`](https://github.com/anza-xyz/kit/commit/74b8d3d5166b4857ab722eae0ec5e2843e480a4b)]:
+    - @solana/rpc-spec@6.10.0
+    - @solana/errors@6.10.0
+    - @solana/rpc-types@6.10.0
+    - @solana/addresses@6.10.0
+    - @solana/codecs-core@6.10.0
+    - @solana/codecs-strings@6.10.0
+    - @solana/keys@6.10.0
+    - @solana/rpc-transformers@6.10.0
+    - @solana/transaction-messages@6.10.0
+    - @solana/transactions@6.10.0
+    - @solana/rpc-parsed-types@6.10.0
+
 ## 6.9.0
 
 ### Minor Changes

@@ -1,5 +1,16 @@
 # @solana/rpc-transport-http
 
+## 6.10.0
+
+### Patch Changes
+
+- [#1700](https://github.com/anza-xyz/kit/pull/1700) [`bb67860`](https://github.com/anza-xyz/kit/commit/bb67860424dfc1004d3d34722dcda83fc5e39036) Thanks [@pgtls](https://github.com/pgtls)! - Stop sending a manual `Content-Length` header from the HTTP transport. The value came from `body.length` — the JavaScript string's UTF-16 code-unit count — which is smaller than the body's actual UTF-8 byte length whenever the payload contains non-ASCII characters. For such payloads the server would respect the header, read only that many bytes off the socket, and stall waiting for a request that the client believed it had already finished sending. The symptom is a hung request rather than a thrown error, and it has been latent since the line was introduced; recent undici versions surface it more readily. The fix is to let `fetch` derive `Content-Length` from the body itself, which it always did anyway. The transport's TypeScript surface and dev-mode runtime check continue to disallow `Content-Length` as a caller-supplied header.
+
+- Updated dependencies [[`5e1644d`](https://github.com/anza-xyz/kit/commit/5e1644db15cfe6828d382041e10bf7e58bd7f825), [`c318d7f`](https://github.com/anza-xyz/kit/commit/c318d7f2e16fec92859503af41102792be01cece), [`460557b`](https://github.com/anza-xyz/kit/commit/460557b9f706f22aa384cb175deeb45c30081166), [`40e0848`](https://github.com/anza-xyz/kit/commit/40e084878ca49f37f38065c8b2f64f1b62454f36), [`47a785b`](https://github.com/anza-xyz/kit/commit/47a785bdb47f89443cccb69151650974d0f57f65), [`6b499ee`](https://github.com/anza-xyz/kit/commit/6b499ee38a3f695951a8505f23964839fd308b3d), [`74b8d3d`](https://github.com/anza-xyz/kit/commit/74b8d3d5166b4857ab722eae0ec5e2843e480a4b)]:
+    - @solana/rpc-spec@6.10.0
+    - @solana/errors@6.10.0
+    - @solana/rpc-spec-types@6.10.0
+
 ## 6.9.0
 
 ### Minor Changes

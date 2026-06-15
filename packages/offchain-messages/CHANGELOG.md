@@ -1,5 +1,21 @@
 # @solana/offchain-messages
 
+## 6.10.0
+
+### Patch Changes
+
+- [#1741](https://github.com/anza-xyz/kit/pull/1741) [`6c2c903`](https://github.com/anza-xyz/kit/commit/6c2c903d0eb573aa2c7bf179c7f005c9ee6f4db6) Thanks [@ChargingFoxSec](https://github.com/ChargingFoxSec)! - Include the v0 preamble bytes when enforcing the 1232-byte limit for hardware-wallet-signable offchain messages.
+
+- Updated dependencies [[`c318d7f`](https://github.com/anza-xyz/kit/commit/c318d7f2e16fec92859503af41102792be01cece), [`460557b`](https://github.com/anza-xyz/kit/commit/460557b9f706f22aa384cb175deeb45c30081166), [`40e0848`](https://github.com/anza-xyz/kit/commit/40e084878ca49f37f38065c8b2f64f1b62454f36), [`47a785b`](https://github.com/anza-xyz/kit/commit/47a785bdb47f89443cccb69151650974d0f57f65), [`6b499ee`](https://github.com/anza-xyz/kit/commit/6b499ee38a3f695951a8505f23964839fd308b3d), [`74b8d3d`](https://github.com/anza-xyz/kit/commit/74b8d3d5166b4857ab722eae0ec5e2843e480a4b)]:
+    - @solana/errors@6.10.0
+    - @solana/addresses@6.10.0
+    - @solana/codecs-core@6.10.0
+    - @solana/codecs-data-structures@6.10.0
+    - @solana/codecs-numbers@6.10.0
+    - @solana/codecs-strings@6.10.0
+    - @solana/keys@6.10.0
+    - @solana/nominal-types@6.10.0
+
 ## 6.9.0
 
 ### Minor Changes

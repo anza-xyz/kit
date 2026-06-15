@@ -1,5 +1,23 @@
 # @solana/transaction-confirmation
 
+## 6.10.0
+
+### Patch Changes
+
+- [#1640](https://github.com/anza-xyz/kit/pull/1640) [`953eed6`](https://github.com/anza-xyz/kit/commit/953eed6ef7f54b1fc367b7dfa84a45fd37c9a4bc) Thanks [@kh0ra](https://github.com/kh0ra)! - Fix an abort listener leak in `getTimeoutPromise`. The listener registered on the caller's `AbortSignal` was never removed after the promise settled, which caused listeners to accumulate when the same signal was reused across multiple calls. `getTimeoutPromise` now registers the listener with the auto-cleanup `signal` option already used by the other strategies in this package and releases it in a `finally` block.
+
+- Updated dependencies [[`c318d7f`](https://github.com/anza-xyz/kit/commit/c318d7f2e16fec92859503af41102792be01cece), [`460557b`](https://github.com/anza-xyz/kit/commit/460557b9f706f22aa384cb175deeb45c30081166), [`93191af`](https://github.com/anza-xyz/kit/commit/93191af2fd088cd1c56cbed65b2ba1acd2a49ff6), [`40e0848`](https://github.com/anza-xyz/kit/commit/40e084878ca49f37f38065c8b2f64f1b62454f36), [`47a785b`](https://github.com/anza-xyz/kit/commit/47a785bdb47f89443cccb69151650974d0f57f65), [`6b499ee`](https://github.com/anza-xyz/kit/commit/6b499ee38a3f695951a8505f23964839fd308b3d), [`74b8d3d`](https://github.com/anza-xyz/kit/commit/74b8d3d5166b4857ab722eae0ec5e2843e480a4b)]:
+    - @solana/errors@6.10.0
+    - @solana/rpc-types@6.10.0
+    - @solana/rpc@6.10.0
+    - @solana/rpc-subscriptions@6.10.0
+    - @solana/addresses@6.10.0
+    - @solana/codecs-strings@6.10.0
+    - @solana/keys@6.10.0
+    - @solana/transaction-messages@6.10.0
+    - @solana/transactions@6.10.0
+    - @solana/promises@6.10.0
+
 ## 6.9.0
 
 ### Minor Changes

@@ -1,5 +1,20 @@
 # @solana/rpc
 
+## 6.10.0
+
+### Patch Changes
+
+- Updated dependencies [[`0d5aa7f`](https://github.com/anza-xyz/kit/commit/0d5aa7f23e3dbc42f974484e1212cdca737b8e91), [`5e1644d`](https://github.com/anza-xyz/kit/commit/5e1644db15cfe6828d382041e10bf7e58bd7f825), [`c318d7f`](https://github.com/anza-xyz/kit/commit/c318d7f2e16fec92859503af41102792be01cece), [`d655bef`](https://github.com/anza-xyz/kit/commit/d655bef59c7ed6c8150802951a0d2d1b0c6b472c), [`460557b`](https://github.com/anza-xyz/kit/commit/460557b9f706f22aa384cb175deeb45c30081166), [`93191af`](https://github.com/anza-xyz/kit/commit/93191af2fd088cd1c56cbed65b2ba1acd2a49ff6), [`40e0848`](https://github.com/anza-xyz/kit/commit/40e084878ca49f37f38065c8b2f64f1b62454f36), [`bb67860`](https://github.com/anza-xyz/kit/commit/bb67860424dfc1004d3d34722dcda83fc5e39036), [`47a785b`](https://github.com/anza-xyz/kit/commit/47a785bdb47f89443cccb69151650974d0f57f65), [`6b499ee`](https://github.com/anza-xyz/kit/commit/6b499ee38a3f695951a8505f23964839fd308b3d), [`74b8d3d`](https://github.com/anza-xyz/kit/commit/74b8d3d5166b4857ab722eae0ec5e2843e480a4b)]:
+    - @solana/rpc-api@6.10.0
+    - @solana/rpc-spec@6.10.0
+    - @solana/errors@6.10.0
+    - @solana/rpc-types@6.10.0
+    - @solana/rpc-transport-http@6.10.0
+    - @solana/rpc-transformers@6.10.0
+    - @solana/fast-stable-stringify@6.10.0
+    - @solana/functional@6.10.0
+    - @solana/rpc-spec-types@6.10.0
+
 ## 6.9.0
 
 ### Minor Changes

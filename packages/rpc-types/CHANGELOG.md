@@ -1,5 +1,22 @@
 # @solana/rpc-types
 
+## 6.10.0
+
+### Minor Changes
+
+- [#1659](https://github.com/anza-xyz/kit/pull/1659) [`93191af`](https://github.com/anza-xyz/kit/commit/93191af2fd088cd1c56cbed65b2ba1acd2a49ff6) Thanks [@kh0ra](https://github.com/kh0ra)! - `Base58EncodedBytes`, `Base64EncodedBytes`, and `Base64EncodedZStdCompressedBytes` are no longer uniquely branded. They are now plain `EncodedString<...>` aliases over their respective encoding tags. As a result, any value that already carries the matching encoding tag (such as `Address`, `Signature`, or `Blockhash` for base 58) can be used wherever `Base58EncodedBytes` is expected. For example, an `Address` may now be passed directly as the `bytes` of a `memcmp` filter in `getProgramAccounts`. The runtime representation is unchanged and existing call sites continue to compile without modification.
+
+### Patch Changes
+
+- Updated dependencies [[`c318d7f`](https://github.com/anza-xyz/kit/commit/c318d7f2e16fec92859503af41102792be01cece), [`460557b`](https://github.com/anza-xyz/kit/commit/460557b9f706f22aa384cb175deeb45c30081166), [`40e0848`](https://github.com/anza-xyz/kit/commit/40e084878ca49f37f38065c8b2f64f1b62454f36), [`47a785b`](https://github.com/anza-xyz/kit/commit/47a785bdb47f89443cccb69151650974d0f57f65), [`6b499ee`](https://github.com/anza-xyz/kit/commit/6b499ee38a3f695951a8505f23964839fd308b3d), [`74b8d3d`](https://github.com/anza-xyz/kit/commit/74b8d3d5166b4857ab722eae0ec5e2843e480a4b)]:
+    - @solana/errors@6.10.0
+    - @solana/addresses@6.10.0
+    - @solana/codecs-core@6.10.0
+    - @solana/codecs-numbers@6.10.0
+    - @solana/codecs-strings@6.10.0
+    - @solana/fixed-points@6.10.0
+    - @solana/nominal-types@6.10.0
+
 ## 6.9.0
 
 ### Minor Changes

@@ -1,5 +1,11 @@
 # @solana/plugin-core
 
+## 6.10.0
+
+### Patch Changes
+
+- [#1646](https://github.com/anza-xyz/kit/pull/1646) [`09e7796`](https://github.com/anza-xyz/kit/commit/09e779660a13899862fdf15a379d750be71e77d5) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Flatten the inferred return type of `extendClient` and `withCleanup` so that chained `.use()` calls on a `Client` no longer produce deeply nested `Omit<Omit<Omit<...>>>` types in editor tooltips and error messages. The inferred shape now displays as a single flat object literal at every step of the chain, while optional (`?`) and `readonly` modifiers, symbol keys, and override semantics are preserved exactly as before. Also exports the new `ExtendedClient<TClient, TAdditions>` helper type for plugin authors who write their own merging helpers and want the same flattening guarantee.
+
 ## 6.9.0
 
 ### Minor Changes

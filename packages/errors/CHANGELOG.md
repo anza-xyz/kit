@@ -1,5 +1,76 @@
 # @solana/errors
 
+## 6.10.0
+
+### Minor Changes
+
+- [#1552](https://github.com/anza-xyz/kit/pull/1552) [`c318d7f`](https://github.com/anza-xyz/kit/commit/c318d7f2e16fec92859503af41102792be01cece) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `retry()` and `getUnifiedState()` to `ReactiveStore`. The new `getUnifiedState()` returns a discriminated `{ data, error, status }` snapshot with stable identity, so stores can be passed directly to `useSyncExternalStore` without an intermediate wrapper. `getState()` and `getError()` remain on the type but are now `@deprecated` in favour of the unified snapshot.
+
+    A new `createReactiveStoreFromDataPublisherFactory` function is also introduced. It accepts a `createDataPublisher: () => Promise<DataPublisher>` factory rather than a ready-made publisher, which lets the store reconnect via `retry()` after an error. The existing `createReactiveStoreFromDataPublisher` is now `@deprecated`; calling `retry()` on a store it produced throws a new `SolanaError` with code `SOLANA_ERROR__SUBSCRIBABLE__RETRY_NOT_SUPPORTED`.
+
+    `createReactiveStoreWithInitialValueAndSlotTracking` (from `@solana/kit`) now supports `retry()`, which re-sends the RPC request and re-subscribes to the subscription with a fresh abort signal while preserving the last known slot and value.
+
+- [#1654](https://github.com/anza-xyz/kit/pull/1654) [`460557b`](https://github.com/anza-xyz/kit/commit/460557b9f706f22aa384cb175deeb45c30081166) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Added `estimateResourceLimitsFactory`, `estimateAndSetResourceLimitsFactory`, and `fillTransactionMessageProvisoryResourceLimits` to `@solana/kit`. These mirror the existing compute-unit estimators but additionally estimate and set the loaded accounts data size limit, which is required for version 1 transactions. Both limits are derived from a single simulation call.
+
+    Two new error codes were added to `@solana/errors`: `SOLANA_ERROR__TRANSACTION__FAILED_TO_ESTIMATE_LOADED_ACCOUNTS_DATA_SIZE_LIMIT` (thrown when an RPC fails to return a `loadedAccountsDataSize` value while estimating a version 1 transaction) and `SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_RESOURCE_LIMITS` (the resource-limits counterpart of `SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT`).
+
+    ## Migration
+
+    The compute-unit-only helpers are still exported but are now deprecated. The new helpers handle every transaction version: for legacy and version 0 messages they behave the same as the old ones (only the compute unit limit is set); for version 1 messages they additionally set the loaded accounts data size limit, which is required for v1.
+
+    ### `estimateComputeUnitLimitFactory` → `estimateResourceLimitsFactory`
+
+    The new estimator returns an object instead of a `number`. Destructure `computeUnitLimit` from the result:
+
+    ```ts
+    // Before
+    const estimateComputeUnitLimit = estimateComputeUnitLimitFactory({ rpc });
+    const units = await estimateComputeUnitLimit(transactionMessage);
+
+    // After
+    const estimateResourceLimits = estimateResourceLimitsFactory({ rpc });
+    const { computeUnitLimit } = await estimateResourceLimits(transactionMessage);
+    // If provided by the RPC, `loadedAccountsDataSizeLimit` is also returned
+    ```
+
+    ### `estimateAndSetComputeUnitLimitFactory` → `estimateAndSetResourceLimitsFactory`
+
+    The new helper accepts the multi-resource estimator and returns a function with the same shape as before — it takes a transaction message and returns the same message with resource limits set. No call-site change beyond the factory swap:
+
+    ```ts
+    // Before
+    const estimator = estimateComputeUnitLimitFactory({ rpc });
+    const estimateAndSet = estimateAndSetComputeUnitLimitFactory(estimator);
+
+    // After
+    const estimator = estimateResourceLimitsFactory({ rpc });
+    const estimateAndSet = estimateAndSetResourceLimitsFactory(estimator);
+    ```
+
+    Behavior note: the new helper re-estimates the compute unit limit when it is unset, set to the provisory value of `0`, or set to the runtime max of `1_400_000` (same as before). For the loaded accounts data size limit on v1 messages it only re-estimates when unset or set to the provisory `0`; an explicit value — including the runtime max of 64 MiB — is left untouched, since callers who set it explicitly are signaling a deliberate choice.
+
+    ### `fillTransactionMessageProvisoryComputeUnitLimit` → `fillTransactionMessageProvisoryResourceLimits`
+
+    The signature is unchanged. For v1 messages, the new helper additionally reserves a provisory `0` for the loaded accounts data size limit when none is set. For legacy and v0 messages, the behavior is unchanged and the function only reserves space for the CU limit.
+
+    ```ts
+    // Before
+    const reserved = fillTransactionMessageProvisoryComputeUnitLimit(transactionMessage);
+
+    // After
+    const reserved = fillTransactionMessageProvisoryResourceLimits(transactionMessage);
+    ```
+
+- [#1746](https://github.com/anza-xyz/kit/pull/1746) [`40e0848`](https://github.com/anza-xyz/kit/commit/40e084878ca49f37f38065c8b2f64f1b62454f36) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add the `SOLANA_ERROR__WALLET__ACCOUNT_NOT_AVAILABLE` error code, thrown when a selected account is not available in the connected wallet. Its context carries the requested `address` and the `walletName`.
+
+- [#1554](https://github.com/anza-xyz/kit/pull/1554) [`47a785b`](https://github.com/anza-xyz/kit/commit/47a785bdb47f89443cccb69151650974d0f57f65) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Rename `ReactiveStore<T>` to `ReactiveStreamStore<T>`. The old name remains exported as a deprecated alias and will be removed in a future major release.
+
+### Patch Changes
+
+- [#1681](https://github.com/anza-xyz/kit/pull/1681) [`6b499ee`](https://github.com/anza-xyz/kit/commit/6b499ee38a3f695951a8505f23964839fd308b3d) Thanks [@brooksprumo](https://github.com/brooksprumo)! - Add FILTER_TRANSACTION_NOT_FOUND error
+
+- [#1679](https://github.com/anza-xyz/kit/pull/1679) [`74b8d3d`](https://github.com/anza-xyz/kit/commit/74b8d3d5166b4857ab722eae0ec5e2843e480a4b) Thanks [@brooksprumo](https://github.com/brooksprumo)! - Add NO_SLOT_HISTORY error
+
 ## 6.9.0
 
 ### Minor Changes

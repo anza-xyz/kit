@@ -1,5 +1,127 @@
 # @solana/kit
 
+## 6.10.0
+
+### Minor Changes
+
+- [#1555](https://github.com/anza-xyz/kit/pull/1555) [`5e1644d`](https://github.com/anza-xyz/kit/commit/5e1644db15cfe6828d382041e10bf7e58bd7f825) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add a `reactiveStore()` method to `PendingRpcRequest`. It fires the request on construction and synchronously returns a `ReactiveActionStore` that holds the request's `idle`/`running`/`success`/`error` lifecycle state. Compatible with `useSyncExternalStore`, Svelte stores, and other reactive primitives. Call `dispatch()` to re-fire the request (e.g. after an error), or `reset()` to abort the in-flight call and return to idle.
+
+    ```ts
+    const store = rpc.getAccountInfo(address).reactiveStore();
+    const state = useSyncExternalStore(store.subscribe, store.getState);
+    if (state.status === 'error') return <ErrorMessage error={state.error} onRetry={store.dispatch} />;
+    if (state.status === 'running' && !state.data) return <Spinner />;
+    return <View data={state.data!} />;
+    ```
+
+- [#1553](https://github.com/anza-xyz/kit/pull/1553) [`15b610d`](https://github.com/anza-xyz/kit/commit/15b610deb88ba0a49b8fdab7dec7085ad3f4cb6e) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add a `reactiveStore()` method to `PendingRpcSubscriptionsRequest`. Unlike `reactive()`, this variant returns a `ReactiveStore` synchronously and supports `retry()` to reconnect after an error. `reactive()` is now `@deprecated` in favour of `reactiveStore()`.
+
+    ```ts
+    const store = rpc.accountNotifications(address).reactiveStore({ abortSignal });
+    const state = useSyncExternalStore(store.subscribe, store.getUnifiedState);
+    if (state.status === 'error') return <ErrorMessage error={state.error} onRetry={store.retry} />;
+    ```
+
+- [#1552](https://github.com/anza-xyz/kit/pull/1552) [`c318d7f`](https://github.com/anza-xyz/kit/commit/c318d7f2e16fec92859503af41102792be01cece) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `retry()` and `getUnifiedState()` to `ReactiveStore`. The new `getUnifiedState()` returns a discriminated `{ data, error, status }` snapshot with stable identity, so stores can be passed directly to `useSyncExternalStore` without an intermediate wrapper. `getState()` and `getError()` remain on the type but are now `@deprecated` in favour of the unified snapshot.
+
+    A new `createReactiveStoreFromDataPublisherFactory` function is also introduced. It accepts a `createDataPublisher: () => Promise<DataPublisher>` factory rather than a ready-made publisher, which lets the store reconnect via `retry()` after an error. The existing `createReactiveStoreFromDataPublisher` is now `@deprecated`; calling `retry()` on a store it produced throws a new `SolanaError` with code `SOLANA_ERROR__SUBSCRIBABLE__RETRY_NOT_SUPPORTED`.
+
+    `createReactiveStoreWithInitialValueAndSlotTracking` (from `@solana/kit`) now supports `retry()`, which re-sends the RPC request and re-subscribes to the subscription with a fresh abort signal while preserving the last known slot and value.
+
+- [#1606](https://github.com/anza-xyz/kit/pull/1606) [`da868aa`](https://github.com/anza-xyz/kit/commit/da868aafa3aec49dc5984d768c65adb471fb71de) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add framework-agnostic source duck-types for reactive bindings.
+
+    `@solana/subscribable` now exports two new types:
+    - `ReactiveStreamSource<T>` — anything with a `reactiveStore({ abortSignal })` method that returns a `ReactiveStreamStore<T>`. `PendingRpcSubscriptionsRequest<T>` satisfies this by design.
+    - `ReactiveActionSource<T>` — anything with a zero-argument `reactiveStore()` method that returns a `ReactiveActionStore<[], T>`. `PendingRpcRequest<T>` satisfies this by design.
+
+    These let reactive-framework bindings consume a single duck-type instead of naming concrete producer types — and let plugin authors expose their own pending-request objects to those bindings without modification.
+
+    Both source types live in `@solana/subscribable` and are not re-exported from `@solana/kit`, matching the existing convention for their parent `ReactiveStreamStore` / `ReactiveActionStore` types — anyone consuming a source duck-type is already in the reactive-primitives layer and will already be importing the related store types from the same package.
+
+    `@solana/kit` now publicly exports the previously-private `CreateReactiveStoreWithInitialValueAndSlotTrackingConfig` type so non-React consumers (e.g. plugins) can declare function return shapes based on it without taking a dependency on `@solana/react`.
+
+- [#1654](https://github.com/anza-xyz/kit/pull/1654) [`460557b`](https://github.com/anza-xyz/kit/commit/460557b9f706f22aa384cb175deeb45c30081166) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Added `estimateResourceLimitsFactory`, `estimateAndSetResourceLimitsFactory`, and `fillTransactionMessageProvisoryResourceLimits` to `@solana/kit`. These mirror the existing compute-unit estimators but additionally estimate and set the loaded accounts data size limit, which is required for version 1 transactions. Both limits are derived from a single simulation call.
+
+    Two new error codes were added to `@solana/errors`: `SOLANA_ERROR__TRANSACTION__FAILED_TO_ESTIMATE_LOADED_ACCOUNTS_DATA_SIZE_LIMIT` (thrown when an RPC fails to return a `loadedAccountsDataSize` value while estimating a version 1 transaction) and `SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_RESOURCE_LIMITS` (the resource-limits counterpart of `SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT`).
+
+    ## Migration
+
+    The compute-unit-only helpers are still exported but are now deprecated. The new helpers handle every transaction version: for legacy and version 0 messages they behave the same as the old ones (only the compute unit limit is set); for version 1 messages they additionally set the loaded accounts data size limit, which is required for v1.
+
+    ### `estimateComputeUnitLimitFactory` → `estimateResourceLimitsFactory`
+
+    The new estimator returns an object instead of a `number`. Destructure `computeUnitLimit` from the result:
+
+    ```ts
+    // Before
+    const estimateComputeUnitLimit = estimateComputeUnitLimitFactory({ rpc });
+    const units = await estimateComputeUnitLimit(transactionMessage);
+
+    // After
+    const estimateResourceLimits = estimateResourceLimitsFactory({ rpc });
+    const { computeUnitLimit } = await estimateResourceLimits(transactionMessage);
+    // If provided by the RPC, `loadedAccountsDataSizeLimit` is also returned
+    ```
+
+    ### `estimateAndSetComputeUnitLimitFactory` → `estimateAndSetResourceLimitsFactory`
+
+    The new helper accepts the multi-resource estimator and returns a function with the same shape as before — it takes a transaction message and returns the same message with resource limits set. No call-site change beyond the factory swap:
+
+    ```ts
+    // Before
+    const estimator = estimateComputeUnitLimitFactory({ rpc });
+    const estimateAndSet = estimateAndSetComputeUnitLimitFactory(estimator);
+
+    // After
+    const estimator = estimateResourceLimitsFactory({ rpc });
+    const estimateAndSet = estimateAndSetResourceLimitsFactory(estimator);
+    ```
+
+    Behavior note: the new helper re-estimates the compute unit limit when it is unset, set to the provisory value of `0`, or set to the runtime max of `1_400_000` (same as before). For the loaded accounts data size limit on v1 messages it only re-estimates when unset or set to the provisory `0`; an explicit value — including the runtime max of 64 MiB — is left untouched, since callers who set it explicitly are signaling a deliberate choice.
+
+    ### `fillTransactionMessageProvisoryComputeUnitLimit` → `fillTransactionMessageProvisoryResourceLimits`
+
+    The signature is unchanged. For v1 messages, the new helper additionally reserves a provisory `0` for the loaded accounts data size limit when none is set. For legacy and v0 messages, the behavior is unchanged and the function only reserves space for the CU limit.
+
+    ```ts
+    // Before
+    const reserved = fillTransactionMessageProvisoryComputeUnitLimit(transactionMessage);
+
+    // After
+    const reserved = fillTransactionMessageProvisoryResourceLimits(transactionMessage);
+    ```
+
+- [#1554](https://github.com/anza-xyz/kit/pull/1554) [`47a785b`](https://github.com/anza-xyz/kit/commit/47a785bdb47f89443cccb69151650974d0f57f65) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Rename `ReactiveStore<T>` to `ReactiveStreamStore<T>`. The old name remains exported as a deprecated alias and will be removed in a future major release.
+
+### Patch Changes
+
+- Updated dependencies [[`0d5aa7f`](https://github.com/anza-xyz/kit/commit/0d5aa7f23e3dbc42f974484e1212cdca737b8e91), [`953eed6`](https://github.com/anza-xyz/kit/commit/953eed6ef7f54b1fc367b7dfa84a45fd37c9a4bc), [`c318d7f`](https://github.com/anza-xyz/kit/commit/c318d7f2e16fec92859503af41102792be01cece), [`09e7796`](https://github.com/anza-xyz/kit/commit/09e779660a13899862fdf15a379d750be71e77d5), [`d655bef`](https://github.com/anza-xyz/kit/commit/d655bef59c7ed6c8150802951a0d2d1b0c6b472c), [`da868aa`](https://github.com/anza-xyz/kit/commit/da868aafa3aec49dc5984d768c65adb471fb71de), [`460557b`](https://github.com/anza-xyz/kit/commit/460557b9f706f22aa384cb175deeb45c30081166), [`93191af`](https://github.com/anza-xyz/kit/commit/93191af2fd088cd1c56cbed65b2ba1acd2a49ff6), [`6c2c903`](https://github.com/anza-xyz/kit/commit/6c2c903d0eb573aa2c7bf179c7f005c9ee6f4db6), [`40e0848`](https://github.com/anza-xyz/kit/commit/40e084878ca49f37f38065c8b2f64f1b62454f36), [`47a785b`](https://github.com/anza-xyz/kit/commit/47a785bdb47f89443cccb69151650974d0f57f65), [`6b499ee`](https://github.com/anza-xyz/kit/commit/6b499ee38a3f695951a8505f23964839fd308b3d), [`82a1ac5`](https://github.com/anza-xyz/kit/commit/82a1ac56131ebc2ad43f948feb862172418f8b3d), [`74b8d3d`](https://github.com/anza-xyz/kit/commit/74b8d3d5166b4857ab722eae0ec5e2843e480a4b)]:
+    - @solana/rpc-api@6.10.0
+    - @solana/transaction-confirmation@6.10.0
+    - @solana/subscribable@6.10.0
+    - @solana/errors@6.10.0
+    - @solana/plugin-core@6.10.0
+    - @solana/rpc-types@6.10.0
+    - @solana/offchain-messages@6.10.0
+    - @solana/program-client-core@6.10.0
+    - @solana/rpc@6.10.0
+    - @solana/sysvars@6.10.0
+    - @solana/accounts@6.10.0
+    - @solana/plugin-interfaces@6.10.0
+    - @solana/rpc-subscriptions@6.10.0
+    - @solana/addresses@6.10.0
+    - @solana/instruction-plans@6.10.0
+    - @solana/instructions@6.10.0
+    - @solana/keys@6.10.0
+    - @solana/programs@6.10.0
+    - @solana/signers@6.10.0
+    - @solana/transaction-messages@6.10.0
+    - @solana/transactions@6.10.0
+    - @solana/rpc-parsed-types@6.10.0
+    - @solana/codecs@6.10.0
+    - @solana/functional@6.10.0
+    - @solana/rpc-spec-types@6.10.0
+
 ## 6.9.0
 
 ### Minor Changes
