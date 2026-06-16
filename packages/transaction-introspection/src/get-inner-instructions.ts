@@ -87,7 +87,7 @@ export function getInnerInstructionsFromMeta(
                     innerIndex,
                     kind: 'inner',
                     outerIndex: group.index,
-                    ...(ix.stackHeight !== undefined ? { stackHeight: ix.stackHeight } : {}),
+                    ...(ix.stackHeight != null ? { stackHeight: ix.stackHeight } : {}),
                 },
             });
         }
