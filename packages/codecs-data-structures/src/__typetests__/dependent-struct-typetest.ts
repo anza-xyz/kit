@@ -1,4 +1,4 @@
-import { Decoder, VariableSizeDecoder } from '@solana/codecs-core';
+import { Decoder, FixedSizeDecoder, VariableSizeDecoder } from '@solana/codecs-core';
 import { getU8Decoder, getU16Decoder, getU32Decoder } from '@solana/codecs-numbers';
 import { getUtf8Decoder } from '@solana/codecs-strings';
 
@@ -6,8 +6,8 @@ import { getArrayDecoder } from '../array';
 import { createDependentStructDecoder } from '../dependent-struct';
 
 {
-    // [createDependentStructDecoder]: An empty builder finishes to a decoder for the empty record.
-    createDependentStructDecoder().finish() satisfies VariableSizeDecoder<Record<never, never>>;
+    // [createDependentStructDecoder]: An empty builder builds to a `FixedSizeDecoder` for the empty record.
+    createDependentStructDecoder().build() satisfies FixedSizeDecoder<Record<never, never>>;
 }
 
 {
@@ -16,7 +16,7 @@ import { createDependentStructDecoder } from '../dependent-struct';
         .field('a', getU8Decoder())
         .field('b', getU16Decoder())
         .field('c', getUtf8Decoder())
-        .finish() satisfies VariableSizeDecoder<{ a: number; b: number; c: string }>;
+        .build() satisfies VariableSizeDecoder<{ a: number; b: number; c: string }>;
 }
 
 {
@@ -27,7 +27,7 @@ import { createDependentStructDecoder } from '../dependent-struct';
             fields satisfies Readonly<{ count: number }>;
             return getArrayDecoder(getU32Decoder(), { size: fields.count });
         })
-        .finish() satisfies VariableSizeDecoder<{ count: number; values: number[] }>;
+        .build() satisfies VariableSizeDecoder<{ count: number; values: number[] }>;
 }
 
 {
@@ -40,7 +40,7 @@ import { createDependentStructDecoder } from '../dependent-struct';
             return getU8Decoder();
         })
         .field('third', getU8Decoder())
-        .finish();
+        .build();
 }
 
 {
@@ -53,7 +53,7 @@ import { createDependentStructDecoder } from '../dependent-struct';
 
 {
     // [createDependentStructDecoder]: The finished decoder is assignable to a generic `Decoder`.
-    const decoder = createDependentStructDecoder().field('value', getU8Decoder()).finish();
+    const decoder = createDependentStructDecoder().field('value', getU8Decoder()).build();
     decoder satisfies Decoder<{ value: number }>;
 }
 
@@ -62,13 +62,48 @@ import { createDependentStructDecoder } from '../dependent-struct';
     createDependentStructDecoder()
         .field('a', getU8Decoder())
         .field('b', () => getU8Decoder())
-        .finish() satisfies VariableSizeDecoder<{ a: number; b: number }>;
+        .build() satisfies VariableSizeDecoder<{ a: number; b: number }>;
 }
 
 {
-    // [createDependentStructDecoder]: The result is always a `VariableSizeDecoder`, never a `FixedSizeDecoder`.
-    const decoder = createDependentStructDecoder().field('a', getU8Decoder()).finish();
-    decoder satisfies VariableSizeDecoder<{ a: number }>;
+    // [createDependentStructDecoder]: A builder built from only fixed size decoders produces a `FixedSizeDecoder`.
+    createDependentStructDecoder()
+        .field('a', getU8Decoder())
+        .field('b', getU16Decoder())
+        .field('c', getU32Decoder())
+        .build() satisfies FixedSizeDecoder<{ a: number; b: number; c: number }>;
+}
+
+{
+    // [createDependentStructDecoder]: Adding a variable size decoder demotes the builder to variable size.
+    createDependentStructDecoder()
+        .field('a', getU8Decoder())
+        .field('b', getUtf8Decoder())
+        .field('c', getU8Decoder())
+        .build() satisfies VariableSizeDecoder<{ a: number; b: string; c: number }>;
+}
+
+{
+    // [createDependentStructDecoder]: Adding a factory demotes the builder to variable size.
+    createDependentStructDecoder()
+        .field('count', getU8Decoder())
+        .field('items', fields => getArrayDecoder(getU8Decoder(), { size: fields.count }))
+        .build() satisfies VariableSizeDecoder<{ count: number; items: number[] }>;
+}
+
+{
+    // [createDependentStructDecoder]: Once variable size, the builder stays variable size on subsequent additions.
+    createDependentStructDecoder()
+        .field('a', getU8Decoder())
+        .field('b', getUtf8Decoder())
+        .field('c', getU8Decoder())
+        .build() satisfies VariableSizeDecoder<{ a: number; b: string; c: number }>;
+    // A fixed size addition after a variable size addition does not raise the builder back to fixed size.
+    createDependentStructDecoder()
+        .field('a', getUtf8Decoder())
+        .field('b', getU8Decoder())
+        // @ts-expect-error The builder dropped to variable size; the result is not a `FixedSizeDecoder`.
+        .build() satisfies FixedSizeDecoder<{ a: string; b: number }>;
 }
 
 {
@@ -80,7 +115,7 @@ import { createDependentStructDecoder } from '../dependent-struct';
         .field('d', getU8Decoder())
         .field('e', getU8Decoder())
         .field('f', getU8Decoder())
-        .finish() satisfies VariableSizeDecoder<{ a: number; b: number; c: number; d: number; e: number; f: number }>;
+        .build() satisfies FixedSizeDecoder<{ a: number; b: number; c: number; d: number; e: number; f: number }>;
 }
 
 {
@@ -92,7 +127,7 @@ import { createDependentStructDecoder } from '../dependent-struct';
             fields.first = 0;
             return getU8Decoder();
         })
-        .finish();
+        .build();
 }
 
 {
@@ -102,13 +137,13 @@ import { createDependentStructDecoder } from '../dependent-struct';
     createDependentStructDecoder()
         .field('version', getU8Decoder())
         .field('payload', buildPayload)
-        .finish() satisfies VariableSizeDecoder<{ payload: number; version: number }>;
+        .build() satisfies VariableSizeDecoder<{ payload: number; version: number }>;
 }
 
 {
     // [createDependentStructDecoder]: The accumulator type is exact; unknown keys are not part of the finished decoder.
-    const decoder = createDependentStructDecoder().field('a', getU8Decoder()).finish();
-    decoder satisfies VariableSizeDecoder<{ a: number }>;
+    const decoder = createDependentStructDecoder().field('a', getU8Decoder()).build();
+    decoder satisfies FixedSizeDecoder<{ a: number }>;
     const value = null as unknown as Awaited<ReturnType<typeof decoder.decode>>;
     // @ts-expect-error `b` was never declared on the builder.
     void value.b;

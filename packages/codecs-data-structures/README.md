@@ -186,7 +186,7 @@ Each call to `field` returns a new builder whose accumulated type is widened by 
 const decoder = createDependentStructDecoder()
     .field('count', getU8Decoder())
     .field('values', fields => getArrayDecoder(getU32Decoder(), { size: fields.count }))
-    .finish();
+    .build();
 
 const struct = decoder.decode(new Uint8Array([0x02, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00]));
 // { count: 2, values: [1, 2] }
@@ -198,18 +198,18 @@ Static and dependent fields can be mixed freely, and a factory may pick the deco
 const decoder = createDependentStructDecoder()
     .field('version', getU8Decoder())
     .field('payload', fields => (fields.version === 0 ? getU16Decoder() : getU32Decoder()))
-    .finish();
+    .build();
 ```
 
-The resulting decoder is always a `VariableSizeDecoder` because the size of any factory-provided field cannot be known ahead of time.
+The builder mirrors the fixed vs variable size behaviour of `getStructDecoder`. The empty builder builds to a `FixedSizeDecoder` of size zero. Adding a `FixedSizeDecoder` keeps the builder fixed size and the byte sizes accumulate. Adding a `VariableSizeDecoder` or a field factory drops the builder to variable size, and every subsequent `field` call stays variable size from that point on. Factories pass their `fields` argument through `Object.freeze`, so attempts to mutate the snapshot at runtime throw in strict mode.
 
 ### When to use `createDependentStructDecoder` vs `getStructDecoder`
 
-| Situation                                                                                              | Recommended                                                                                                 |
-| ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
-| Every field's decoder is fixed at construction time.                                                   | `getStructDecoder`                                                                                          |
-| One field's decoder needs the value of a previously decoded field (count, version, discriminator ...). | `createDependentStructDecoder`                                                                              |
-| You need both a `Codec` (encoder + decoder).                                                           | Combine `getStructEncoder` with the result of `createDependentStructDecoder().finish()` via `combineCodec`. |
+| Situation                                                                                              | Recommended                                                                                                |
+| ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| Every field's decoder is fixed at construction time.                                                   | `getStructDecoder`                                                                                         |
+| One field's decoder needs the value of a previously decoded field (count, version, discriminator ...). | `createDependentStructDecoder`                                                                             |
+| You need both a `Codec` (encoder + decoder).                                                           | Combine `getStructEncoder` with the result of `createDependentStructDecoder().build()` via `combineCodec`. |
 
 The builder is intentionally limited to the decoder side. The encoder direction already has access to the entire value when serialising, so the existing `getStructEncoder` already supports the same shape; pair it with `createDependentStructDecoder` and `combineCodec` to obtain a full codec.
 
