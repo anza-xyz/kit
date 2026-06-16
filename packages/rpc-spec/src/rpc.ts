@@ -2,6 +2,7 @@ import { SOLANA_ERROR__RPC__API_PLAN_MISSING_FOR_RPC_METHOD, SolanaError } from 
 import { Callable, Flatten, OverloadImplementations, UnionToIntersection } from '@solana/rpc-spec-types';
 import { createReactiveActionStore, ReactiveActionStore } from '@solana/subscribable';
 
+import { getNonRpcPropertyValue, isNonRpcPropertyName } from './non-rpc-proxy-properties';
 import { RpcApi, RpcPlan } from './rpc-api';
 import { RpcTransport } from './rpc-transport';
 
@@ -94,8 +95,8 @@ function makeProxy<TRpcMethods, TRpcTransport extends RpcTransport>(
             return false;
         },
         get(target, p, receiver) {
-            if (p === 'then') {
-                return undefined;
+            if (isNonRpcPropertyName(p)) {
+                return getNonRpcPropertyValue(p, receiver);
             }
             return function (...rawParams: unknown[]) {
                 const methodName = p.toString();

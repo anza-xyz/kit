@@ -6,6 +6,7 @@ import {
     createReactiveStoreFromDataPublisherFactory,
 } from '@solana/subscribable';
 
+import { getNonRpcPropertyValue, isNonRpcPropertyName } from './non-rpc-proxy-properties';
 import { RpcSubscriptionsApi, RpcSubscriptionsPlan } from './rpc-subscriptions-api';
 import { PendingRpcSubscriptionsRequest, RpcSubscribeOptions } from './rpc-subscriptions-request';
 import { RpcSubscriptionsTransport } from './rpc-subscriptions-transport';
@@ -60,8 +61,8 @@ export function createSubscriptionRpc<TRpcSubscriptionsApiMethods>(
             return false;
         },
         get(target, p, receiver) {
-            if (p === 'then') {
-                return undefined;
+            if (isNonRpcPropertyName(p)) {
+                return getNonRpcPropertyValue(p, receiver);
             }
             return function (...rawParams: unknown[]) {
                 const notificationName = p.toString();

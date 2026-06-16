@@ -1,6 +1,10 @@
 import { createRpcSubscriptionsApi, RpcSubscriptionsPlan } from '../rpc-subscriptions-api';
 import { RpcSubscriptionsChannel } from '../rpc-subscriptions-channel';
 
+function getUntypedProperty(obj: unknown, propertyName: PropertyKey): unknown {
+    return (obj as Record<PropertyKey, unknown>)[propertyName];
+}
+
 describe('createRpcSubscriptionsApi', () => {
     let mockChannel: RpcSubscriptionsChannel<unknown, unknown>;
     beforeEach(() => {
@@ -42,5 +46,24 @@ describe('createRpcSubscriptionsApi', () => {
             const result = api.foo('hi');
             expect(result.request).toEqual({ methodName: 'bar', params: [1, 2, 3] });
         });
+    });
+    it('does not expose JS protocol hooks as subscription methods', () => {
+        expect.assertions(7);
+        const api = createRpcSubscriptionsApi({ planExecutor: jest.fn() });
+
+        expect(api).not.toHaveProperty('then');
+        expect(api).not.toHaveProperty('toJSON');
+        expect(getUntypedProperty(api, Symbol.asyncIterator)).toBeUndefined();
+        expect(getUntypedProperty(api, Symbol.for('nodejs.util.inspect.custom'))).toBeUndefined();
+        expect(getUntypedProperty(api, Symbol.iterator)).toBeUndefined();
+        expect(getUntypedProperty(api, Symbol.toPrimitive)).toBeUndefined();
+        expect(getUntypedProperty(api, Symbol.toStringTag)).toBeUndefined();
+    });
+    it('preserves Object prototype behavior', () => {
+        expect.assertions(2);
+        const api = createRpcSubscriptionsApi({ planExecutor: jest.fn() });
+
+        expect(String(api)).toBe('[object Object]');
+        expect(getUntypedProperty(api, 'hasOwnProperty')).toBe(Object.prototype.hasOwnProperty);
     });
 });

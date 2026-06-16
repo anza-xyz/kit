@@ -9,6 +9,10 @@ interface TestRpcMethods {
     someMethod(...args: unknown[]): unknown;
 }
 
+function getUntypedProperty(obj: unknown, propertyName: PropertyKey): unknown {
+    return (obj as Record<PropertyKey, unknown>)[propertyName];
+}
+
 describe('JSON-RPC 2.0', () => {
     let makeHttpRequest: RpcTransport;
     beforeEach(() => {
@@ -34,6 +38,10 @@ describe('JSON-RPC 2.0', () => {
                     params: ['some', 'params', 123],
                 }),
             );
+        });
+        it('does not treat JSON serialization as a missing RPC method', () => {
+            expect.assertions(1);
+            expect(JSON.stringify(rpc)).toBe('{}');
         });
     });
     describe('when using a simple RPC API proxy', () => {
@@ -78,6 +86,24 @@ describe('JSON-RPC 2.0', () => {
         it('should not be thenable', () => {
             expect.assertions(1);
             expect(rpc).not.toHaveProperty('then');
+        });
+        it('does not expose JSON serialization as an RPC method', () => {
+            expect.assertions(2);
+            expect(rpc).not.toHaveProperty('toJSON');
+            expect(JSON.stringify(rpc)).toBe('{}');
+        });
+        it('does not expose JS protocol symbols as RPC methods', () => {
+            expect.assertions(5);
+            expect(getUntypedProperty(rpc, Symbol.asyncIterator)).toBeUndefined();
+            expect(getUntypedProperty(rpc, Symbol.for('nodejs.util.inspect.custom'))).toBeUndefined();
+            expect(getUntypedProperty(rpc, Symbol.iterator)).toBeUndefined();
+            expect(getUntypedProperty(rpc, Symbol.toPrimitive)).toBeUndefined();
+            expect(getUntypedProperty(rpc, Symbol.toStringTag)).toBeUndefined();
+        });
+        it('preserves Object prototype behavior', () => {
+            expect.assertions(2);
+            expect(String(rpc)).toBe('[object Object]');
+            expect(getUntypedProperty(rpc, 'hasOwnProperty')).toBe(Object.prototype.hasOwnProperty);
         });
     });
     describe('when calling reactiveStore() on a pending request', () => {

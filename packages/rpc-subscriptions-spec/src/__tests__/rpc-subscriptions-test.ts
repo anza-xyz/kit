@@ -8,6 +8,10 @@ interface TestRpcSubscriptionNotifications {
     thingNotifications(...args: unknown[]): { value: number };
 }
 
+function getUntypedProperty(obj: unknown, propertyName: PropertyKey): unknown {
+    return (obj as Record<PropertyKey, unknown>)[propertyName];
+}
+
 describe('createSubscriptionRpc', () => {
     let rpcSubscriptions: RpcSubscriptions<TestRpcSubscriptionNotifications>;
 
@@ -31,6 +35,27 @@ describe('createSubscriptionRpc', () => {
 
     it('should not be thenable', () => {
         expect(rpcSubscriptions).not.toHaveProperty('then');
+    });
+
+    it('does not expose JSON serialization as a subscription method', () => {
+        expect.assertions(2);
+        expect(rpcSubscriptions).not.toHaveProperty('toJSON');
+        expect(JSON.stringify(rpcSubscriptions)).toBe('{}');
+    });
+
+    it('does not expose JS protocol symbols as subscription methods', () => {
+        expect.assertions(5);
+        expect(getUntypedProperty(rpcSubscriptions, Symbol.asyncIterator)).toBeUndefined();
+        expect(getUntypedProperty(rpcSubscriptions, Symbol.for('nodejs.util.inspect.custom'))).toBeUndefined();
+        expect(getUntypedProperty(rpcSubscriptions, Symbol.iterator)).toBeUndefined();
+        expect(getUntypedProperty(rpcSubscriptions, Symbol.toPrimitive)).toBeUndefined();
+        expect(getUntypedProperty(rpcSubscriptions, Symbol.toStringTag)).toBeUndefined();
+    });
+
+    it('preserves Object prototype behavior', () => {
+        expect.assertions(2);
+        expect(String(rpcSubscriptions)).toBe('[object Object]');
+        expect(getUntypedProperty(rpcSubscriptions, 'hasOwnProperty')).toBe(Object.prototype.hasOwnProperty);
     });
 });
 
