@@ -142,6 +142,26 @@ for (const ix of walkInstructions({ compiledMessage, loadedAddresses, meta: rpcT
 }
 ```
 
+The same pattern works with any auto-generated `@solana-program/*` client. Here, tally the lamports moved by every System-program `TransferSol` — outer or inner CPI:
+
+```ts
+import { isInstructionForProgram } from '@solana/instructions';
+import { walkInstructions } from '@solana/transaction-introspection';
+import {
+    identifySystemInstruction,
+    parseTransferSolInstruction,
+    SYSTEM_PROGRAM_ADDRESS,
+    SystemInstruction,
+} from '@solana-program/system';
+
+let totalLamports = 0n;
+for (const ix of walkInstructions({ compiledMessage, loadedAddresses, meta: rpcTx.meta })) {
+    if (!isInstructionForProgram(ix, SYSTEM_PROGRAM_ADDRESS)) continue;
+    if (identifySystemInstruction(ix) !== SystemInstruction.TransferSol) continue;
+    totalLamports += parseTransferSolInstruction(ix).data.amount;
+}
+```
+
 ## Types
 
 ### `LoadedAddresses`
