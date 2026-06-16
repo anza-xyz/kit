@@ -79,7 +79,7 @@ describe('getBlockProduction', () => {
                 ),
                 expect(blockProductionPromise).rejects.toHaveProperty(
                     'context.__serverMessage',
-                    expect.stringMatching(/lastSlot, 9223372036854776000, is too large; max \d+/),
+                    expect.stringMatching(/lastSlot, 9223372036854775807, is too large; max \d+/),
                 ),
             ]);
         });

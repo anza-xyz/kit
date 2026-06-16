@@ -34,7 +34,7 @@ describe('getBlockTime', () => {
             const blockTimePromise = rpc.getBlockTime(blockNumber).send();
             await expect(blockTimePromise).rejects.toThrow(
                 new SolanaError(SOLANA_ERROR__JSON_RPC__SERVER_ERROR_BLOCK_NOT_AVAILABLE, {
-                    __serverMessage: 'Block not available for slot 9223372036854776000',
+                    __serverMessage: 'Block not available for slot 9223372036854775807',
                 }),
             );
         });
