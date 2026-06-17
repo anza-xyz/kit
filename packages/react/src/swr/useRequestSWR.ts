@@ -39,13 +39,12 @@ function getNeverAbortedSignal(): AbortSignal {
  *     return <p>Blockhash: {data!.value.blockhash}</p>;
  * }
  *
- * // Function shape — wraps an arbitrary async call:
+ * // Function shape — wraps an arbitrary async call.
  * function Profile({ userId }: { userId: string }) {
- *     const fetcher = useCallback(
+ *     const { data, error, isLoading, mutate } = useRequestSWR(
+ *         ['users', userId],
  *         (signal: AbortSignal) => fetch(`/api/users/${userId}`, { signal }).then(r => r.json()),
- *         [userId],
  *     );
- *     const { data, error, isLoading, mutate } = useRequestSWR(['users', userId], fetcher);
  *     if (error) return <button onClick={() => mutate()}>Retry</button>;
  *     if (isLoading) return <p>Loading…</p>;
  *     return <p>{data!.name}</p>;

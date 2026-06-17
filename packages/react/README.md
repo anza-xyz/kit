@@ -339,18 +339,18 @@ For any one-shot async work that isn't a `ReactiveActionSource` — `fetch`, a t
 
 ```tsx
 function Profile({ userId }: { userId: string }) {
-    const fetcher = useCallback(
+    const { data, error, isLoading, mutate } = useRequestSWR(
+        ['users', userId],
         (signal: AbortSignal) => fetch(`/api/users/${userId}`, { signal }).then(r => r.json()),
-        [userId],
+        { getAbortSignal: () => AbortSignal.timeout(5_000) },
     );
-    const { data, error, isLoading, mutate } = useRequestSWR(['users', userId], fetcher, {
-        getAbortSignal: () => AbortSignal.timeout(5_000),
-    });
     if (error) return <button onClick={() => mutate()}>Retry</button>;
     if (isLoading) return <p>Loading…</p>;
     return <p>{data!.name}</p>;
 }
 ```
+
+The function source is held in a ref synced to the latest render, so an inline closure recreated each render is fine — no `useCallback` needed. SWR keys the cache off `key`, not the fetcher identity.
 
 When `getAbortSignal` isn't configured the signal is a fresh never-aborting `AbortSignal` (so the function's signature is satisfied) — it does **not** fire on unmount or when SWR supersedes the request. SWR's model is to discard the stale result rather than cancel the network call.
 
@@ -406,6 +406,53 @@ If the `spec` changes (new mappers, new source) but the SWR `key` is stable, the
 ### Why no `useActionSWR`?
 
 It would just be a wrapper around SWR's built-in [`useSWRMutation`](https://swr.vercel.app/docs/mutation#useswrmutation) with no additional functionality. Either use `useSWRMutation` or, if you don't need the SWR integration, use `useAction`.
+
+## TanStack Query adapter (`@solana/react/query`)
+
+Opt-in subpath that bridges Kit's reactive primitives into [TanStack Query](https://tanstack.com/query)'s cache. Import from `@solana/react/query`; `@tanstack/react-query@^5` is an optional peer dependency, and your tree must be wrapped in a `QueryClientProvider`. Hooks carry the `Query` suffix to keep the cache backing visible at the call site.
+
+### `useRequestQuery(key, source, options?)`
+
+TanStack Query-backed counterpart to `useRequest`. Same `source` shape (a `ReactiveActionSource<T>` or `(signal: AbortSignal) => Promise<T>`). Returns TanStack's native `UseQueryResult<T>`. Pass `null` for `source` to disable — useful when one of the source's inputs isn't yet known. This maps to TanStack's `enabled: false`. Unlike SWR there is no nullable `key`, disable via a `null` source (or `enabled`) instead.
+
+```tsx
+import { useClient } from '@solana/react';
+import { useRequestQuery } from '@solana/react/query';
+import type { ClientWithRpc, GetLatestBlockhashApi } from '@solana/kit';
+
+function LatestBlockhash() {
+    const client = useClient<ClientWithRpc<GetLatestBlockhashApi>>();
+    const { data, error, isLoading, refetch } = useRequestQuery(['latestBlockhash'], client.rpc.getLatestBlockhash());
+    if (error) return <button onClick={() => refetch()}>Retry</button>;
+    if (isLoading) return <p>Loading…</p>;
+    return <p>Blockhash: {data!.value.blockhash}</p>;
+}
+```
+
+`refetch()` is TanStack's revalidate verb — call it to re-fire the request manually (the equivalent of `refresh()` from `useRequest`).
+
+Pass any TanStack `useQuery` option in the options bag (e.g. `enabled`, `staleTime`, `refetchInterval`) — `queryKey` and `queryFn` are owned by the hook. The query's `queryFn` is handed TanStack's own `AbortSignal`, which aborts when the query is cancelled (unmount, garbage collection, or a superseding refetch), and that signal is threaded into the source so cancellation propagates all the way down. The Kit-only `getAbortSignal: () => AbortSignal` factory adds a second signal (typically a per-attempt timeout); when supplied, it is combined with TanStack's signal via `AbortSignal.any`, so aborting either one cancels the attempt and the rejection surfaces via `error`.
+
+```tsx
+useRequestQuery(['latestBlockhash'], source, {
+    getAbortSignal: () => AbortSignal.timeout(5_000),
+});
+```
+
+For any one-shot async work that isn't a `ReactiveActionSource` — `fetch`, a third-party SDK call, etc. — you can pass an async function instead of a source. This can be any function of shape `(signal: AbortSignal) => Promise<T>`, and the combined abort signal is passed to it on each request. Other than that signal, this is the equivalent of `useQuery({ queryKey, queryFn })` and both are interoperable.
+
+```tsx
+function Profile({ userId }: { userId: string }) {
+    const { data, error, isLoading, refetch } = useRequestQuery(['users', userId], (signal: AbortSignal) =>
+        fetch(`/api/users/${userId}`, { signal }).then(r => r.json()),
+    );
+    if (error) return <button onClick={() => refetch()}>Retry</button>;
+    if (isLoading) return <p>Loading…</p>;
+    return <p>{data!.name}</p>;
+}
+```
+
+The function source is held in a ref synced to the latest render, so an inline closure recreated each render is fine — no `useCallback` needed. TanStack keys the cache off `key`, not the queryFn identity.
 
 ## Hooks
 
