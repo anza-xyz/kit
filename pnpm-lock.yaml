@@ -124,8 +124,8 @@ importers:
         specifier: ^0.11.0
         version: 0.11.0(@solana/kit@packages+kit)
       '@solana-program/memo':
-        specifier: ^0.11.1
-        version: 0.11.1(@solana/kit@packages+kit)
+        specifier: ^0.11.2
+        version: 0.11.2(@solana/kit@packages+kit)
       '@solana-program/system':
         specifier: ^0.12.2
         version: 0.12.2(@solana/kit@packages+kit)
@@ -267,8 +267,8 @@ importers:
         specifier: ^0.12.2
         version: 0.12.2(@solana/kit@packages+kit)
       '@solana-program/token':
-        specifier: ^0.13.0
-        version: 0.13.0(@solana/kit@packages+kit)
+        specifier: ^0.14.0
+        version: 0.14.0(@solana/kit@packages+kit)
       '@solana/example-utils':
         specifier: workspace:*
         version: link:../utils
@@ -4922,8 +4922,8 @@ packages:
     peerDependencies:
       '@solana/kit': ^6.0
 
-  '@solana-program/memo@0.11.1':
-    resolution: {integrity: sha512-acVlHWhGcRqwsTfCE0EpHasQbho1iHAd0s1a43GP2DZ3WIyYEu3Z+FETbQxT0kh1o3vVr1AWMADKUB7mgSRr5Q==}
+  '@solana-program/memo@0.11.2':
+    resolution: {integrity: sha512-W32j3JAibRDG7s17NJpMwhDWkHlfltW8guWmWylB9wsszboOHkT372iI+th7BmhzOmuCqRZQWCNS5yUVZvUTOQ==}
     peerDependencies:
       '@solana/kit': ^6.4.0
 
@@ -4932,8 +4932,9 @@ packages:
     peerDependencies:
       '@solana/kit': ^6.4.0
 
-  '@solana-program/token@0.13.0':
-    resolution: {integrity: sha512-/Apjrd5lwOJGrPB0J5Rv7EBeclvyEBQPAGA85Scm7wBH+GpkbdLDM9uK3TNg8jjFKyWQYai/JtPHbrx7VgFLSg==}
+  '@solana-program/token@0.14.0':
+    resolution: {integrity: sha512-zpLMr6JZndlsQCQvrm0gezfwdr1lmzOGqN6v2WIYXjtDmbF+xg6zh/MAp2UFHRpv3uDmylEdjtQo05pa2OeaYg==}
+    engines: {node: '>=24.0.0'}
     peerDependencies:
       '@solana/kit': ^6.5.0
 
@@ -13527,7 +13528,7 @@ snapshots:
     dependencies:
       '@solana/kit': link:packages/kit
 
-  '@solana-program/memo@0.11.1(@solana/kit@packages+kit)':
+  '@solana-program/memo@0.11.2(@solana/kit@packages+kit)':
     dependencies:
       '@solana/kit': link:packages/kit
 
@@ -13535,7 +13536,7 @@ snapshots:
     dependencies:
       '@solana/kit': link:packages/kit
 
-  '@solana-program/token@0.13.0(@solana/kit@packages+kit)':
+  '@solana-program/token@0.14.0(@solana/kit@packages+kit)':
     dependencies:
       '@solana-program/system': 0.12.2(@solana/kit@packages+kit)
       '@solana/kit': link:packages/kit
