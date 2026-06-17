@@ -454,6 +454,41 @@ function Profile({ userId }: { userId: string }) {
 
 The function source is held in a ref synced to the latest render, so an inline closure recreated each render is fine — no `useCallback` needed. TanStack keys the cache off `key`, not the queryFn identity.
 
+### `useSubscriptionQuery(key, source, options?)`
+
+TanStack Query-backed counterpart to `useSubscription`, for streams that have no one-shot RPC fetch. This hook is built on `experimental_streamedQuery`: a long-lived query that stays `fetching` for the subscription's whole life, writing each notification to the cache as it arrives. Components reading the same `key` share one underlying connection and the stream shows up in TanStack Query's devtools.
+
+Returns TanStack's native `UseQueryResult<T>`. `data` is the raw notification, exactly as the source emits it, so for RPC subscriptions read `data.value` and `data.context.slot`. Pass `null` for `source` to disable (TanStack's `enabled: false`).
+
+```tsx
+import { useClient } from '@solana/react';
+import { useSubscriptionQuery } from '@solana/react/query';
+import type { ClientWithRpcSubscriptions, SlotNotificationsApi } from '@solana/kit';
+
+function SlotHeight() {
+    const client = useClient<ClientWithRpcSubscriptions<SlotNotificationsApi>>();
+    const { data, error } = useSubscriptionQuery(['slot'], client.rpcSubscriptions.slotNotifications());
+    if (error) return <p>Disconnected.</p>;
+    if (!data) return <p>Connecting…</p>;
+    return <p>Slot {String(data.slot)}</p>;
+}
+```
+
+Because the stream never settles, the query sits in `fetchStatus: 'fetching'` for the subscription's whole life — `isFetching` is permanently `true`, and `isLoading` flips false after the first notification. Read `data` / `error` / `status` and ignore `isFetching` for subscriptions. Note that `isLoading` only reports the _initial_ connect — it stays false across reconnects. `result.refetch()` is the reconnect verb: it aborts the current connection (resetting its store) and opens a fresh one. Fire and forget — for a never-ending stream the returned promise never resolves, so don't `await refetch()` or it will hang forever. Sensible defaults are applied and all overridable: `retry: false` (the underlying reactive store owns retry/backoff), and `staleTime: Infinity` + `refetchOnWindowFocus: false` so a focus revalidation doesn't tear down and re-open the socket — the subscription is what keeps the data fresh.
+
+The source matches `useSubscription`: a `ReactiveStreamSource<T>`. This hook also accepts a raw `(signal: AbortSignal) => AsyncIterable<T>` factory, as `experimental_streamedQuery` is built on `AsyncIterable`.
+
+```tsx
+function Ticker() {
+    const { data } = useSubscriptionQuery(['ticker'], (signal: AbortSignal) => streamPrices(signal));
+    return <p>{data ?? '…'}</p>;
+}
+```
+
+### Why no `useActionQuery`?
+
+It would just be a wrapper around Tanstack's built-in [`useMutation`](https://tanstack.com/query/latest/docs/framework/react/guides/mutations) with no additional functionality. Either use `useMutation` or, if you don't need the Tanstack integration, use `useAction`.
+
 ## Hooks
 
 ### `useSignIn(uiWalletAccount, chain)`
