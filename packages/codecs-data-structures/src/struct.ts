@@ -29,6 +29,58 @@ import { DrainOuterGeneric, getFixedSize, getMaxSize, sumCodecSizes } from './ut
  */
 type Fields<T> = readonly (readonly [string, T])[];
 
+/**
+ * The maximum total byte size for which {@link getStructEncoder}, {@link getStructDecoder} and
+ * {@link getStructCodec} infer a *literal* `fixedSize` from their fields. Structs whose fields sum
+ * to more than this (or that contain a single field larger than this) keep the broad `number` size.
+ * The cap keeps the type-level addition below TypeScript's recursion ceiling, so it can never
+ * surface as a compile error in a consumer's code.
+ */
+type MaxInferredStructSize = 512;
+
+// Builds a tuple of length `TLength` (tail-recursive accumulator).
+type BuildTuple<TLength extends number, TTuple extends unknown[] = []> = TTuple['length'] extends TLength
+    ? TTuple
+    : BuildTuple<TLength, [...TTuple, unknown]>;
+
+type StructSizeCapTuple = BuildTuple<MaxInferredStructSize>;
+
+// True when `0 <= TSize <= MaxInferredStructSize`. Walks the cap tuple down rather than
+// materialising `BuildTuple<TSize>`, which would blow the recursion limit for a large `TSize`.
+type IsStructSizeInRange<TSize extends number, TCap extends unknown[] = StructSizeCapTuple> = number extends TSize
+    ? false
+    : TSize extends TCap['length']
+      ? true
+      : TCap extends readonly [unknown, ...infer TRest]
+        ? IsStructSizeInRange<TSize, TRest>
+        : false;
+
+// The literal byte size of each field, in declaration order.
+type FieldFixedSizes<TFields extends Fields<{ readonly fixedSize: number }>> = {
+    [I in keyof TFields]: TFields[I][1] extends { readonly fixedSize: infer TSize extends number } ? TSize : never;
+};
+
+// Sums the field sizes into a literal, falling back to `number` if any field (or the running
+// total) is non-literal or exceeds the cap.
+type SumFieldSizes<TSizes extends readonly number[], TAcc extends unknown[] = []> = TSizes extends readonly [
+    infer THead extends number,
+    ...infer TTail extends readonly number[],
+]
+    ? IsStructSizeInRange<THead> extends true
+        ? [...TAcc, ...BuildTuple<THead>] extends infer TNext extends unknown[]
+            ? IsStructSizeInRange<TNext['length']> extends true
+                ? SumFieldSizes<TTail, TNext>
+                : number
+            : number
+        : number
+    : TAcc['length'];
+
+/**
+ * Infers the literal `fixedSize` of a struct as the sum of its fields' sizes, when that sum is
+ * statically known and within {@link MaxInferredStructSize}; otherwise resolves to `number`.
+ */
+type StructFixedSize<TFields extends Fields<{ readonly fixedSize: number }>> = SumFieldSizes<FieldFixedSizes<TFields>>;
+
 type ArrayIndices<T extends readonly unknown[]> = Exclude<Partial<T>['length'], T['length']> & number;
 
 /**
@@ -84,7 +136,7 @@ type GetDecoderTypeFromFields<TFields extends Fields<Decoder<any>>> = DrainOuter
  */
 export function getStructEncoder<const TFields extends Fields<FixedSizeEncoder<any>>>(
     fields: TFields,
-): FixedSizeEncoder<GetEncoderTypeFromFields<TFields>>;
+): FixedSizeEncoder<GetEncoderTypeFromFields<TFields>, StructFixedSize<TFields>>;
 export function getStructEncoder<const TFields extends Fields<Encoder<any>>>(
     fields: TFields,
 ): VariableSizeEncoder<GetEncoderTypeFromFields<TFields>>;
@@ -146,7 +198,7 @@ export function getStructEncoder<const TFields extends Fields<Encoder<any>>>(
  */
 export function getStructDecoder<const TFields extends Fields<FixedSizeDecoder<any>>>(
     fields: TFields,
-): FixedSizeDecoder<GetDecoderTypeFromFields<TFields>>;
+): FixedSizeDecoder<GetDecoderTypeFromFields<TFields>, StructFixedSize<TFields>>;
 export function getStructDecoder<const TFields extends Fields<Decoder<any>>>(
     fields: TFields,
 ): VariableSizeDecoder<GetDecoderTypeFromFields<TFields>>;
@@ -221,7 +273,8 @@ export function getStructCodec<const TFields extends Fields<FixedSizeCodec<any>>
     fields: TFields,
 ): FixedSizeCodec<
     GetEncoderTypeFromFields<TFields>,
-    GetDecoderTypeFromFields<TFields> & GetEncoderTypeFromFields<TFields>
+    GetDecoderTypeFromFields<TFields> & GetEncoderTypeFromFields<TFields>,
+    StructFixedSize<TFields>
 >;
 export function getStructCodec<const TFields extends Fields<Codec<any>>>(
     fields: TFields,
