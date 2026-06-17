@@ -10,7 +10,10 @@ import { SlotIndicator } from '../SlotIndicator';
 
 type SlotNotification = Readonly<{ parent: bigint; root: bigint; slot: bigint }>;
 type Snapshot =
-    { data: SlotNotification | undefined; error: undefined; status: 'loading' } | { data: SlotNotification | undefined; error: unknown; status: 'error' } | { data: SlotNotification; error: undefined; status: 'loaded' } | { data: undefined; error: undefined; status: 'idle' };
+    | { data: SlotNotification | undefined; error: undefined; status: 'loading' }
+    | { data: SlotNotification | undefined; error: unknown; status: 'error' }
+    | { data: SlotNotification; error: undefined; status: 'loaded' }
+    | { data: undefined; error: undefined; status: 'idle' };
 
 function makeReactiveStreamStore() {
     const subscribers = new Set<() => void>();

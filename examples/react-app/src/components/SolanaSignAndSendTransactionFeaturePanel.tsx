@@ -5,7 +5,6 @@ import {
     assertIsTransactionMessageWithSingleSendingSigner,
     createTransactionMessage,
     getBase58Decoder,
-    lamports,
     pipe,
     setTransactionMessageFeePayerSigner,
     setTransactionMessageLifetimeUsingBlockhash,
@@ -19,24 +18,13 @@ import { useContext, useId, useMemo, useState } from 'react';
 
 import { ChainContext } from '../context/ChainContext';
 import { RpcContext } from '../context/RpcContext';
+import { solStringToLamports } from '../lamports';
 import { ErrorDialog } from './ErrorDialog';
 import { WalletMenuItemContent } from './WalletMenuItemContent';
 
 type Props = Readonly<{
     account: UiWalletAccount;
 }>;
-
-function solStringToLamports(solQuantityString: string) {
-    if (Number.isNaN(parseFloat(solQuantityString))) {
-        throw new Error('Could not parse token quantity: ' + String(solQuantityString));
-    }
-    const formatter = new Intl.NumberFormat('en-US', { useGrouping: false });
-    const bigIntLamports = BigInt(
-        // @ts-expect-error - scientific notation is supported by `Intl.NumberFormat` but the types are wrong
-        formatter.format(`${solQuantityString}E9`).split('.')[0],
-    );
-    return lamports(bigIntLamports);
-}
 
 export function SolanaSignAndSendTransactionFeaturePanel({ account }: Props) {
     const { rpc } = useContext(RpcContext);

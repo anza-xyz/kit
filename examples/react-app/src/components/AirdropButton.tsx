@@ -25,7 +25,7 @@ export function AirdropButton({ address }: { address: Address }) {
         error,
         isRunning,
         reset,
-    } = useAction(async (signal) => {
+    } = useAction(async signal => {
         if (isMainnet) throw new Error('Airdrops are not available on mainnet');
         return await airdrop({
             abortSignal: signal,

@@ -35,8 +35,7 @@ export function SlotIndicator() {
                     <Tooltip
                         content={
                             <>
-                                Slot stream interrupted: {getErrorMessage(error, 'Unknown reason')}. Click to
-                                reconnect.
+                                Slot stream interrupted: {getErrorMessage(error, 'Unknown reason')}. Click to reconnect.
                             </>
                         }
                     >

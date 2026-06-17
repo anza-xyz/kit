@@ -1,6 +1,6 @@
 import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
 import { Flex, Text, Tooltip } from '@radix-ui/themes';
-import { address, type Lamports } from '@solana/kit';
+import { address, formatDecimalFixedPoint, type Lamports, lamportsToSol } from '@solana/kit';
 import { useTrackedDataSWR } from '@solana/react/swr';
 import type { UiWalletAccount } from '@wallet-standard/react';
 import { useContext, useMemo } from 'react';
@@ -35,13 +35,7 @@ export function Balance({ account }: Props) {
         return <Text>&ndash;</Text>;
     }
     // Show the latest data (if any), alongside the error (if any).
-    const formattedSolValue =
-        data != null
-            ? solFormatter.format(
-                // @ts-expect-error This format string is 100% allowed now.
-                `${data.value}E-9`,
-            )
-            : null;
+    const formattedSolValue = data != null ? formatDecimalFixedPoint(solFormatter, lamportsToSol(data.value)) : null;
     return (
         <Flex asChild align="center" gap="1" display="inline-flex">
             <Text>

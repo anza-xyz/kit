@@ -10,7 +10,6 @@ import {
     getSignatureFromTransaction,
     getTransactionDecoder,
     getTransactionEncoder,
-    lamports,
     pipe,
     sendAndConfirmTransactionFactory,
     setTransactionMessageFeePayerSigner,
@@ -29,6 +28,7 @@ import { useContext, useId, useMemo, useState } from 'react';
 
 import { ChainContext } from '../context/ChainContext';
 import { RpcContext } from '../context/RpcContext';
+import { solStringToLamports } from '../lamports';
 import signerBytes from '../signerBytes.json' with { type: 'json' };
 import { AirdropButton } from './AirdropButton';
 import { ErrorDialog } from './ErrorDialog';
@@ -37,18 +37,6 @@ import { WalletMenuItemContent } from './WalletMenuItemContent';
 type Props = Readonly<{
     account: UiWalletAccount;
 }>;
-
-function solStringToLamports(solQuantityString: string) {
-    if (Number.isNaN(parseFloat(solQuantityString))) {
-        throw new Error('Could not parse token quantity: ' + String(solQuantityString));
-    }
-    const formatter = new Intl.NumberFormat('en-US', { useGrouping: false });
-    const bigIntLamports = BigInt(
-        // @ts-expect-error - scientific notation is supported by `Intl.NumberFormat` but the types are wrong
-        formatter.format(`${solQuantityString}E9`).split('.')[0],
-    );
-    return lamports(bigIntLamports);
-}
 
 async function mockApiRequest(serializedTransaction: ReadonlyUint8Array): Promise<SignatureBytes> {
     const keypair = await createKeyPairFromBytes(new Uint8Array(signerBytes));
