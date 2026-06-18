@@ -15,6 +15,6 @@ jobs:
     steps:
       - name: Dismiss Stale PR Reviews
         if: ${{ !contains('OWNER,MEMBER,COLLABORATOR', github.event.pull_request.author_association) }}
-        uses: withgraphite/dismiss-stale-approvals@36620714c84092b9d1bd5123ab3b5e11c48b5119
+        uses: withgraphite/dismiss-stale-approvals@23da77dd04e4549404329f3078a3d978e4db13c2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
