@@ -1,10 +1,10 @@
-import React, { ComponentType, ReactElement, ReactNode, StrictMode } from 'react';
 import {
     render as baseRender,
     renderHook as baseRenderHook,
     RenderHookOptions,
     RenderOptions,
 } from '@testing-library/react';
+import React, { ComponentType, ReactElement, ReactNode, StrictMode } from 'react';
 
 /**
  * Shared test renderers that wrap every React tree in `<StrictMode>`.

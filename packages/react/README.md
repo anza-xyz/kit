@@ -485,6 +485,48 @@ function Ticker() {
 }
 ```
 
+### `useTrackedDataQuery(key, spec, options?)`
+
+TanStack Query-backed counterpart to `useTrackedData`. Takes the same `TrackedDataSpec` (a one-shot RPC fetch paired with a subscription, plus two mappers that unify their value shapes into a common `TItem`) and routes the unified, slot-deduped stream through TanStack Query's cache via `experimental_streamedQuery`. Like `useSubscriptionQuery` it stays `fetching` for the subscription's whole life, but the initial fetch surfaces a value as soon as it resolves — typically before the first notification — so the loading paint is shorter. Components reading the same `key` share one underlying connection and the stream shows up in TanStack Query's devtools.
+
+Returns TanStack's native `UseQueryResult`. `data` is the `SolanaRpcResponse<TItem>` envelope emitted by the underlying Kit primitive, so callers can read `data.value` (the unified item produced by the mappers) and `data.context.slot` (the slot the store dedup'd on) directly. Pass `null` for `spec` to disable (TanStack's `enabled: false`).
+
+```tsx
+import { useClient } from '@solana/react';
+import { useTrackedDataQuery } from '@solana/react/query';
+import type {
+    Address,
+    AccountNotificationsApi,
+    ClientWithRpc,
+    ClientWithRpcSubscriptions,
+    GetBalanceApi,
+} from '@solana/kit';
+
+function AccountBalance({ address }: { address: Address }) {
+    const client = useClient<ClientWithRpc<GetBalanceApi> & ClientWithRpcSubscriptions<AccountNotificationsApi>>();
+    const spec = useMemo(
+        () => ({
+            initialValueSource: client.rpc.getBalance(address),
+            initialValueMapper: (lamports: bigint) => lamports,
+            streamSource: client.rpcSubscriptions.accountNotifications(address),
+            streamValueMapper: ({ lamports }: { lamports: bigint }) => lamports,
+        }),
+        [client, address],
+    );
+    const { data, error } = useTrackedDataQuery(['balance', address], spec);
+    if (error) return <p>Failed to load.</p>;
+    return <p>{data ? `${data.value} lamports at slot ${data.context.slot}` : 'Loading…'}</p>;
+}
+```
+
+The hook reads the latest `spec` from a ref, so an inline spec recreated each render is fine — no `useMemo` needed for correctness. TanStack keys the cache off `key`, not the spec identity, so bump the `key` to swap specs.
+
+Because the subscription never settles, the query sits in `fetchStatus: 'fetching'` for its whole life — `isFetching` is permanently `true`, and `isLoading` flips false after the first value. Read `data` / `error` / `status` and ignore `isFetching`. Note that `isLoading` only reports the _initial_ connect — it stays false across reconnects. `result.refetch()` is the reconnect verb: it aborts the current connection (resetting its store) and re-runs both the initial RPC fetch and the subscription. Fire and forget — for a never-ending stream the returned promise never resolves, so don't `await refetch()` or it will hang forever. Sensible defaults are applied and all overridable: `retry: false` (the underlying reactive store owns retry/backoff), and `staleTime: Infinity` + `refetchOnWindowFocus: false` so a focus revalidation doesn't tear down and re-open the socket.
+
+Slot dedupe spans the whole TanStack cache, not just one store. The underlying primitive tracks a slot high-water mark per store, but that mark dies when the store is disposed (on reconnect or remount) while the cache entry survives. This hook bridges that gap: a fresh store's reconnect cannot regress the cached envelope to an older slot — e.g. a lagging RPC node resolving the new initial fetch behind the cached value is refused, and the warmer cached value stands until something newer arrives.
+
+Like the other query hooks, you can pass a `getAbortSignal: () => AbortSignal` factory to add a per-attempt signal (typically a timeout); it is combined with TanStack's own cancellation signal via `AbortSignal.any`, so aborting either one tears the connection down.
+
 ### Why no `useActionQuery`?
 
 It would just be a wrapper around Tanstack's built-in [`useMutation`](https://tanstack.com/query/latest/docs/framework/react/guides/mutations) with no additional functionality. Either use `useMutation` or, if you don't need the Tanstack integration, use `useAction`.

@@ -12,3 +12,4 @@
  */
 export * from './query/useRequestQuery';
 export * from './query/useSubscriptionQuery';
+export * from './query/useTrackedDataQuery';

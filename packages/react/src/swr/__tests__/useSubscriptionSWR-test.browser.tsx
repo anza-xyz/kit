@@ -122,7 +122,7 @@ describe('useSubscriptionSWR', () => {
         await waitForActiveSubscription(sub);
         expect(result.current.data).toBeUndefined();
 
-        await act(async () => sub.publish({ context: { slot: 99n }, value: { lamports: 5n } }));
+        await act(async () => await sub.publish({ context: { slot: 99n }, value: { lamports: 5n } }));
         await waitFor(() =>
             expect(result.current.data).toStrictEqual({ context: { slot: 99n }, value: { lamports: 5n } }),
         );
@@ -134,7 +134,7 @@ describe('useSubscriptionSWR', () => {
         await waitForActiveSubscription(sub);
         expect(result.current.data).toBeUndefined();
 
-        await act(async () => sub.publish({ slot: 10n }));
+        await act(async () => await sub.publish({ slot: 10n }));
         await waitFor(() => expect(result.current.data).toStrictEqual({ slot: 10n }));
     });
 
@@ -145,7 +145,7 @@ describe('useSubscriptionSWR', () => {
         expect(result.current.error).toBeUndefined();
 
         const boom = new Error('boom');
-        await act(async () => sub.publishError(boom));
+        await act(async () => await sub.publishError(boom));
         await waitFor(() => expect(result.current.error).toBe(boom));
     });
 
@@ -163,11 +163,11 @@ describe('useSubscriptionSWR', () => {
         expect(result.current.data).toBeUndefined();
         expect(result.current.error).toBeUndefined();
 
-        await act(async () => sub.publish({ value: 1 }));
+        await act(async () => await sub.publish({ value: 1 }));
         await waitFor(() => expect(result.current.data).toStrictEqual({ value: 1 }));
 
         const boom = new Error('boom after load');
-        await act(async () => sub.publishError(boom));
+        await act(async () => await sub.publishError(boom));
         await waitFor(() => expect(result.current.error).toBe(boom));
         // The prior notification is retained alongside the surfaced error.
         expect(result.current.data).toStrictEqual({ value: 1 });
@@ -185,10 +185,10 @@ describe('useSubscriptionSWR', () => {
         expect(result.current.data).toBeUndefined();
         expect(result.current.error).toBeUndefined();
 
-        await act(async () => sub.publish({ value: 1 }));
+        await act(async () => await sub.publish({ value: 1 }));
         await waitFor(() => expect(result.current.data).toStrictEqual({ value: 1 }));
 
-        await act(async () => sub.publishError(undefined));
+        await act(async () => await sub.publishError(undefined));
         await waitFor(() =>
             expect(isSolanaError(result.current.error, SOLANA_ERROR__REACT__SUBSCRIPTION_CLOSED_WITHOUT_ERROR)).toBe(
                 true,
@@ -225,7 +225,7 @@ describe('useSubscriptionSWR', () => {
 
         rerender({ source: sub.source });
         await waitForActiveSubscription(sub);
-        await act(async () => sub.publish({ value: 1 }));
+        await act(async () => await sub.publish({ value: 1 }));
         await waitFor(() => expect(result.current.data).toStrictEqual({ value: 1 }));
         expect(sub.activeConnections()).toBe(1);
     });
@@ -257,7 +257,7 @@ describe('useSubscriptionSWR', () => {
         source = null;
         rerender();
         await waitFor(() => expect(sub.activeConnections()).toBe(0));
-        await act(async () => sub.publish({ value: 2 }));
+        await act(async () => await sub.publish({ value: 2 }));
     });
 
     it('tears down the old subscription and opens a new one when the key changes', async () => {

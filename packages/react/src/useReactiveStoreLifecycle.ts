@@ -84,7 +84,7 @@ export function useReactiveStoreLifecycle<TStore extends { reset(): void }>(
             }
             if (++churn.count > CHURN_WARNING_THRESHOLD && !churn.warned) {
                 churn.warned = true;
-                // eslint-disable-next-line no-console
+
                 console.error(
                     'A reactive-store hook (e.g. `useRequest`) recreated its store %d times within ' +
                         '1s. This almost always means the `source`/`spec` passed to it is a fresh ' +

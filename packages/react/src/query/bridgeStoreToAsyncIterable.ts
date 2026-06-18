@@ -11,9 +11,9 @@ import {
  * iterable, since `streamedQuery` drives the stream by `for await`-ing it.
  *
  * Subscribes to the store, `connect()`s it bound to `signal`, and yields its unified lifecycle:
- * - `loaded` → yields the value. Latest-wins: if several notifications land between pulls, only the
- *   most recent unconsumed value is yielded (a subscription consumer wants the freshest state, not a
- *   backlog).
+ * - `loaded` → yields the value, unless an optional `shouldYield` predicate rejects it. Latest-wins:
+ *   if several notifications land between pulls, only the most recent unconsumed value is yielded (a
+ *   subscription consumer wants the freshest state, not a backlog).
  * - `error` → throws, so the `streamedQuery` queryFn rejects and the query surfaces `error`.
  *   Substitutes a {@link SOLANA_ERROR__REACT__SUBSCRIPTION_CLOSED_WITHOUT_ERROR} sentinel when the
  *   store reports an error with a nullish payload (mirrors `bridgeStoreToSwr`). An error takes
@@ -32,13 +32,19 @@ import {
  * @param store - An idle stream store to drive.
  * @param signal - The abort signal to bind the connection to (TanStack's query-cancellation signal,
  *   optionally combined with a caller-supplied one). Aborting it tears the stream down.
+ * @param shouldYield - Optional gate run against each `loaded` value before it is yielded. Return
+ *   `false` to drop the value. When omitted, every loaded value is yielded.
  *
  * @returns An `AsyncIterable<T>` that yields each store value until the store errors or `signal`
  *   aborts.
  *
  * @internal
  */
-export function bridgeStoreToAsyncIterable<T>(store: ReactiveStreamStore<T>, signal: AbortSignal): AsyncIterable<T> {
+export function bridgeStoreToAsyncIterable<T>(
+    store: ReactiveStreamStore<T>,
+    signal: AbortSignal,
+    shouldYield?: (value: T) => boolean,
+): AsyncIterable<T> {
     return {
         async *[Symbol.asyncIterator](): AsyncIterator<T> {
             // Latest-wins single-slot buffer plus a one-shot "something changed" deferred the loop
@@ -55,6 +61,8 @@ export function bridgeStoreToAsyncIterable<T>(store: ReactiveStreamStore<T>, sig
             const onChange = () => {
                 const state = store.getUnifiedState();
                 if (state.status === 'loaded') {
+                    // Drop a value the gate rejects. The stream parks again rather than yielding it.
+                    if (shouldYield && !shouldYield(state.data)) return;
                     latest = { value: state.data };
                     wake();
                 } else if (state.status === 'error') {
