@@ -11,6 +11,7 @@ import { SlotIndicator } from '../components/SlotIndicator';
 import { SolanaPartialSignTransactionFeaturePanel } from '../components/SolanaPartialSignTransactionFeaturePanel';
 import { SolanaSignAndSendTransactionFeaturePanel } from '../components/SolanaSignAndSendTransactionFeaturePanel';
 import { SolanaSignMessageFeaturePanel } from '../components/SolanaSignMessageFeaturePanel';
+import { SolanaSignOffchainMessageFeaturePanel } from '../components/SolanaSignOffchainMessageFeaturePanel';
 import { SolanaSignTransactionFeaturePanel } from '../components/SolanaSignTransactionFeaturePanel';
 import { WalletAccountIcon } from '../components/WalletAccountIcon';
 import { ChainContext } from '../context/ChainContext';
@@ -72,6 +73,14 @@ function Root() {
                                 resetKeys={errorBoundaryResetKeys}
                             >
                                 <SolanaSignMessageFeaturePanel account={selectedWalletAccount} />
+                            </ErrorBoundary>
+                        </FeaturePanel>
+                        <FeaturePanel label="Sign Offchain Message">
+                            <ErrorBoundary
+                                FallbackComponent={FeatureNotSupportedCallout}
+                                resetKeys={errorBoundaryResetKeys}
+                            >
+                                <SolanaSignOffchainMessageFeaturePanel account={selectedWalletAccount} />
                             </ErrorBoundary>
                         </FeaturePanel>
                         <FeaturePanel label="Sign And Send Transaction">

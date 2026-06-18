@@ -1,4 +1,6 @@
+import { Code, DataList } from '@radix-ui/themes';
 import type { Address } from '@solana/kit';
+import { getBase64Decoder } from '@solana/kit';
 import { useWalletAccountMessageSigner } from '@solana/react';
 import type { ReadonlyUint8Array } from '@wallet-standard/core';
 import type { UiWalletAccount } from '@wallet-standard/react';
@@ -28,5 +30,17 @@ export function SolanaSignMessageFeaturePanel({ account }: Props) {
         },
         [account.address, messageSigner],
     );
-    return <BaseSignMessageFeaturePanel signMessage={signMessage} />;
+    return (
+        <BaseSignMessageFeaturePanel
+            renderSignedMessageDetails={signature => (
+                <DataList.Item>
+                    <DataList.Label minWidth="88px">Signature</DataList.Label>
+                    <DataList.Value>
+                        <Code truncate>{getBase64Decoder().decode(signature)}</Code>
+                    </DataList.Value>
+                </DataList.Item>
+            )}
+            signMessage={signMessage}
+        />
+    );
 }
