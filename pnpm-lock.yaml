@@ -1165,6 +1165,9 @@ importers:
 
   packages/rpc-spec-types:
     dependencies:
+      '@solana/errors':
+        specifier: workspace:*
+        version: link:../errors
       typescript:
         specifier: '>=5.4.0'
         version: 5.9.3

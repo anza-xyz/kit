@@ -1,3 +1,4 @@
+import { SOLANA_ERROR__MALFORMED_BIGINT_STRING, SolanaError } from '@solana/errors';
 import fs from 'fs';
 import path from 'path';
 
@@ -74,6 +75,40 @@ describe('parseJsonWithBigInts', () => {
         '{"data":["","base64"]}',
     ])('does not alter the value of %s', input => {
         expect(parseJsonWithBigInts(input)).toStrictEqual(JSON.parse(input));
+    });
+    it.each([
+        '{"$n":"not-a-number"}',
+        '{"$n":"abc"}',
+        '{"$n":""}',
+        '{"$n":"123a"}',
+        '{"$n":"1.5"}',
+        '{"$n":"0x10"}',
+        '{"$n":"1e-5"}',
+        '{"$n":"Infinity"}',
+    ])('throws a `SolanaError` when an injected `$n` value object is not a valid integer (%s)', input => {
+        const value = JSON.parse(input).$n;
+        expect(() => parseJsonWithBigInts(input)).toThrow(
+            new SolanaError(SOLANA_ERROR__MALFORMED_BIGINT_STRING, { value }),
+        );
+    });
+    it.each(['{"$n":"1e9999999"}', '{"$n":"1e99999999"}', '{"$n":"1e999999999"}', '{"$n":"1e999999999999999999"}'])(
+        'rejects an absurdly large `$n` value object instead of materializing it (%s)',
+        input => {
+            const value = JSON.parse(input).$n;
+            expect(() => parseJsonWithBigInts(input)).toThrow(
+                new SolanaError(SOLANA_ERROR__MALFORMED_BIGINT_STRING, { value }),
+            );
+        },
+    );
+    it('parses an integer whose digit count is exactly at the limit', () => {
+        // `1e999` materializes to a 1,000-digit integer (1 mantissa digit + 999 zeroes).
+        expect(parseJsonWithBigInts('{"$n":"1e999"}')).toBe(10n ** 999n);
+    });
+    it('rejects an integer whose digit count exceeds the limit by one', () => {
+        // `1e1000` would materialize to a 1,001-digit integer.
+        expect(() => parseJsonWithBigInts('{"$n":"1e1000"}')).toThrow(
+            new SolanaError(SOLANA_ERROR__MALFORMED_BIGINT_STRING, { value: '1e1000' }),
+        );
     });
     it('can parse complex JSON files', () => {
         const largeJsonPath = path.join(__dirname, 'large-json-file.json');

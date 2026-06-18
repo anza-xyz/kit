@@ -1,3 +1,20 @@
+import { SOLANA_ERROR__MALFORMED_BIGINT_STRING, SolanaError } from '@solana/errors';
+
+/**
+ * Matches an optionally-signed integer with an optional non-negative exponent —
+ * matching the shape that {@link wrapBigIntValueObject} can emit. Capturing the
+ * sign, mantissa, and exponent separately lets us both validate the value and
+ * estimate how many digits it would materialize into.
+ */
+const BIGINT_VALUE_OBJECT_PATTERN = /^(-?)(\d+)(?:[eE]\+?(\d+))?$/;
+
+/**
+ * The largest integer (by decimal digit count) we are willing to materialize
+ * from a `$n` value object. This prevents a malformed `$n` value from causing
+ * us to allocate overly large numbers.
+ */
+const MAX_BIGINT_DIGITS = 1_000;
+
 /**
  * This function is a replacement for `JSON.parse` that can handle large
  * unsafe integers by parsing them as BigInts. It transforms every
@@ -69,11 +86,18 @@ function wrapBigIntValueObject(value: string): string {
 }
 
 function unwrapBigIntValueObject({ $n }: BigIntValueObject): bigint {
-    if ($n.match(/[eE]/)) {
-        const [units, exponent] = $n.split(/[eE]/);
-        return BigInt(units) * BigInt(10) ** BigInt(exponent);
+    const match = $n.match(BIGINT_VALUE_OBJECT_PATTERN);
+    if (match) {
+        const [, sign, mantissa, exponent] = match;
+        // The materialized integer has `mantissa.length + exponent` digits.
+        // `Number(exponent)` saturates to `Infinity` for absurd exponents, which
+        // safely exceeds the limit rather than overflowing.
+        const digitCount = mantissa.length + (exponent ? Number(exponent) : 0);
+        if (digitCount <= MAX_BIGINT_DIGITS) {
+            return exponent ? BigInt(`${sign}${mantissa}`) * 10n ** BigInt(exponent) : BigInt($n);
+        }
     }
-    return BigInt($n);
+    throw new SolanaError(SOLANA_ERROR__MALFORMED_BIGINT_STRING, { value: $n });
 }
 
 function isBigIntValueObject(value: unknown): value is BigIntValueObject {
