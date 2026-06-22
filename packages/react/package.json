@@ -98,7 +98,7 @@
         "react": "^19.2.7",
         "react-dom": "^19.2.7",
         "react-error-boundary": "^5.0.0",
-        "react-test-renderer": "^19.2.6"
+        "react-test-renderer": "^19.2.7"
     },
     "peerDependencies": {
         "react": ">=18"
