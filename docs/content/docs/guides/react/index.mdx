@@ -1,0 +1,113 @@
+---
+title: Overview
+description: Reactive hooks for building Solana apps with Kit
+---
+
+`@solana/react` is a set of React hooks built on top of Kit.
+
+```package-install
+@solana/kit @solana/react
+```
+
+## Set up the provider
+
+Every hook reads a Kit client from the nearest `ClientProvider`. You compose the client in plain Kit with `createClient().use(...)` and hand the finished client to the provider - the provider does no composition or lifecycle management, it just distributes the value you pass in.
+
+```ts twoslash
+import { createClient } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { generatedSigner } from '@solana/kit-plugin-signer';
+
+// Build once, at module scope, so the reference is stable across renders.
+const client = createClient().use(generatedSigner()).use(solanaDevnetRpc());
+```
+
+Wrap your app in the provider and pass the client in:
+
+```tsx
+import { ClientProvider } from '@solana/react';
+
+export function App() {
+    return (
+        <ClientProvider client={client}>
+            <Dashboard />
+        </ClientProvider>
+    );
+}
+```
+
+The client reference must be **stable** across renders. Build it at module scope (as above), or memoize it with `useMemo` when its configuration is reactive.
+
+### Rebuilding the client at runtime
+
+When a configuration value changes at runtime - a cluster toggle, an RPC URL switch - rebuild the client in `useMemo` keyed on that value and pass the new reference. The subtree re-subscribes against the new client identity.
+
+```tsx
+import { useMemo, useState } from 'react';
+import { createClient } from '@solana/kit';
+import { solanaDevnetRpc, solanaMainnetRpc } from '@solana/kit-plugin-rpc';
+import { generatedSigner } from '@solana/kit-plugin-signer';
+import { ClientProvider } from '@solana/react';
+
+export function App() {
+    const [cluster, setCluster] = useState<'devnet' | 'mainnet'>('mainnet');
+    const client = useMemo(
+        () =>
+            createClient()
+                .use(generatedSigner())
+                .use(cluster === 'mainnet' ? solanaMainnetRpc() : solanaDevnetRpc()),
+        [cluster],
+    );
+    return (
+        <ClientProvider client={client}>
+            <ClusterToggle value={cluster} onChange={setCluster} />
+            <Dashboard />
+        </ClientProvider>
+    );
+}
+```
+
+### Async plugins (Suspense)
+
+If any plugin's `.use()` is async, `createClient().use(...)` returns a `Promise<Client>`. Pass the promise straight to `ClientProvider` and it suspends the subtree via the nearest `<Suspense>` boundary until the client resolves. The promise identity must be stable - pass a `useMemo`'d or module-scope value, never an inline `new Promise(...)`.
+
+```tsx
+import { Suspense, useMemo } from 'react';
+import { ClientProvider } from '@solana/react';
+
+function Root() {
+    const clientPromise = useMemo(() => createClientWithAsyncPlugins(), []);
+    return (
+        <ClientProvider client={clientPromise}>
+            <Dashboard />
+        </ClientProvider>
+    );
+}
+
+export function App() {
+    return (
+        <Suspense fallback={<Splash />}>
+            <Root />
+        </Suspense>
+    );
+}
+```
+
+## Choosing a hook
+
+Once a provider is mounted, pick a hook by what you are trying to do:
+
+| You want to…                                     | Hook                                                                       | What you get back                                                                    |
+| ------------------------------------------------ | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Access the raw client imperatively               | [`useClient`](/docs/guides/react/core-hooks#useclient)                     | The Kit client from context (type-cast, no runtime check).                           |
+| Access the client and assert a plugin is present | [`useClientCapability`](/docs/guides/react/core-hooks#useclientcapability) | The narrowed client, throws if the capability is missing.                            |
+| Read a value once                                | [`useRequest`](/docs/guides/react/core-hooks#userequest)                   | `{ data, error, status, refresh }`. Request fires on mount, `refresh()` re-fires.    |
+| Subscribe to a stream of notifications           | [`useSubscription`](/docs/guides/react/core-hooks#usesubscription)         | `{ data, error, status, reconnect }`. Latest notification, no initial fetch.         |
+| Read a value that updates live                   | [`useTrackedData`](/docs/guides/react/core-hooks#usetrackeddata)           | `{ data, error, status, refresh }`. Initial fetch seeds, subscription keeps it live. |
+| Trigger an async action on user input            | [`useAction`](/docs/guides/react/core-hooks#useaction)                     | `{ dispatch, status, data, error, reset }`. Fires on demand.                         |
+
+The [SWR](/docs/guides/react/swr) and [TanStack Query](/docs/guides/react/query) adapters route the read hooks through those libraries' caches. These add features such as deduplication and devtools.
+
+## Server rendering
+
+Every hook is safe to render on the server. The fetch or subscription is committed in an effect, which never runs during SSR, so no request opens and no socket connects until the component hydrates on the client. On the server - and on the first client render, before hydration - each hook reports its pre-fetch status: `fetching` for `useRequest`, `loading` for `useSubscription` and `useTrackedData`, and `idle` for `useAction` (which only ever fires on demand). Server and client markup therefore match, and the live work begins after hydration.

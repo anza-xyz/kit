@@ -9,6 +9,7 @@
         "sending-multiple-transactions",
         "fetching-accounts",
         "using-program-plugins",
-        "testing-and-local-development"
+        "testing-and-local-development",
+        "react"
     ]
 }

@@ -1,0 +1,157 @@
+---
+title: Core hooks
+description: The core hooks in @solana/react
+---
+
+Every hook on this page must be rendered under a [`ClientProvider`](/docs/guides/react). They fall into four groups: accessing the client, reading once, reading live data, and triggering actions.
+
+## Accessing the client
+
+### `useClient`
+
+Reads the Kit client published by the nearest `ClientProvider`. It defaults to the base `Client` shape; when you know a plugin is installed, narrow the type through the generic. This is a pure type-cast with no runtime check - reach for `useClientCapability` instead when a missing plugin should fail. Throws `SOLANA_ERROR__REACT__MISSING_PROVIDER` if no provider is mounted above it.
+
+```tsx
+import { ClientWithRpc, GetEpochInfoApi } from '@solana/kit';
+import { useClient } from '@solana/react';
+
+function FetchEpochButton() {
+    const client = useClient<ClientWithRpc<GetEpochInfoApi>>();
+    return <button onClick={() => client.rpc.getEpochInfo().send()}>Fetch epoch</button>;
+}
+```
+
+### `useClientCapability`
+
+Reads the client and asserts at mount that a capability is installed, narrowing the return type via the generic. If the capability is absent it throws `SOLANA_ERROR__REACT__MISSING_CAPABILITY`, including the `hookName` and `providerHint` you supply so the mistake is easy to locate. This is the building block for plugin-specific hooks.
+
+```tsx
+import { ClientWithRpc, GetEpochInfoApi } from '@solana/kit';
+import { useClientCapability } from '@solana/react';
+
+function useRpc() {
+    return useClientCapability<ClientWithRpc<GetEpochInfoApi>>({
+        capability: 'rpc',
+        hookName: 'useRpc',
+        providerHint: 'Install a `solanaRpc()` plugin on the client.',
+    });
+}
+```
+
+Pass an array for `capability` when a hook needs more than one (e.g. `['rpc', 'rpcSubscriptions']`); the same `providerHint` is reported for whichever is missing.
+
+## Reading once
+
+### `useRequest`
+
+Fires a one-shot request on mount and re-fires whenever the source changes identity or you call `refresh()`. The result tracks the call's lifecycle and keeps stale `data`/`error` populated while a refresh is in flight (stale-while-revalidate). Status is `fetching`, `success`, `error`, or `disabled` (when the source is `null`).
+
+Pass either a Kit request source (most commonly a `PendingRpcRequest`) or an `async (signal) => Promise<T>` function to wrap any one-shot async call. Memoize the source (`useMemo`) or function (`useCallback`) on its inputs.
+
+```tsx
+import { useMemo } from 'react';
+import { ClientWithRpc, GetLatestBlockhashApi } from '@solana/kit';
+import { useClient, useRequest } from '@solana/react';
+
+function LatestBlockhash() {
+    const client = useClient<ClientWithRpc<GetLatestBlockhashApi>>();
+    const source = useMemo(() => client.rpc.getLatestBlockhash(), [client]);
+    const { data, error, status, refresh } = useRequest(source, {
+        getAbortSignal: () => AbortSignal.timeout(5_000),
+    });
+    if (error) return <button onClick={() => refresh()}>Retry</button>;
+    return <p>{data ? `Blockhash: ${data.value.blockhash}` : 'Loading…'}</p>;
+}
+```
+
+The `getAbortSignal` factory runs on every attempt (initial fire and every `refresh()`), so `() => AbortSignal.timeout(5_000)` gives each attempt its own five-second clock.
+
+## Reading live data
+
+### `useSubscription`
+
+Subscribes to a stream source and surfaces the latest notification - no initial fetch. The subscription opens on mount, re-opens when the source changes identity, and tears down on unmount. Use `reconnect()` to re-open manually. Status is `loading`, `loaded`, `error`, or `disabled`.
+
+```tsx
+import { useMemo } from 'react';
+import { Address, ClientWithRpcSubscriptions, AccountNotificationsApi } from '@solana/kit';
+import { useClient, useSubscription } from '@solana/react';
+
+function LiveAccount({ address }: { address: Address }) {
+    const client = useClient<ClientWithRpcSubscriptions<AccountNotificationsApi>>();
+    const source = useMemo(
+        () => client.rpcSubscriptions.accountNotifications(address),
+        [client, address],
+    );
+    const { data, error, reconnect } = useSubscription(source);
+    if (error) return <button onClick={() => reconnect()}>Reconnect</button>;
+    return (
+        <p>
+            {data ? `${data.value.lamports} lamports at slot ${data.context.slot}` : 'Connecting…'}
+        </p>
+    );
+}
+```
+
+### `useTrackedData`
+
+Renders a value that loads quickly and then stays live: a one-shot fetch seeds the value, and a subscription keeps it updated. The underlying store slot-dedupes between the two sources, so out-of-order arrivals never regress the surfaced value. `data` is a `SolanaRpcResponse<T>` envelope (`{ context: { slot }, value }`), so you can read `data.value` and `data.context.slot` directly. Status is `loading`, `loaded`, `error`, or `disabled`.
+
+Pass a memoized spec with an `initialValueSource` + `initialValueMapper` (the initial fetch) and a `streamSource` + `streamValueMapper` (the subscription).
+
+```tsx
+import { useMemo } from 'react';
+import {
+    Address,
+    ClientWithRpc,
+    ClientWithRpcSubscriptions,
+    GetBalanceApi,
+    AccountNotificationsApi,
+} from '@solana/kit';
+import { useClient, useTrackedData } from '@solana/react';
+
+function AccountBalance({ address }: { address: Address }) {
+    const client = useClient<
+        ClientWithRpc<GetBalanceApi> & ClientWithRpcSubscriptions<AccountNotificationsApi>
+    >();
+    const spec = useMemo(
+        () => ({
+            initialValueSource: client.rpc.getBalance(address),
+            initialValueMapper: (lamports: bigint) => lamports,
+            streamSource: client.rpcSubscriptions.accountNotifications(address),
+            streamValueMapper: ({ lamports }: { lamports: bigint }) => lamports,
+        }),
+        [client, address],
+    );
+    const { data, error, refresh } = useTrackedData(spec);
+    if (error) return <button onClick={() => refresh()}>Retry</button>;
+    return <p>{data ? `${data.value} lamports at slot ${data.context.slot}` : 'Loading…'}</p>;
+}
+```
+
+Reach for `useSubscription` when there is no meaningful "initial value" to fetch, reach for `useTrackedData` when you want a value before the first notification arrives.
+
+## Triggering actions
+
+### `useAction`
+
+Wraps an arbitrary async function and tracks each invocation through React state. Each `dispatch(...)` runs the function with a fresh `AbortSignal`, dispatching again while a call is in flight aborts the first. Status is `idle`, `running`, `success`, or `error`. Use `dispatch` from event handlers (fire-and-forget, never throws) and `dispatchAsync` when you need the resolved value or to propagate errors.
+
+```tsx
+import { useAction } from '@solana/react';
+
+function PostMessageButton({ url, body }: { url: string; body: string }) {
+    const { dispatch, isRunning, error } = useAction(async (signal, content: string) => {
+        const res = await fetch(url, { body: content, method: 'POST', signal });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return (await res.json()) as { id: string };
+    });
+    return (
+        <button disabled={isRunning} onClick={() => dispatch(body)}>
+            {isRunning ? 'Posting…' : error ? 'Retry' : 'Post'}
+        </button>
+    );
+}
+```
+
+`reset()` returns the action to `idle` and aborts any in-flight call. The `isIdle` / `isRunning` / `isSuccess` / `isError` booleans are derived from `status` - use whichever reads better at the call site.

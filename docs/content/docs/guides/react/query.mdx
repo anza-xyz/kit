@@ -1,0 +1,110 @@
+---
+title: TanStack Query adapter
+description: Route @solana/react reads through TanStack Query's cache
+---
+
+The TanStack Query adapter routes the core read hooks through TanStack Query's cache: components reading the same key dedupe into one in-flight request, all TanStack Query features are available, and everything shows up in TanStack Query's devtools. Use it when your app already uses TanStack Query, or when you want its revalidation and cache-invalidation model.
+
+```package-install
+@solana/react @tanstack/react-query
+```
+
+Import from the `@solana/react/query` subpath. It declares `@tanstack/react-query` as a peer dependency, pulled in only when this subpath is imported. As with any TanStack Query usage, the tree must be wrapped in a `QueryClientProvider`.
+
+There's a Query variant for each core read hook. All three take a cache `key` up front and return TanStack's `UseQueryResult`:
+
+| Core hook                                                          | Query variant          |
+| ------------------------------------------------------------------ | ---------------------- |
+| [`useRequest`](/docs/guides/react/core-hooks#userequest)           | `useRequestQuery`      |
+| [`useSubscription`](/docs/guides/react/core-hooks#usesubscription) | `useSubscriptionQuery` |
+| [`useTrackedData`](/docs/guides/react/core-hooks#usetrackeddata)   | `useTrackedDataQuery`  |
+
+## `useRequestQuery`
+
+The TanStack Query-backed counterpart to `useRequest`. It takes a query `key`, the same source shape as `useRequest`, and any `useQuery` options. It returns TanStack's own `useQuery` result, so `data`, `error`, `isLoading`, and `refetch` behave as they do everywhere else.
+
+```tsx
+import { ClientWithRpc, GetLatestBlockhashApi } from '@solana/kit';
+import { useClient } from '@solana/react';
+import { useRequestQuery } from '@solana/react/query';
+
+function LatestBlockhash() {
+    const client = useClient<ClientWithRpc<GetLatestBlockhashApi>>();
+    const { data, error, isLoading, refetch } = useRequestQuery(
+        ['latestBlockhash'],
+        client.rpc.getLatestBlockhash(),
+        { getAbortSignal: () => AbortSignal.timeout(5_000) },
+    );
+    if (error) return <button onClick={() => refetch()}>Retry</button>;
+    if (isLoading) return <p>Loading…</p>;
+    return <p>Blockhash: {data!.value.blockhash}</p>;
+}
+```
+
+Unlike core `useRequest`, the source does **not** need to be memoized. The cache is keyed by `key`.
+
+TanStack Query hands the `queryFn` its own cancellation `AbortSignal`, and the hook threads that signal into the source. When you also pass a `getAbortSignal` factory, the two signals are combined with `AbortSignal.any`, so aborting either cancels the attempt.
+
+In addition to TanStack's `enabled: false`, you can pass `null` for `source` to disable the query. Call `refetch()` to refresh.
+
+## `useSubscriptionQuery`
+
+The counterpart to `useSubscription`, for a long-lived stream with no one-shot fetch. It takes a `key` and the same source shape as `useSubscription`, routes the stream through TanStack Query's cache (via `experimental_streamedQuery`), and returns a `UseQueryResult`. `data` is the raw notification exactly as the source emits it.
+
+```tsx
+import { ClientWithRpcSubscriptions, SlotNotificationsApi } from '@solana/kit';
+import { useClient } from '@solana/react';
+import { useSubscriptionQuery } from '@solana/react/query';
+
+function SlotHeight() {
+    const client = useClient<ClientWithRpcSubscriptions<SlotNotificationsApi>>();
+    const { data, error } = useSubscriptionQuery(
+        ['slot'],
+        client.rpcSubscriptions.slotNotifications(),
+    );
+    if (error) return <p>Disconnected.</p>;
+    if (!data) return <p>Connecting…</p>;
+    return <p>Slot {String(data.slot)}</p>;
+}
+```
+
+Because the stream never settles, the query stays in `fetchStatus: 'fetching'` for the subscription's whole life: `isFetching` is permanently `true`, while `isLoading` flips to `false` after the first notification. `refetch()` reconnects but the returned promise never resolves for a never-ending stream, so don't `await` it. The prior value stays visible across a reconnect.
+
+By default `retry`, `staleTime`, and `refetchOnWindowFocus` are tuned for a long-lived socket (`false`, `Infinity`, `false` respectively). All are overridable through the options. Again the source does not need to be memoized, and passing `null` disables the subscription.
+
+## `useTrackedDataQuery`
+
+The counterpart to `useTrackedData`: a one-shot fetch seeds the value and a subscription keeps it live, with the unified stream routed through TanStack Query's cache. It takes a `key` and the same `TrackedDataSpec` as `useTrackedData`. `data` is the `SolanaRpcResponse<TItem>` envelope, so read `data.value` and `data.context.slot` directly.
+
+```tsx
+import {
+    Address,
+    ClientWithRpc,
+    ClientWithRpcSubscriptions,
+    GetBalanceApi,
+    AccountNotificationsApi,
+} from '@solana/kit';
+import { useClient } from '@solana/react';
+import { useTrackedDataQuery } from '@solana/react/query';
+
+function AccountBalance({ address }: { address: Address }) {
+    const client = useClient<
+        ClientWithRpc<GetBalanceApi> & ClientWithRpcSubscriptions<AccountNotificationsApi>
+    >();
+    const { data, error } = useTrackedDataQuery(['balance', address], {
+        initialValueSource: client.rpc.getBalance(address),
+        initialValueMapper: (lamports: bigint) => lamports,
+        streamSource: client.rpcSubscriptions.accountNotifications(address),
+        streamValueMapper: ({ lamports }: { lamports: bigint }) => lamports,
+    });
+    if (error) return <p>Failed to load.</p>;
+    return <p>{data ? `${data.value} lamports at slot ${data.context.slot}` : 'Loading…'}</p>;
+}
+```
+
+Like `useSubscriptionQuery`, the query never settles (`isFetching` stays `true`, don't `await refetch()`), and the same long-lived-socket defaults apply. The spec does not need to be memoized. Slot dedupe applies across a reconnect.
+
+<Callout type="info">
+    We do not have a `useAction` counterpart. Use `useAction` or TanStack Query's `useMutation`
+    directly, and call `queryClient.invalidateQueries()` if you need to invalidate cached reads.
+</Callout>

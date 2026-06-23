@@ -1,0 +1,109 @@
+---
+title: SWR adapter
+description: Route @solana/react reads through SWR's cache
+---
+
+The SWR adapter routes the core read hooks through SWR's cache: components reading the same key dedupe into one in-flight request, all SWR features are available, and everything shows up in SWR's devtools. Use it when your app already uses SWR, or when you want its revalidation and cache-invalidation model.
+
+```package-install
+@solana/react swr
+```
+
+Import from the `@solana/react/swr` subpath. It declares `swr` as a peer dependency, pulled in only when this subpath is imported.
+
+There's an SWR variant for each core read hook, each taking a cache `key` up front. Their return shapes differ: `useRequestSWR` gives you SWR's full response object, while the two stream-backed variants are built on `useSWRSubscription` and return only `{ data, error }`.
+
+| Core hook                                                          | SWR variant          | Returns                   |
+| ------------------------------------------------------------------ | -------------------- | ------------------------- |
+| [`useRequest`](/docs/guides/react/core-hooks#userequest)           | `useRequestSWR`      | `SWRResponse`             |
+| [`useSubscription`](/docs/guides/react/core-hooks#usesubscription) | `useSubscriptionSWR` | `SWRSubscriptionResponse` |
+| [`useTrackedData`](/docs/guides/react/core-hooks#usetrackeddata)   | `useTrackedDataSWR`  | `SWRSubscriptionResponse` |
+
+## `useRequestSWR`
+
+The SWR-backed counterpart to `useRequest`. It takes an SWR `key`, the same source shape as `useRequest`, and any SWR configuration. It returns SWR's `SWRResponse`, so `data`, `error`, `isLoading`, and `mutate` behave exactly as they do everywhere else.
+
+```tsx
+import { ClientWithRpc, GetLatestBlockhashApi } from '@solana/kit';
+import { useClient } from '@solana/react';
+import { useRequestSWR } from '@solana/react/swr';
+
+function LatestBlockhash() {
+    const client = useClient<ClientWithRpc<GetLatestBlockhashApi>>();
+    const { data, error, isLoading, mutate } = useRequestSWR(
+        ['latestBlockhash'],
+        client.rpc.getLatestBlockhash(),
+        { getAbortSignal: () => AbortSignal.timeout(5_000) },
+    );
+    if (error) return <button onClick={() => mutate()}>Retry</button>;
+    if (isLoading) return <p>Loading…</p>;
+    return <p>Blockhash: {data!.value.blockhash}</p>;
+}
+```
+
+Unlike core `useRequest`, the source does **not** need to be memoized. The cache is keyed by `key`.
+
+Pass `null` for the `key` or the `source` to disable the request. Call `mutate()` to refresh.
+
+## `useSubscriptionSWR`
+
+The counterpart to `useSubscription`, for a long-lived stream with no one-shot fetch. It takes a `key` and the same source shape as `useSubscription`, and routes the stream through SWR's subscription cache (`useSWRSubscription`). It returns SWR's `SWRSubscriptionResponse`. `data` is the raw notification exactly as the source emits it.
+
+```tsx
+import { ClientWithRpcSubscriptions, SlotNotificationsApi } from '@solana/kit';
+import { useClient } from '@solana/react';
+import { useSubscriptionSWR } from '@solana/react/swr';
+
+function SlotHeight() {
+    const client = useClient<ClientWithRpcSubscriptions<SlotNotificationsApi>>();
+    const { data, error } = useSubscriptionSWR(
+        ['slot'],
+        client.rpcSubscriptions.slotNotifications(),
+    );
+    if (error) return <p>Disconnected.</p>;
+    if (!data) return <p>Connecting…</p>;
+    return <p>Slot {String(data.slot)}</p>;
+}
+```
+
+There's no `reconnect` and no `getAbortSignal`: to stop or restart the subscription, toggle its `key` to or from `null`. The source does not need to be memoized.
+
+When `key` flips to `null` the `data` is cleared, unlike core `useSubscription` where `reconnect()` keeps the last `data` visible. Pass SWR's `keepPreviousData` if you want the last value to persist across the toggle.
+
+## `useTrackedDataSWR`
+
+The counterpart to `useTrackedData`: a one-shot fetch seeds the value and a subscription keeps it live, with the unified stream routed through SWR's subscription cache. It takes a `key` and the same `TrackedDataSpec` as `useTrackedData`. Like `useSubscriptionSWR` it returns an `SWRSubscriptionResponse`, but `data` is the `SolanaRpcResponse<TItem>` envelope, so read `data.value` and `data.context.slot` directly.
+
+```tsx
+import {
+    Address,
+    ClientWithRpc,
+    ClientWithRpcSubscriptions,
+    GetBalanceApi,
+    AccountNotificationsApi,
+} from '@solana/kit';
+import { useClient } from '@solana/react';
+import { useTrackedDataSWR } from '@solana/react/swr';
+
+function AccountBalance({ address }: { address: Address }) {
+    const client = useClient<
+        ClientWithRpc<GetBalanceApi> & ClientWithRpcSubscriptions<AccountNotificationsApi>
+    >();
+    const { data, error } = useTrackedDataSWR(['balance', address], {
+        initialValueSource: client.rpc.getBalance(address),
+        initialValueMapper: (lamports: bigint) => lamports,
+        streamSource: client.rpcSubscriptions.accountNotifications(address),
+        streamValueMapper: ({ lamports }: { lamports: bigint }) => lamports,
+    });
+    if (error) return <p>Failed to load.</p>;
+    return <p>{data ? `${data.value} lamports at slot ${data.context.slot}` : 'Loading…'}</p>;
+}
+```
+
+Like `useSubscriptionSWR`, it returns only `{ data, error }`, toggle the `key` to or from `null` to stop or restart. The spec does not need to be memoized. Slot dedupe spans the cache, not just one store, so a reconnect's fresh fetch can't regress the cached envelope to an older slot.
+
+Like `useSubscriptionSWR`, when `key` flips to `null` the `data` is cleared. Pass SWR's `keepPreviousData` if you want the last value to persist across the toggle.
+
+<Callout type="info">
+    We do not have a `useAction` counterpart. Use `useAction` or SWR's `mutate` directly.
+</Callout>
