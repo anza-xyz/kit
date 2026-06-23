@@ -1,7 +1,7 @@
 'use client';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'fumadocs-ui/components/ui/tabs';
-import { createContext, useContext, useLayoutEffect, useMemo, useState, type ReactNode } from 'react';
+import { Children, cloneElement, isValidElement, useLayoutEffect, useMemo, useState, type ReactNode } from 'react';
 import { cn } from 'fumadocs-ui/utils/cn';
 import { FlaskConicalIcon, GlobeIcon, LaptopIcon, PuzzleIcon, type LucideIcon } from 'lucide-react';
 
@@ -29,11 +29,6 @@ function toValue(title: string): string {
     return title.toLowerCase().replace(/\s+/g, '-');
 }
 
-const CardTabContext = createContext<{ values: string[]; register: () => number }>({
-    values: [],
-    register: () => 0,
-});
-
 /**
  * Renders a tab list as a grid of selectable cards.
  *
@@ -60,18 +55,13 @@ export function CardTabs({ cards, groupId, persist = false, children }: CardTabs
         }
     }
 
-    // Collection pattern: each CardTab calls register() during render
-    // to get its index. The counter resets on each render cycle.
-    const collectionRef = useMemo(() => ({ current: 0 }), []);
-    collectionRef.current = 0;
-
-    const ctx = useMemo(
-        () => ({
-            values,
-            register: () => collectionRef.current++,
-        }),
-        [values, collectionRef],
-    );
+    // Assign each CardTab child its value by position.
+    let tabIndex = 0;
+    const panels = Children.map(children, child => {
+        if (!isValidElement<CardTabProps>(child)) return child;
+        const index = tabIndex++;
+        return cloneElement(child, { index, value: values[index] });
+    });
 
     return (
         <Tabs
@@ -107,27 +97,31 @@ export function CardTabs({ cards, groupId, persist = false, children }: CardTabs
                     );
                 })}
             </TabsList>
-            <CardTabContext.Provider value={ctx}>{children}</CardTabContext.Provider>
+            {panels}
         </Tabs>
     );
+}
+
+interface CardTabProps {
+    children: ReactNode;
+    // Injected by the parent `CardTabs` based on this child's position.
+    index?: number;
+    value?: string;
 }
 
 /**
  * Renders one panel within a {@link CardTabs} group.
  *
- * @param props - The tab panel children to render.
- * @return A tab panel associated with the next card in the parent group.
+ * @param props - The tab panel children to render. `index` and `value` are
+ *   injected by the parent {@link CardTabs} and should not be passed manually.
+ * @return A tab panel associated with the matching card in the parent group.
  * @throws Throws if there are more `CardTab` children than card definitions.
  */
-export function CardTab({ children }: { children: ReactNode }) {
-    const ctx = useContext(CardTabContext);
-    const index = ctx.register();
-    const value = ctx.values[index];
-
+export function CardTab({ children, index, value }: CardTabProps) {
     if (!value) {
         throw new Error(
             `CardTab at index ${index} does not have a matching card definition. ` +
-                `Make sure the number of CardTab children matches the number of cards.`,
+            `Make sure the number of CardTab children matches the number of cards.`,
         );
     }
 
