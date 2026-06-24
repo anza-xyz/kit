@@ -1,0 +1,363 @@
+---
+title: Reactive stores
+description: Framework-agnostic reactive state primitives that power the React hooks
+---
+
+Kit ships two framework-agnostic reactive state containers - a **reactive action store** for on-demand async work and a **reactive stream store** for live notification streams. Both expose a tiny `subscribe` / `getState` contract that drops into any reactive system: React's `useSyncExternalStore`, Svelte stores, Vue's `shallowRef`, Solid's `from()`, or a hand-rolled render loop.
+
+The [`@solana/react`](/docs/guides/react) hooks are thin `useSyncExternalStore` wrappers over exactly these stores. If you are not using React - or you want imperative control the hooks don't expose - reach for the stores directly. Everything on this page is available from `@solana/kit`.
+
+## Action stores
+
+A `ReactiveActionStore` wraps an async function as a reactive state machine. Each `dispatch()` runs the function and drives a `{ data, error, status }` snapshot through `idle → running → success` (or `error`).
+
+`data` and `error` persist through subsequent `running` states, so a view can keep rendering the last result while a retry is in flight (stale-while-revalidate). A `success` clears `error`, and a `reset()` clears `data` and `error`.
+
+Any Kit RPC request is an action source: call `.reactiveStore()` on it to get a store that re-fires the same request on every `dispatch()`.
+
+```ts
+import { createSolanaRpc } from '@solana/kit';
+
+const rpc = createSolanaRpc('https://api.devnet.solana.com');
+
+// The store starts `idle`. The arguments are baked into the request, so each
+// dispatch() re-fires the same getLatestBlockhash call.
+const store = rpc.getLatestBlockhash().reactiveStore();
+
+const unsubscribe = store.subscribe(() => {
+    const { data, error, status } = store.getState();
+    if (status === 'success') {
+        console.log('Blockhash:', data.value.blockhash);
+    } else if (status === 'error') {
+        console.error(error);
+    }
+});
+
+store.dispatch(); // fire the first attempt
+```
+
+### The store API
+
+| Member                   | What it does                                                                                                                        |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `dispatch(...args)`      | Fire-and-forget. Returns synchronously and never throws - failures land on state as `{ status: 'error' }`. Use from event handlers. |
+| `dispatchAsync(...args)` | Promise-returning. Resolves with the result, rejects with the thrown error (or an `AbortError` when superseded / reset).            |
+| `getState()`             | The current `{ data, error, status }` snapshot. Stable identity between changes.                                                    |
+| `subscribe(listener)`    | Registers a change listener; returns an unsubscribe function. The listener takes no argument - read the latest via `getState()`.    |
+| `reset()`                | Aborts any in-flight dispatch and returns the store to `idle`, clearing `data` and `error`.                                         |
+| `withSignal(signal)`     | A wrapper exposing `dispatch` / `dispatchAsync` bound to a caller-provided `AbortSignal`.                                           |
+
+Each `dispatch()` aborts the previous in-flight call, so only the most recent dispatch can mutate state - a stale response can never clobber a newer one.
+
+Use `withSignal` to attach your own cancellation source. A fresh timeout per attempt:
+
+```ts
+import { createSolanaRpc } from '@solana/kit';
+
+const rpc = createSolanaRpc('https://api.devnet.solana.com');
+const store = rpc.getLatestBlockhash().reactiveStore();
+
+// Fresh 5-second clock on every attempt:
+store.withSignal(AbortSignal.timeout(5_000)).dispatch();
+```
+
+### Binding to your view
+
+The `subscribe` / `getState` pair works with reactive UI frameworks. Wire the blockhash store to a "fetch" button:
+
+<Tabs items={["Vanilla JS", "Svelte", "Vue"]}>
+  <Tab value="Vanilla JS">
+
+```ts
+import { createSolanaRpc } from '@solana/kit';
+
+const rpc = createSolanaRpc('https://api.devnet.solana.com');
+const store = rpc.getLatestBlockhash().reactiveStore();
+
+const button = document.querySelector('button')!;
+const output = document.querySelector('#out')!;
+
+button.addEventListener('click', () => store.dispatch());
+
+const unsubscribe = store.subscribe(() => {
+    const state = store.getState();
+    output.textContent = state.status === 'success' ? state.data.value.blockhash : state.status;
+});
+// On teardown: unsubscribe();
+```
+
+  </Tab>
+  <Tab value="Svelte">
+
+```svelte
+<script>
+  import { createSolanaRpc } from '@solana/kit';
+
+  const rpc = createSolanaRpc('https://api.devnet.solana.com');
+  const store = rpc.getLatestBlockhash().reactiveStore();
+
+  // Svelte's store contract ≈ useSyncExternalStore:
+  // subscribe(run) → emit current snapshot, then on every change; return unsubscribe.
+  const blockhash = {
+    subscribe: (run) => {
+      run(store.getState());
+      return store.subscribe(() => run(store.getState()));
+    },
+  };
+</script>
+
+<button onclick={() => store.dispatch()}>Fetch blockhash</button>
+
+{#if $blockhash.status === 'success'}
+  <p>{$blockhash.data.value.blockhash}</p>
+{:else}
+  <p>{$blockhash.status}</p>
+{/if}
+```
+
+  </Tab>
+  <Tab value="Vue">
+
+```vue
+<script setup>
+import { onScopeDispose, shallowRef } from 'vue';
+import { createSolanaRpc } from '@solana/kit';
+
+const rpc = createSolanaRpc('https://api.devnet.solana.com');
+const store = rpc.getLatestBlockhash().reactiveStore();
+
+const state = shallowRef(store.getState());
+const unsubscribe = store.subscribe(() => (state.value = store.getState()));
+onScopeDispose(unsubscribe);
+</script>
+
+<template>
+    <button @click="store.dispatch()">Fetch blockhash</button>
+    <p v-if="state.status === 'success'">{{ state.data.value.blockhash }}</p>
+    <p v-else>{{ state.status }}</p>
+</template>
+```
+
+  </Tab>
+</Tabs>
+
+Another common use case is to call `dispatch` on mount for data loading. React splits these into two hooks over the same store: [`useRequest`](/docs/guides/react/core-hooks#userequest) fires on mount, [`useAction`](/docs/guides/react/core-hooks#useaction) fires on demand.
+
+### Wrapping any async function
+
+`.reactiveStore()` is sugar for RPC requests. For anything else - a `fetch`, your own SDK etc., you can build a store with `createReactiveActionStore`. The wrapped function receives the per-dispatch `AbortSignal` first, then whatever you pass to `dispatch`:
+
+```ts
+import { createReactiveActionStore } from '@solana/kit';
+
+const store = createReactiveActionStore(async (signal: AbortSignal, accountId: string) => {
+    const response = await fetch(`/api/accounts/${accountId}`, { signal });
+    return response.json();
+});
+
+store.subscribe(() => console.log(store.getState()));
+store.dispatch('abc...'); // forwarded to the wrapped function after the signal
+```
+
+The signal is aborted automatically when a newer `dispatch()` supersedes this one or when `reset()` is called, so a function that threads it into its I/O cancels cleanly.
+
+## Stream stores
+
+A `ReactiveStreamStore` holds the latest value from an ongoing stream. Where an action store fires on demand, a stream store opens a connection with `connect()` and updates its snapshot every time a notification arrives. Its status vocabulary is `idle → loading → loaded` (or `error`). `data` and `error` are preserved across `loading`, so a reconnect can render stale data while it re-establishes.
+
+Any Kit RPC subscription is a stream source - call `.reactiveStore()` on it.
+
+```ts
+import { createSolanaRpcSubscriptions } from '@solana/kit';
+
+const rpcSubscriptions = createSolanaRpcSubscriptions('wss://api.devnet.solana.com');
+
+const store = rpcSubscriptions.slotNotifications().reactiveStore();
+
+const unsubscribe = store.subscribe(() => {
+    const { data, status } = store.getState();
+    if (status === 'loaded') {
+        console.log('Current slot:', data.slot);
+    }
+});
+
+store.connect(); // open the stream
+```
+
+### The store API
+
+| Member                | What it does                                                                                                                |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `connect()`           | Opens the stream (aborting any active connection) and transitions to `loading`, then `loaded` / `error`.                    |
+| `getState()`          | The current `{ data, error, status }` snapshot. Stable identity between changes.                                            |
+| `subscribe(listener)` | Registers a change listener; returns an unsubscribe function. Read the latest via `getState()`.                             |
+| `reset()`             | Aborts the active connection and returns the store to `idle`, clearing `data` and `error`.                                  |
+| `withSignal(signal)`  | A wrapper exposing `connect()` bound to a caller-provided `AbortSignal` - a per-connection timeout or a shared kill switch. |
+
+Unlike an action store, a stream store is opened once and left running; `reset()` tears it down. A subsequent `connect()` always opens a fresh stream.
+
+### Binding to your view
+
+The contract is the same `subscribe` / `getState` pair, but it is important to call `reset()` on teardown to clean up the stream. Wire the slot store to a live display:
+
+<Tabs items={["Vanilla JS", "Svelte", "Vue"]}>
+  <Tab value="Vanilla JS">
+
+```ts
+import { createSolanaRpcSubscriptions } from '@solana/kit';
+
+const rpcSubscriptions = createSolanaRpcSubscriptions('wss://api.devnet.solana.com');
+const store = rpcSubscriptions.slotNotifications().reactiveStore();
+
+const output = document.querySelector('#slot')!;
+const unsubscribe = store.subscribe(() => {
+    const state = store.getState();
+    output.textContent = state.status === 'loaded' ? String(state.data.slot) : state.status;
+});
+
+store.connect();
+// On teardown: unsubscribe(); store.reset();
+```
+
+  </Tab>
+  <Tab value="Svelte">
+
+```svelte
+<script>
+  import { onMount } from 'svelte';
+  import { createSolanaRpcSubscriptions } from '@solana/kit';
+
+  const rpcSubscriptions = createSolanaRpcSubscriptions('wss://api.devnet.solana.com');
+  const store = rpcSubscriptions.slotNotifications().reactiveStore();
+
+  // Svelte's store contract ≈ useSyncExternalStore:
+  // subscribe(run) → emit current snapshot, then on every change; return unsubscribe.
+  const slot = {
+    subscribe: (run) => {
+      run(store.getState());
+      return store.subscribe(() => run(store.getState()));
+    },
+  };
+
+  // connect()/reset() in onMount keeps the WebSocket client-only (SSR-safe).
+  onMount(() => {
+    store.connect();
+    return () => store.reset();
+  });
+</script>
+
+{#if $slot.status === 'loaded'}
+  <p>Slot: {$slot.data.slot}</p>
+{:else}
+  <p>{$slot.status}</p>
+{/if}
+```
+
+  </Tab>
+  <Tab value="Vue">
+
+```vue
+<script setup>
+import { onMounted, onScopeDispose, shallowRef } from 'vue';
+import { createSolanaRpcSubscriptions } from '@solana/kit';
+
+const rpcSubscriptions = createSolanaRpcSubscriptions('wss://api.devnet.solana.com');
+const store = rpcSubscriptions.slotNotifications().reactiveStore();
+
+const slot = shallowRef(store.getState());
+const unsubscribe = store.subscribe(() => (slot.value = store.getState()));
+
+onMounted(() => store.connect());
+onScopeDispose(() => {
+    unsubscribe();
+    store.reset();
+});
+</script>
+
+<template>
+    <p v-if="slot.status === 'loaded'">Slot: {{ slot.data.slot }}</p>
+    <p v-else>{{ slot.status }}</p>
+</template>
+```
+
+  </Tab>
+</Tabs>
+
+### Wrapping any stream
+
+For a stream that is not a Kit subscription, you can build a store with `createReactiveStoreFromDataPublisherFactory`. You give it a factory that produces a fresh `DataPublisher` on every `connect()`, plus the channel names to read data and errors from. The factory receives the per-connection `AbortSignal`; thread it into the transport so the connection itself tears down on reset, not just the store's listeners.
+
+```ts
+import { createReactiveStoreFromDataPublisherFactory } from '@solana/kit';
+
+const store = createReactiveStoreFromDataPublisherFactory<string>({
+    createDataPublisher: (signal) => {
+        const socket = new WebSocket('wss://example.com/feed');
+        signal.addEventListener('abort', () => socket.close());
+        // A `DataPublisher` exposes `on(channel, subscriber, { signal })`. Forward the
+        // payload you care about from each channel - here, the message text.
+        return Promise.resolve({
+            on(channelName, subscriber, options) {
+                if (channelName === 'message') {
+                    const handler = (event: MessageEvent) => subscriber(event.data);
+                    socket.addEventListener('message', handler, options);
+                    return () => socket.removeEventListener('message', handler);
+                }
+                // channelName === 'error' here — surface a real Error rather than the raw DOM event.
+                const handler = () => subscriber(new Error('WebSocket connection error'));
+                socket.addEventListener('error', handler, options);
+                return () => socket.removeEventListener('error', handler);
+            },
+        });
+    },
+    dataChannelName: 'message',
+    errorChannelName: 'error',
+});
+
+store.subscribe(() => {
+    const snapshot = store.getState();
+    if (snapshot.status === 'loaded') console.log('Latest:', snapshot.data);
+});
+
+// Fresh 30-second clock per connection attempt:
+store.withSignal(AbortSignal.timeout(30_000)).connect();
+```
+
+The factory runs on every `connect()`, so a torn-down stream can be reopened without losing subscribers or the last known value.
+
+## Fetch once, then stay live
+
+A common pattern is "load a value, then keep it current" - fetch an account balance once, then track it through subscription notifications. Doing this by hand is fiddly: the initial fetch and the first few notifications can arrive out of order, and a late initial response must not overwrite a newer notification.
+
+`createReactiveStoreWithInitialValueAndSlotTracking` solves exactly this. It pairs an action source (the one-shot read) with a stream source (the live updates) and deduplicates the two by slot, so the store always holds the value observed at the highest slot. The result is an ordinary `ReactiveStreamStore` - `connect()` to start, and bind it with the same `subscribe` / `getState` pattern as any stream store. This is the primitive behind React's [`useTrackedData`](/docs/guides/react/core-hooks#usetrackeddata).
+
+```ts
+import {
+    address,
+    createReactiveStoreWithInitialValueAndSlotTracking,
+    createSolanaRpc,
+    createSolanaRpcSubscriptions,
+} from '@solana/kit';
+
+const rpc = createSolanaRpc('https://api.devnet.solana.com');
+const rpcSubscriptions = createSolanaRpcSubscriptions('wss://api.devnet.solana.com');
+const myAddress = address('FnHyam9w4NZoWR6mKN1CuGBritdsEWZQa4Z4oawLZGxa');
+
+const balanceStore = createReactiveStoreWithInitialValueAndSlotTracking({
+    initialValueSource: rpc.getBalance(myAddress, { commitment: 'confirmed' }),
+    initialValueMapper: (lamports) => lamports,
+    streamSource: rpcSubscriptions.accountNotifications(myAddress),
+    streamValueMapper: ({ lamports }) => lamports,
+});
+
+const unsubscribe = balanceStore.subscribe(() => {
+    const state = balanceStore.getState();
+    if (state.status === 'loaded') {
+        console.log(`Balance at slot ${state.data.context.slot}:`, state.data.value);
+    }
+});
+
+balanceStore.connect();
+```
+
+Both sources must yield `SolanaRpcResponse` envelopes so their slots can be compared; the two mappers project each source's value into the unified item type the store holds. The loaded `data` is itself a `SolanaRpcResponse`, so `data.context.slot` tells you the slot the current value was observed at.
