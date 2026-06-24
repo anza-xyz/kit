@@ -571,6 +571,7 @@ if (isFailedSingleTransactionPlanResult(result.plans[1])) {
     console.log(result.plans[1].context.transaction); // If available
 }
 ```
+
 ### Working with transaction plan results
 
 The `flattenTransactionPlanResult` function collapses a result tree into a flat array of all
@@ -604,7 +605,9 @@ const summary = summarizeTransactionPlanResult(result);
 if (summary.successful) {
     console.log(`All ${summary.successfulTransactions.length} transactions confirmed`);
 } else {
-    console.warn(`${summary.failedTransactions.length} failed, ${summary.canceledTransactions.length} canceled`);
+    console.warn(
+        `${summary.failedTransactions.length} failed, ${summary.canceledTransactions.length} canceled`,
+    );
 }
 ```
 
