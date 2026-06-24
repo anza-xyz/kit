@@ -78,12 +78,12 @@ This is the same composition the bundled clients use internally. See [Advanced g
 
 ## Estimate compute units
 
-Setting an explicit compute unit limit close to what your transaction actually consumes increases the chance of inclusion, packs more transactions per block, and reduces priority fees. Kit ships everything you need for this without leaving `@solana/kit`: `estimateComputeUnitLimitFactory` simulates the message to estimate the cost, and `estimateAndSetComputeUnitLimitFactory` wraps that estimator to write the result back onto the message in one step.
+Setting explicit resource limits (the compute unit limit, and on version 1 transactions the loaded accounts data size limit) close to what your transaction actually consumes increases the chance of inclusion, packs more transactions per block, and reduces priority fees. Kit ships everything you need for this without leaving `@solana/kit`: `estimateResourceLimitsFactory` simulates the message to estimate the compute unit limit (and the loaded accounts data size limit for version 1 transactions), and `estimateAndSetResourceLimitsFactory` wraps that estimator to write the result back onto the message in one step.
 
 ```ts twoslash
 import {
-    estimateAndSetComputeUnitLimitFactory,
-    estimateComputeUnitLimitFactory,
+    estimateAndSetResourceLimitsFactory,
+    estimateResourceLimitsFactory,
     TransactionMessage,
     TransactionMessageWithFeePayer,
 } from '@solana/kit';
@@ -92,11 +92,10 @@ import { createSolanaRpc } from '@solana/kit';
 const rpc = createSolanaRpc('https://api.devnet.solana.com');
 const transactionMessage = {} as TransactionMessage & TransactionMessageWithFeePayer;
 // ---cut-end---
-const estimateComputeUnitLimit = estimateComputeUnitLimitFactory({ rpc });
-const estimateAndSetComputeUnitLimit =
-    estimateAndSetComputeUnitLimitFactory(estimateComputeUnitLimit);
+const estimateResourceLimits = estimateResourceLimitsFactory({ rpc });
+const estimateAndSetResourceLimits = estimateAndSetResourceLimitsFactory(estimateResourceLimits);
 
-const transactionMessageWithLimit = await estimateAndSetComputeUnitLimit(transactionMessage);
+const transactionMessageWithLimits = await estimateAndSetResourceLimits(transactionMessage);
 ```
 
 Bundled clients such as `solanaRpc` and `litesvm` already do this for you when sending transactions.

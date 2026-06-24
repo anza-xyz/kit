@@ -264,9 +264,9 @@ const transactionMessageWithLimit = setTransactionMessageComputeUnitLimit(
 
 To remove the limit, pass `undefined` as the first argument. The matching reader [`getTransactionMessageComputeUnitLimit`](/api/functions/getTransactionMessageComputeUnitLimit) returns the limit currently set on a message, or `undefined` if none is set.
 
-### Estimating the compute unit limit [#configuring-compute-unit-limit-estimation]
+### Estimating compute units [#configuring-resource-limit-estimation]
 
-A good way to size the compute unit limit is to simulate the transaction and use the result. Kit ships [`estimateComputeUnitLimitFactory`](/api/functions/estimateComputeUnitLimitFactory) for the simulation step and [`estimateAndSetComputeUnitLimitFactory`](/api/functions/estimateAndSetComputeUnitLimitFactory) for the common case of estimating and writing the result back onto the message in one call.
+A good way to size a transaction's compute units and other resource limits is to simulate it and use the result. Kit ships [`estimateResourceLimitsFactory`](/api/functions/estimateResourceLimitsFactory) for the simulation step and [`estimateAndSetResourceLimitsFactory`](/api/functions/estimateAndSetResourceLimitsFactory) for the common case of estimating and writing the result back onto the message in one call. Alongside the compute unit limit, these also estimate the loaded accounts data size limit, which is required for version 1 transactions.
 
 ```ts twoslash
 import {
@@ -279,20 +279,20 @@ const rpc = null as unknown as Rpc<SimulateTransactionApi>;
 const transactionMessage = null as unknown as TransactionMessage & TransactionMessageWithFeePayer;
 // ---cut-before---
 import {
-    estimateAndSetComputeUnitLimitFactory,
-    estimateComputeUnitLimitFactory,
+    estimateAndSetResourceLimitsFactory,
+    estimateResourceLimitsFactory,
 } from '@solana/kit';
 
-const estimateComputeUnitLimit = estimateComputeUnitLimitFactory({ rpc });
-const estimateAndSetComputeUnitLimit =
-    estimateAndSetComputeUnitLimitFactory(estimateComputeUnitLimit);
+const estimateResourceLimits = estimateResourceLimitsFactory({ rpc });
+const estimateAndSetResourceLimits =
+    estimateAndSetResourceLimitsFactory(estimateResourceLimits);
 
-const transactionMessageWithLimit = await estimateAndSetComputeUnitLimit(transactionMessage);
+const transactionMessageWithLimits = await estimateAndSetResourceLimits(transactionMessage);
 ```
 
-The estimator simulates the transaction with the maximum allowed limit so the simulation itself never runs out of budget; the returned value is the compute unit count actually consumed. `estimateAndSetComputeUnitLimitFactory` only updates the message if no explicit limit is already set or if the existing limit is the provisory `0` value, leaving messages with manually configured limits untouched.
+The estimator simulates the transaction with the maximum allowed limits so the simulation itself never runs out of budget; the returned values are the compute units actually consumed and, for version 1 transactions, the loaded accounts data size. `estimateAndSetResourceLimitsFactory` only updates a limit if no explicit value is already set or if the existing value is the provisory `0` value, leaving manually configured limits untouched.
 
-When constructing a message that you intend to estimate later, [`fillTransactionMessageProvisoryComputeUnitLimit`](/api/functions/fillTransactionMessageProvisoryComputeUnitLimit) reserves space for the limit by setting it to a provisory value of `0`.
+When constructing a message that you intend to estimate later, [`fillTransactionMessageProvisoryResourceLimits`](/api/functions/fillTransactionMessageProvisoryResourceLimits) reserves space for the limits by setting them to a provisory value of `0`.
 
 ### Setting the priority fee [#configuring-priority-fees]
 

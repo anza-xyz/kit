@@ -655,12 +655,12 @@ const transactionPlanner = createTransactionPlanner({
 
 ### Estimating compute units
 
-You can estimate and set compute unit limits dynamically by using a two-step process:
+You can estimate and set compute units and other resource limits dynamically by using a two-step process:
 
-- First, add a provisory compute unit limit (if missing) in your transaction planner.
-- Then, estimate and update it right before sending the transaction.
+- First, add provisory resource limits (if missing) in your transaction planner.
+- Then, estimate and update them right before sending the transaction.
 
-The [`fillTransactionMessageProvisoryComputeUnitLimit`](/api/functions/fillTransactionMessageProvisoryComputeUnitLimit) helper from `@solana/kit` reserves the limit by setting it to a provisory value of `0`, so the planner can account for the resulting compute budget instruction when packing transaction messages. See [Estimating the compute unit limit](/docs/advanced-guides/transactions#configuring-compute-unit-limit-estimation) for the full estimator API.
+The [`fillTransactionMessageProvisoryResourceLimits`](/api/functions/fillTransactionMessageProvisoryResourceLimits) helper from `@solana/kit` reserves the limits by setting them to a provisory value of `0`, so the planner can account for the resulting compute budget instructions when packing transaction messages. See [Estimating compute units](/docs/advanced-guides/transactions#configuring-resource-limit-estimation) for the full estimator API.
 
 ```ts twoslash
 import {
@@ -672,19 +672,19 @@ import {
 } from '@solana/kit';
 const payer = {} as unknown as TransactionSigner;
 // ---cut-before---
-import { fillTransactionMessageProvisoryComputeUnitLimit } from '@solana/kit'; // [!code ++]
+import { fillTransactionMessageProvisoryResourceLimits } from '@solana/kit'; // [!code ++]
 
 const transactionPlanner = createTransactionPlanner({
     createTransactionMessage: () =>
         pipe(
             createTransactionMessage({ version: 0 }),
             (message) => setTransactionMessageFeePayerSigner(payer, message),
-            (message) => fillTransactionMessageProvisoryComputeUnitLimit(message), // [!code ++]
+            (message) => fillTransactionMessageProvisoryResourceLimits(message), // [!code ++]
         ),
 });
 ```
 
-Then, pair [`estimateComputeUnitLimitFactory`](/api/functions/estimateComputeUnitLimitFactory) with [`estimateAndSetComputeUnitLimitFactory`](/api/functions/estimateAndSetComputeUnitLimitFactory) in your transaction plan executor to estimate the compute units right before sending the transaction.
+Then, pair [`estimateResourceLimitsFactory`](/api/functions/estimateResourceLimitsFactory) with [`estimateAndSetResourceLimitsFactory`](/api/functions/estimateAndSetResourceLimitsFactory) in your transaction plan executor to estimate the resource limits right before sending the transaction.
 
 ```ts twoslash
 import {
@@ -706,14 +706,14 @@ const rpcSubscriptions = {} as unknown as RpcSubscriptions<SolanaRpcSubscription
 // ---cut-before---
 // [!code ++:4]
 import {
-    estimateAndSetComputeUnitLimitFactory,
-    estimateComputeUnitLimitFactory,
+    estimateAndSetResourceLimitsFactory,
+    estimateResourceLimitsFactory,
 } from '@solana/kit';
 
 const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
 // [!code ++:2]
-const estimateCULimit = estimateComputeUnitLimitFactory({ rpc });
-const estimateAndSetCULimit = estimateAndSetComputeUnitLimitFactory(estimateCULimit);
+const estimateResourceLimits = estimateResourceLimitsFactory({ rpc });
+const estimateAndSetResourceLimits = estimateAndSetResourceLimitsFactory(estimateResourceLimits);
 
 const transactionPlanExecutor = createTransactionPlanExecutor({
     executeTransactionMessage: async (context, message) => {
@@ -723,7 +723,7 @@ const transactionPlanExecutor = createTransactionPlanExecutor({
             message,
         );
         context.message = messageWithBlockhash;
-        const estimatedMessage = await estimateAndSetCULimit(messageWithBlockhash); // [!code ++]
+        const estimatedMessage = await estimateAndSetResourceLimits(messageWithBlockhash); // [!code ++]
         context.message = estimatedMessage; // [!code ++]
         const transaction = await signTransactionMessageWithSigners(estimatedMessage);
         context.transaction = transaction;
