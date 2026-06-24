@@ -81,19 +81,6 @@ Returns a `TransactionMessage` from a `CompiledTransactionMessage`. If any of th
 
 Given a list of addresses belonging to address lookup tables, returns a map of lookup table addresses to an ordered array of the addresses they contain.
 
-### `getMinimumBalanceForRentExemption(space)` (Deprecated)
-
-> **Deprecated**: The minimum balance for an account is being actively reduced (see [SIMD-0437](https://github.com/solana-foundation/solana-improvement-documents/pull/437)) and is expected to become dynamic in future Solana upgrades (see [SIMD-0194](https://github.com/solana-foundation/solana-improvement-documents/pull/194) and [SIMD-0389](https://github.com/solana-foundation/solana-improvement-documents/pull/389)), meaning a hardcoded local computation will no longer return accurate results. Use the `getMinimumBalanceForRentExemption` RPC method or a `ClientWithGetMinimumBalance` plugin instead. This function will be removed in v7.
-
-Calculates the minimum `Lamports` required to make an account rent exempt for a given data size, without performing an RPC call.
-
-```ts
-import { getMinimumBalanceForRentExemption } from '@solana/kit';
-
-const mintSize = 82n;
-const rentExemptLamports = getMinimumBalanceForRentExemption(mintSize);
-```
-
 ### Compute Unit Limit Estimation
 
 Correctly budgeting a compute unit limit for your transaction message can increase the probability that your transaction will be accepted for processing. If you don't declare a compute unit limit on your transaction, validators will assume an upper limit of 200K compute units (CU) per instruction.

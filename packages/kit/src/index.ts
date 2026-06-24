@@ -34,7 +34,6 @@ export * from './compute-unit-limit-estimation';
 export * from './decompile-transaction-message-fetching-lookup-tables';
 export * from './resource-limit-estimation';
 export * from './fetch-lookup-tables';
-export * from './get-minimum-balance-for-rent-exemption';
 export * from './send-and-confirm-durable-nonce-transaction';
 export * from './send-and-confirm-transaction';
 export * from './send-transaction-without-confirming';

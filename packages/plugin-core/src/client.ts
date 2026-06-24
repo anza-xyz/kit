@@ -146,9 +146,6 @@ export type AsyncClient<TSelf extends object> = Promise<Client<TSelf>> & {
     ) => AsyncClient<TOutput extends Promise<infer U> ? (U extends object ? U : never) : TOutput>;
 };
 
-/** @deprecated This function has been renamed. Use `createClient` instead. It behaves identically. */
-export const createEmptyClient = () => createClient();
-
 /**
  * Creates a new empty client that can be extended with plugins.
  *
