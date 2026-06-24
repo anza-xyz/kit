@@ -256,6 +256,11 @@ function isJsonParsedResponse(rpcTx: AnyGetTransactionResponse): boolean {
  * any other unrecognized input throws
  * {@link SOLANA_ERROR__TRANSACTION_INTROSPECTION__UNRECOGNIZED_GET_TRANSACTION_RESPONSE}.
  *
+ * A response carrying a transaction version this package cannot decode
+ * throws {@link SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED} —
+ * raised by the JSON path for an unrecognized `version`, and by the wire
+ * decoders for malformed binary input.
+ *
  * Use this together with {@link getInstructionsFromCompiledTransactionMessage}
  * (or {@link walkInstructions}) to inspect a confirmed transaction's
  * instructions in a form the auto-generated `@solana-program/*` clients

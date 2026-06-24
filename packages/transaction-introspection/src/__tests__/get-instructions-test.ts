@@ -102,10 +102,10 @@ describe('getInstructionsFromCompiledTransactionMessage', () => {
             ...compiled,
             instructions: [{ accountIndices: [0], data: new Uint8Array(), programAddressIndex: 99 }],
         } as CompiledTransactionMessage;
-        const err = getThrownError(() => getInstructionsFromCompiledTransactionMessage(broken));
-        expect(err).toBeInstanceOf(SolanaError);
-        expect((err as SolanaError).context.__code).toBe(
-            SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_PROGRAM_ADDRESS_NOT_FOUND,
+        expect(() => getInstructionsFromCompiledTransactionMessage(broken)).toThrow(
+            new SolanaError(SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_PROGRAM_ADDRESS_NOT_FOUND, {
+                index: 99,
+            }),
         );
     });
 
@@ -114,12 +114,11 @@ describe('getInstructionsFromCompiledTransactionMessage', () => {
             ...compiled,
             instructions: [{ accountIndices: [42], data: new Uint8Array([1]), programAddressIndex: 1 }],
         } as CompiledTransactionMessage;
-        const err = getThrownError(() => getInstructionsFromCompiledTransactionMessage(broken));
-        expect(err).toBeInstanceOf(SolanaError);
-        expect((err as SolanaError).context.__code).toBe(
-            SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_ACCOUNT_INDEX_OUT_OF_RANGE,
+        expect(() => getInstructionsFromCompiledTransactionMessage(broken)).toThrow(
+            new SolanaError(SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_ACCOUNT_INDEX_OUT_OF_RANGE, {
+                index: 42,
+            }),
         );
-        expect((err as SolanaError).context).toMatchObject({ index: 42 });
     });
 
     it('omits `accounts` and `data` when the compiled instruction has none', () => {
@@ -180,29 +179,18 @@ describe('getInstructionsFromCompiledTransactionMessage', () => {
             staticAccounts: ['fee-payer' as Address, 'program' as Address],
             version: 1,
         } as unknown as CompiledTransactionMessage;
-        const err = getThrownError(() => getInstructionsFromCompiledTransactionMessage(v1));
-        expect(err).toBeInstanceOf(SolanaError);
-        expect((err as SolanaError).context).toMatchObject({
-            __code: SOLANA_ERROR__TRANSACTION__INSTRUCTION_HEADERS_PAYLOADS_MISMATCH,
-            numInstructionHeaders: 1,
-            numInstructionPayloads: 0,
-        });
+        expect(() => getInstructionsFromCompiledTransactionMessage(v1)).toThrow(
+            new SolanaError(SOLANA_ERROR__TRANSACTION__INSTRUCTION_HEADERS_PAYLOADS_MISMATCH, {
+                numInstructionHeaders: 1,
+                numInstructionPayloads: 0,
+            }),
+        );
     });
 
     it('throws SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED for unknown versions', () => {
         const vN = { ...compiled, version: 99 } as unknown as CompiledTransactionMessage;
-        const err = getThrownError(() => getInstructionsFromCompiledTransactionMessage(vN));
-        expect(err).toBeInstanceOf(SolanaError);
-        expect((err as SolanaError).context.__code).toBe(SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED);
-        expect((err as SolanaError).context).toMatchObject({ unsupportedVersion: 99 });
+        expect(() => getInstructionsFromCompiledTransactionMessage(vN)).toThrow(
+            new SolanaError(SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED, { unsupportedVersion: 99 }),
+        );
     });
 });
-
-function getThrownError(fn: () => unknown): unknown {
-    try {
-        fn();
-    } catch (e) {
-        return e;
-    }
-    throw new Error('expected fn to throw');
-}

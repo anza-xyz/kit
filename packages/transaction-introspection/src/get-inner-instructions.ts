@@ -69,14 +69,14 @@ export function getInnerInstructionsFromMeta(
                 );
             }
             const accounts: AccountMeta[] = ix.accounts.map(i => {
-                const meta = accountMetas[i];
-                if (!meta) {
+                const accountMeta = accountMetas[i];
+                if (!accountMeta) {
                     throw new SolanaError(
                         SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_ACCOUNT_INDEX_OUT_OF_RANGE,
                         { index: i },
                     );
                 }
-                return meta;
+                return accountMeta;
             });
             const data = base58.encode(ix.data);
             result.push({
