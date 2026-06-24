@@ -1,5 +1,6 @@
 import { mdxComponents } from '@/app/layout.config';
 import { LLMCopyButton, ViewOptions } from '@/components/page-actions';
+import { VisibleToc } from '@/components/visible-toc';
 import { overridenMdxComponents } from '@/lib/Overrides';
 import { docsSource } from '@/lib/source';
 import { getPageTreePeers } from 'fumadocs-core/server';
@@ -15,7 +16,11 @@ export default async function Page(props: { params: Promise<{ slug?: string[] }>
     const hasCategory = page.file.name === 'index' && page.slugs.length > 0;
 
     return (
-        <DocsPage toc={page.data.toc} full={page.data.full}>
+        <DocsPage
+            toc={page.data.toc}
+            full={page.data.full}
+            tableOfContent={{ component: <VisibleToc toc={page.data.toc} /> }}
+        >
             <DocsTitle>{page.data.title}</DocsTitle>
 
             <DocsDescription className='mb-0'>{page.data.description}</DocsDescription>
