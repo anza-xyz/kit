@@ -571,6 +571,42 @@ if (isFailedSingleTransactionPlanResult(result.plans[1])) {
     console.log(result.plans[1].context.transaction); // If available
 }
 ```
+### Working with transaction plan results
+
+The `flattenTransactionPlanResult` function collapses a result tree into a flat array of all
+[`SingleTransactionPlanResult`](/api/type-aliases/SingleTransactionPlanResult) instances, regardless
+of how they are nested in parallel or sequential structures.
+
+```ts twoslash
+import { flattenTransactionPlanResult, TransactionPlanResult } from '@solana/kit';
+const result = {} as unknown as TransactionPlanResult;
+// ---cut-before---
+for (const single of flattenTransactionPlanResult(result)) {
+    if (single.status === 'successful') {
+        console.log('✅', single.context.signature);
+    } else if (single.status === 'failed') {
+        console.error('❌', single.error.message);
+    } else {
+        console.warn('⚠️ Transaction was canceled');
+    }
+}
+```
+
+The `summarizeTransactionPlanResult` function provides a higher-level view by bucketing all single
+results into `successfulTransactions`, `failedTransactions`, and `canceledTransactions` arrays. It
+also exposes a `successful` boolean that is `true` only when there are no failures or cancellations.
+
+```ts twoslash
+import { summarizeTransactionPlanResult, TransactionPlanResult } from '@solana/kit';
+const result = {} as unknown as TransactionPlanResult;
+// ---cut-before---
+const summary = summarizeTransactionPlanResult(result);
+if (summary.successful) {
+    console.log(`All ${summary.successfulTransactions.length} transactions confirmed`);
+} else {
+    console.warn(`${summary.failedTransactions.length} failed, ${summary.canceledTransactions.length} canceled`);
+}
+```
 
 ### Failed transaction executions
 
