@@ -29,9 +29,9 @@ dataPublisher.on('error', e => {
 
 ### `ReactiveStreamStore<T>`
 
-This type represents a reactive store that holds the latest value published to a data channel. It exposes a `{ getUnifiedState, retry, subscribe }` contract compatible with `useSyncExternalStore`, Svelte stores, and other reactive primitives.
+This type represents a reactive store that holds the latest value published to a data channel. It exposes a `{ getState, retry, subscribe }` contract compatible with `useSyncExternalStore`, Svelte stores, and other reactive primitives.
 
-`getUnifiedState()` returns a discriminated snapshot of the store's lifecycle:
+`getState()` returns a discriminated snapshot of the store's lifecycle:
 
 ```ts
 type ReactiveState<T> =
@@ -49,7 +49,7 @@ The store starts in `status: 'idle'`. Call `connect()` to open the underlying st
 const store: ReactiveStreamStore<AccountInfo> = /* ... */;
 
 // React — snapshot identity is stable between updates, so it can be passed directly.
-const state = useSyncExternalStore(store.subscribe, store.getUnifiedState);
+const state = useSyncExternalStore(store.subscribe, store.getState);
 useEffect(() => {
     store.connect();
     return () => store.reset();
@@ -64,16 +64,12 @@ return (
 );
 
 // Vue
-const snapshot = shallowRef(store.getUnifiedState());
+const snapshot = shallowRef(store.getState());
 store.subscribe(() => {
-    snapshot.value = store.getUnifiedState();
+    snapshot.value = store.getState();
 });
 store.connect();
 ```
-
-`retry()` is a deprecated alias for the error-recovery case — prefer calling `connect()` directly. `connect()` always reopens the stream, regardless of current status; wrap with a status guard at the call site if you need the error-only behaviour.
-
-The individual `getState()` and `getError()` getters on `ReactiveStreamStore<T>` are `@deprecated` &mdash; prefer `getUnifiedState()`, which exposes the same information with a stable snapshot identity and `status` discriminator.
 
 ### `ReactiveActionStore<TArgs, TResult>`
 
@@ -210,7 +206,7 @@ const store = createReactiveStoreFromDataPublisherFactory({
     errorChannelName: 'error',
 });
 const unsubscribe = store.subscribe(() => {
-    const snapshot = store.getUnifiedState();
+    const snapshot = store.getState();
     if (snapshot.status === 'error') console.error('Connection failed:', snapshot.error);
     else if (snapshot.status === 'loaded') console.log('Latest:', snapshot.data);
 });

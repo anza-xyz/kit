@@ -28,7 +28,7 @@ export function useSubscriptionResult<T>(
     reconnect: (options?: { abortSignal?: AbortSignal | undefined }) => void,
     disabled: boolean,
 ): SubscriptionResult<T> {
-    const state = useSyncExternalStore(store.subscribe, store.getUnifiedState, store.getUnifiedState);
+    const state = useSyncExternalStore(store.subscribe, store.getState, store.getState);
     return useMemo(() => {
         const status: SubscriptionResult<T>['status'] =
             state.status === 'idle' ? (disabled ? 'disabled' : 'loading') : state.status;

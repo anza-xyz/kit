@@ -103,7 +103,7 @@ const IDLE_STATE: ReactiveState<never> = Object.freeze({
  * });
  *
  * const unsubscribe = balanceStore.subscribe(() => {
- *     const state = balanceStore.getUnifiedState();
+ *     const state = balanceStore.getState();
  *     if (state.status === 'error') {
  *         console.error('Error:', state.error);
  *         balanceStore.connect();
@@ -213,7 +213,7 @@ export function createReactiveStoreWithInitialValueAndSlotTracking<TInitialValue
             }
         });
         const unsubscribeStream = streamStore.subscribe(() => {
-            const state = streamStore.getUnifiedState();
+            const state = streamStore.getState();
             if (state.status === 'loaded') {
                 const { context, value } = state.data;
                 handleSlottedValue({ context, value: streamValueMapper(value) });
@@ -250,20 +250,10 @@ export function createReactiveStoreWithInitialValueAndSlotTracking<TInitialValue
         connect(): void {
             performConnect(undefined);
         },
-        getError(): unknown {
-            return currentState.error;
-        },
-        getState(): SolanaRpcResponse<TItem> | undefined {
-            return currentState.data;
-        },
-        getUnifiedState(): ReactiveState<SolanaRpcResponse<TItem>> {
+        getState(): ReactiveState<SolanaRpcResponse<TItem>> {
             return currentState;
         },
         reset: performReset,
-        retry(): void {
-            if (currentState.status !== 'error') return;
-            performConnect(undefined);
-        },
         subscribe(callback: () => void): () => void {
             subscribers.add(callback);
             return () => {

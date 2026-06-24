@@ -44,7 +44,7 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
                 dataChannelName: 'data',
                 errorChannelName: 'error',
             });
-            expect(store.getUnifiedState()).toStrictEqual({
+            expect(store.getState()).toStrictEqual({
                 data: undefined,
                 error: undefined,
                 status: 'idle',
@@ -62,7 +62,7 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
                 errorChannelName: 'error',
             });
             store.connect();
-            expect(store.getUnifiedState()).toStrictEqual({
+            expect(store.getState()).toStrictEqual({
                 data: undefined,
                 error: undefined,
                 status: 'loading',
@@ -80,7 +80,7 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
             store.connect();
             await jest.runAllTimersAsync();
             publishers[0].publish('data', { value: 42 });
-            expect(store.getUnifiedState()).toStrictEqual({
+            expect(store.getState()).toStrictEqual({
                 data: { value: 42 },
                 error: undefined,
                 status: 'loaded',
@@ -97,7 +97,7 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
             });
             store.connect();
             await jest.runAllTimersAsync();
-            expect(store.getUnifiedState()).toStrictEqual({
+            expect(store.getState()).toStrictEqual({
                 data: undefined,
                 error: failure,
                 status: 'error',
@@ -116,7 +116,7 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
             publishers[0].publish('data', { value: 42 });
             const failure = new Error('stream died');
             publishers[0].publish('error', failure);
-            expect(store.getUnifiedState()).toStrictEqual({
+            expect(store.getState()).toStrictEqual({
                 data: { value: 42 },
                 error: failure,
                 status: 'error',
@@ -136,7 +136,7 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
             const fail = new Error('fail');
             publishers[0].publish('error', fail);
             store.connect();
-            expect(store.getUnifiedState()).toStrictEqual({
+            expect(store.getState()).toStrictEqual({
                 data: { value: 42 },
                 error: fail,
                 status: 'loading',
@@ -154,7 +154,7 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
             await jest.runAllTimersAsync();
             publishers[0].publish('data', { value: 42 });
             store.connect();
-            expect(store.getUnifiedState()).toStrictEqual({
+            expect(store.getState()).toStrictEqual({
                 data: { value: 42 },
                 error: undefined,
                 status: 'loading',
@@ -188,7 +188,7 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
             store.connect();
             await jest.runAllTimersAsync();
             publishers[1].publish('data', { value: 'recovered' });
-            expect(store.getUnifiedState()).toStrictEqual({
+            expect(store.getState()).toStrictEqual({
                 data: { value: 'recovered' },
                 error: undefined,
                 status: 'loaded',
@@ -224,11 +224,11 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
             });
             store.connect();
             await jest.runAllTimersAsync();
-            expect(store.getUnifiedState().status).toBe('error');
+            expect(store.getState().status).toBe('error');
             store.connect();
             await jest.runAllTimersAsync();
             publisher.publish('data', { value: 99 });
-            expect(store.getUnifiedState()).toStrictEqual({
+            expect(store.getState()).toStrictEqual({
                 data: { value: 99 },
                 error: undefined,
                 status: 'loaded',
@@ -248,7 +248,7 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
             await jest.runAllTimersAsync();
             store.connect();
             await jest.runAllTimersAsync();
-            expect(store.getUnifiedState()).toStrictEqual({
+            expect(store.getState()).toStrictEqual({
                 data: undefined,
                 error: secondFailure,
                 status: 'error',
@@ -263,7 +263,7 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
             });
             store.connect();
             store.connect();
-            expect(store.getUnifiedState()).toStrictEqual({
+            expect(store.getState()).toStrictEqual({
                 data: undefined,
                 error: undefined,
                 status: 'loading',
@@ -314,7 +314,7 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
             await jest.runAllTimersAsync();
             publishers[0].publish('data', { value: 42 });
             store.reset();
-            expect(store.getUnifiedState()).toStrictEqual({
+            expect(store.getState()).toStrictEqual({
                 data: undefined,
                 error: undefined,
                 status: 'idle',
@@ -379,48 +379,10 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
             await jest.runAllTimersAsync();
             publishers[1].publish('data', { value: 'fresh' });
             expect(mockRequest).toHaveBeenCalledTimes(2);
-            expect(store.getUnifiedState()).toStrictEqual({
+            expect(store.getState()).toStrictEqual({
                 data: { value: 'fresh' },
                 error: undefined,
                 status: 'loaded',
-            });
-        });
-    });
-
-    describe('retry() (deprecated)', () => {
-        it('is a no-op when the store is not in `error` state', async () => {
-            expect.assertions(2);
-            const { mockRequest } = createFactory();
-            const store = createReactiveStoreFromDataPublisherFactory({
-                createDataPublisher: mockRequest,
-                dataChannelName: 'data',
-                errorChannelName: 'error',
-            });
-            store.connect();
-            await jest.runAllTimersAsync();
-            const callsBefore = mockRequest.mock.calls.length;
-            store.retry();
-            expect(mockRequest).toHaveBeenCalledTimes(callsBefore);
-            expect(store.getUnifiedState().status).toBe('loading');
-        });
-        it('transitions back to `loading` from `error`, preserving stale data and error (SWR)', async () => {
-            expect.assertions(1);
-            const { mockRequest, publishers } = createFactory();
-            const store = createReactiveStoreFromDataPublisherFactory({
-                createDataPublisher: mockRequest,
-                dataChannelName: 'data',
-                errorChannelName: 'error',
-            });
-            store.connect();
-            await jest.runAllTimersAsync();
-            publishers[0].publish('data', { value: 42 });
-            const fail = new Error('fail');
-            publishers[0].publish('error', fail);
-            store.retry();
-            expect(store.getUnifiedState()).toStrictEqual({
-                data: { value: 42 },
-                error: fail,
-                status: 'loading',
             });
         });
     });
@@ -501,7 +463,7 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
             store.withSignal(abortController.signal).connect();
             const reason = new Error('timed out');
             abortController.abort(reason);
-            expect(store.getUnifiedState()).toStrictEqual({
+            expect(store.getState()).toStrictEqual({
                 data: undefined,
                 error: reason,
                 status: 'error',
@@ -521,7 +483,7 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
             publishers[0].publish('data', { value: 42 });
             const reason = new Error('timed out');
             abortController.abort(reason);
-            expect(store.getUnifiedState()).toStrictEqual({
+            expect(store.getState()).toStrictEqual({
                 data: { value: 42 },
                 error: reason,
                 status: 'error',
@@ -539,7 +501,7 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
             });
             store.withSignal(abortController.signal).connect();
             expect(mockRequest).not.toHaveBeenCalled();
-            expect(store.getUnifiedState()).toStrictEqual({
+            expect(store.getState()).toStrictEqual({
                 data: undefined,
                 error: reason,
                 status: 'error',
@@ -567,7 +529,7 @@ describe('createReactiveStoreFromDataPublisherFactory', () => {
             killController.abort(reason);
             killable.connect();
             expect(mockRequest).toHaveBeenCalledTimes(2);
-            expect(store.getUnifiedState().status).toBe('error');
+            expect(store.getState().status).toBe('error');
         });
         it('does not abort the listener signal on supersede via a fresh connect()', async () => {
             expect.assertions(1);

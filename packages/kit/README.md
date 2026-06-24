@@ -64,7 +64,7 @@ const balanceStore = createReactiveStoreWithInitialValueAndSlotTracking({
 });
 
 const unsubscribe = balanceStore.subscribe(() => {
-    const state = balanceStore.getUnifiedState();
+    const state = balanceStore.getState();
     if (state.status === 'error') console.error('Error:', state.error);
     else if (state.status === 'loaded') console.log('Balance:', state.data.value);
 });

@@ -26,19 +26,10 @@ function createFakeStore<T>(): {
         connect: jest.fn().mockImplementation(() => {
             throw new Error('not implemented');
         }),
-        getError: jest.fn().mockImplementation(() => {
-            throw new Error('not implemented');
-        }),
-        getState: jest.fn().mockImplementation(() => {
-            throw new Error('not implemented');
-        }),
-        getUnifiedState: () => state,
+        getState: () => state,
         reset: () => {
             resets++;
         },
-        retry: jest.fn().mockImplementation(() => {
-            throw new Error('not implemented');
-        }),
         subscribe: (callback: () => void) => {
             listeners.add(callback);
             return () => {

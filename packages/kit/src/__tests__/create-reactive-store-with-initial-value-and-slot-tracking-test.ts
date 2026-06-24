@@ -104,134 +104,6 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
         abortController.abort();
     });
 
-    describe('getState()', () => {
-        it('returns `undefined` before any data arrives', () => {
-            const { source: initialValueSource } = createMockInitialValueSource();
-            const { source: streamSource } = createMockStreamSource();
-            const store = createStore(initialValueSource, streamSource);
-            store.connect();
-            expect(store.getState()).toBeUndefined();
-        });
-        it('updates with the initial-value source response', async () => {
-            expect.assertions(1);
-            const { instances, source: initialValueSource } = createMockInitialValueSource();
-            const { source: streamSource } = createMockStreamSource();
-            const store = createStore(initialValueSource, streamSource);
-            store.connect();
-            instances[0].resolve(rpcResponse(100, { count: 42 }));
-            await jest.runAllTimersAsync();
-            expect(store.getState()).toEqual({ context: { slot: 100n }, value: 42 });
-        });
-        it('updates with a stream notification value', async () => {
-            expect.assertions(1);
-            const { source: initialValueSource } = createMockInitialValueSource();
-            const { publishers, source: streamSource } = createMockStreamSource();
-            const store = createStore(initialValueSource, streamSource);
-            store.connect();
-            await jest.runAllTimersAsync();
-            publishers[0].publish('data', rpcResponse(100, { count: 99 }));
-            await jest.runAllTimersAsync();
-            expect(store.getState()).toEqual({ context: { slot: 100n }, value: 99 });
-        });
-        it('ignores the initial value when a newer stream notification has already arrived', async () => {
-            expect.assertions(1);
-            const { instances, source: initialValueSource } = createMockInitialValueSource();
-            const { publishers, source: streamSource } = createMockStreamSource();
-            const store = createStore(initialValueSource, streamSource);
-            store.connect();
-            await jest.runAllTimersAsync();
-            publishers[0].publish('data', rpcResponse(200, { count: 99 }));
-            await jest.runAllTimersAsync();
-            // Initial value arrives later at an older slot
-            instances[0].resolve(rpcResponse(100, { count: 42 }));
-            await jest.runAllTimersAsync();
-            expect(store.getState()).toEqual({ context: { slot: 200n }, value: 99 });
-        });
-        it('ignores a stream notification when the initial value was at a newer slot', async () => {
-            expect.assertions(1);
-            const { instances, source: initialValueSource } = createMockInitialValueSource();
-            const { publishers, source: streamSource } = createMockStreamSource();
-            const store = createStore(initialValueSource, streamSource);
-            store.connect();
-            instances[0].resolve(rpcResponse(200, { count: 42 }));
-            await jest.runAllTimersAsync();
-            publishers[0].publish('data', rpcResponse(100, { count: 99 }));
-            await jest.runAllTimersAsync();
-            expect(store.getState()).toEqual({ context: { slot: 200n }, value: 42 });
-        });
-        it('preserves the last known value after an error', async () => {
-            expect.assertions(1);
-            const { instances, source: initialValueSource } = createMockInitialValueSource();
-            const { publishers, source: streamSource } = createMockStreamSource();
-            const store = createStore(initialValueSource, streamSource);
-            store.connect();
-            instances[0].resolve(rpcResponse(100, { count: 42 }));
-            await jest.runAllTimersAsync();
-            publishers[0].publish('error', new Error('stream failed'));
-            await jest.runAllTimersAsync();
-            expect(store.getState()).toEqual({ context: { slot: 100n }, value: 42 });
-        });
-    });
-
-    describe('getError()', () => {
-        it('returns `undefined` before any error', () => {
-            const { source: initialValueSource } = createMockInitialValueSource();
-            const { source: streamSource } = createMockStreamSource();
-            const store = createStore(initialValueSource, streamSource);
-            store.connect();
-            expect(store.getError()).toBeUndefined();
-        });
-        it('captures an error from the initial-value source', async () => {
-            expect.assertions(1);
-            const { instances, source: initialValueSource } = createMockInitialValueSource();
-            const { source: streamSource } = createMockStreamSource();
-            const store = createStore(initialValueSource, streamSource);
-            store.connect();
-            const error = new Error('initial value failed');
-            instances[0].reject(error);
-            await jest.runAllTimersAsync();
-            expect(store.getError()).toBe(error);
-        });
-        it('captures an error from the stream', async () => {
-            expect.assertions(1);
-            const { source: initialValueSource } = createMockInitialValueSource();
-            const { publishers, source: streamSource } = createMockStreamSource();
-            const store = createStore(initialValueSource, streamSource);
-            store.connect();
-            await jest.runAllTimersAsync();
-            const streamError = new Error('stream failed');
-            publishers[0].publish('error', streamError);
-            await jest.runAllTimersAsync();
-            expect(store.getError()).toBe(streamError);
-        });
-        it('only captures the first error when the initial value fails then the stream fails', async () => {
-            expect.assertions(1);
-            const { instances, source: initialValueSource } = createMockInitialValueSource();
-            const { publishers, source: streamSource } = createMockStreamSource();
-            const store = createStore(initialValueSource, streamSource);
-            store.connect();
-            await jest.runAllTimersAsync();
-            instances[0].reject(new Error('initial value error'));
-            await jest.runAllTimersAsync();
-            publishers[0].publish('error', new Error('stream error'));
-            await jest.runAllTimersAsync();
-            expect(store.getError()).toEqual(new Error('initial value error'));
-        });
-        it('only captures the first error when the stream fails then the initial value fails', async () => {
-            expect.assertions(1);
-            const { instances, source: initialValueSource } = createMockInitialValueSource();
-            const { publishers, source: streamSource } = createMockStreamSource();
-            const store = createStore(initialValueSource, streamSource);
-            store.connect();
-            await jest.runAllTimersAsync();
-            publishers[0].publish('error', new Error('stream error'));
-            await jest.runAllTimersAsync();
-            instances[0].reject(new Error('initial value error'));
-            await jest.runAllTimersAsync();
-            expect(store.getError()).toEqual(new Error('stream error'));
-        });
-    });
-
     describe('subscribe()', () => {
         it('calls the subscriber when the initial value arrives', async () => {
             expect.assertions(1);
@@ -355,7 +227,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             store.withSignal(abortController.signal).connect();
             const reason = new Error('timed out');
             abortController.abort(reason);
-            expect(store.getUnifiedState()).toStrictEqual({
+            expect(store.getState()).toStrictEqual({
                 data: undefined,
                 error: reason,
                 status: 'error',
@@ -371,7 +243,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             abortController.abort(reason);
             instances[0].reject(new Error('late'));
             await jest.runAllTimersAsync();
-            expect(store.getError()).toBe(reason);
+            expect(store.getState().error).toBe(reason);
         });
         it('does not update state when the initial value arrives after abort', async () => {
             expect.assertions(1);
@@ -382,7 +254,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             abortController.abort();
             instances[0].resolve(rpcResponse(100, { count: 42 }));
             await jest.runAllTimersAsync();
-            expect(store.getState()).toBeUndefined();
+            expect(store.getState().data).toBeUndefined();
         });
         it('does not update state when a stream notification arrives after abort', async () => {
             expect.assertions(1);
@@ -394,17 +266,17 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             abortController.abort();
             publishers[0].publish('data', rpcResponse(100, { count: 99 }));
             await jest.runAllTimersAsync();
-            expect(store.getState()).toBeUndefined();
+            expect(store.getState().data).toBeUndefined();
         });
     });
 
-    describe('getUnifiedState()', () => {
+    describe('getState()', () => {
         it('starts in `loading` status', () => {
             const { source: initialValueSource } = createMockInitialValueSource();
             const { source: streamSource } = createMockStreamSource();
             const store = createStore(initialValueSource, streamSource);
             store.connect();
-            expect(store.getUnifiedState()).toStrictEqual({
+            expect(store.getState()).toStrictEqual({
                 data: undefined,
                 error: undefined,
                 status: 'loading',
@@ -418,7 +290,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             store.connect();
             instances[0].resolve(rpcResponse(100, { count: 42 }));
             await jest.runAllTimersAsync();
-            expect(store.getUnifiedState()).toStrictEqual({
+            expect(store.getState()).toStrictEqual({
                 data: { context: { slot: 100n }, value: 42 },
                 error: undefined,
                 status: 'loaded',
@@ -433,7 +305,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             const failure = new Error('initial value failed');
             instances[0].reject(failure);
             await jest.runAllTimersAsync();
-            expect(store.getUnifiedState()).toStrictEqual({
+            expect(store.getState()).toStrictEqual({
                 data: undefined,
                 error: failure,
                 status: 'error',
@@ -450,7 +322,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             const failure = new Error('stream failed');
             publishers[0].publish('error', failure);
             await jest.runAllTimersAsync();
-            expect(store.getUnifiedState()).toStrictEqual({
+            expect(store.getState()).toStrictEqual({
                 data: { context: { slot: 100n }, value: 42 },
                 error: failure,
                 status: 'error',
@@ -465,7 +337,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             await jest.runAllTimersAsync();
             publishers[0].publish('data', rpcResponse(100, { count: 99 }));
             await jest.runAllTimersAsync();
-            expect(store.getUnifiedState()).toStrictEqual({
+            expect(store.getState()).toStrictEqual({
                 data: { context: { slot: 100n }, value: 99 },
                 error: undefined,
                 status: 'loaded',
@@ -483,7 +355,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             // Initial value arrives later at an older slot and should be ignored
             instances[0].resolve(rpcResponse(100, { count: 42 }));
             await jest.runAllTimersAsync();
-            expect(store.getUnifiedState()).toStrictEqual({
+            expect(store.getState()).toStrictEqual({
                 data: { context: { slot: 200n }, value: 99 },
                 error: undefined,
                 status: 'loaded',
@@ -500,7 +372,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             // Stream notification arrives at an older slot and should be ignored
             publishers[0].publish('data', rpcResponse(100, { count: 99 }));
             await jest.runAllTimersAsync();
-            expect(store.getUnifiedState()).toStrictEqual({
+            expect(store.getState()).toStrictEqual({
                 data: { context: { slot: 200n }, value: 42 },
                 error: undefined,
                 status: 'loaded',
@@ -518,7 +390,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             await jest.runAllTimersAsync();
             publishers[0].publish('error', new Error('stream error'));
             await jest.runAllTimersAsync();
-            expect(store.getUnifiedState()).toStrictEqual({
+            expect(store.getState()).toStrictEqual({
                 data: undefined,
                 error: firstError,
                 status: 'error',
@@ -536,105 +408,11 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             await jest.runAllTimersAsync();
             instances[0].reject(new Error('initial value error'));
             await jest.runAllTimersAsync();
-            expect(store.getUnifiedState()).toStrictEqual({
+            expect(store.getState()).toStrictEqual({
                 data: undefined,
                 error: firstError,
                 status: 'error',
             });
-        });
-    });
-
-    describe('retry()', () => {
-        it('is a no-op when the store is not in error state', async () => {
-            expect.assertions(1);
-            const { fn, source: initialValueSource } = createMockInitialValueSource();
-            const { source: streamSource } = createMockStreamSource();
-            const store = createStore(initialValueSource, streamSource);
-            store.connect();
-            await jest.runAllTimersAsync();
-            store.retry();
-            expect(fn).toHaveBeenCalledTimes(1);
-        });
-        it('transitions back to `loading` with preserved data AND error (SWR)', async () => {
-            expect.assertions(1);
-            const { instances, source: initialValueSource } = createMockInitialValueSource();
-            const { publishers, source: streamSource } = createMockStreamSource();
-            const store = createStore(initialValueSource, streamSource);
-            store.connect();
-            instances[0].resolve(rpcResponse(100, { count: 42 }));
-            await jest.runAllTimersAsync();
-            const fail = new Error('stream died');
-            publishers[0].publish('error', fail);
-            await jest.runAllTimersAsync();
-            store.retry();
-            expect(store.getUnifiedState()).toStrictEqual({
-                data: { context: { slot: 100n }, value: 42 },
-                error: fail,
-                status: 'loading',
-            });
-        });
-        it('re-builds both inner stores on retry', async () => {
-            expect.assertions(2);
-            const { fn, instances, source: initialValueSource } = createMockInitialValueSource();
-            const { createDataPublisher, source: streamSource } = createMockStreamSource();
-            const store = createStore(initialValueSource, streamSource);
-            store.connect();
-            instances[0].reject(new Error('boom'));
-            await jest.runAllTimersAsync();
-            store.retry();
-            await jest.runAllTimersAsync();
-            expect(fn).toHaveBeenCalledTimes(2);
-            expect(createDataPublisher).toHaveBeenCalledTimes(2);
-        });
-        it('recovers to `loaded` when the retried initial value succeeds', async () => {
-            expect.assertions(1);
-            const { instances, source: initialValueSource } = createMockInitialValueSource();
-            const { source: streamSource } = createMockStreamSource();
-            const store = createStore(initialValueSource, streamSource);
-            store.connect();
-            instances[0].reject(new Error('first failure'));
-            await jest.runAllTimersAsync();
-            store.retry();
-            await jest.runAllTimersAsync();
-            instances[1].resolve(rpcResponse(200, { count: 99 }));
-            await jest.runAllTimersAsync();
-            expect(store.getUnifiedState()).toStrictEqual({
-                data: { context: { slot: 200n }, value: 99 },
-                error: undefined,
-                status: 'loaded',
-            });
-        });
-        it('transitions to `error` again when the retried initial value also fails', async () => {
-            expect.assertions(1);
-            const { instances, source: initialValueSource } = createMockInitialValueSource();
-            const { source: streamSource } = createMockStreamSource();
-            const store = createStore(initialValueSource, streamSource);
-            store.connect();
-            instances[0].reject(new Error('first'));
-            await jest.runAllTimersAsync();
-            store.retry();
-            await jest.runAllTimersAsync();
-            const secondFailure = new Error('second');
-            instances[1].reject(secondFailure);
-            await jest.runAllTimersAsync();
-            expect(store.getUnifiedState()).toStrictEqual({
-                data: undefined,
-                error: secondFailure,
-                status: 'error',
-            });
-        });
-        it('notifies subscribers on the error → loading transition after retry', async () => {
-            expect.assertions(1);
-            const { instances, source: initialValueSource } = createMockInitialValueSource();
-            const { source: streamSource } = createMockStreamSource();
-            const store = createStore(initialValueSource, streamSource);
-            store.connect();
-            instances[0].reject(new Error('fail'));
-            await jest.runAllTimersAsync();
-            const subscriber = jest.fn();
-            store.subscribe(subscriber);
-            store.retry();
-            expect(subscriber).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -660,7 +438,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             await jest.runAllTimersAsync();
             // The store must leave `loading`, retaining the newer slot-100 data rather than
             // regressing to the stale slot-99 value.
-            expect(store.getUnifiedState()).toStrictEqual({
+            expect(store.getState()).toStrictEqual({
                 data: { context: { slot: 100n }, value: 42 },
                 error: undefined,
                 status: 'loaded',
@@ -681,7 +459,7 @@ describe('createReactiveStoreWithInitialValueAndSlotTracking', () => {
             await jest.runAllTimersAsync();
             publishers[1].publish('data', rpcResponse(99, { count: 7 }));
             await jest.runAllTimersAsync();
-            expect(store.getUnifiedState()).toStrictEqual({
+            expect(store.getState()).toStrictEqual({
                 data: { context: { slot: 100n }, value: 42 },
                 error: undefined,
                 status: 'loaded',

@@ -41,7 +41,13 @@ export type ReactiveActionStore<TArgs extends readonly unknown[], TResult> = {
      * `@solana/promises`.
      */
     readonly dispatchAsync: (...args: TArgs) => Promise<TResult>;
-    /** Returns the current state. */
+    /**
+     * Returns the current lifecycle snapshot: `{ data, error, status }`. The returned object has
+     * stable identity between state changes, making it safe to pass directly as the
+     * `getSnapshot` argument to React's `useSyncExternalStore`.
+     *
+     * @see {@link ReactiveActionState}
+     */
     readonly getState: () => ReactiveActionState<TResult>;
     /** Aborts any in-flight dispatch and resets the state to `{ status: 'idle' }`. */
     readonly reset: () => void;

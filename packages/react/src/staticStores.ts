@@ -41,7 +41,7 @@ export function disabledActionStore<T>(): ReactiveActionStore<[], T> {
 
 /**
  * A {@link ReactiveStreamStore} that never transitions out of `idle` and ignores every
- * `connect` / `retry` / `reset` / `subscribe` call. Returned by `useSubscription` when its
+ * `connect` / `reset` / `subscribe` call. Returned by `useSubscription` when its
  * source is `null`, signalling that the subscription should be gated off — for example because
  * a required input (an address) is not yet known.
  *
@@ -51,11 +51,8 @@ export function disabledActionStore<T>(): ReactiveActionStore<[], T> {
 export function disabledStreamStore<T>(): ReactiveStreamStore<T> {
     return {
         connect: noopUnsubscribe,
-        getError: () => undefined,
-        getState: () => undefined,
-        getUnifiedState: () => IDLE_STREAM_STATE,
+        getState: () => IDLE_STREAM_STATE,
         reset: noopUnsubscribe,
-        retry: noopUnsubscribe,
         subscribe: noopSubscribe,
         withSignal: () => ({ connect: noopUnsubscribe }),
     };

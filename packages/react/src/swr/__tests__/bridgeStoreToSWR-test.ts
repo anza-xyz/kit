@@ -23,26 +23,17 @@ function createFakeStore<T>(): {
         connect: () => {
             connects++;
         },
-        // Deprecated getters / APIs the bridge never touches — fail loudly if they're called.
-        getError: jest.fn().mockImplementation(() => {
-            throw new Error('not implemented');
-        }),
-        getState: jest.fn().mockImplementation(() => {
-            throw new Error('not implemented');
-        }),
-        getUnifiedState: () => state,
+        getState: () => state,
         reset: () => {
             resets++;
         },
-        retry: jest.fn().mockImplementation(() => {
-            throw new Error('not implemented');
-        }),
         subscribe: (callback: () => void) => {
             listeners.add(callback);
             return () => {
                 listeners.delete(callback);
             };
         },
+        // The bridge never touches `withSignal` — fail loudly if it's called.
         withSignal: jest.fn().mockImplementation(() => {
             throw new Error('not implemented');
         }),

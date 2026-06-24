@@ -40,7 +40,7 @@ export function bridgeStoreToSWR<T, TError>(
     shouldForward?: (data: T) => boolean,
 ): () => void {
     const unsubscribe = store.subscribe(() => {
-        const state = store.getUnifiedState();
+        const state = store.getState();
         if (state.status === 'loaded') {
             if (shouldForward && !shouldForward(state.data)) return;
             next(null, state.data);

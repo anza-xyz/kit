@@ -31,7 +31,7 @@ export function useTrackedDataResult<TItem>(
     refresh: (options?: { abortSignal?: AbortSignal | undefined }) => void,
     disabled: boolean,
 ): TrackedDataResult<TItem> {
-    const state = useSyncExternalStore(store.subscribe, store.getUnifiedState, store.getUnifiedState);
+    const state = useSyncExternalStore(store.subscribe, store.getState, store.getState);
     return useMemo(() => {
         const status: TrackedDataResult<TItem>['status'] =
             state.status === 'idle' ? (disabled ? 'disabled' : 'loading') : state.status;

@@ -59,7 +59,7 @@ export function bridgeStoreToAsyncIterable<T>(
             };
 
             const onChange = () => {
-                const state = store.getUnifiedState();
+                const state = store.getState();
                 if (state.status === 'loaded') {
                     // Drop a value the gate rejects. The stream parks again rather than yielding it.
                     if (shouldYield && !shouldYield(state.data)) return;

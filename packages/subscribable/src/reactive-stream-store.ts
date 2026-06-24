@@ -59,7 +59,7 @@ const IDLE_STATE: ReactiveState<never> = Object.freeze({
 /**
  * A reactive store that holds the latest value published to a data channel and allows external
  * systems to subscribe to changes. Compatible with `useSyncExternalStore`, Svelte stores, Solid's
- * `from()`, and other reactive primitives that expect a `{ subscribe, getUnifiedState }` contract.
+ * `from()`, and other reactive primitives that expect a `{ subscribe, getState }` contract.
  *
  * The store starts in `status: 'idle'`. Call {@link ReactiveStreamStore.connect | `connect()`}
  * to open the underlying stream; the store transitions through `loading` → `loaded` (or `error`).
@@ -70,7 +70,7 @@ const IDLE_STATE: ReactiveState<never> = Object.freeze({
  * ```ts
  * // React — the unified state snapshot has stable identity per update, making it suitable as
  * // the second argument to `useSyncExternalStore`.
- * const state = useSyncExternalStore(store.subscribe, store.getUnifiedState);
+ * const state = useSyncExternalStore(store.subscribe, store.getState);
  * useEffect(() => {
  *     store.connect();
  *     return () => store.reset();
@@ -91,29 +91,13 @@ export type ReactiveStreamStore<T> = {
      */
     connect(): void;
     /**
-     * Returns the error published to the error channel, or `undefined` if no error has occurred.
-     *
-     * @deprecated Use {@link ReactiveStreamStore.getUnifiedState | `getUnifiedState()`} instead. This
-     * getter returns only the error field and cannot narrow the relationship between the current
-     * value, error, and status.
-     */
-    getError(): unknown;
-    /**
-     * Returns the most recent value published to the data channel, or `undefined` if no
-     * notification has arrived yet. On error, continues to return the last known value.
-     *
-     * @deprecated Use {@link ReactiveStreamStore.getUnifiedState | `getUnifiedState()`} instead. This
-     * getter returns only the value field and does not surface lifecycle status (e.g. `loading`).
-     */
-    getState(): T | undefined;
-    /**
      * Returns the current lifecycle snapshot: `{ data, error, status }`. The returned object has
      * stable identity between state changes, making it safe to pass directly as the
      * `getSnapshot` argument to React's `useSyncExternalStore`.
      *
      * @see {@link ReactiveState}
      */
-    getUnifiedState(): ReactiveState<T>;
+    getState(): ReactiveState<T>;
     /**
      * Aborts any currently active connection and resets the store to `{ status: 'idle' }`. Both
      * `data` and `error` are cleared. Use this to tear down the connection without permanently
@@ -121,14 +105,6 @@ export type ReactiveStreamStore<T> = {
      * a fresh stream.
      */
     reset(): void;
-    /**
-     * Re-opens the stream after an error. No-op when the store is not in `status: 'error'`.
-     *
-     * @deprecated Use {@link ReactiveStreamStore.connect | `connect()`} instead. `connect()`
-     * always (re)connects, regardless of current status — wrap with a status guard at the call
-     * site if you need the error-only behaviour.
-     */
-    retry(): void;
     /**
      * Registers a callback to be called whenever the state changes or an error is received.
      * Returns an unsubscribe function. Safe to call multiple times.
@@ -150,17 +126,11 @@ export type ReactiveStreamStore<T> = {
      *   everywhere; aborting the controller cancels the active connection and short-circuits
      *   future calls through the bound wrapper.
      *
-     * The wrapper exposes only `connect()` — `getUnifiedState` / `subscribe` / `reset` remain
+     * The wrapper exposes only `connect()` — `getState` / `subscribe` / `reset` remain
      * store-level concerns on the parent.
      */
     withSignal(signal: AbortSignal): { readonly connect: () => void };
 };
-
-/**
- * @deprecated Use {@link ReactiveStreamStore} instead. This alias will be removed in a future
- * major release.
- */
-export type ReactiveStore<T> = ReactiveStreamStore<T>;
 
 /**
  * Duck-type for objects that build a {@link ReactiveStreamStore} on demand via a `reactiveStore()`
@@ -224,7 +194,7 @@ export type ReactiveStreamSource<T> = {
  *     errorChannelName: 'error',
  * });
  * const unsubscribe = store.subscribe(() => {
- *     const snapshot = store.getUnifiedState();
+ *     const snapshot = store.getState();
  *     if (snapshot.status === 'error') console.error('Connection failed:', snapshot.error);
  *     else if (snapshot.status === 'loaded') console.log('Latest:', snapshot.data);
  * });
@@ -324,20 +294,10 @@ export function createReactiveStoreFromDataPublisherFactory<TData>({
         connect(): void {
             performConnect(undefined);
         },
-        getError(): unknown {
-            return currentState.error;
-        },
-        getState(): TData | undefined {
-            return currentState.data;
-        },
-        getUnifiedState(): ReactiveState<TData> {
+        getState(): ReactiveState<TData> {
             return currentState;
         },
         reset: performReset,
-        retry(): void {
-            if (currentState.status !== 'error') return;
-            performConnect(undefined);
-        },
         subscribe(callback: () => void): () => void {
             subscribers.add(callback);
             return () => {

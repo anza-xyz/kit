@@ -67,7 +67,7 @@ describe('PendingRpcSubscriptionsRequest.reactiveStore()', () => {
 
     it('returns a store that starts in `idle` status and does not call the transport before connect()', () => {
         const store = rpcSubscriptions.thingNotifications().reactiveStore();
-        expect(store.getUnifiedState()).toStrictEqual({
+        expect(store.getState()).toStrictEqual({
             data: undefined,
             error: undefined,
             status: 'idle',
@@ -87,7 +87,7 @@ describe('PendingRpcSubscriptionsRequest.reactiveStore()', () => {
     it('transitions to `loading` after connect() before the transport resolves', () => {
         const store = rpcSubscriptions.thingNotifications().reactiveStore();
         store.connect();
-        expect(store.getUnifiedState()).toStrictEqual({
+        expect(store.getState()).toStrictEqual({
             data: undefined,
             error: undefined,
             status: 'loading',
@@ -99,7 +99,7 @@ describe('PendingRpcSubscriptionsRequest.reactiveStore()', () => {
         store.connect();
         await flushMicrotasks();
         publish('notification', { value: 42 });
-        expect(store.getUnifiedState()).toStrictEqual({
+        expect(store.getState()).toStrictEqual({
             data: { value: 42 },
             error: undefined,
             status: 'loaded',
@@ -115,14 +115,14 @@ describe('PendingRpcSubscriptionsRequest.reactiveStore()', () => {
         publish('notification', { value: 42 });
         expect(subscriber).toHaveBeenCalledTimes(1);
     });
-    it('surfaces errors via getUnifiedState()', async () => {
+    it('surfaces errors via getState()', async () => {
         expect.assertions(1);
         const store = rpcSubscriptions.thingNotifications().reactiveStore();
         store.connect();
         await flushMicrotasks();
         const error = new Error('o no');
         publish('error', error);
-        expect(store.getUnifiedState()).toStrictEqual({
+        expect(store.getState()).toStrictEqual({
             data: undefined,
             error,
             status: 'error',
@@ -150,13 +150,13 @@ describe('PendingRpcSubscriptionsRequest.reactiveStore()', () => {
         abortController.abort();
         expect(listenerSignal.aborted).toBe(true);
     });
-    it('returns the same getUnifiedState() snapshot across consecutive calls when state has not changed', async () => {
+    it('returns the same getState() snapshot across consecutive calls when state has not changed', async () => {
         expect.assertions(2);
         const store = rpcSubscriptions.thingNotifications().reactiveStore();
         store.connect();
         await flushMicrotasks();
-        expect(store.getUnifiedState()).toBe(store.getUnifiedState());
+        expect(store.getState()).toBe(store.getState());
         publish('notification', { value: 42 });
-        expect(store.getUnifiedState()).toBe(store.getUnifiedState());
+        expect(store.getState()).toBe(store.getState());
     });
 });

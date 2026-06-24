@@ -40,7 +40,7 @@ function makeReactiveStreamStore() {
         resetCalls: () => reset.mock.calls.length,
         store: {
             connect,
-            getUnifiedState: () => snapshot,
+            getState: () => snapshot,
             reset,
             subscribe: (cb: () => void) => {
                 subscribers.add(cb);

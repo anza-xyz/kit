@@ -20,7 +20,7 @@ export type PendingRpcSubscriptionsRequest<TNotification> = {
     /**
      * Synchronously returns a {@link ReactiveStreamStore} that holds the latest notification.
      * Compatible with `useSyncExternalStore` and other reactive primitives that expect a
-     * `{ subscribe, getUnifiedState }` contract. The returned store is in `status: 'idle'` — call
+     * `{ subscribe, getState }` contract. The returned store is in `status: 'idle'` — call
      * {@link ReactiveStreamStore.connect | `connect()`} to open the subscription; a follow-up
      * `connect()` after an error reopens it. Attach a caller-provided cancellation source via
      * {@link ReactiveStreamStore.withSignal | `withSignal()`}.
@@ -31,7 +31,7 @@ export type PendingRpcSubscriptionsRequest<TNotification> = {
      * // Per-connection timeout — fresh clock per attempt:
      * store.withSignal(AbortSignal.timeout(30_000)).connect();
      * // React — the unified snapshot has stable identity per update.
-     * const state = useSyncExternalStore(store.subscribe, store.getUnifiedState);
+     * const state = useSyncExternalStore(store.subscribe, store.getState);
      * if (state.status === 'error') return <ErrorMessage error={state.error} onRetry={store.connect} />;
      * if (state.status === 'loading' || state.status === 'idle') return <Spinner />;
      * return <View data={state.data} />;
