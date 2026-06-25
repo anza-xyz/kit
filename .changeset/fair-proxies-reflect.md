@@ -1,5 +1,6 @@
 ---
 '@solana/rpc-spec': patch
+'@solana/rpc-spec-types': patch
 '@solana/rpc-subscriptions-spec': patch
 ---
 

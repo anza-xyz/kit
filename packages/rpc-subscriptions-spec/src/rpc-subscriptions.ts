@@ -1,12 +1,18 @@
 import { SOLANA_ERROR__RPC_SUBSCRIPTIONS__CANNOT_CREATE_SUBSCRIPTION_PLAN, SolanaError } from '@solana/errors';
-import { Callable, Flatten, OverloadImplementations, UnionToIntersection } from '@solana/rpc-spec-types';
+import {
+    Callable,
+    Flatten,
+    getNonRpcPropertyValue,
+    isNonRpcPropertyName,
+    OverloadImplementations,
+    UnionToIntersection,
+} from '@solana/rpc-spec-types';
 import {
     createAsyncIterableFromDataPublisher,
     createReactiveStoreFromDataPublisher,
     createReactiveStoreFromDataPublisherFactory,
 } from '@solana/subscribable';
 
-import { getNonRpcPropertyValue, isNonRpcPropertyName } from './non-rpc-proxy-properties';
 import { RpcSubscriptionsApi, RpcSubscriptionsPlan } from './rpc-subscriptions-api';
 import { PendingRpcSubscriptionsRequest, RpcSubscribeOptions } from './rpc-subscriptions-request';
 import { RpcSubscriptionsTransport } from './rpc-subscriptions-transport';

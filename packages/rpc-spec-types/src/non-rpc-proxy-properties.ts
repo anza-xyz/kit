@@ -1,16 +1,25 @@
 const NODEJS_CUSTOM_INSPECT_SYMBOL = Symbol.for('nodejs.util.inspect.custom');
 
-const JAVASCRIPT_PROTOCOL_PROPERTY_NAMES = new Set<PropertyKey>([
-    'then',
-    'toJSON',
-    NODEJS_CUSTOM_INSPECT_SYMBOL,
-    Symbol.asyncIterator,
-    Symbol.iterator,
-    Symbol.toPrimitive,
-    Symbol.toStringTag,
-]);
+const SymbolWithDispose = Symbol as typeof Symbol & {
+    asyncDispose?: symbol;
+    dispose?: symbol;
+};
 
-const OBJECT_PROTOTYPE_PROPERTY_NAMES = new Set<PropertyKey>([
+const JAVASCRIPT_PROTOCOL_PROPERTY_NAMES = new Set<string | symbol>(
+    [
+        'then',
+        'toJSON',
+        NODEJS_CUSTOM_INSPECT_SYMBOL,
+        Symbol.asyncIterator,
+        Symbol.iterator,
+        Symbol.toPrimitive,
+        Symbol.toStringTag,
+        SymbolWithDispose.asyncDispose,
+        SymbolWithDispose.dispose,
+    ].filter((propertyName): propertyName is string | symbol => propertyName != null),
+);
+
+const OBJECT_PROTOTYPE_PROPERTY_NAMES = new Set<string | symbol>([
     '__defineGetter__',
     '__defineSetter__',
     '__lookupGetter__',

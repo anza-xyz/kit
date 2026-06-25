@@ -1,7 +1,12 @@
-import { Callable, RpcRequest, RpcRequestTransformer } from '@solana/rpc-spec-types';
+import {
+    Callable,
+    getNonRpcPropertyValue,
+    isNonRpcPropertyName,
+    RpcRequest,
+    RpcRequestTransformer,
+} from '@solana/rpc-spec-types';
 import { DataPublisher } from '@solana/subscribable';
 
-import { getNonRpcPropertyValue, isNonRpcPropertyName } from './non-rpc-proxy-properties';
 import { RpcSubscriptionsChannel } from './rpc-subscriptions-channel';
 import { RpcSubscriptionsTransportDataEvents } from './rpc-subscriptions-transport';
 

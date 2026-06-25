@@ -12,6 +12,16 @@ function getUntypedProperty(obj: unknown, propertyName: PropertyKey): unknown {
     return (obj as Record<PropertyKey, unknown>)[propertyName];
 }
 
+const JAVASCRIPT_PROTOCOL_SYMBOLS = [
+    Symbol.asyncIterator,
+    (Symbol as typeof Symbol & { asyncDispose?: symbol }).asyncDispose,
+    (Symbol as typeof Symbol & { dispose?: symbol }).dispose,
+    Symbol.for('nodejs.util.inspect.custom'),
+    Symbol.iterator,
+    Symbol.toPrimitive,
+    Symbol.toStringTag,
+].filter((propertyName): propertyName is symbol => propertyName != null);
+
 describe('createSubscriptionRpc', () => {
     let rpcSubscriptions: RpcSubscriptions<TestRpcSubscriptionNotifications>;
 
@@ -44,12 +54,10 @@ describe('createSubscriptionRpc', () => {
     });
 
     it('does not expose JS protocol symbols as subscription methods', () => {
-        expect.assertions(5);
-        expect(getUntypedProperty(rpcSubscriptions, Symbol.asyncIterator)).toBeUndefined();
-        expect(getUntypedProperty(rpcSubscriptions, Symbol.for('nodejs.util.inspect.custom'))).toBeUndefined();
-        expect(getUntypedProperty(rpcSubscriptions, Symbol.iterator)).toBeUndefined();
-        expect(getUntypedProperty(rpcSubscriptions, Symbol.toPrimitive)).toBeUndefined();
-        expect(getUntypedProperty(rpcSubscriptions, Symbol.toStringTag)).toBeUndefined();
+        expect.hasAssertions();
+        JAVASCRIPT_PROTOCOL_SYMBOLS.forEach(symbol => {
+            expect(getUntypedProperty(rpcSubscriptions, symbol)).toBeUndefined();
+        });
     });
 
     it('preserves Object prototype behavior', () => {

@@ -1,12 +1,13 @@
 import {
     Callable,
     createRpcMessage,
+    getNonRpcPropertyValue,
+    isNonRpcPropertyName,
     RpcRequestTransformer,
     RpcResponse,
     RpcResponseTransformer,
 } from '@solana/rpc-spec-types';
 
-import { getNonRpcPropertyValue, isNonRpcPropertyName } from './non-rpc-proxy-properties';
 import type { RpcTransport } from './rpc-transport';
 
 export type RpcApiConfig = Readonly<{

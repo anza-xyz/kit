@@ -5,6 +5,16 @@ function getUntypedProperty(obj: unknown, propertyName: PropertyKey): unknown {
     return (obj as Record<PropertyKey, unknown>)[propertyName];
 }
 
+const JAVASCRIPT_PROTOCOL_SYMBOLS = [
+    Symbol.asyncIterator,
+    (Symbol as typeof Symbol & { asyncDispose?: symbol }).asyncDispose,
+    (Symbol as typeof Symbol & { dispose?: symbol }).dispose,
+    Symbol.for('nodejs.util.inspect.custom'),
+    Symbol.iterator,
+    Symbol.toPrimitive,
+    Symbol.toStringTag,
+].filter((propertyName): propertyName is symbol => propertyName != null);
+
 describe('createRpcSubscriptionsApi', () => {
     let mockChannel: RpcSubscriptionsChannel<unknown, unknown>;
     beforeEach(() => {
@@ -48,16 +58,14 @@ describe('createRpcSubscriptionsApi', () => {
         });
     });
     it('does not expose JS protocol hooks as subscription methods', () => {
-        expect.assertions(7);
+        expect.hasAssertions();
         const api = createRpcSubscriptionsApi({ planExecutor: jest.fn() });
 
         expect(api).not.toHaveProperty('then');
         expect(api).not.toHaveProperty('toJSON');
-        expect(getUntypedProperty(api, Symbol.asyncIterator)).toBeUndefined();
-        expect(getUntypedProperty(api, Symbol.for('nodejs.util.inspect.custom'))).toBeUndefined();
-        expect(getUntypedProperty(api, Symbol.iterator)).toBeUndefined();
-        expect(getUntypedProperty(api, Symbol.toPrimitive)).toBeUndefined();
-        expect(getUntypedProperty(api, Symbol.toStringTag)).toBeUndefined();
+        JAVASCRIPT_PROTOCOL_SYMBOLS.forEach(symbol => {
+            expect(getUntypedProperty(api, symbol)).toBeUndefined();
+        });
     });
     it('preserves Object prototype behavior', () => {
         expect.assertions(2);

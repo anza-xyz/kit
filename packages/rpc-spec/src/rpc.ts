@@ -1,8 +1,14 @@
 import { SOLANA_ERROR__RPC__API_PLAN_MISSING_FOR_RPC_METHOD, SolanaError } from '@solana/errors';
-import { Callable, Flatten, OverloadImplementations, UnionToIntersection } from '@solana/rpc-spec-types';
+import {
+    Callable,
+    Flatten,
+    getNonRpcPropertyValue,
+    isNonRpcPropertyName,
+    OverloadImplementations,
+    UnionToIntersection,
+} from '@solana/rpc-spec-types';
 import { createReactiveActionStore, ReactiveActionStore } from '@solana/subscribable';
 
-import { getNonRpcPropertyValue, isNonRpcPropertyName } from './non-rpc-proxy-properties';
 import { RpcApi, RpcPlan } from './rpc-api';
 import { RpcTransport } from './rpc-transport';
 
