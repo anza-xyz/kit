@@ -20,7 +20,7 @@ function createNoopStore(error?: unknown): ReactiveStore<SlotNotification> {
     return {
         getError: () => error,
         getState: () => undefined,
-        subscribe: () => () => { },
+        subscribe: () => () => {},
     };
 }
 
