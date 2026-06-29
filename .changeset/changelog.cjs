@@ -51,11 +51,22 @@ const getGithubInfo = require(
 
 const CHUNK_SIZE = Math.max(1, Number(process.env.CHANGELOG_CHUNK_SIZE) || 5);
 const GITHUB_SERVER_URL = process.env.GITHUB_SERVER_URL || 'https://github.com';
+// Total attempts per ref (1 initial + retries). GitHub's GraphQL API drops connections
+// ("Premature close") in short bursts, especially under the CI token's secondary rate
+// limit, so we retry with exponential backoff to ride out a multi-second degraded window
+// rather than hammering it immediately.
+const MAX_ATTEMPTS = Math.max(1, Number(process.env.CHANGELOG_MAX_ATTEMPTS) || 5);
+const RETRY_BASE_MS = Math.max(0, Number(process.env.CHANGELOG_RETRY_BASE_MS) || 1000);
+// Small gap between chunks to spread requests out and avoid tripping the secondary rate
+// limit with a burst of back-to-back queries.
+const INTER_CHUNK_MS = Math.max(0, Number(process.env.CHANGELOG_INTER_CHUNK_MS) || 300);
+
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
  * Wrap an async `get-github-info` fetcher so calls are de-duplicated by key, dispatched
- * in bounded chunks, retried once on failure, and degraded to a fallback value instead
- * of throwing.
+ * in bounded chunks, retried with exponential backoff on failure, and degraded to a
+ * fallback value instead of throwing.
  *
  * @param {Function} fetch - The underlying fetcher (`getInfo` / `getInfoFromPullRequest`).
  * @param {(args: unknown[]) => string} keyOf - Stable cache/dedupe key for a call.
@@ -76,33 +87,44 @@ function makeResilientFetcher(fetch, keyOf, fallbackOf) {
       while (queue.length > 0) {
         const chunk = queue.splice(0, CHUNK_SIZE);
 
-        // First attempt: all refs in the chunk land in one DataLoader batch, i.e. one
-        // GraphQL query of at most CHUNK_SIZE refs.
-        let settled = await Promise.allSettled(chunk.map(job => fetch(...job.args)));
+        // Track which jobs still need a result; refetch only those each attempt. All
+        // refs in an attempt land in one DataLoader batch (one GraphQL query of at most
+        // CHUNK_SIZE refs); on a batch rejection DataLoader clears the keys, so the next
+        // attempt genuinely re-fetches.
+        let pending = chunk.map((job, i) => ({ job, i }));
+        const settled = new Array(chunk.length);
 
-        // Retry only the failures once. DataLoader clears rejected keys, so this
-        // re-fetches; a smaller/retried query usually gets through a transient drop.
-        const retryIndexes = settled
-          .map((result, i) => (result.status === 'rejected' ? i : -1))
-          .filter(i => i !== -1);
-        if (retryIndexes.length > 0) {
-          const retried = await Promise.allSettled(retryIndexes.map(i => fetch(...chunk[i].args)));
-          retryIndexes.forEach((i, k) => {
-            settled[i] = retried[k];
+        for (let attempt = 1; attempt <= MAX_ATTEMPTS && pending.length > 0; attempt++) {
+          if (attempt > 1) {
+            // Exponential backoff with jitter before retrying the still-failing refs.
+            const backoff = RETRY_BASE_MS * 2 ** (attempt - 2);
+            await sleep(backoff + Math.floor(Math.random() * 250));
+          }
+          const results = await Promise.allSettled(pending.map(p => fetch(...p.job.args)));
+          const next = [];
+          results.forEach((result, k) => {
+            if (result.status === 'fulfilled') {
+              settled[pending[k].i] = result.value;
+            } else {
+              next.push(pending[k]);
+            }
           });
+          pending = next;
         }
 
-        settled.forEach((result, i) => {
-          if (result.status === 'fulfilled') {
-            chunk[i].resolve(result.value);
+        chunk.forEach((job, i) => {
+          if (i in settled) {
+            job.resolve(settled[i]);
           } else {
             console.warn(
-              `[changelog] GitHub lookup failed for ${keyOf(chunk[i].args)}; ` +
-                `degrading this entry (no author attribution): ${result.reason && result.reason.message}`,
+              `[changelog] GitHub lookup failed for ${keyOf(job.args)} after ${MAX_ATTEMPTS} ` +
+                `attempts; degrading this entry (no author attribution).`,
             );
-            chunk[i].resolve(fallbackOf(chunk[i].args));
+            job.resolve(fallbackOf(job.args));
           }
         });
+
+        if (queue.length > 0) await sleep(INTER_CHUNK_MS);
       }
     } finally {
       draining = false;
