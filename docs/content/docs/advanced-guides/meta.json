@@ -1,5 +1,11 @@
 {
     "title": "Advanced Guides",
     "defaultOpen": true,
-    "pages": ["kit-without-a-client", "reactive-stores", "..."]
+    "pages": [
+        "kit-without-a-client",
+        "transactions",
+        "transaction-introspection",
+        "reactive-stores",
+        "..."
+    ]
 }

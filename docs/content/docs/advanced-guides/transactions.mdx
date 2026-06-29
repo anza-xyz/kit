@@ -569,3 +569,5 @@ const transactionMessage = decompileTransactionMessage(compiledTransactionMessag
     supplied in the `config` argument of the `decompileTransactionMessage` or
     `decompileTransactionMessageFetchingLookupTables` methods.
 </Callout>
+
+To resolve a confirmed transaction's instructions — including the inner instructions emitted by cross-program invocations — into a form the `@solana-program/*` clients can `identify` and `parse` directly, see [Transaction introspection](/docs/advanced-guides/transaction-introspection).
