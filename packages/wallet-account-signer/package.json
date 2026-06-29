@@ -85,7 +85,7 @@
         "@solana/wallet-standard-features": "^1.4.0",
         "@wallet-standard/base": "^1.1.0",
         "@wallet-standard/errors": "^0.1.2",
-        "@wallet-standard/ui": "^1.0.1",
+        "@wallet-standard/ui": "^1.0.3",
         "@wallet-standard/ui-registry": "^1.0.1"
     },
     "devDependencies": {
