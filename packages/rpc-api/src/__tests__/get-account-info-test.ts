@@ -312,7 +312,9 @@ describe('getAccountInfo', () => {
                 });
             });
 
-            it('returns parsed JSON data for Config stake account', async () => {
+            // The stake config program is deprecated and is no longer recognized by the RPC's
+            // JSON parser, so a `jsonParsed` request now falls back to annotated base64.
+            it('falls back to annotated base64 for the deprecated Config stake account', async () => {
                 expect.assertions(1);
                 // See scripts/fixtures/config-stake-account.json
                 const publicKey =
@@ -327,17 +329,7 @@ describe('getAccountInfo', () => {
                 await expect(accountInfoPromise).resolves.toStrictEqual({
                     context: CONTEXT_MATCHER,
                     value: {
-                        data: {
-                            parsed: {
-                                info: {
-                                    slashPenalty: 12,
-                                    warmupCooldownRate: 0.25,
-                                },
-                                type: 'stakeConfig',
-                            },
-                            program: 'config',
-                            space: 10n,
-                        },
+                        data: ['AAAAAAAAANA/DA==', 'base64'],
                         executable: false,
                         lamports: 960480n,
                         owner: 'Config1111111111111111111111111111111111111',
@@ -603,7 +595,6 @@ describe('getAccountInfo', () => {
                                             deactivationEpoch: '471',
                                             stake: '8007935',
                                             voter: 'CertusDeBmqN8ZawdkxK5kFGMwBXdudvWHYwtNgNhvLu',
-                                            warmupCooldownRate: 0.25,
                                         },
                                     },
                                 },
@@ -639,9 +630,7 @@ describe('getAccountInfo', () => {
                         data: {
                             parsed: {
                                 info: expect.objectContaining({
-                                    burnPercent: 50,
-                                    exemptionThreshold: 1,
-                                    lamportsPerByteYear: '6960',
+                                    lamportsPerByte: '6960',
                                 }),
                                 type: 'rent',
                             },
@@ -680,7 +669,7 @@ describe('getAccountInfo', () => {
                                     ],
                                     authorizedWithdrawer: 'HMU77m6WSL9Xew9YvVCgz1hLuhzamz74eD9avi4XPdr',
                                     blockRevenueCollector: expect.any(String),
-                                    blockRevenueCommissionBps: expect.any(BigInt),
+                                    blockRevenueCommissionBps: expect.any(Number),
                                     blsPubkeyCompressed: null,
                                     commission: 50,
                                     epochCredits: expect.arrayContaining([
@@ -1006,7 +995,7 @@ describe('getAccountInfo', () => {
                                         },
                                     ]),
                                     inflationRewardsCollector: expect.any(String),
-                                    inflationRewardsCommissionBps: expect.any(BigInt),
+                                    inflationRewardsCommissionBps: expect.any(Number),
                                     lastTimestamp: {
                                         slot: 283619438n,
                                         timestamp: 1709828565n,

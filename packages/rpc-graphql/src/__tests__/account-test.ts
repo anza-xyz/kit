@@ -1069,9 +1069,7 @@ describe('account', () => {
                             }
                             space
                             ... on SysvarRentAccount {
-                                burnPercent
-                                exemptionThreshold
-                                lamportsPerByteYear
+                                lamportsPerByte
                             }
                         }
                     }
@@ -1081,10 +1079,8 @@ describe('account', () => {
                     data: {
                         account: {
                             address: 'SysvarRent111111111111111111111111111111111',
-                            burnPercent: expect.any(Number),
-                            exemptionThreshold: expect.any(Number),
                             lamports: expect.any(BigInt),
-                            lamportsPerByteYear: expect.any(BigInt),
+                            lamportsPerByte: expect.any(BigInt),
                             ownerProgram: {
                                 address: 'Sysvar1111111111111111111111111111111111111',
                             },

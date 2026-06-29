@@ -64,6 +64,19 @@ All errors use the `SolanaError` class from `@solana/errors`. Key rules:
 - In production builds, messages are stripped. Use `npx @solana/errors decode -- <code>` to decode them.
 - To add a new error: add the constant to `codes.ts`, add it to the `SolanaErrorCode` union, optionally define context in `context.ts`, and add the message to `messages.ts`.
 
+## RPC Types
+
+RPC method response types live in `packages/rpc-api/src/<methodName>.ts`; types for `jsonParsed` account data live in `packages/rpc-parsed-types/`.
+
+- **Agave is the source of truth.** RPC types must mirror the shape the server actually returns — field names, nesting, optionality, and numeric width. Confirm a field against the Agave source for the relevant release tag (e.g. `RpcVoteAccountInfo` in [`anza-xyz/agave`](https://github.com/anza-xyz/agave) at `rpc-client-types/src/response.rs`), and sanity-check the live shape against a local test validator (`./scripts/start-shared-test-validator.sh`, then `curl` the method). Don't infer the type from a single validator's output alone — read the Rust definition.
+- **`number` vs `bigint` is decided by the Rust type.** Kit's response transformer (`packages/rpc-transformers/src/response-transformer-bigint-upcast.ts`) upcasts **every** JSON integer to `bigint` by default, to avoid silent precision loss on values that can exceed `Number.MAX_SAFE_INTEGER`. To keep a field as a JS `number` instead, you must add its keypath to an allow-list. Decide based on the server-side type:
+    - `u64` / `usize` / `i64`, or anything that could exceed 2^53 → type as **`bigint`**; do **not** allow-list it (let the default upcast apply).
+    - A small bounded integer guaranteed to fit a JS number (`u8`, `u16`, `u32`) → type as **`number`** and allow-list its keypath.
+    - A float (`f32`/`f64`, which cannot be a `bigint`) → type as **`number`** and allow-list its keypath.
+- **Where to allow-list a keypath:** for top-level method responses, add it to the per-method entry in `getAllowedNumericKeypaths()` in `packages/rpc-api/src/index.ts` (keyed by method name, with `KEYPATH_WILDCARD` for array elements). For numbers nested inside `jsonParsed` account data, add it to the shared configs in `packages/rpc-transformers/src/response-transformer-allowed-numeric-values.ts`.
+- **Optionality & versioning.** If the Agave field is `Option<T>` or `#[serde(skip_serializing_if = ...)]`, or was introduced/removed in a specific Agave version, type it optional (`field?: T`) — older or newer nodes won't always include it. Prefer backward-compatible widenings (optional fields, or a union of the old and new shapes that callers can narrow) over hard replacements, so the types stay correct across validator versions rather than asserting one version's shape.
+- **Mirror changes in `@solana/rpc-graphql`.** The GraphQL schema in `packages/rpc-graphql/src/schema/type-defs/` re-exposes the same RPC and `jsonParsed` account shapes, so when you change a `jsonParsed` type (especially a parsed-account shape in `rpc-parsed-types`), check whether the corresponding GraphQL type needs the same field added/removed. GraphQL output fields are nullable unless suffixed with `!`, so prefer leaving version-dependent fields nullable (don't add `!`) and keep legacy fields alongside new ones — the same backward-compatible widening rule as above. Most fields resolve via GraphQL's default resolver straight off the parsed object, so adding a field to the type def is usually enough; only `data`/`ownerProgram`-style fields have custom resolvers in `packages/rpc-graphql/src/schema/type-resolvers/`.
+
 ## Coding Conventions
 
 - **TypeScript strict mode**, ESM-first.

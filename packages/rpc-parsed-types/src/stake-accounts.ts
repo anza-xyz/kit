@@ -23,7 +23,13 @@ type JsonParsedStakeAccount = Readonly<{
             deactivationEpoch: StringifiedBigInt;
             stake: StringifiedBigInt;
             voter: Address;
-            warmupCooldownRate: number;
+            /**
+             * The rate at which the delegation activates or deactivates.
+             *
+             * @deprecated Removed from the parsed stake delegation in Agave 4.1.0. This field is
+             * only present on accounts fetched from validators running earlier versions.
+             */
+            warmupCooldownRate?: number;
         }>;
     }> | null;
 }>;

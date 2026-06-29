@@ -34,8 +34,11 @@ export const jsonParsedAccountsConfigs = [
     ['data', 'parsed', 'info', 'exemptionThreshold'],
     ['data', 'parsed', 'info', 'burnPercent'],
     // parsed Vote account
+    ['data', 'parsed', 'info', 'blockRevenueCommissionBps'],
     ['data', 'parsed', 'info', 'commission'],
+    ['data', 'parsed', 'info', 'inflationRewardsCommissionBps'],
     ['data', 'parsed', 'info', 'votes', KEYPATH_WILDCARD, 'confirmationCount'],
+    ['data', 'parsed', 'info', 'votes', KEYPATH_WILDCARD, 'latency'],
 ];
 export const innerInstructionsConfigs = [
     ['index'],

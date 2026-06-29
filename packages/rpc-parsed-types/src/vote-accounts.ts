@@ -12,7 +12,7 @@ export type JsonParsedVoteAccount = RpcParsedInfo<{
     /** The address that collects block revenue (tips/MEV) */
     blockRevenueCollector: Address;
     /** Block revenue commission in basis points */
-    blockRevenueCommissionBps: bigint;
+    blockRevenueCommissionBps: number;
     /** Compressed BLS public key, or `null` if not set */
     blsPubkeyCompressed: string | null;
     commission: number;
@@ -24,7 +24,7 @@ export type JsonParsedVoteAccount = RpcParsedInfo<{
     /** The address that collects inflation rewards */
     inflationRewardsCollector: Address;
     /** Inflation rewards commission in basis points */
-    inflationRewardsCommissionBps: bigint;
+    inflationRewardsCommissionBps: number;
     lastTimestamp: Readonly<{
         slot: Slot;
         timestamp: UnixTimestamp;
@@ -41,7 +41,7 @@ export type JsonParsedVoteAccount = RpcParsedInfo<{
     votes: Readonly<{
         confirmationCount: number;
         /** The latency of this vote, in slots */
-        latency: bigint;
+        latency: number;
         slot: Slot;
     }>[];
 }>;

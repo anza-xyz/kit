@@ -95,7 +95,18 @@ import { JsonParsedSysvarAccount } from '../sysvar-accounts';
     }
 }
 
-// rent account
+// rent account (current shape, Agave 4.1.0+)
+{
+    const account = {
+        info: {
+            lamportsPerByte: '3480' as StringifiedBigInt,
+        },
+        type: 'rent' as const,
+    };
+    account satisfies JsonParsedSysvarAccount;
+}
+
+// rent account (deprecated shape, Agave < 4.1.0)
 {
     const account = {
         info: {
@@ -111,7 +122,14 @@ import { JsonParsedSysvarAccount } from '../sysvar-accounts';
 {
     const account = {} as unknown as JsonParsedSysvarAccount;
     if (account.type === 'rent') {
-        account.info.burnPercent satisfies number;
+        // Narrow the current shape from the deprecated one on the presence of `lamportsPerByte`.
+        if ('lamportsPerByte' in account.info) {
+            account.info.lamportsPerByte satisfies StringifiedBigInt;
+        } else {
+            account.info.burnPercent satisfies number;
+            account.info.exemptionThreshold satisfies number;
+            account.info.lamportsPerByteYear satisfies StringifiedBigInt;
+        }
     }
 }
 

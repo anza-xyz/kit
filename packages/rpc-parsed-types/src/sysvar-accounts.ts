@@ -31,10 +31,22 @@ type JsonParsedRecentBlockhashesAccount_DEPRECATED = Readonly<{
     feeCalculator: FeeCalculator;
 }>[];
 
-type JsonParsedRentAccount = Readonly<{
+/**
+ * The shape of the parsed rent sysvar returned by validators running Agave versions prior to
+ * 4.1.0.
+ *
+ * @deprecated Agave 4.1.0 reshaped the parsed rent sysvar to {@link JsonParsedRentAccount}. Narrow on the
+ * presence of `lamportsPerByte` (current) versus `lamportsPerByteYear` (deprecated) to tell the
+ * two apart.
+ */
+type JsonParsedRentAccount_DEPRECATED = Readonly<{
     burnPercent: number;
     exemptionThreshold: number;
     lamportsPerByteYear: StringifiedBigInt;
+}>;
+
+type JsonParsedRentAccount = Readonly<{
+    lamportsPerByte: StringifiedBigInt;
 }>;
 
 type JsonParsedSlotHashesAccount = Readonly<{
@@ -73,7 +85,7 @@ export type JsonParsedSysvarAccount =
     | RpcParsedType<'fees', JsonParsedFeesAccount_DEPRECATED>
     | RpcParsedType<'lastRestartSlot', JsonParsedLastRestartSlotAccount>
     | RpcParsedType<'recentBlockhashes', JsonParsedRecentBlockhashesAccount_DEPRECATED>
-    | RpcParsedType<'rent', JsonParsedRentAccount>
+    | RpcParsedType<'rent', JsonParsedRentAccount | JsonParsedRentAccount_DEPRECATED>
     | RpcParsedType<'slotHashes', JsonParsedSlotHashesAccount>
     | RpcParsedType<'slotHistory', JsonParsedSlotHistoryAccount>
     | RpcParsedType<'stakeHistory', JsonParsedStakeHistoryAccount>;

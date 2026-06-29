@@ -119,9 +119,7 @@ describe('sysvar account', () => {
             expect.assertions(3);
             await assertValidJsonParsedSysvarAccount(SYSVAR_RENT_ADDRESS, {
                 data: {
-                    burnPercent: expect.any(Number),
-                    exemptionThreshold: expect.any(Number),
-                    lamportsPerByteYear: expect.any(String), // JsonParsed converts to string
+                    lamportsPerByte: expect.any(String), // JsonParsed converts to string
                 },
             });
         });

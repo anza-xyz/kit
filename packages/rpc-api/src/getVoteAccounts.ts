@@ -18,6 +18,8 @@ type VoteAccount<TVotePubkey extends Address> = Readonly<{
     epochCredits: readonly EpochCredit[];
     /** Whether the vote account is staked for this epoch */
     epochVoteAccount: boolean;
+    /** Inflation rewards commission, in basis points. */
+    inflationRewardsCommissionBps?: number;
     /** Most recent slot voted on by this vote account */
     lastVote: bigint;
     /** Validator identity */

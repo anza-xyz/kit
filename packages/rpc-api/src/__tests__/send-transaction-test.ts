@@ -182,11 +182,15 @@ describe('sendTransaction', () => {
                 { encoding: 'base64', preflightCommitment: 'processed' },
             )
             .send();
+        // The exact `__serverMessage` is the validator's deserialization error text, which changes
+        // between Agave versions; assert only on the error code and that a server message was
+        // surfaced, not its precise wording.
         await expect(resultPromise).rejects.toThrow(
-            new SolanaError(SOLANA_ERROR__JSON_RPC__INVALID_PARAMS, {
-                __serverMessage:
-                    'failed to deserialize solana_transaction::versioned::VersionedTransaction: ' +
-                    'invalid value: integer `126`, expected a valid transaction message version',
+            expect.objectContaining({
+                context: expect.objectContaining({
+                    __code: SOLANA_ERROR__JSON_RPC__INVALID_PARAMS,
+                    __serverMessage: expect.any(String),
+                }),
             }),
         );
     });
@@ -207,11 +211,15 @@ describe('sendTransaction', () => {
                 { encoding: 'base64', preflightCommitment: 'processed' },
             )
             .send();
+        // The exact `__serverMessage` is the validator's deserialization error text, which changes
+        // between Agave versions; assert only on the error code and that a server message was
+        // surfaced, not its precise wording.
         await expect(resultPromise).rejects.toThrow(
-            new SolanaError(SOLANA_ERROR__JSON_RPC__INVALID_PARAMS, {
-                __serverMessage:
-                    'failed to deserialize solana_transaction::versioned::VersionedTransaction: ' +
-                    'io error: failed to fill whole buffer',
+            expect.objectContaining({
+                context: expect.objectContaining({
+                    __code: SOLANA_ERROR__JSON_RPC__INVALID_PARAMS,
+                    __serverMessage: expect.any(String),
+                }),
             }),
         );
     });

@@ -509,6 +509,7 @@ export const accountTypeDefs = /* GraphQL */ `
         burnPercent: Int
         exemptionThreshold: Int
         lamportsPerByteYear: Lamports
+        lamportsPerByte: Lamports
     }
 
     type SlotHashEntry {

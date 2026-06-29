@@ -13,7 +13,7 @@ const account = {
         ],
         authorizedWithdrawer: 'HMU77m6WSL9Xew9YvVCgz1hLuhzamz74eD9avi4XPdr' as Address,
         blockRevenueCollector: 'HMU77m6WSL9Xew9YvVCgz1hLuhzamz74eD9avi4XPdr' as Address,
-        blockRevenueCommissionBps: 10000n,
+        blockRevenueCommissionBps: 10000,
         blsPubkeyCompressed: null,
         commission: 50,
         epochCredits: [
@@ -29,7 +29,7 @@ const account = {
             },
         ],
         inflationRewardsCollector: 'HMU77m6WSL9Xew9YvVCgz1hLuhzamz74eD9avi4XPdr' as Address,
-        inflationRewardsCommissionBps: 5000n,
+        inflationRewardsCommissionBps: 5000,
         lastTimestamp: {
             slot: 228884530n as Slot,
             timestamp: 1689090220n as UnixTimestamp,
@@ -41,12 +41,12 @@ const account = {
         votes: [
             {
                 confirmationCount: 31,
-                latency: 0n,
+                latency: 0,
                 slot: 228884500n as Slot,
             },
             {
                 confirmationCount: 30,
-                latency: 0n,
+                latency: 0,
                 slot: 228884501n as Slot,
             },
         ],

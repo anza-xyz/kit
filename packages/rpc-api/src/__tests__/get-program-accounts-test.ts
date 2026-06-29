@@ -493,18 +493,11 @@ describe('getProgramAccounts', () => {
                         // We can't guarantee ordering is preserved across test runs
                         expect.arrayContaining([
                             {
+                                // The stake config program is deprecated and is no longer
+                                // recognized by the RPC's JSON parser, so a `jsonParsed` request
+                                // now falls back to annotated base64.
                                 account: {
-                                    data: {
-                                        parsed: {
-                                            info: {
-                                                slashPenalty: 12,
-                                                warmupCooldownRate: 0.25,
-                                            },
-                                            type: 'stakeConfig',
-                                        },
-                                        program: 'config',
-                                        space: 10n,
-                                    },
+                                    data: ['AAAAAAAAANA/DA==', 'base64'],
                                     executable: false,
                                     lamports: 960480n,
                                     owner: 'Config1111111111111111111111111111111111111',
@@ -967,7 +960,6 @@ describe('getProgramAccounts', () => {
                                                         deactivationEpoch: expect.any(String), // Changes
                                                         stake: expect.any(String), // Changes
                                                         voter: voteAccountAddress,
-                                                        warmupCooldownRate: 0.25,
                                                     },
                                                 },
                                             },
@@ -1009,7 +1001,6 @@ describe('getProgramAccounts', () => {
                                                         deactivationEpoch: expect.any(String), // Changes
                                                         stake: expect.any(String), // Changes
                                                         voter: 'CertusDeBmqN8ZawdkxK5kFGMwBXdudvWHYwtNgNhvLu',
-                                                        warmupCooldownRate: 0.25,
                                                     },
                                                 },
                                             },
@@ -1445,18 +1436,11 @@ describe('getProgramAccounts', () => {
                         // We can't guarantee ordering is preserved across test runs
                         value: expect.arrayContaining([
                             {
+                                // The stake config program is deprecated and is no longer
+                                // recognized by the RPC's JSON parser, so a `jsonParsed` request
+                                // now falls back to annotated base64.
                                 account: {
-                                    data: {
-                                        parsed: {
-                                            info: {
-                                                slashPenalty: 12,
-                                                warmupCooldownRate: 0.25,
-                                            },
-                                            type: 'stakeConfig',
-                                        },
-                                        program: 'config',
-                                        space: 10n,
-                                    },
+                                    data: ['AAAAAAAAANA/DA==', 'base64'],
                                     executable: false,
                                     lamports: 960480n,
                                     owner: 'Config1111111111111111111111111111111111111',
@@ -1923,7 +1907,6 @@ describe('getProgramAccounts', () => {
                                                         deactivationEpoch: expect.any(String), // Changes
                                                         stake: expect.any(String), // Changes
                                                         voter: voteAccountAddress,
-                                                        warmupCooldownRate: 0.25,
                                                     },
                                                 },
                                             },
@@ -1965,7 +1948,6 @@ describe('getProgramAccounts', () => {
                                                         deactivationEpoch: expect.any(String), // Changes
                                                         stake: expect.any(String), // Changes
                                                         voter: 'CertusDeBmqN8ZawdkxK5kFGMwBXdudvWHYwtNgNhvLu',
-                                                        warmupCooldownRate: 0.25,
                                                     },
                                                 },
                                             },

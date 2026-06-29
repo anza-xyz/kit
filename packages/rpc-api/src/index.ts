@@ -349,7 +349,9 @@ function getAllowedNumericKeypaths(): AllowedNumericKeypaths<RpcApi<SolanaRpcApi
             getVersion: [['feature-set']],
             getVoteAccounts: [
                 ['current', KEYPATH_WILDCARD, 'commission'],
+                ['current', KEYPATH_WILDCARD, 'inflationRewardsCommissionBps'],
                 ['delinquent', KEYPATH_WILDCARD, 'commission'],
+                ['delinquent', KEYPATH_WILDCARD, 'inflationRewardsCommissionBps'],
             ],
             simulateTransaction: [
                 ['value', 'loadedAccountsDataSize'],

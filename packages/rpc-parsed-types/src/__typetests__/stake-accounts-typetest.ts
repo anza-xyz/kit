@@ -26,6 +26,7 @@ import type { JsonParsedStakeProgramAccount } from '../stake-accounts';
                     deactivationEpoch: '471' as StringifiedBigInt,
                     stake: '8007935' as StringifiedBigInt,
                     voter: 'CertusDeBmqN8ZawdkxK5kFGMwBXdudvWHYwtNgNhvLu' as Address,
+                    // Present on accounts fetched from validators running Agave < 4.1.0.
                     warmupCooldownRate: 0.25,
                 },
             },
@@ -65,7 +66,6 @@ import type { JsonParsedStakeProgramAccount } from '../stake-accounts';
                     deactivationEpoch: '471' as StringifiedBigInt,
                     stake: '8007935' as StringifiedBigInt,
                     voter: 'CertusDeBmqN8ZawdkxK5kFGMwBXdudvWHYwtNgNhvLu' as Address,
-                    warmupCooldownRate: 0.25,
                 },
             },
         },

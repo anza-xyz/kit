@@ -412,10 +412,11 @@ describe('simulateTransaction', () => {
             )
             .send();
         await expect(resultPromise).rejects.toThrow(
-            new SolanaError(SOLANA_ERROR__JSON_RPC__INVALID_PARAMS, {
-                __serverMessage:
-                    'failed to deserialize solana_transaction::versioned::VersionedTransaction: ' +
-                    'invalid value: integer `126`, expected a valid transaction message version',
+            expect.objectContaining({
+                context: expect.objectContaining({
+                    __code: SOLANA_ERROR__JSON_RPC__INVALID_PARAMS,
+                    __serverMessage: expect.any(String),
+                }),
             }),
         );
     });
@@ -438,10 +439,11 @@ describe('simulateTransaction', () => {
             )
             .send();
         await expect(resultPromise).rejects.toThrow(
-            new SolanaError(SOLANA_ERROR__JSON_RPC__INVALID_PARAMS, {
-                __serverMessage:
-                    'failed to deserialize solana_transaction::versioned::VersionedTransaction: ' +
-                    'io error: failed to fill whole buffer',
+            expect.objectContaining({
+                context: expect.objectContaining({
+                    __code: SOLANA_ERROR__JSON_RPC__INVALID_PARAMS,
+                    __serverMessage: expect.any(String),
+                }),
             }),
         );
     });
