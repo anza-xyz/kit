@@ -93,6 +93,7 @@ function makeResilientFetcher(fetch, keyOf, fallbackOf) {
         // attempt genuinely re-fetches.
         let pending = chunk.map((job, i) => ({ job, i }));
         const settled = new Array(chunk.length);
+        const lastError = new Array(chunk.length);
 
         for (let attempt = 1; attempt <= MAX_ATTEMPTS && pending.length > 0; attempt++) {
           if (attempt > 1) {
@@ -106,6 +107,8 @@ function makeResilientFetcher(fetch, keyOf, fallbackOf) {
             if (result.status === 'fulfilled') {
               settled[pending[k].i] = result.value;
             } else {
+              // Keep the most recent failure reason so a degraded entry is diagnosable.
+              lastError[pending[k].i] = result.reason;
               next.push(pending[k]);
             }
           });
@@ -116,9 +119,10 @@ function makeResilientFetcher(fetch, keyOf, fallbackOf) {
           if (i in settled) {
             job.resolve(settled[i]);
           } else {
+            const reason = (lastError[i] && lastError[i].message) || lastError[i] || 'unknown error';
             console.warn(
               `[changelog] GitHub lookup failed for ${keyOf(job.args)} after ${MAX_ATTEMPTS} ` +
-                `attempts; degrading this entry (no author attribution).`,
+                `attempts; degrading this entry (no author attribution). Last error: ${reason}`,
             );
             job.resolve(fallbackOf(job.args));
           }

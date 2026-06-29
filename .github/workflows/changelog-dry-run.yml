@@ -1,0 +1,90 @@
+name: Changelog dry run
+
+# Exercises the changelog generation path on PRs that touch changesets, so degraded
+# entries (missing PR/author attribution) surface here rather than after merge on main.
+# It runs the real release-time path — `changeset version` through the resilient adapter
+# in `.changeset/changelog.cjs`, hitting the GitHub GraphQL API with the CI token — but
+# only locally: nothing is committed, pushed, or published. It is intentionally
+# non-blocking; the release job on main degrades gracefully, so a transient GitHub blip
+# on a PR should warn, not fail.
+
+on:
+  pull_request:
+    paths:
+      - '.changeset/**'
+
+permissions:
+  contents: read
+  # Lets the job publish a separate "Changelog attribution" check run (neutral/success).
+  # Not granted to the token on fork PRs; the job tolerates that.
+  checks: write
+
+env:
+  DO_NOT_TRACK: '1'
+
+jobs:
+  changelog-dry-run:
+    name: Changelog dry run
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Install Dependencies
+        uses: ./.github/workflows/actions/install-dependencies
+
+      - name: Generate changelogs (dry run)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          # Regenerate version bumps + CHANGELOGs locally. The runner is ephemeral and
+          # there is no commit/push/publish step, so this only inspects the output.
+          pnpm exec changeset version 2>&1 | tee changeset-dry-run.log || true
+
+          degraded=$(grep -c '\[changelog\] GitHub lookup failed' changeset-dry-run.log || true)
+          if [ "${degraded:-0}" -gt 0 ]; then
+            verdict="⚠️ ${degraded} changelog entr(ies) degraded — missing PR/author attribution (see the log above)."
+          else
+            verdict="✅ All changelog entries resolved with full attribution."
+          fi
+
+          # Print the verdict to the step log too, so it's visible without opening the Summary tab.
+          echo ""
+          echo "$verdict"
+
+          {
+            echo "## Changelog dry run"
+            echo
+            echo "${verdict}"
+            if [ "${degraded:-0}" -gt 0 ]; then
+              echo
+              echo '```'
+              grep '\[changelog\] GitHub lookup failed' changeset-dry-run.log || true
+              echo '```'
+              echo
+              echo "This does not block the PR — the release job on \`main\` degrades gracefully too — but the published changelog will lack PR/author links for these entries unless a later run resolves them."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # Publish the result as a separate check run with a "neutral" conclusion when
+          # degraded: visible (distinct from a green pass) but never merge-blocking, even
+          # if it were ever made a required check. A clean run reports success. Creating a
+          # check needs checks:write, which the token lacks on fork PRs — tolerate that
+          # rather than failing the job.
+          if [ "${degraded:-0}" -gt 0 ]; then
+            conclusion="neutral"
+            title="${degraded} changelog entr(ies) degraded"
+          else
+            conclusion="success"
+            title="All changelog entries fully attributed"
+          fi
+          jq -n \
+            --arg sha "$HEAD_SHA" \
+            --arg conclusion "$conclusion" \
+            --arg title "$title" \
+            --arg summary "$verdict" \
+            '{name: "Changelog attribution", head_sha: $sha, status: "completed", conclusion: $conclusion, output: {title: $title, summary: $summary}}' \
+            | gh api -X POST "repos/${GITHUB_REPOSITORY}/check-runs" --input - \
+            || echo "::notice::Skipped publishing the neutral check (insufficient token permissions, e.g. a fork PR)."
