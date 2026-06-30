@@ -1,5 +1,48 @@
 # @solana/rpc-transformers
 
+## 7.0.0
+
+### Major Changes
+
+- [#1795](https://github.com/anza-xyz/kit/pull/1795) [`8d3bbf1`](https://github.com/anza-xyz/kit/commit/8d3bbf1b471aa153e1d51a995981224778fa2937) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Update RPC and parsed-account types to match Agave 4.1.0, and surface basis-points commission and vote-latency fields as numbers instead of bigints.
+
+    **BREAKING CHANGES**
+
+    **Parsed vote-account commissions and vote latency are now `number` instead of `bigint`.** Agave returns these as small bounded integers (`u16`/`u8`), so kit no longer upcasts them. This affects `blockRevenueCommissionBps`, `inflationRewardsCommissionBps`, and each vote's `latency` on `JsonParsedVoteAccount`.
+
+    ```diff
+    - const bps: bigint = voteAccount.inflationRewardsCommissionBps;
+    + const bps: number = voteAccount.inflationRewardsCommissionBps;
+    ```
+
+    **The parsed rent sysvar is now a union of the current and pre-4.1.0 shapes.** Agave 4.1.0 reshaped the rent sysvar from `{ burnPercent, exemptionThreshold, lamportsPerByteYear }` to `{ lamportsPerByte }`. The type is now a union of both, so consumers must narrow before accessing the legacy fields. Narrow on the presence of `lamportsPerByte` (current) versus `lamportsPerByteYear` (deprecated).
+
+    ```diff
+    - const perByteYear = rent.info.lamportsPerByteYear;
+    + const perByte = 'lamportsPerByte' in rent.info
+    +     ? rent.info.lamportsPerByte
+    +     : rent.info.lamportsPerByteYear;
+    ```
+
+    **`warmupCooldownRate` on the parsed stake delegation is now optional.** Agave 4.1.0 removed it from the parsed output, so it is only present on accounts fetched from validators running earlier versions. It is marked `@deprecated`.
+
+    Additionally, `getVoteAccounts` now includes an optional `inflationRewardsCommissionBps` field (added by Agave 4.1.0; absent on older validators), and the parsed stake-config account fields (`slashPenalty`, `warmupCooldownRate`) are marked `@deprecated` because the stake config program is no longer recognized by the RPC's JSON parser as of Agave 4.1.0 (such accounts now fall back to annotated base64).
+
+    The GraphQL `SysvarRentAccount` type gains a nullable `lamportsPerByte` field to match the reshaped rent sysvar in Agave 4.1.0. The legacy `burnPercent`, `exemptionThreshold`, and `lamportsPerByteYear` fields are retained (and remain nullable) for validators running earlier versions.
+
+### Patch Changes
+
+- [#1730](https://github.com/anza-xyz/kit/pull/1730) [`4a22021`](https://github.com/anza-xyz/kit/commit/4a2202157e489cb7c0215deea89e8cab40a4762a) Thanks [@plutohan](https://github.com/plutohan)! - Stop downcasting `bigint` request params to `number` in the default Solana RPC request transformer
+
+    `getDefaultRequestTransformerForSolanaRpc` no longer runs `getBigIntDowncastRequestTransformer`. The Solana RPC transport already serializes `bigint` values losslessly as large integer literals (via `stringifyJsonWithBigInts`), and Agave parses JSON integers across the full `u64` range without precision loss, so the lossy `bigint`->`number` downcast was redundant. Removing it also fixes silent truncation for RPC APIs configured without an `onIntegerOverflow` handler. `getBigIntDowncastRequestTransformer` is now deprecated and slated for removal in a future major version.
+
+- Updated dependencies [[`3014977`](https://github.com/anza-xyz/kit/commit/30149771475d45b6cfff1c4aacd16c8f7256e256), [`772b82c`](https://github.com/anza-xyz/kit/commit/772b82c4f18c418100560a5010b17e6b40dd7ab3), [`660bd74`](https://github.com/anza-xyz/kit/commit/660bd7447348d6669d48f6f45fc627b002bc16aa), [`e193711`](https://github.com/anza-xyz/kit/commit/e1937110a3eb300e184b10732f82ccfefe9c2a3f), [`069d56d`](https://github.com/anza-xyz/kit/commit/069d56d69226f755412b282c22818cbc90f2db4f), [`2c47363`](https://github.com/anza-xyz/kit/commit/2c47363f8add9d16aa3a7e6181344e167d27997c)]:
+    - @solana/errors@7.0.0
+    - @solana/rpc-spec-types@7.0.0
+    - @solana/rpc-types@7.0.0
+    - @solana/functional@7.0.0
+    - @solana/nominal-types@7.0.0
+
 ## 6.10.0
 
 ### Patch Changes

@@ -1,5 +1,20 @@
 # @solana/program-client-core
 
+## 7.0.0
+
+### Patch Changes
+
+- Updated dependencies [[`3014977`](https://github.com/anza-xyz/kit/commit/30149771475d45b6cfff1c4aacd16c8f7256e256), [`772b82c`](https://github.com/anza-xyz/kit/commit/772b82c4f18c418100560a5010b17e6b40dd7ab3), [`e193711`](https://github.com/anza-xyz/kit/commit/e1937110a3eb300e184b10732f82ccfefe9c2a3f), [`069d56d`](https://github.com/anza-xyz/kit/commit/069d56d69226f755412b282c22818cbc90f2db4f), [`8d3bbf1`](https://github.com/anza-xyz/kit/commit/8d3bbf1b471aa153e1d51a995981224778fa2937), [`cab6d7e`](https://github.com/anza-xyz/kit/commit/cab6d7ed7bc870ba030c961c131a2cd8c49b6eb4)]:
+    - @solana/errors@7.0.0
+    - @solana/rpc-api@7.0.0
+    - @solana/instruction-plans@7.0.0
+    - @solana/accounts@7.0.0
+    - @solana/addresses@7.0.0
+    - @solana/codecs-core@7.0.0
+    - @solana/instructions@7.0.0
+    - @solana/signers@7.0.0
+    - @solana/plugin-interfaces@7.0.0
+
 ## 6.10.0
 
 ### Patch Changes

@@ -1,5 +1,209 @@
 # @solana/kit
 
+## 7.0.0
+
+### Major Changes
+
+- [#1663](https://github.com/anza-xyz/kit/pull/1663) [`d09718d`](https://github.com/anza-xyz/kit/commit/d09718de4e2644c8d2a29d4e2d8992bc06177510) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `withSignal()` to `ReactiveStreamStore` for per-connection cancellation, replacing the construction-time `abortSignal` option. Mirrors the action store's per-dispatch `withSignal()` pattern — callers attach a per-connection signal at the call site instead of baking one into the store.
+
+    ```ts
+    const store = createReactiveStoreFromDataPublisherFactory({
+        createDataPublisher: signal => transport({ signal, ...plan }),
+        dataChannelName: 'notification',
+        errorChannelName: 'error',
+    });
+    // Per-connection timeout — fresh clock per attempt:
+    store.withSignal(AbortSignal.timeout(30_000)).connect();
+    ```
+
+    `store.withSignal(signal)` returns a thin wrapper exposing `connect()` that composes the caller-provided signal with the per-connection inner controller via `AbortSignal.any`. Aborting the caller's signal surfaces the abort reason on state as `{ status: 'error' }`; supersession via the internal controller (a newer `connect()` or `reset()`) stays silent so the newer call owns state. The "permanent kill switch" pattern is expressible by binding once: `const killable = store.withSignal(killCtrl.signal); killable.connect();`. After `killCtrl.abort()`, every `killable.connect()` short-circuits to error.
+
+    `createDataPublisher` is widened from `() => Promise<DataPublisher>` to `(signal: AbortSignal) => Promise<DataPublisher>`. The store passes the composed per-connection signal to the factory so the underlying transport can stop on per-connection abort, not just the stream-store's listeners. Existing no-arg factories still satisfy the new shape — TypeScript allows fewer parameters than the declared type.
+
+    The construction-time `abortSignal` option on `createReactiveStoreFromDataPublisherFactory`, `createReactiveStoreWithInitialValueAndSlotTracking`, and `PendingRpcSubscriptionsRequest.reactiveStore()` is removed. Callers wanting a long-lived kill switch use the bind-once `withSignal` pattern. `ReactiveStreamSource<T>.reactiveStore()` is now parameter-less (mirrors `ReactiveActionSource<T>.reactiveStore()`).
+
+- [#1662](https://github.com/anza-xyz/kit/pull/1662) [`fa04323`](https://github.com/anza-xyz/kit/commit/fa043235a58d928a30b7a66a56643dec5327dd6a) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Drop auto-connect from `ReactiveStreamStore`; callers explicitly invoke `connect()` to open the underlying stream. Mirrors the action store's caller-driven `dispatch()` pattern — the store is a state machine that callers orchestrate, not a self-starting subscription.
+
+    The factory variant returned by `createReactiveStoreFromDataPublisherFactory` now starts in `status: 'idle'`. Call `store.connect()` to open the stream; from `idle`, the store transitions through `loading` → `loaded` (or `error`). A subsequent `connect()` from any non-idle status transitions through `retrying` while preserving the last known value. A new `reset()` method aborts the current connection and returns the store to `idle` without permanently killing it — natural for React effect cleanup.
+
+    ```ts
+    const store = createReactiveStoreFromDataPublisherFactory({
+        abortSignal,
+        createDataPublisher,
+        dataChannelName: 'notification',
+        errorChannelName: 'error',
+    });
+    store.connect(); // opens the stream — previously this happened on construction
+    ```
+
+    `retry()` is now deprecated; it remains as an error-only alias for `connect()`. Migrate to calling `connect()` directly. Code that previously relied on `retry()` being a no-op when the store was not in `error` state should add an explicit `if (status === 'error') store.connect();` guard at the call site.
+
+    `createReactiveStoreFromDataPublisher` (the deprecated non-factory variant accepting a ready-made `DataPublisher`) is removed. Its only documented use was as a backwards-compatibility alias behind `PendingRpcSubscriptionsRequest.reactive()`, which is also removed in this release. Migrate to the factory variant — wrap a ready-made publisher in `() => Promise.resolve(publisher)` if needed — and use `reactiveStore()` for RPC subscriptions.
+
+    `createReactiveStoreWithInitialValueAndSlotTracking` in `@solana/kit` no longer fires the RPC request on construction — call `store.connect()` to start it, or wrap in a `useEffect` that calls `connect()` on mount and `reset()` on cleanup. The store starts in `status: 'idle'` and follows the same lifecycle as the underlying stream store.
+
+- [#1708](https://github.com/anza-xyz/kit/pull/1708) [`03000e5`](https://github.com/anza-xyz/kit/commit/03000e57cf90a1dab630704edf067bc2ac3bc381) Thanks [@mcintyre94](https://github.com/mcintyre94)! - `createReactiveStoreWithInitialValueAndSlotTracking` now consumes its two inputs as reactive sources rather than as request objects it calls `send()` / `subscribe()` on directly. The `rpcRequest` / `rpcSubscriptionRequest` config fields (and their `rpcValueMapper` / `rpcSubscriptionValueMapper`) are replaced by `initialValueSource: ReactiveActionSource<...>` / `streamSource: ReactiveStreamSource<...>` (with `initialValueMapper` / `streamValueMapper`).
+
+    Each source is consumed via its `reactiveStore()` method, so the helper reuses `ReactiveActionStore` / `ReactiveStreamStore` primitives. `PendingRpcRequest` satisfies `ReactiveActionSource` and `PendingRpcSubscriptionsRequest` satisfies `ReactiveStreamSource`, so callers can still pass eg. `rpc.getBalance(addr)` / `rpcSubscriptions.accountNotifications(addr)` results directly.
+
+    ```ts
+    const balanceStore = createReactiveStoreWithInitialValueAndSlotTracking({
+        initialValueSource: rpc.getBalance(myAddress, { commitment: 'confirmed' }),
+        initialValueMapper: lamports => lamports,
+        streamSource: rpcSubscriptions.accountNotifications(myAddress),
+        streamValueMapper: ({ lamports }) => lamports,
+    });
+    balanceStore.withSignal(AbortSignal.timeout(60_000)).connect();
+    ```
+
+- [#1677](https://github.com/anza-xyz/kit/pull/1677) [`a198b5c`](https://github.com/anza-xyz/kit/commit/a198b5c6c9681b3f9c37d9d458cbc6b87b7667e7) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Collapse `loading` and `retrying` into a single `loading` status on `ReactiveStreamStore`, mirroring the action store's `running` (which is itself the merged "first call vs subsequent call" state). `data` and `error` are preserved through `loading` for stale-while-revalidate — UI can render the prior outcome alongside an in-flight reconnect.
+
+    `ReactiveState<T>` drops the `retrying` variant. `loading` widens from `{ data: undefined, error: undefined }` to `{ data: T | undefined, error: unknown }`. Both `createReactiveStoreFromDataPublisherFactory` and `createReactiveStoreWithInitialValueAndSlotTracking` now transition every `connect()` through `loading` (preserving `currentState.data` and `currentState.error`); a subsequent `loaded` clears `error`, a subsequent `error` replaces it.
+
+    ```ts
+    // Previously:
+    { status: 'error', data: lastValue, error: caughtError }
+    // connect() →
+    { status: 'retrying', data: lastValue, error: undefined }  // error cleared, separate status
+
+    // Now:
+    { status: 'error', data: lastValue, error: caughtError }
+    // connect() →
+    { status: 'loading', data: lastValue, error: caughtError }  // error preserved, unified status
+    ```
+
+    Migration: replace `status === 'retrying'` checks with `status === 'loading' && data !== undefined` (or just `status === 'loading'` if you don't need to distinguish first-load vs reconnect — the SWR pattern lets you render whatever is in `data` regardless).
+
+- [#1786](https://github.com/anza-xyz/kit/pull/1786) [`6947740`](https://github.com/anza-xyz/kit/commit/6947740680b1bb8c570a5c513ba165e356ceee7d) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Remove deprecated `getMinimumBalanceForRentExemption` and `createEmptyClient`.
+
+    **BREAKING CHANGES**
+
+    **Removed `getMinimumBalanceForRentExemption` from `@solana/kit`.** The minimum balance for an account is being actively reduced (see [SIMD-0437](https://github.com/solana-foundation/solana-improvement-documents/pull/437)) and is expected to become dynamic in future Solana upgrades (see [SIMD-0194](https://github.com/solana-foundation/solana-improvement-documents/pull/194) and [SIMD-0389](https://github.com/solana-foundation/solana-improvement-documents/pull/389)), so a hardcoded local computation can no longer return accurate results. Use the `getMinimumBalanceForRentExemption` RPC method or a `ClientWithGetMinimumBalance` plugin instead.
+
+    ```diff
+    - import { getMinimumBalanceForRentExemption } from '@solana/kit';
+    - const rentExemptLamports = getMinimumBalanceForRentExemption(82n);
+    + const { value: rentExemptLamports } = await rpc.getMinimumBalanceForRentExemption(82n).send();
+    ```
+
+    **Removed `createEmptyClient` from `@solana/plugin-core`.** Use `createClient`, which behaves identically and additionally accepts an optional initial value.
+
+    ```diff
+    - import { createEmptyClient } from '@solana/plugin-core';
+    - const client = createEmptyClient();
+    + import { createClient } from '@solana/plugin-core';
+    + const client = createClient();
+    ```
+
+- [#1780](https://github.com/anza-xyz/kit/pull/1780) [`acec0be`](https://github.com/anza-xyz/kit/commit/acec0be468340a7367f78fe8a8ed61ed8a16e553) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Streamline the `ReactiveStreamStore` contract by removing deprecated members and unifying its state accessor with `ReactiveActionStore`. The `getUnifiedState()` method has been renamed to `getState()`, and the deprecated value-only `getState()`, `getError()`, and `retry()` members along with the `ReactiveStore` type alias have been removed.
+
+    **BREAKING CHANGES**
+
+    **`getUnifiedState()` renamed to `getState()`.** The unified `{ data, error, status }` snapshot accessor is now simply `getState()`, matching `ReactiveActionStore.getState()`.
+
+    ```diff
+    - const state = useSyncExternalStore(store.subscribe, store.getUnifiedState);
+    + const state = useSyncExternalStore(store.subscribe, store.getState);
+    ```
+
+    **Removed the deprecated value-only `getState()` and `getError()`.** Read the value and error off the unified snapshot instead.
+
+    ```diff
+    - const data = store.getState();
+    - const error = store.getError();
+    + const { data, error } = store.getState();
+    ```
+
+    **Removed `retry()`.** Use `connect()`, which always (re)connects regardless of status. Wrap it with a status guard if you need the error-only behavior.
+
+    ```diff
+    - store.retry();
+    + if (store.getState().status === 'error') store.connect();
+    ```
+
+    **Removed the `ReactiveStore` type alias.** Use `ReactiveStreamStore` directly.
+
+    ```diff
+    - import type { ReactiveStore } from '@solana/subscribable';
+    + import type { ReactiveStreamStore } from '@solana/subscribable';
+    ```
+
+### Minor Changes
+
+- [#1611](https://github.com/anza-xyz/kit/pull/1611) [`772b82c`](https://github.com/anza-xyz/kit/commit/772b82c4f18c418100560a5010b17e6b40dd7ab3) Thanks [@amilz](https://github.com/amilz)! - Add `@solana/transaction-introspection`, a new package that bridges a `getTransaction` response and the auto-generated `@solana-program/*` `parseXInstruction` clients. Decodes the transaction (`encoding: 'base64'`, `'base58'`, or `'json'`), resolves account indices against static + ALT-loaded addresses, normalizes inner instructions from `meta.innerInstructions`, and exposes `walkInstructions` to enumerate every instruction in display order — each outer instruction followed by its inner instructions — with a `trace` recording its location. Each returned instruction is a `ResolvedInstruction & { trace }` directly usable with `isInstructionForProgram` from `@solana/instructions` and with the auto-generated `identifyXInstruction` / `parseXInstruction` helpers. Supports `legacy`, `v0`, and `v1` compiled transaction messages. Re-exported from `@solana/kit`.
+
+    ```ts
+    import { createSolanaRpc, signature } from '@solana/kit';
+    import { isInstructionForProgram } from '@solana/instructions';
+    import { decodeTransactionFromRpcResponse, walkInstructions } from '@solana/transaction-introspection';
+    import { identifyTokenInstruction, TOKEN_PROGRAM_ADDRESS, TokenInstruction } from '@solana-program/token';
+
+    const rpc = createSolanaRpc('https://api.mainnet-beta.solana.com');
+    const rpcTx = await rpc
+        .getTransaction(signature(txid), {
+            commitment: 'confirmed',
+            encoding: 'base64',
+            maxSupportedTransactionVersion: 0,
+        })
+        .send();
+    if (!rpcTx) throw new Error(`Transaction ${txid} not found`);
+
+    const { compiledMessage, loadedAddresses } = decodeTransactionFromRpcResponse(rpcTx);
+
+    for (const ix of walkInstructions({ compiledMessage, loadedAddresses, meta: rpcTx.meta })) {
+        if (!isInstructionForProgram(ix, TOKEN_PROGRAM_ADDRESS)) continue;
+        if (identifyTokenInstruction(ix) === TokenInstruction.SyncNative) {
+            console.log('SyncNative found at', ix.trace);
+        }
+    }
+    ```
+
+    `@solana/rpc-api` now exports the non-null `getTransaction` response shapes as named types (`GetTransactionApiResponseBase58`, `GetTransactionApiResponseBase64`, `GetTransactionApiResponseJson`, `GetTransactionApiResponseJsonParsed`), which `decodeTransactionFromRpcResponse` accepts as inputs. `@solana/errors` gains `SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_ACCOUNT_INDEX_OUT_OF_RANGE` plus a new `TRANSACTION_INTROSPECTION` domain (`SOLANA_ERROR__TRANSACTION_INTROSPECTION__CANNOT_DECODE_JSON_PARSED_TRANSACTION`, `SOLANA_ERROR__TRANSACTION_INTROSPECTION__UNRECOGNIZED_GET_TRANSACTION_RESPONSE`).
+
+- [#1706](https://github.com/anza-xyz/kit/pull/1706) [`9063658`](https://github.com/anza-xyz/kit/commit/906365844fdc8555850ea9c8d1fc84614e6883ca) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Migrate `@solana/react` to depend on `@solana/kit` as a peer dependency (replacing its individual workspace sub-package deps) and re-export `@solana/subscribable` from `@solana/kit` so React consumers have a single import root. `@solana/promises` remains as a direct dep — it's a small utility that isn't part of Kit's public surface.
+
+    For `@solana/react` users:
+    - `@solana/kit` must now be installed alongside `@solana/react`.
+    - Apps that already use both get a single deduplicated `@solana/kit` instance — important for anything relying on shared types or `instanceof SolanaError` checks.
+    - Kit can be bumped independently of React within the peer range.
+
+    For `@solana/kit` users:
+    - `ReactiveStreamSource`, `ReactiveStreamStore`, `ReactiveActionSource`, `ReactiveActionStore`, `ReactiveState`, `createReactiveActionStore`, `createReactiveStoreFromDataPublisherFactory`, `DataPublisher` and the rest of `@solana/subscribable`'s surface are now reachable directly through `@solana/kit`.
+
+### Patch Changes
+
+- [#1740](https://github.com/anza-xyz/kit/pull/1740) [`a4ef3b5`](https://github.com/anza-xyz/kit/commit/a4ef3b5f6c3735d015d6f08898372bd648f36c67) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Fix `createReactiveStoreWithInitialValueAndSlotTracking` stranding the store in `loading` when a fresh `connect()` window is answered only by a stale-slot value
+
+    `lastUpdateSlot` persists across `connect()` windows so the surfaced value never regresses. Previously, a successful response at a slot older than the high-water mark was dropped entirely — including the status transition — so a reconnect (e.g. a `useTrackedData` `refresh()`) answered by a lagging RPC node while a quiet account's subscription emitted nothing would sit in `loading` forever. A stale-slot response now settles the store back to `loaded`, retaining the newer data it already holds rather than regressing to the older value.
+
+- Updated dependencies [[`3014977`](https://github.com/anza-xyz/kit/commit/30149771475d45b6cfff1c4aacd16c8f7256e256), [`d09718d`](https://github.com/anza-xyz/kit/commit/d09718de4e2644c8d2a29d4e2d8992bc06177510), [`fa04323`](https://github.com/anza-xyz/kit/commit/fa043235a58d928a30b7a66a56643dec5327dd6a), [`3de3dda`](https://github.com/anza-xyz/kit/commit/3de3dda437c18be882cd6378bebda7a82a54e5b0), [`772b82c`](https://github.com/anza-xyz/kit/commit/772b82c4f18c418100560a5010b17e6b40dd7ab3), [`660bd74`](https://github.com/anza-xyz/kit/commit/660bd7447348d6669d48f6f45fc627b002bc16aa), [`e193711`](https://github.com/anza-xyz/kit/commit/e1937110a3eb300e184b10732f82ccfefe9c2a3f), [`069d56d`](https://github.com/anza-xyz/kit/commit/069d56d69226f755412b282c22818cbc90f2db4f), [`a198b5c`](https://github.com/anza-xyz/kit/commit/a198b5c6c9681b3f9c37d9d458cbc6b87b7667e7), [`8d3bbf1`](https://github.com/anza-xyz/kit/commit/8d3bbf1b471aa153e1d51a995981224778fa2937), [`cab6d7e`](https://github.com/anza-xyz/kit/commit/cab6d7ed7bc870ba030c961c131a2cd8c49b6eb4), [`6947740`](https://github.com/anza-xyz/kit/commit/6947740680b1bb8c570a5c513ba165e356ceee7d), [`1c8d215`](https://github.com/anza-xyz/kit/commit/1c8d215afaa795f981999a5d8c6f21e9effb1db6), [`2c47363`](https://github.com/anza-xyz/kit/commit/2c47363f8add9d16aa3a7e6181344e167d27997c), [`acec0be`](https://github.com/anza-xyz/kit/commit/acec0be468340a7367f78fe8a8ed61ed8a16e553)]:
+    - @solana/errors@7.0.0
+    - @solana/subscribable@7.0.0
+    - @solana/transaction-introspection@7.0.0
+    - @solana/rpc-api@7.0.0
+    - @solana/rpc-spec-types@7.0.0
+    - @solana/instruction-plans@7.0.0
+    - @solana/rpc-parsed-types@7.0.0
+    - @solana/plugin-core@7.0.0
+    - @solana/rpc-types@7.0.0
+    - @solana/accounts@7.0.0
+    - @solana/addresses@7.0.0
+    - @solana/instructions@7.0.0
+    - @solana/keys@7.0.0
+    - @solana/offchain-messages@7.0.0
+    - @solana/program-client-core@7.0.0
+    - @solana/programs@7.0.0
+    - @solana/rpc@7.0.0
+    - @solana/rpc-subscriptions@7.0.0
+    - @solana/signers@7.0.0
+    - @solana/sysvars@7.0.0
+    - @solana/transaction-confirmation@7.0.0
+    - @solana/transaction-messages@7.0.0
+    - @solana/transactions@7.0.0
+    - @solana/codecs@7.0.0
+    - @solana/plugin-interfaces@7.0.0
+    - @solana/functional@7.0.0
+
 ## 6.10.0
 
 ### Minor Changes

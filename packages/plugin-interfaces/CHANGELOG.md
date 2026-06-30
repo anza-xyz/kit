@@ -1,5 +1,18 @@
 # @solana/plugin-interfaces
 
+## 7.0.0
+
+### Patch Changes
+
+- Updated dependencies [[`d09718d`](https://github.com/anza-xyz/kit/commit/d09718de4e2644c8d2a29d4e2d8992bc06177510), [`fa04323`](https://github.com/anza-xyz/kit/commit/fa043235a58d928a30b7a66a56643dec5327dd6a), [`a6783e0`](https://github.com/anza-xyz/kit/commit/a6783e00efea2c4af27eaced9fa4af6996e5bc2d), [`069d56d`](https://github.com/anza-xyz/kit/commit/069d56d69226f755412b282c22818cbc90f2db4f), [`2c47363`](https://github.com/anza-xyz/kit/commit/2c47363f8add9d16aa3a7e6181344e167d27997c)]:
+    - @solana/rpc-subscriptions-spec@7.0.0
+    - @solana/rpc-spec@7.0.0
+    - @solana/instruction-plans@7.0.0
+    - @solana/rpc-types@7.0.0
+    - @solana/addresses@7.0.0
+    - @solana/keys@7.0.0
+    - @solana/signers@7.0.0
+
 ## 6.10.0
 
 ### Patch Changes

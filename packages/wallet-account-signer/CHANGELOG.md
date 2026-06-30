@@ -1,5 +1,18 @@
 # @solana/wallet-account-signer
 
+## 7.0.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/addresses@7.0.0
+    - @solana/codecs-core@7.0.0
+    - @solana/keys@7.0.0
+    - @solana/signers@7.0.0
+    - @solana/transaction-messages@7.0.0
+    - @solana/transactions@7.0.0
+    - @solana/promises@7.0.0
+
 ## 6.10.0
 
 ### Patch Changes

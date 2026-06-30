@@ -1,5 +1,94 @@
 # @solana/rpc-api
 
+## 7.0.0
+
+### Major Changes
+
+- [#1795](https://github.com/anza-xyz/kit/pull/1795) [`8d3bbf1`](https://github.com/anza-xyz/kit/commit/8d3bbf1b471aa153e1d51a995981224778fa2937) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Update RPC and parsed-account types to match Agave 4.1.0, and surface basis-points commission and vote-latency fields as numbers instead of bigints.
+
+    **BREAKING CHANGES**
+
+    **Parsed vote-account commissions and vote latency are now `number` instead of `bigint`.** Agave returns these as small bounded integers (`u16`/`u8`), so kit no longer upcasts them. This affects `blockRevenueCommissionBps`, `inflationRewardsCommissionBps`, and each vote's `latency` on `JsonParsedVoteAccount`.
+
+    ```diff
+    - const bps: bigint = voteAccount.inflationRewardsCommissionBps;
+    + const bps: number = voteAccount.inflationRewardsCommissionBps;
+    ```
+
+    **The parsed rent sysvar is now a union of the current and pre-4.1.0 shapes.** Agave 4.1.0 reshaped the rent sysvar from `{ burnPercent, exemptionThreshold, lamportsPerByteYear }` to `{ lamportsPerByte }`. The type is now a union of both, so consumers must narrow before accessing the legacy fields. Narrow on the presence of `lamportsPerByte` (current) versus `lamportsPerByteYear` (deprecated).
+
+    ```diff
+    - const perByteYear = rent.info.lamportsPerByteYear;
+    + const perByte = 'lamportsPerByte' in rent.info
+    +     ? rent.info.lamportsPerByte
+    +     : rent.info.lamportsPerByteYear;
+    ```
+
+    **`warmupCooldownRate` on the parsed stake delegation is now optional.** Agave 4.1.0 removed it from the parsed output, so it is only present on accounts fetched from validators running earlier versions. It is marked `@deprecated`.
+
+    Additionally, `getVoteAccounts` now includes an optional `inflationRewardsCommissionBps` field (added by Agave 4.1.0; absent on older validators), and the parsed stake-config account fields (`slashPenalty`, `warmupCooldownRate`) are marked `@deprecated` because the stake config program is no longer recognized by the RPC's JSON parser as of Agave 4.1.0 (such accounts now fall back to annotated base64).
+
+    The GraphQL `SysvarRentAccount` type gains a nullable `lamportsPerByte` field to match the reshaped rent sysvar in Agave 4.1.0. The legacy `burnPercent`, `exemptionThreshold`, and `lamportsPerByteYear` fields are retained (and remain nullable) for validators running earlier versions.
+
+- [#1803](https://github.com/anza-xyz/kit/pull/1803) [`cab6d7e`](https://github.com/anza-xyz/kit/commit/cab6d7ed7bc870ba030c961c131a2cd8c49b6eb4) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Always surface `replacementBlockhash` on the `simulateTransaction` response. Agave v3.x validators unconditionally include this field, setting it to `null` when `replaceRecentBlockhash` was not `true`. The field now lives on the base response type as `TransactionBlockhashLifetime | null`, and is narrowed to a non-`null` `TransactionBlockhashLifetime` only on the overloads where `replaceRecentBlockhash: true`.
+
+    **BREAKING CHANGES**
+
+    **`replacementBlockhash` is now always present on the `simulateTransaction` response.** Previously the field was only present on the type when `replaceRecentBlockhash` was `true`. It is now always present, typed as `TransactionBlockhashLifetime | null`, with `null` indicating that no blockhash was replaced. Code that relied on the field being absent (e.g. to discriminate the response shape) must instead check for `null`.
+
+    ```diff
+    const { value } = await rpc.simulateTransaction(tx, { encoding: 'base64' }).send();
+    - // `value.replacementBlockhash` was not present on the type
+    + // `value.replacementBlockhash` is now `TransactionBlockhashLifetime | null` (null here)
+    ```
+
+### Minor Changes
+
+- [#1611](https://github.com/anza-xyz/kit/pull/1611) [`772b82c`](https://github.com/anza-xyz/kit/commit/772b82c4f18c418100560a5010b17e6b40dd7ab3) Thanks [@amilz](https://github.com/amilz)! - Add `@solana/transaction-introspection`, a new package that bridges a `getTransaction` response and the auto-generated `@solana-program/*` `parseXInstruction` clients. Decodes the transaction (`encoding: 'base64'`, `'base58'`, or `'json'`), resolves account indices against static + ALT-loaded addresses, normalizes inner instructions from `meta.innerInstructions`, and exposes `walkInstructions` to enumerate every instruction in display order — each outer instruction followed by its inner instructions — with a `trace` recording its location. Each returned instruction is a `ResolvedInstruction & { trace }` directly usable with `isInstructionForProgram` from `@solana/instructions` and with the auto-generated `identifyXInstruction` / `parseXInstruction` helpers. Supports `legacy`, `v0`, and `v1` compiled transaction messages. Re-exported from `@solana/kit`.
+
+    ```ts
+    import { createSolanaRpc, signature } from '@solana/kit';
+    import { isInstructionForProgram } from '@solana/instructions';
+    import { decodeTransactionFromRpcResponse, walkInstructions } from '@solana/transaction-introspection';
+    import { identifyTokenInstruction, TOKEN_PROGRAM_ADDRESS, TokenInstruction } from '@solana-program/token';
+
+    const rpc = createSolanaRpc('https://api.mainnet-beta.solana.com');
+    const rpcTx = await rpc
+        .getTransaction(signature(txid), {
+            commitment: 'confirmed',
+            encoding: 'base64',
+            maxSupportedTransactionVersion: 0,
+        })
+        .send();
+    if (!rpcTx) throw new Error(`Transaction ${txid} not found`);
+
+    const { compiledMessage, loadedAddresses } = decodeTransactionFromRpcResponse(rpcTx);
+
+    for (const ix of walkInstructions({ compiledMessage, loadedAddresses, meta: rpcTx.meta })) {
+        if (!isInstructionForProgram(ix, TOKEN_PROGRAM_ADDRESS)) continue;
+        if (identifyTokenInstruction(ix) === TokenInstruction.SyncNative) {
+            console.log('SyncNative found at', ix.trace);
+        }
+    }
+    ```
+
+    `@solana/rpc-api` now exports the non-null `getTransaction` response shapes as named types (`GetTransactionApiResponseBase58`, `GetTransactionApiResponseBase64`, `GetTransactionApiResponseJson`, `GetTransactionApiResponseJsonParsed`), which `decodeTransactionFromRpcResponse` accepts as inputs. `@solana/errors` gains `SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_ACCOUNT_INDEX_OUT_OF_RANGE` plus a new `TRANSACTION_INTROSPECTION` domain (`SOLANA_ERROR__TRANSACTION_INTROSPECTION__CANNOT_DECODE_JSON_PARSED_TRANSACTION`, `SOLANA_ERROR__TRANSACTION_INTROSPECTION__UNRECOGNIZED_GET_TRANSACTION_RESPONSE`).
+
+### Patch Changes
+
+- Updated dependencies [[`3014977`](https://github.com/anza-xyz/kit/commit/30149771475d45b6cfff1c4aacd16c8f7256e256), [`772b82c`](https://github.com/anza-xyz/kit/commit/772b82c4f18c418100560a5010b17e6b40dd7ab3), [`4a22021`](https://github.com/anza-xyz/kit/commit/4a2202157e489cb7c0215deea89e8cab40a4762a), [`a6783e0`](https://github.com/anza-xyz/kit/commit/a6783e00efea2c4af27eaced9fa4af6996e5bc2d), [`e193711`](https://github.com/anza-xyz/kit/commit/e1937110a3eb300e184b10732f82ccfefe9c2a3f), [`069d56d`](https://github.com/anza-xyz/kit/commit/069d56d69226f755412b282c22818cbc90f2db4f), [`8d3bbf1`](https://github.com/anza-xyz/kit/commit/8d3bbf1b471aa153e1d51a995981224778fa2937), [`2c47363`](https://github.com/anza-xyz/kit/commit/2c47363f8add9d16aa3a7e6181344e167d27997c)]:
+    - @solana/errors@7.0.0
+    - @solana/rpc-transformers@7.0.0
+    - @solana/rpc-spec@7.0.0
+    - @solana/rpc-parsed-types@7.0.0
+    - @solana/rpc-types@7.0.0
+    - @solana/addresses@7.0.0
+    - @solana/codecs-core@7.0.0
+    - @solana/codecs-strings@7.0.0
+    - @solana/keys@7.0.0
+    - @solana/transaction-messages@7.0.0
+    - @solana/transactions@7.0.0
+
 ## 6.10.0
 
 ### Minor Changes

@@ -1,5 +1,35 @@
 # @solana/codecs-data-structures
 
+## 7.0.0
+
+### Major Changes
+
+- [#1683](https://github.com/anza-xyz/kit/pull/1683) [`99667a1`](https://github.com/anza-xyz/kit/commit/99667a1ea9b0d3b3f227f4cccb2c4b5ba734eb83) Thanks [@oritwoen](https://github.com/oritwoen)! - Align the return types of the union, predicate, and pattern-match codecs so that a fixed-size result is only exposed when every branch is fixed-size _and_ of the same statically-known size. Branches whose sizes are unequal or not statically known now widen from `FixedSize*` to `VariableSize*` (when at least one branch is variable-size) or to a plain `Encoder`/`Decoder`/`Codec` (when the branches are fixed-size but their sizes are not statically comparable), matching what these codecs actually produce at runtime.
+
+    This is a type-only change with no runtime impact, but it is breaking in two ways:
+    - **Return types change.** Consumers that relied on the previous (unsound) fixed-size typing — e.g. reading `.fixedSize`, or passing the result where a `FixedSize*` is required — will need to adjust.
+    - **The predicate and pattern-match signatures changed.** Their value/output type is now inferred from the branch encoders, decoders, or codecs rather than from an explicit type argument. Passing an explicit type argument no longer sets the branch domain: `getPatternMatchEncoder<MyType>([...])` (and the decoder/codec equivalents) now fails to compile, and `getPredicateEncoder<MyType>(...)` silently degrades its return to a plain `Encoder<MyType>`. Instead, type the branch predicates' parameters (e.g. `(value: MyType) => ...`) and let the return type be inferred.
+
+### Minor Changes
+
+- [#1731](https://github.com/anza-xyz/kit/pull/1731) [`ec4d3ef`](https://github.com/anza-xyz/kit/commit/ec4d3ef7192a437ecbdc7103aa1c95556dbd7f5f) Thanks [@kh0ra](https://github.com/kh0ra)! - Add `createDependentStructDecoder`, a fluent builder for a struct decoder whose later fields may depend on the decoded values of earlier ones. Each call to `field` adds a name and either a static `Decoder` or a factory that receives a frozen snapshot of the fields decoded so far. Calling `build` produces a `FixedSizeDecoder` when every field added to the builder is itself a `FixedSizeDecoder`, and a `VariableSizeDecoder` otherwise.
+
+    This is useful for binary formats where a count, version, or discriminator that appears near the start of the struct controls how a later field must be parsed, such as the per-instruction headers in a v1 transaction message.
+
+    ```ts
+    const decoder = createDependentStructDecoder()
+        .field('count', getU8Decoder())
+        .field('values', fields => getArrayDecoder(getU32Decoder(), { size: fields.count }))
+        .build();
+    ```
+
+### Patch Changes
+
+- Updated dependencies [[`3014977`](https://github.com/anza-xyz/kit/commit/30149771475d45b6cfff1c4aacd16c8f7256e256), [`772b82c`](https://github.com/anza-xyz/kit/commit/772b82c4f18c418100560a5010b17e6b40dd7ab3), [`e193711`](https://github.com/anza-xyz/kit/commit/e1937110a3eb300e184b10732f82ccfefe9c2a3f), [`069d56d`](https://github.com/anza-xyz/kit/commit/069d56d69226f755412b282c22818cbc90f2db4f)]:
+    - @solana/errors@7.0.0
+    - @solana/codecs-core@7.0.0
+    - @solana/codecs-numbers@7.0.0
+
 ## 6.10.0
 
 ### Patch Changes

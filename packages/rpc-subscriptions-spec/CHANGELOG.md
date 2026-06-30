@@ -1,5 +1,55 @@
 # @solana/rpc-subscriptions-spec
 
+## 7.0.0
+
+### Major Changes
+
+- [#1663](https://github.com/anza-xyz/kit/pull/1663) [`d09718d`](https://github.com/anza-xyz/kit/commit/d09718de4e2644c8d2a29d4e2d8992bc06177510) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `withSignal()` to `ReactiveStreamStore` for per-connection cancellation, replacing the construction-time `abortSignal` option. Mirrors the action store's per-dispatch `withSignal()` pattern — callers attach a per-connection signal at the call site instead of baking one into the store.
+
+    ```ts
+    const store = createReactiveStoreFromDataPublisherFactory({
+        createDataPublisher: signal => transport({ signal, ...plan }),
+        dataChannelName: 'notification',
+        errorChannelName: 'error',
+    });
+    // Per-connection timeout — fresh clock per attempt:
+    store.withSignal(AbortSignal.timeout(30_000)).connect();
+    ```
+
+    `store.withSignal(signal)` returns a thin wrapper exposing `connect()` that composes the caller-provided signal with the per-connection inner controller via `AbortSignal.any`. Aborting the caller's signal surfaces the abort reason on state as `{ status: 'error' }`; supersession via the internal controller (a newer `connect()` or `reset()`) stays silent so the newer call owns state. The "permanent kill switch" pattern is expressible by binding once: `const killable = store.withSignal(killCtrl.signal); killable.connect();`. After `killCtrl.abort()`, every `killable.connect()` short-circuits to error.
+
+    `createDataPublisher` is widened from `() => Promise<DataPublisher>` to `(signal: AbortSignal) => Promise<DataPublisher>`. The store passes the composed per-connection signal to the factory so the underlying transport can stop on per-connection abort, not just the stream-store's listeners. Existing no-arg factories still satisfy the new shape — TypeScript allows fewer parameters than the declared type.
+
+    The construction-time `abortSignal` option on `createReactiveStoreFromDataPublisherFactory`, `createReactiveStoreWithInitialValueAndSlotTracking`, and `PendingRpcSubscriptionsRequest.reactiveStore()` is removed. Callers wanting a long-lived kill switch use the bind-once `withSignal` pattern. `ReactiveStreamSource<T>.reactiveStore()` is now parameter-less (mirrors `ReactiveActionSource<T>.reactiveStore()`).
+
+- [#1662](https://github.com/anza-xyz/kit/pull/1662) [`fa04323`](https://github.com/anza-xyz/kit/commit/fa043235a58d928a30b7a66a56643dec5327dd6a) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Drop auto-connect from `ReactiveStreamStore`; callers explicitly invoke `connect()` to open the underlying stream. Mirrors the action store's caller-driven `dispatch()` pattern — the store is a state machine that callers orchestrate, not a self-starting subscription.
+
+    The factory variant returned by `createReactiveStoreFromDataPublisherFactory` now starts in `status: 'idle'`. Call `store.connect()` to open the stream; from `idle`, the store transitions through `loading` → `loaded` (or `error`). A subsequent `connect()` from any non-idle status transitions through `retrying` while preserving the last known value. A new `reset()` method aborts the current connection and returns the store to `idle` without permanently killing it — natural for React effect cleanup.
+
+    ```ts
+    const store = createReactiveStoreFromDataPublisherFactory({
+        abortSignal,
+        createDataPublisher,
+        dataChannelName: 'notification',
+        errorChannelName: 'error',
+    });
+    store.connect(); // opens the stream — previously this happened on construction
+    ```
+
+    `retry()` is now deprecated; it remains as an error-only alias for `connect()`. Migrate to calling `connect()` directly. Code that previously relied on `retry()` being a no-op when the store was not in `error` state should add an explicit `if (status === 'error') store.connect();` guard at the call site.
+
+    `createReactiveStoreFromDataPublisher` (the deprecated non-factory variant accepting a ready-made `DataPublisher`) is removed. Its only documented use was as a backwards-compatibility alias behind `PendingRpcSubscriptionsRequest.reactive()`, which is also removed in this release. Migrate to the factory variant — wrap a ready-made publisher in `() => Promise.resolve(publisher)` if needed — and use `reactiveStore()` for RPC subscriptions.
+
+    `createReactiveStoreWithInitialValueAndSlotTracking` in `@solana/kit` no longer fires the RPC request on construction — call `store.connect()` to start it, or wrap in a `useEffect` that calls `connect()` on mount and `reset()` on cleanup. The store starts in `status: 'idle'` and follows the same lifecycle as the underlying stream store.
+
+### Patch Changes
+
+- Updated dependencies [[`3014977`](https://github.com/anza-xyz/kit/commit/30149771475d45b6cfff1c4aacd16c8f7256e256), [`d09718d`](https://github.com/anza-xyz/kit/commit/d09718de4e2644c8d2a29d4e2d8992bc06177510), [`fa04323`](https://github.com/anza-xyz/kit/commit/fa043235a58d928a30b7a66a56643dec5327dd6a), [`3de3dda`](https://github.com/anza-xyz/kit/commit/3de3dda437c18be882cd6378bebda7a82a54e5b0), [`772b82c`](https://github.com/anza-xyz/kit/commit/772b82c4f18c418100560a5010b17e6b40dd7ab3), [`660bd74`](https://github.com/anza-xyz/kit/commit/660bd7447348d6669d48f6f45fc627b002bc16aa), [`e193711`](https://github.com/anza-xyz/kit/commit/e1937110a3eb300e184b10732f82ccfefe9c2a3f), [`069d56d`](https://github.com/anza-xyz/kit/commit/069d56d69226f755412b282c22818cbc90f2db4f), [`a198b5c`](https://github.com/anza-xyz/kit/commit/a198b5c6c9681b3f9c37d9d458cbc6b87b7667e7), [`1c8d215`](https://github.com/anza-xyz/kit/commit/1c8d215afaa795f981999a5d8c6f21e9effb1db6), [`acec0be`](https://github.com/anza-xyz/kit/commit/acec0be468340a7367f78fe8a8ed61ed8a16e553)]:
+    - @solana/errors@7.0.0
+    - @solana/subscribable@7.0.0
+    - @solana/rpc-spec-types@7.0.0
+    - @solana/promises@7.0.0
+
 ## 6.10.0
 
 ### Minor Changes

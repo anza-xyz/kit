@@ -1,5 +1,41 @@
 # @solana/rpc-types
 
+## 7.0.0
+
+### Minor Changes
+
+- [#1678](https://github.com/anza-xyz/kit/pull/1678) [`2c47363`](https://github.com/anza-xyz/kit/commit/2c47363f8add9d16aa3a7e6181344e167d27997c) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `UnwrapRpcResponse<T>` type and `isSolanaRpcResponse()` runtime helper alongside `SolanaRpcResponse`. Use them to detect and unwrap notifications that may or may not be wrapped in a `SolanaRpcResponse` envelope.
+
+    `UnwrapRpcResponse<T>` is a conditional type:
+
+    ```ts
+    type UnwrapRpcResponse<T> = T extends SolanaRpcResponse<infer U> ? U : T;
+    ```
+
+    `isSolanaRpcResponse()` is a type guard that validates the envelope shape by checking `context.slot: bigint` and the presence of `value`, leaving room for additional envelope fields without changing the guard's contract. The narrowed type is `SolanaRpcResponse<UnwrapRpcResponse<T>>`, so callers don't need to spell out the inner type separately.
+
+    ```ts
+    import { isSolanaRpcResponse } from '@solana/rpc-types';
+
+    function lift<T>(notification: T) {
+        if (isSolanaRpcResponse(notification)) {
+            return { slot: notification.context.slot, value: notification.value };
+        }
+        return { slot: undefined, value: notification };
+    }
+    ```
+
+### Patch Changes
+
+- Updated dependencies [[`3014977`](https://github.com/anza-xyz/kit/commit/30149771475d45b6cfff1c4aacd16c8f7256e256), [`772b82c`](https://github.com/anza-xyz/kit/commit/772b82c4f18c418100560a5010b17e6b40dd7ab3), [`e193711`](https://github.com/anza-xyz/kit/commit/e1937110a3eb300e184b10732f82ccfefe9c2a3f), [`069d56d`](https://github.com/anza-xyz/kit/commit/069d56d69226f755412b282c22818cbc90f2db4f)]:
+    - @solana/errors@7.0.0
+    - @solana/addresses@7.0.0
+    - @solana/codecs-core@7.0.0
+    - @solana/codecs-numbers@7.0.0
+    - @solana/codecs-strings@7.0.0
+    - @solana/fixed-points@7.0.0
+    - @solana/nominal-types@7.0.0
+
 ## 6.10.0
 
 ### Minor Changes

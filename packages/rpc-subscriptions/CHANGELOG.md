@@ -1,5 +1,22 @@
 # @solana/rpc-subscriptions
 
+## 7.0.0
+
+### Patch Changes
+
+- Updated dependencies [[`3014977`](https://github.com/anza-xyz/kit/commit/30149771475d45b6cfff1c4aacd16c8f7256e256), [`d09718d`](https://github.com/anza-xyz/kit/commit/d09718de4e2644c8d2a29d4e2d8992bc06177510), [`fa04323`](https://github.com/anza-xyz/kit/commit/fa043235a58d928a30b7a66a56643dec5327dd6a), [`3de3dda`](https://github.com/anza-xyz/kit/commit/3de3dda437c18be882cd6378bebda7a82a54e5b0), [`772b82c`](https://github.com/anza-xyz/kit/commit/772b82c4f18c418100560a5010b17e6b40dd7ab3), [`4a22021`](https://github.com/anza-xyz/kit/commit/4a2202157e489cb7c0215deea89e8cab40a4762a), [`660bd74`](https://github.com/anza-xyz/kit/commit/660bd7447348d6669d48f6f45fc627b002bc16aa), [`e193711`](https://github.com/anza-xyz/kit/commit/e1937110a3eb300e184b10732f82ccfefe9c2a3f), [`069d56d`](https://github.com/anza-xyz/kit/commit/069d56d69226f755412b282c22818cbc90f2db4f), [`a198b5c`](https://github.com/anza-xyz/kit/commit/a198b5c6c9681b3f9c37d9d458cbc6b87b7667e7), [`8d3bbf1`](https://github.com/anza-xyz/kit/commit/8d3bbf1b471aa153e1d51a995981224778fa2937), [`1c8d215`](https://github.com/anza-xyz/kit/commit/1c8d215afaa795f981999a5d8c6f21e9effb1db6), [`2c47363`](https://github.com/anza-xyz/kit/commit/2c47363f8add9d16aa3a7e6181344e167d27997c), [`acec0be`](https://github.com/anza-xyz/kit/commit/acec0be468340a7367f78fe8a8ed61ed8a16e553)]:
+    - @solana/errors@7.0.0
+    - @solana/subscribable@7.0.0
+    - @solana/rpc-subscriptions-spec@7.0.0
+    - @solana/rpc-transformers@7.0.0
+    - @solana/rpc-spec-types@7.0.0
+    - @solana/rpc-types@7.0.0
+    - @solana/rpc-subscriptions-channel-websocket@7.0.0
+    - @solana/rpc-subscriptions-api@7.0.0
+    - @solana/fast-stable-stringify@7.0.0
+    - @solana/functional@7.0.0
+    - @solana/promises@7.0.0
+
 ## 6.10.0
 
 ### Patch Changes

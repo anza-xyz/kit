@@ -1,5 +1,100 @@
 # @solana/errors
 
+## 7.0.0
+
+### Minor Changes
+
+- [#1719](https://github.com/anza-xyz/kit/pull/1719) [`3014977`](https://github.com/anza-xyz/kit/commit/30149771475d45b6cfff1c4aacd16c8f7256e256) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add the `SOLANA_ERROR__REACT__SUBSCRIPTION_CLOSED_WITHOUT_ERROR` error code. `useSubscriptionSWR` now surfaces this `SolanaError` when the underlying store reaches an error state without an error value (e.g. a `DataPublisher` emitting `undefined` on its error channel, or `controller.abort(null)`), instead of passing the nullish value to SWR's `next` — which would be treated as a success and silently wipe the cached data.
+
+- [#1611](https://github.com/anza-xyz/kit/pull/1611) [`772b82c`](https://github.com/anza-xyz/kit/commit/772b82c4f18c418100560a5010b17e6b40dd7ab3) Thanks [@amilz](https://github.com/amilz)! - Add `@solana/transaction-introspection`, a new package that bridges a `getTransaction` response and the auto-generated `@solana-program/*` `parseXInstruction` clients. Decodes the transaction (`encoding: 'base64'`, `'base58'`, or `'json'`), resolves account indices against static + ALT-loaded addresses, normalizes inner instructions from `meta.innerInstructions`, and exposes `walkInstructions` to enumerate every instruction in display order — each outer instruction followed by its inner instructions — with a `trace` recording its location. Each returned instruction is a `ResolvedInstruction & { trace }` directly usable with `isInstructionForProgram` from `@solana/instructions` and with the auto-generated `identifyXInstruction` / `parseXInstruction` helpers. Supports `legacy`, `v0`, and `v1` compiled transaction messages. Re-exported from `@solana/kit`.
+
+    ```ts
+    import { createSolanaRpc, signature } from '@solana/kit';
+    import { isInstructionForProgram } from '@solana/instructions';
+    import { decodeTransactionFromRpcResponse, walkInstructions } from '@solana/transaction-introspection';
+    import { identifyTokenInstruction, TOKEN_PROGRAM_ADDRESS, TokenInstruction } from '@solana-program/token';
+
+    const rpc = createSolanaRpc('https://api.mainnet-beta.solana.com');
+    const rpcTx = await rpc
+        .getTransaction(signature(txid), {
+            commitment: 'confirmed',
+            encoding: 'base64',
+            maxSupportedTransactionVersion: 0,
+        })
+        .send();
+    if (!rpcTx) throw new Error(`Transaction ${txid} not found`);
+
+    const { compiledMessage, loadedAddresses } = decodeTransactionFromRpcResponse(rpcTx);
+
+    for (const ix of walkInstructions({ compiledMessage, loadedAddresses, meta: rpcTx.meta })) {
+        if (!isInstructionForProgram(ix, TOKEN_PROGRAM_ADDRESS)) continue;
+        if (identifyTokenInstruction(ix) === TokenInstruction.SyncNative) {
+            console.log('SyncNative found at', ix.trace);
+        }
+    }
+    ```
+
+    `@solana/rpc-api` now exports the non-null `getTransaction` response shapes as named types (`GetTransactionApiResponseBase58`, `GetTransactionApiResponseBase64`, `GetTransactionApiResponseJson`, `GetTransactionApiResponseJsonParsed`), which `decodeTransactionFromRpcResponse` accepts as inputs. `@solana/errors` gains `SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_ACCOUNT_INDEX_OUT_OF_RANGE` plus a new `TRANSACTION_INTROSPECTION` domain (`SOLANA_ERROR__TRANSACTION_INTROSPECTION__CANNOT_DECODE_JSON_PARSED_TRANSACTION`, `SOLANA_ERROR__TRANSACTION_INTROSPECTION__UNRECOGNIZED_GET_TRANSACTION_RESPONSE`).
+
+- [#1607](https://github.com/anza-xyz/kit/pull/1607) [`e193711`](https://github.com/anza-xyz/kit/commit/e1937110a3eb300e184b10732f82ccfefe9c2a3f) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `ClientProvider`, `useClient`, and `useClientCapability` — the Kit client context layer for React.
+
+    `ClientProvider` publishes a caller-owned Kit client to its subtree. Required by `useClient`, `useClientCapability`, and any plugin-specific hook that depends on a client capability — generic primitives like `useAction` work against arbitrary async functions and don't need a provider. The provider accepts both synchronous clients and promise-returning ones — when given a promise (e.g. `createClient().use(asyncPlugin())`), it suspends via the nearest `<Suspense>` boundary until the client resolves. On React 19 it delegates to `React.use(promise)`; on React 18 an internal thrown-promise shim, keyed by promise identity, honours the same contract.
+
+    `useClient<TClient>()` is the basic context accessor. Defaults to the base `Client` shape; callers who know a specific plugin is installed may widen the type via the generic. Throws a new `SolanaError` with code `SOLANA_ERROR__REACT__MISSING_PROVIDER` when called outside a provider.
+
+    `useClientCapability<TClient>({ capability, hookName, providerHint })` runtime-checks that the requested capability (or capabilities) is installed on the client and throws `SOLANA_ERROR__REACT__MISSING_CAPABILITY` — surfacing the calling `hookName` and a `providerHint` — when it isn't. Plugin-hook authors use this to fail loudly at mount instead of letting a missing plugin surface later as `undefined`.
+
+    Two new error codes (`SOLANA_ERROR__REACT__MISSING_PROVIDER`, `SOLANA_ERROR__REACT__MISSING_CAPABILITY`) are reserved in the `[9000000-9000999]` range.
+
+### Patch Changes
+
+- [#1723](https://github.com/anza-xyz/kit/pull/1723) [`069d56d`](https://github.com/anza-xyz/kit/commit/069d56d69226f755412b282c22818cbc90f2db4f) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add configurable instruction-count limits to transaction planners and message packers, and default planned and packed transaction messages to 16 instructions. The planner limit applies to the final transaction message, including instructions returned by `createTransactionMessage` or added by `onTransactionMessageUpdated`, and can be overridden when creating a planner or for an individual planning call.
+
+    This is useful because Solana limits transactions to 64 instructions, including inner instructions. Kit does not know how many inner instructions each instruction will require when executed. The default of 16 assumes an average of 3 additional inner instructions per top-level instruction.
+
+    When a transaction message reaches this configured ceiling, the planner and message packer throw the new `SOLANA_ERROR__INSTRUCTION_PLANS__MAX_INSTRUCTIONS_PER_TRANSACTION_EXCEEDED` error rather than the `SOLANA_ERROR__TRANSACTION__TOO_MANY_INSTRUCTIONS` error reserved for the hard 64-instruction limit, so the configurable soft limit is distinguishable from the format-enforced one. Throws `SOLANA_ERROR__INSTRUCTION_PLANS__INVALID_MAX_INSTRUCTIONS_PER_TRANSACTION` is the configured max is invalid (not a positive integer, or greater than 64).
+
+    Configure a maximum for every plan created by a transaction planner:
+
+    ```ts
+    const transactionPlanner = createTransactionPlanner({
+        createTransactionMessage,
+        maxInstructionsPerTransaction: 32,
+    });
+    ```
+
+    Override the maximum for an individual planning request:
+
+    ```ts
+    const transactionPlan = await transactionPlanner(instructionPlan, {
+        maxInstructionsPerTransaction: 8,
+    });
+    ```
+
+    Override the maximum when packing a message directly:
+
+    ```ts
+    const packedTransactionMessage = messagePacker.packMessageToCapacity(transactionMessage, {
+        maxInstructions: 32,
+    });
+    ```
+
+    **BREAKING CHANGES**
+
+    **Transaction planners and message packers now default to 16 instructions per transaction.** Plans and direct message packer calls that previously fit 17 to 64 top-level instructions in one transaction message may now be split into multiple transaction messages. Apps that depend on larger single-transaction plans can preserve the previous top-level instruction limit by configuring `maxInstructionsPerTransaction: 64` on transaction planners or `maxInstructions: 64` on direct message packer calls; the hard transaction-message limit of 64 top-level instructions still applies.
+
+    ```diff
+     const transactionPlanner = createTransactionPlanner({
+         createTransactionMessage,
+    +    maxInstructionsPerTransaction: 64,
+     });
+    ```
+
+    ```diff
+    -const packedTransactionMessage = messagePacker.packMessageToCapacity(transactionMessage);
+    +const packedTransactionMessage = messagePacker.packMessageToCapacity(transactionMessage, { maxInstructions: 64 });
+    ```
+
 ## 6.10.0
 
 ### Minor Changes

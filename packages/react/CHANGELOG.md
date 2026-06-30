@@ -1,5 +1,200 @@
 # @solana/react
 
+## 7.0.0
+
+### Major Changes
+
+- [#1780](https://github.com/anza-xyz/kit/pull/1780) [`acec0be`](https://github.com/anza-xyz/kit/commit/acec0be468340a7367f78fe8a8ed61ed8a16e553) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Streamline the `ReactiveStreamStore` contract by removing deprecated members and unifying its state accessor with `ReactiveActionStore`. The `getUnifiedState()` method has been renamed to `getState()`, and the deprecated value-only `getState()`, `getError()`, and `retry()` members along with the `ReactiveStore` type alias have been removed.
+
+    **BREAKING CHANGES**
+
+    **`getUnifiedState()` renamed to `getState()`.** The unified `{ data, error, status }` snapshot accessor is now simply `getState()`, matching `ReactiveActionStore.getState()`.
+
+    ```diff
+    - const state = useSyncExternalStore(store.subscribe, store.getUnifiedState);
+    + const state = useSyncExternalStore(store.subscribe, store.getState);
+    ```
+
+    **Removed the deprecated value-only `getState()` and `getError()`.** Read the value and error off the unified snapshot instead.
+
+    ```diff
+    - const data = store.getState();
+    - const error = store.getError();
+    + const { data, error } = store.getState();
+    ```
+
+    **Removed `retry()`.** Use `connect()`, which always (re)connects regardless of status. Wrap it with a status guard if you need the error-only behavior.
+
+    ```diff
+    - store.retry();
+    + if (store.getState().status === 'error') store.connect();
+    ```
+
+    **Removed the `ReactiveStore` type alias.** Use `ReactiveStreamStore` directly.
+
+    ```diff
+    - import type { ReactiveStore } from '@solana/subscribable';
+    + import type { ReactiveStreamStore } from '@solana/subscribable';
+    ```
+
+### Minor Changes
+
+- [#1612](https://github.com/anza-xyz/kit/pull/1612) [`08777cf`](https://github.com/anza-xyz/kit/commit/08777cfc156c661e519896d31dcb26ccec4daeee) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `useAction` — a React hook that bridges any async function into a tracked action with `dispatch` / `dispatchAsync` / `status` / `data` / `error` / `reset` and supersede-on-second-call semantics. Built on `createReactiveActionStore` from `@solana/subscribable`.
+
+    The wrapped function receives a fresh `AbortSignal` per dispatch. `dispatch(...)` is fire-and-forget — it returns `void`, never throws, and is the variant to wire into UI event handlers, with outcomes read off `status` / `data` / `error`. `dispatchAsync(...)` returns a promise for imperative callers that need the resolved value. Calling either again while a prior call is in flight aborts the first; awaiters of a superseded `dispatchAsync` call see a rejection with an `AbortError` filterable via `isAbortError` from `@solana/promises`. `data` from a prior `success` persists through subsequent `running` states for stale-while-revalidate UX; only `reset()` clears it.
+
+    `fn` is held in a ref synced to the latest render's closure, so values it captures (form state, route params, etc.) are always fresh on each new dispatch without the caller needing to maintain a `deps` array. In-flight calls are unaffected — they continue with the closure they captured at dispatch time. Matches the convention used by `useMutation` in TanStack Query and `useWriteContract` in wagmi.
+
+    The shared `ActionResult<TArgs, TResult>` type is also exported so plugin hooks can declare their return shape against it.
+
+- [#1619](https://github.com/anza-xyz/kit/pull/1619) [`fd6bdef`](https://github.com/anza-xyz/kit/commit/fd6bdef9eb65955ff3c3592e3fef01b4260f1ecd) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `useRequest` — a React hook for one-shot async reads. Pass either an async function `(signal) => Promise<T>` or a memoized `ReactiveActionSource<T>` (satisfied by `PendingRpcRequest`). The hook fires the call on mount, re-fires whenever the source identity changes, and aborts the in-flight call on cleanup.
+
+    ```tsx
+    // `ReactiveActionSource` (e.g. `PendingRpcRequest`):
+    const source = useMemo(() => client.rpc.getLatestBlockhash(), [client]);
+    const { data, error, refresh } = useRequest(source);
+
+    // Bare async function:
+    const fetcher = useCallback(
+        (signal: AbortSignal) => fetch(`/api/users/${userId}`, { signal }).then(r => r.json()),
+        [userId],
+    );
+    const { data, error, refresh } = useRequest(fetcher);
+    ```
+
+    The result reports `status` as one of `fetching | success | error | disabled`. A request in flight is always `fetching`; inspect `data` and `error` to know what stale content (if any) is available to render alongside a spinner — first attempt has neither, a refresh after a prior outcome carries one or both forward. Pass `null` for the source to gate the request off — useful while inputs aren't yet known. The result then reports `status: 'disabled'`.
+
+    Optional `getAbortSignal: () => AbortSignal` is a factory invoked on every attempt (initial fire + every `refresh()`). Each attempt gets a fresh signal that's composed with the store's internal per-dispatch controller via `AbortSignal.any`. The natural use is per-attempt timeouts: `getAbortSignal: () => AbortSignal.timeout(5_000)` gives every attempt its own 5-second clock that resets on refresh. The factory is held in a ref synced to the latest render, so inline closures are fine — no `useCallback` needed. `refresh()` also accepts an optional `{ abortSignal }` override to replace the factory for one specific attempt.
+
+    The new `RequestResult<T>` and `UseRequestOptions` types are exported alongside the hook so plugin hooks built on top can declare their return shape against them.
+
+- [#1719](https://github.com/anza-xyz/kit/pull/1719) [`3014977`](https://github.com/anza-xyz/kit/commit/30149771475d45b6cfff1c4aacd16c8f7256e256) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `useSubscriptionSWR(key, source, options?)` to the `@solana/react/swr` subpath — the SWR-backed counterpart to `useSubscription`. Routes a `ReactiveStreamSource<T>` through SWR's subscription cache (`useSWRSubscription`).
+
+    ```tsx
+    import { useSubscriptionSWR } from '@solana/react/swr';
+
+    const { data } = useSubscriptionSWR(['account', address], client.rpcSubscriptions.accountNotifications(address));
+    ```
+
+    `data` is the notification exactly as the source emits it. Pass `null` for either `key` or `source` to disable. Options accept SWR's config plus `getAbortSignal` for an abort signal.
+
+- [#1607](https://github.com/anza-xyz/kit/pull/1607) [`e193711`](https://github.com/anza-xyz/kit/commit/e1937110a3eb300e184b10732f82ccfefe9c2a3f) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `ClientProvider`, `useClient`, and `useClientCapability` — the Kit client context layer for React.
+
+    `ClientProvider` publishes a caller-owned Kit client to its subtree. Required by `useClient`, `useClientCapability`, and any plugin-specific hook that depends on a client capability — generic primitives like `useAction` work against arbitrary async functions and don't need a provider. The provider accepts both synchronous clients and promise-returning ones — when given a promise (e.g. `createClient().use(asyncPlugin())`), it suspends via the nearest `<Suspense>` boundary until the client resolves. On React 19 it delegates to `React.use(promise)`; on React 18 an internal thrown-promise shim, keyed by promise identity, honours the same contract.
+
+    `useClient<TClient>()` is the basic context accessor. Defaults to the base `Client` shape; callers who know a specific plugin is installed may widen the type via the generic. Throws a new `SolanaError` with code `SOLANA_ERROR__REACT__MISSING_PROVIDER` when called outside a provider.
+
+    `useClientCapability<TClient>({ capability, hookName, providerHint })` runtime-checks that the requested capability (or capabilities) is installed on the client and throws `SOLANA_ERROR__REACT__MISSING_CAPABILITY` — surfacing the calling `hookName` and a `providerHint` — when it isn't. Plugin-hook authors use this to fail loudly at mount instead of letting a missing plugin surface later as `undefined`.
+
+    Two new error codes (`SOLANA_ERROR__REACT__MISSING_PROVIDER`, `SOLANA_ERROR__REACT__MISSING_CAPABILITY`) are reserved in the `[9000000-9000999]` range.
+
+- [#1702](https://github.com/anza-xyz/kit/pull/1702) [`3a92f37`](https://github.com/anza-xyz/kit/commit/3a92f378cc47e936e96e55ce396e1958308f5e6c) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `useSubscription` — a React hook for subscription-based live data. Pass a `ReactiveStreamSource<T>` (satisfied by `PendingRpcSubscriptionsRequest`) and the hook opens the subscription on mount, re-opens whenever the source identity changes, and tears it down on unmount.
+
+    ```tsx
+    function AccountBalance({ address }: { address: Address }) {
+        const client = useClient<ClientWithRpcSubscriptions<AccountNotificationsApi>>();
+        const source = useMemo(() => client.rpcSubscriptions.accountNotifications(address), [client, address]);
+        const { data, error, reconnect } = useSubscription(source);
+        if (error) return <button onClick={reconnect}>Reconnect</button>;
+        return <p>{data ? `${data.value.lamports} lamports at slot ${data.context.slot}` : 'Connecting…'}</p>;
+    }
+    ```
+
+    The result reports `status` as one of `loading | loaded | error | disabled`. `data` is the notification exactly as the source emits it — no unwrapping or reshaping. For RPC subscriptions that emit `SolanaRpcResponse<U>` (account/program/signature), read the inner value at `data.value` and the slot at `data.context.slot`; for raw notifications (slot/logs/root) `data` is the raw shape. Pass `null` for the source to gate the subscription off — useful while inputs aren't yet known. The result then reports `status: 'disabled'`. After a notification arrives, an error transitions to `status: 'error'` while preserving the stale `data`; `reconnect()` returns to `loading` (preserving stale `data` and `error` for stale-while-revalidate) before settling on `loaded` or a fresh `error`.
+
+    Optional `getAbortSignal: () => AbortSignal` is a factory invoked on every connection (initial subscribe + every `reconnect()`). Each connection gets a fresh signal that the underlying store composes with its per-connection controller via `AbortSignal.any`. The natural use is per-connection timeouts: `getAbortSignal: () => AbortSignal.timeout(30_000)` gives every connection its own 30-second clock that resets on reconnect. The factory is held in a ref synced to the latest render, so inline closures are fine — no `useCallback` needed. `reconnect()` also accepts an optional `{ abortSignal }` override to replace the factory for one specific attempt (presence-based: omit to use the factory, `{ abortSignal: signal }` to override, `{ abortSignal: undefined }` to opt out).
+
+    The hook mirrors `useRequest`'s structure exactly: construct the lazy store via `useMemo`, fire `store.connect()` in a `useEffect`, tear down via `store.reset()` in cleanup. Same StrictMode-safe lifecycle, same vocabulary, same per-call signal API. SSR-safe — on the server the connect effect doesn't run, so the store stays `idle` and the hook reports `status: 'loading'`; first client render hydrates from the same paint and commits the connect.
+
+    `SubscriptionResult<T>` and `UseSubscriptionOptions` are exported alongside the hook so plugin hooks built on top can declare their return shape against them.
+
+- [#1713](https://github.com/anza-xyz/kit/pull/1713) [`587ec07`](https://github.com/anza-xyz/kit/commit/587ec070f2742a95871b0ee5d46077ad2738f9cb) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `@solana/react/swr` subpath with `useRequestSWR(key, source, options?)` — the SWR-backed counterpart to `useRequest`. Same source shape (`ReactiveActionSource<T>` or `(signal) => Promise<T>`); returns SWR's native `SWRResponse<T>`. Pass `null` for either `key` or `source` to disable. Requires `swr@^2` as an optional peer dependency.
+
+    ```tsx
+    import { useRequestSWR } from '@solana/react/swr';
+
+    const { data } = useRequestSWR(['epochInfo'], client.rpc.getEpochInfo());
+    ```
+
+    Options accept any `SWRConfiguration` field plus the Kit-only `getAbortSignal: () => AbortSignal` (same option as `useRequest`), which threads a per-attempt signal into the source — typically a timeout via `AbortSignal.timeout()`. Use SWR's `result.mutate()` to re-fire on demand.
+
+- [#1707](https://github.com/anza-xyz/kit/pull/1707) [`da42ff8`](https://github.com/anza-xyz/kit/commit/da42ff802251374c752b54f76f6a32f13fbb18a8) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `useTrackedData` — a React hook for an RPC subscription seeded by a one-shot RPC fetch, slot-deduped. The subscription (e.g. `accountNotifications`) is the primary source of live updates; the initial fetch (e.g. `getBalance`, `getAccountInfo`) provides a value to surface as soon as it resolves — typically before the first subscription notification arrives — so the `loading` paint is shorter than subscription-only would give you. Surfaces a unified `{ data, error, refresh, status }` view where `data` is the `SolanaRpcResponse<TItem>` envelope that the underlying kit primitive emits — the primitive's type guarantees the envelope shape, so callers can read `data.value` and `data.context.slot` directly without a runtime check. The underlying store slot-dedupes between the two sources — out-of-order arrivals never regress the surfaced value (older slots are dropped silently, so a stale RPC response can't overwrite a fresher subscription notification).
+
+    ```tsx
+    function AccountBalance({ address }: { address: Address }) {
+        const client = useClient<ClientWithRpc<GetBalanceApi> & ClientWithRpcSubscriptions<AccountNotificationsApi>>();
+        const spec = useMemo(
+            () => ({
+                rpcRequest: client.rpc.getBalance(address),
+                rpcSubscriptionRequest: client.rpcSubscriptions.accountNotifications(address),
+                rpcValueMapper: (lamports: bigint) => lamports,
+                rpcSubscriptionValueMapper: ({ lamports }: { lamports: bigint }) => lamports,
+            }),
+            [client, address],
+        );
+        const { data, error, refresh } = useTrackedData(spec);
+        if (error) return <button onClick={refresh}>Retry</button>;
+        return <p>{data ? `${data.value} lamports at slot ${data.context.slot}` : 'Loading…'}</p>;
+    }
+    ```
+
+    The result reports `status` as one of `loading | loaded | error | disabled`. Pass `null` for the spec to gate the work off — useful while inputs aren't yet known (e.g. an `address` that hasn't been selected). After a notification arrives, an error transitions to `status: 'error'` while preserving the stale `data` (envelope intact); `refresh()` re-runs both the initial RPC and the subscription, returns `status` to `loading` (preserving stale `data` and `error` for stale-while-revalidate), and settles on `loaded` or a fresh `error`.
+
+    Optional `getAbortSignal: () => AbortSignal` is a factory invoked on every attempt (initial run + every `refresh()`). Each attempt gets a fresh signal that the underlying store composes with its per-attempt controller via `AbortSignal.any`. The natural use is per-attempt timeouts: `getAbortSignal: () => AbortSignal.timeout(30_000)` gives every attempt its own 30-second clock that resets on refresh. The factory is held in a ref synced to the latest render, so inline closures are fine — no `useCallback` needed. `refresh()` also accepts an optional `{ abortSignal }` override to replace the factory for one specific attempt (presence-based: omit to use the factory, `{ abortSignal: signal }` to override, `{ abortSignal: undefined }` to opt out).
+
+    The hook is built on `createReactiveStoreWithInitialValueAndSlotTracking` from `@solana/kit` — the slot tracking, abort plumbing, and stale-while-revalidate behaviour live one layer down. The React surface reduces to `useSyncExternalStore` glue plus the per-attempt signal API. The Kit primitive's config type is re-shaped as `TrackedDataSpec<TRpcValue, TSubscriptionValue, TItem>` for friendlier use-site naming; the two are mutually assignable. SSR-safe — on the server the connect effect doesn't run, so the store stays `idle` and the hook reports `status: 'loading'`; first client render hydrates from the same paint and commits the connect.
+
+    `TrackedDataResult<T>`, `TrackedDataSpec<TRpc, TSub, T>`, and `UseTrackedDataOptions` are exported alongside the hook for plugin hooks built on top.
+
+- [#1727](https://github.com/anza-xyz/kit/pull/1727) [`c32a0f7`](https://github.com/anza-xyz/kit/commit/c32a0f72ea1c264e4f0936a59aa47d2512314f92) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `useTrackedDataSWR(key, spec, options?)` to the `@solana/react/swr` subpath — the SWR-backed counterpart to `useTrackedData`. Takes the same `TrackedDataSpec` and routes the unified, slot-deduped stream through SWR's `useSWRSubscription`.
+
+    ```tsx
+    import { useTrackedDataSWR } from '@solana/react/swr';
+
+    const { data } = useTrackedDataSWR(['balance', address], spec);
+    // data is `SolanaRpcResponse<TItem> | undefined`
+    ```
+
+    `data` is shape `SolanaRpcResponse<TItem>`, because this hook requires the slot for de-duping. Mirrors core `useTrackedData`. Pass `null` for either `key` or `spec` to disable. Options accept SWR's config plus `getAbortSignal` for a custom abort signal.
+
+- [#1769](https://github.com/anza-xyz/kit/pull/1769) [`205af00`](https://github.com/anza-xyz/kit/commit/205af001328d8e209c9cb99dad846748fa88077b) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `useTrackedDataQuery` to the `@solana/react/query` subpath. This is the TanStack Query-backed counterpart to `useTrackedData`: it pairs a one-shot RPC fetch with an ongoing subscription (slot-deduped) and routes the unified stream through TanStack Query's cache via `experimental_streamedQuery`, surfacing the `SolanaRpcResponse<TItem>` envelope as `data`. Slot dedupe spans the cache, so a `refetch()`'s fresh store cannot regress the cached envelope to an older slot from a lagging RPC node.
+
+- [#1759](https://github.com/anza-xyz/kit/pull/1759) [`1032a79`](https://github.com/anza-xyz/kit/commit/1032a79046cf4e7a7f8b983ac9c05aaede6814d3) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add a `@solana/react/query` subpath that bridges Kit's reactive primitives into [TanStack Query](https://tanstack.com/query). The new `useRequestQuery(key, source, options?)` hook is the TanStack Query-backed counterpart to `useRequest` — it accepts the same `ReactiveActionSource<T>` or `(signal: AbortSignal) => Promise<T>` source shape, routes it through TanStack's cache, and threads the query's cancellation signal (combined with the optional `getAbortSignal` factory) into the source. Pass a `null` source to disable the query (mapped to TanStack's `enabled: false`). `@tanstack/react-query@^5` is an optional peer dependency.
+
+- [#1760](https://github.com/anza-xyz/kit/pull/1760) [`251b361`](https://github.com/anza-xyz/kit/commit/251b3611700b37a96b4ff16f8818fb486c58bf87) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `useSubscriptionQuery(key, source, options?)` to the `@solana/react/query` subpath — the TanStack Query-backed counterpart to `useSubscription`, for streams with no one-shot RPC fetch. It routes a long-lived stream through TanStack Query's cache via `experimental_streamedQuery`, so components reading the same `key` share one connection and the stream shows up in TanStack Query's devtools.
+
+    ```tsx
+    import { useSubscriptionQuery } from '@solana/react/query';
+
+    const { data, error } = useSubscriptionQuery(['slot'], client.rpcSubscriptions.slotNotifications());
+    ```
+
+    The source matches `useSubscription`: a `ReactiveStreamSource<T>`. The hook also accepts a raw `(signal: AbortSignal) => AsyncIterable<T>` factory, as `experimental_streamedQuery` is built on `AsyncIterable`. `data` is the raw notification — the `SolanaRpcResponse` envelope is not unwrapped — matching `useSubscription`. Pass `null` for `source` to disable (TanStack's `enabled: false`); call `result.refetch()` to reconnect. Defaults `retry: false`, `staleTime: Infinity`, and `refetchOnWindowFocus: false` so a focus revalidation doesn't tear down and re-open the connection.
+
+- [#1624](https://github.com/anza-xyz/kit/pull/1624) [`1c8d215`](https://github.com/anza-xyz/kit/commit/1c8d215afaa795f981999a5d8c6f21e9effb1db6) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Preserve the last `error` on a `ReactiveActionStore` through subsequent `running` states, matching the existing stale-while-revalidate behavior for `data`. A re-dispatch after a failure now keeps the previous error visible until the new attempt resolves, mirroring how SWR and TanStack Query handle revalidation. `success` clears the error; `reset()` clears both. This also affects `useAction`, whose `error` field now persists through a new `dispatch()` until the new call resolves.
+
+### Patch Changes
+
+- [#1719](https://github.com/anza-xyz/kit/pull/1719) [`3014977`](https://github.com/anza-xyz/kit/commit/30149771475d45b6cfff1c4aacd16c8f7256e256) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add the `SOLANA_ERROR__REACT__SUBSCRIPTION_CLOSED_WITHOUT_ERROR` error code. `useSubscriptionSWR` now surfaces this `SolanaError` when the underlying store reaches an error state without an error value (e.g. a `DataPublisher` emitting `undefined` on its error channel, or `controller.abort(null)`), instead of passing the nullish value to SWR's `next` — which would be treated as a success and silently wipe the cached data.
+
+- [#1706](https://github.com/anza-xyz/kit/pull/1706) [`9063658`](https://github.com/anza-xyz/kit/commit/906365844fdc8555850ea9c8d1fc84614e6883ca) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Migrate `@solana/react` to depend on `@solana/kit` as a peer dependency (replacing its individual workspace sub-package deps) and re-export `@solana/subscribable` from `@solana/kit` so React consumers have a single import root. `@solana/promises` remains as a direct dep — it's a small utility that isn't part of Kit's public surface.
+
+    For `@solana/react` users:
+    - `@solana/kit` must now be installed alongside `@solana/react`.
+    - Apps that already use both get a single deduplicated `@solana/kit` instance — important for anything relying on shared types or `instanceof SolanaError` checks.
+    - Kit can be bumped independently of React within the peer range.
+
+    For `@solana/kit` users:
+    - `ReactiveStreamSource`, `ReactiveStreamStore`, `ReactiveActionSource`, `ReactiveActionStore`, `ReactiveState`, `createReactiveActionStore`, `createReactiveStoreFromDataPublisherFactory`, `DataPublisher` and the rest of `@solana/subscribable`'s surface are now reachable directly through `@solana/kit`.
+
+- Updated dependencies [[`d09718d`](https://github.com/anza-xyz/kit/commit/d09718de4e2644c8d2a29d4e2d8992bc06177510), [`fa04323`](https://github.com/anza-xyz/kit/commit/fa043235a58d928a30b7a66a56643dec5327dd6a), [`3de3dda`](https://github.com/anza-xyz/kit/commit/3de3dda437c18be882cd6378bebda7a82a54e5b0), [`772b82c`](https://github.com/anza-xyz/kit/commit/772b82c4f18c418100560a5010b17e6b40dd7ab3), [`03000e5`](https://github.com/anza-xyz/kit/commit/03000e57cf90a1dab630704edf067bc2ac3bc381), [`a4ef3b5`](https://github.com/anza-xyz/kit/commit/a4ef3b5f6c3735d015d6f08898372bd648f36c67), [`a198b5c`](https://github.com/anza-xyz/kit/commit/a198b5c6c9681b3f9c37d9d458cbc6b87b7667e7), [`9063658`](https://github.com/anza-xyz/kit/commit/906365844fdc8555850ea9c8d1fc84614e6883ca), [`6947740`](https://github.com/anza-xyz/kit/commit/6947740680b1bb8c570a5c513ba165e356ceee7d), [`1c8d215`](https://github.com/anza-xyz/kit/commit/1c8d215afaa795f981999a5d8c6f21e9effb1db6), [`acec0be`](https://github.com/anza-xyz/kit/commit/acec0be468340a7367f78fe8a8ed61ed8a16e553)]:
+    - @solana/subscribable@7.0.0
+    - @solana/kit@7.0.0
+    - @solana/signers@7.0.0
+    - @solana/transaction-messages@7.0.0
+    - @solana/transactions@7.0.0
+    - @solana/promises@7.0.0
+
 ## 6.10.0
 
 ### Patch Changes
