@@ -112,9 +112,10 @@ export function estimateResourceLimitsFactory({
                     sigVerify: false,
                 })
                 .send({ abortSignal });
-            // The API response type varies based on config (eg. `replacementBlockhash` is only
-            // present when `replaceRecentBlockhash` is true), but `RpcSimulateTransactionResult`
-            // is a flat superset. Cast through `unknown` to bridge the structural gap.
+            // The API response and `RpcSimulateTransactionResult` describe overlapping but
+            // structurally different shapes (eg. `replacementBlockhash` is a parsed
+            // `TransactionBlockhashLifetime` object here, but a raw string there). Cast through
+            // `unknown` to bridge the structural gap.
             const { err: transactionError, ...simulationResult } =
                 response.value as unknown as RpcSimulateTransactionResult;
 
