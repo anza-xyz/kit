@@ -5,9 +5,9 @@ description: Decode a confirmed transaction and parse its instructions
 
 ## Introduction
 
-When you fetch a confirmed transaction with `getTransaction`, the RPC hands you a compiled, wire-shaped payload: account references are numeric indices, instruction data is encoded as a string, and the instructions emitted by cross-program invocations live in a separate `meta.innerInstructions` field. Codama auto-generated (e.g.`@solana-program/*` clients) — `identifyXyzProgramInstruction`, `parseMyProgramInstruction`, and other helpers — want kit [`Instruction`](/api/interfaces/Instruction) objects with resolved [`AccountMeta`](/api/interfaces/AccountMeta)s and raw bytes.
+When you fetch a confirmed transaction with `getTransaction`, the RPC hands you a compiled, wire-shaped payload: account references are numeric indices, instruction data is encoded as a string, and the instructions emitted by cross-program invocations live in a separate `meta.innerInstructions` field. Codama auto-generated (e.g.`@solana-program/*`) clients — `identifyXyzProgramInstruction`, `parseMyProgramInstruction`, and other helpers — want Kit [`Instruction`](/api/interfaces/Instruction) objects with resolved [`AccountMeta`](/api/interfaces/AccountMeta)s and raw bytes.
 
-The `@solana/transaction-introspection` package (in Kit v7+) bridges that gap. It decodes a `getTransaction` response into a [`CompiledTransactionMessage`](/api/type-aliases/CompiledTransactionMessage), resolves every account index against the static keys plus the addresses loaded from address lookup tables, normalizes the inner CPI instructions, and returns instructions in the exact form the `@solana-program/*` clients can `identify` and `parse` directly. It supports `legacy`, `v0`, and `v1` transactions.
+The `@solana/transaction-introspection` package bridges that gap. It decodes a `getTransaction` response into a [`CompiledTransactionMessage`](/api/type-aliases/CompiledTransactionMessage), resolves every account index against the static keys plus the addresses loaded from address lookup tables, normalizes the inner CPI instructions, and returns instructions in the exact form the `@solana-program/*` clients can `identify` and `parse` directly. It supports `legacy`, `v0`, and `v1` transactions.
 
 This guide picks up where [Deserializing transactions](/docs/advanced-guides/transactions#deserializing-transactions) leaves off.
 
@@ -23,7 +23,7 @@ These utilities are **included within the `@solana/kit` library** but you may al
 
 [`decodeTransactionFromRpcResponse`](/api/functions/decodeTransactionFromRpcResponse) turns a `getTransaction` response into a [`DecodedRpcTransaction`](/api/type-aliases/DecodedRpcTransaction): the `compiledMessage` (always carrying the recent blockhash in `lifetimeToken`), the `loadedAddresses` pulled from `meta`, and — for `base64` and `base58` encodings only — a re-encodable `transaction`.
 
-```ts twoslash
+```ts
 import { createSolanaRpc, signature } from '@solana/kit';
 const rpc = createSolanaRpc('https://api.mainnet-beta.solana.com');
 const txid = '5pX...';
@@ -44,7 +44,7 @@ if (!rpcTx) {
 const { compiledMessage, loadedAddresses, transaction } = decodeTransactionFromRpcResponse(rpcTx);
 ```
 
-Prefer `encoding: 'base64'` when bandwidth allows — it is the most compact, the wire bytes round-trip cleanly through the kit codecs, and the return type statically guarantees a non-optional `transaction`. `encoding: 'base58'` behaves the same way, and `encoding: 'json'` is accepted too, though it omits `transaction` because the server has already decompiled the wire format.
+Prefer `encoding: 'base64'` when bandwidth allows — it is the most compact, the wire bytes round-trip cleanly through the Kit codecs, and the return type statically guarantees a non-optional `transaction`. `encoding: 'base58'` behaves the same way, and `encoding: 'json'` is accepted too, though it omits `transaction` because the server has already decompiled the wire format.
 
 <Callout type="warn">
     `encoding: 'jsonParsed'` is **not** supported. Its instructions arrive pre-parsed by the server
@@ -59,11 +59,11 @@ Prefer `encoding: 'base64'` when bandwidth allows — it is the most compact, th
 
 ## Walking every instruction
 
-[`walkInstructions`](/api/functions/walkInstructions) is the headline API. It returns every instruction in a confirmed transaction as an array of [`TracedInstruction`](/api/type-aliases/TracedInstruction)s, in the order an explorer displays them: each outer instruction followed immediately by the inner instructions its CPIs produced. Because each entry is itself a resolved kit `Instruction`, you can pass it straight to [`isInstructionForProgram`](/api/functions/isInstructionForProgram) and to the auto-generated `identifyXInstruction` / `parseXInstruction` helpers.
+[`walkInstructions`](/api/functions/walkInstructions) is the main API. It returns every instruction in a confirmed transaction as an array of [`TracedInstruction`](/api/type-aliases/TracedInstruction)s, in the order an explorer displays them: each outer instruction followed immediately by the inner instructions its CPIs produced. Because each entry is itself a resolved Kit `Instruction`, you can pass it straight to [`isInstructionForProgram`](/api/functions/isInstructionForProgram) and to the auto-generated `identifyXInstruction` / `parseXInstruction` helpers.
 
 Here we tally every USDC transfer in a transaction — outer instructions and inner CPI alike — using the `@solana-program/token` client to parse each `TransferChecked` and filter by mint:
 
-```ts twoslash
+```ts
 import { createSolanaRpc, signature } from '@solana/kit';
 const rpc = createSolanaRpc('https://api.mainnet-beta.solana.com');
 const txid = '5pX...';
@@ -128,9 +128,15 @@ Each entry carries a `trace` property typed as [`InstructionTrace`](/api/type-al
 
 The same pattern works with any codama-generated `@solana-program/*` client. Swap in `@solana-program/system` to tally lamports moved by every `TransferSol`, outer or inner:
 
-```ts twoslash
-import { CompiledTransactionMessage, CompiledTransactionMessageWithLifetime, LoadedAddresses, MetaWithInnerInstructions } from '@solana/kit';
-const compiledMessage = null as unknown as CompiledTransactionMessage & CompiledTransactionMessageWithLifetime;
+```ts
+import {
+    CompiledTransactionMessage,
+    CompiledTransactionMessageWithLifetime,
+    LoadedAddresses,
+    MetaWithInnerInstructions,
+} from '@solana/kit';
+const compiledMessage = null as unknown as CompiledTransactionMessage &
+    CompiledTransactionMessageWithLifetime;
 const loadedAddresses = null as unknown as LoadedAddresses;
 const meta = null as unknown as MetaWithInnerInstructions;
 // ---cut-before---
@@ -162,8 +168,8 @@ for (const ix of walkInstructions({ compiledMessage, loadedAddresses, meta })) {
     tables. This package never makes an RPC call to resolve lookup tables itself — it uses the
     addresses the validator already recorded in `meta`. Without them, only the static accounts are
     available to resolve indices, and any instruction referencing a looked-up account index throws
-    `SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_ACCOUNT_INDEX_OUT_OF_RANGE`. Omitting
-    `meta` entirely returns only the outer instructions.
+    `SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_ACCOUNT_INDEX_OUT_OF_RANGE`.
+    Omitting `meta` entirely returns only the outer instructions.
 </Callout>
 
 ## Resolving instructions without walking
@@ -172,9 +178,15 @@ If you do not need the interleaved outer-and-inner ordering, the lower-level hel
 
 [`getInstructionsFromCompiledTransactionMessage`](/api/functions/getInstructionsFromCompiledTransactionMessage) returns just the outer instructions as [`ResolvedInstruction`](/api/type-aliases/ResolvedInstruction)s. [`getInnerInstructionsFromMeta`](/api/functions/getInnerInstructionsFromMeta) returns just the inner instructions (decoding their base58 data and resolving indices against a supplied `AccountMeta` list). [`getAccountMetasFromCompiledTransactionMessage`](/api/functions/getAccountMetasFromCompiledTransactionMessage) builds the ordered `AccountMeta` list both rely on.
 
-```ts twoslash
-import { CompiledTransactionMessage, CompiledTransactionMessageWithLifetime, LoadedAddresses, MetaWithInnerInstructions } from '@solana/kit';
-const compiledMessage = null as unknown as CompiledTransactionMessage & CompiledTransactionMessageWithLifetime;
+```ts
+import {
+    CompiledTransactionMessage,
+    CompiledTransactionMessageWithLifetime,
+    LoadedAddresses,
+    MetaWithInnerInstructions,
+} from '@solana/kit';
+const compiledMessage = null as unknown as CompiledTransactionMessage &
+    CompiledTransactionMessageWithLifetime;
 const loadedAddresses = null as unknown as LoadedAddresses;
 const meta = null as unknown as MetaWithInnerInstructions;
 // ---cut-before---
@@ -184,9 +196,15 @@ import {
     getInstructionsFromCompiledTransactionMessage,
 } from '@solana/kit';
 
-const outerInstructions = getInstructionsFromCompiledTransactionMessage(compiledMessage, loadedAddresses);
+const outerInstructions = getInstructionsFromCompiledTransactionMessage(
+    compiledMessage,
+    loadedAddresses,
+);
 
-const accountMetas = getAccountMetasFromCompiledTransactionMessage(compiledMessage, loadedAddresses);
+const accountMetas = getAccountMetasFromCompiledTransactionMessage(
+    compiledMessage,
+    loadedAddresses,
+);
 const innerInstructions = getInnerInstructionsFromMeta(meta, accountMetas);
 ```
 
