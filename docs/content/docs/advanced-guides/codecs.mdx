@@ -2575,17 +2575,17 @@ import { getPatternMatchCodec, getU8Codec, getU16Codec, getU32Codec, Codec } fro
 
 const codec: Codec<number> = getPatternMatchCodec([
     [
-        (value: number) => value < 256,
+        (value: number | bigint) => value < 256,
         bytes => bytes.length === 1,
         getU8Codec(),
     ],
     [
-        (value: number) => value < 2 ** 16,
+        (value: number | bigint) => value < 2 ** 16,
         bytes => bytes.length === 2,
         getU16Codec(),
     ],
     [
-        (value: number) => value < 2 ** 32,
+        (value: number | bigint) => value < 2 ** 32,
         bytes => bytes.length <= 4,
         getU32Codec(),
     ],

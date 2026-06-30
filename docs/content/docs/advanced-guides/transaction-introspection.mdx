@@ -23,7 +23,7 @@ These utilities are **included within the `@solana/kit` library** but you may al
 
 [`decodeTransactionFromRpcResponse`](/api/functions/decodeTransactionFromRpcResponse) turns a `getTransaction` response into a [`DecodedRpcTransaction`](/api/type-aliases/DecodedRpcTransaction): the `compiledMessage` (always carrying the recent blockhash in `lifetimeToken`), the `loadedAddresses` pulled from `meta`, and — for `base64` and `base58` encodings only — a re-encodable `transaction`.
 
-```ts
+```ts twoslash
 import { createSolanaRpc, signature } from '@solana/kit';
 const rpc = createSolanaRpc('https://api.mainnet-beta.solana.com');
 const txid = '5pX...';
@@ -63,7 +63,7 @@ Prefer `encoding: 'base64'` when bandwidth allows — it is the most compact, th
 
 Here we tally every USDC transfer in a transaction — outer instructions and inner CPI alike — using the `@solana-program/token` client to parse each `TransferChecked` and filter by mint:
 
-```ts
+```ts twoslash
 import { createSolanaRpc, signature } from '@solana/kit';
 const rpc = createSolanaRpc('https://api.mainnet-beta.solana.com');
 const txid = '5pX...';
@@ -128,7 +128,7 @@ Each entry carries a `trace` property typed as [`InstructionTrace`](/api/type-al
 
 The same pattern works with any codama-generated `@solana-program/*` client. Swap in `@solana-program/system` to tally lamports moved by every `TransferSol`, outer or inner:
 
-```ts
+```ts twoslash
 import {
     CompiledTransactionMessage,
     CompiledTransactionMessageWithLifetime,
@@ -178,7 +178,7 @@ If you do not need the interleaved outer-and-inner ordering, the lower-level hel
 
 [`getInstructionsFromCompiledTransactionMessage`](/api/functions/getInstructionsFromCompiledTransactionMessage) returns just the outer instructions as [`ResolvedInstruction`](/api/type-aliases/ResolvedInstruction)s. [`getInnerInstructionsFromMeta`](/api/functions/getInnerInstructionsFromMeta) returns just the inner instructions (decoding their base58 data and resolving indices against a supplied `AccountMeta` list). [`getAccountMetasFromCompiledTransactionMessage`](/api/functions/getAccountMetasFromCompiledTransactionMessage) builds the ordered `AccountMeta` list both rely on.
 
-```ts
+```ts twoslash
 import {
     CompiledTransactionMessage,
     CompiledTransactionMessageWithLifetime,

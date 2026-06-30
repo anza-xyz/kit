@@ -24,7 +24,15 @@ const client = createClient().use(generatedSigner()).use(solanaDevnetRpc());
 
 Wrap your app in the provider and pass the client in:
 
-```tsx
+```tsx twoslash
+import { createClient } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { generatedSigner } from '@solana/kit-plugin-signer';
+const client = createClient().use(generatedSigner()).use(solanaDevnetRpc());
+function Dashboard() {
+    return null;
+}
+// ---cut-before---
 import { ClientProvider } from '@solana/react';
 
 export function App() {
@@ -42,7 +50,17 @@ The client reference must be **stable** across renders. Build it at module scope
 
 When a configuration value changes at runtime - a cluster toggle, an RPC URL switch - rebuild the client in `useMemo` keyed on that value and pass the new reference. The subtree re-subscribes against the new client identity.
 
-```tsx
+```tsx twoslash
+function ClusterToggle(props: {
+    value: 'devnet' | 'mainnet';
+    onChange: (value: 'devnet' | 'mainnet') => void;
+}) {
+    return null;
+}
+function Dashboard() {
+    return null;
+}
+// ---cut-before---
 import { useMemo, useState } from 'react';
 import { createClient } from '@solana/kit';
 import { solanaDevnetRpc, solanaMainnetRpc } from '@solana/kit-plugin-rpc';
@@ -55,7 +73,11 @@ export function App() {
         () =>
             createClient()
                 .use(generatedSigner())
-                .use(cluster === 'mainnet' ? solanaMainnetRpc() : solanaDevnetRpc()),
+                .use(
+                    cluster === 'mainnet'
+                        ? solanaMainnetRpc({ rpcUrl: 'https://api.mainnet-beta.solana.com' })
+                        : solanaDevnetRpc(),
+                ),
         [cluster],
     );
     return (
@@ -71,7 +93,20 @@ export function App() {
 
 If any plugin's `.use()` is async, `createClient().use(...)` returns a `Promise<Client>`. Pass the promise straight to `ClientProvider` and it suspends the subtree via the nearest `<Suspense>` boundary until the client resolves. The promise identity must be stable - pass a `useMemo`'d or module-scope value, never an inline `new Promise(...)`.
 
-```tsx
+```tsx twoslash
+import { createClient } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { generatedSigner } from '@solana/kit-plugin-signer';
+async function createClientWithAsyncPlugins() {
+    return createClient().use(generatedSigner()).use(solanaDevnetRpc());
+}
+function Dashboard() {
+    return null;
+}
+function Splash() {
+    return null;
+}
+// ---cut-before---
 import { Suspense, useMemo } from 'react';
 import { ClientProvider } from '@solana/react';
 

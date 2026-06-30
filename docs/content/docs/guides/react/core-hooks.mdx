@@ -11,7 +11,7 @@ Every hook on this page must be rendered under a [`ClientProvider`](/docs/guides
 
 Reads the Kit client published by the nearest `ClientProvider`. It defaults to the base `Client` shape; when you know a plugin is installed, narrow the type through the generic. This is a pure type-cast with no runtime check - reach for `useClientCapability` instead when a missing plugin should fail. Throws `SOLANA_ERROR__REACT__MISSING_PROVIDER` if no provider is mounted above it.
 
-```tsx
+```tsx twoslash
 import { ClientWithRpc, GetEpochInfoApi } from '@solana/kit';
 import { useClient } from '@solana/react';
 
@@ -25,7 +25,7 @@ function FetchEpochButton() {
 
 Reads the client and asserts at mount that a capability is installed, narrowing the return type via the generic. If the capability is absent it throws `SOLANA_ERROR__REACT__MISSING_CAPABILITY`, including the `hookName` and `providerHint` you supply so the mistake is easy to locate. This is the building block for plugin-specific hooks.
 
-```tsx
+```tsx twoslash
 import { ClientWithRpc, GetEpochInfoApi } from '@solana/kit';
 import { useClientCapability } from '@solana/react';
 
@@ -48,7 +48,7 @@ Fires a one-shot request on mount and re-fires whenever the source changes ident
 
 Pass either a Kit request source (most commonly a `PendingRpcRequest`) or an `async (signal) => Promise<T>` function to wrap any one-shot async call. Memoize the source (`useMemo`) or function (`useCallback`) on its inputs.
 
-```tsx
+```tsx twoslash
 import { useMemo } from 'react';
 import { ClientWithRpc, GetLatestBlockhashApi } from '@solana/kit';
 import { useClient, useRequest } from '@solana/react';
@@ -72,7 +72,7 @@ The `getAbortSignal` factory runs on every attempt (initial fire and every `refr
 
 Subscribes to a stream source and surfaces the latest notification - no initial fetch. The subscription opens on mount, re-opens when the source changes identity, and tears down on unmount. Use `reconnect()` to re-open manually. Status is `loading`, `loaded`, `error`, or `disabled`.
 
-```tsx
+```tsx twoslash
 import { useMemo } from 'react';
 import { Address, ClientWithRpcSubscriptions, AccountNotificationsApi } from '@solana/kit';
 import { useClient, useSubscription } from '@solana/react';
@@ -99,7 +99,7 @@ Renders a value that loads quickly and then stays live: a one-shot fetch seeds t
 
 Pass a memoized spec with an `initialValueSource` + `initialValueMapper` (the initial fetch) and a `streamSource` + `streamValueMapper` (the subscription).
 
-```tsx
+```tsx twoslash
 import { useMemo } from 'react';
 import {
     Address,
@@ -137,7 +137,7 @@ Reach for `useSubscription` when there is no meaningful "initial value" to fetch
 
 Wraps an arbitrary async function and tracks each invocation through React state. Each `dispatch(...)` runs the function with a fresh `AbortSignal`, dispatching again while a call is in flight aborts the first. Status is `idle`, `running`, `success`, or `error`. Use `dispatch` from event handlers (fire-and-forget, never throws) and `dispatchAsync` when you need the resolved value or to propagate errors.
 
-```tsx
+```tsx twoslash
 import { useAction } from '@solana/react';
 
 function PostMessageButton({ url, body }: { url: string; body: string }) {

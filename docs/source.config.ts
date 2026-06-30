@@ -47,7 +47,24 @@ export default defineConfig({
                 dark: 'github-dark',
                 light: 'github-light',
             },
-            transformers: [...(rehypeCodeDefaultOptions.transformers ?? []), transformerTwoslash()],
+            transformers: [
+                ...(rehypeCodeDefaultOptions.transformers ?? []),
+                transformerTwoslash({
+                    twoslashOptions: {
+                        compilerOptions: {
+                            // Enable JSX so the React (`.tsx`) examples in the guides type-check.
+                            jsx: 4 /* react-jsx */,
+                            // Resolve package `exports` subpaths (e.g. `@solana/react/swr`),
+                            // matching the docs site's own tsconfig.
+                            moduleResolution: 100 /* bundler */,
+                        },
+                        // Recognize the rich-renderer annotation tags (e.g. `// @log:` to show
+                        // example output). Without this, twoslash treats them as unknown flags
+                        // and throws.
+                        customTags: ['annotate', 'error', 'log', 'warn'],
+                    },
+                }),
+            ],
         },
         remarkPlugins: [() => remarkInstall({ persist: { id: 'package-install' } })],
     },

@@ -28,7 +28,8 @@ export default function InKeepSearchDialog(props: SharedProps) {
                 sync: {
                     target: globalThis.document?.documentElement,
                     attributes: ['class'],
-                    isDarkMode: attributes => !!attributes.class?.includes('dark'),
+                    isDarkMode: (attributes: Record<string, string | null>) =>
+                        !!attributes.class?.includes('dark'),
                 },
             },
             ...(process.env.NODE_ENV === 'development' ? { env: 'development' } : null),

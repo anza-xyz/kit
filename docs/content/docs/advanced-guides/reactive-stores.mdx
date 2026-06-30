@@ -15,7 +15,7 @@ A `ReactiveActionStore` wraps an async function as a reactive state machine. Eac
 
 Any Kit RPC request is an action source: call `.reactiveStore()` on it to get a store that re-fires the same request on every `dispatch()`.
 
-```ts
+```ts twoslash
 import { createSolanaRpc } from '@solana/kit';
 
 const rpc = createSolanaRpc('https://api.devnet.solana.com');
@@ -51,7 +51,7 @@ Each `dispatch()` aborts the previous in-flight call, so only the most recent di
 
 Use `withSignal` to attach your own cancellation source. A fresh timeout per attempt:
 
-```ts
+```ts twoslash
 import { createSolanaRpc } from '@solana/kit';
 
 const rpc = createSolanaRpc('https://api.devnet.solana.com');
@@ -68,7 +68,7 @@ The `subscribe` / `getState` pair works with reactive UI frameworks. Wire the bl
 <Tabs items={["Vanilla JS", "Svelte", "Vue"]}>
   <Tab value="Vanilla JS">
 
-```ts
+```ts twoslash
 import { createSolanaRpc } from '@solana/kit';
 
 const rpc = createSolanaRpc('https://api.devnet.solana.com');
@@ -147,7 +147,7 @@ Another common use case is to call `dispatch` on mount for data loading. React s
 
 `.reactiveStore()` is sugar for RPC requests. For anything else - a `fetch`, your own SDK etc., you can build a store with `createReactiveActionStore`. The wrapped function receives the per-dispatch `AbortSignal` first, then whatever you pass to `dispatch`:
 
-```ts
+```ts twoslash
 import { createReactiveActionStore } from '@solana/kit';
 
 const store = createReactiveActionStore(async (signal: AbortSignal, accountId: string) => {
@@ -167,7 +167,7 @@ A `ReactiveStreamStore` holds the latest value from an ongoing stream. Where an 
 
 Any Kit RPC subscription is a stream source - call `.reactiveStore()` on it.
 
-```ts
+```ts twoslash
 import { createSolanaRpcSubscriptions } from '@solana/kit';
 
 const rpcSubscriptions = createSolanaRpcSubscriptions('wss://api.devnet.solana.com');
@@ -203,7 +203,7 @@ The contract is the same `subscribe` / `getState` pair, but it is important to c
 <Tabs items={["Vanilla JS", "Svelte", "Vue"]}>
   <Tab value="Vanilla JS">
 
-```ts
+```ts twoslash
 import { createSolanaRpcSubscriptions } from '@solana/kit';
 
 const rpcSubscriptions = createSolanaRpcSubscriptions('wss://api.devnet.solana.com');
@@ -287,7 +287,7 @@ onScopeDispose(() => {
 
 For a stream that is not a Kit subscription, you can build a store with `createReactiveStoreFromDataPublisherFactory`. You give it a factory that produces a fresh `DataPublisher` on every `connect()`, plus the channel names to read data and errors from. The factory receives the per-connection `AbortSignal`; thread it into the transport so the connection itself tears down on reset, not just the store's listeners.
 
-```ts
+```ts twoslash
 import { createReactiveStoreFromDataPublisherFactory } from '@solana/kit';
 
 const store = createReactiveStoreFromDataPublisherFactory<string>({
@@ -331,7 +331,7 @@ A common pattern is "load a value, then keep it current" - fetch an account bala
 
 `createReactiveStoreWithInitialValueAndSlotTracking` solves exactly this. It pairs an action source (the one-shot read) with a stream source (the live updates) and deduplicates the two by slot, so the store always holds the value observed at the highest slot. The result is an ordinary `ReactiveStreamStore` - `connect()` to start, and bind it with the same `subscribe` / `getState` pattern as any stream store. This is the primitive behind React's [`useTrackedData`](/docs/guides/react/core-hooks#usetrackeddata).
 
-```ts
+```ts twoslash
 import {
     address,
     createReactiveStoreWithInitialValueAndSlotTracking,

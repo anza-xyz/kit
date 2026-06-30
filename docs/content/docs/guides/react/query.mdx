@@ -23,7 +23,7 @@ There's a Query variant for each core read hook. All three take a cache `key` up
 
 The TanStack Query-backed counterpart to `useRequest`. It takes a query `key`, the same source shape as `useRequest`, and any `useQuery` options. It returns TanStack's own `useQuery` result, so `data`, `error`, `isLoading`, and `refetch` behave as they do everywhere else.
 
-```tsx
+```tsx twoslash
 import { ClientWithRpc, GetLatestBlockhashApi } from '@solana/kit';
 import { useClient } from '@solana/react';
 import { useRequestQuery } from '@solana/react/query';
@@ -51,7 +51,7 @@ In addition to TanStack's `enabled: false`, you can pass `null` for `source` to 
 
 The counterpart to `useSubscription`, for a long-lived stream with no one-shot fetch. It takes a `key` and the same source shape as `useSubscription`, routes the stream through TanStack Query's cache (via `experimental_streamedQuery`), and returns a `UseQueryResult`. `data` is the raw notification exactly as the source emits it.
 
-```tsx
+```tsx twoslash
 import { ClientWithRpcSubscriptions, SlotNotificationsApi } from '@solana/kit';
 import { useClient } from '@solana/react';
 import { useSubscriptionQuery } from '@solana/react/query';
@@ -76,7 +76,7 @@ By default `retry`, `staleTime`, and `refetchOnWindowFocus` are tuned for a long
 
 The counterpart to `useTrackedData`: a one-shot fetch seeds the value and a subscription keeps it live, with the unified stream routed through TanStack Query's cache. It takes a `key` and the same `TrackedDataSpec` as `useTrackedData`. `data` is the `SolanaRpcResponse<TItem>` envelope, so read `data.value` and `data.context.slot` directly.
 
-```tsx
+```tsx twoslash
 import {
     Address,
     ClientWithRpc,

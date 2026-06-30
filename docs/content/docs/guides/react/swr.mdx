@@ -23,7 +23,7 @@ There's an SWR variant for each core read hook, each taking a cache `key` up fro
 
 The SWR-backed counterpart to `useRequest`. It takes an SWR `key`, the same source shape as `useRequest`, and any SWR configuration. It returns SWR's `SWRResponse`, so `data`, `error`, `isLoading`, and `mutate` behave exactly as they do everywhere else.
 
-```tsx
+```tsx twoslash
 import { ClientWithRpc, GetLatestBlockhashApi } from '@solana/kit';
 import { useClient } from '@solana/react';
 import { useRequestSWR } from '@solana/react/swr';
@@ -49,7 +49,7 @@ Pass `null` for the `key` or the `source` to disable the request. Call `mutate()
 
 The counterpart to `useSubscription`, for a long-lived stream with no one-shot fetch. It takes a `key` and the same source shape as `useSubscription`, and routes the stream through SWR's subscription cache (`useSWRSubscription`). It returns SWR's `SWRSubscriptionResponse`. `data` is the raw notification exactly as the source emits it.
 
-```tsx
+```tsx twoslash
 import { ClientWithRpcSubscriptions, SlotNotificationsApi } from '@solana/kit';
 import { useClient } from '@solana/react';
 import { useSubscriptionSWR } from '@solana/react/swr';
@@ -74,7 +74,7 @@ When `key` flips to `null` the `data` is cleared, unlike core `useSubscription` 
 
 The counterpart to `useTrackedData`: a one-shot fetch seeds the value and a subscription keeps it live, with the unified stream routed through SWR's subscription cache. It takes a `key` and the same `TrackedDataSpec` as `useTrackedData`. Like `useSubscriptionSWR` it returns an `SWRSubscriptionResponse`, but `data` is the `SolanaRpcResponse<TItem>` envelope, so read `data.value` and `data.context.slot` directly.
 
-```tsx
+```tsx twoslash
 import {
     Address,
     ClientWithRpc,
