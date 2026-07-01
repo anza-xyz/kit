@@ -222,6 +222,40 @@ Things to note:
 - `reset()` aborts the current connection and returns the store to `idle`, clearing `data` and `error`. A follow-up `connect()` opens a fresh stream.
 - Attach a caller-provided cancellation source via `store.withSignal(signal).connect()` — the signal is composed with the per-connection controller via `AbortSignal.any`. Aborting the caller's signal transitions the store to `error` with that abort reason.
 
+### `bridgeStoreToAsyncIterable(store, signal, shouldYield?)`
+
+Adapts a `ReactiveStreamStore` into an `AsyncIterable`, so its _push_-based `subscribe` contract can be driven by _pull_-based consumers like TanStack Query's `experimental_streamedQuery` — anything that consumes a stream by `for await`-ing it.
+
+The bridge only _observes_ the store. Just like every other consumer in this package — a store does nothing until you `connect()` it — the caller owns the store's lifecycle: `connect()` it yourself (typically bound to the same `signal`), and `reset()` it when you're done. The bridge subscribes, yields values, and unsubscribes when iteration ends.
+
+```ts
+const store = rpcSubscriptions.slotNotifications().reactiveStore();
+const controller = new AbortController();
+// The caller owns the connection — bind it to the same signal so an abort tears it down.
+store.withSignal(controller.signal).connect();
+try {
+    for await (const notification of bridgeStoreToAsyncIterable(store, controller.signal)) {
+        console.log('Latest slot:', notification.slot);
+    }
+} catch (e) {
+    console.error('The subscription errored', e);
+} finally {
+    store.reset();
+}
+// Elsewhere: controller.abort() ends the loop cleanly.
+```
+
+This is the store-backed sibling of `createAsyncIterableFromDataPublisher`. Reach for that helper when you have a raw `DataPublisher` and want every message queued and delivered; reach for `bridgeStoreToAsyncIterable` when you already have a `ReactiveStreamStore` and want to consume its unified lifecycle as an iterable. Note this is also distinct from an RPC subscription's own iterable (`await rpcSubscriptions.someNotifications().subscribe({ abortSignal })`), which vends messages straight off the transport without a store in between.
+
+Because it reads through a store, its semantics follow the store's snapshot model:
+
+- **Seeds from the current snapshot.** On iteration it reads the store's current state, so a value (or error) already present when iteration begins is delivered — you don't have to create the iterable before connecting.
+- **Latest-wins.** A store only ever holds the most recent value, so if several notifications land between pulls only the freshest survives — a subscription consumer wants the current state, not a backlog. (This is the key behavioural difference from `createAsyncIterableFromDataPublisher`, which queues every message.)
+- **`error` throws.** A store `error` rejects the consuming `for await`. If the store errors with a nullish payload, a `SolanaError` with code `SOLANA_ERROR__SUBSCRIBABLE__STREAM_CLOSED_WITHOUT_ERROR` is substituted so the failure still surfaces. An error takes precedence over a buffered value.
+- **Abort ends cleanly.** Aborting `signal` completes the iterable (`done`) rather than throwing — an abort is teardown, not failure. Because a subscription never completes on its own, this is how the iterable terminates; bind the same signal to the store's connection so the abort tears the underlying stream down too.
+
+The optional `shouldYield` predicate gates each `loaded` value before it is yielded; return `false` to drop it (useful for e.g. deduping by slot).
+
 ### `demultiplexDataPublisher(publisher, sourceChannelName, messageTransformer)`
 
 Given a channel that carries messages for multiple subscribers on a single channel name, this function returns a new `DataPublisher` that splits them into multiple channel names.
