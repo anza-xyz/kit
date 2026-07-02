@@ -371,4 +371,68 @@ describe('decodeTransactionFromRpcResponse', () => {
             new SolanaError(SOLANA_ERROR__TRANSACTION_INTROSPECTION__CANNOT_DECODE_JSON_PARSED_TRANSACTION),
         );
     });
+
+    describe('getTransactionsForAddress-shaped results', () => {
+        // A `getTransactionsForAddress` `'full'` element carries the same
+        // `transaction` / `meta` / `version` envelope as a `getTransaction`
+        // response, plus `slot` / `blockTime` / `transactionIndex`. The decoder
+        // reads only the envelope, so it should ignore the extra fields and
+        // decode just the same. (Type-level acceptance of the real g4a result
+        // types is proven in the typetest; here we exercise the runtime path
+        // with the extra fields present.)
+
+        it('decodes a base64 (v0) result, ignoring slot/blockTime/transactionIndex', () => {
+            const b64 = buildBase64Tx({
+                addressTableLookups: [
+                    {
+                        lookupTableAddress: '11111111111111111111111111111113' as Address,
+                        readonlyIndexes: [1],
+                        writableIndexes: [0],
+                    },
+                ],
+                version: 0,
+            } as Partial<EncodableCompiledMessage>);
+            const rpcTx = {
+                blockTime: 1234567890n,
+                meta: { loadedAddresses: { readonly: ['ro' as Address], writable: ['w' as Address] } },
+                slot: 100n,
+                transaction: [b64, 'base64'],
+                transactionIndex: 3,
+                version: 0,
+            } as unknown as GetTransactionApiResponseBase64<0>;
+            const result = decodeTransactionFromRpcResponse(rpcTx);
+
+            expect(result.compiledMessage.version).toBe(0);
+            expect(result.transaction.signatures).toBeDefined();
+            expect(result.loadedAddresses).toStrictEqual({ readonly: ['ro'], writable: ['w'] });
+        });
+
+        it('decodes a JSON (legacy) result with no top-level `version`, defaulting to legacy', () => {
+            const rpcTx = {
+                blockTime: null,
+                meta: null,
+                slot: 100n,
+                transaction: {
+                    message: {
+                        accountKeys: ['fee-payer' as Address, 'program' as Address],
+                        header: {
+                            numReadonlySignedAccounts: 0,
+                            numReadonlyUnsignedAccounts: 1,
+                            numRequiredSignatures: 1,
+                        },
+                        instructions: [{ accounts: [0], data: '3Bxs411Dtc7pkFQj', programIdIndex: 1 }],
+                        recentBlockhash: '11111111111111111111111111111111',
+                    },
+                    signatures: [],
+                },
+                transactionIndex: 0,
+            } as unknown as GetTransactionApiResponseJson;
+            const result = decodeTransactionFromRpcResponse(rpcTx);
+
+            expect(result.compiledMessage.version).toBe('legacy');
+            expect(result.compiledMessage.staticAccounts).toStrictEqual(['fee-payer', 'program']);
+            // No re-encodable wire bytes on the JSON path.
+            expect(result.transaction).toBeUndefined();
+        });
+    });
 });
