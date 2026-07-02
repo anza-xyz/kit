@@ -5,18 +5,18 @@ import {
     SolanaError,
 } from '@solana/errors';
 import type { AccountMeta } from '@solana/instructions';
-import type { GetTransactionApiResponseBase64 } from '@solana/rpc-api';
+import type { TransactionForFullMetaInnerInstructionsUnparsed } from '@solana/rpc-types';
 
 import type { TracedInstruction } from './types';
 
 /**
- * The shape of an inner-instructions group as returned by the JSON-RPC
- * `getTransaction` endpoint when not using `jsonParsed` encoding. Derived
- * from `@solana/rpc-api` via indexed access so the two stay in sync.
+ * The shape of an inner-instructions group as returned by any JSON-RPC method
+ * that includes transaction `meta` when not using `jsonParsed` encoding (e.g.
+ * `getTransaction`, `getTransactionsForAddress`, `getBlock`). Derived from the
+ * shared leaf type in `@solana/rpc-types` via indexed access so the two stay in
+ * sync, without coupling to a specific method's response envelope.
  */
-type RpcInnerInstructionsGroup = NonNullable<
-    NonNullable<GetTransactionApiResponseBase64<0>['meta']>['innerInstructions']
->[number];
+type RpcInnerInstructionsGroup = TransactionForFullMetaInnerInstructionsUnparsed['innerInstructions'][number];
 
 /**
  * The minimum shape of `getTransaction`'s `meta` field that this helper

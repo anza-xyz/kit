@@ -78,11 +78,12 @@
         "@solana/codecs-strings": "workspace:*",
         "@solana/errors": "workspace:*",
         "@solana/instructions": "workspace:*",
-        "@solana/rpc-api": "workspace:*",
+        "@solana/rpc-types": "workspace:*",
         "@solana/transaction-messages": "workspace:*",
         "@solana/transactions": "workspace:*"
     },
     "devDependencies": {
+        "@solana/rpc-api": "workspace:*",
         "@solana/rpc-types": "workspace:*"
     },
     "peerDependencies": {

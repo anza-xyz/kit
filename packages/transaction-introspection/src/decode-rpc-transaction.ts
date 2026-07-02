@@ -7,10 +7,11 @@ import {
     SolanaError,
 } from '@solana/errors';
 import type {
-    GetTransactionApiResponseBase58,
-    GetTransactionApiResponseBase64,
-    GetTransactionApiResponseJson,
-} from '@solana/rpc-api';
+    Base58EncodedBytes,
+    Base58EncodedDataResponse,
+    Base64EncodedDataResponse,
+    Blockhash,
+} from '@solana/rpc-types';
 import type {
     CompiledTransactionMessage,
     CompiledTransactionMessageWithLifetime,
@@ -25,13 +26,70 @@ import { getTransactionDecoder } from '@solana/transactions';
 
 import type { LoadedAddresses } from './loaded-addresses';
 
-type AnyGetTransactionResponse =
-    | GetTransactionApiResponseBase58<TransactionVersion | void>
-    | GetTransactionApiResponseBase64<TransactionVersion | void>
-    | GetTransactionApiResponseJson<TransactionVersion | void>;
+/**
+ * The subset of a wire-format transaction response (`encoding: 'base58'` or
+ * `'base64'`) that {@link decodeTransactionFromRpcResponse} reads: the
+ * base-encoded wire-transaction tuple, plus the optional `meta` (carrying
+ * `loadedAddresses`) and `version`.
+ *
+ * Only these fields are modeled — not the full RPC response envelope — so any
+ * response carrying a compatible wire-transaction tuple satisfies it
+ * structurally, regardless of which method produced it (`getTransaction`,
+ * `getTransactionsForAddress`, or a future one).
+ */
+type DecodableWireTransactionResponse = Readonly<{
+    meta?: unknown;
+    transaction: Base58EncodedDataResponse | Base64EncodedDataResponse;
+    version?: TransactionVersion;
+}>;
 
 /**
- * The result of decoding a `getTransaction` response: the
+ * The subset of an `encoding: 'json'` transaction response that
+ * {@link decodeTransactionFromRpcResponse} reads. Only the message fields the
+ * decoder actually consumes are modeled, so any response carrying a compatible
+ * `transaction.message` satisfies it structurally, regardless of which method
+ * produced it.
+ */
+type DecodableJsonTransactionResponse = Readonly<{
+    meta?: unknown;
+    transaction: Readonly<{
+        message: Readonly<{
+            accountKeys: readonly Address[];
+            // Nullable to match the RPC types
+            addressTableLookups?:
+                | readonly Readonly<{
+                      accountKey: Address;
+                      readonlyIndexes: readonly number[];
+                      writableIndexes: readonly number[];
+                  }>[]
+                | null;
+            header: Readonly<{
+                numReadonlySignedAccounts: number;
+                numReadonlyUnsignedAccounts: number;
+                numRequiredSignatures: number;
+            }>;
+            instructions: readonly Readonly<{
+                accounts: readonly number[];
+                data: Base58EncodedBytes;
+                programIdIndex: number;
+            }>[];
+            recentBlockhash: Blockhash;
+        }>;
+    }>;
+    version?: TransactionVersion;
+}>;
+
+/**
+ * Any confirmed-transaction RPC response that
+ * {@link decodeTransactionFromRpcResponse} can decode, regardless of which
+ * method produced it. The wire and JSON members are disjoint on the shape of
+ * `transaction` (a base-encoded tuple vs. a structured message), which is what
+ * lets the overloads resolve the correct return type per encoding.
+ */
+type DecodableTransactionResponse = DecodableJsonTransactionResponse | DecodableWireTransactionResponse;
+
+/**
+ * The result of decoding a confirmed-transaction RPC response: the
  * {@link CompiledTransactionMessage} (always with a `lifetimeToken` carrying
  * the recent blockhash), the loaded ALT addresses pulled from `meta` (if
  * any), and — for `'base64'` and `'base58'` responses — the wire-format
@@ -57,11 +115,10 @@ export type DecodedRpcTransaction = Readonly<{
 const EMPTY_LOADED_ADDRESSES: LoadedAddresses = { readonly: [], writable: [] };
 
 /**
- * Pulls `loadedAddresses` off a `getTransaction` `meta` field if present,
- * regardless of which encoding overload produced it. The conditional types
- * in `@solana/rpc-api` mean some `meta` shapes statically lack the field
- * (legacy responses fetched without `maxSupportedTransactionVersion`); we
- * still need a uniform runtime extraction.
+ * Pulls `loadedAddresses` off a response `meta` field if present, regardless of
+ * which encoding produced it. The conditional types in the RPC API mean some
+ * `meta` shapes statically lack the field (legacy responses fetched without
+ * `maxSupportedTransactionVersion`); we still need a uniform runtime extraction.
  */
 function getLoadedAddresses(meta: unknown): LoadedAddresses {
     const loaded = (meta as { loadedAddresses?: LoadedAddresses } | null | undefined)?.loadedAddresses;
@@ -77,25 +134,19 @@ function decodeFromWire(wireBytes: Uint8Array): {
     return { compiledMessage, transaction };
 }
 
-function decodeFromBase64<TMaxSupportedTransactionVersion extends TransactionVersion | void>(
-    rpcTx: GetTransactionApiResponseBase64<TMaxSupportedTransactionVersion>,
-): DecodedRpcTransaction {
+function decodeFromBase64(rpcTx: DecodableWireTransactionResponse): DecodedRpcTransaction {
     const [b64] = rpcTx.transaction;
     const { compiledMessage, transaction } = decodeFromWire(getBase64Encoder().encode(b64) as Uint8Array);
     return { compiledMessage, loadedAddresses: getLoadedAddresses(rpcTx.meta), transaction };
 }
 
-function decodeFromBase58<TMaxSupportedTransactionVersion extends TransactionVersion | void>(
-    rpcTx: GetTransactionApiResponseBase58<TMaxSupportedTransactionVersion>,
-): DecodedRpcTransaction {
+function decodeFromBase58(rpcTx: DecodableWireTransactionResponse): DecodedRpcTransaction {
     const [b58] = rpcTx.transaction;
     const { compiledMessage, transaction } = decodeFromWire(getBase58Encoder().encode(b58) as Uint8Array);
     return { compiledMessage, loadedAddresses: getLoadedAddresses(rpcTx.meta), transaction };
 }
 
-function decodeFromJson<TMaxSupportedTransactionVersion extends TransactionVersion | void>(
-    rpcTx: GetTransactionApiResponseJson<TMaxSupportedTransactionVersion>,
-): DecodedRpcTransaction {
+function decodeFromJson(rpcTx: DecodableJsonTransactionResponse): DecodedRpcTransaction {
     const base58 = getBase58Encoder();
     const { message } = rpcTx.transaction;
     const staticAccounts: Address[] = [...message.accountKeys];
@@ -119,7 +170,8 @@ function decodeFromJson<TMaxSupportedTransactionVersion extends TransactionVersi
 
     // The envelope only carries `version` when `maxSupportedTransactionVersion`
     // was set on the request; otherwise the response is necessarily legacy.
-    const version: TransactionVersion = 'version' in rpcTx ? rpcTx.version : 'legacy';
+    // `??` (not `||`) so a legitimate `0` (v0) is not treated as absent.
+    const version: TransactionVersion = rpcTx.version ?? 'legacy';
 
     // For transactions whose lifetime is specified by a durable nonce,
     // `message.recentBlockhash` is the nonce value, not a blockhash (see
@@ -141,14 +193,13 @@ function decodeFromJson<TMaxSupportedTransactionVersion extends TransactionVersi
         case 0: {
             // The wire decoder omits `addressTableLookups` when the message
             // has none; match that here for shape parity.
-            const addressTableLookups =
-                'addressTableLookups' in message
-                    ? message.addressTableLookups.map(l => ({
-                          lookupTableAddress: l.accountKey,
-                          readonlyIndexes: l.readonlyIndexes,
-                          writableIndexes: l.writableIndexes,
-                      }))
-                    : [];
+            const addressTableLookups = message.addressTableLookups
+                ? message.addressTableLookups.map(l => ({
+                      lookupTableAddress: l.accountKey,
+                      readonlyIndexes: l.readonlyIndexes,
+                      writableIndexes: l.writableIndexes,
+                  }))
+                : [];
             compiledMessage = {
                 ...(addressTableLookups.length ? { addressTableLookups } : null),
                 header,
@@ -199,17 +250,17 @@ function decodeFromJson<TMaxSupportedTransactionVersion extends TransactionVersi
     return { compiledMessage, loadedAddresses: getLoadedAddresses(rpcTx.meta) };
 }
 
-function isBase64Response(rpcTx: AnyGetTransactionResponse): rpcTx is GetTransactionApiResponseBase64 {
+function isBase64Response(rpcTx: DecodableTransactionResponse): rpcTx is DecodableWireTransactionResponse {
     const t = rpcTx.transaction;
     return Array.isArray(t) && t[1] === 'base64';
 }
 
-function isBase58Response(rpcTx: AnyGetTransactionResponse): rpcTx is GetTransactionApiResponseBase58 {
+function isBase58Response(rpcTx: DecodableTransactionResponse): rpcTx is DecodableWireTransactionResponse {
     const t = rpcTx.transaction;
     return Array.isArray(t) && t[1] === 'base58';
 }
 
-function getJsonShapedMessage(rpcTx: AnyGetTransactionResponse): Record<string, unknown> | undefined {
+function getJsonShapedMessage(rpcTx: DecodableTransactionResponse): Record<string, unknown> | undefined {
     const t = rpcTx.transaction;
     if (typeof t !== 'object' || t === null || Array.isArray(t) || !('message' in t)) return undefined;
     const message = (t as { message?: { instructions?: readonly unknown[] } }).message;
@@ -224,7 +275,7 @@ function getJsonShapedMessage(rpcTx: AnyGetTransactionResponse): Record<string, 
  * each of its `accountKeys` — so checking for it distinguishes the two
  * encodings regardless of how many instructions the transaction has.
  */
-function isJsonResponse(rpcTx: AnyGetTransactionResponse): rpcTx is GetTransactionApiResponseJson {
+function isJsonResponse(rpcTx: DecodableTransactionResponse): rpcTx is DecodableJsonTransactionResponse {
     const message = getJsonShapedMessage(rpcTx);
     return message != null && typeof message.header === 'object' && message.header !== null;
 }
@@ -236,17 +287,39 @@ function isJsonResponse(rpcTx: AnyGetTransactionResponse): rpcTx is GetTransacti
  * rather than a `programIdIndex`) and are not round-trippable through the
  * kit codecs, so these responses are rejected.
  */
-function isJsonParsedResponse(rpcTx: AnyGetTransactionResponse): boolean {
+function isJsonParsedResponse(rpcTx: DecodableTransactionResponse): boolean {
     const message = getJsonShapedMessage(rpcTx);
     return message != null && !('header' in message);
 }
 
 /**
- * Decodes a `getTransaction` response (any of `encoding: 'base64'`,
+ * Decodes a confirmed-transaction RPC response (any of `encoding: 'base64'`,
  * `'base58'`, or `'json'`) into a {@link CompiledTransactionMessage} plus,
  * for `'base64'` and `'base58'`, a re-encodable {@link Transaction}. The
  * JSON path does not produce a `Transaction`: the server has already
  * decompiled the wire format, so there are no message bytes to carry.
+ *
+ * Because it reads only the `transaction` / `meta` / `version` envelope —
+ * not a method-specific response shape — it accepts results from any method
+ * that returns confirmed transactions in these encodings: `getTransaction`,
+ * `getTransactionsForAddress`, and `getBlock` (the latter two with
+ * `transactionDetails: 'full'`). The array-returning methods just need a map:
+ *
+ * ```ts
+ * const { data } = await rpc.getTransactionsForAddress(address, {
+ *     encoding: 'base64',
+ *     maxSupportedTransactionVersion: 0,
+ *     transactionDetails: 'full',
+ * }).send();
+ * const decoded = data.map(tx => decodeTransactionFromRpcResponse(tx));
+ *
+ * const block = await rpc.getBlock(slot, {
+ *     encoding: 'base64',
+ *     maxSupportedTransactionVersion: 0,
+ *     transactionDetails: 'full',
+ * }).send();
+ * const decodedBlockTxs = block?.transactions.map(tx => decodeTransactionFromRpcResponse(tx)) ?? [];
+ * ```
  *
  * `'jsonParsed'` is **not** supported — its instructions arrive
  * pre-parsed by the server and lack raw bytes, so they cannot be
@@ -283,32 +356,17 @@ function isJsonParsedResponse(rpcTx: AnyGetTransactionResponse): boolean {
  * const instructions = getInstructionsFromCompiledTransactionMessage(compiledMessage, loadedAddresses);
  * ```
  */
-export function decodeTransactionFromRpcResponse<
-    TMaxSupportedTransactionVersion extends TransactionVersion | void = TransactionVersion | void,
->(
-    rpcTx: GetTransactionApiResponseBase64<TMaxSupportedTransactionVersion>,
+export function decodeTransactionFromRpcResponse(
+    rpcTx: DecodableWireTransactionResponse,
 ): DecodedRpcTransaction & { transaction: Transaction };
-export function decodeTransactionFromRpcResponse<
-    TMaxSupportedTransactionVersion extends TransactionVersion | void = TransactionVersion | void,
->(
-    rpcTx: GetTransactionApiResponseBase58<TMaxSupportedTransactionVersion>,
-): DecodedRpcTransaction & { transaction: Transaction };
-export function decodeTransactionFromRpcResponse<
-    TMaxSupportedTransactionVersion extends TransactionVersion | void = TransactionVersion | void,
->(rpcTx: GetTransactionApiResponseJson<TMaxSupportedTransactionVersion>): DecodedRpcTransaction;
-export function decodeTransactionFromRpcResponse<
-    TMaxSupportedTransactionVersion extends TransactionVersion | void = TransactionVersion | void,
->(
-    rpcTx:
-        | GetTransactionApiResponseBase58<TMaxSupportedTransactionVersion>
-        | GetTransactionApiResponseBase64<TMaxSupportedTransactionVersion>
-        | GetTransactionApiResponseJson<TMaxSupportedTransactionVersion>,
-): DecodedRpcTransaction {
-    const tx = rpcTx as AnyGetTransactionResponse;
-    if (isBase64Response(tx)) return decodeFromBase64(tx);
-    if (isBase58Response(tx)) return decodeFromBase58(tx);
-    if (isJsonResponse(tx)) return decodeFromJson(tx);
-    if (isJsonParsedResponse(tx)) {
+export function decodeTransactionFromRpcResponse(
+    rpcTx: DecodableJsonTransactionResponse,
+): DecodedRpcTransaction & { transaction?: never };
+export function decodeTransactionFromRpcResponse(rpcTx: DecodableTransactionResponse): DecodedRpcTransaction {
+    if (isBase64Response(rpcTx)) return decodeFromBase64(rpcTx);
+    if (isBase58Response(rpcTx)) return decodeFromBase58(rpcTx);
+    if (isJsonResponse(rpcTx)) return decodeFromJson(rpcTx);
+    if (isJsonParsedResponse(rpcTx)) {
         throw new SolanaError(SOLANA_ERROR__TRANSACTION_INTROSPECTION__CANNOT_DECODE_JSON_PARSED_TRANSACTION);
     }
     throw new SolanaError(SOLANA_ERROR__TRANSACTION_INTROSPECTION__UNRECOGNIZED_GET_TRANSACTION_RESPONSE);
