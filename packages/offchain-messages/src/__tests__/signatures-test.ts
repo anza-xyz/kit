@@ -5,19 +5,26 @@ import { ReadonlyUint8Array } from '@solana/codecs-core';
 import {
     SOLANA_ERROR__CODECS__INVALID_CONSTANT,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__ADDRESSES_CANNOT_SIGN_OFFCHAIN_MESSAGE,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__CONTENT_DOES_NOT_MATCH_EXPECTED,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__MESSAGE_MUST_BE_NON_EMPTY,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__NUM_REQUIRED_SIGNERS_CANNOT_BE_ZERO,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATORIES_MUST_BE_UNIQUE,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURE_VERIFICATION_FAILURE,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURES_MISSING,
     SolanaError,
 } from '@solana/errors';
 import { SignatureBytes, signBytes, verifySignature } from '@solana/keys';
 
+import { getOffchainMessageV1Encoder } from '../codecs/message-v1';
 import { OffchainMessageEnvelope } from '../envelope';
 import { OffchainMessageBytes } from '../message';
+import { OffchainMessageV1 } from '../message-v1';
 import {
     assertIsFullySignedOffchainMessageEnvelope,
     isFullySignedOffchainMessageEnvelope,
     partiallySignOffchainMessageEnvelope,
     signOffchainMessageEnvelope,
+    verifyOffchainMessage,
     verifyOffchainMessageEnvelope,
 } from '../signatures';
 
@@ -739,5 +746,267 @@ describe('verifyOffchainMessageEnvelope', () => {
                 }),
             );
         });
+    });
+});
+
+describe('verifyOffchainMessage', () => {
+    const mockPublicKeyAddressA =
+        'signerAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' as Address<'signerAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'>;
+    const mockPublicKeyAddressB =
+        'signerBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB' as Address<'signerBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'>;
+    const mockKeyPairA = { privateKey: {} as CryptoKey, publicKey: {} as CryptoKey } as CryptoKeyPair;
+    const mockKeyPairB = { privateKey: {} as CryptoKey, publicKey: {} as CryptoKey } as CryptoKeyPair;
+    const mockValidSignatureA = new Uint8Array(Array(64).fill(1)) as SignatureBytes;
+    const mockValidSignatureB = new Uint8Array(Array(64).fill(2)) as SignatureBytes;
+    const mockInvalidSignature = new Uint8Array(Array(64).fill(0xff)) as SignatureBytes;
+    const MESSAGE = 'Hello world';
+    // `mockPublicKeyAddressA` sorts before `mockPublicKeyAddressB` by their decoded bytes.
+    const SIGNERS = [mockPublicKeyAddressA, mockPublicKeyAddressB];
+    // The bytes a well-behaved signer would have signed, given `MESSAGE` and `SIGNERS`.
+    const signedMessageBytes = getOffchainMessageV1Encoder().encode({
+        content: MESSAGE,
+        requiredSignatories: SIGNERS.map(address => ({ address })),
+        version: 1,
+    } satisfies OffchainMessageV1);
+    // The bytes for a message that only signer A is required to sign.
+    const singleSignerMessageBytes = getOffchainMessageV1Encoder().encode({
+        content: MESSAGE,
+        requiredSignatories: [{ address: mockPublicKeyAddressA }],
+        version: 1,
+    } satisfies OffchainMessageV1);
+    beforeEach(() => {
+        (getPublicKeyFromAddress as jest.Mock).mockImplementation(address => {
+            switch (address) {
+                case mockPublicKeyAddressA:
+                    return mockKeyPairA.publicKey;
+                case mockPublicKeyAddressB:
+                    return mockKeyPairB.publicKey;
+                default:
+                    return { privateKey: {} as CryptoKey, publicKey: {} as CryptoKey } as CryptoKeyPair;
+            }
+        });
+        (verifySignature as jest.Mock).mockImplementation((publicKey, signature) => {
+            return (
+                (publicKey === mockKeyPairA.publicKey && signature === mockValidSignatureA) ||
+                (publicKey === mockKeyPairB.publicKey && signature === mockValidSignatureB)
+            );
+        });
+    });
+    it('resolves when the signed bytes match the expected message and the signature is valid', async () => {
+        expect.assertions(1);
+        const result = verifyOffchainMessage({
+            message: MESSAGE,
+            requiredSigners: SIGNERS,
+            signature: mockValidSignatureA,
+            signedMessageBytes,
+            signer: mockPublicKeyAddressA,
+        });
+        await expect(result).resolves.toBeUndefined();
+    });
+    it('defaults the required signers to the lone signer when `requiredSigners` is omitted', async () => {
+        expect.assertions(1);
+        const result = verifyOffchainMessage({
+            message: MESSAGE,
+            signature: mockValidSignatureA,
+            // The message only required signer A; we omit `requiredSigners` entirely.
+            signedMessageBytes: singleSignerMessageBytes,
+            signer: mockPublicKeyAddressA,
+        });
+        await expect(result).resolves.toBeUndefined();
+    });
+    it('throws when `requiredSigners` is omitted but the message required more than one signer', async () => {
+        expect.assertions(1);
+        const result = verifyOffchainMessage({
+            message: MESSAGE,
+            signature: mockValidSignatureA,
+            // These bytes require both A and B, but omitting `requiredSigners` only expects [signer].
+            signedMessageBytes,
+            signer: mockPublicKeyAddressA,
+        });
+        await expect(result).rejects.toThrow(
+            new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__CONTENT_DOES_NOT_MATCH_EXPECTED),
+        );
+    });
+    it('throws when the signed bytes do not match the expected message', async () => {
+        expect.assertions(1);
+        const result = verifyOffchainMessage({
+            // Signer signed a different message than the one we expected.
+            message: 'Goodbye world',
+            requiredSigners: SIGNERS,
+            signature: mockValidSignatureA,
+            signedMessageBytes,
+            signer: mockPublicKeyAddressA,
+        });
+        await expect(result).rejects.toThrow(
+            new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__CONTENT_DOES_NOT_MATCH_EXPECTED),
+        );
+    });
+    it('does not verify the signature when the signed bytes do not match the expected message', async () => {
+        expect.assertions(1);
+        await verifyOffchainMessage({
+            message: 'Goodbye world',
+            requiredSigners: SIGNERS,
+            signature: mockValidSignatureA,
+            signedMessageBytes,
+            signer: mockPublicKeyAddressA,
+        }).catch(() => {});
+        expect(verifySignature as jest.Mock).not.toHaveBeenCalled();
+    });
+    it('throws when the signed bytes match but the signature is invalid', async () => {
+        expect.assertions(1);
+        const result = verifyOffchainMessage({
+            message: MESSAGE,
+            requiredSigners: SIGNERS,
+            signature: mockInvalidSignature,
+            signedMessageBytes,
+            signer: mockPublicKeyAddressA,
+        });
+        await expect(result).rejects.toThrow(
+            new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURE_VERIFICATION_FAILURE, {
+                signatoriesWithInvalidSignatures: [mockPublicKeyAddressA],
+                signatoriesWithMissingSignatures: [],
+            }),
+        );
+    });
+    it('throws when the signature is valid but for a different signer than expected', async () => {
+        expect.assertions(1);
+        const result = verifyOffchainMessage({
+            message: MESSAGE,
+            requiredSigners: SIGNERS,
+            signature: mockValidSignatureA,
+            signedMessageBytes,
+            // `mockValidSignatureA` is only valid for signer A, not signer B.
+            signer: mockPublicKeyAddressB,
+        });
+        await expect(result).rejects.toThrow(
+            new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURE_VERIFICATION_FAILURE, {
+                signatoriesWithInvalidSignatures: [mockPublicKeyAddressB],
+                signatoriesWithMissingSignatures: [],
+            }),
+        );
+    });
+    it('verifies a signature for any one of the required signers', async () => {
+        expect.assertions(1);
+        // Signer B is also a required signer; its signature should verify against the same bytes.
+        const result = verifyOffchainMessage({
+            message: MESSAGE,
+            requiredSigners: SIGNERS,
+            signature: mockValidSignatureB,
+            signedMessageBytes,
+            signer: mockPublicKeyAddressB,
+        });
+        await expect(result).resolves.toBeUndefined();
+    });
+    it('resolves when the signers are provided out of sorted order', async () => {
+        expect.assertions(1);
+        // Signers are serialized in sorted order, so reversing the input still matches the bytes.
+        const result = verifyOffchainMessage({
+            message: MESSAGE,
+            requiredSigners: [mockPublicKeyAddressB, mockPublicKeyAddressA],
+            signature: mockValidSignatureA,
+            signedMessageBytes,
+            signer: mockPublicKeyAddressA,
+        });
+        await expect(result).resolves.toBeUndefined();
+    });
+    it('throws when the requested signers omit a signer present in the signed bytes', async () => {
+        expect.assertions(1);
+        const result = verifyOffchainMessage({
+            message: MESSAGE,
+            // Signed bytes require both A and B, but we only expected A to be a signer.
+            requiredSigners: [mockPublicKeyAddressA],
+            signature: mockValidSignatureA,
+            signedMessageBytes,
+            signer: mockPublicKeyAddressA,
+        });
+        await expect(result).rejects.toThrow(
+            new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__CONTENT_DOES_NOT_MATCH_EXPECTED),
+        );
+    });
+    it('throws when the signed bytes declare a different message version', async () => {
+        expect.assertions(1);
+        // Flip the version byte (offset 16, immediately after the 16-byte signing domain) of the
+        // bytes the signer returned, as if it had signed a different message version than expected.
+        const tamperedBytes = Uint8Array.from(signedMessageBytes);
+        tamperedBytes[16] = 0x00;
+        const result = verifyOffchainMessage({
+            message: MESSAGE,
+            requiredSigners: SIGNERS,
+            signature: mockValidSignatureA,
+            signedMessageBytes: tamperedBytes,
+            signer: mockPublicKeyAddressA,
+        });
+        await expect(result).rejects.toThrow(
+            new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__CONTENT_DOES_NOT_MATCH_EXPECTED),
+        );
+    });
+    it('throws when there are no required signers', async () => {
+        expect.assertions(1);
+        const result = verifyOffchainMessage({
+            message: MESSAGE,
+            requiredSigners: [],
+            signature: mockValidSignatureA,
+            signedMessageBytes,
+            signer: mockPublicKeyAddressA,
+        });
+        await expect(result).rejects.toThrow(
+            new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__NUM_REQUIRED_SIGNERS_CANNOT_BE_ZERO),
+        );
+    });
+    it('throws when the requested signers contain a duplicate', async () => {
+        expect.assertions(1);
+        const result = verifyOffchainMessage({
+            message: MESSAGE,
+            requiredSigners: [mockPublicKeyAddressA, mockPublicKeyAddressA],
+            signature: mockValidSignatureA,
+            signedMessageBytes,
+            signer: mockPublicKeyAddressA,
+        });
+        await expect(result).rejects.toThrow(
+            new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATORIES_MUST_BE_UNIQUE),
+        );
+    });
+    it('throws when the message content is empty', async () => {
+        expect.assertions(1);
+        const result = verifyOffchainMessage({
+            message: '',
+            requiredSigners: SIGNERS,
+            signature: mockValidSignatureA,
+            signedMessageBytes,
+            signer: mockPublicKeyAddressA,
+        });
+        await expect(result).rejects.toThrow(
+            new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__MESSAGE_MUST_BE_NON_EMPTY),
+        );
+    });
+    it('throws when the signed bytes are a truncated version of the expected message', async () => {
+        expect.assertions(1);
+        const result = verifyOffchainMessage({
+            message: MESSAGE,
+            requiredSigners: SIGNERS,
+            signature: mockValidSignatureA,
+            signedMessageBytes: signedMessageBytes.subarray(0, signedMessageBytes.length - 1),
+            signer: mockPublicKeyAddressA,
+        });
+        await expect(result).rejects.toThrow(
+            new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__CONTENT_DOES_NOT_MATCH_EXPECTED),
+        );
+    });
+    it('throws when the signer is not one of the required signers, even if its signature is otherwise valid', async () => {
+        expect.assertions(1);
+        // Signer B's signature is valid over these bytes, but B was never a required signer.
+        const result = verifyOffchainMessage({
+            message: MESSAGE,
+            requiredSigners: [mockPublicKeyAddressA],
+            signature: mockValidSignatureB,
+            signedMessageBytes: singleSignerMessageBytes,
+            signer: mockPublicKeyAddressB,
+        });
+        await expect(result).rejects.toThrow(
+            new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__ADDRESSES_CANNOT_SIGN_OFFCHAIN_MESSAGE, {
+                expectedAddresses: [mockPublicKeyAddressA],
+                unexpectedAddresses: [mockPublicKeyAddressB],
+            }),
+        );
     });
 });

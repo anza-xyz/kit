@@ -188,6 +188,7 @@ import {
     SOLANA_ERROR__NONCE_ACCOUNT_NOT_FOUND,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__ADDRESSES_CANNOT_SIGN_OFFCHAIN_MESSAGE,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__APPLICATION_DOMAIN_STRING_LENGTH_OUT_OF_RANGE,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__CONTENT_DOES_NOT_MATCH_EXPECTED,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__ENVELOPE_SIGNERS_MISMATCH,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__INVALID_APPLICATION_DOMAIN_BYTE_LENGTH,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__MAXIMUM_LENGTH_EXCEEDED,
@@ -630,6 +631,9 @@ export const SolanaErrorMessages: Readonly<{
         'Attempted to sign an offchain message with an address that is not a signer for it',
     [SOLANA_ERROR__OFFCHAIN_MESSAGE__APPLICATION_DOMAIN_STRING_LENGTH_OUT_OF_RANGE]:
         'Expected base58-encoded application domain string of length in the range [32, 44]. Actual length: $actualLength.',
+    [SOLANA_ERROR__OFFCHAIN_MESSAGE__CONTENT_DOES_NOT_MATCH_EXPECTED]:
+        'The signed offchain message does not match the message that was expected. The signer may ' +
+        'have signed different data than was requested; do not trust its signature.',
     [SOLANA_ERROR__OFFCHAIN_MESSAGE__ENVELOPE_SIGNERS_MISMATCH]:
         'The signer addresses in this offchain message envelope do not match the list of ' +
         'required signers in the message preamble. These unexpected signers were present in the ' +
