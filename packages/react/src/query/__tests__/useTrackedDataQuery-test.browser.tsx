@@ -4,7 +4,7 @@ import {
     isSolanaError,
     ReactiveActionSource,
     ReactiveStreamSource,
-    SOLANA_ERROR__REACT__SUBSCRIPTION_CLOSED_WITHOUT_ERROR,
+    SOLANA_ERROR__SUBSCRIBABLE__STREAM_CLOSED_WITHOUT_ERROR,
     SolanaRpcResponse,
 } from '@solana/kit';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -212,7 +212,7 @@ describe('useTrackedDataQuery', () => {
 
         await act(async () => fake.error(undefined));
         await waitFor(() =>
-            expect(isSolanaError(result.current.error, SOLANA_ERROR__REACT__SUBSCRIPTION_CLOSED_WITHOUT_ERROR)).toBe(
+            expect(isSolanaError(result.current.error, SOLANA_ERROR__SUBSCRIBABLE__STREAM_CLOSED_WITHOUT_ERROR)).toBe(
                 true,
             ),
         );
@@ -293,7 +293,7 @@ describe('useTrackedDataQuery', () => {
         await waitFor(() => expect(fake.activeConnections()).toBe(1));
     });
 
-    it('resets the store and aborts the connection on unmount', async () => {
+    it('aborts the connection on unmount', async () => {
         const fake = makeSpec();
         const { unmount } = renderHook(() => useTrackedDataQuery(['teardown'], fake.spec), { wrapper: makeWrapper() });
         await waitFor(() => expect(fake.activeConnections()).toBe(1));

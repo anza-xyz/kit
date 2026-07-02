@@ -86,23 +86,23 @@ function makeStreamFactory<T>() {
 function createFakeStore<T>(): {
     connectCount: () => number;
     emit: (state: ReactiveState<T>) => void;
-    resetCount: () => number;
     store: ReactiveStreamStore<T>;
     withSignalArg: () => AbortSignal | undefined;
 } {
     let state: ReactiveState<T> = { data: undefined, error: undefined, status: 'idle' };
     const listeners = new Set<() => void>();
     let connects = 0;
-    let resets = 0;
     let withSignalArg: AbortSignal | undefined;
     const store: ReactiveStreamStore<T> = {
         connect: jest.fn().mockImplementation(() => {
             throw new Error('not implemented');
         }),
         getState: () => state,
-        reset: () => {
-            resets++;
-        },
+        // The hook connects via `withSignal(signal).connect()` and relies on aborting that signal for
+        // teardown — it must never `reset()` the store. Throw so an accidental reset fails loudly.
+        reset: jest.fn().mockImplementation(() => {
+            throw new Error('not implemented');
+        }),
         subscribe: (callback: () => void) => {
             listeners.add(callback);
             return () => {
@@ -124,7 +124,6 @@ function createFakeStore<T>(): {
             state = next;
             listeners.forEach(l => l());
         },
-        resetCount: () => resets,
         store,
         withSignalArg: () => withSignalArg,
     };
@@ -142,7 +141,6 @@ function makeStoreSource<T>() {
     };
     return {
         emit: (state: ReactiveState<T>) => latest!.emit(state),
-        resetCount: () => latest!.resetCount(),
         source,
         withSignalArg: () => latest!.withSignalArg(),
     };
@@ -337,7 +335,7 @@ describe('useSubscriptionQuery', () => {
             await waitFor(() => expect(result.current.error).toBe(boom));
         });
 
-        it('resets the store on unmount', async () => {
+        it('aborts the store connection on unmount', async () => {
             const src = makeStoreSource<number>();
             const { unmount } = renderHook(() => useSubscriptionQuery(['store-teardown'], src.source), {
                 wrapper: createWrapper(),
@@ -345,7 +343,7 @@ describe('useSubscriptionQuery', () => {
             await waitFor(() => expect(src.withSignalArg()).toBeInstanceOf(AbortSignal));
 
             unmount();
-            await waitFor(() => expect(src.resetCount()).toBeGreaterThan(0));
+            await waitFor(() => expect(src.withSignalArg()!.aborted).toBe(true));
         });
 
         it('does not connect when the source is null', async () => {

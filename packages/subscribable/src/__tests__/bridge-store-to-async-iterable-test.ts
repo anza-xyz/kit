@@ -1,74 +1,74 @@
-import {
-    isSolanaError,
-    type ReactiveState,
-    type ReactiveStreamStore,
-    SOLANA_ERROR__REACT__SUBSCRIPTION_CLOSED_WITHOUT_ERROR,
-} from '@solana/kit';
+import { isSolanaError, SOLANA_ERROR__SUBSCRIBABLE__STREAM_CLOSED_WITHOUT_ERROR } from '@solana/errors';
 
-import { bridgeStoreToAsyncIterable } from '../bridgeStoreToAsyncIterable';
+import { bridgeStoreToAsyncIterable } from '../bridge-store-to-async-iterable';
+import type { ReactiveState, ReactiveStreamStore } from '../reactive-stream-store';
 
 function createFakeStore<T>(): {
-    connectCount: () => number;
     emit: (state: ReactiveState<T>) => void;
     listenerCount: () => number;
-    resetCount: () => number;
     store: ReactiveStreamStore<T>;
-    withSignalArg: () => AbortSignal | undefined;
 } {
     let state: ReactiveState<T> = { data: undefined, error: undefined, status: 'idle' };
     const listeners = new Set<() => void>();
-    let connects = 0;
-    let resets = 0;
-    let withSignalArg: AbortSignal | undefined;
     const store: ReactiveStreamStore<T> = {
-        // The bridge connects via `withSignal(signal).connect()`, never the bare `connect()` — fail
-        // loudly if it reaches for the unbound one.
+        // The bridge only *observes* the store — it must never drive its lifecycle. These throw so an
+        // accidental call fails the test loudly rather than passing silently.
         connect: jest.fn().mockImplementation(() => {
             throw new Error('not implemented');
         }),
         getState: () => state,
-        reset: () => {
-            resets++;
-        },
+        reset: jest.fn().mockImplementation(() => {
+            throw new Error('not implemented');
+        }),
         subscribe: (callback: () => void) => {
             listeners.add(callback);
             return () => {
                 listeners.delete(callback);
             };
         },
-        withSignal: (signal: AbortSignal) => {
-            withSignalArg = signal;
-            return {
-                connect: () => {
-                    connects++;
-                },
-            };
-        },
+        withSignal: jest.fn().mockImplementation(() => {
+            throw new Error('not implemented');
+        }),
     };
     return {
-        connectCount: () => connects,
+        // Before iteration begins there are no listeners, so `emit` doubles as a way to pre-seed the
+        // store's snapshot (set state, notify nobody). After iteration it notifies the subscriber.
         emit: (next: ReactiveState<T>) => {
             state = next;
             listeners.forEach(l => l());
         },
         listenerCount: () => listeners.size,
-        resetCount: () => resets,
         store,
-        withSignalArg: () => withSignalArg,
     };
 }
 
 describe('bridgeStoreToAsyncIterable', () => {
-    it('subscribes to and connects the store bound to the signal', () => {
+    it('subscribes to the store on iteration without connecting or resetting it', () => {
         const fake = createFakeStore<number>();
-        const ctrl = new AbortController();
-        const it = bridgeStoreToAsyncIterable(fake.store, ctrl.signal)[Symbol.asyncIterator]();
-        // The generator body runs synchronously up to its first `await`, so subscribe + connect have
-        // happened by the time `next()` returns its (still-pending) promise.
+        const it = bridgeStoreToAsyncIterable(fake.store, new AbortController().signal)[Symbol.asyncIterator]();
+        // The generator body runs synchronously up to its first `await`, so subscribe has happened by
+        // the time `next()` returns its (still-pending) promise. `connect` / `withSignal` / `reset`
+        // are throwing stubs, so if the bridge touched the store's lifecycle this would throw.
         void it.next();
         expect(fake.listenerCount()).toBe(1);
-        expect(fake.connectCount()).toBe(1);
-        expect(fake.withSignalArg()).toBe(ctrl.signal);
+    });
+
+    it('yields a value already present when iteration begins', async () => {
+        expect.assertions(1);
+        const fake = createFakeStore<number>();
+        // A value the caller's own `connect()` already produced before it started iterating.
+        fake.emit({ data: 5, error: undefined, status: 'loaded' });
+        const it = bridgeStoreToAsyncIterable(fake.store, new AbortController().signal)[Symbol.asyncIterator]();
+        await expect(it.next()).resolves.toEqual({ done: false, value: 5 });
+    });
+
+    it('throws an error already present when iteration begins', async () => {
+        expect.assertions(1);
+        const fake = createFakeStore<number>();
+        const boom = new Error('boom');
+        fake.emit({ data: undefined, error: boom, status: 'error' });
+        const it = bridgeStoreToAsyncIterable(fake.store, new AbortController().signal)[Symbol.asyncIterator]();
+        await expect(it.next()).rejects.toBe(boom);
     });
 
     it('yields a loaded value', async () => {
@@ -118,19 +118,18 @@ describe('bridgeStoreToAsyncIterable', () => {
         await expect(pull).resolves.toEqual({ done: false, value: 7 });
     });
 
-    it('throws on a store error and resets the store', async () => {
-        expect.assertions(2);
+    it('throws on a store error', async () => {
+        expect.assertions(1);
         const fake = createFakeStore<number>();
         const it = bridgeStoreToAsyncIterable(fake.store, new AbortController().signal)[Symbol.asyncIterator]();
         const pull = it.next();
         const boom = new Error('boom');
         fake.emit({ data: undefined, error: boom, status: 'error' });
         await expect(pull).rejects.toBe(boom);
-        expect(fake.resetCount()).toBe(1);
     });
 
     it('drops a buffered value when an error arrives before the next pull', async () => {
-        expect.assertions(2);
+        expect.assertions(1);
         const fake = createFakeStore<number>();
         const it = bridgeStoreToAsyncIterable(fake.store, new AbortController().signal)[Symbol.asyncIterator]();
         const pull = it.next();
@@ -141,7 +140,6 @@ describe('bridgeStoreToAsyncIterable', () => {
         fake.emit({ data: 1, error: undefined, status: 'loaded' });
         fake.emit({ data: undefined, error: boom, status: 'error' });
         await expect(pull).rejects.toBe(boom);
-        expect(fake.resetCount()).toBe(1);
     });
 
     it('substitutes a sentinel when the store errors with a nullish payload', async () => {
@@ -155,13 +153,13 @@ describe('bridgeStoreToAsyncIterable', () => {
                 throw new Error('expected the pull to reject');
             },
             error => {
-                expect(isSolanaError(error, SOLANA_ERROR__REACT__SUBSCRIPTION_CLOSED_WITHOUT_ERROR)).toBe(true);
+                expect(isSolanaError(error, SOLANA_ERROR__SUBSCRIBABLE__STREAM_CLOSED_WITHOUT_ERROR)).toBe(true);
             },
         );
     });
 
-    it('ends cleanly and resets the store when the signal aborts', async () => {
-        expect.assertions(3);
+    it('ends cleanly and unsubscribes when the signal aborts', async () => {
+        expect.assertions(2);
         const fake = createFakeStore<number>();
         const ctrl = new AbortController();
         const it = bridgeStoreToAsyncIterable(fake.store, ctrl.signal)[Symbol.asyncIterator]();
@@ -169,12 +167,11 @@ describe('bridgeStoreToAsyncIterable', () => {
         ctrl.abort();
         // An abort is teardown, not failure: the iterable completes (`done`) rather than rejecting.
         await expect(pull).resolves.toEqual({ done: true, value: undefined });
-        expect(fake.resetCount()).toBe(1);
         expect(fake.listenerCount()).toBe(0);
     });
 
-    it('unsubscribes and resets the store when the consumer stops early', async () => {
-        expect.assertions(2);
+    it('unsubscribes from the store when the consumer stops early', async () => {
+        expect.assertions(1);
         const fake = createFakeStore<number>();
         const it = bridgeStoreToAsyncIterable(fake.store, new AbortController().signal)[Symbol.asyncIterator]();
         const pull = it.next();
@@ -182,7 +179,6 @@ describe('bridgeStoreToAsyncIterable', () => {
         await pull;
 
         await it.return!(undefined);
-        expect(fake.resetCount()).toBe(1);
         expect(fake.listenerCount()).toBe(0);
     });
 });
