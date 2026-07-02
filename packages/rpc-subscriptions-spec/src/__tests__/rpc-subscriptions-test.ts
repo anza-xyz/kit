@@ -8,6 +8,20 @@ interface TestRpcSubscriptionNotifications {
     thingNotifications(...args: unknown[]): { value: number };
 }
 
+function getUntypedProperty(obj: unknown, propertyName: PropertyKey): unknown {
+    return (obj as Record<PropertyKey, unknown>)[propertyName];
+}
+
+const JAVASCRIPT_PROTOCOL_SYMBOLS = [
+    Symbol.asyncIterator,
+    (Symbol as typeof Symbol & { asyncDispose?: symbol }).asyncDispose,
+    (Symbol as typeof Symbol & { dispose?: symbol }).dispose,
+    Symbol.for('nodejs.util.inspect.custom'),
+    Symbol.iterator,
+    Symbol.toPrimitive,
+    Symbol.toStringTag,
+].filter((propertyName): propertyName is symbol => propertyName != null);
+
 describe('createSubscriptionRpc', () => {
     let rpcSubscriptions: RpcSubscriptions<TestRpcSubscriptionNotifications>;
 
@@ -31,6 +45,25 @@ describe('createSubscriptionRpc', () => {
 
     it('should not be thenable', () => {
         expect(rpcSubscriptions).not.toHaveProperty('then');
+    });
+
+    it('does not expose JSON serialization as a subscription method', () => {
+        expect.assertions(2);
+        expect(rpcSubscriptions).not.toHaveProperty('toJSON');
+        expect(JSON.stringify(rpcSubscriptions)).toBe('{}');
+    });
+
+    it('does not expose JS protocol symbols as subscription methods', () => {
+        expect.hasAssertions();
+        JAVASCRIPT_PROTOCOL_SYMBOLS.forEach(symbol => {
+            expect(getUntypedProperty(rpcSubscriptions, symbol)).toBeUndefined();
+        });
+    });
+
+    it('preserves Object prototype behavior', () => {
+        expect.assertions(2);
+        expect(String(rpcSubscriptions)).toBe('[object Object]');
+        expect(getUntypedProperty(rpcSubscriptions, 'hasOwnProperty')).toBe(Object.prototype.hasOwnProperty);
     });
 });
 

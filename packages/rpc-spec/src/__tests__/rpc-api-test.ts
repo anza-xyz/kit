@@ -9,6 +9,20 @@ type DummyApi = {
     someMethod(...args: unknown[]): unknown;
 };
 
+function getUntypedProperty(obj: unknown, propertyName: PropertyKey): unknown {
+    return (obj as Record<PropertyKey, unknown>)[propertyName];
+}
+
+const JAVASCRIPT_PROTOCOL_SYMBOLS = [
+    Symbol.asyncIterator,
+    (Symbol as typeof Symbol & { asyncDispose?: symbol }).asyncDispose,
+    (Symbol as typeof Symbol & { dispose?: symbol }).dispose,
+    Symbol.for('nodejs.util.inspect.custom'),
+    Symbol.iterator,
+    Symbol.toPrimitive,
+    Symbol.toStringTag,
+].filter((propertyName): propertyName is symbol => propertyName != null);
+
 describe('createJsonRpcApi', () => {
     let transport: jest.Mock & RpcTransport;
     beforeEach(() => {
@@ -99,6 +113,23 @@ describe('createJsonRpcApi', () => {
 
         // Then we expect the returned plan to be frozen.
         expect(plan).toBeFrozenObject();
+    });
+    it('does not expose JS protocol hooks as RPC methods', () => {
+        expect.hasAssertions();
+        const api = createJsonRpcApi<DummyApi>();
+
+        expect(api).not.toHaveProperty('then');
+        expect(api).not.toHaveProperty('toJSON');
+        JAVASCRIPT_PROTOCOL_SYMBOLS.forEach(symbol => {
+            expect(getUntypedProperty(api, symbol)).toBeUndefined();
+        });
+    });
+    it('preserves Object prototype behavior', () => {
+        expect.assertions(2);
+        const api = createJsonRpcApi<DummyApi>();
+
+        expect(String(api)).toBe('[object Object]');
+        expect(getUntypedProperty(api, 'hasOwnProperty')).toBe(Object.prototype.hasOwnProperty);
     });
     it('also returns a frozen object with a request transformer', () => {
         // Given a dummy API with a request transformer.

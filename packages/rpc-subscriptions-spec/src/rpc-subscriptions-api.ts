@@ -1,4 +1,10 @@
-import { Callable, RpcRequest, RpcRequestTransformer } from '@solana/rpc-spec-types';
+import {
+    Callable,
+    getNonRpcPropertyValue,
+    isNonRpcPropertyName,
+    RpcRequest,
+    RpcRequestTransformer,
+} from '@solana/rpc-spec-types';
 import { DataPublisher } from '@solana/subscribable';
 
 import { RpcSubscriptionsChannel } from './rpc-subscriptions-channel';
@@ -146,6 +152,9 @@ export function createRpcSubscriptionsApi<TRpcSubscriptionsApiMethods extends Rp
             ...args: Parameters<NonNullable<ProxyHandler<RpcSubscriptionsApi<TRpcSubscriptionsApiMethods>>['get']>>
         ) {
             const [_, p] = args;
+            if (isNonRpcPropertyName(p)) {
+                return getNonRpcPropertyValue(p, args[2]);
+            }
             const methodName = p.toString() as keyof TRpcSubscriptionsApiMethods as string;
             return function (
                 ...params: Parameters<

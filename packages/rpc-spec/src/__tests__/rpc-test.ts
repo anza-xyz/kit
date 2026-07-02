@@ -9,6 +9,20 @@ interface TestRpcMethods {
     someMethod(...args: unknown[]): unknown;
 }
 
+function getUntypedProperty(obj: unknown, propertyName: PropertyKey): unknown {
+    return (obj as Record<PropertyKey, unknown>)[propertyName];
+}
+
+const JAVASCRIPT_PROTOCOL_SYMBOLS = [
+    Symbol.asyncIterator,
+    (Symbol as typeof Symbol & { asyncDispose?: symbol }).asyncDispose,
+    (Symbol as typeof Symbol & { dispose?: symbol }).dispose,
+    Symbol.for('nodejs.util.inspect.custom'),
+    Symbol.iterator,
+    Symbol.toPrimitive,
+    Symbol.toStringTag,
+].filter((propertyName): propertyName is symbol => propertyName != null);
+
 describe('JSON-RPC 2.0', () => {
     let makeHttpRequest: RpcTransport;
     beforeEach(() => {
@@ -34,6 +48,10 @@ describe('JSON-RPC 2.0', () => {
                     params: ['some', 'params', 123],
                 }),
             );
+        });
+        it('does not treat JSON serialization as a missing RPC method', () => {
+            expect.assertions(1);
+            expect(JSON.stringify(rpc)).toBe('{}');
         });
     });
     describe('when using a simple RPC API proxy', () => {
@@ -78,6 +96,22 @@ describe('JSON-RPC 2.0', () => {
         it('should not be thenable', () => {
             expect.assertions(1);
             expect(rpc).not.toHaveProperty('then');
+        });
+        it('does not expose JSON serialization as an RPC method', () => {
+            expect.assertions(2);
+            expect(rpc).not.toHaveProperty('toJSON');
+            expect(JSON.stringify(rpc)).toBe('{}');
+        });
+        it('does not expose JS protocol symbols as RPC methods', () => {
+            expect.hasAssertions();
+            JAVASCRIPT_PROTOCOL_SYMBOLS.forEach(symbol => {
+                expect(getUntypedProperty(rpc, symbol)).toBeUndefined();
+            });
+        });
+        it('preserves Object prototype behavior', () => {
+            expect.assertions(2);
+            expect(String(rpc)).toBe('[object Object]');
+            expect(getUntypedProperty(rpc, 'hasOwnProperty')).toBe(Object.prototype.hasOwnProperty);
         });
     });
     describe('when calling reactiveStore() on a pending request', () => {

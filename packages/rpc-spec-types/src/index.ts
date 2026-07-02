@@ -6,6 +6,7 @@
  * @packageDocumentation
  */
 export * from './overloads';
+export * from './non-rpc-proxy-properties';
 export * from './parse-json-with-bigints';
 export * from './rpc-message';
 export * from './rpc-request';
