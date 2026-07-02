@@ -87,6 +87,7 @@ import {
     GetTransactionApiResponseJsonParsed,
 } from './getTransaction';
 import { GetTransactionCountApi } from './getTransactionCount';
+import { GetTransactionsForAddressApi } from './getTransactionsForAddress';
 import { GetVersionApi } from './getVersion';
 import { GetVoteAccountsApi } from './getVoteAccounts';
 import { IsBlockhashValidApi } from './isBlockhashValid';
@@ -140,6 +141,7 @@ type SolanaRpcApiForAllClusters = GetAccountInfoApi &
     GetTokenSupplyApi &
     GetTransactionApi &
     GetTransactionCountApi &
+    GetTransactionsForAddressApi &
     GetVersionApi &
     GetVoteAccountsApi &
     IsBlockhashValidApi &
@@ -223,6 +225,7 @@ export type {
     GetTransactionApiResponseJson,
     GetTransactionApiResponseJsonParsed,
     GetTransactionCountApi,
+    GetTransactionsForAddressApi,
     GetVersionApi,
     GetVoteAccountsApi,
     IsBlockhashValidApi,
@@ -345,6 +348,23 @@ function getAllowedNumericKeypaths(): AllowedNumericKeypaths<RpcApi<SolanaRpcApi
                 ['meta', 'rewards', KEYPATH_WILDCARD, 'commission'],
                 ...innerInstructionsConfigs.map(c => ['meta', 'innerInstructions', KEYPATH_WILDCARD, ...c]),
                 ...messageConfig.map(c => ['transaction', 'message', ...c] as const),
+            ],
+            getTransactionsForAddress: [
+                ['data', KEYPATH_WILDCARD, 'transactionIndex'],
+                ['data', KEYPATH_WILDCARD, 'meta', 'preTokenBalances', KEYPATH_WILDCARD, 'accountIndex'],
+                ['data', KEYPATH_WILDCARD, 'meta', 'preTokenBalances', KEYPATH_WILDCARD, 'uiTokenAmount', 'decimals'],
+                ['data', KEYPATH_WILDCARD, 'meta', 'postTokenBalances', KEYPATH_WILDCARD, 'accountIndex'],
+                ['data', KEYPATH_WILDCARD, 'meta', 'postTokenBalances', KEYPATH_WILDCARD, 'uiTokenAmount', 'decimals'],
+                ['data', KEYPATH_WILDCARD, 'meta', 'rewards', KEYPATH_WILDCARD, 'commission'],
+                ...innerInstructionsConfigs.map(c => [
+                    'data',
+                    KEYPATH_WILDCARD,
+                    'meta',
+                    'innerInstructions',
+                    KEYPATH_WILDCARD,
+                    ...c,
+                ]),
+                ...messageConfig.map(c => ['data', KEYPATH_WILDCARD, 'transaction', 'message', ...c] as const),
             ],
             getVersion: [['feature-set']],
             getVoteAccounts: [
