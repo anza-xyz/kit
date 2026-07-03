@@ -14,14 +14,14 @@ function getUntypedProperty(obj: unknown, propertyName: PropertyKey): unknown {
 }
 
 const JAVASCRIPT_PROTOCOL_SYMBOLS = [
-    Symbol.asyncIterator,
-    (Symbol as typeof Symbol & { asyncDispose?: symbol }).asyncDispose,
-    (Symbol as typeof Symbol & { dispose?: symbol }).dispose,
-    Symbol.for('nodejs.util.inspect.custom'),
-    Symbol.iterator,
-    Symbol.toPrimitive,
-    Symbol.toStringTag,
-].filter((propertyName): propertyName is symbol => propertyName != null);
+    { name: 'Symbol.asyncIterator', symbol: Symbol.asyncIterator },
+    { name: 'Symbol.asyncDispose', symbol: Symbol.asyncDispose },
+    { name: 'Symbol.dispose', symbol: Symbol.dispose },
+    { name: 'Symbol.for(nodejs.util.inspect.custom)', symbol: Symbol.for('nodejs.util.inspect.custom') },
+    { name: 'Symbol.iterator', symbol: Symbol.iterator },
+    { name: 'Symbol.toPrimitive', symbol: Symbol.toPrimitive },
+    { name: 'Symbol.toStringTag', symbol: Symbol.toStringTag },
+].filter(({ symbol }) => symbol != null);
 
 describe('JSON-RPC 2.0', () => {
     let makeHttpRequest: RpcTransport;
@@ -102,11 +102,9 @@ describe('JSON-RPC 2.0', () => {
             expect(rpc).not.toHaveProperty('toJSON');
             expect(JSON.stringify(rpc)).toBe('{}');
         });
-        it('does not expose JS protocol symbols as RPC methods', () => {
-            expect.hasAssertions();
-            JAVASCRIPT_PROTOCOL_SYMBOLS.forEach(symbol => {
-                expect(getUntypedProperty(rpc, symbol)).toBeUndefined();
-            });
+        it.each(JAVASCRIPT_PROTOCOL_SYMBOLS)('does not expose $name as an RPC method', ({ symbol }) => {
+            expect.assertions(1);
+            expect(getUntypedProperty(rpc, symbol)).toBeUndefined();
         });
         it('preserves Object prototype behavior', () => {
             expect.assertions(2);

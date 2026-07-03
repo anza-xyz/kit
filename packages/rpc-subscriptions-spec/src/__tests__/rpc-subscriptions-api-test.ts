@@ -6,14 +6,14 @@ function getUntypedProperty(obj: unknown, propertyName: PropertyKey): unknown {
 }
 
 const JAVASCRIPT_PROTOCOL_SYMBOLS = [
-    Symbol.asyncIterator,
-    (Symbol as typeof Symbol & { asyncDispose?: symbol }).asyncDispose,
-    (Symbol as typeof Symbol & { dispose?: symbol }).dispose,
-    Symbol.for('nodejs.util.inspect.custom'),
-    Symbol.iterator,
-    Symbol.toPrimitive,
-    Symbol.toStringTag,
-].filter((propertyName): propertyName is symbol => propertyName != null);
+    { name: 'Symbol.asyncIterator', symbol: Symbol.asyncIterator },
+    { name: 'Symbol.asyncDispose', symbol: Symbol.asyncDispose },
+    { name: 'Symbol.dispose', symbol: Symbol.dispose },
+    { name: 'Symbol.for(nodejs.util.inspect.custom)', symbol: Symbol.for('nodejs.util.inspect.custom') },
+    { name: 'Symbol.iterator', symbol: Symbol.iterator },
+    { name: 'Symbol.toPrimitive', symbol: Symbol.toPrimitive },
+    { name: 'Symbol.toStringTag', symbol: Symbol.toStringTag },
+].filter(({ symbol }) => symbol != null);
 
 describe('createRpcSubscriptionsApi', () => {
     let mockChannel: RpcSubscriptionsChannel<unknown, unknown>;
@@ -57,15 +57,17 @@ describe('createRpcSubscriptionsApi', () => {
             expect(result.request).toEqual({ methodName: 'bar', params: [1, 2, 3] });
         });
     });
-    it('does not expose JS protocol hooks as subscription methods', () => {
-        expect.hasAssertions();
+    it('does not expose JS protocol string hooks as subscription methods', () => {
+        expect.assertions(2);
         const api = createRpcSubscriptionsApi({ planExecutor: jest.fn() });
 
         expect(api).not.toHaveProperty('then');
         expect(api).not.toHaveProperty('toJSON');
-        JAVASCRIPT_PROTOCOL_SYMBOLS.forEach(symbol => {
-            expect(getUntypedProperty(api, symbol)).toBeUndefined();
-        });
+    });
+    it.each(JAVASCRIPT_PROTOCOL_SYMBOLS)('does not expose $name as a subscription method', ({ symbol }) => {
+        const api = createRpcSubscriptionsApi({ planExecutor: jest.fn() });
+
+        expect(getUntypedProperty(api, symbol)).toBeUndefined();
     });
     it('preserves Object prototype behavior', () => {
         expect.assertions(2);

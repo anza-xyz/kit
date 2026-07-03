@@ -1,10 +1,5 @@
 const NODEJS_CUSTOM_INSPECT_SYMBOL = Symbol.for('nodejs.util.inspect.custom');
 
-const SymbolWithDispose = Symbol as typeof Symbol & {
-    asyncDispose?: symbol;
-    dispose?: symbol;
-};
-
 const JAVASCRIPT_PROTOCOL_PROPERTY_NAMES = new Set<string | symbol>(
     [
         'then',
@@ -14,8 +9,8 @@ const JAVASCRIPT_PROTOCOL_PROPERTY_NAMES = new Set<string | symbol>(
         Symbol.iterator,
         Symbol.toPrimitive,
         Symbol.toStringTag,
-        SymbolWithDispose.asyncDispose,
-        SymbolWithDispose.dispose,
+        Symbol.asyncDispose,
+        Symbol.dispose,
     ].filter((propertyName): propertyName is string | symbol => propertyName != null),
 );
 

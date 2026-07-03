@@ -13,14 +13,14 @@ function getUntypedProperty(obj: unknown, propertyName: PropertyKey): unknown {
 }
 
 const JAVASCRIPT_PROTOCOL_SYMBOLS = [
-    Symbol.asyncIterator,
-    (Symbol as typeof Symbol & { asyncDispose?: symbol }).asyncDispose,
-    (Symbol as typeof Symbol & { dispose?: symbol }).dispose,
-    Symbol.for('nodejs.util.inspect.custom'),
-    Symbol.iterator,
-    Symbol.toPrimitive,
-    Symbol.toStringTag,
-].filter((propertyName): propertyName is symbol => propertyName != null);
+    { name: 'Symbol.asyncIterator', symbol: Symbol.asyncIterator },
+    { name: 'Symbol.asyncDispose', symbol: Symbol.asyncDispose },
+    { name: 'Symbol.dispose', symbol: Symbol.dispose },
+    { name: 'Symbol.for(nodejs.util.inspect.custom)', symbol: Symbol.for('nodejs.util.inspect.custom') },
+    { name: 'Symbol.iterator', symbol: Symbol.iterator },
+    { name: 'Symbol.toPrimitive', symbol: Symbol.toPrimitive },
+    { name: 'Symbol.toStringTag', symbol: Symbol.toStringTag },
+].filter(({ symbol }) => symbol != null);
 
 describe('createSubscriptionRpc', () => {
     let rpcSubscriptions: RpcSubscriptions<TestRpcSubscriptionNotifications>;
@@ -53,11 +53,9 @@ describe('createSubscriptionRpc', () => {
         expect(JSON.stringify(rpcSubscriptions)).toBe('{}');
     });
 
-    it('does not expose JS protocol symbols as subscription methods', () => {
-        expect.hasAssertions();
-        JAVASCRIPT_PROTOCOL_SYMBOLS.forEach(symbol => {
-            expect(getUntypedProperty(rpcSubscriptions, symbol)).toBeUndefined();
-        });
+    it.each(JAVASCRIPT_PROTOCOL_SYMBOLS)('does not expose $name as a subscription method', ({ symbol }) => {
+        expect.assertions(1);
+        expect(getUntypedProperty(rpcSubscriptions, symbol)).toBeUndefined();
     });
 
     it('preserves Object prototype behavior', () => {
