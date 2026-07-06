@@ -1,4 +1,8 @@
-import { getSolanaErrorFromTransactionError } from '@solana/errors';
+import {
+    getSolanaErrorFromTransactionError,
+    SOLANA_ERROR__RPC_SUBSCRIPTIONS__CHANNEL_CONNECTION_CLOSED,
+    SolanaError,
+} from '@solana/errors';
 import { AbortController } from '@solana/event-target-impl';
 import type { Signature } from '@solana/keys';
 import { safeRace } from '@solana/promises';
@@ -99,6 +103,8 @@ export function createRecentSignatureConfirmationPromiseFactory<
                     return;
                 }
             }
+            abortController.signal.throwIfAborted();
+            throw new SolanaError(SOLANA_ERROR__RPC_SUBSCRIPTIONS__CHANNEL_CONNECTION_CLOSED);
         })();
         /**
          * STEP 2: Having subscribed for updates, make a one-shot request for the current status.
