@@ -301,6 +301,33 @@ refresh({ abortSignal: undefined }); // no abort signal for this attempt
 refresh(); // omit the key to use the factory (default)
 ```
 
+### Transaction planning & sending
+
+Four hooks wrap a client's transaction-planning capabilities (installed via `planAndSendTransactions()`) as tracked actions. Each is built on `useClientCapability` + `useAction`, so it asserts its capability at mount and returns the same `{ dispatch, dispatchAsync, data, error, status, reset }` shape. The hook owns the `AbortSignal`, so dispatching again aborts the in-flight call.
+
+| Hook                    | Capability         | Result                                   |
+| ----------------------- | ------------------ | ---------------------------------------- |
+| `usePlanTransaction()`  | `planTransaction`  | the planned transaction message          |
+| `usePlanTransactions()` | `planTransactions` | the full transaction plan                |
+| `useSendTransaction()`  | `sendTransaction`  | the successful single-transaction result |
+| `useSendTransactions()` | `sendTransactions` | the full transaction plan result         |
+
+```tsx
+import { useSendTransaction } from '@solana/react';
+
+function SendButton({ instructions }: { instructions: InstructionPlan }) {
+    const { dispatch, isRunning, error } = useSendTransaction();
+
+    return (
+        <button disabled={isRunning} onClick={() => dispatch(instructions)}>
+            {isRunning ? 'Sending…' : error ? 'Retry' : 'Send'}
+        </button>
+    );
+}
+```
+
+The `Plan` variants stop after planning without submitting anything and accept an `InstructionPlanInput` — an instruction or instruction plan (or an array of either). The `Send` variants plan and send, and accept that same input plus an already-built transaction message or transaction plan. Use the singular `Transaction` hooks when you expect a single transaction and the plural `Transactions` hooks when the work may span several. Each throws `SOLANA_ERROR__REACT__MISSING_CAPABILITY` at mount if its capability isn't installed on the client.
+
 ## SWR adapter (`@solana/react/swr`)
 
 Opt-in subpath that bridges Kit's reactive primitives into SWR's cache. Import from `@solana/react/swr`; `swr@^2` is an optional peer dependency. Hooks carry the `Swr` suffix to keep the cache backing visible at the call site.
