@@ -18,6 +18,7 @@ export * from '@solana/offchain-messages';
 export * from '@solana/plugin-core';
 export type * from '@solana/plugin-interfaces';
 export * from '@solana/programs';
+export * from '@solana/promises';
 export * from '@solana/rpc';
 export * from '@solana/rpc-parsed-types';
 export * from '@solana/rpc-subscriptions';

@@ -756,6 +756,9 @@ importers:
       '@solana/programs':
         specifier: workspace:*
         version: link:../programs
+      '@solana/promises':
+        specifier: workspace:*
+        version: link:../promises
       '@solana/rpc':
         specifier: workspace:*
         version: link:../rpc

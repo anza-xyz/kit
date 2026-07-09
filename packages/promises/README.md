@@ -11,7 +11,7 @@
 
 # @solana/promises
 
-This package contains helpers for using JavaScript promises.
+This package contains helpers for using JavaScript promises. It can be used standalone, but it is also exported as part of Kit [`@solana/kit`](https://github.com/anza-xyz/kit/tree/main/packages/kit).
 
 ## Functions
 
