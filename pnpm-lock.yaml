@@ -984,8 +984,8 @@ importers:
         specifier: ^1.0.1
         version: 1.0.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@wallet-standard/ui':
-        specifier: ^1.0.1
-        version: 1.0.1
+        specifier: ^1.0.3
+        version: 1.0.3
       '@wallet-standard/ui-registry':
         specifier: ^1.0.1
         version: 1.0.1
@@ -1711,8 +1711,8 @@ importers:
         specifier: ^0.1.2
         version: 0.1.2
       '@wallet-standard/ui':
-        specifier: ^1.0.1
-        version: 1.0.1
+        specifier: ^1.0.3
+        version: 1.0.3
       '@wallet-standard/ui-registry':
         specifier: ^1.0.1
         version: 1.0.1
@@ -5784,25 +5784,33 @@ packages:
     resolution: {integrity: sha512-StpPv234R94MmJCCUZurQvQSsX6Xe1eOd2lNgwVonvSVdPqCNVS/haVpdrBMx0wX1Ut24X77qyBLP7SGxK5OUg==}
     engines: {node: '>=16'}
 
-  '@wallet-standard/ui-compare@1.0.1':
-    resolution: {integrity: sha512-Qr6AjgxTgTNgjUm/HQend08jFCUJ2ugbONpbC1hSl4Ndul+theJV3CwVZ2ffKun584bHoR8OAibJ+QA4ecogEA==}
-    engines: {node: '>=16'}
+  '@wallet-standard/ui-compare@1.0.3':
+    resolution: {integrity: sha512-AXst7auT0+5eIaj8MyUXZLopKWN2HwqiQNTVgcF80u9X9a/fsiiHi8tlY0dc/y/AIOM654cMpvpJqsJEZNV9pg==}
+    engines: {node: '>=22'}
 
   '@wallet-standard/ui-core@1.0.0':
     resolution: {integrity: sha512-pnpBfxJois0fIAI0IBJ6hopOguw81JniB6DzOs5J7C16W7/M2kC0OKHQFKrz6cgSGMq8X0bPA8nZTXFTSNbURg==}
     engines: {node: '>=16'}
 
-  '@wallet-standard/ui-features@1.0.1':
-    resolution: {integrity: sha512-0/lZFx599bGcDEvisAWtbFMuRM/IuqP/o0vbhAeQdLWsWsaqFTUIKZtMt8JJq+fFBMQGc6tuRH6ehrgm+Y0biQ==}
-    engines: {node: '>=16'}
+  '@wallet-standard/ui-core@1.0.1':
+    resolution: {integrity: sha512-LFmsSjMw3wXfZgZ5eAFGdIJ1512dGTWIEeoPDKsc6mHf7cMU18tvtpe4bOL76lT9Qh1Gc+4+kdtwSkTuJ9L+jw==}
+    engines: {node: '>=22'}
+
+  '@wallet-standard/ui-features@1.0.3':
+    resolution: {integrity: sha512-3YgxBoDXZCsaSyCNMph7i7G57ap+C6Y+l3HmTEQKigzTGxPUJ2mvqpTPwdj8D2cVkTKBzu8/78wweV7I9eG1rA==}
+    engines: {node: '>=22'}
 
   '@wallet-standard/ui-registry@1.0.1':
     resolution: {integrity: sha512-+SeXEwSoyqEWv9B6JLxRioRlgN5ksSFObZMf+XKm2U+vwmc/mfm43I8zw5wvGBpubzmywbe2eejd5k/snyx+uA==}
     engines: {node: '>=16'}
 
-  '@wallet-standard/ui@1.0.1':
-    resolution: {integrity: sha512-3b1iSfHOB3YpuBM645ZAgA0LMGZv+3Eh4y9lM3kS+NnvK4NxwnEdn1mLbFxevRhyulNjFZ50m2Cq5mpEOYs2mw==}
-    engines: {node: '>=16'}
+  '@wallet-standard/ui-registry@1.1.1':
+    resolution: {integrity: sha512-vJDZ/K2xwIqkxiyWUhPb6s62bTMRbYPj0MCJa9lYsqHGZgMbKBI3ZjLJK5MzWow2VxoOfuR77HuJng+HDWt1hA==}
+    engines: {node: '>=22'}
+
+  '@wallet-standard/ui@1.0.3':
+    resolution: {integrity: sha512-H2QJTR5m3PeHi06q8kj4TiRf3U+fEe6W+jw+hztPkjTRBVDeCIrwRhbdgAyI8yaGc7dBhzGYqhUQ9ecYj7x0rQ==}
+    engines: {node: '>=22'}
 
   '@wallet-standard/wallet@1.1.1':
     resolution: {integrity: sha512-8WiRPaKk/wNNRZhB2eVhpR/JW7/aqTCMoZhgVUCujuzDmxxmGvsosMxdCG4NAdYkoyozAHCX8/xLtlWUn5mNdQ==}
@@ -14460,7 +14468,7 @@ snapshots:
       '@wallet-standard/errors': 0.1.2
       '@wallet-standard/experimental-features': 0.2.0
       '@wallet-standard/features': 1.1.1
-      '@wallet-standard/ui': 1.0.1
+      '@wallet-standard/ui': 1.0.3
       '@wallet-standard/ui-registry': 1.0.1
       react: 19.2.7
       react-dom: 19.2.7(react@19.2.7)
@@ -14472,22 +14480,26 @@ snapshots:
       - react
       - react-dom
 
-  '@wallet-standard/ui-compare@1.0.1':
+  '@wallet-standard/ui-compare@1.0.3':
     dependencies:
-      '@wallet-standard/base': 1.1.0
-      '@wallet-standard/ui-core': 1.0.0
-      '@wallet-standard/ui-registry': 1.0.1
+      '@wallet-standard/base': 1.1.1
+      '@wallet-standard/ui-core': 1.0.1
+      '@wallet-standard/ui-registry': 1.1.1
 
   '@wallet-standard/ui-core@1.0.0':
     dependencies:
       '@wallet-standard/base': 1.1.0
 
-  '@wallet-standard/ui-features@1.0.1':
+  '@wallet-standard/ui-core@1.0.1':
     dependencies:
-      '@wallet-standard/base': 1.1.0
-      '@wallet-standard/errors': 0.1.1
-      '@wallet-standard/ui-core': 1.0.0
-      '@wallet-standard/ui-registry': 1.0.1
+      '@wallet-standard/base': 1.1.1
+
+  '@wallet-standard/ui-features@1.0.3':
+    dependencies:
+      '@wallet-standard/base': 1.1.1
+      '@wallet-standard/errors': 0.1.2
+      '@wallet-standard/ui-core': 1.0.1
+      '@wallet-standard/ui-registry': 1.1.1
 
   '@wallet-standard/ui-registry@1.0.1':
     dependencies:
@@ -14495,11 +14507,17 @@ snapshots:
       '@wallet-standard/errors': 0.1.1
       '@wallet-standard/ui-core': 1.0.0
 
-  '@wallet-standard/ui@1.0.1':
+  '@wallet-standard/ui-registry@1.1.1':
     dependencies:
-      '@wallet-standard/ui-compare': 1.0.1
-      '@wallet-standard/ui-core': 1.0.0
-      '@wallet-standard/ui-features': 1.0.1
+      '@wallet-standard/base': 1.1.1
+      '@wallet-standard/errors': 0.1.2
+      '@wallet-standard/ui-core': 1.0.1
+
+  '@wallet-standard/ui@1.0.3':
+    dependencies:
+      '@wallet-standard/ui-compare': 1.0.3
+      '@wallet-standard/ui-core': 1.0.1
+      '@wallet-standard/ui-features': 1.0.3
 
   '@wallet-standard/wallet@1.1.1':
     dependencies:
