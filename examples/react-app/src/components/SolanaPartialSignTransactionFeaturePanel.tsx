@@ -11,18 +11,20 @@ import {
     getTransactionDecoder,
     getTransactionEncoder,
     pipe,
+    type ReadonlyUint8Array,
     sendAndConfirmTransactionFactory,
     setTransactionMessageFeePayerSigner,
     setTransactionMessageLifetimeUsingBlockhash,
-    SignatureBytes,
+    type SignatureBytes,
     signTransaction,
     signTransactionMessageWithSigners,
-    TransactionPartialSigner,
+    type TransactionPartialSigner,
 } from '@solana/kit';
-import { useAction, useWalletAccountTransactionSigner } from '@solana/react';
+import type { WalletSigner } from '@solana/kit-plugin-wallet';
+import { useWallets } from '@solana/kit-plugin-wallet/react';
+import { useAction } from '@solana/react';
 import { getTransferSolInstruction } from '@solana-program/system';
-import { ReadonlyUint8Array } from '@wallet-standard/core';
-import { getUiWalletAccountStorageKey, type UiWalletAccount, useWallets } from '@wallet-standard/react';
+import { getUiWalletAccountStorageKey } from '@wallet-standard/ui';
 import type { SyntheticEvent } from 'react';
 import { useContext, useId, useMemo, useState } from 'react';
 
@@ -30,12 +32,13 @@ import { ChainContext } from '../context/ChainContext';
 import { RpcContext } from '../context/RpcContext';
 import { solStringToLamports } from '../lamports';
 import signerBytes from '../signerBytes.json' with { type: 'json' };
+import { assertCanSignTransactions } from '../walletCapability';
 import { AirdropButton } from './AirdropButton';
 import { ErrorDialog } from './ErrorDialog';
 import { WalletMenuItemContent } from './WalletMenuItemContent';
 
 type Props = Readonly<{
-    account: UiWalletAccount;
+    signer: WalletSigner | null;
 }>;
 
 async function mockApiRequest(serializedTransaction: ReadonlyUint8Array): Promise<SignatureBytes> {
@@ -45,7 +48,7 @@ async function mockApiRequest(serializedTransaction: ReadonlyUint8Array): Promis
     return getBase58Encoder().encode(getSignatureFromTransaction(signedTransaction)) as SignatureBytes;
 }
 
-export function SolanaPartialSignTransactionFeaturePanel({ account }: Props) {
+export function SolanaPartialSignTransactionFeaturePanel({ signer }: Props) {
     const { rpc, rpcSubscriptions } = useContext(RpcContext);
     const sendAndConfirmTransaction = useMemo(
         () => sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions }),
@@ -66,7 +69,6 @@ export function SolanaPartialSignTransactionFeaturePanel({ account }: Props) {
         }
     }, [recipientAccountStorageKey, wallets]);
     const { chain: currentChain, solanaExplorerClusterName } = useContext(ChainContext);
-    const transactionSigner = useWalletAccountTransactionSigner(account, currentChain);
     const lamportsInputId = useId();
     const recipientSelectId = useId();
 
@@ -85,10 +87,15 @@ export function SolanaPartialSignTransactionFeaturePanel({ account }: Props) {
         },
     };
 
+    // Render-time capability guard: throws so the surrounding `ErrorBoundary` renders
+    // `FeatureNotSupportedCallout` when the connected account can't sign transactions
+    // Also narrows the signer for the `useAction` below
+    assertCanSignTransactions(signer);
+
     // Step one: Build + sign the transaction
-    // Note that we have two signers: feePayerSigner and transactionSigner
+    // Note that we have two signers: feePayerSigner and the connected wallet's `signer`
     // feePayerSigner uses the `mockApiRequest` to sign the transaction, acting like a server signer
-    // transactionSigner uses the connected wallet's signing feature
+    // `signer` uses the connected wallet's signing feature (as the transfer's `source`)
     const signAction = useAction(async signal => {
         const amount = solStringToLamports(solQuantityString);
         if (!recipientAccount) {
@@ -106,7 +113,7 @@ export function SolanaPartialSignTransactionFeaturePanel({ account }: Props) {
                     getTransferSolInstruction({
                         amount,
                         destination: address(recipientAccount.address),
-                        source: transactionSigner,
+                        source: signer,
                     }),
                     m,
                 ),

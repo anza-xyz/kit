@@ -1,15 +1,12 @@
 import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
 import { Button, Callout, DropdownMenu } from '@radix-ui/themes';
-import { useSelectedWalletAccount } from '@solana/react';
-import { StandardConnect, StandardDisconnect } from '@wallet-standard/core';
-import type { UiWallet } from '@wallet-standard/react';
-import { uiWalletAccountBelongsToUiWallet } from '@wallet-standard/react';
-import { useRef, useState } from 'react';
-import { ErrorBoundary } from 'react-error-boundary';
+import { useConnectedWallet, useWallets } from '@solana/kit-plugin-wallet/react';
+import type { UiWallet } from '@wallet-standard/ui';
+import { useContext, useRef, useState } from 'react';
 
+import { ChainContext } from '../context/ChainContext';
 import { ConnectWalletMenuItem } from './ConnectWalletMenuItem';
 import { ErrorDialog } from './ErrorDialog';
-import { UnconnectableWalletMenuItem } from './UnconnectableWalletMenuItem';
 import { WalletAccountIcon } from './WalletAccountIcon';
 
 type Props = Readonly<{
@@ -18,49 +15,32 @@ type Props = Readonly<{
 
 export function ConnectWalletMenu({ children }: Props) {
     const { current: NO_ERROR } = useRef(Symbol());
-    const [selectedWalletAccount, setSelectedWalletAccount, wallets] = useSelectedWalletAccount();
+    const { displayName: currentChainName } = useContext(ChainContext);
+    const wallets = useWallets();
+    const connected = useConnectedWallet();
     const [error, setError] = useState(NO_ERROR);
     const [forceClose, setForceClose] = useState(false);
+    // Every wallet from `useWallets()` is pre-filtered by the plugin to those that support
+    // `standard:connect` on the active chain, so every item rendered here is connectable.
     function renderItem(wallet: UiWallet) {
         return (
-            <ErrorBoundary
-                fallbackRender={({ error }) => <UnconnectableWalletMenuItem error={error} wallet={wallet} />}
+            <ConnectWalletMenuItem
                 key={`wallet:${wallet.name}`}
-            >
-                <ConnectWalletMenuItem
-                    onAccountSelect={account => {
-                        setSelectedWalletAccount(account);
-                        setForceClose(true);
-                    }}
-                    onDisconnect={wallet => {
-                        if (selectedWalletAccount && uiWalletAccountBelongsToUiWallet(selectedWalletAccount, wallet)) {
-                            setSelectedWalletAccount(undefined);
-                        }
-                    }}
-                    onError={setError}
-                    wallet={wallet}
-                />
-            </ErrorBoundary>
+                onAccountSelect={() => setForceClose(true)}
+                onError={setError}
+                wallet={wallet}
+            />
         );
-    }
-    const walletsThatSupportStandardConnect = [];
-    const unconnectableWallets = [];
-    for (const wallet of wallets) {
-        if (wallet.features.includes(StandardConnect) && wallet.features.includes(StandardDisconnect)) {
-            walletsThatSupportStandardConnect.push(wallet);
-        } else {
-            unconnectableWallets.push(wallet);
-        }
     }
     return (
         <>
             <DropdownMenu.Root open={forceClose ? false : undefined} onOpenChange={setForceClose.bind(null, false)}>
                 <DropdownMenu.Trigger>
                     <Button>
-                        {selectedWalletAccount ? (
+                        {connected ? (
                             <>
-                                <WalletAccountIcon account={selectedWalletAccount} width="18" height="18" />
-                                {selectedWalletAccount.address.slice(0, 8)}
+                                <WalletAccountIcon account={connected.account} width="18" height="18" />
+                                {connected.account.address.slice(0, 8)}
                             </>
                         ) : (
                             children
@@ -74,18 +54,15 @@ export function ConnectWalletMenu({ children }: Props) {
                             <Callout.Icon>
                                 <ExclamationTriangleIcon />
                             </Callout.Icon>
-                            <Callout.Text>This browser has no wallets installed.</Callout.Text>
+                            {/* Wallets that don't support `standard:connect` on the current
+                                chain are filtered out by the plugin, so an empty list doesn't
+                                necessarily mean no wallets are installed. */}
+                            <Callout.Text>
+                                This browser has no wallets installed that support {currentChainName}.
+                            </Callout.Text>
                         </Callout.Root>
                     ) : (
-                        <>
-                            {walletsThatSupportStandardConnect.map(renderItem)}
-                            {unconnectableWallets.length ? (
-                                <>
-                                    <DropdownMenu.Separator />
-                                    {unconnectableWallets.map(renderItem)}
-                                </>
-                            ) : null}
-                        </>
+                        wallets.map(renderItem)
                     )}
                 </DropdownMenu.Content>
             </DropdownMenu.Root>

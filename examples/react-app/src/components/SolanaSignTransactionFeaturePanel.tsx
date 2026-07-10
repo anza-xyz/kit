@@ -12,23 +12,26 @@ import {
     setTransactionMessageLifetimeUsingBlockhash,
     signTransactionMessageWithSigners,
 } from '@solana/kit';
-import { useAction, useWalletAccountTransactionSigner } from '@solana/react';
+import type { WalletSigner } from '@solana/kit-plugin-wallet';
+import { useWallets } from '@solana/kit-plugin-wallet/react';
+import { useAction } from '@solana/react';
 import { getTransferSolInstruction } from '@solana-program/system';
-import { getUiWalletAccountStorageKey, type UiWalletAccount, useWallets } from '@wallet-standard/react';
+import { getUiWalletAccountStorageKey } from '@wallet-standard/ui';
 import type { SyntheticEvent } from 'react';
 import { useContext, useId, useMemo, useState } from 'react';
 
 import { ChainContext } from '../context/ChainContext';
 import { RpcContext } from '../context/RpcContext';
 import { solStringToLamports } from '../lamports';
+import { assertCanSignTransactions } from '../walletCapability';
 import { ErrorDialog } from './ErrorDialog';
 import { WalletMenuItemContent } from './WalletMenuItemContent';
 
 type Props = Readonly<{
-    account: UiWalletAccount;
+    signer: WalletSigner | null;
 }>;
 
-export function SolanaSignTransactionFeaturePanel({ account }: Props) {
+export function SolanaSignTransactionFeaturePanel({ signer }: Props) {
     const { rpc, rpcSubscriptions } = useContext(RpcContext);
     const sendAndConfirmTransaction = useMemo(
         () => sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions }),
@@ -49,9 +52,13 @@ export function SolanaSignTransactionFeaturePanel({ account }: Props) {
         }
     }, [recipientAccountStorageKey, wallets]);
     const { chain: currentChain, solanaExplorerClusterName } = useContext(ChainContext);
-    const transactionSigner = useWalletAccountTransactionSigner(account, currentChain);
     const lamportsInputId = useId();
     const recipientSelectId = useId();
+
+    // throws so the surrounding `ErrorBoundary` renders `FeatureNotSupportedCallout` when
+    // the connected account can't sign transactions
+    // it also narrows `signer` for the `useAction` below
+    assertCanSignTransactions(signer);
 
     // Step one: build and sign the transaction
     const signAction = useAction(async signal => {
@@ -64,14 +71,14 @@ export function SolanaSignTransactionFeaturePanel({ account }: Props) {
             .send({ abortSignal: signal });
         const message = pipe(
             createTransactionMessage({ version: 0 }),
-            m => setTransactionMessageFeePayerSigner(transactionSigner, m),
+            m => setTransactionMessageFeePayerSigner(signer, m),
             m => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, m),
             m =>
                 appendTransactionMessageInstruction(
                     getTransferSolInstruction({
                         amount,
                         destination: address(recipientAccount.address),
-                        source: transactionSigner,
+                        source: signer,
                     }),
                     m,
                 ),

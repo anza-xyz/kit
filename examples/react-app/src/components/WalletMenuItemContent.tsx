@@ -1,5 +1,5 @@
 import { Avatar, Flex, Spinner, Text } from '@radix-ui/themes';
-import type { UiWallet } from '@wallet-standard/react';
+import type { UiWallet } from '@wallet-standard/ui';
 import React from 'react';
 
 type Props = Readonly<{

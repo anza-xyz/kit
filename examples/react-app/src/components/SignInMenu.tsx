@@ -1,14 +1,12 @@
 import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
 import { Button, Callout, DropdownMenu } from '@radix-ui/themes';
-import { useSelectedWalletAccount } from '@solana/react';
+import { useWallets } from '@solana/kit-plugin-wallet/react';
 import { SolanaSignIn } from '@solana/wallet-standard-features';
-import type { UiWallet } from '@wallet-standard/react';
+import type { UiWallet } from '@wallet-standard/ui';
 import { useRef, useState } from 'react';
-import { ErrorBoundary } from 'react-error-boundary';
 
 import { ErrorDialog } from './ErrorDialog';
 import { SignInMenuItem } from './SignInMenuItem';
-import { UnconnectableWalletMenuItem } from './UnconnectableWalletMenuItem';
 
 type Props = Readonly<{
     children: React.ReactNode;
@@ -16,24 +14,17 @@ type Props = Readonly<{
 
 export function SignInMenu({ children }: Props) {
     const { current: NO_ERROR } = useRef(Symbol());
-    const [, setSelectedWalletAccount, wallets] = useSelectedWalletAccount();
+    const wallets = useWallets();
     const [error, setError] = useState(NO_ERROR);
     const [forceClose, setForceClose] = useState(false);
     function renderItem(wallet: UiWallet) {
         return (
-            <ErrorBoundary
-                fallbackRender={({ error }) => <UnconnectableWalletMenuItem error={error} wallet={wallet} />}
+            <SignInMenuItem
                 key={`wallet:${wallet.name}`}
-            >
-                <SignInMenuItem
-                    onSignIn={account => {
-                        setSelectedWalletAccount(account);
-                        setForceClose(true);
-                    }}
-                    onError={setError}
-                    wallet={wallet}
-                />
-            </ErrorBoundary>
+                onSignIn={() => setForceClose(true)}
+                onError={setError}
+                wallet={wallet}
+            />
         );
     }
     const walletsThatSupportSignInWithSolana = [];

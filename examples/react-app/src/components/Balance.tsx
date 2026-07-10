@@ -2,7 +2,7 @@ import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
 import { Flex, Text, Tooltip } from '@radix-ui/themes';
 import { address, formatDecimalFixedPoint, type Lamports, lamportsToSol } from '@solana/kit';
 import { useTrackedDataSWR } from '@solana/react/swr';
-import type { UiWalletAccount } from '@wallet-standard/react';
+import type { UiWalletAccount } from '@wallet-standard/ui';
 import { useContext, useMemo } from 'react';
 
 import { ChainContext } from '../context/ChainContext';
