@@ -1,11 +1,12 @@
 import type { ClusterUrl } from '@solana/kit';
 import { devnet } from '@solana/kit';
+import type { SolanaChain } from '@solana/wallet-standard-chains';
 import { createContext } from 'react';
 
 export type ChainContext = Readonly<{
-    chain: `solana:${string}`;
+    chain: SolanaChain;
     displayName: string;
-    setChain?(chain: `solana:${string}`): void;
+    setChain?(chain: SolanaChain): void;
     solanaExplorerClusterName: 'devnet' | 'mainnet-beta' | 'testnet';
     solanaRpcSubscriptionsUrl: ClusterUrl;
     solanaRpcUrl: ClusterUrl;

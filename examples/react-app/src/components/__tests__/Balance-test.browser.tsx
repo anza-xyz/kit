@@ -10,7 +10,7 @@ import type {
 } from '@solana/kit';
 import { createReactiveActionStore, createReactiveStoreFromDataPublisherFactory } from '@solana/kit';
 import { act, waitFor } from '@testing-library/react';
-import type { UiWalletAccount } from '@wallet-standard/react';
+import type { UiWalletAccount } from '@wallet-standard/ui';
 import React from 'react';
 import { SWRConfig } from 'swr';
 
