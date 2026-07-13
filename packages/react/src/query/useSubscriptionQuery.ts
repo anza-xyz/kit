@@ -1,4 +1,4 @@
-import type { ReactiveStreamSource } from '@solana/kit';
+import { bridgeStoreToAsyncIterable, type ReactiveStreamSource } from '@solana/kit';
 import {
     experimental_streamedQuery,
     type QueryFunction,
@@ -12,7 +12,6 @@ import { useCallback } from 'react';
 
 import { useLatest } from '../useLatest';
 import type { UseRequestOptions } from '../useRequest';
-import { bridgeStoreToAsyncIterable } from './bridgeStoreToAsyncIterable';
 
 /**
  * Options accepted by {@link useSubscriptionQuery}: every option `@tanstack/react-query`'s `useQuery`
@@ -50,10 +49,10 @@ export type UseSubscriptionQueryOptions<T, TError = unknown, TData = T> = Omit<
  * Because the stream never settles, the query stays in `fetchStatus: 'fetching'` for the
  * subscription's whole life — `isFetching` is permanently `true` and `isLoading` flips false
  * after the first notification. Read `data` / `error` / `status` and ignore `isFetching` for
- * subscriptions. `result.refetch()` reconnects: TanStack aborts the old signal (ending the prior
- * iterable, which resets its store) and opens a fresh stream. Fire and forget — for a never-ending
- * stream the returned promise never resolves, so don't `await refetch()` (a click handler that does
- * will hang forever).
+ * subscriptions. `result.refetch()` reconnects: TanStack aborts the old signal (tearing the prior
+ * stream's connection down) and opens a fresh stream. Fire and forget — for a never-ending stream
+ * the returned promise never resolves, so don't `await refetch()` (a click handler that does will
+ * hang forever).
  *
  * Defaults, all overridable: `retry: false` (the underlying reactive store owns retry/backoff),
  * `staleTime: Infinity` and `refetchOnWindowFocus: false` (a focus revalidation must not tear down
@@ -133,7 +132,10 @@ export function useSubscriptionQuery<T, TError = unknown, TData = T>(
                     if (typeof current === 'function') {
                         return current(combinedSignal);
                     }
-                    return bridgeStoreToAsyncIterable(current.reactiveStore(), combinedSignal);
+                    const store = current.reactiveStore();
+                    // reset not needed, the connection tears down and the store gets GCed after abort
+                    store.withSignal(combinedSignal).connect();
+                    return bridgeStoreToAsyncIterable(store, combinedSignal);
                 },
             })(context),
         [getAbortSignalRef, sourceRef],

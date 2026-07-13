@@ -325,6 +325,45 @@ store.withSignal(AbortSignal.timeout(30_000)).connect();
 
 The factory runs on every `connect()`, so a torn-down stream can be reopened without losing subscribers or the last known value.
 
+### Consuming a store as an async iterable
+
+The `subscribe` / `getState` contract is _push_-based: the store calls you when something changes. Some consumers are _pull_-based instead: they drive a stream by `for await`-ing an `AsyncIterable`. TanStack Query's `experimental_streamedQuery` is the canonical example, and it's exactly how Kit's [`useSubscriptionQuery`](/docs/guides/react/query#usesubscriptionquery) routes a subscription through the query cache.
+
+`bridgeStoreToAsyncIterable` adapts any `ReactiveStreamStore` to that contract. It only _observes_ the store, so you connect and reset the store yourself; the bridge just subscribes, yields values, and unsubscribes when the loop ends:
+
+```ts
+import { bridgeStoreToAsyncIterable, createSolanaRpcSubscriptions } from '@solana/kit';
+
+const rpcSubscriptions = createSolanaRpcSubscriptions('wss://api.devnet.solana.com');
+const store = rpcSubscriptions.slotNotifications().reactiveStore();
+
+const controller = new AbortController();
+// You own the connection — bind it to the same signal so an abort tears it down.
+store.withSignal(controller.signal).connect();
+try {
+    for await (const notification of bridgeStoreToAsyncIterable(store, controller.signal)) {
+        console.log('Current slot:', notification.slot);
+    }
+} catch (e) {
+    console.error('The subscription errored', e);
+} finally {
+    store.reset();
+}
+// Elsewhere — end the loop cleanly: controller.abort();
+```
+
+Because it reads through a store, it inherits the store's snapshot model: it **seeds from the current value** (a value already present when the loop starts is delivered, so the order of `connect()` and iteration doesn't matter), it is **latest-wins** (a store only ever holds the newest value, so if several notifications land between pulls only the freshest is yielded), a store `error` **throws** out of the `for await`, and aborting the signal **ends the loop cleanly** (an abort is teardown, not failure). Because a subscription never ends on its own, the signal is how the loop terminates — bind it to the store's connection so the abort tears the underlying stream down too. An optional third `shouldYield` predicate gates each value before it is yielded — return `false` to drop it.
+
+<Callout type="info">
+    This is a different thing from an RPC subscription's own async iterable. `await
+    rpcSubscriptions.slotNotifications().subscribe({abortSignal})` also gives you an
+    `AsyncIterable`, but that one vends messages **straight off the transport** — it does not go
+    through a store, so there's no `idle`/`loading`/`loaded`/`error` snapshot, no
+    stale-while-revalidate, and it queues every message rather than keeping only the latest. Use
+    `.subscribe()` when you want the raw transport stream; use `bridgeStoreToAsyncIterable` when you
+    want a store's unified lifecycle exposed as an iterable.
+</Callout>
+
 ## Fetch once, then stay live
 
 A common pattern is "load a value, then keep it current" - fetch an account balance once, then track it through subscription notifications. Doing this by hand is fiddly: the initial fetch and the first few notifications can arrive out of order, and a late initial response must not overwrite a newer notification.

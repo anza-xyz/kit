@@ -8,6 +8,7 @@
  */
 export * from './reactive-action-store';
 export * from './async-iterable';
+export * from './bridge-store-to-async-iterable';
 export * from './data-publisher';
 export * from './demultiplex';
 export * from './event-emitter';

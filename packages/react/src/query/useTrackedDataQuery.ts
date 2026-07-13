@@ -1,4 +1,8 @@
-import { createReactiveStoreWithInitialValueAndSlotTracking, type SolanaRpcResponse } from '@solana/kit';
+import {
+    bridgeStoreToAsyncIterable,
+    createReactiveStoreWithInitialValueAndSlotTracking,
+    type SolanaRpcResponse,
+} from '@solana/kit';
 import {
     experimental_streamedQuery,
     type QueryFunction,
@@ -14,7 +18,6 @@ import { useCallback } from 'react';
 import { useLatest } from '../useLatest';
 import type { UseRequestOptions } from '../useRequest';
 import type { TrackedDataSpec } from '../useTrackedData';
-import { bridgeStoreToAsyncIterable } from './bridgeStoreToAsyncIterable';
 
 /**
  * Options accepted by {@link useTrackedDataQuery}: every option `@tanstack/react-query`'s `useQuery`
@@ -53,8 +56,8 @@ export type UseTrackedDataQueryOptions<TItem, TError = unknown, TData = SolanaRp
  * Because the subscription never settles, the query stays in `fetchStatus: 'fetching'` for its whole
  * life — `isFetching` is permanently `true` and `isLoading` flips false after the first value. Read
  * `data` / `error` / `status` and ignore `isFetching`. `result.refetch()` reconnects: TanStack aborts
- * the old signal (ending the prior iterable, which resets its store) and re-runs both the initial RPC
- * fetch and the subscription. Fire and forget — for a never-ending stream the returned promise never
+ * the old signal (tearing the prior stream's connection down) and re-runs both the initial RPC fetch
+ * and the subscription. Fire and forget — for a never-ending stream the returned promise never
  * resolves, so don't `await refetch()`.
  *
  * Defaults, all overridable: `retry: false` (the underlying reactive store owns retry/backoff),
@@ -152,6 +155,8 @@ export function useTrackedDataQuery<
                     // signal (when present) so aborting either tears the stream down.
                     const combinedSignal = userSignal ? AbortSignal.any([signal, userSignal]) : signal;
                     const store = createReactiveStoreWithInitialValueAndSlotTracking(current);
+                    // reset not needed, the connection tears down and the store gets GCed after abort
+                    store.withSignal(combinedSignal).connect();
                     // Refuse any envelope older than the slot the cache already holds. A fresh store
                     // (e.g. after a remount) tracks slots from scratch, so without this it could
                     // overwrite the cached value with an older one from a lagging RPC node.
