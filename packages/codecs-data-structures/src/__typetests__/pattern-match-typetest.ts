@@ -27,6 +27,12 @@ const stringTypePredicate = null as unknown as (value: number | string) => value
         // It returns an encoder for the same type as the inputs
         getPatternMatchEncoder([[numberValuePredicate, {} as Encoder<number>]]) satisfies Encoder<number>;
 
+        // It accepts a boolean predicate whose parameter is a subtype of the encoder's value type
+        // (e.g. a `number` predicate against a `number | bigint` encoder), mirroring getPredicateEncoder.
+        getPatternMatchEncoder([[numberValuePredicate, {} as Encoder<bigint | number>]]) satisfies Encoder<
+            bigint | number
+        >;
+
         // It does not allow mixing incompatible value types across boolean-predicate branches
         getPatternMatchEncoder(
             // @ts-expect-error A string branch is not compatible with a number-typed pattern match.
@@ -286,6 +292,12 @@ const stringTypePredicate = null as unknown as (value: number | string) => value
     {
         // It returns a codec for the same type as the inputs
         getPatternMatchCodec([[numberValuePredicate, bytesPredicate, {} as Codec<number>]]) satisfies Codec<number>;
+
+        // It accepts a boolean predicate whose parameter is a subtype of the codec's value type
+        // (e.g. a `number` predicate against a `number | bigint` codec), mirroring getPredicateCodec.
+        getPatternMatchCodec([
+            [numberValuePredicate, bytesPredicate, {} as Codec<bigint | number, number>],
+        ]) satisfies Codec<bigint | number, number>;
 
         // It does not allow mixing incompatible value types across boolean-predicate branches
         getPatternMatchCodec(

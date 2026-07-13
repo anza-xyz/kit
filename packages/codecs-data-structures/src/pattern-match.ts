@@ -9,11 +9,16 @@ import {
 import { getUnionDecoder, getUnionEncoder } from './union';
 import { GetEncoderTypeFromVariants, GetUnionCodecType, GetUnionDecoderType, GetUnionEncoderType } from './utils';
 
+// A boolean predicate whose parameter is checked bivariantly (method-syntax escape hatch), so a
+// predicate that narrows to a subtype of the variant's value type — e.g. `(value: number)` against a
+// number codec whose value type is `number | bigint` — is still accepted, mirroring `getPredicateCodec`.
+type BivariantBooleanPredicate<TFrom> = { predicate(value: TFrom): boolean }['predicate'];
+
 type PatternMatchEncoderEntry<TNarrowed, TFrom = TNarrowed> = TNarrowed extends TFrom
-    ? // Boolean predicate with original encoder
-          | readonly [(value: TFrom) => boolean, Encoder<TFrom>]
-          // Type predicate with narrowed encoder
+    ? // Type predicate with narrowed encoder
           | readonly [(value: TFrom) => value is TNarrowed, Encoder<TNarrowed>]
+          // Boolean predicate with original encoder
+          | readonly [BivariantBooleanPredicate<TFrom>, Encoder<TFrom>]
     : never;
 
 type PatternMatchDecoderEntry<TTo> = readonly [(bytes: ReadonlyUint8Array) => boolean, Decoder<TTo>];
@@ -163,7 +168,7 @@ type PatternMatchCodecEntry<TNarrowedFrom, TFrom = TNarrowedFrom, TTo = TNarrowe
                     (bytes: ReadonlyUint8Array) => boolean,
                     Codec<TNarrowedFrom, TTo>,
                 ]
-              | readonly [(value: TFrom) => boolean, (bytes: ReadonlyUint8Array) => boolean, Codec<TFrom, TTo>]
+              | readonly [BivariantBooleanPredicate<TFrom>, (bytes: ReadonlyUint8Array) => boolean, Codec<TFrom, TTo>]
         : never
     : never;
 
