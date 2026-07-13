@@ -10,6 +10,8 @@ export * from './useClientCapability';
 export * from './usePlanTransaction';
 export * from './usePlanTransactions';
 export * from './useRequest';
+export * from './useRpc';
+export * from './useRpcSubscriptions';
 export * from './useSendTransaction';
 export * from './useSendTransactions';
 export * from './useSignAndSendTransaction';

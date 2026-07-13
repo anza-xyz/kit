@@ -4,18 +4,13 @@ import {
     SOLANA_ERROR__REACT__MISSING_CAPABILITY,
     SOLANA_ERROR__REACT__MISSING_PROVIDER,
 } from '@solana/kit';
-import React from 'react';
 
+import { createClientWrapper } from '../__test-utils__/client-wrapper';
 import { renderHook } from '../__test-utils__/render';
-import { ClientProvider } from '../ClientProvider';
 import { useClient } from '../useClient';
 import { useClientCapability } from '../useClientCapability';
 
 type ClientWithFoo = { foo: { hello(): string } };
-
-function wrapperFor<T extends object>(client: ReturnType<typeof createClient<T>>) {
-    return ({ children }: { children: React.ReactNode }) => <ClientProvider client={client}>{children}</ClientProvider>;
-}
 
 describe('useClientCapability', () => {
     it('returns the client when the capability is present', () => {
@@ -27,7 +22,7 @@ describe('useClientCapability', () => {
                     hookName: 'useFoo',
                     providerHint: 'Install fooPlugin().',
                 }),
-            { wrapper: wrapperFor(client) },
+            { wrapper: createClientWrapper(client) },
         );
         expect(result.current).toBe(client);
     });
@@ -46,7 +41,7 @@ describe('useClientCapability', () => {
                     return err;
                 }
             },
-            { wrapper: wrapperFor(client) },
+            { wrapper: createClientWrapper(client) },
         );
         expect(isSolanaError(result.current, SOLANA_ERROR__REACT__MISSING_CAPABILITY)).toBe(true);
         const ctx = (
@@ -71,7 +66,7 @@ describe('useClientCapability', () => {
                     return err;
                 }
             },
-            { wrapper: wrapperFor(client) },
+            { wrapper: createClientWrapper(client) },
         );
         expect(isSolanaError(result.current, SOLANA_ERROR__REACT__MISSING_CAPABILITY)).toBe(true);
         expect((result.current as { context: { capabilities: readonly string[] } }).context.capabilities).toEqual([
@@ -93,7 +88,7 @@ describe('useClientCapability', () => {
                     return err;
                 }
             },
-            { wrapper: wrapperFor(client) },
+            { wrapper: createClientWrapper(client) },
         );
         expect(isSolanaError(result.current, SOLANA_ERROR__REACT__MISSING_CAPABILITY)).toBe(true);
         expect((result.current as { context: { capabilities: readonly string[] } }).context.capabilities).toEqual([

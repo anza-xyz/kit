@@ -92,6 +92,28 @@ function useRpc() {
 
 Pass an array of capability names when a hook needs more than one (e.g. `['rpc', 'rpcSubscriptions']`) — the same `providerHint` is surfaced for whichever is missing.
 
+### `useRpc()` / `useRpcSubscriptions()`
+
+First-class, capability-checked access to the client's `rpc` and `rpcSubscriptions` objects. Each is a thin `useClientCapability` wrapper: it asserts the capability at mount (throwing `SOLANA_ERROR__REACT__MISSING_CAPABILITY` when the plugin is absent) and returns the object directly. The generic is the method set, defaulting to `SolanaRpcApi` / `SolanaRpcSubscriptionsApi`; use it to match the client you built.
+
+```tsx
+import { useEffect, useState } from 'react';
+import { useRpc } from '@solana/react';
+
+function EpochBadge() {
+    const rpc = useRpc();
+    const [epoch, setEpoch] = useState<bigint>();
+    useEffect(() => {
+        rpc.getEpochInfo()
+            .send()
+            .then(info => setEpoch(info.epoch));
+    }, [rpc]);
+    return <span>{epoch !== undefined ? `Epoch ${epoch}` : '…'}</span>;
+}
+```
+
+Calling `.send()` (or `.subscribe()` on a subscription) yourself is the low-level path. In practice you'll usually hand the resulting `PendingRpcRequest` / `PendingRpcSubscriptionsRequest` to `useRequest`, `useSubscription`, or `useTrackedData` (below), which track the lifecycle as React state for you.
+
 ### `useAction(fn)`
 
 Bridges any async function into a tracked action with `dispatch` / `status` / `data` / `error` / `reset`. Each `dispatch(...)` runs `fn` with a fresh `AbortSignal` and tracks the lifecycle through React state; calling `dispatch` again while a prior call is in flight aborts the first.
@@ -138,12 +160,12 @@ Fires a one-shot request on mount and re-fires whenever `source` changes identit
 > Unlike `useAction`, `useRequest` needs the input to have stable identity across renders — it's how the hook knows when to re-fire. Memoize with `useMemo` (for a reactive store source) or `useCallback` (for a function), keyed on whatever inputs your call depends on.
 
 ```tsx
-import { useClient, useRequest } from '@solana/react';
-import type { ClientWithRpc, GetLatestBlockhashApi } from '@solana/kit';
+import { useRequest, useRpc } from '@solana/react';
+import type { GetLatestBlockhashApi } from '@solana/kit';
 
 function LatestBlockhash() {
-    const client = useClient<ClientWithRpc<GetLatestBlockhashApi>>();
-    const source = useMemo(() => client.rpc.getLatestBlockhash(), [client]);
+    const rpc = useRpc<GetLatestBlockhashApi>();
+    const source = useMemo(() => rpc.getLatestBlockhash(), [rpc]);
     const { data, error, refresh } = useRequest(source);
     if (error) return <button onClick={refresh}>Retry</button>;
     return <p>{data ? `Blockhash: ${data.value.blockhash}` : 'Loading…'}</p>;
@@ -154,9 +176,9 @@ function LatestBlockhash() {
 
 ```tsx
 function Balance({ address }: { address: Address | null }) {
-    const client = useClient<ClientWithRpc<GetBalanceApi>>();
+    const rpc = useRpc<GetBalanceApi>();
     // Disabled until an address is selected.
-    const source = useMemo(() => (address ? client.rpc.getBalance(address) : null), [client, address]);
+    const source = useMemo(() => (address ? rpc.getBalance(address) : null), [rpc, address]);
     const { data, status } = useRequest(source);
     if (status === 'disabled') return <p>Select an account to see its balance.</p>;
     return <p>{data?.value !== undefined ? `${data.value} lamports` : 'Loading…'}</p>;
@@ -208,12 +230,12 @@ Subscribe to a stream-store source and surface the latest notification as reacti
 `data` is the notification as the source emits it. For RPC subscriptions that emit `SolanaRpcResponse<U>`, read the inner value at `data.value` and the slot at `data.context.slot`. For raw notifications, `data` is the raw shape.
 
 ```tsx
-import { useClient, useSubscription } from '@solana/react';
-import type { Address, AccountNotificationsApi, ClientWithRpcSubscriptions } from '@solana/kit';
+import { useRpcSubscriptions, useSubscription } from '@solana/react';
+import type { Address, AccountNotificationsApi } from '@solana/kit';
 
 function AccountBalance({ address }: { address: Address }) {
-    const client = useClient<ClientWithRpcSubscriptions<AccountNotificationsApi>>();
-    const source = useMemo(() => client.rpcSubscriptions.accountNotifications(address), [client, address]);
+    const rpcSubscriptions = useRpcSubscriptions<AccountNotificationsApi>();
+    const source = useMemo(() => rpcSubscriptions.accountNotifications(address), [rpcSubscriptions, address]);
     const { data, error, reconnect } = useSubscription(source);
     if (error) return <button onClick={reconnect}>Reconnect</button>;
     return <p>{data ? `${data.value.lamports} lamports at slot ${data.context.slot}` : 'Connecting…'}</p>;
@@ -251,25 +273,20 @@ Render reactive state for an RPC subscription seeded by a one-shot RPC fetch, sl
 `spec` is a `TrackedDataSpec<TRpcValue, TSubscriptionValue, TItem>` with four fields: a pending RPC request, a pending RPC subscription request, and two mappers that unify their value shapes into a common `TItem`. Both RPC responses and subscription notifications must have shape `SolanaRpcResponse` for slot de-dupe. Pass `null` to disable (the result reports `status: 'disabled'`). Memoize the spec with `useMemo` keyed on its inputs — stable identity is how the hook knows when to tear down and re-run.
 
 ```tsx
-import { useClient, useTrackedData } from '@solana/react';
-import type {
-    Address,
-    AccountNotificationsApi,
-    ClientWithRpc,
-    ClientWithRpcSubscriptions,
-    GetBalanceApi,
-} from '@solana/kit';
+import { useRpc, useRpcSubscriptions, useTrackedData } from '@solana/react';
+import type { Address, AccountNotificationsApi, GetBalanceApi } from '@solana/kit';
 
 function AccountBalance({ address }: { address: Address }) {
-    const client = useClient<ClientWithRpc<GetBalanceApi> & ClientWithRpcSubscriptions<AccountNotificationsApi>>();
+    const rpc = useRpc<GetBalanceApi>();
+    const rpcSubscriptions = useRpcSubscriptions<AccountNotificationsApi>();
     const spec = useMemo(
         () => ({
-            rpcRequest: client.rpc.getBalance(address),
-            rpcSubscriptionRequest: client.rpcSubscriptions.accountNotifications(address),
+            rpcRequest: rpc.getBalance(address),
+            rpcSubscriptionRequest: rpcSubscriptions.accountNotifications(address),
             rpcValueMapper: (lamports: bigint) => lamports,
             rpcSubscriptionValueMapper: ({ lamports }: { lamports: bigint }) => lamports,
         }),
-        [client, address],
+        [rpc, rpcSubscriptions, address],
     );
     const { data, error, refresh } = useTrackedData(spec);
     if (error) return <button onClick={refresh}>Retry</button>;
@@ -337,13 +354,13 @@ Opt-in subpath that bridges Kit's reactive primitives into SWR's cache. Import f
 SWR-backed counterpart to `useRequest`. Same `source` shape (a `ReactiveActionSource<T>` or `(signal: AbortSignal) => Promise<T>`). Returns SWR's native `SWRResponse<T>`. Pass `null` for either `key` or `source` to disable — useful when one of the source's inputs isn't yet known.
 
 ```tsx
-import { useClient } from '@solana/react';
+import { useRpc } from '@solana/react';
 import { useRequestSWR } from '@solana/react/swr';
-import type { ClientWithRpc, GetLatestBlockhashApi } from '@solana/kit';
+import type { GetLatestBlockhashApi } from '@solana/kit';
 
 function LatestBlockhash() {
-    const client = useClient<ClientWithRpc<GetLatestBlockhashApi>>();
-    const { data, error, isLoading, mutate } = useRequestSWR(['latestBlockhash'], client.rpc.getLatestBlockhash());
+    const rpc = useRpc<GetLatestBlockhashApi>();
+    const { data, error, isLoading, mutate } = useRequestSWR(['latestBlockhash'], rpc.getLatestBlockhash());
     if (error) return <button onClick={() => mutate()}>Retry</button>;
     if (isLoading) return <p>Loading…</p>;
     return <p>Blockhash: {data!.value.blockhash}</p>;
@@ -387,10 +404,10 @@ SWR-backed counterpart to `useSubscription`. Routes a `ReactiveStreamSource<T>` 
 
 ```tsx
 function AccountBalance({ address }: { address: Address }) {
-    const client = useClient<ClientWithRpcSubscriptions<AccountNotificationsApi>>();
+    const rpcSubscriptions = useRpcSubscriptions<AccountNotificationsApi>();
     const { data, error } = useSubscriptionSWR(
         address ? ['account', address] : null,
-        address ? client.rpcSubscriptions.accountNotifications(address) : null,
+        address ? rpcSubscriptions.accountNotifications(address) : null,
     );
     if (error) return <p>Failed to connect.</p>;
     if (!data) return <p>Connecting…</p>;
@@ -410,18 +427,19 @@ SWR-backed counterpart to `useTrackedData`. Takes the same `TrackedDataSpec` (RP
 
 ```tsx
 function AccountBalance({ address }: { address: Address }) {
-    const client = useClient<ClientWithRpc<GetBalanceApi> & ClientWithRpcSubscriptions<AccountNotificationsApi>>();
+    const rpc = useRpc<GetBalanceApi>();
+    const rpcSubscriptions = useRpcSubscriptions<AccountNotificationsApi>();
     const spec = useMemo(
         () =>
             address
                 ? {
-                      initialValueSource: client.rpc.getBalance(address),
+                      initialValueSource: rpc.getBalance(address),
                       initialValueMapper: (lamports: bigint) => lamports,
-                      streamSource: client.rpcSubscriptions.accountNotifications(address),
+                      streamSource: rpcSubscriptions.accountNotifications(address),
                       streamValueMapper: ({ lamports }: { lamports: bigint }) => lamports,
                   }
                 : null,
-        [client, address],
+        [rpc, rpcSubscriptions, address],
     );
     const { data } = useTrackedDataSWR(address ? ['balance', address] : null, spec);
     return <p>{data ? `${data.value} lamports at slot ${data.context.slot}` : 'Loading…'}</p>;
@@ -443,13 +461,13 @@ Opt-in subpath that bridges Kit's reactive primitives into [TanStack Query](http
 TanStack Query-backed counterpart to `useRequest`. Same `source` shape (a `ReactiveActionSource<T>` or `(signal: AbortSignal) => Promise<T>`). Returns TanStack's native `UseQueryResult<T>`. Pass `null` for `source` to disable — useful when one of the source's inputs isn't yet known. This maps to TanStack's `enabled: false`. Unlike SWR there is no nullable `key`, disable via a `null` source (or `enabled`) instead.
 
 ```tsx
-import { useClient } from '@solana/react';
+import { useRpc } from '@solana/react';
 import { useRequestQuery } from '@solana/react/query';
-import type { ClientWithRpc, GetLatestBlockhashApi } from '@solana/kit';
+import type { GetLatestBlockhashApi } from '@solana/kit';
 
 function LatestBlockhash() {
-    const client = useClient<ClientWithRpc<GetLatestBlockhashApi>>();
-    const { data, error, isLoading, refetch } = useRequestQuery(['latestBlockhash'], client.rpc.getLatestBlockhash());
+    const rpc = useRpc<GetLatestBlockhashApi>();
+    const { data, error, isLoading, refetch } = useRequestQuery(['latestBlockhash'], rpc.getLatestBlockhash());
     if (error) return <button onClick={() => refetch()}>Retry</button>;
     if (isLoading) return <p>Loading…</p>;
     return <p>Blockhash: {data!.value.blockhash}</p>;
@@ -488,13 +506,13 @@ TanStack Query-backed counterpart to `useSubscription`, for streams that have no
 Returns TanStack's native `UseQueryResult<T>`. `data` is the raw notification, exactly as the source emits it, so for RPC subscriptions read `data.value` and `data.context.slot`. Pass `null` for `source` to disable (TanStack's `enabled: false`).
 
 ```tsx
-import { useClient } from '@solana/react';
+import { useRpcSubscriptions } from '@solana/react';
 import { useSubscriptionQuery } from '@solana/react/query';
-import type { ClientWithRpcSubscriptions, SlotNotificationsApi } from '@solana/kit';
+import type { SlotNotificationsApi } from '@solana/kit';
 
 function SlotHeight() {
-    const client = useClient<ClientWithRpcSubscriptions<SlotNotificationsApi>>();
-    const { data, error } = useSubscriptionQuery(['slot'], client.rpcSubscriptions.slotNotifications());
+    const rpcSubscriptions = useRpcSubscriptions<SlotNotificationsApi>();
+    const { data, error } = useSubscriptionQuery(['slot'], rpcSubscriptions.slotNotifications());
     if (error) return <p>Disconnected.</p>;
     if (!data) return <p>Connecting…</p>;
     return <p>Slot {String(data.slot)}</p>;
@@ -519,26 +537,21 @@ TanStack Query-backed counterpart to `useTrackedData`. Takes the same `TrackedDa
 Returns TanStack's native `UseQueryResult`. `data` is the `SolanaRpcResponse<TItem>` envelope emitted by the underlying Kit primitive, so callers can read `data.value` (the unified item produced by the mappers) and `data.context.slot` (the slot the store dedup'd on) directly. Pass `null` for `spec` to disable (TanStack's `enabled: false`).
 
 ```tsx
-import { useClient } from '@solana/react';
+import { useRpc, useRpcSubscriptions } from '@solana/react';
 import { useTrackedDataQuery } from '@solana/react/query';
-import type {
-    Address,
-    AccountNotificationsApi,
-    ClientWithRpc,
-    ClientWithRpcSubscriptions,
-    GetBalanceApi,
-} from '@solana/kit';
+import type { Address, AccountNotificationsApi, GetBalanceApi } from '@solana/kit';
 
 function AccountBalance({ address }: { address: Address }) {
-    const client = useClient<ClientWithRpc<GetBalanceApi> & ClientWithRpcSubscriptions<AccountNotificationsApi>>();
+    const rpc = useRpc<GetBalanceApi>();
+    const rpcSubscriptions = useRpcSubscriptions<AccountNotificationsApi>();
     const spec = useMemo(
         () => ({
-            initialValueSource: client.rpc.getBalance(address),
+            initialValueSource: rpc.getBalance(address),
             initialValueMapper: (lamports: bigint) => lamports,
-            streamSource: client.rpcSubscriptions.accountNotifications(address),
+            streamSource: rpcSubscriptions.accountNotifications(address),
             streamValueMapper: ({ lamports }: { lamports: bigint }) => lamports,
         }),
-        [client, address],
+        [rpc, rpcSubscriptions, address],
     );
     const { data, error } = useTrackedDataQuery(['balance', address], spec);
     if (error) return <p>Failed to load.</p>;
