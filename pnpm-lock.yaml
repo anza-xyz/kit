@@ -1580,9 +1580,9 @@ importers:
       '@solana/instructions':
         specifier: workspace:*
         version: link:../instructions
-      '@solana/rpc-api':
+      '@solana/rpc-types':
         specifier: workspace:*
-        version: link:../rpc-api
+        version: link:../rpc-types
       '@solana/transaction-messages':
         specifier: workspace:*
         version: link:../transaction-messages
@@ -1593,9 +1593,9 @@ importers:
         specifier: '>=5.4.0'
         version: 5.9.3
     devDependencies:
-      '@solana/rpc-types':
+      '@solana/rpc-api':
         specifier: workspace:*
-        version: link:../rpc-types
+        version: link:../rpc-api
 
   packages/transaction-messages:
     dependencies:
