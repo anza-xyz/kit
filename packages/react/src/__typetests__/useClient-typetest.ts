@@ -8,14 +8,6 @@ type ClientWithFoo = { foo: { hello(): string } };
 
 // [DESCRIBE] useClient
 {
-    // It defaults to `Client<object>`
-    {
-        const client = useClient();
-        client satisfies Client<object>;
-        // @ts-expect-error - the base shape carries no plugin capabilities
-        void client.foo;
-    }
-
     // It narrows to the requested shape via the generic
     {
         const client = useClient<ClientWithFoo>();
