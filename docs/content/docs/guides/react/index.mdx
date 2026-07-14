@@ -19,8 +19,14 @@ import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
 import { generatedSigner } from '@solana/kit-plugin-signer';
 
 // Build once, at module scope, so the reference is stable across renders.
-const client = createClient().use(generatedSigner()).use(solanaDevnetRpc());
+export const client = createClient().use(generatedSigner()).use(solanaDevnetRpc());
+
+// Export the client's type too, so components can read a fully-typed client.
+// `Awaited<…>` resolves the promise when a plugin is async; it's a no-op otherwise.
+export type AppClient = Awaited<typeof client>;
 ```
+
+Exporting `AppClient` lets any component ask for the fully-typed client with [`useClient<AppClient>()`](/docs/guides/react/core-hooks#useclient) - every capability you installed above is typed, with no per-call narrowing or casting.
 
 Wrap your app in the provider and pass the client in:
 
@@ -132,14 +138,14 @@ export function App() {
 
 Once a provider is mounted, pick a hook by what you are trying to do:
 
-| You want to…                                     | Hook                                                                       | What you get back                                                                    |
-| ------------------------------------------------ | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| Access the raw client imperatively               | [`useClient`](/docs/guides/react/core-hooks#useclient)                     | The Kit client from context (type-cast, no runtime check).                           |
-| Access the client and assert a plugin is present | [`useClientCapability`](/docs/guides/react/core-hooks#useclientcapability) | The narrowed client, throws if the capability is missing.                            |
-| Read a value once                                | [`useRequest`](/docs/guides/react/core-hooks#userequest)                   | `{ data, error, status, refresh }`. Request fires on mount, `refresh()` re-fires.    |
-| Subscribe to a stream of notifications           | [`useSubscription`](/docs/guides/react/core-hooks#usesubscription)         | `{ data, error, status, reconnect }`. Latest notification, no initial fetch.         |
-| Read a value that updates live                   | [`useTrackedData`](/docs/guides/react/core-hooks#usetrackeddata)           | `{ data, error, status, refresh }`. Initial fetch seeds, subscription keeps it live. |
-| Trigger an async action on user input            | [`useAction`](/docs/guides/react/core-hooks#useaction)                     | `{ dispatch, status, data, error, reset }`. Fires on demand.                         |
+| You want to…                                    | Hook                                                                       | What you get back                                                                    |
+| ----------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Access your typed client imperatively           | [`useClient`](/docs/guides/react/core-hooks#useclient)                     | Your `AppClient` from context (type-cast, no runtime check).                         |
+| Runtime-guard a capability on an untyped client | [`useClientCapability`](/docs/guides/react/core-hooks#useclientcapability) | The narrowed client; throws at mount if the capability is missing.                   |
+| Read a value once                               | [`useRequest`](/docs/guides/react/core-hooks#userequest)                   | `{ data, error, status, refresh }`. Request fires on mount, `refresh()` re-fires.    |
+| Subscribe to a stream of notifications          | [`useSubscription`](/docs/guides/react/core-hooks#usesubscription)         | `{ data, error, status, reconnect }`. Latest notification, no initial fetch.         |
+| Read a value that updates live                  | [`useTrackedData`](/docs/guides/react/core-hooks#usetrackeddata)           | `{ data, error, status, refresh }`. Initial fetch seeds, subscription keeps it live. |
+| Trigger an async action on user input           | [`useAction`](/docs/guides/react/core-hooks#useaction)                     | `{ dispatch, status, data, error, reset }`. Fires on demand.                         |
 
 The [SWR](/docs/guides/react/swr) and [TanStack Query](/docs/guides/react/query) adapters route the read hooks through those libraries' caches. These add features such as deduplication and devtools.
 

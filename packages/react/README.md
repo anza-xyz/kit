@@ -19,7 +19,7 @@ The Kit client is a plugin-extensible value built outside the React tree (`creat
 
 ### `ClientProvider`
 
-Publishes a caller-owned Kit client to its subtree. Required for `useClient`, `useClientCapability`, and any plugin-specific hook that depends on a client capability. Generic primitives like `useAction` work against arbitrary async functions and don't need a provider.
+Publishes a caller-owned Kit client to its subtree. Required for `useClient` and any plugin-specific hook that reads a client capability. Generic primitives like `useAction` work against arbitrary async functions and don't need a provider.
 
 ```tsx
 import { createClient } from '@solana/kit';
@@ -59,38 +59,58 @@ function Root() {
 
 Reads the Kit client published by the nearest `ClientProvider`. Throws a `SolanaError` with code `SOLANA_ERROR__REACT__MISSING_PROVIDER` if no provider is mounted.
 
-Defaults to the base `Client` shape. Callers who know a specific plugin is installed may widen the type via the generic — this is a pure cast with no runtime check, so reach for `useClientCapability` when a missing plugin should fail loudly at mount instead of surfacing later as `undefined`.
+It defaults to the base `Client` shape, pass your client's type through the generic to get the capabilities you installed typed at the call site. The ergonomic way is to **reuse the type of the client you already built** — export it from wherever you compose the client and hand that to `useClient`, so the hook's type stays in sync with your real plugin composition automatically:
 
 ```tsx
-import { ClientWithRpc, GetEpochInfoApi } from '@solana/kit';
+// client.ts — where you build the client
+import { createClient } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { generatedSigner } from '@solana/kit-plugin-signer';
+
+export const client = createClient().use(generatedSigner()).use(solanaDevnetRpc());
+
+// `Awaited<…>` resolves the promise when any plugin is async (e.g. `generatedSigner()`);
+// for a fully-synchronous client it is simply `typeof client`.
+export type AppClient = Awaited<typeof client>;
+```
+
+```tsx
+// any component
 import { useClient } from '@solana/react';
+import type { AppClient } from './client';
 
 function ManualSend() {
-    const client = useClient<ClientWithRpc<GetEpochInfoApi>>();
+    const client = useClient<AppClient>(); // rpc, signers, … all typed
     return <button onClick={() => client.rpc.getEpochInfo().send()}>Fetch</button>;
 }
 ```
 
+`useClient` is a pure type assertion with no runtime check.
+
 ### `useClientCapability<TClient>(config)`
 
-Reads the client and asserts at mount that the requested capability is installed, narrowing the return type via the generic. Throws a `SolanaError` with code `SOLANA_ERROR__REACT__MISSING_CAPABILITY` when the capability is absent — including `hookName` and `providerHint` so users can fix the mistake without cross-referencing docs.
+A runtime escape hatch for the uncommon case where the client isn't precisely typed — a loosely-typed `Client` read from context, say — and you want a clear failure at mount rather than a downstream `undefined`. It reads the client, asserts at mount that the requested capability is installed, and narrows the return type via the generic, throwing a `SolanaError` with code `SOLANA_ERROR__REACT__MISSING_CAPABILITY` (with your `hookName` and `providerHint`) when the capability is absent.
 
-Use this from the implementation of plugin-specific hooks. Apps that need ad-hoc access can reach for `useClient` directly and supply their own narrowing.
+When you type your client with `useClient<AppClient>()`, the compiler already guarantees the capability is present, so you rarely need this.
 
 ```tsx
 import { ClientWithRpc, GetEpochInfoApi } from '@solana/kit';
 import { useClientCapability } from '@solana/react';
 
-function useRpc() {
-    return useClientCapability<ClientWithRpc<GetEpochInfoApi>>({
+// The provider holds a loosely-typed `Client` (built elsewhere, or by a
+// third party), so `useClient` can't prove `rpc` is installed. Assert it here
+// and get a clear mount-time error — with your hint — if it isn't.
+function EpochBadge() {
+    const client = useClientCapability<ClientWithRpc<GetEpochInfoApi>>({
         capability: 'rpc',
-        hookName: 'useRpc',
+        hookName: 'EpochBadge',
         providerHint: 'Install `solanaRpc()` on the client.',
     });
+    return <button onClick={() => client.rpc.getEpochInfo().send()}>Refresh epoch</button>;
 }
 ```
 
-Pass an array of capability names when a hook needs more than one (e.g. `['rpc', 'rpcSubscriptions']`) — the same `providerHint` is surfaced for whichever is missing.
+Pass an array of capability names when you need more than one (e.g. `['rpc', 'rpcSubscriptions']`) — the same `providerHint` is surfaced for whichever is missing.
 
 ### `useAction(fn)`
 
@@ -139,10 +159,10 @@ Fires a one-shot request on mount and re-fires whenever `source` changes identit
 
 ```tsx
 import { useClient, useRequest } from '@solana/react';
-import type { ClientWithRpc, GetLatestBlockhashApi } from '@solana/kit';
+import type { AppClient } from './client';
 
 function LatestBlockhash() {
-    const client = useClient<ClientWithRpc<GetLatestBlockhashApi>>();
+    const client = useClient<AppClient>();
     const source = useMemo(() => client.rpc.getLatestBlockhash(), [client]);
     const { data, error, refresh } = useRequest(source);
     if (error) return <button onClick={refresh}>Retry</button>;
@@ -154,7 +174,7 @@ function LatestBlockhash() {
 
 ```tsx
 function Balance({ address }: { address: Address | null }) {
-    const client = useClient<ClientWithRpc<GetBalanceApi>>();
+    const client = useClient<AppClient>();
     // Disabled until an address is selected.
     const source = useMemo(() => (address ? client.rpc.getBalance(address) : null), [client, address]);
     const { data, status } = useRequest(source);
@@ -209,10 +229,11 @@ Subscribe to a stream-store source and surface the latest notification as reacti
 
 ```tsx
 import { useClient, useSubscription } from '@solana/react';
-import type { Address, AccountNotificationsApi, ClientWithRpcSubscriptions } from '@solana/kit';
+import type { Address } from '@solana/kit';
+import type { AppClient } from './client';
 
 function AccountBalance({ address }: { address: Address }) {
-    const client = useClient<ClientWithRpcSubscriptions<AccountNotificationsApi>>();
+    const client = useClient<AppClient>();
     const source = useMemo(() => client.rpcSubscriptions.accountNotifications(address), [client, address]);
     const { data, error, reconnect } = useSubscription(source);
     if (error) return <button onClick={reconnect}>Reconnect</button>;
@@ -252,16 +273,11 @@ Render reactive state for an RPC subscription seeded by a one-shot RPC fetch, sl
 
 ```tsx
 import { useClient, useTrackedData } from '@solana/react';
-import type {
-    Address,
-    AccountNotificationsApi,
-    ClientWithRpc,
-    ClientWithRpcSubscriptions,
-    GetBalanceApi,
-} from '@solana/kit';
+import type { Address } from '@solana/kit';
+import type { AppClient } from './client';
 
 function AccountBalance({ address }: { address: Address }) {
-    const client = useClient<ClientWithRpc<GetBalanceApi> & ClientWithRpcSubscriptions<AccountNotificationsApi>>();
+    const client = useClient<AppClient>();
     const spec = useMemo(
         () => ({
             rpcRequest: client.rpc.getBalance(address),
@@ -312,10 +328,10 @@ SWR-backed counterpart to `useRequest`. Same `source` shape (a `ReactiveActionSo
 ```tsx
 import { useClient } from '@solana/react';
 import { useRequestSWR } from '@solana/react/swr';
-import type { ClientWithRpc, GetLatestBlockhashApi } from '@solana/kit';
+import type { AppClient } from './client';
 
 function LatestBlockhash() {
-    const client = useClient<ClientWithRpc<GetLatestBlockhashApi>>();
+    const client = useClient<AppClient>();
     const { data, error, isLoading, mutate } = useRequestSWR(['latestBlockhash'], client.rpc.getLatestBlockhash());
     if (error) return <button onClick={() => mutate()}>Retry</button>;
     if (isLoading) return <p>Loading…</p>;
@@ -360,7 +376,7 @@ SWR-backed counterpart to `useSubscription`. Routes a `ReactiveStreamSource<T>` 
 
 ```tsx
 function AccountBalance({ address }: { address: Address }) {
-    const client = useClient<ClientWithRpcSubscriptions<AccountNotificationsApi>>();
+    const client = useClient<AppClient>();
     const { data, error } = useSubscriptionSWR(
         address ? ['account', address] : null,
         address ? client.rpcSubscriptions.accountNotifications(address) : null,
@@ -383,7 +399,7 @@ SWR-backed counterpart to `useTrackedData`. Takes the same `TrackedDataSpec` (RP
 
 ```tsx
 function AccountBalance({ address }: { address: Address }) {
-    const client = useClient<ClientWithRpc<GetBalanceApi> & ClientWithRpcSubscriptions<AccountNotificationsApi>>();
+    const client = useClient<AppClient>();
     const spec = useMemo(
         () =>
             address
@@ -418,10 +434,10 @@ TanStack Query-backed counterpart to `useRequest`. Same `source` shape (a `React
 ```tsx
 import { useClient } from '@solana/react';
 import { useRequestQuery } from '@solana/react/query';
-import type { ClientWithRpc, GetLatestBlockhashApi } from '@solana/kit';
+import type { AppClient } from './client';
 
 function LatestBlockhash() {
-    const client = useClient<ClientWithRpc<GetLatestBlockhashApi>>();
+    const client = useClient<AppClient>();
     const { data, error, isLoading, refetch } = useRequestQuery(['latestBlockhash'], client.rpc.getLatestBlockhash());
     if (error) return <button onClick={() => refetch()}>Retry</button>;
     if (isLoading) return <p>Loading…</p>;
@@ -463,10 +479,10 @@ Returns TanStack's native `UseQueryResult<T>`. `data` is the raw notification, e
 ```tsx
 import { useClient } from '@solana/react';
 import { useSubscriptionQuery } from '@solana/react/query';
-import type { ClientWithRpcSubscriptions, SlotNotificationsApi } from '@solana/kit';
+import type { AppClient } from './client';
 
 function SlotHeight() {
-    const client = useClient<ClientWithRpcSubscriptions<SlotNotificationsApi>>();
+    const client = useClient<AppClient>();
     const { data, error } = useSubscriptionQuery(['slot'], client.rpcSubscriptions.slotNotifications());
     if (error) return <p>Disconnected.</p>;
     if (!data) return <p>Connecting…</p>;
@@ -494,16 +510,11 @@ Returns TanStack's native `UseQueryResult`. `data` is the `SolanaRpcResponse<TIt
 ```tsx
 import { useClient } from '@solana/react';
 import { useTrackedDataQuery } from '@solana/react/query';
-import type {
-    Address,
-    AccountNotificationsApi,
-    ClientWithRpc,
-    ClientWithRpcSubscriptions,
-    GetBalanceApi,
-} from '@solana/kit';
+import type { Address } from '@solana/kit';
+import type { AppClient } from './client';
 
 function AccountBalance({ address }: { address: Address }) {
-    const client = useClient<ClientWithRpc<GetBalanceApi> & ClientWithRpcSubscriptions<AccountNotificationsApi>>();
+    const client = useClient<AppClient>();
     const spec = useMemo(
         () => ({
             initialValueSource: client.rpc.getBalance(address),

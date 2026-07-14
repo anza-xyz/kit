@@ -9,36 +9,56 @@ Every hook on this page must be rendered under a [`ClientProvider`](/docs/guides
 
 ### `useClient`
 
-Reads the Kit client published by the nearest `ClientProvider`. It defaults to the base `Client` shape; when you know a plugin is installed, narrow the type through the generic. This is a pure type-cast with no runtime check - reach for `useClientCapability` instead when a missing plugin should fail. Throws `SOLANA_ERROR__REACT__MISSING_PROVIDER` if no provider is mounted above it.
+Reads the Kit client published by the nearest `ClientProvider`. Throws `SOLANA_ERROR__REACT__MISSING_PROVIDER` if no provider is mounted above it.
+
+Pass your client's type through the generic so every capability you installed is typed at the call site. The simplest way is to reuse the type of the [client you already built](/docs/guides/react) - export it once alongside the client - so the hook's type always matches your real plugin composition:
 
 ```tsx twoslash
-import { ClientWithRpc, GetEpochInfoApi } from '@solana/kit';
+// client.ts — where you build the client
+import { createClient } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { generatedSigner } from '@solana/kit-plugin-signer';
+
+export const client = createClient().use(generatedSigner()).use(solanaDevnetRpc());
+export type AppClient = Awaited<typeof client>;
+
+// any component
 import { useClient } from '@solana/react';
 
 function FetchEpochButton() {
-    const client = useClient<ClientWithRpc<GetEpochInfoApi>>();
+    const client = useClient<AppClient>(); // rpc, signers, … all typed
     return <button onClick={() => client.rpc.getEpochInfo().send()}>Fetch epoch</button>;
 }
 ```
 
+`AppClient` uses `Awaited<typeof client>` so it resolves the promise when a plugin is async, for a fully-synchronous client `Awaited<…>` is a no-op and `typeof client` alone would do.
+
+`useClient` is a pure type-cast with no runtime check.
+
 ### `useClientCapability`
 
-Reads the client and asserts at mount that a capability is installed, narrowing the return type via the generic. If the capability is absent it throws `SOLANA_ERROR__REACT__MISSING_CAPABILITY`, including the `hookName` and `providerHint` you supply so the mistake is easy to locate. This is the building block for plugin-specific hooks.
+A runtime escape hatch for the uncommon case where the client isn't precisely typed — a loosely-typed `Client` read from context, say — and you want a clear failure at mount instead of a downstream `undefined`. It reads the client, asserts a capability is installed, and narrows the return type via the generic; if the capability is absent it throws `SOLANA_ERROR__REACT__MISSING_CAPABILITY` with the `hookName` and `providerHint` you supply.
+
+When you type your client with `useClient<AppClient>()` the compiler already guarantees the capability is present, so you rarely need this.
 
 ```tsx twoslash
 import { ClientWithRpc, GetEpochInfoApi } from '@solana/kit';
 import { useClientCapability } from '@solana/react';
 
-function useRpc() {
-    return useClientCapability<ClientWithRpc<GetEpochInfoApi>>({
+// The provider holds a loosely-typed `Client` (built elsewhere, or by a
+// third party), so `useClient` can't prove `rpc` is installed. Assert it here
+// and get a clear mount-time error — with your hint — if it isn't.
+function EpochBadge() {
+    const client = useClientCapability<ClientWithRpc<GetEpochInfoApi>>({
         capability: 'rpc',
-        hookName: 'useRpc',
+        hookName: 'EpochBadge',
         providerHint: 'Install a `solanaRpc()` plugin on the client.',
     });
+    return <button onClick={() => client.rpc.getEpochInfo().send()}>Refresh epoch</button>;
 }
 ```
 
-Pass an array for `capability` when a hook needs more than one (e.g. `['rpc', 'rpcSubscriptions']`); the same `providerHint` is reported for whichever is missing.
+Pass an array for `capability` when you need more than one (e.g. `['rpc', 'rpcSubscriptions']`); the same `providerHint` is reported for whichever is missing.
 
 ## Reading once
 
@@ -49,12 +69,17 @@ Fires a one-shot request on mount and re-fires whenever the source changes ident
 Pass either a Kit request source (most commonly a `PendingRpcRequest`) or an `async (signal) => Promise<T>` function to wrap any one-shot async call. Memoize the source (`useMemo`) or function (`useCallback`) on its inputs.
 
 ```tsx twoslash
+import { createClient } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { generatedSigner } from '@solana/kit-plugin-signer';
+const client = createClient().use(generatedSigner()).use(solanaDevnetRpc());
+type AppClient = Awaited<typeof client>;
+// ---cut-before---
 import { useMemo } from 'react';
-import { ClientWithRpc, GetLatestBlockhashApi } from '@solana/kit';
 import { useClient, useRequest } from '@solana/react';
 
 function LatestBlockhash() {
-    const client = useClient<ClientWithRpc<GetLatestBlockhashApi>>();
+    const client = useClient<AppClient>();
     const source = useMemo(() => client.rpc.getLatestBlockhash(), [client]);
     const { data, error, status, refresh } = useRequest(source, {
         getAbortSignal: () => AbortSignal.timeout(5_000),
@@ -73,12 +98,18 @@ The `getAbortSignal` factory runs on every attempt (initial fire and every `refr
 Subscribes to a stream source and surfaces the latest notification - no initial fetch. The subscription opens on mount, re-opens when the source changes identity, and tears down on unmount. Use `reconnect()` to re-open manually. Status is `loading`, `loaded`, `error`, or `disabled`.
 
 ```tsx twoslash
+import { createClient } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { generatedSigner } from '@solana/kit-plugin-signer';
+const client = createClient().use(generatedSigner()).use(solanaDevnetRpc());
+type AppClient = Awaited<typeof client>;
+// ---cut-before---
 import { useMemo } from 'react';
-import { Address, ClientWithRpcSubscriptions, AccountNotificationsApi } from '@solana/kit';
+import { Address } from '@solana/kit';
 import { useClient, useSubscription } from '@solana/react';
 
 function LiveAccount({ address }: { address: Address }) {
-    const client = useClient<ClientWithRpcSubscriptions<AccountNotificationsApi>>();
+    const client = useClient<AppClient>();
     const source = useMemo(
         () => client.rpcSubscriptions.accountNotifications(address),
         [client, address],
@@ -100,20 +131,18 @@ Renders a value that loads quickly and then stays live: a one-shot fetch seeds t
 Pass a memoized spec with an `initialValueSource` + `initialValueMapper` (the initial fetch) and a `streamSource` + `streamValueMapper` (the subscription).
 
 ```tsx twoslash
+import { createClient } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { generatedSigner } from '@solana/kit-plugin-signer';
+const client = createClient().use(generatedSigner()).use(solanaDevnetRpc());
+type AppClient = Awaited<typeof client>;
+// ---cut-before---
 import { useMemo } from 'react';
-import {
-    Address,
-    ClientWithRpc,
-    ClientWithRpcSubscriptions,
-    GetBalanceApi,
-    AccountNotificationsApi,
-} from '@solana/kit';
+import { Address } from '@solana/kit';
 import { useClient, useTrackedData } from '@solana/react';
 
 function AccountBalance({ address }: { address: Address }) {
-    const client = useClient<
-        ClientWithRpc<GetBalanceApi> & ClientWithRpcSubscriptions<AccountNotificationsApi>
-    >();
+    const client = useClient<AppClient>();
     const spec = useMemo(
         () => ({
             initialValueSource: client.rpc.getBalance(address),
