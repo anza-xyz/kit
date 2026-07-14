@@ -19,7 +19,7 @@ export function getBaseConfig(platform: Platform, formats: Format[], _options: O
     // via the package.json `exports` map.
     const moduleEntry =
         env.npm_package_name === '@solana/kit'
-            ? ['./src/index.ts', './src/program-client-core.ts']
+            ? ['./src/index.ts', './src/program-client-core.ts', './src/codecs.ts']
             : env.npm_package_name === '@solana/react'
               ? ['./src/index.ts', './src/swr.ts', './src/query.ts']
               : ['./src/index.ts'];

@@ -43,6 +43,26 @@
             },
             "react-native": "./dist/program-client-core.native.mjs",
             "types": "./dist/types/program-client-core.d.ts"
+        },
+        "./codecs": {
+            "edge-light": {
+                "import": "./dist/codecs.node.mjs",
+                "require": "./dist/codecs.node.cjs"
+            },
+            "workerd": {
+                "import": "./dist/codecs.node.mjs",
+                "require": "./dist/codecs.node.cjs"
+            },
+            "browser": {
+                "import": "./dist/codecs.browser.mjs",
+                "require": "./dist/codecs.browser.cjs"
+            },
+            "node": {
+                "import": "./dist/codecs.node.mjs",
+                "require": "./dist/codecs.node.cjs"
+            },
+            "react-native": "./dist/codecs.native.mjs",
+            "types": "./dist/types/codecs.d.ts"
         }
     },
     "browser": {
