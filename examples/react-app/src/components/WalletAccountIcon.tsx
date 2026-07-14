@@ -1,5 +1,6 @@
-import type { UiWalletAccount } from '@wallet-standard/react';
-import { uiWalletAccountBelongsToUiWallet, useWallets } from '@wallet-standard/react';
+import { useWallets } from '@solana/kit-plugin-wallet/react';
+import type { UiWalletAccount } from '@wallet-standard/ui';
+import { uiWalletAccountBelongsToUiWallet } from '@wallet-standard/ui';
 import React from 'react';
 
 type Props = React.ComponentProps<'img'> &

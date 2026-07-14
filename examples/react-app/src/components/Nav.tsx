@@ -1,4 +1,6 @@
-import { Badge, Box, DropdownMenu, Flex, Heading } from '@radix-ui/themes';
+import { Badge, Box, Button, DropdownMenu, Flex, Heading } from '@radix-ui/themes';
+import { WalletReadyGate } from '@solana/kit-plugin-wallet/react';
+import type { SolanaChain } from '@solana/wallet-standard-chains';
 import { useContext } from 'react';
 
 import { ChainContext } from '../context/ChainContext';
@@ -33,7 +35,7 @@ export function Nav() {
                                 <DropdownMenu.Content>
                                     <DropdownMenu.RadioGroup
                                         onValueChange={value => {
-                                            setChain(value as 'solana:${string}');
+                                            setChain(value as SolanaChain);
                                         }}
                                         value={chain}
                                     >
@@ -52,8 +54,16 @@ export function Nav() {
                         )}
                     </Heading>
                 </Box>
-                <ConnectWalletMenu>Connect Wallet</ConnectWalletMenu>
-                <SignInMenu>Sign In</SignInMenu>
+                <WalletReadyGate
+                    fallback={
+                        <Button disabled loading>
+                            Connect Wallet
+                        </Button>
+                    }
+                >
+                    <ConnectWalletMenu>Connect Wallet</ConnectWalletMenu>
+                    <SignInMenu>Sign In</SignInMenu>
+                </WalletReadyGate>
             </Flex>
         </Box>
     );
