@@ -59,7 +59,7 @@ function Root() {
 
 Reads the Kit client published by the nearest `ClientProvider`. Throws a `SolanaError` with code `SOLANA_ERROR__REACT__MISSING_PROVIDER` if no provider is mounted.
 
-It defaults to the base `Client` shape, pass your client's type through the generic to get the capabilities you installed typed at the call site. The ergonomic way is to **reuse the type of the client you already built** — export it from wherever you compose the client and hand that to `useClient`, so the hook's type stays in sync with your real plugin composition automatically:
+Pass your client's type through the generic to get the capabilities you installed typed at the call site. The ergonomic way is to **reuse the type of the client you already built** — export it from wherever you compose the client and hand that to `useClient`, so the hook's type stays in sync with your real plugin composition automatically:
 
 ```tsx
 // client.ts — where you build the client
