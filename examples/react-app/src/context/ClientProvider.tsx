@@ -1,6 +1,8 @@
-import { createClient } from '@solana/kit';
+import type { ClusterUrl } from '@solana/kit';
+import { createClient, extendClient } from '@solana/kit';
+import { solanaRpc } from '@solana/kit-plugin-rpc';
 import { walletSigner } from '@solana/kit-plugin-wallet';
-import { ClientProvider } from '@solana/react';
+import { ClientProvider as KitClientProvider } from '@solana/react';
 import type { SolanaChain } from '@solana/wallet-standard-chains';
 import { useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
@@ -10,26 +12,36 @@ type Props = Readonly<{
     children: React.ReactNode;
 }>;
 
-function buildWalletClient(chain: SolanaChain) {
-    return createClient().use(walletSigner({ chain }));
+function buildClient(chain: SolanaChain, rpcUrl: ClusterUrl, rpcSubscriptionsUrl: ClusterUrl) {
+    return (
+        createClient()
+            .use(walletSigner({ chain }))
+            .use(solanaRpc({ rpcSubscriptionsUrl, rpcUrl }))
+            // Include the chain on the client so consumers can read it back off `useClient()` in lockstep
+            // with `rpc`/`rpcSubscriptions`.
+            .use(client => extendClient(client, { chain }))
+    );
 }
 
 /**
- * The concrete Kit client type published by {@link WalletClientProvider} — a base client with the
- * wallet plugin installed. Pass it as the type argument to `useClient` wherever this app reads the
- * client from context (e.g. `useClient<AppClient>()`) so the wallet plugin's namespace is typed.
+ * The concrete Kit client type published by {@link ClientProvider} — a base client with the wallet
+ * and RPC plugins installed, plus the target `chain` via {@link extendClient}. Pass it as
+ * the type argument to `useClient` wherever this app reads the client from context (e.g.
+ * `useClient<AppClient>()`) so every installed plugin's namespace (the wallet signer, `rpc`,
+ * `rpcSubscriptions`, …) and the `chain` are typed.
  */
-export type AppClient = ReturnType<typeof buildWalletClient>;
+export type AppClient = ReturnType<typeof buildClient>;
 
 /**
- * Builds a Kit client with the wallet plugin installed and publishes it via `ClientProvider`,
- * rebuilding it whenever the selected chain changes.
+ * Builds a Kit client with the wallet and RPC plugins installed and publishes it via `@solana/react`'s
+ * `ClientProvider`, rebuilding it whenever the selected chain changes.
  *
- * Each wallet plugin is bound to a single chain, so switching chains means building a fresh client.
- * A freshly built client runs a silent auto-reconnect that briefly passes through `'pending'` /
- * `'reconnecting'`. Rather than hide the whole app during that warm-up, we publish the client right
- * away and let {@link WalletReadyGate} hold back only the wallet-dependent UI — so the app chrome
- * (title, chain switcher) stays on screen throughout.
+ * Each wallet plugin is bound to a single chain — and each chain has its own RPC endpoints — so
+ * switching chains means building a fresh client. A freshly built client runs a silent
+ * auto-reconnect that briefly passes through `'pending'` / `'reconnecting'`. Rather than hide the
+ * whole app during that warm-up, we publish the client right away and let {@link WalletReadyGate}
+ * hold back only the wallet-dependent UI — so the app chrome (title, chain switcher) stays on screen
+ * throughout.
  *
  * The first client is published from a layout effect — before the browser paints — so the app
  * chrome is visible from the very first frame. On a later chain switch, the current (already-ready)
@@ -45,15 +57,15 @@ export type AppClient = ReturnType<typeof buildWalletClient>;
  * `whenReady()` resolves and the continuation runs — the guard is what keeps the disposed client
  * from being published.
  */
-export function WalletClientProvider({ children }: Props) {
-    const { chain } = useContext(ChainContext);
+export function ClientProvider({ children }: Props) {
+    const { chain, solanaRpcSubscriptionsUrl, solanaRpcUrl } = useContext(ChainContext);
     const [client, setClient] = useState<AppClient | null>(null);
     // The client currently published to the tree, tracked outside React state so the effects
     // below can dispose hand-over-hand without extra renders.
     const activeClientRef = useRef<AppClient | null>(null);
 
     useLayoutEffect(() => {
-        const next = buildWalletClient(chain);
+        const next = buildClient(chain, solanaRpcUrl, solanaRpcSubscriptionsUrl);
         let cancelled = false;
         const publish = () => {
             activeClientRef.current?.[Symbol.dispose]();
@@ -82,7 +94,7 @@ export function WalletClientProvider({ children }: Props) {
                 next[Symbol.dispose]();
             }
         };
-    }, [chain]);
+    }, [chain, solanaRpcSubscriptionsUrl, solanaRpcUrl]);
 
     // Dispose the published client when the provider unmounts. (StrictMode's simulated unmount
     // trips this once at mount in dev, disposing the first client early — the effect above then
@@ -99,5 +111,5 @@ export function WalletClientProvider({ children }: Props) {
         // Only the pre-layout-effect render pass lands here; it is never painted.
         return null;
     }
-    return <ClientProvider client={client}>{children}</ClientProvider>;
+    return <KitClientProvider client={client}>{children}</KitClientProvider>;
 }

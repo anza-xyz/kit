@@ -19,6 +19,7 @@
         "@radix-ui/themes": "3.3.0",
         "@solana-program/system": "^0.12.2",
         "@solana/kit": "workspace:*",
+        "@solana/kit-plugin-rpc": "0.13.0",
         "@solana/kit-plugin-wallet": "0.13.1",
         "@solana/react": "workspace:*",
         "@wallet-standard/core": "^1.1.2",

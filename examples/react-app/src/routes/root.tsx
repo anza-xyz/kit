@@ -1,8 +1,9 @@
 import { Box, Code, Container, DataList, Flex, Heading, Spinner, Text } from '@radix-ui/themes';
 import { useConnectedWallet } from '@solana/kit-plugin-wallet/react';
+import { useClient } from '@solana/react';
 import type { SolanaChain } from '@solana/wallet-standard-chains';
 import { getUiWalletAccountStorageKey } from '@wallet-standard/ui';
-import { Suspense, useContext } from 'react';
+import { Suspense } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 
 import { Balance } from '../components/Balance';
@@ -14,7 +15,7 @@ import { SolanaSignAndSendTransactionFeaturePanel } from '../components/SolanaSi
 import { SolanaSignMessageFeaturePanel } from '../components/SolanaSignMessageFeaturePanel';
 import { SolanaSignTransactionFeaturePanel } from '../components/SolanaSignTransactionFeaturePanel';
 import { WalletAccountIcon } from '../components/WalletAccountIcon';
-import { ChainContext } from '../context/ChainContext';
+import type { AppClient } from '../context/ClientProvider';
 
 function SlotIndicatorPanel({ chain }: { chain: SolanaChain }) {
     return (
@@ -33,7 +34,13 @@ function SlotIndicatorPanel({ chain }: { chain: SolanaChain }) {
  * The wallet-dependent view, gated by `WalletReadyGate`.
  */
 function Root() {
-    const { chain } = useContext(ChainContext);
+    // Read the chain off the client (the *active* network) rather than `ChainContext` (the eagerly
+    // updated *selected* network). These reset/remount keys must flip only when the client actually
+    // swaps: `ClientProvider` keeps the previous client published until the new one is ready, so
+    // keying on the selected chain would remount `Balance`/`SlotIndicator` against the old client the
+    // instant you pick a network — firing a request to the previous network before the swap fires the
+    // real one to the new network.
+    const { chain } = useClient<AppClient>();
     const connected = useConnectedWallet();
     const errorBoundaryResetKeys = [chain, connected && getUiWalletAccountStorageKey(connected.account)].filter(
         Boolean,

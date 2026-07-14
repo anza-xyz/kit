@@ -1,11 +1,12 @@
 import { Theme } from '@radix-ui/themes';
 import type { Rpc, RpcSubscriptions, SolanaRpcApiMainnet, SolanaRpcSubscriptionsApi } from '@solana/kit';
+import { ClientProvider } from '@solana/react';
 import { act, waitFor } from '@testing-library/react';
 import React from 'react';
 
 import { render } from '../../__test-utils__/render';
 import { ChainContext, DEFAULT_CHAIN_CONFIG } from '../../context/ChainContext';
-import { RpcContext } from '../../context/RpcContext';
+import type { AppClient } from '../../context/ClientProvider';
 import { SlotIndicator } from '../SlotIndicator';
 
 type SlotNotification = Readonly<{ parent: bigint; root: bigint; slot: bigint }>;
@@ -59,11 +60,12 @@ function makeMockRpcSubscriptions(reactiveStore: jest.Mock) {
 
 function makeWrapper(rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>) {
     const rpc = {} as Rpc<SolanaRpcApiMainnet>;
+    const client = { rpc, rpcSubscriptions } as unknown as AppClient;
     return function Wrapper({ children }: { children: React.ReactNode }) {
         return (
             <Theme>
                 <ChainContext.Provider value={DEFAULT_CHAIN_CONFIG}>
-                    <RpcContext.Provider value={{ rpc, rpcSubscriptions }}>{children}</RpcContext.Provider>
+                    <ClientProvider client={client}>{children}</ClientProvider>
                 </ChainContext.Provider>
             </Theme>
         );

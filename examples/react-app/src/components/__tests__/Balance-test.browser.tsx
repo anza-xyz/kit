@@ -9,14 +9,15 @@ import type {
     SolanaRpcSubscriptionsApi,
 } from '@solana/kit';
 import { createReactiveActionStore, createReactiveStoreFromDataPublisherFactory } from '@solana/kit';
+import { ClientProvider } from '@solana/react';
 import { act, waitFor } from '@testing-library/react';
 import type { UiWalletAccount } from '@wallet-standard/ui';
 import React from 'react';
 import { SWRConfig } from 'swr';
 
 import { render } from '../../__test-utils__/render';
-import { ChainContext, DEFAULT_CHAIN_CONFIG } from '../../context/ChainContext';
-import { RpcContext } from '../../context/RpcContext';
+import { DEFAULT_CHAIN_CONFIG } from '../../context/ChainContext';
+import type { AppClient } from '../../context/ClientProvider';
 import { Balance } from '../Balance';
 
 type LamportsResponse = SolanaRpcResponse<Lamports>;
@@ -105,13 +106,12 @@ function makeWrapper({
     rpc: Rpc<SolanaRpcApiMainnet>;
     rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
 }) {
+    const client = { chain: DEFAULT_CHAIN_CONFIG.chain, rpc, rpcSubscriptions } as unknown as AppClient;
     return function Wrapper({ children }: { children: React.ReactNode }) {
         return (
             <Theme>
                 <SWRConfig value={{ provider: () => new Map() }}>
-                    <ChainContext.Provider value={DEFAULT_CHAIN_CONFIG}>
-                        <RpcContext.Provider value={{ rpc, rpcSubscriptions }}>{children}</RpcContext.Provider>
-                    </ChainContext.Provider>
+                    <ClientProvider client={client}>{children}</ClientProvider>
                 </SWRConfig>
             </Theme>
         );
@@ -181,6 +181,53 @@ describe('Balance', () => {
             await jest.runAllTimersAsync();
         });
         await waitFor(() => expect(container.querySelector('svg')).not.toBeNull());
+    });
+
+    it('refetches against the new client when the network (client) switches', async () => {
+        const swrCache = new Map();
+        const provider = () => swrCache;
+        const devnet = makeMockRpc();
+        const testnet = makeMockRpc();
+        const devnetSubscriptions = makeMockSubscriptions();
+        const testnetSubscriptions = makeMockSubscriptions();
+        const devnetClient = {
+            chain: 'solana:devnet',
+            rpc: devnet.rpc,
+            rpcSubscriptions: devnetSubscriptions.rpcSubscriptions,
+        } as unknown as AppClient;
+        const testnetClient = {
+            chain: 'solana:testnet',
+            rpc: testnet.rpc,
+            rpcSubscriptions: testnetSubscriptions.rpcSubscriptions,
+        } as unknown as AppClient;
+        const tree = (client: AppClient) => (
+            <Theme>
+                <SWRConfig value={{ provider }}>
+                    <ClientProvider client={client}>
+                        <Balance account={makeAccount()} />
+                    </ClientProvider>
+                </SWRConfig>
+            </Theme>
+        );
+
+        const { container, rerender } = render(tree(devnetClient));
+        await act(async () => {
+            devnet.resolveGetBalance(lamportsResponse(100, 1_000_000_000n));
+            await jest.runAllTimersAsync();
+        });
+        await waitFor(() => expect(container.textContent).toBe('1 ◎'));
+
+        // Switch networks. `ClientProvider` rebuilds the client per chain and stamps the new `chain`
+        // onto it, so `Balance`'s SWR key (derived from `client.chain`) changes and the subscription
+        // rebinds to the new client's rpc — resolving *only* the testnet fetch drives the UI. Were the
+        // key derived from an eagerly-updated chain source rather than the client, the subscription
+        // would stay bound to the devnet rpc and this would remain `1 ◎`.
+        rerender(tree(testnetClient));
+        await act(async () => {
+            testnet.resolveGetBalance(lamportsResponse(200, 2_000_000_000n));
+            await jest.runAllTimersAsync();
+        });
+        await waitFor(() => expect(container.textContent).toBe('2 ◎'));
     });
 
     it('keeps showing the last known balance when the subscription later errors', async () => {

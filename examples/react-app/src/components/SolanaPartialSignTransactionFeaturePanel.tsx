@@ -22,14 +22,14 @@ import {
 } from '@solana/kit';
 import type { WalletSigner } from '@solana/kit-plugin-wallet';
 import { useWallets } from '@solana/kit-plugin-wallet/react';
-import { useAction } from '@solana/react';
+import { useAction, useClient } from '@solana/react';
 import { getTransferSolInstruction } from '@solana-program/system';
 import { getUiWalletAccountStorageKey } from '@wallet-standard/ui';
 import type { SyntheticEvent } from 'react';
 import { useContext, useId, useMemo, useState } from 'react';
 
 import { ChainContext } from '../context/ChainContext';
-import { RpcContext } from '../context/RpcContext';
+import type { AppClient } from '../context/ClientProvider';
 import { solStringToLamports } from '../lamports';
 import signerBytes from '../signerBytes.json' with { type: 'json' };
 import { assertCanSignTransactions } from '../walletCapability';
@@ -49,7 +49,7 @@ async function mockApiRequest(serializedTransaction: ReadonlyUint8Array): Promis
 }
 
 export function SolanaPartialSignTransactionFeaturePanel({ signer }: Props) {
-    const { rpc, rpcSubscriptions } = useContext(RpcContext);
+    const { rpc, rpcSubscriptions } = useClient<AppClient>();
     const sendAndConfirmTransaction = useMemo(
         () => sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions }),
         [rpc, rpcSubscriptions],
