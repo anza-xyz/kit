@@ -160,6 +160,9 @@ importers:
       '@solana/kit':
         specifier: workspace:*
         version: link:../../packages/kit
+      '@solana/kit-plugin-rpc':
+        specifier: 0.13.0
+        version: 0.13.0(@solana/kit@packages+kit)
       '@solana/kit-plugin-wallet':
         specifier: 0.13.1
         version: 0.13.1(@solana/kit@packages+kit)(@solana/react@packages+react)(fastestsmallesttextencoderdecoder@1.0.22)(react@19.2.7)(typescript@5.9.3)
@@ -5122,6 +5125,16 @@ packages:
     peerDependenciesMeta:
       typescript:
         optional: true
+
+  '@solana/kit-plugin-instruction-plan@0.13.0':
+    resolution: {integrity: sha512-9RA94e0LLtVLN+bvGclpu8l0lAXGOGS72DxPIQ1VyGZs7vK/WTwPOqKnWhjJs2Cv/SDJ2xsCAhYkXr0UltVrOg==}
+    peerDependencies:
+      '@solana/kit': ^7.0.0
+
+  '@solana/kit-plugin-rpc@0.13.0':
+    resolution: {integrity: sha512-cYDbMjtp6vpU2FIuIQXN+EDSo2ljIA6m16B9BIi/ts/R0ETPt8rRvyXupi2dDS8wxUdRFUxXGXsPY78hRf4bfQ==}
+    peerDependencies:
+      '@solana/kit': ^7.0.0
 
   '@solana/kit-plugin-wallet@0.13.1':
     resolution: {integrity: sha512-Zmbz7MAa5HHZPKMKoYMzi9Xh6jBD40WTMB5M6oZBkrTQKSnXnsf2wyjDG5NmkaSPS/7He+oLLuxPOeukfzoxvg==}
@@ -13931,6 +13944,15 @@ snapshots:
       typescript: 5.9.3
     transitivePeerDependencies:
       - fastestsmallesttextencoderdecoder
+
+  '@solana/kit-plugin-instruction-plan@0.13.0(@solana/kit@packages+kit)':
+    dependencies:
+      '@solana/kit': link:packages/kit
+
+  '@solana/kit-plugin-rpc@0.13.0(@solana/kit@packages+kit)':
+    dependencies:
+      '@solana/kit': link:packages/kit
+      '@solana/kit-plugin-instruction-plan': 0.13.0(@solana/kit@packages+kit)
 
   '@solana/kit-plugin-wallet@0.13.1(@solana/kit@packages+kit)(@solana/react@packages+react)(fastestsmallesttextencoderdecoder@1.0.22)(react@19.2.7)(typescript@5.9.3)':
     dependencies:

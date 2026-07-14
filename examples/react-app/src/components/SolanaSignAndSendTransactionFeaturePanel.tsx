@@ -12,14 +12,14 @@ import {
 } from '@solana/kit';
 import type { WalletSigner } from '@solana/kit-plugin-wallet';
 import { useWallets } from '@solana/kit-plugin-wallet/react';
-import { useAction } from '@solana/react';
+import { useAction, useClient } from '@solana/react';
 import { getTransferSolInstruction } from '@solana-program/system';
 import { getUiWalletAccountStorageKey } from '@wallet-standard/ui';
 import type { SyntheticEvent } from 'react';
 import { useContext, useId, useMemo, useState } from 'react';
 
 import { ChainContext } from '../context/ChainContext';
-import { RpcContext } from '../context/RpcContext';
+import type { AppClient } from '../context/ClientProvider';
 import { solStringToLamports } from '../lamports';
 import { assertCanSignAndSendTransactions } from '../walletCapability';
 import { ErrorDialog } from './ErrorDialog';
@@ -30,7 +30,7 @@ type Props = Readonly<{
 }>;
 
 export function SolanaSignAndSendTransactionFeaturePanel({ signer }: Props) {
-    const { rpc } = useContext(RpcContext);
+    const { rpc } = useClient<AppClient>();
     const wallets = useWallets();
     const [solQuantityString, setSolQuantityString] = useState<string>('');
     const [recipientAccountStorageKey, setRecipientAccountStorageKey] = useState<string | undefined>();
