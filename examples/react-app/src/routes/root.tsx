@@ -1,6 +1,7 @@
 import { Box, Code, DataList, Flex, Heading, Spinner, Text } from '@radix-ui/themes';
+import { useClient } from '@solana/react';
 import { getUiWalletAccountStorageKey } from '@wallet-standard/ui';
-import { Suspense, useContext } from 'react';
+import { Suspense } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 
 import { Balance } from '../components/Balance';
@@ -13,7 +14,7 @@ import { SolanaSignAndSendTransactionFeaturePanel } from '../components/SolanaSi
 import { SolanaSignMessageFeaturePanel } from '../components/SolanaSignMessageFeaturePanel';
 import { SolanaSignTransactionFeaturePanel } from '../components/SolanaSignTransactionFeaturePanel';
 import { WalletAccountIcon } from '../components/WalletAccountIcon';
-import { ChainContext } from '../context/ChainContext';
+import type { AppClient } from '../context/ClientProvider';
 import { useDisplayedWallet } from '../hooks/useDisplayedWallet';
 
 /**
@@ -22,7 +23,10 @@ import { useDisplayedWallet } from '../hooks/useDisplayedWallet';
  * (account header, balance, feature panels) dim while `isStale`.
  */
 function Root() {
-    const { chain } = useContext(ChainContext);
+    // Read `chain` off the client (the *active* network) rather than `ChainContext` (the eagerly
+    // updated *selected* network) so the reset/remount keys below flip only when the client actually
+    // swaps — in lockstep with the rpc/subscriptions those cells read — rather than a render early.
+    const { chain } = useClient<AppClient>();
     const { connected, isStale } = useDisplayedWallet();
     const errorBoundaryResetKeys = [chain, connected && getUiWalletAccountStorageKey(connected.account)].filter(
         Boolean,

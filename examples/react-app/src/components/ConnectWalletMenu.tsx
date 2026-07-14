@@ -6,7 +6,7 @@ import type { UiWallet } from '@wallet-standard/ui';
 import { useContext, useRef, useState } from 'react';
 
 import { ChainContext } from '../context/ChainContext';
-import type { AppClient } from '../context/WalletClientProvider';
+import type { AppClient } from '../context/ClientProvider';
 import { useDisplayedWallet } from '../hooks/useDisplayedWallet';
 import { ConnectWalletMenuItem } from './ConnectWalletMenuItem';
 import { ErrorDialog } from './ErrorDialog';

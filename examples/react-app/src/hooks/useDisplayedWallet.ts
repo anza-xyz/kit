@@ -3,7 +3,7 @@ import { useConnectedWallet, useIsWalletReady } from '@solana/kit-plugin-wallet/
 import { useClient } from '@solana/react';
 import { useRef } from 'react';
 
-import type { AppClient } from '../context/WalletClientProvider';
+import type { AppClient } from '../context/ClientProvider';
 
 /**
  * The connection to *display*, held stable across the wallet's warm-up.

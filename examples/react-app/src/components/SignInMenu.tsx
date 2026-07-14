@@ -6,7 +6,7 @@ import { SolanaSignIn } from '@solana/wallet-standard-features';
 import type { UiWallet } from '@wallet-standard/ui';
 import { useRef, useState } from 'react';
 
-import type { AppClient } from '../context/WalletClientProvider';
+import type { AppClient } from '../context/ClientProvider';
 import { ErrorDialog } from './ErrorDialog';
 import { SignInMenuItem } from './SignInMenuItem';
 

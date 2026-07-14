@@ -6,7 +6,7 @@ import { StandardDisconnect } from '@wallet-standard/core';
 import type { UiWallet, UiWalletAccount } from '@wallet-standard/ui';
 import { uiWalletAccountBelongsToUiWallet } from '@wallet-standard/ui';
 
-import type { AppClient } from '../context/WalletClientProvider';
+import type { AppClient } from '../context/ClientProvider';
 import { WalletMenuItemContent } from './WalletMenuItemContent';
 
 type Props = Readonly<{

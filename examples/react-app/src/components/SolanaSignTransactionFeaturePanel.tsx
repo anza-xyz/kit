@@ -21,8 +21,7 @@ import type { SyntheticEvent } from 'react';
 import { useContext, useId, useMemo, useState } from 'react';
 
 import { ChainContext } from '../context/ChainContext';
-import { RpcContext } from '../context/RpcContext';
-import type { AppClient } from '../context/WalletClientProvider';
+import type { AppClient } from '../context/ClientProvider';
 import { solStringToLamports } from '../lamports';
 import { assertCanSignTransactions } from '../walletCapability';
 import { ErrorDialog } from './ErrorDialog';
@@ -33,12 +32,12 @@ type Props = Readonly<{
 }>;
 
 export function SolanaSignTransactionFeaturePanel({ signer }: Props) {
-    const { rpc, rpcSubscriptions } = useContext(RpcContext);
+    const client = useClient<AppClient>();
+    const { rpc, rpcSubscriptions } = client;
     const sendAndConfirmTransaction = useMemo(
         () => sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions }),
         [rpc, rpcSubscriptions],
     );
-    const client = useClient<AppClient>();
     const wallets = useWallets(client);
     const [solQuantityString, setSolQuantityString] = useState<string>('');
     const [recipientAccountStorageKey, setRecipientAccountStorageKey] = useState<string | undefined>();

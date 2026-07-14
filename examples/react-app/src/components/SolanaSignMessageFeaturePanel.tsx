@@ -2,7 +2,7 @@ import { useSignMessage } from '@solana/kit-plugin-wallet/react';
 import { useClient } from '@solana/react';
 import type { UiWalletAccount } from '@wallet-standard/ui';
 
-import type { AppClient } from '../context/WalletClientProvider';
+import type { AppClient } from '../context/ClientProvider';
 import { assertCanSignMessages } from '../walletCapability';
 import { BaseSignMessageFeaturePanel } from './BaseSignMessageFeaturePanel';
 

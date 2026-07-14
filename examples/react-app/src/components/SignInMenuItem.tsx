@@ -5,7 +5,7 @@ import { useClient } from '@solana/react';
 import type { UiWallet } from '@wallet-standard/ui';
 import type { MouseEvent } from 'react';
 
-import type { AppClient } from '../context/WalletClientProvider';
+import type { AppClient } from '../context/ClientProvider';
 import { WalletMenuItemContent } from './WalletMenuItemContent';
 
 type Props = Readonly<{

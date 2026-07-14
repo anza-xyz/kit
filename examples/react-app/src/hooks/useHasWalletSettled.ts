@@ -3,7 +3,7 @@ import { useIsWalletReady } from '@solana/kit-plugin-wallet/react';
 import { useClient } from '@solana/react';
 import { useRef } from 'react';
 
-import type { AppClient } from '../context/WalletClientProvider';
+import type { AppClient } from '../context/ClientProvider';
 
 /**
  * Whether the wallet has settled its initial auto-reconnect *at least once since this component

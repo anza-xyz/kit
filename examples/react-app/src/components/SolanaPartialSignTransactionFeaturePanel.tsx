@@ -29,8 +29,7 @@ import type { SyntheticEvent } from 'react';
 import { useContext, useId, useMemo, useState } from 'react';
 
 import { ChainContext } from '../context/ChainContext';
-import { RpcContext } from '../context/RpcContext';
-import type { AppClient } from '../context/WalletClientProvider';
+import type { AppClient } from '../context/ClientProvider';
 import { solStringToLamports } from '../lamports';
 import signerBytes from '../signerBytes.json' with { type: 'json' };
 import { assertCanSignTransactions } from '../walletCapability';
@@ -50,12 +49,12 @@ async function mockApiRequest(serializedTransaction: ReadonlyUint8Array): Promis
 }
 
 export function SolanaPartialSignTransactionFeaturePanel({ signer }: Props) {
-    const { rpc, rpcSubscriptions } = useContext(RpcContext);
+    const client = useClient<AppClient>();
+    const { rpc, rpcSubscriptions } = client;
     const sendAndConfirmTransaction = useMemo(
         () => sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions }),
         [rpc, rpcSubscriptions],
     );
-    const client = useClient<AppClient>();
     const wallets = useWallets(client);
     const [solQuantityString, setSolQuantityString] = useState<string>('');
     const [recipientAccountStorageKey, setRecipientAccountStorageKey] = useState<string | undefined>();

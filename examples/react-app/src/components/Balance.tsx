@@ -1,12 +1,12 @@
 import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
 import { Flex, Text, Tooltip } from '@radix-ui/themes';
 import { address, formatDecimalFixedPoint, type Lamports, lamportsToSol } from '@solana/kit';
+import { useClient } from '@solana/react';
 import { useTrackedDataSWR } from '@solana/react/swr';
 import type { UiWalletAccount } from '@wallet-standard/ui';
-import { useContext, useMemo } from 'react';
+import { useMemo } from 'react';
 
-import { ChainContext } from '../context/ChainContext';
-import { RpcContext } from '../context/RpcContext';
+import type { AppClient } from '../context/ClientProvider';
 import { getErrorMessage } from '../errors';
 
 type Props = Readonly<{
@@ -16,8 +16,11 @@ type Props = Readonly<{
 const solFormatter = new Intl.NumberFormat(undefined, { maximumFractionDigits: 5 });
 
 export function Balance({ account }: Props) {
-    const { chain } = useContext(ChainContext);
-    const { rpc, rpcSubscriptions } = useContext(RpcContext);
+    // Read `chain` off the client (not `ChainContext`) so the SWR cache key below and the `rpc` that
+    // fills it always come from the same client instance. `ClientProvider` rebuilds the client one
+    // render after `ChainContext` flips, so a key derived from `ChainContext` would bind the new
+    // network's fetch to the previous network's rpc.
+    const { chain, rpc, rpcSubscriptions } = useClient<AppClient>();
     const accountAddress = useMemo(() => address(account.address), [account.address]);
     const spec = useMemo(
         () => ({

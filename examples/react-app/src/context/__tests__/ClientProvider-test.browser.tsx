@@ -8,15 +8,27 @@ import { ChainContext, DEFAULT_CHAIN_CONFIG } from '../ChainContext';
 // disposal.
 const mockPublishedClients: unknown[] = [];
 
+// A chainable client stub: every `.use()` returns the same disposable object so the provider's
+// `createClient().use(walletSigner(…)).use(solanaRpc(…))` chain resolves to one disposable client.
+function makeDisposableClient() {
+    const client: { [Symbol.dispose]: jest.Mock; use: () => typeof client } = {
+        [Symbol.dispose]: jest.fn(),
+        use: () => client,
+    };
+    return client;
+}
+
 jest.mock('@solana/kit', () => ({
-    createClient: () => ({
-        use: () => ({ [Symbol.dispose]: jest.fn() }),
-    }),
+    createClient: () => ({ use: () => makeDisposableClient() }),
     // `ChainContext` (imported below for its `DEFAULT_CHAIN_CONFIG`) also pulls `devnet` from
     // `@solana/kit`; since this mock replaces the whole module, `devnet` must be provided too.
     devnet: (url: string) => url,
+    // `buildClient` passes an `extendClient` plugin to `.use()`; the chainable stub above never
+    // invokes plugins, so this only needs to exist for the import to resolve.
+    extendClient: (client: unknown) => client,
 }));
 jest.mock('@solana/kit-plugin-wallet', () => ({ walletSigner: () => ({}) }));
+jest.mock('@solana/kit-plugin-rpc', () => ({ solanaRpc: () => ({}) }));
 jest.mock('@solana/react', () => ({
     ClientProvider: ({ children, client }: { children: ReactNode; client: unknown }) => {
         mockPublishedClients.push(client);
@@ -25,19 +37,19 @@ jest.mock('@solana/react', () => ({
 }));
 
 // Import after the mocks are registered.
-import { WalletClientProvider } from '../WalletClientProvider';
+import { ClientProvider } from '../ClientProvider';
 
 function tree(chain: string) {
     return (
         <ChainContext.Provider value={{ ...DEFAULT_CHAIN_CONFIG, chain: chain as typeof DEFAULT_CHAIN_CONFIG.chain }}>
-            <WalletClientProvider>
+            <ClientProvider>
                 <div>child</div>
-            </WalletClientProvider>
+            </ClientProvider>
         </ChainContext.Provider>
     );
 }
 
-describe('WalletClientProvider', () => {
+describe('ClientProvider', () => {
     beforeEach(() => {
         mockPublishedClients.length = 0;
     });

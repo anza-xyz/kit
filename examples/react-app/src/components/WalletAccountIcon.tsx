@@ -4,7 +4,7 @@ import type { UiWalletAccount } from '@wallet-standard/ui';
 import { uiWalletAccountBelongsToUiWallet } from '@wallet-standard/ui';
 import React from 'react';
 
-import type { AppClient } from '../context/WalletClientProvider';
+import type { AppClient } from '../context/ClientProvider';
 
 type Props = React.ComponentProps<'img'> &
     Readonly<{
