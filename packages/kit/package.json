@@ -24,6 +24,26 @@
             "react-native": "./dist/index.native.mjs",
             "types": "./dist/types/index.d.ts"
         },
+        "./codecs": {
+            "edge-light": {
+                "import": "./dist/codecs.node.mjs",
+                "require": "./dist/codecs.node.cjs"
+            },
+            "workerd": {
+                "import": "./dist/codecs.node.mjs",
+                "require": "./dist/codecs.node.cjs"
+            },
+            "browser": {
+                "import": "./dist/codecs.browser.mjs",
+                "require": "./dist/codecs.browser.cjs"
+            },
+            "node": {
+                "import": "./dist/codecs.node.mjs",
+                "require": "./dist/codecs.node.cjs"
+            },
+            "react-native": "./dist/codecs.native.mjs",
+            "types": "./dist/types/codecs.d.ts"
+        },
         "./program-client-core": {
             "edge-light": {
                 "import": "./dist/program-client-core.node.mjs",
@@ -46,6 +66,8 @@
         }
     },
     "browser": {
+        "./dist/codecs.node.cjs": "./dist/codecs.browser.cjs",
+        "./dist/codecs.node.mjs": "./dist/codecs.browser.mjs",
         "./dist/index.node.cjs": "./dist/index.browser.cjs",
         "./dist/index.node.mjs": "./dist/index.browser.mjs",
         "./dist/program-client-core.node.cjs": "./dist/program-client-core.browser.cjs",

@@ -5,6 +5,11 @@ const kitPackageFolder = path.resolve(__dirname, '../../');
 const requireFromKit = createRequire(path.join(kitPackageFolder, 'package.json'));
 
 describe('@solana/kit program-client-core subpath export', () => {
+    it('resolves `@solana/kit/codecs` to its dedicated dist entrypoint', () => {
+        const resolvedSubpathExport = requireFromKit.resolve('@solana/kit/codecs');
+        expect(resolvedSubpathExport).toBe(path.join(kitPackageFolder, 'dist', 'codecs.node.cjs'));
+    });
+
     it('resolves `@solana/kit/program-client-core` to its dedicated dist entrypoint', () => {
         const resolvedSubpathExport = requireFromKit.resolve('@solana/kit/program-client-core');
         expect(resolvedSubpathExport).toBe(path.join(kitPackageFolder, 'dist', 'program-client-core.node.cjs'));
@@ -12,9 +17,11 @@ describe('@solana/kit program-client-core subpath export', () => {
 
     it('keeps root and subpath exports distinct', () => {
         const resolvedRootExport = requireFromKit.resolve('@solana/kit');
+        const resolvedCodecsSubpathExport = requireFromKit.resolve('@solana/kit/codecs');
         const resolvedSubpathExport = requireFromKit.resolve('@solana/kit/program-client-core');
 
         expect(resolvedRootExport).toBe(path.join(kitPackageFolder, 'dist', 'index.node.cjs'));
+        expect(resolvedRootExport).not.toBe(resolvedCodecsSubpathExport);
         expect(resolvedRootExport).not.toBe(resolvedSubpathExport);
     });
 });
