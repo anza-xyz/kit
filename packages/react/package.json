@@ -144,13 +144,13 @@
         "react-dom": "^19.2.7",
         "react-error-boundary": "^5.0.0",
         "react-test-renderer": "^19.2.7",
-        "swr": "^2.0.0"
+        "swr": "^2.4.2"
     },
     "peerDependencies": {
         "@solana/kit": "workspace:*",
         "@tanstack/react-query": "^5.0.0",
         "react": ">=18",
-        "swr": "^2.0.0"
+        "swr": "^2.4.2"
     },
     "peerDependenciesMeta": {
         "@tanstack/react-query": {
