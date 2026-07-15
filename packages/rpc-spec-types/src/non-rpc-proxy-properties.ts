@@ -1,6 +1,6 @@
-const NODEJS_CUSTOM_INSPECT_SYMBOL = Symbol.for('nodejs.util.inspect.custom');
+const NODEJS_CUSTOM_INSPECT_SYMBOL = /* @__PURE__ */ Symbol.for('nodejs.util.inspect.custom');
 
-const JAVASCRIPT_PROTOCOL_PROPERTY_NAMES = new Set<string | symbol>(
+const JAVASCRIPT_PROTOCOL_PROPERTY_NAMES = /* @__PURE__ */ new Set<string | symbol>(
     [
         'then',
         'toJSON',
@@ -14,7 +14,7 @@ const JAVASCRIPT_PROTOCOL_PROPERTY_NAMES = new Set<string | symbol>(
     ].filter((propertyName): propertyName is string | symbol => propertyName != null),
 );
 
-const OBJECT_PROTOTYPE_PROPERTY_NAMES = new Set<string | symbol>([
+const OBJECT_PROTOTYPE_PROPERTY_NAMES = /* @__PURE__ */ new Set<string | symbol>([
     '__defineGetter__',
     '__defineSetter__',
     '__lookupGetter__',
@@ -29,6 +29,12 @@ const OBJECT_PROTOTYPE_PROPERTY_NAMES = new Set<string | symbol>([
     'valueOf',
 ]);
 
+/**
+ * Gets the value of a property that must not be treated as an RPC method.
+ *
+ * @see https://github.com/anza-xyz/kit/issues/509
+ * @internal
+ */
 export function getNonRpcPropertyValue(propertyName: string | symbol, receiver: unknown): unknown {
     if (JAVASCRIPT_PROTOCOL_PROPERTY_NAMES.has(propertyName)) {
         return undefined;
@@ -36,6 +42,12 @@ export function getNonRpcPropertyValue(propertyName: string | symbol, receiver: 
     return Reflect.get(Object.prototype, propertyName, receiver);
 }
 
+/**
+ * Returns whether a property name must not be treated as an RPC method.
+ *
+ * @see https://github.com/anza-xyz/kit/issues/509
+ * @internal
+ */
 export function isNonRpcPropertyName(propertyName: string | symbol): boolean {
     return JAVASCRIPT_PROTOCOL_PROPERTY_NAMES.has(propertyName) || OBJECT_PROTOTYPE_PROPERTY_NAMES.has(propertyName);
 }
