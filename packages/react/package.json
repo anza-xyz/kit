@@ -130,7 +130,7 @@
         "@wallet-standard/errors": "^0.1.2",
         "@wallet-standard/react": "^1.0.1",
         "@wallet-standard/ui": "^1.0.1",
-        "@wallet-standard/ui-registry": "^1.0.1"
+        "@wallet-standard/ui-registry": "^1.1.1"
     },
     "devDependencies": {
         "@solana/eslint-config": "workspace:*",
