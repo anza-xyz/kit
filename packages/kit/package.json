@@ -114,6 +114,7 @@
         "@solana/plugin-interfaces": "workspace:*",
         "@solana/program-client-core": "workspace:*",
         "@solana/programs": "workspace:*",
+        "@solana/promises": "workspace:*",
         "@solana/rpc": "workspace:*",
         "@solana/rpc-api": "workspace:*",
         "@solana/rpc-parsed-types": "workspace:*",

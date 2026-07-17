@@ -1,10 +1,11 @@
 import type { Signature } from '@solana/keys';
+import { safeRace } from '@solana/promises';
 import type { GetSignatureStatusesApi, RequestAirdropApi, Rpc } from '@solana/rpc';
 import type { RpcSubscriptions, SignatureNotificationsApi } from '@solana/rpc-subscriptions';
+import type { Commitment } from '@solana/rpc-types';
 import {
     createRecentSignatureConfirmationPromiseFactory,
     getTimeoutPromise,
-    waitForRecentTransactionConfirmationUntilTimeout,
 } from '@solana/transaction-confirmation';
 
 import { requestAndConfirmAirdrop_INTERNAL_ONLY_DO_NOT_EXPORT } from './airdrop-internal';
@@ -58,17 +59,38 @@ export function airdropFactory<TCluster extends 'devnet' | 'mainnet' | 'testnet'
         rpc,
         rpcSubscriptions,
     } as Parameters<typeof createRecentSignatureConfirmationPromiseFactory>[0]);
-    async function confirmSignatureOnlyTransaction(
-        config: Omit<
-            Parameters<typeof waitForRecentTransactionConfirmationUntilTimeout>[0],
-            'getRecentSignatureConfirmationPromise' | 'getTimeoutPromise'
-        >,
-    ) {
-        await waitForRecentTransactionConfirmationUntilTimeout({
-            ...config,
-            getRecentSignatureConfirmationPromise,
-            getTimeoutPromise,
-        });
+    async function confirmSignatureOnlyTransaction({
+        abortSignal,
+        commitment,
+        signature,
+    }: Readonly<{
+        abortSignal?: AbortSignal;
+        commitment: Commitment;
+        signature: Signature;
+    }>) {
+        abortSignal?.throwIfAborted();
+        const abortController = new AbortController();
+        if (abortSignal) {
+            const handleAbort = () => {
+                abortController.abort();
+            };
+            abortSignal.addEventListener('abort', handleAbort, { signal: abortController.signal });
+        }
+        try {
+            await safeRace([
+                getRecentSignatureConfirmationPromise({
+                    abortSignal: abortController.signal,
+                    commitment,
+                    signature,
+                }),
+                getTimeoutPromise({
+                    abortSignal: abortController.signal,
+                    commitment,
+                }),
+            ]);
+        } finally {
+            abortController.abort();
+        }
     }
     return async function airdrop(config) {
         return await requestAndConfirmAirdrop_INTERNAL_ONLY_DO_NOT_EXPORT({
