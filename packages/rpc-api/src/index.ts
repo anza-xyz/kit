@@ -37,6 +37,7 @@ import {
 } from '@solana/rpc-transformers';
 
 import { GetAccountInfoApi } from './getAccountInfo';
+import { GetAlpenglowMigrationSlotApi } from './getAlpenglowMigrationSlot';
 import { GetBalanceApi } from './getBalance';
 import { GetBlockApi } from './getBlock';
 import { GetBlockCommitmentApi } from './getBlockCommitment';
@@ -97,6 +98,7 @@ import { SendTransactionApi } from './sendTransaction';
 import { SimulateTransactionApi } from './simulateTransaction';
 
 type SolanaRpcApiForAllClusters = GetAccountInfoApi &
+    GetAlpenglowMigrationSlotApi &
     GetBalanceApi &
     GetBlockApi &
     GetBlockCommitmentApi &
@@ -177,6 +179,7 @@ export type SolanaRpcApiMainnet = SolanaRpcApiForAllClusters;
 
 export type {
     GetAccountInfoApi,
+    GetAlpenglowMigrationSlotApi,
     GetBalanceApi,
     GetBlockApi,
     GetBlockCommitmentApi,
