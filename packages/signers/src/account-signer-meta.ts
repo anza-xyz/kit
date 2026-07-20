@@ -38,12 +38,22 @@ export interface AccountSignerMeta<
     readonly signer: TSigner;
 }
 
+type AccountMetaWithoutSigner = Readonly<{ signer?: never }> & (AccountLookupMeta | AccountMeta);
+
+type TransactionMessageWithNonSignerFeePayer<TAddress extends string = string> = Readonly<{
+    feePayer: Readonly<{
+        modifyAndSignTransactions?: never;
+        signAndSendTransactions?: never;
+        signTransactions?: never;
+    }> &
+        TransactionMessageWithFeePayer<TAddress>['feePayer'];
+}>;
+
 /**
  * A union type that supports base account metas as well as {@link AccountSignerMeta | signer account metas}.
  */
 type AccountMetaWithSigner<TSigner extends TransactionSigner = TransactionSigner> =
-    | AccountLookupMeta
-    | AccountMeta
+    | AccountMetaWithoutSigner
     | AccountSignerMeta<string, TSigner>;
 
 /**
@@ -115,7 +125,10 @@ export type TransactionMessageWithSigners<
     TSigner extends TransactionSigner<TAddress> = TransactionSigner<TAddress>,
     TAccounts extends readonly AccountMetaWithSigner<TSigner>[] = readonly AccountMetaWithSigner<TSigner>[],
 > = Partial<
-    Pick<TransactionMessageWithFeePayer<TAddress> | TransactionMessageWithFeePayerSigner<TAddress, TSigner>, 'feePayer'>
+    Pick<
+        TransactionMessageWithFeePayerSigner<TAddress, TSigner> | TransactionMessageWithNonSignerFeePayer<TAddress>,
+        'feePayer'
+    >
 > &
     Readonly<{ instructions: readonly (Instruction & InstructionWithSigners<TSigner, TAccounts>)[] }>;
 
@@ -148,8 +161,8 @@ export type TransactionMessageWithSigners<
 export function getSignersFromInstruction<TSigner extends TransactionSigner = TransactionSigner>(
     instruction: InstructionWithSigners<TSigner>,
 ): readonly TSigner[] {
-    return deduplicateSigners(
-        (instruction.accounts ?? []).flatMap(account => ('signer' in account ? account.signer : [])),
+    return deduplicateSigners<TSigner>(
+        (instruction.accounts ?? []).flatMap(account => (account.signer ? [account.signer] : [])),
     );
 }
 
@@ -198,8 +211,8 @@ export function getSignersFromTransactionMessage<
         TSigner
     >,
 >(transaction: TTransactionMessage): readonly TSigner[] {
-    return deduplicateSigners([
+    return deduplicateSigners<TSigner>([
         ...(transaction.feePayer && isTransactionSigner(transaction.feePayer) ? [transaction.feePayer as TSigner] : []),
-        ...transaction.instructions.flatMap(getSignersFromInstruction),
+        ...transaction.instructions.flatMap(instruction => getSignersFromInstruction<TSigner>(instruction)),
     ]);
 }
