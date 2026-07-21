@@ -84,6 +84,19 @@ describe('useAction', () => {
         expect(isAbortError(firstError)).toBe(true);
     });
 
+    it('aborts the in-flight call when the component unmounts', () => {
+        const fn = jest.fn((_s: AbortSignal) => new Promise<string>(() => {})); // never settles
+        const { result, unmount } = renderHook(() => useAction(fn));
+
+        act(() => {
+            result.current.dispatch();
+        });
+        expect(fn.mock.calls[0][0].aborted).toBe(false);
+
+        unmount();
+        expect(fn.mock.calls[0][0].aborted).toBe(true);
+    });
+
     it('await dispatchAsync(...) resolves to the function result on success', async () => {
         const { result } = renderHook(() => useAction(async (_s: AbortSignal, n: number) => n * 2));
         await act(async () => {
