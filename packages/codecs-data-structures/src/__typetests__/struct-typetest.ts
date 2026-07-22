@@ -6,7 +6,14 @@ import {
     VariableSizeDecoder,
     VariableSizeEncoder,
 } from '@solana/codecs-core';
-import { getU32Codec, getU32Decoder, getU32Encoder } from '@solana/codecs-numbers';
+import {
+    getU8Codec,
+    getU8Decoder,
+    getU8Encoder,
+    getU32Codec,
+    getU32Decoder,
+    getU32Encoder,
+} from '@solana/codecs-numbers';
 import { getUtf8Codec, getUtf8Decoder, getUtf8Encoder } from '@solana/codecs-strings';
 
 import { getStructCodec, getStructDecoder, getStructEncoder } from '../struct';
@@ -118,4 +125,37 @@ import { getStructCodec, getStructDecoder, getStructEncoder } from '../struct';
             name: string;
         }
     >;
+}
+
+{
+    // [getStructEncoder]: It infers a literal `fixedSize` from fixed-size fields (issue #1738).
+    getStructEncoder([
+        ['a', getU32Encoder()],
+        ['b', getU8Encoder()],
+    ]) satisfies FixedSizeEncoder<{ a: number; b: number }, 5>;
+    getStructEncoder([['age', getU32Encoder()]]) satisfies FixedSizeEncoder<{ age: number }, 4>;
+    // It falls back to a `number` size when a field's size is not a literal.
+    getStructEncoder([['a', {} as FixedSizeEncoder<number>]]) satisfies FixedSizeEncoder<{ a: number }, number>;
+    // @ts-expect-error It does not claim a literal size when a field's size is not a literal.
+    getStructEncoder([['a', {} as FixedSizeEncoder<number>]]) satisfies FixedSizeEncoder<{ a: number }, 4>;
+    // It falls back to a `number` size when the total exceeds the inference cap (no TS2589).
+    getStructEncoder([['a', {} as FixedSizeEncoder<number, 1000>]]) satisfies FixedSizeEncoder<{ a: number }, number>;
+    // @ts-expect-error It does not infer a literal size beyond the cap.
+    getStructEncoder([['a', {} as FixedSizeEncoder<number, 1000>]]) satisfies FixedSizeEncoder<{ a: number }, 1000>;
+}
+
+{
+    // [getStructDecoder]: It infers a literal `fixedSize` from fixed-size fields (issue #1738).
+    getStructDecoder([
+        ['a', getU32Decoder()],
+        ['b', getU8Decoder()],
+    ]) satisfies FixedSizeDecoder<{ a: number; b: number }, 5>;
+}
+
+{
+    // [getStructCodec]: It infers a literal `fixedSize` from fixed-size fields (issue #1738).
+    getStructCodec([
+        ['a', getU32Codec()],
+        ['b', getU8Codec()],
+    ]) satisfies FixedSizeCodec<{ a: number; b: number }, { a: number; b: number }, 5>;
 }
