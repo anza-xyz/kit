@@ -1,5 +1,23 @@
 # @solana/transaction-introspection
 
+## 8.0.0
+
+### Minor Changes
+
+- [#1814](https://github.com/anza-xyz/kit/pull/1814) [`c45d5e0`](https://github.com/anza-xyz/kit/commit/c45d5e0e1deef45bde74f4fdfc2a9322c6079201) Thanks [@mcintyre94](https://github.com/mcintyre94)! - `decodeTransactionFromRpcResponse` now accepts confirmed transactions from any RPC method that returns them, not just `getTransaction`. It reads only the shared `transaction` / `meta` / `version` envelope, so `getTransactionsForAddress` results (map over its `data` array) and `getBlock` results (map over its `transactions` array, with `transactionDetails: 'full'`) decode identically, including legacy transactions fetched without `maxSupportedTransactionVersion`. The `'json'` overload now types its omitted `transaction` as `never` rather than an optional `Transaction`, reflecting that the JSON path never yields re-encodable wire bytes.
+
+### Patch Changes
+
+- Updated dependencies [[`7022c26`](https://github.com/anza-xyz/kit/commit/7022c262ba75bdd243c148c4f0759c2546159b6f)]:
+    - @solana/errors@8.0.0
+    - @solana/addresses@8.0.0
+    - @solana/codecs-core@8.0.0
+    - @solana/codecs-strings@8.0.0
+    - @solana/instructions@8.0.0
+    - @solana/rpc-types@8.0.0
+    - @solana/transaction-messages@8.0.0
+    - @solana/transactions@8.0.0
+
 ## 7.0.0
 
 ### Minor Changes

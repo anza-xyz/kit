@@ -1,6 +1,6 @@
 {
     "name": "@solana/transaction-introspection",
-    "version": "7.0.0",
+    "version": "8.0.0",
     "description": "Helpers for inspecting confirmed Solana transactions and walking their instructions",
     "homepage": "https://www.solanakit.com/api#solanatransaction-introspection",
     "exports": {

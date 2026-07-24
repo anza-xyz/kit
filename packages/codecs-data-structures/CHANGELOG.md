@@ -1,5 +1,16 @@
 # @solana/codecs-data-structures
 
+## 8.0.0
+
+### Patch Changes
+
+- [#1809](https://github.com/anza-xyz/kit/pull/1809) [`204ed6e`](https://github.com/anza-xyz/kit/commit/204ed6e19bbf87e39184bf1f2201c91d155e3e0c) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Allow boolean predicates passed to `getPatternMatchCodec` and `getPatternMatchEncoder` to narrow to a subtype of the variant's value type. Previously, matching against codecs whose value type is a union — such as the number codecs, whose encode type is `number | bigint` — forced predicates to be typed against the full union (e.g. `(value: number | bigint) => …`). The predicate parameter is now checked bivariantly, so a narrower predicate like `(value: number) => …` is accepted, mirroring the ergonomics of `getPredicateCodec` and `getPredicateEncoder`.
+
+- Updated dependencies [[`7022c26`](https://github.com/anza-xyz/kit/commit/7022c262ba75bdd243c148c4f0759c2546159b6f)]:
+    - @solana/errors@8.0.0
+    - @solana/codecs-core@8.0.0
+    - @solana/codecs-numbers@8.0.0
+
 ## 7.0.0
 
 ### Major Changes

@@ -1,5 +1,17 @@
 # @solana/keys
 
+## 8.0.0
+
+### Patch Changes
+
+- Updated dependencies [[`7022c26`](https://github.com/anza-xyz/kit/commit/7022c262ba75bdd243c148c4f0759c2546159b6f)]:
+    - @solana/errors@8.0.0
+    - @solana/assertions@8.0.0
+    - @solana/codecs-core@8.0.0
+    - @solana/codecs-strings@8.0.0
+    - @solana/nominal-types@8.0.0
+    - @solana/promises@8.0.0
+
 ## 7.0.0
 
 ### Patch Changes

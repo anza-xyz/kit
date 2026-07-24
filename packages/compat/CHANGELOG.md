@@ -1,5 +1,17 @@
 # @solana/compat
 
+## 8.0.0
+
+### Patch Changes
+
+- Updated dependencies [[`7022c26`](https://github.com/anza-xyz/kit/commit/7022c262ba75bdd243c148c4f0759c2546159b6f)]:
+    - @solana/errors@8.0.0
+    - @solana/addresses@8.0.0
+    - @solana/codecs-core@8.0.0
+    - @solana/instructions@8.0.0
+    - @solana/keys@8.0.0
+    - @solana/transactions@8.0.0
+
 ## 7.0.0
 
 ### Patch Changes
