@@ -1,6 +1,8 @@
 import {
     Callable,
     createRpcMessage,
+    getNonRpcPropertyValue,
+    isNonRpcPropertyName,
     RpcRequestTransformer,
     RpcResponse,
     RpcResponseTransformer,
@@ -112,6 +114,9 @@ export function createJsonRpcApi<TRpcMethods extends RpcApiMethods>(config?: Rpc
             ...args: Parameters<NonNullable<ProxyHandler<RpcApi<TRpcMethods>>['get']>>
         ) {
             const [_, p] = args;
+            if (isNonRpcPropertyName(p)) {
+                return getNonRpcPropertyValue(p, args[2]);
+            }
             const methodName = p.toString() as keyof TRpcMethods as string;
             return function (
                 ...rawParams: Parameters<

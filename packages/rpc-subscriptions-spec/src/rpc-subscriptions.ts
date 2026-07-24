@@ -1,5 +1,12 @@
 import { SOLANA_ERROR__RPC_SUBSCRIPTIONS__CANNOT_CREATE_SUBSCRIPTION_PLAN, SolanaError } from '@solana/errors';
-import { Callable, Flatten, OverloadImplementations, UnionToIntersection } from '@solana/rpc-spec-types';
+import {
+    Callable,
+    Flatten,
+    getNonRpcPropertyValue,
+    isNonRpcPropertyName,
+    OverloadImplementations,
+    UnionToIntersection,
+} from '@solana/rpc-spec-types';
 import {
     createAsyncIterableFromDataPublisher,
     createReactiveStoreFromDataPublisherFactory,
@@ -59,8 +66,8 @@ export function createSubscriptionRpc<TRpcSubscriptionsApiMethods>(
             return false;
         },
         get(target, p, receiver) {
-            if (p === 'then') {
-                return undefined;
+            if (isNonRpcPropertyName(p)) {
+                return getNonRpcPropertyValue(p, receiver);
             }
             return function (...rawParams: unknown[]) {
                 const notificationName = p.toString();
