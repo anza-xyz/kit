@@ -1,6 +1,11 @@
 import type { Address } from '@solana/addresses';
 import { getBase58Decoder, getBase64Encoder } from '@solana/codecs-strings';
-import { SOLANA_ERROR__INVALID_NONCE, SOLANA_ERROR__NONCE_ACCOUNT_NOT_FOUND, SolanaError } from '@solana/errors';
+import {
+    SOLANA_ERROR__INVALID_NONCE,
+    SOLANA_ERROR__NONCE_ACCOUNT_NOT_FOUND,
+    SOLANA_ERROR__RPC_SUBSCRIPTIONS__CHANNEL_CONNECTION_CLOSED,
+    SolanaError,
+} from '@solana/errors';
 import { AbortController } from '@solana/event-target-impl';
 import { safeRace } from '@solana/promises';
 import type { GetAccountInfoApi, Rpc } from '@solana/rpc';
@@ -119,6 +124,8 @@ export function createNonceInvalidationPromiseFactory<TCluster extends 'devnet' 
                     });
                 }
             }
+            abortController.signal.throwIfAborted();
+            throw new SolanaError(SOLANA_ERROR__RPC_SUBSCRIPTIONS__CHANNEL_CONNECTION_CLOSED);
         })();
         /**
          * STEP 2: Having subscribed for updates, make a one-shot request for the current nonce

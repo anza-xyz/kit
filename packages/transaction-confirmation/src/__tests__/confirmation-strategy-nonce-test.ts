@@ -1,6 +1,11 @@
 import { Address } from '@solana/addresses';
 import { getBase58Encoder, getBase64Decoder } from '@solana/codecs-strings';
-import { SOLANA_ERROR__INVALID_NONCE, SOLANA_ERROR__NONCE_ACCOUNT_NOT_FOUND, SolanaError } from '@solana/errors';
+import {
+    SOLANA_ERROR__INVALID_NONCE,
+    SOLANA_ERROR__NONCE_ACCOUNT_NOT_FOUND,
+    SOLANA_ERROR__RPC_SUBSCRIPTIONS__CHANNEL_CONNECTION_CLOSED,
+    SolanaError,
+} from '@solana/errors';
 import { Nonce } from '@solana/transaction-messages';
 
 import { createNonceInvalidationPromiseFactory } from '../confirmation-strategy-nonce';
@@ -221,5 +226,46 @@ describe('createNonceInvalidationPromiseFactory', () => {
                 expectedNonceValue: '44444444444444444444444444444444444444444444',
             }),
         );
+    });
+    it('rejects when the account subscription ends without detecting nonce invalidation', async () => {
+        expect.assertions(1);
+        accountNotificationGenerator.mockImplementation(async function* () {
+            /* subscription ended without yielding a nonce change */
+        });
+        getAccountInfoMock.mockResolvedValue({
+            value: {
+                data: ['4'.repeat(44), 'base58'],
+            },
+        });
+        const invalidationPromise = getNonceInvalidationPromise({
+            abortSignal: new AbortController().signal,
+            commitment: 'finalized',
+            currentNonceValue: '4'.repeat(44) as Nonce,
+            nonceAccountAddress: '9'.repeat(44) as Address,
+        });
+        await expect(invalidationPromise).rejects.toThrow(
+            new SolanaError(SOLANA_ERROR__RPC_SUBSCRIPTIONS__CHANNEL_CONNECTION_CLOSED),
+        );
+    });
+    it('rejects when aborted before the nonce is invalidated', async () => {
+        expect.assertions(1);
+        getAccountInfoMock.mockReturnValue(FOREVER_PROMISE);
+        createSubscriptionIterable.mockImplementation(async ({ abortSignal }) => ({
+            [Symbol.asyncIterator]: async function* () {
+                await new Promise<void>(resolve => {
+                    abortSignal.addEventListener('abort', resolve, { once: true });
+                });
+            },
+        }));
+        const abortController = new AbortController();
+        const invalidationPromise = getNonceInvalidationPromise({
+            abortSignal: abortController.signal,
+            commitment: 'finalized',
+            currentNonceValue: '4'.repeat(44) as Nonce,
+            nonceAccountAddress: '9'.repeat(44) as Address,
+        });
+        await jest.runAllTimersAsync();
+        abortController.abort('canceled');
+        await expect(invalidationPromise).rejects.toThrow('canceled');
     });
 });

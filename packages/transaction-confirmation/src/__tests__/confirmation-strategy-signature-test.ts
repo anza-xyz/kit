@@ -1,4 +1,8 @@
-import { SOLANA_ERROR__TRANSACTION_ERROR__UNKNOWN, SolanaError } from '@solana/errors';
+import {
+    SOLANA_ERROR__RPC_SUBSCRIPTIONS__CHANNEL_CONNECTION_CLOSED,
+    SOLANA_ERROR__TRANSACTION_ERROR__UNKNOWN,
+    SolanaError,
+} from '@solana/errors';
 import { Signature } from '@solana/keys';
 
 import { createRecentSignatureConfirmationPromiseFactory } from '../confirmation-strategy-recent-signature';
@@ -197,5 +201,42 @@ describe('createSignatureConfirmationPromiseFactory', () => {
         expect(createSubscriptionIterable).toHaveBeenCalledWith({
             abortSignal: expect.objectContaining({ aborted: true }),
         });
+    });
+    it('rejects when the signature subscription ends without a confirming notification', async () => {
+        expect.assertions(1);
+        signatureNotificationGenerator.mockImplementation(async function* () {
+            /* subscription ended without yielding a confirmation */
+        });
+        getSignatureStatusesMock.mockResolvedValue({
+            value: [null],
+        });
+        const signatureConfirmationPromise = getSignatureConfirmationPromise({
+            abortSignal: new AbortController().signal,
+            commitment: 'finalized',
+            signature: 'abc' as Signature,
+        });
+        await expect(signatureConfirmationPromise).rejects.toThrow(
+            new SolanaError(SOLANA_ERROR__RPC_SUBSCRIPTIONS__CHANNEL_CONNECTION_CLOSED),
+        );
+    });
+    it('rejects when aborted before the signature is confirmed', async () => {
+        expect.assertions(1);
+        getSignatureStatusesMock.mockReturnValue(FOREVER_PROMISE);
+        createSubscriptionIterable.mockImplementation(async ({ abortSignal }) => ({
+            [Symbol.asyncIterator]: async function* () {
+                await new Promise<void>(resolve => {
+                    abortSignal.addEventListener('abort', resolve, { once: true });
+                });
+            },
+        }));
+        const abortController = new AbortController();
+        const signatureConfirmationPromise = getSignatureConfirmationPromise({
+            abortSignal: abortController.signal,
+            commitment: 'finalized',
+            signature: 'abc' as Signature,
+        });
+        await jest.runAllTimersAsync();
+        abortController.abort('canceled');
+        await expect(signatureConfirmationPromise).rejects.toThrow('canceled');
     });
 });
