@@ -1,5 +1,7 @@
 # @solana/rpc-parsed-types
 
+## 8.0.0
+
 ## 7.0.0
 
 ### Major Changes
