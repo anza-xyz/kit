@@ -22,7 +22,7 @@ import {
 } from '@solana/kit';
 import type { WalletSigner } from '@solana/kit-plugin-wallet';
 import { useWallets } from '@solana/kit-plugin-wallet/react';
-import { useAction } from '@solana/react';
+import { useAction, useClient } from '@solana/react';
 import { getTransferSolInstruction } from '@solana-program/system';
 import { getUiWalletAccountStorageKey } from '@wallet-standard/ui';
 import type { SyntheticEvent } from 'react';
@@ -30,6 +30,7 @@ import { useContext, useId, useMemo, useState } from 'react';
 
 import { ChainContext } from '../context/ChainContext';
 import { RpcContext } from '../context/RpcContext';
+import type { AppClient } from '../context/WalletClientProvider';
 import { solStringToLamports } from '../lamports';
 import signerBytes from '../signerBytes.json' with { type: 'json' };
 import { assertCanSignTransactions } from '../walletCapability';
@@ -54,7 +55,8 @@ export function SolanaPartialSignTransactionFeaturePanel({ signer }: Props) {
         () => sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions }),
         [rpc, rpcSubscriptions],
     );
-    const wallets = useWallets();
+    const client = useClient<AppClient>();
+    const wallets = useWallets(client);
     const [solQuantityString, setSolQuantityString] = useState<string>('');
     const [recipientAccountStorageKey, setRecipientAccountStorageKey] = useState<string | undefined>();
     const recipientAccount = useMemo(() => {

@@ -1,10 +1,12 @@
 import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
 import { Button, Callout, DropdownMenu } from '@radix-ui/themes';
 import { useWallets } from '@solana/kit-plugin-wallet/react';
+import { useClient } from '@solana/react';
 import { SolanaSignIn } from '@solana/wallet-standard-features';
 import type { UiWallet } from '@wallet-standard/ui';
 import { useRef, useState } from 'react';
 
+import type { AppClient } from '../context/WalletClientProvider';
 import { ErrorDialog } from './ErrorDialog';
 import { SignInMenuItem } from './SignInMenuItem';
 
@@ -14,7 +16,8 @@ type Props = Readonly<{
 
 export function SignInMenu({ children }: Props) {
     const { current: NO_ERROR } = useRef(Symbol());
-    const wallets = useWallets();
+    const client = useClient<AppClient>();
+    const wallets = useWallets(client);
     const [error, setError] = useState(NO_ERROR);
     const [forceClose, setForceClose] = useState(false);
     function renderItem(wallet: UiWallet) {

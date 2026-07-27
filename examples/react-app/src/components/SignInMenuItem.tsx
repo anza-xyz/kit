@@ -1,9 +1,11 @@
 import { DropdownMenu } from '@radix-ui/themes';
 import { isAbortError } from '@solana/kit';
 import { useSignIn } from '@solana/kit-plugin-wallet/react';
+import { useClient } from '@solana/react';
 import type { UiWallet } from '@wallet-standard/ui';
 import type { MouseEvent } from 'react';
 
+import type { AppClient } from '../context/WalletClientProvider';
 import { WalletMenuItemContent } from './WalletMenuItemContent';
 
 type Props = Readonly<{
@@ -13,7 +15,8 @@ type Props = Readonly<{
 }>;
 
 export function SignInMenuItem({ onSignIn, onError, wallet }: Props) {
-    const signIn = useSignIn();
+    const client = useClient<AppClient>();
+    const signIn = useSignIn(client);
     async function handleSignInClick(e: MouseEvent) {
         e.preventDefault();
         try {

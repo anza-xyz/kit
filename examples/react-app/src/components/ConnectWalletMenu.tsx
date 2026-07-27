@@ -1,10 +1,12 @@
 import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
 import { Button, Callout, DropdownMenu } from '@radix-ui/themes';
 import { useConnectedWallet, useWallets } from '@solana/kit-plugin-wallet/react';
+import { useClient } from '@solana/react';
 import type { UiWallet } from '@wallet-standard/ui';
 import { useContext, useRef, useState } from 'react';
 
 import { ChainContext } from '../context/ChainContext';
+import type { AppClient } from '../context/WalletClientProvider';
 import { ConnectWalletMenuItem } from './ConnectWalletMenuItem';
 import { ErrorDialog } from './ErrorDialog';
 import { WalletAccountIcon } from './WalletAccountIcon';
@@ -16,8 +18,9 @@ type Props = Readonly<{
 export function ConnectWalletMenu({ children }: Props) {
     const { current: NO_ERROR } = useRef(Symbol());
     const { displayName: currentChainName } = useContext(ChainContext);
-    const wallets = useWallets();
-    const connected = useConnectedWallet();
+    const client = useClient<AppClient>();
+    const wallets = useWallets(client);
+    const connected = useConnectedWallet(client);
     const [error, setError] = useState(NO_ERROR);
     const [forceClose, setForceClose] = useState(false);
     // Every wallet from `useWallets()` is pre-filtered by the plugin to those that support

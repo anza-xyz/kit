@@ -1,10 +1,12 @@
 import { DropdownMenu } from '@radix-ui/themes';
 import { isAbortError } from '@solana/kit';
 import { useConnect, useConnectedWallet, useDisconnect, useSelectAccount } from '@solana/kit-plugin-wallet/react';
+import { useClient } from '@solana/react';
 import { StandardDisconnect } from '@wallet-standard/core';
 import type { UiWallet, UiWalletAccount } from '@wallet-standard/ui';
 import { uiWalletAccountBelongsToUiWallet } from '@wallet-standard/ui';
 
+import type { AppClient } from '../context/WalletClientProvider';
 import { WalletMenuItemContent } from './WalletMenuItemContent';
 
 type Props = Readonly<{
@@ -14,10 +16,11 @@ type Props = Readonly<{
 }>;
 
 export function ConnectWalletMenuItem({ onAccountSelect, onError, wallet }: Props) {
-    const connect = useConnect();
-    const disconnect = useDisconnect();
-    const selectAccount = useSelectAccount();
-    const connected = useConnectedWallet();
+    const client = useClient<AppClient>();
+    const connect = useConnect(client);
+    const disconnect = useDisconnect(client);
+    const selectAccount = useSelectAccount(client);
+    const connected = useConnectedWallet(client);
     const isPending = connect.isRunning || disconnect.isRunning;
     const isConnected = wallet.accounts.length > 0;
     // "Active" = the account currently driving the app's feature panels belongs to this wallet.

@@ -155,14 +155,14 @@ importers:
         specifier: 3.3.0
         version: 3.3.0(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@solana-program/system':
-        specifier: ^0.12.2
-        version: 0.12.2(@solana/kit@packages+kit)
+        specifier: ^0.13.0
+        version: 0.13.0(@solana/kit@packages+kit)
       '@solana/kit':
         specifier: workspace:*
         version: link:../../packages/kit
       '@solana/kit-plugin-wallet':
-        specifier: 0.13.1
-        version: 0.13.1(@solana/kit@packages+kit)(@solana/react@packages+react)(fastestsmallesttextencoderdecoder@1.0.22)(react@19.2.7)(typescript@5.9.3)
+        specifier: 0.14.0
+        version: 0.14.0(@solana/kit@packages+kit)(@solana/react@packages+react)(fastestsmallesttextencoderdecoder@1.0.22)(react@19.2.7)(typescript@5.9.3)
       '@solana/react':
         specifier: workspace:*
         version: link:../../packages/react
@@ -4991,6 +4991,11 @@ packages:
     peerDependencies:
       '@solana/kit': ^6.4.0
 
+  '@solana-program/system@0.13.0':
+    resolution: {integrity: sha512-Id6QQxCG7ByImXPD5X/c3Ag2kySD+49aJ9waIkfxyUFyokhMQgxYQAx2rKuaygaBlaBQY6VVfBS46pqxZV+99A==}
+    peerDependencies:
+      '@solana/kit': ^7.0.0
+
   '@solana-program/token@0.14.0':
     resolution: {integrity: sha512-zpLMr6JZndlsQCQvrm0gezfwdr1lmzOGqN6v2WIYXjtDmbF+xg6zh/MAp2UFHRpv3uDmylEdjtQo05pa2OeaYg==}
     engines: {node: '>=24.0.0'}
@@ -5123,8 +5128,8 @@ packages:
       typescript:
         optional: true
 
-  '@solana/kit-plugin-wallet@0.13.1':
-    resolution: {integrity: sha512-Zmbz7MAa5HHZPKMKoYMzi9Xh6jBD40WTMB5M6oZBkrTQKSnXnsf2wyjDG5NmkaSPS/7He+oLLuxPOeukfzoxvg==}
+  '@solana/kit-plugin-wallet@0.14.0':
+    resolution: {integrity: sha512-gxVJk4TEBebXhxksptt8i4OTPSN8FAhHayu3/P2eYTpY2gik5mTnakisTa7cevF2E53+xApHd4qoavYXltwJ6w==}
     peerDependencies:
       '@solana/kit': ^7.0.0
       '@solana/react': ^7.0.0
@@ -13840,6 +13845,10 @@ snapshots:
     dependencies:
       '@solana/kit': link:packages/kit
 
+  '@solana-program/system@0.13.0(@solana/kit@packages+kit)':
+    dependencies:
+      '@solana/kit': link:packages/kit
+
   '@solana-program/token@0.14.0(@solana/kit@packages+kit)':
     dependencies:
       '@solana-program/system': 0.12.2(@solana/kit@packages+kit)
@@ -13952,7 +13961,7 @@ snapshots:
     transitivePeerDependencies:
       - fastestsmallesttextencoderdecoder
 
-  '@solana/kit-plugin-wallet@0.13.1(@solana/kit@packages+kit)(@solana/react@packages+react)(fastestsmallesttextencoderdecoder@1.0.22)(react@19.2.7)(typescript@5.9.3)':
+  '@solana/kit-plugin-wallet@0.14.0(@solana/kit@packages+kit)(@solana/react@packages+react)(fastestsmallesttextencoderdecoder@1.0.22)(react@19.2.7)(typescript@5.9.3)':
     dependencies:
       '@solana/kit': link:packages/kit
       '@solana/wallet-account-signer': 7.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)

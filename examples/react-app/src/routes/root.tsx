@@ -1,5 +1,6 @@
 import { Box, Code, Container, DataList, Flex, Heading, Spinner, Text } from '@radix-ui/themes';
 import { useConnectedWallet } from '@solana/kit-plugin-wallet/react';
+import { useClient } from '@solana/react';
 import type { SolanaChain } from '@solana/wallet-standard-chains';
 import { getUiWalletAccountStorageKey } from '@wallet-standard/ui';
 import { Suspense, useContext } from 'react';
@@ -15,6 +16,7 @@ import { SolanaSignMessageFeaturePanel } from '../components/SolanaSignMessageFe
 import { SolanaSignTransactionFeaturePanel } from '../components/SolanaSignTransactionFeaturePanel';
 import { WalletAccountIcon } from '../components/WalletAccountIcon';
 import { ChainContext } from '../context/ChainContext';
+import type { AppClient } from '../context/WalletClientProvider';
 
 function SlotIndicatorPanel({ chain }: { chain: SolanaChain }) {
     return (
@@ -34,7 +36,8 @@ function SlotIndicatorPanel({ chain }: { chain: SolanaChain }) {
  */
 function Root() {
     const { chain } = useContext(ChainContext);
-    const connected = useConnectedWallet();
+    const client = useClient<AppClient>();
+    const connected = useConnectedWallet(client);
     const errorBoundaryResetKeys = [chain, connected && getUiWalletAccountStorageKey(connected.account)].filter(
         Boolean,
     );
