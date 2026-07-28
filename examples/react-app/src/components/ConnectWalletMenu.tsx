@@ -1,12 +1,13 @@
 import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
 import { Button, Callout, DropdownMenu } from '@radix-ui/themes';
-import { useConnectedWallet, useWallets } from '@solana/kit-plugin-wallet/react';
+import { useWallets } from '@solana/kit-plugin-wallet/react';
 import { useClient } from '@solana/react';
 import type { UiWallet } from '@wallet-standard/ui';
 import { useContext, useRef, useState } from 'react';
 
 import { ChainContext } from '../context/ChainContext';
 import type { AppClient } from '../context/WalletClientProvider';
+import { useDisplayedWallet } from '../hooks/useDisplayedWallet';
 import { ConnectWalletMenuItem } from './ConnectWalletMenuItem';
 import { ErrorDialog } from './ErrorDialog';
 import { WalletAccountIcon } from './WalletAccountIcon';
@@ -20,7 +21,7 @@ export function ConnectWalletMenu({ children }: Props) {
     const { displayName: currentChainName } = useContext(ChainContext);
     const client = useClient<AppClient>();
     const wallets = useWallets(client);
-    const connected = useConnectedWallet(client);
+    const { connected, isStale } = useDisplayedWallet();
     const [error, setError] = useState(NO_ERROR);
     const [forceClose, setForceClose] = useState(false);
     // Every wallet from `useWallets()` is pre-filtered by the plugin to those that support
@@ -39,7 +40,15 @@ export function ConnectWalletMenu({ children }: Props) {
         <>
             <DropdownMenu.Root open={forceClose ? false : undefined} onOpenChange={setForceClose.bind(null, false)}>
                 <DropdownMenu.Trigger>
-                    <Button>
+                    <Button
+                        aria-busy={isStale}
+                        disabled={isStale}
+                        style={{
+                            opacity: isStale ? 0.5 : undefined,
+                            pointerEvents: isStale ? 'none' : undefined,
+                            transition: 'opacity 150ms',
+                        }}
+                    >
                         {connected ? (
                             <>
                                 <WalletAccountIcon account={connected.account} width="18" height="18" />

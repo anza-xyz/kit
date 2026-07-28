@@ -1,17 +1,13 @@
-import { Badge, Box, Button, DropdownMenu, Flex, Heading } from '@radix-ui/themes';
-import { WalletReadyGate } from '@solana/kit-plugin-wallet/react';
-import { useClient } from '@solana/react';
+import { Badge, Box, DropdownMenu, Flex, Heading } from '@radix-ui/themes';
 import type { SolanaChain } from '@solana/wallet-standard-chains';
 import { useContext } from 'react';
 
 import { ChainContext } from '../context/ChainContext';
-import type { AppClient } from '../context/WalletClientProvider';
 import { ConnectWalletMenu } from './ConnectWalletMenu';
 import { SignInMenu } from './SignInMenu';
 
 export function Nav() {
     const { displayName: currentChainName, chain, setChain } = useContext(ChainContext);
-    const client = useClient<AppClient>();
     const currentChainBadge = (
         <Badge color="gray" style={{ verticalAlign: 'middle' }}>
             {currentChainName}
@@ -57,17 +53,8 @@ export function Nav() {
                         )}
                     </Heading>
                 </Box>
-                <WalletReadyGate
-                    client={client}
-                    fallback={
-                        <Button disabled loading>
-                            Connect Wallet
-                        </Button>
-                    }
-                >
-                    <ConnectWalletMenu>Connect Wallet</ConnectWalletMenu>
-                    <SignInMenu>Sign In</SignInMenu>
-                </WalletReadyGate>
+                <ConnectWalletMenu>Connect Wallet</ConnectWalletMenu>
+                <SignInMenu>Sign In</SignInMenu>
             </Flex>
         </Box>
     );

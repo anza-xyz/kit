@@ -1,6 +1,6 @@
 import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
 import { Button, Callout, DropdownMenu } from '@radix-ui/themes';
-import { useWallets } from '@solana/kit-plugin-wallet/react';
+import { useIsWalletReady, useWallets } from '@solana/kit-plugin-wallet/react';
 import { useClient } from '@solana/react';
 import { SolanaSignIn } from '@solana/wallet-standard-features';
 import type { UiWallet } from '@wallet-standard/ui';
@@ -18,6 +18,7 @@ export function SignInMenu({ children }: Props) {
     const { current: NO_ERROR } = useRef(Symbol());
     const client = useClient<AppClient>();
     const wallets = useWallets(client);
+    const isReady = useIsWalletReady(client);
     const [error, setError] = useState(NO_ERROR);
     const [forceClose, setForceClose] = useState(false);
     function renderItem(wallet: UiWallet) {
@@ -40,7 +41,15 @@ export function SignInMenu({ children }: Props) {
         <>
             <DropdownMenu.Root open={forceClose ? false : undefined} onOpenChange={setForceClose.bind(null, false)}>
                 <DropdownMenu.Trigger>
-                    <Button>
+                    <Button
+                        aria-busy={!isReady}
+                        disabled={!isReady}
+                        style={{
+                            opacity: isReady ? undefined : 0.5,
+                            pointerEvents: isReady ? undefined : 'none',
+                            transition: 'opacity 150ms',
+                        }}
+                    >
                         {children}
                         <DropdownMenu.TriggerIcon />
                     </Button>

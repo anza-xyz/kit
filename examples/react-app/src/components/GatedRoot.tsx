@@ -1,30 +1,27 @@
-import { Flex, Section, Spinner, Text } from '@radix-ui/themes';
-import { WalletReadyGate } from '@solana/kit-plugin-wallet/react';
-import { useClient } from '@solana/react';
+import { Container, Flex, Section, Spinner, Text } from '@radix-ui/themes';
 
-import type { AppClient } from '../context/WalletClientProvider';
+import { useHasWalletSettled } from '../hooks/useHasWalletSettled';
 import Root from '../routes/root';
 
 /**
- * The wallet-dependent view, held back by {@link WalletReadyGate} until the client published by
- * {@link WalletClientProvider} settles its initial auto-reconnect. Reads the client from context so
- * it can be passed to the gate.
+ * The wallet-dependent view, held behind a lightweight placeholder only until the wallet first
+ * settles its initial auto-reconnect ({@link useHasWalletSettled}). Later chain-switch warm-ups are
+ * handled by per-cell dimming inside `Root`, not by re-showing this gate.
  */
 export function GatedRoot() {
-    const client = useClient<AppClient>();
+    const hasSettled = useHasWalletSettled();
     return (
         <Section>
-            <WalletReadyGate
-                client={client}
-                fallback={
+            <Container mx={{ initial: '3', xs: '6' }}>
+                {hasSettled ? (
+                    <Root />
+                ) : (
                     <Flex align="center" justify="center" gap="2" p="9">
                         <Spinner loading />
                         <Text as="p">Connecting to your wallet&hellip;</Text>
                     </Flex>
-                }
-            >
-                <Root />
-            </WalletReadyGate>
+                )}
+            </Container>
         </Section>
     );
 }
