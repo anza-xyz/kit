@@ -16,10 +16,10 @@ type Props = Readonly<{
 const solFormatter = new Intl.NumberFormat(undefined, { maximumFractionDigits: 5 });
 
 export function Balance({ account }: Props) {
-    // Read `chain` off the client (not `ChainContext`) so the SWR cache key below and the `rpc` that
-    // fills it always come from the same client instance. `ClientProvider` rebuilds the client one
-    // render after `ChainContext` flips, so a key derived from `ChainContext` would bind the new
-    // network's fetch to the previous network's rpc.
+    // Read `chain` off the client (the *active* network) so the SWR cache key below and the `rpc`
+    // that fills it always come from the same client instance. `ClientProvider` rebuilds the client
+    // one render after the *selected* chain flips, so a key derived from the selected chain would
+    // bind the new network's fetch to the previous network's rpc.
     const { chain, rpc, rpcSubscriptions } = useClient<AppClient>();
     const accountAddress = useMemo(() => address(account.address), [account.address]);
     const spec = useMemo(

@@ -26,9 +26,9 @@ import { useAction, useClient } from '@solana/react';
 import { getTransferSolInstruction } from '@solana-program/system';
 import { getUiWalletAccountStorageKey } from '@wallet-standard/ui';
 import type { SyntheticEvent } from 'react';
-import { useContext, useId, useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 
-import { ChainContext } from '../context/ChainContext';
+import { getExplorerClusterName } from '../chain';
 import type { AppClient } from '../context/ClientProvider';
 import { solStringToLamports } from '../lamports';
 import signerBytes from '../signerBytes.json' with { type: 'json' };
@@ -69,7 +69,8 @@ export function SolanaPartialSignTransactionFeaturePanel({ signer }: Props) {
             }
         }
     }, [recipientAccountStorageKey, wallets]);
-    const { chain: currentChain, solanaExplorerClusterName } = useContext(ChainContext);
+    const currentChain = client.chain;
+    const solanaExplorerClusterName = getExplorerClusterName(currentChain);
     const lamportsInputId = useId();
     const recipientSelectId = useId();
 

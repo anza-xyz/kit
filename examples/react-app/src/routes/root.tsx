@@ -23,14 +23,11 @@ import { useDisplayedWallet } from '../hooks/useDisplayedWallet';
  * (account header, balance, feature panels) dim while `isStale`.
  */
 function Root() {
-    // Read `chain` off the client (the *active* network) rather than `ChainContext` (the eagerly
-    // updated *selected* network) so the reset/remount keys below flip only when the client actually
-    // swaps — in lockstep with the rpc/subscriptions those cells read — rather than a render early.
+    // Read `chain` off the client (the *active* network) rather than the eagerly-updated *selected*
+    // network so the reset/remount keys below flip only when the client actually swaps — in lockstep
+    // with the rpc/subscriptions those cells read — rather than a render early.
     const { chain } = useClient<AppClient>();
     const { connected, isStale } = useDisplayedWallet();
-    const errorBoundaryResetKeys = [chain, connected && getUiWalletAccountStorageKey(connected.account)].filter(
-        Boolean,
-    );
     if (!connected) {
         return (
             <Flex gap="6" direction="column">
@@ -78,24 +75,29 @@ function Root() {
                 </Flex>
             </Flex>
             <Dimmable busy={isStale}>
-                <DataList.Root orientation={{ initial: 'vertical', sm: 'horizontal' }} size="3">
+                {/* Re-render the panels when account or chain changes */}
+                <DataList.Root
+                    key={`${getUiWalletAccountStorageKey(connected.account)}:${chain}`}
+                    orientation={{ initial: 'vertical', sm: 'horizontal' }}
+                    size="3"
+                >
                     <FeaturePanel label="Sign Message">
-                        <ErrorBoundary FallbackComponent={FeatureNotSupportedCallout} resetKeys={errorBoundaryResetKeys}>
+                        <ErrorBoundary FallbackComponent={FeatureNotSupportedCallout}>
                             <SolanaSignMessageFeaturePanel account={connected.account} />
                         </ErrorBoundary>
                     </FeaturePanel>
                     <FeaturePanel label="Sign And Send Transaction">
-                        <ErrorBoundary FallbackComponent={FeatureNotSupportedCallout} resetKeys={errorBoundaryResetKeys}>
+                        <ErrorBoundary FallbackComponent={FeatureNotSupportedCallout}>
                             <SolanaSignAndSendTransactionFeaturePanel signer={connected.signer} />
                         </ErrorBoundary>
                     </FeaturePanel>
                     <FeaturePanel label="Sign Transaction">
-                        <ErrorBoundary FallbackComponent={FeatureNotSupportedCallout} resetKeys={errorBoundaryResetKeys}>
+                        <ErrorBoundary FallbackComponent={FeatureNotSupportedCallout}>
                             <SolanaSignTransactionFeaturePanel signer={connected.signer} />
                         </ErrorBoundary>
                     </FeaturePanel>
                     <FeaturePanel label="Partial Sign Transaction">
-                        <ErrorBoundary FallbackComponent={FeatureNotSupportedCallout} resetKeys={errorBoundaryResetKeys}>
+                        <ErrorBoundary FallbackComponent={FeatureNotSupportedCallout}>
                             <SolanaPartialSignTransactionFeaturePanel signer={connected.signer} />
                         </ErrorBoundary>
                     </FeaturePanel>

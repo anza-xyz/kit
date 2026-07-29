@@ -1,18 +1,20 @@
 import { Badge, Box, DropdownMenu, Flex, Heading } from '@radix-ui/themes';
+import { useClient } from '@solana/react';
 import type { SolanaChain } from '@solana/wallet-standard-chains';
-import { useContext } from 'react';
 
-import { ChainContext } from '../context/ChainContext';
+import { getChainDisplayName, SUPPORTED_CHAINS } from '../chain';
+import type { AppClient } from '../context/ClientProvider';
 import { ConnectWalletMenu } from './ConnectWalletMenu';
 import { SignInMenu } from './SignInMenu';
 
-export function Nav() {
-    const { displayName: currentChainName, chain, setChain } = useContext(ChainContext);
-    const currentChainBadge = (
-        <Badge color="gray" style={{ verticalAlign: 'middle' }}>
-            {currentChainName}
-        </Badge>
-    );
+type Props = Readonly<{
+    onChainChange: (chain: SolanaChain) => void;
+}>;
+
+export function Nav({ onChainChange }: Props) {
+    // Read the *active* chain off the client so the badge and the picker's selection track the client
+    // the rest of the app is using (they update one render after a switch, once the client rebuilds).
+    const { chain } = useClient<AppClient>();
     return (
         <Box
             style={{
@@ -28,29 +30,27 @@ export function Nav() {
                 <Box flexGrow="1">
                     <Heading as="h1" size={{ initial: '4', xs: '6' }} truncate>
                         Solana React App{' '}
-                        {setChain ? (
-                            <DropdownMenu.Root>
-                                <DropdownMenu.Trigger>{currentChainBadge}</DropdownMenu.Trigger>
-                                <DropdownMenu.Content>
-                                    <DropdownMenu.RadioGroup
-                                        onValueChange={value => {
-                                            setChain(value as SolanaChain);
-                                        }}
-                                        value={chain}
-                                    >
-                                        {process.env.REACT_EXAMPLE_APP_ENABLE_MAINNET === 'true' ? (
-                                            <DropdownMenu.RadioItem value="solana:mainnet">
-                                                Mainnet Beta
-                                            </DropdownMenu.RadioItem>
-                                        ) : null}
-                                        <DropdownMenu.RadioItem value="solana:devnet">Devnet</DropdownMenu.RadioItem>
-                                        <DropdownMenu.RadioItem value="solana:testnet">Testnet</DropdownMenu.RadioItem>
-                                    </DropdownMenu.RadioGroup>
-                                </DropdownMenu.Content>
-                            </DropdownMenu.Root>
-                        ) : (
-                            currentChainBadge
-                        )}
+                        <DropdownMenu.Root>
+                            <DropdownMenu.Trigger>
+                                <Badge color="gray" style={{ verticalAlign: 'middle' }}>
+                                    {getChainDisplayName(chain)}
+                                </Badge>
+                            </DropdownMenu.Trigger>
+                            <DropdownMenu.Content>
+                                <DropdownMenu.RadioGroup
+                                    onValueChange={value => {
+                                        onChainChange(value as SolanaChain);
+                                    }}
+                                    value={chain}
+                                >
+                                    {SUPPORTED_CHAINS.map(supportedChain => (
+                                        <DropdownMenu.RadioItem key={supportedChain} value={supportedChain}>
+                                            {getChainDisplayName(supportedChain)}
+                                        </DropdownMenu.RadioItem>
+                                    ))}
+                                </DropdownMenu.RadioGroup>
+                            </DropdownMenu.Content>
+                        </DropdownMenu.Root>
                     </Heading>
                 </Box>
                 <ConnectWalletMenu>Connect Wallet</ConnectWalletMenu>

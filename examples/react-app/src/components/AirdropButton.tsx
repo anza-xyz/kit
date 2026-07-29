@@ -1,15 +1,15 @@
 import { Blockquote, Button, Dialog, Flex, Link, Text } from '@radix-ui/themes';
 import { Address, airdropFactory, lamports, Rpc, SolanaRpcApi } from '@solana/kit';
 import { useAction, useClient } from '@solana/react';
-import { useContext, useMemo } from 'react';
+import { useMemo } from 'react';
 
-import { ChainContext } from '../context/ChainContext';
+import { getExplorerClusterName } from '../chain';
 import type { AppClient } from '../context/ClientProvider';
 import { ErrorDialog } from './ErrorDialog';
 
 export function AirdropButton({ address }: { address: Address }) {
-    const { chain, solanaExplorerClusterName } = useContext(ChainContext);
-    const { rpc, rpcSubscriptions } = useClient<AppClient>();
+    const { chain, rpc, rpcSubscriptions } = useClient<AppClient>();
+    const solanaExplorerClusterName = getExplorerClusterName(chain);
 
     const isMainnet = chain === 'solana:mainnet';
 

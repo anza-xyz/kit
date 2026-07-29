@@ -16,7 +16,6 @@ import React from 'react';
 import { SWRConfig } from 'swr';
 
 import { render } from '../../__test-utils__/render';
-import { ChainContext, DEFAULT_CHAIN_CONFIG } from '../../context/ChainContext';
 import type { AppClient } from '../../context/ClientProvider';
 import { Balance } from '../Balance';
 
@@ -106,7 +105,7 @@ function makeWrapper({
     rpc: Rpc<SolanaRpcApiMainnet>;
     rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
 }) {
-    const client = { chain: DEFAULT_CHAIN_CONFIG.chain, rpc, rpcSubscriptions } as unknown as AppClient;
+    const client = { chain: 'solana:devnet', rpc, rpcSubscriptions } as unknown as AppClient;
     return function Wrapper({ children }: { children: React.ReactNode }) {
         return (
             <Theme>
@@ -183,7 +182,7 @@ describe('Balance', () => {
         await waitFor(() => expect(container.querySelector('svg')).not.toBeNull());
     });
 
-    it('refetches against the new network even when the selected chain leads the client swap', async () => {
+    it('refetches against the new network when the client swaps chains', async () => {
         const swrCache = new Map();
         const provider = () => swrCache;
         const devnet = makeMockRpc();
@@ -200,38 +199,27 @@ describe('Balance', () => {
             rpc: testnet.rpc,
             rpcSubscriptions: testnetSubscriptions.rpcSubscriptions,
         } as unknown as AppClient;
-        // The real app rebuilds the client in a layout effect, so on a chain switch `ChainContext`
-        // (the eagerly-updated *selected* chain) leads the freshly-published client by one render.
-        // `contextChain` and `client` are separate props here so the test can freeze that lag: the
-        // middle render has `ChainContext` already on testnet while `client` is still the devnet one.
-        const tree = (contextChain: string, client: AppClient) => (
+        // `Balance` derives its SWR cache key from `client.chain`, so the key and the `rpc` that fills
+        // it always travel together on one client instance. Swapping the whole client (chain + rpc in
+        // lockstep) changes the key and rebinds the fetch to the new network in a single step.
+        const tree = (client: AppClient) => (
             <Theme>
                 <SWRConfig value={{ provider }}>
-                    <ChainContext.Provider
-                        value={{ ...DEFAULT_CHAIN_CONFIG, chain: contextChain as typeof DEFAULT_CHAIN_CONFIG.chain }}
-                    >
-                        <ClientProvider client={client}>
-                            <Balance account={makeAccount()} />
-                        </ClientProvider>
-                    </ChainContext.Provider>
+                    <ClientProvider client={client}>
+                        <Balance account={makeAccount()} />
+                    </ClientProvider>
                 </SWRConfig>
             </Theme>
         );
 
-        const { container, rerender } = render(tree('solana:devnet', devnetClient));
+        const { container, rerender } = render(tree(devnetClient));
         await act(async () => {
             devnet.resolveGetBalance(lamportsResponse(100, 1_000_000_000n));
             await jest.runAllTimersAsync();
         });
         await waitFor(() => expect(container.textContent).toBe('1 ◎'));
 
-        // Lag render: `ChainContext` flips to testnet, but the client is still devnet. If `Balance`
-        // derived its SWR key from `ChainContext`, the key would change *now* and bind the fetch to
-        // the stale devnet rpc — and because the key never changes again once the client catches up,
-        // the UI would stay stuck on the devnet value. Deriving the key from `client.chain` keeps the
-        // key and the rpc that fills it on the same object, so the swap happens in one step below.
-        rerender(tree('solana:testnet', devnetClient));
-        rerender(tree('solana:testnet', testnetClient));
+        rerender(tree(testnetClient));
         await act(async () => {
             testnet.resolveGetBalance(lamportsResponse(200, 2_000_000_000n));
             await jest.runAllTimersAsync();

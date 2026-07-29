@@ -1,29 +1,26 @@
 import { Theme } from '@radix-ui/themes';
 import { useWallets } from '@solana/kit-plugin-wallet/react';
+import { useClient } from '@solana/react';
 import type { ReactNode } from 'react';
 
 import { render } from '../../__test-utils__/render';
-import { ChainContext, DEFAULT_CHAIN_CONFIG } from '../../context/ChainContext';
 import { useDisplayedWallet } from '../../hooks/useDisplayedWallet';
 import { ConnectWalletMenu } from '../ConnectWalletMenu';
 
-jest.mock('@solana/react', () => ({ useClient: jest.fn(() => ({})) }));
+jest.mock('@solana/react', () => ({ useClient: jest.fn() }));
 jest.mock('@solana/kit-plugin-wallet/react', () => ({ useWallets: jest.fn(() => []) }));
 jest.mock('../../hooks/useDisplayedWallet', () => ({ useDisplayedWallet: jest.fn() }));
 jest.mock('../WalletAccountIcon', () => ({ WalletAccountIcon: () => null }));
 
 const mockUseDisplayedWallet = useDisplayedWallet as jest.Mock;
-// The repo's shared Jest config sets `resetMocks: true`, which strips even the initial
-// `jest.fn(() => [])` implementation supplied to the factory above before every test runs — so
-// `useWallets` must be given its return value explicitly here rather than relying on the factory.
+// The repo's shared Jest config sets `resetMocks: true`, which strips even an initial factory
+// implementation before every test runs — so `useWallets` and `useClient` must be given their
+// return values explicitly in `beforeEach` rather than relying on the factories above.
 const mockUseWallets = useWallets as jest.Mock;
+const mockUseClient = useClient as jest.Mock;
 
 function Wrapper({ children }: { children: ReactNode }) {
-    return (
-        <Theme>
-            <ChainContext.Provider value={DEFAULT_CHAIN_CONFIG}>{children}</ChainContext.Provider>
-        </Theme>
-    );
+    return <Theme>{children}</Theme>;
 }
 
 function connection(address: string) {
@@ -34,6 +31,7 @@ describe('ConnectWalletMenu', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         mockUseWallets.mockReturnValue([]);
+        mockUseClient.mockReturnValue({ chain: 'solana:devnet' });
     });
 
     it('shows the connected account, enabled, when ready', () => {

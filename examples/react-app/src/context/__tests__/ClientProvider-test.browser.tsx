@@ -2,7 +2,6 @@ import { act } from '@testing-library/react';
 import type { ReactNode } from 'react';
 
 import { render } from '../../__test-utils__/render';
-import { ChainContext, DEFAULT_CHAIN_CONFIG } from '../ChainContext';
 
 // Each built client is a fresh disposable; the mock records published ones so the test can assert
 // disposal.
@@ -20,12 +19,14 @@ function makeDisposableClient() {
 
 jest.mock('@solana/kit', () => ({
     createClient: () => ({ use: () => makeDisposableClient() }),
-    // `ChainContext` (imported below for its `DEFAULT_CHAIN_CONFIG`) also pulls `devnet` from
-    // `@solana/kit`; since this mock replaces the whole module, `devnet` must be provided too.
+    // `ClientProvider` derives RPC URLs via `chain.ts`, which brands them with these cluster helpers;
+    // since this mock replaces the whole module, all three must be provided.
     devnet: (url: string) => url,
     // `buildClient` passes an `extendClient` plugin to `.use()`; the chainable stub above never
     // invokes plugins, so this only needs to exist for the import to resolve.
     extendClient: (client: unknown) => client,
+    mainnet: (url: string) => url,
+    testnet: (url: string) => url,
 }));
 jest.mock('@solana/kit-plugin-wallet', () => ({ walletSigner: () => ({}) }));
 jest.mock('@solana/kit-plugin-rpc', () => ({ solanaRpc: () => ({}) }));
@@ -41,11 +42,9 @@ import { ClientProvider } from '../ClientProvider';
 
 function tree(chain: string) {
     return (
-        <ChainContext.Provider value={{ ...DEFAULT_CHAIN_CONFIG, chain: chain as typeof DEFAULT_CHAIN_CONFIG.chain }}>
-            <ClientProvider>
-                <div>child</div>
-            </ClientProvider>
-        </ChainContext.Provider>
+        <ClientProvider chain={chain as Parameters<typeof ClientProvider>[0]['chain']}>
+            <div>child</div>
+        </ClientProvider>
     );
 }
 

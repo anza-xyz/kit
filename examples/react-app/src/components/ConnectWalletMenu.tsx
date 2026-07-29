@@ -3,9 +3,9 @@ import { Button, Callout, DropdownMenu } from '@radix-ui/themes';
 import { useWallets } from '@solana/kit-plugin-wallet/react';
 import { useClient } from '@solana/react';
 import type { UiWallet } from '@wallet-standard/ui';
-import { useContext, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
-import { ChainContext } from '../context/ChainContext';
+import { getChainDisplayName } from '../chain';
 import type { AppClient } from '../context/ClientProvider';
 import { useDisplayedWallet } from '../hooks/useDisplayedWallet';
 import { ConnectWalletMenuItem } from './ConnectWalletMenuItem';
@@ -18,8 +18,8 @@ type Props = Readonly<{
 
 export function ConnectWalletMenu({ children }: Props) {
     const { current: NO_ERROR } = useRef(Symbol());
-    const { displayName: currentChainName } = useContext(ChainContext);
     const client = useClient<AppClient>();
+    const currentChainName = getChainDisplayName(client.chain);
     const wallets = useWallets(client);
     const { connected, isStale } = useDisplayedWallet();
     const [error, setError] = useState(NO_ERROR);

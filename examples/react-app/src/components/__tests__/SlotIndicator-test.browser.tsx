@@ -5,7 +5,6 @@ import { act, waitFor } from '@testing-library/react';
 import React from 'react';
 
 import { render } from '../../__test-utils__/render';
-import { ChainContext, DEFAULT_CHAIN_CONFIG } from '../../context/ChainContext';
 import type { AppClient } from '../../context/ClientProvider';
 import { SlotIndicator } from '../SlotIndicator';
 
@@ -60,13 +59,11 @@ function makeMockRpcSubscriptions(reactiveStore: jest.Mock) {
 
 function makeWrapper(rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>) {
     const rpc = {} as Rpc<SolanaRpcApiMainnet>;
-    const client = { rpc, rpcSubscriptions } as unknown as AppClient;
+    const client = { chain: 'solana:devnet', rpc, rpcSubscriptions } as unknown as AppClient;
     return function Wrapper({ children }: { children: React.ReactNode }) {
         return (
             <Theme>
-                <ChainContext.Provider value={DEFAULT_CHAIN_CONFIG}>
-                    <ClientProvider client={client}>{children}</ClientProvider>
-                </ChainContext.Provider>
+                <ClientProvider client={client}>{children}</ClientProvider>
             </Theme>
         );
     };

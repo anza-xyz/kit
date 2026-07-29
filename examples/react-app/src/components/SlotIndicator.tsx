@@ -1,17 +1,17 @@
 import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
 import { Flex, IconButton, Link, Text, Tooltip } from '@radix-ui/themes';
 import { useClient, useSubscription } from '@solana/react';
-import { useContext, useMemo } from 'react';
+import { useMemo } from 'react';
 
-import { ChainContext } from '../context/ChainContext';
+import { getExplorerClusterName } from '../chain';
 import type { AppClient } from '../context/ClientProvider';
 import { getErrorMessage } from '../errors';
 
 const slotFormatter = new Intl.NumberFormat();
 
 export function SlotIndicator() {
-    const { rpcSubscriptions } = useClient<AppClient>();
-    const { solanaExplorerClusterName } = useContext(ChainContext);
+    const { chain, rpcSubscriptions } = useClient<AppClient>();
+    const solanaExplorerClusterName = getExplorerClusterName(chain);
     const source = useMemo(() => rpcSubscriptions.slotNotifications(), [rpcSubscriptions]);
     const { data, error, reconnect } = useSubscription(source);
 
