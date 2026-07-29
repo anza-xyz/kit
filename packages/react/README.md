@@ -149,6 +149,26 @@ try {
 }
 ```
 
+### Transaction planning & sending
+
+Wrap a client's transaction-planning and -sending capabilities as tracked actions. Each hook takes the client and returns the same `ActionResult` as [`useAction`](#useactionfn) — `{ data, dispatch, dispatchAsync, error, isRunning, status, reset, ... }` — with `dispatch(input)` supplying the input and the hook injecting the `AbortSignal` for you.
+
+```tsx
+import { usePlanTransaction, useSendTransaction } from '@solana/react';
+
+function SendButton({ client, instructions }) {
+    const { dispatch, isRunning } = useSendTransaction(client);
+    return (
+        <button disabled={isRunning} onClick={() => dispatch(instructions)}>
+            {isRunning ? 'Sending…' : 'Send'}
+        </button>
+    );
+}
+```
+
+- **`usePlanTransaction(client)`** / **`usePlanTransactions(client)`** — plan a single, or multiple, transaction message(s) from an instruction input. Requires a client with transaction planning installed (`ClientWithTransactionPlanning`). `usePlanTransaction` resolves with a single transaction message; `usePlanTransactions` resolves with the full transaction plan.
+- **`useSendTransaction(client)`** / **`useSendTransactions(client)`** — sign, submit, and confirm a single, or multiple, transaction(s). Requires a client with transaction sending installed (`ClientWithTransactionSending`). Both accept flexible input (instructions, an instruction plan, or a transaction plan); `useSendTransaction` additionally accepts a single transaction message.
+
 ### `useRequest(source, options?)`
 
 Fires a one-shot request on mount and re-fires whenever `source` changes identity. Returns `{ data, error, status, refresh }` where `status` is one of `'fetching' | 'success' | 'error' | 'disabled'`. Use it for RPC reads, or for any other one-shot async work an app needs (a `fetch`, a third-party SDK call, etc.).
