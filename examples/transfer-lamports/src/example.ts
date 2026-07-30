@@ -176,7 +176,7 @@ log.info({ signature: getSignatureFromTransaction(signedTransaction) }, '[step 2
  * lifetime constraint).
  */
 log.info(
-    '[step 3] Sending transaction: https://explorer.solana.com/tx/%s?cluster=custom&customUrl=127.0.0.1:8899',
+    `[step 3] Sending transaction: https://explorer.solana.com/tx/%s?cluster=custom&customUrl=${encodeURIComponent('http://127.0.0.1:8899')}`,
     getSignatureFromTransaction(signedTransaction),
 );
 log.warn(

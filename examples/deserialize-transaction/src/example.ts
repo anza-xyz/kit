@@ -370,12 +370,7 @@ if (identifiedInstruction === SystemInstruction.TransferSol) {
     // Narrow the type again, the instruction must have accounts to be parsed as a transfer SOL instruction
     assertIsInstructionWithAccounts(firstInstruction);
 
-    // TODO: This can just be `parseTransferSolInstruction(firstInstruction)` when the client is updated
-    // with the `@solana/kit` version that changes the instruction data type to `ReadonlyUint8Array`
-    const parsedFirstInstruction = parseTransferSolInstruction({
-        ...firstInstruction,
-        data: firstInstruction.data as unknown as Uint8Array,
-    });
+    const parsedFirstInstruction = parseTransferSolInstruction(firstInstruction);
     log.info(parsedFirstInstruction, '[step 4] The parsed Transfer SOL instruction');
 
     // This gives us an understanding of what exactly is happening in the instruction
@@ -401,12 +396,7 @@ if (secondInstruction.programAddress === MEMO_PROGRAM_ADDRESS) {
 
 assertIsInstructionWithData(secondInstruction);
 
-// TODO: This can just be `parseAddMemoInstruction(secondInstruction)` when the client is updated
-// with the `@solana/kit` version that changes the instruction data type to `ReadonlyUint8Array`
-const parsedSecondInstruction = parseAddMemoInstruction({
-    ...secondInstruction,
-    data: secondInstruction.data as unknown as Uint8Array,
-});
+const parsedSecondInstruction = parseAddMemoInstruction(secondInstruction);
 log.info(parsedSecondInstruction, '[step 4] The parsed Add Memo instruction');
 log.info(`[step 4] The second instruction adds a memo with message "${parsedSecondInstruction.data.memo}"`);
 

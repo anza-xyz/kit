@@ -11,25 +11,29 @@ import { createLogger } from '@solana/example-utils/createLogger.js';
 import pressAnyKeyPrompt from '@solana/example-utils/pressAnyKeyPrompt.js';
 import {
     assertIsTransactionWithBlockhashLifetime,
+    ClientWithGetMinimumBalance,
     createKeyPairSignerFromBytes,
     createSolanaRpc,
     createSolanaRpcSubscriptions,
     createTransactionMessage,
     createTransactionPlanExecutor,
     createTransactionPlanner,
-    estimateAndSetComputeUnitLimitFactory,
-    estimateComputeUnitLimitFactory,
-    fillTransactionMessageProvisoryComputeUnitLimit,
+    estimateAndSetResourceLimitsFactory,
+    estimateResourceLimitsFactory,
+    fillTransactionMessageProvisoryResourceLimits,
     generateKeyPairSigner,
     getSignatureFromTransaction,
     parallelInstructionPlan,
     pipe,
+    ResourceLimitsEstimate,
     sendAndConfirmTransactionFactory,
     sequentialInstructionPlan,
     setTransactionMessageComputeUnitPrice,
     setTransactionMessageFeePayer,
     setTransactionMessageLifetimeUsingBlockhash,
     signTransactionMessageWithSigners,
+    TransactionMessage,
+    TransactionMessageWithFeePayer,
     TransactionPlan,
 } from '@solana/kit';
 import { getCreateMintInstructionPlan, getMintToATAInstructionPlanAsync } from '@solana-program/token';
@@ -108,15 +112,15 @@ const transactionPlanner = createTransactionPlanner({
              */
             tx => setTransactionMessageComputeUnitPrice(100n, tx),
             /**
-             * We are also adding a provisory CU limit. At this point we don't know what
-             * instructions will be added to the transaction, so we don't know what the CU limit
-             * will be. The CU limit will be updated later by the transaction executor.
-             * The transaction planner is going to add as many instructions as possible to each
-             * transaction, so we may not be able to add instructions later in the transaction
-             * executor. By using the provisory limit, we ensure that there is always space for
-             * the CU limit.
+             * We are also adding provisory resource limits. At this point we don't know what
+             * instructions will be added to the transaction, so we don't know what the compute
+             * unit (CU) limit will be. The resource limits will be updated later by the transaction
+             * executor. The transaction planner is going to add as many instructions as possible to
+             * each transaction, so we may not be able to add instructions later in the transaction
+             * executor. By using the provisory limits, we ensure that there is always space for
+             * them.
              */
-            tx => fillTransactionMessageProvisoryComputeUnitLimit(tx),
+            tx => fillTransactionMessageProvisoryResourceLimits(tx),
         );
     },
 });
@@ -140,22 +144,25 @@ const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({
 });
 
 /**
- * CU LIMIT ESTIMATOR
- * We create a compute unit limit estimator which will be used by the transaction executor to
- * estimate the CU limit for each transaction message before sending it.
- * It does this by simulating the transaction message using the RPC we created earlier.
+ * RESOURCE LIMIT ESTIMATOR
+ * We create a resource limit estimator which will be used by the transaction executor to
+ * estimate the resource limits (such as the CU limit) for each transaction message before sending
+ * it. It does this by simulating the transaction message using the RPC we created earlier.
  */
-const estimateCULimit = estimateComputeUnitLimitFactory({ rpc });
-// We multiply the simulated limit by 1.1 to add a 10% buffer
-async function estimateWithMultiplier(...args: Parameters<typeof estimateCULimit>): Promise<number> {
-    const estimate = await estimateCULimit(...args);
-    return Math.ceil(estimate * 1.1);
+const estimateResourceLimits = estimateResourceLimitsFactory({ rpc });
+// We multiply the simulated compute unit limit by 1.1 to add a 10% buffer
+async function estimateWithMultiplier<TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer>(
+    transactionMessage: TTransactionMessage,
+    config?: Parameters<typeof estimateResourceLimits>[1],
+): Promise<ResourceLimitsEstimate<TTransactionMessage>> {
+    const estimate = await estimateResourceLimits(transactionMessage, config);
+    return { ...estimate, computeUnitLimit: Math.min(1_400_000, Math.ceil(estimate.computeUnitLimit * 1.1)) };
 }
 /**
- * This helper will take the estimate and use it to update the provisory CU limit
+ * This helper will take the estimate and use it to update the provisory resource limits
  * that we included in the planner base transaction message.
  */
-const estimateAndSetCULimit = estimateAndSetComputeUnitLimitFactory(estimateWithMultiplier);
+const estimateAndSetResourceLimits = estimateAndSetResourceLimitsFactory(estimateWithMultiplier);
 
 /**
  * TRANSACTION EXECUTOR
@@ -180,11 +187,11 @@ const transactionExecutor = createTransactionPlanExecutor({
             message,
             tx => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx),
             /**
-             * We use the helper that we created to estimate and set the CU limit.
-             * This returns an updated transaction message with the CU limit set.
-             * Recall that this replaces the provisory CU limit that was added in the planner.
+             * We use the helper that we created to estimate and set the resource limits.
+             * This returns an updated transaction message with the resource limits set.
+             * Recall that this replaces the provisory limits that were added in the planner.
              */
-            tx => estimateAndSetCULimit(tx, { abortSignal }),
+            tx => estimateAndSetResourceLimits(tx, { abortSignal }),
         );
 
         // Store the updated message in the context for potential error handling.
@@ -205,13 +212,24 @@ const transactionExecutor = createTransactionPlanExecutor({
         await sendAndConfirmTransaction(signedTransaction, { abortSignal, commitment: 'confirmed' });
         log.info(
             { signature },
-            `[transaction executor] Transaction confirmed: https://explorer.solana.com/tx/${signature}?cluster=custom&customUrl=127.0.0.1:8899`,
+            `[transaction executor] Transaction confirmed: https://explorer.solana.com/tx/${signature}?cluster=custom&customUrl=${encodeURIComponent('http://127.0.0.1:8899')}`,
         );
 
         // Return the context that the successful result should carry.
         return { message: updatedMessage, signature, transaction: signedTransaction };
     },
 });
+
+/**
+ * MINIMUM BALANCE CLIENT
+ * Creating a mint requires funding the new mint account with enough lamports to make it
+ * rent-exempt. `getCreateMintInstructionPlan` computes this for us, but it needs a client that can
+ * look up the minimum balance for a given account size. Here we adapt our RPC's
+ * `getMinimumBalanceForRentExemption` method into the `getMinimumBalance` interface it expects.
+ */
+const minimumBalanceClient: ClientWithGetMinimumBalance = {
+    getMinimumBalance: (space: number) => rpc.getMinimumBalanceForRentExemption(BigInt(space)).send(),
+};
 
 /**
  * CREATE INSTRUCTION PLAN
@@ -231,8 +249,10 @@ const instructionPlan = sequentialInstructionPlan([
     /**
      * This helper returns an instruction plan including all the instructions necessary to create a mint.
      * It is itself a `SequentialInstructionPlan`.
+     * It is async because it uses the minimum balance client to determine how many lamports are
+     * needed to make the new mint account rent-exempt.
      */
-    getCreateMintInstructionPlan({
+    await getCreateMintInstructionPlan(minimumBalanceClient, {
         decimals: 6,
         mintAuthority: SOURCE_ACCOUNT_SIGNER.address,
         newMint: tokenMint,
