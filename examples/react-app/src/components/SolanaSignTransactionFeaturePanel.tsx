@@ -1,14 +1,13 @@
 import { Blockquote, Box, Button, Dialog, Flex, Link, Select, Text, TextField } from '@radix-ui/themes';
 import {
     address,
-    appendTransactionMessageInstruction,
     assertIsSendableTransaction,
     assertIsTransactionWithBlockhashLifetime,
-    createTransactionMessage,
+    estimateAndSetResourceLimitsFactory,
+    estimateResourceLimitsFactory,
     getSignatureFromTransaction,
     pipe,
     sendAndConfirmTransactionFactory,
-    setTransactionMessageFeePayerSigner,
     setTransactionMessageLifetimeUsingBlockhash,
     signTransactionMessageWithSigners,
 } from '@solana/kit';
@@ -38,6 +37,11 @@ export function SolanaSignTransactionFeaturePanel({ signer }: Props) {
         () => sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions }),
         [rpc, rpcSubscriptions],
     );
+    const estimateResourceLimits = useMemo(() => estimateResourceLimitsFactory({ rpc: client.rpc }), [client.rpc]);
+    const estimateAndSetResourceLimits = useMemo(() => estimateAndSetResourceLimitsFactory(async (tx, config) => {
+        const resourceLimits = await estimateResourceLimits(tx, config);
+        return { ...resourceLimits, computeUnitLimit: resourceLimits.computeUnitLimit + 300 };
+    }), [estimateResourceLimits]);
     const wallets = useWallets(client);
     const [solQuantityString, setSolQuantityString] = useState<string>('');
     const [recipientAccountStorageKey, setRecipientAccountStorageKey] = useState<string | undefined>();
@@ -68,22 +72,25 @@ export function SolanaSignTransactionFeaturePanel({ signer }: Props) {
         if (!recipientAccount) {
             throw new Error('The address of the recipient could not be found');
         }
+        const planned = await client.planTransaction(
+            getTransferSolInstruction({
+                amount,
+                destination: address(recipientAccount.address),
+                source: signer,
+            }),
+            { abortSignal: signal },
+        );
+        // `planTransaction` builds the message but does not set a lifetime or add CUs,
+        // these are part of the default transaction executor.
         const { value: latestBlockhash } = await rpc
             .getLatestBlockhash({ commitment: 'confirmed' })
             .send({ abortSignal: signal });
-        const message = pipe(
-            createTransactionMessage({ version: 0 }),
-            m => setTransactionMessageFeePayerSigner(signer, m),
-            m => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, m),
-            m =>
-                appendTransactionMessageInstruction(
-                    getTransferSolInstruction({
-                        amount,
-                        destination: address(recipientAccount.address),
-                        source: signer,
-                    }),
-                    m,
-                ),
+        const message = await pipe(
+            planned,
+            // Set the lifetime to the latest blockhash  
+            tx => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx),
+            // Estimate and set the resource limits for the transaction
+            async tx => await estimateAndSetResourceLimits(tx, { abortSignal: signal }),
         );
         const transaction = await signTransactionMessageWithSigners(message);
         assertIsSendableTransaction(transaction);

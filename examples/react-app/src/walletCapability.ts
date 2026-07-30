@@ -1,5 +1,5 @@
-import type { TransactionSendingSigner, TransactionSigner } from '@solana/kit';
-import { isTransactionModifyingSigner, isTransactionPartialSigner, isTransactionSendingSigner } from '@solana/kit';
+import type { TransactionSigner } from '@solana/kit';
+import { isTransactionModifyingSigner, isTransactionPartialSigner } from '@solana/kit';
 import type { WalletSigner } from '@solana/kit-plugin-wallet';
 import { SolanaSignMessage } from '@solana/wallet-standard-features';
 import type { UiWalletAccount } from '@wallet-standard/ui';
@@ -29,18 +29,6 @@ import { getWalletAccountFeature } from '@wallet-standard/ui';
 export function assertCanSignTransactions(signer: WalletSigner | null): asserts signer is TransactionSigner {
     if (!signer || !(isTransactionModifyingSigner(signer) || isTransactionPartialSigner(signer))) {
         throw new Error('This account does not support signing transactions');
-    }
-}
-
-/**
- * Asserts that the connected wallet's signer can sign *and send* transactions. Used by the "Sign
- * And Send Transaction" panel.
- */
-export function assertCanSignAndSendTransactions(
-    signer: WalletSigner | null,
-): asserts signer is TransactionSendingSigner {
-    if (!signer || !isTransactionSendingSigner(signer)) {
-        throw new Error('This account does not support signing and sending transactions');
     }
 }
 

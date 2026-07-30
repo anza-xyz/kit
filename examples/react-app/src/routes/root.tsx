@@ -65,7 +65,10 @@ function Root() {
                             <Heading as="h4" size="3">
                                 Balance
                             </Heading>
-                            <ErrorBoundary fallback={<Text>&ndash;</Text>} key={`${connected.account.address}:${chain}`}>
+                            <ErrorBoundary
+                                fallback={<Text>&ndash;</Text>}
+                                key={`${connected.account.address}:${chain}`}
+                            >
                                 <Suspense fallback={<Spinner loading my="1" />}>
                                     <Balance account={connected.account} />
                                 </Suspense>
@@ -88,7 +91,7 @@ function Root() {
                     </FeaturePanel>
                     <FeaturePanel label="Sign And Send Transaction">
                         <ErrorBoundary FallbackComponent={FeatureNotSupportedCallout}>
-                            <SolanaSignAndSendTransactionFeaturePanel signer={connected.signer} />
+                            <SolanaSignAndSendTransactionFeaturePanel />
                         </ErrorBoundary>
                     </FeaturePanel>
                     <FeaturePanel label="Sign Transaction">

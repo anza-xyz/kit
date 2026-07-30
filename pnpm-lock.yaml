@@ -161,8 +161,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/kit
       '@solana/kit-plugin-rpc':
-        specifier: 0.13.0
-        version: 0.13.0(@solana/kit@packages+kit)
+        specifier: 0.15.0
+        version: 0.15.0(@solana/kit@packages+kit)
       '@solana/kit-plugin-wallet':
         specifier: 0.14.0
         version: 0.14.0(@solana/kit@packages+kit)(@solana/react@packages+react)(fastestsmallesttextencoderdecoder@1.0.22)(react@19.2.8)(typescript@5.9.3)
@@ -5149,8 +5149,8 @@ packages:
     peerDependencies:
       '@solana/kit': ^7.0.0
 
-  '@solana/kit-plugin-rpc@0.13.0':
-    resolution: {integrity: sha512-cYDbMjtp6vpU2FIuIQXN+EDSo2ljIA6m16B9BIi/ts/R0ETPt8rRvyXupi2dDS8wxUdRFUxXGXsPY78hRf4bfQ==}
+  '@solana/kit-plugin-rpc@0.15.0':
+    resolution: {integrity: sha512-Abymr7WLP9yQ6ixCCv+tKzjoWpAkxJ90JWzL+pfkTAFGTpVk9N0myhMcO2ohl6yztJRMOxsw1CXWjcVecxxUlg==}
     peerDependencies:
       '@solana/kit': ^7.0.0
 
@@ -14020,7 +14020,7 @@ snapshots:
     dependencies:
       '@solana/kit': link:packages/kit
 
-  '@solana/kit-plugin-rpc@0.13.0(@solana/kit@packages+kit)':
+  '@solana/kit-plugin-rpc@0.15.0(@solana/kit@packages+kit)':
     dependencies:
       '@solana/kit': link:packages/kit
       '@solana/kit-plugin-instruction-plan': 0.13.0(@solana/kit@packages+kit)
