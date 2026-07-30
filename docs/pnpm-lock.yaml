@@ -33,10 +33,10 @@ importers:
         version: 12.0.3(fumadocs-core@15.2.10(@types/react@19.2.17)(next@16.2.11(@babel/core@7.28.5)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(next@16.2.11(@babel/core@7.28.5)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)
       fumadocs-twoslash:
         specifier: ^3.1.1
-        version: 3.1.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(fumadocs-ui@15.2.10(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(next@16.2.11(@babel/core@7.28.5)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.2.1))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(shiki@3.3.0)(typescript@5.9.3)
+        version: 3.1.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(fumadocs-ui@15.2.10(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(next@16.2.11(@babel/core@7.28.5)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(shiki@3.3.0)(typescript@5.9.3)
       fumadocs-ui:
         specifier: 15.2.10
-        version: 15.2.10(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(next@16.2.11(@babel/core@7.28.5)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.2.1)
+        version: 15.2.10(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(next@16.2.11(@babel/core@7.28.5)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3)
       lucide-react:
         specifier: ^0.563.0
         version: 0.563.0(react@19.2.8)
@@ -132,8 +132,8 @@ importers:
         specifier: ^2.4.1
         version: 2.4.2(react@19.2.8)
       tailwindcss:
-        specifier: ^4.2.1
-        version: 4.2.1
+        specifier: ^4.3.3
+        version: 4.3.3
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -6025,11 +6025,11 @@ packages:
   tailwind-merge@3.4.0:
     resolution: {integrity: sha512-uSaO4gnW+b3Y2aWoWfFpX62vn2sR3skfhbjsEnaBI81WD1wBLlHZe5sWf0AqjksNdYTbGBEd0UasQMT3SNV15g==}
 
-  tailwindcss@4.2.1:
-    resolution: {integrity: sha512-/tBrSQ36vCleJkAOsy9kbNTgaxvGbyOamC30PRePTQe/o1MFwEKHQk4Cn7BNGaPtjp+PuUrByJehM1hgxfq4sw==}
-
   tailwindcss@4.2.2:
     resolution: {integrity: sha512-KWBIxs1Xb6NoLdMVqhbhgwZf2PGBpPEiwOqgI4pFIYbNTfBXiKYyWoTsXgBQ9WFg/OlhnvHaY+AEpW7wSmFo2Q==}
+
+  tailwindcss@4.3.3:
+    resolution: {integrity: sha512-gOhV3P7ufE62QDGg1zVaTgCR+EtPv92k2nIhVcVKcLmxT1sUBsQGhnZj175j+MqRt4zLF7ic+sCYjfhxMxj7YQ==}
 
   tapable@2.3.2:
     resolution: {integrity: sha512-1MOpMXuhGzGL5TTCZFItxCc0AARf1EZFQkGqMm7ERKj8+Hgr5oLvJOVFcC+lRmR8hCe2S3jC4T5D7Vg/d7/fhA==}
@@ -11142,11 +11142,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  fumadocs-twoslash@3.1.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(fumadocs-ui@15.2.10(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(next@16.2.11(@babel/core@7.28.5)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.2.1))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(shiki@3.3.0)(typescript@5.9.3):
+  fumadocs-twoslash@3.1.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(fumadocs-ui@15.2.10(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(next@16.2.11(@babel/core@7.28.5)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(shiki@3.3.0)(typescript@5.9.3):
     dependencies:
       '@radix-ui/react-popover': 1.1.15(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@shikijs/twoslash': 3.3.0(typescript@5.9.3)
-      fumadocs-ui: 15.2.10(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(next@16.2.11(@babel/core@7.28.5)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.2.1)
+      fumadocs-ui: 15.2.10(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(next@16.2.11(@babel/core@7.28.5)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3)
       mdast-util-from-markdown: 2.0.2
       mdast-util-gfm: 3.1.0
       mdast-util-to-hast: 13.2.0
@@ -11161,7 +11161,7 @@ snapshots:
       - supports-color
       - typescript
 
-  fumadocs-ui@15.2.10(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(next@16.2.11(@babel/core@7.28.5)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.2.1):
+  fumadocs-ui@15.2.10(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(next@16.2.11(@babel/core@7.28.5)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tailwindcss@4.3.3):
     dependencies:
       '@radix-ui/react-accordion': 1.2.8(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@radix-ui/react-collapsible': 1.1.8(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -11184,7 +11184,7 @@ snapshots:
       react-medium-image-zoom: 5.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       tailwind-merge: 3.4.0
     optionalDependencies:
-      tailwindcss: 4.2.1
+      tailwindcss: 4.3.3
     transitivePeerDependencies:
       - '@oramacloud/client'
       - '@types/react'
@@ -13269,9 +13269,9 @@ snapshots:
 
   tailwind-merge@3.4.0: {}
 
-  tailwindcss@4.2.1: {}
-
   tailwindcss@4.2.2: {}
+
+  tailwindcss@4.3.3: {}
 
   tapable@2.3.2: {}
 
