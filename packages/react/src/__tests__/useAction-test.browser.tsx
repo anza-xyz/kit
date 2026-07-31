@@ -165,7 +165,10 @@ describe('useAction', () => {
 
     it('uses the latest fn closure on each new call', async () => {
         let captured: number | null = null;
-        const { result, rerender } = renderHook(({ value }: { value: number }) => useAction(async () => (captured = value)), { initialProps: { value: 1 } });
+        const { result, rerender } = renderHook(
+            ({ value }: { value: number }) => useAction(async () => (captured = value)),
+            { initialProps: { value: 1 } },
+        );
 
         await act(async () => {
             await result.current.dispatchAsync();

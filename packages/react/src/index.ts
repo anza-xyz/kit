@@ -7,6 +7,8 @@ export * from './ClientProvider';
 export * from './useAction';
 export * from './useClient';
 export * from './useClientCapability';
+export * from './useIdentity';
+export * from './usePayer';
 export * from './usePlanTransaction';
 export * from './usePlanTransactions';
 export * from './useRequest';

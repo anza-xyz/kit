@@ -169,6 +169,32 @@ function SendButton({ client, instructions }) {
 - **`usePlanTransaction(client)`** / **`usePlanTransactions(client)`** — plan a single, or multiple, transaction message(s) from an instruction input. Requires a client with transaction planning installed (`ClientWithTransactionPlanning`). `usePlanTransaction` resolves with a single transaction message; `usePlanTransactions` resolves with the full transaction plan.
 - **`useSendTransaction(client)`** / **`useSendTransactions(client)`** — sign, submit, and confirm a single, or multiple, transaction(s). Requires a client with transaction sending installed (`ClientWithTransactionSending`). Both accept flexible input (instructions, an instruction plan, or a transaction plan); `useSendTransaction` additionally accepts a single transaction message.
 
+### Payer & identity
+
+Read the signer a client uses to pay for transactions (`payer`), or the wallet whose on-chain assets the app acts upon (`identity`), and re-render whenever it changes. Both hooks return the current `TransactionSigner`, or `undefined` while none is available.
+
+```tsx
+import { useClient, useIdentity, usePayer } from '@solana/react';
+import type { AppClient } from './client';
+
+function AccountBar() {
+    const client = useClient<AppClient>();
+    const identity = useIdentity(client);
+    const payer = usePayer(client);
+    return (
+        <div>
+            <span>{identity ? `Signed in as ${identity.address}` : 'Signed out'}</span>
+            <span>{payer ? `Paying with ${payer.address}` : 'No payer'}</span>
+        </div>
+    );
+}
+```
+
+- **`usePayer(client)`** — reads `client.payer`. Requires a client with a payer plugin installed (`ClientWithPayer`).
+- **`useIdentity(client)`** — reads `client.identity`. Requires a client with an identity plugin installed (`ClientWithIdentity`).
+
+When the client also advertises `subscribeToPayer` / `subscribeToIdentity` (`ClientWithSubscribeToPayer` / `ClientWithSubscribeToIdentity`), each hook subscribes so the returned value always reflects the latest signer. For a client whose payer or identity is fixed for its lifetime, it falls back to a no-op subscription and reads the value once.
+
 ### `useRequest(source, options?)`
 
 Fires a one-shot request on mount and re-fires whenever `source` changes identity. Returns `{ data, error, status, refresh }` where `status` is one of `'fetching' | 'success' | 'error' | 'disabled'`. Use it for RPC reads, or for any other one-shot async work an app needs (a `fetch`, a third-party SDK call, etc.).

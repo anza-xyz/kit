@@ -109,7 +109,7 @@ describe('ClientProvider + useClient', () => {
             const clientPromise = Promise.reject<Client<object>>(boom);
             // Pre-attach a catch so the rejection isn't flagged as unhandled before React's
             // error-boundary subscription runs.
-            clientPromise.catch(() => { });
+            clientPromise.catch(() => {});
             const onError = jest.fn();
             function Probe() {
                 useClient();

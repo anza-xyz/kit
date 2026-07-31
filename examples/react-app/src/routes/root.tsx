@@ -28,6 +28,7 @@ function Root() {
     // with the rpc/subscriptions those cells read — rather than a render early.
     const { chain } = useClient<AppClient>();
     const { connected, isStale } = useDisplayedWallet();
+
     if (!connected) {
         return (
             <Flex gap="6" direction="column">

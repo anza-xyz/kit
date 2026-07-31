@@ -102,7 +102,7 @@ describe('useSubscription', () => {
     });
 
     it('passes raw notifications through unchanged', async () => {
-        const sub = makeFakeSubscription<{ parent: bigint, root: bigint, slot: bigint }>();
+        const sub = makeFakeSubscription<{ parent: bigint; root: bigint; slot: bigint }>();
         const { result } = renderHook(() => useSubscription(sub.source));
 
         await act(async () => await sub.publish({ parent: 9n, root: 8n, slot: 10n }));

@@ -246,10 +246,9 @@ describe('useRequestSWR', () => {
             const withSignal = jest.fn(() => ({ dispatchAsync }));
             const source = stubActionSource<string>({ dispatchAsync, withSignal });
             const ctrl = new AbortController();
-            renderHook(
-                () => useRequestSWR(['source-signal-identity'], source, { getAbortSignal: () => ctrl.signal }),
-                { wrapper },
-            );
+            renderHook(() => useRequestSWR(['source-signal-identity'], source, { getAbortSignal: () => ctrl.signal }), {
+                wrapper,
+            });
             await waitFor(() => expect(withSignal).toHaveBeenCalledWith(ctrl.signal));
         });
 
@@ -321,8 +320,7 @@ describe('useRequestSWR', () => {
                 reactiveStore: () => createReactiveActionStore<[], string>(() => Promise.resolve(value)),
             });
             const { result, rerender } = renderHook(
-                ({ source }: { source: ReactiveActionSource<string> }) =>
-                    useRequestSWR(['source-latest'], source),
+                ({ source }: { source: ReactiveActionSource<string> }) => useRequestSWR(['source-latest'], source),
                 { initialProps: { source: sourceFor('a') }, wrapper },
             );
             await waitFor(() => expect(result.current.data).toBe('a'));

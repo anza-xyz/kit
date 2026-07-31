@@ -34,8 +34,8 @@ function createWrapper() {
 type DeepPartial<T> = T extends (...args: infer A) => infer R
     ? (...args: A) => DeepPartial<R>
     : T extends object
-    ? { [K in keyof T]?: DeepPartial<T[K]> }
-    : T;
+      ? { [K in keyof T]?: DeepPartial<T[K]> }
+      : T;
 
 // Wraps a partial `ReactiveActionStore` stub into a `ReactiveActionSource`, isolating the
 // type-narrowing cast to one place so spy-on-store tests stay legible.

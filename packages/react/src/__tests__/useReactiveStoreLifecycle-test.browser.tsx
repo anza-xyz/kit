@@ -94,10 +94,7 @@ describe('useReactiveStoreLifecycle', () => {
             for (let i = 0; i < 40; i++) {
                 rerender({ store: makeFakeStore() });
             }
-            expect(errorSpy).toHaveBeenCalledWith(
-                expect.stringContaining('recreated its store'),
-                expect.any(Number),
-            );
+            expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('recreated its store'), expect.any(Number));
         });
 
         it('does not warn when the store identity is stable across renders', () => {
@@ -124,10 +121,7 @@ describe('useReactiveStoreLifecycle', () => {
         for (let i = 0; i < 40; i++) {
             rerender({ store: makeFakeStore() });
         }
-        expect(errorSpy).not.toHaveBeenCalledWith(
-            expect.stringContaining('recreated its store'),
-            expect.anything(),
-        );
+        expect(errorSpy).not.toHaveBeenCalledWith(expect.stringContaining('recreated its store'), expect.anything());
         errorSpy.mockRestore();
     });
 });
