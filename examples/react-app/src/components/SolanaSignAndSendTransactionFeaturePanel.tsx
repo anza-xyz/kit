@@ -2,7 +2,6 @@ import { Blockquote, Box, Button, Dialog, Flex, Link, Select, Text, TextField } 
 import { address } from '@solana/kit';
 import { useConnectedWallet, useWallets } from '@solana/kit-plugin-wallet/react';
 import { useClient, useSendTransaction } from '@solana/react';
-import { getTransferSolInstruction } from '@solana-program/system';
 import { getUiWalletAccountStorageKey } from '@wallet-standard/ui';
 import type { SyntheticEvent } from 'react';
 import { useId, useMemo, useState } from 'react';
@@ -56,7 +55,7 @@ export function SolanaSignAndSendTransactionFeaturePanel() {
                     }
                     try {
                         await dispatchAsync(
-                            getTransferSolInstruction({
+                            client.system.instructions.transferSol({
                                 amount: solStringToLamports(solQuantityString),
                                 destination: address(recipientAccount.address),
                                 source: signer,

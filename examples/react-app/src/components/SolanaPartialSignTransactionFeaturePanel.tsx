@@ -23,7 +23,6 @@ import {
 import type { WalletSigner } from '@solana/kit-plugin-wallet';
 import { useWallets } from '@solana/kit-plugin-wallet/react';
 import { useAction, useClient } from '@solana/react';
-import { getTransferSolInstruction } from '@solana-program/system';
 import { getUiWalletAccountStorageKey } from '@wallet-standard/ui';
 import type { SyntheticEvent } from 'react';
 import { useId, useMemo, useState } from 'react';
@@ -57,10 +56,14 @@ export function SolanaPartialSignTransactionFeaturePanel({ signer }: Props) {
     );
 
     const estimateResourceLimits = useMemo(() => estimateResourceLimitsFactory({ rpc: client.rpc }), [client.rpc]);
-    const estimateAndSetResourceLimits = useMemo(() => estimateAndSetResourceLimitsFactory(async (tx, config) => {
-        const resourceLimits = await estimateResourceLimits(tx, config);
-        return { ...resourceLimits, computeUnitLimit: resourceLimits.computeUnitLimit + 300 };
-    }), [estimateResourceLimits]);
+    const estimateAndSetResourceLimits = useMemo(
+        () =>
+            estimateAndSetResourceLimitsFactory(async (tx, config) => {
+                const resourceLimits = await estimateResourceLimits(tx, config);
+                return { ...resourceLimits, computeUnitLimit: resourceLimits.computeUnitLimit + 300 };
+            }),
+        [estimateResourceLimits],
+    );
     const wallets = useWallets(client);
     const [solQuantityString, setSolQuantityString] = useState<string>('');
     const [recipientAccountStorageKey, setRecipientAccountStorageKey] = useState<string | undefined>();
@@ -111,7 +114,7 @@ export function SolanaPartialSignTransactionFeaturePanel({ signer }: Props) {
         }
         // Use the client to plan the transaction, then set the payer to our mock server signer
         const planned = await client.planTransaction(
-            getTransferSolInstruction({
+            client.system.instructions.transferSol({
                 amount,
                 destination: address(recipientAccount.address),
                 source: signer,
@@ -127,7 +130,7 @@ export function SolanaPartialSignTransactionFeaturePanel({ signer }: Props) {
             planned,
             // Set the fee payer to our mock server signer
             tx => setTransactionMessageFeePayerSigner(feePayerSigner, tx),
-            // Set the lifetime to the latest blockhash  
+            // Set the lifetime to the latest blockhash
             tx => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx),
             // Estimate and set the resource limits for the transaction
             async tx => await estimateAndSetResourceLimits(tx, { abortSignal: signal }),

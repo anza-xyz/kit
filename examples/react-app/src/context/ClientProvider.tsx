@@ -4,6 +4,7 @@ import { solanaRpc } from '@solana/kit-plugin-rpc';
 import { walletSigner } from '@solana/kit-plugin-wallet';
 import { ClientProvider as KitClientProvider } from '@solana/react';
 import type { SolanaChain } from '@solana/wallet-standard-chains';
+import { systemProgram } from '@solana-program/system';
 import { useLayoutEffect, useState } from 'react';
 
 import { getChainRpcUrl } from '../chain';
@@ -27,6 +28,7 @@ function buildClient(chain: SolanaChain, rpcUrl: ClusterUrl) {
             // importantly `Balance`'s SWR cache key — has to derive `chain` from the client, or it
             // would key the new network's fetch against the old network's rpc.
             .use(client => extendClient(client, { chain }))
+            .use(systemProgram())
     );
 }
 
