@@ -19,11 +19,18 @@ const addressesByLookupTableAddress = null as unknown as AddressesByLookupTableA
         result satisfies v0TransactionMessage;
     }
 
-    // It accepts only v0 transaction messages
+    // It rejects legacy transaction messages
     {
-        const invalidMessage = null as unknown as Exclude<TransactionMessage, { version: 0 }>;
-        // @ts-expect-error Only v0 messages are accepted.
-        compressTransactionMessageUsingAddressLookupTables(invalidMessage, addressesByLookupTableAddress);
+        const legacyMessage = null as unknown as Extract<TransactionMessage, { version: 'legacy' }>;
+        // @ts-expect-error Legacy messages are not accepted.
+        compressTransactionMessageUsingAddressLookupTables(legacyMessage, addressesByLookupTableAddress);
+    }
+
+    // It rejects v1 transaction messages
+    {
+        const v1Message = null as unknown as Extract<TransactionMessage, { version: 1 }>;
+        // @ts-expect-error Only v0 messages are accepted, not v1.
+        compressTransactionMessageUsingAddressLookupTables(v1Message, addressesByLookupTableAddress);
     }
 
     // It preserves the fee payer type

@@ -28,7 +28,7 @@ function findAddressInLookupTables(
     }
 }
 
-type TransactionMessageNotLegacy = Exclude<TransactionMessage, { version: 'legacy' }>;
+type SupportedTransactionMessage = Extract<TransactionMessage, { version: 0 }>;
 
 // Each account can be AccountLookupMeta | AccountMeta
 type WidenInstructionAccounts<TInstruction extends Instruction> =
@@ -85,7 +85,7 @@ type WidenTransactionMessageInstructions<TTransactionMessage extends Transaction
  * ```
  */
 export function compressTransactionMessageUsingAddressLookupTables<
-    TTransactionMessage extends TransactionMessageNotLegacy = TransactionMessageNotLegacy,
+    TTransactionMessage extends SupportedTransactionMessage = SupportedTransactionMessage,
 >(
     transactionMessage: TTransactionMessage,
     addressesByLookupTableAddress: AddressesByLookupTableAddress,
