@@ -5,6 +5,7 @@
  */
 export * from './ClientProvider';
 export * from './useAction';
+export * from './useAirdrop';
 export * from './useClient';
 export * from './useClientCapability';
 export * from './useIdentity';

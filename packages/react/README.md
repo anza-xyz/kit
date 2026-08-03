@@ -169,6 +169,27 @@ function SendButton({ client, instructions }) {
 - **`usePlanTransaction(client)`** / **`usePlanTransactions(client)`** — plan a single, or multiple, transaction message(s) from an instruction input. Requires a client with transaction planning installed (`ClientWithTransactionPlanning`). `usePlanTransaction` resolves with a single transaction message; `usePlanTransactions` resolves with the full transaction plan.
 - **`useSendTransaction(client)`** / **`useSendTransactions(client)`** — sign, submit, and confirm a single, or multiple, transaction(s). Requires a client with transaction sending installed (`ClientWithTransactionSending`). Both accept flexible input (instructions, an instruction plan, or a transaction plan); `useSendTransaction` additionally accepts a single transaction message.
 
+### `useAirdrop(client)`
+
+Request an airdrop of SOL to an address as a tracked action. Requires a client with an airdrop plugin installed (`ClientWithAirdrop`) — typically available on devnet, testnet, and local validators. Returns the same `ActionResult` as [`useAction`](#useactionfn); `dispatch(address, amount)` supplies the recipient and lamport amount while the hook injects the `AbortSignal`. A natural fit for a devnet "fund this account" button.
+
+```tsx
+import { useAirdrop } from '@solana/react';
+import { lamports } from '@solana/kit';
+import type { Address } from '@solana/kit';
+
+function AirdropButton({ client, address }: { client: ClientWithAirdrop; address: Address }) {
+    const { dispatch, isRunning } = useAirdrop(client);
+    return (
+        <button disabled={isRunning} onClick={() => dispatch(address, lamports(1_000_000_000n))}>
+            {isRunning ? 'Airdropping…' : 'Airdrop 1 SOL'}
+        </button>
+    );
+}
+```
+
+`data` resolves to the transaction `Signature`, or `undefined` when the airdrop was applied without a transaction (some implementations, e.g. LiteSVM, adjust balances directly) — null-check it before use.
+
 ### Payer & identity
 
 Read the signer a client uses to pay for transactions (`payer`), or the wallet whose on-chain assets the app acts upon (`identity`), and re-render whenever it changes. Both hooks return the current `TransactionSigner`, or `undefined` while none is available.
