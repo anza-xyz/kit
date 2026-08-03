@@ -1,35 +1,53 @@
-import type { ClusterUrl } from '@solana/kit';
 import { createClient, extendClient } from '@solana/kit';
-import { solanaRpc } from '@solana/kit-plugin-rpc';
+import { solanaDevnetRpc, solanaMainnetRpc, solanaTestnetRpc } from '@solana/kit-plugin-rpc';
 import { walletSigner } from '@solana/kit-plugin-wallet';
 import { ClientProvider as KitClientProvider } from '@solana/react';
 import type { SolanaChain } from '@solana/wallet-standard-chains';
 import { systemProgram } from '@solana-program/system';
 import { useLayoutEffect, useState } from 'react';
 
-import { getChainRpcUrl } from '../chain';
-
 type Props = Readonly<{
     chain: SolanaChain;
     children: React.ReactNode;
 }>;
 
-function buildClient(chain: SolanaChain, rpcUrl: ClusterUrl) {
-    return (
-        createClient()
-            .use(walletSigner({ chain }))
-            // Only `rpcUrl` is passed; `solanaRpc` derives the subscriptions URL from it by swapping
-            // the protocol to `ws`/`wss`.
-            .use(solanaRpc({ rpcUrl }))
-            // Stamp the target `chain` onto the client so consumers can read it back off `useClient()`
-            // *in lockstep with* `rpc`/`rpcSubscriptions`. This is load-bearing, not decorative: on a
-            // chain switch the selected chain (this component's `chain` prop) flips one render before
-            // the rebuilt client is published, so anything that must move with the client's rpc — most
-            // importantly `Balance`'s SWR cache key — has to derive `chain` from the client, or it
-            // would key the new network's fetch against the old network's rpc.
-            .use(client => extendClient(client, { chain }))
-            .use(systemProgram())
-    );
+function buildClient(chain: SolanaChain) {
+    const base = createClient().use(walletSigner({ chain }));
+    // Stamp the target `chain` onto the client so consumers can read it back off `useClient()` *in
+    // lockstep with* `rpc`/`rpcSubscriptions`, then install the system program. This is load-bearing,
+    // not decorative: on a chain switch the selected chain (this component's `chain` prop) flips one
+    // render before the rebuilt client is published, so anything that must move with the client's rpc —
+    // most importantly `Balance`'s SWR cache key — has to derive `chain` from the client, or it would
+    // key the new network's fetch against the old network's rpc.
+    //
+    // The RPC plugin is selected per chain, because each cluster's plugin brands its endpoint to that
+    // cluster and installs the capabilities that cluster actually has: `solanaDevnetRpc` and
+    // `solanaTestnetRpc` both bundle `airdrop` (and default to the public devnet/testnet endpoints),
+    // while `solanaMainnetRpc` does not, since mainnet has no faucet. Each branch returns its
+    // fully-built client, so `AppClient` stays a union whose mainnet member has no `airdrop` — which is
+    // what lets `AirdropButton` narrow with `'airdrop' in client`.
+    switch (chain) {
+        case 'solana:mainnet':
+            return base
+                .use(
+                    solanaMainnetRpc({
+                        rpcUrl: process.env.REACT_EXAMPLE_APP_MAINNET_URL ?? 'https://api.mainnet-beta.solana.com',
+                    }),
+                )
+                .use(client => extendClient(client, { chain }))
+                .use(systemProgram());
+        case 'solana:testnet':
+            return base
+                .use(solanaTestnetRpc())
+                .use(client => extendClient(client, { chain }))
+                .use(systemProgram());
+        case 'solana:devnet':
+        default:
+            return base
+                .use(solanaDevnetRpc())
+                .use(client => extendClient(client, { chain }))
+                .use(systemProgram());
+    }
 }
 
 /**
@@ -52,7 +70,7 @@ export type AppClient = ReturnType<typeof buildClient>;
 export function ClientProvider({ chain, children }: Props) {
     const [client, setClient] = useState<AppClient | null>(null);
     useLayoutEffect(() => {
-        const next = buildClient(chain, getChainRpcUrl(chain));
+        const next = buildClient(chain);
         // Publishing `next` synchronously here (rather than deriving it from state) is deliberate:
         // it lets the client be built/disposed alongside the external resource it wraps, with the
         // effect cleanup owning disposal.

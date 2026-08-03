@@ -1,5 +1,3 @@
-import type { ClusterUrl } from '@solana/kit';
-import { devnet, mainnet, testnet } from '@solana/kit';
 import type { SolanaChain } from '@solana/wallet-standard-chains';
 import { useCallback, useState } from 'react';
 
@@ -38,23 +36,6 @@ export function getExplorerClusterName(chain: SolanaChain): 'devnet' | 'mainnet-
         case 'solana:devnet':
         default:
             return 'devnet';
-    }
-}
-
-/**
- * The RPC HTTP endpoint for a chain, branded to that cluster. `solanaRpc` derives the WebSocket
- * (subscriptions) URL from this by swapping the protocol to `ws`/`wss`, so only the HTTP URL is
- * needed here. Mainnet uses `REACT_EXAMPLE_APP_MAINNET_URL` when set (see {@link SUPPORTED_CHAINS}).
- */
-export function getChainRpcUrl(chain: SolanaChain): ClusterUrl {
-    switch (chain) {
-        case 'solana:mainnet':
-            return mainnet(process.env.REACT_EXAMPLE_APP_MAINNET_URL ?? 'https://api.mainnet-beta.solana.com');
-        case 'solana:testnet':
-            return testnet('https://api.testnet.solana.com');
-        case 'solana:devnet':
-        default:
-            return devnet('https://api.devnet.solana.com');
     }
 }
 

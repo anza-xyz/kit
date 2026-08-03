@@ -1,39 +1,35 @@
 import { Blockquote, Button, Dialog, Flex, Link, Text } from '@radix-ui/themes';
-import { Address, airdropFactory, lamports, Rpc, SolanaRpcApi } from '@solana/kit';
-import { useAction, useClient } from '@solana/react';
-import { useMemo } from 'react';
+import { Address, ClientWithAirdrop, lamports } from '@solana/kit';
+import { useAirdrop, useClient } from '@solana/react';
 
 import { getExplorerClusterName } from '../chain';
 import type { AppClient } from '../context/ClientProvider';
 import { ErrorDialog } from './ErrorDialog';
 
 export function AirdropButton({ address }: { address: Address }) {
-    const { chain, rpc, rpcSubscriptions } = useClient<AppClient>();
-    const solanaExplorerClusterName = getExplorerClusterName(chain);
+    const client = useClient<AppClient>();
+    // Airdrops aren't available on mainnet, whose client carries no `airdrop` capability. Narrow on
+    // its presence: absent (mainnet) → a permanently disabled button; present → the working control,
+    // which lives in its own component so `useAirdrop` is always called unconditionally.
+    if (!('airdrop' in client)) {
+        return (
+            <Button disabled type="button" variant="outline">
+                Airdrop to fee payer
+            </Button>
+        );
+    }
+    return <AirdropToFeePayerButton address={address} client={client} />;
+}
 
-    const isMainnet = chain === 'solana:mainnet';
-
-    // Cast RPC for airdrop, this is safe because we disable the airdrop button on mainnet
-    const airdrop = useMemo(
-        () => airdropFactory({ rpc: rpc as Rpc<SolanaRpcApi>, rpcSubscriptions }),
-        [rpc, rpcSubscriptions],
-    );
-
-    const {
-        data: lastSignature,
-        dispatch,
-        error,
-        isRunning,
-        reset,
-    } = useAction(async signal => {
-        if (isMainnet) throw new Error('Airdrops are not available on mainnet');
-        return await airdrop({
-            abortSignal: signal,
-            commitment: 'confirmed',
-            lamports: lamports(1_000_000_000n),
-            recipientAddress: address,
-        });
-    });
+function AirdropToFeePayerButton({
+    address,
+    client,
+}: {
+    address: Address;
+    client: Extract<AppClient, ClientWithAirdrop>;
+}) {
+    const solanaExplorerClusterName = getExplorerClusterName(client.chain);
+    const { data: lastSignature, dispatch, error, isRunning, reset } = useAirdrop(client);
 
     return (
         <>
@@ -49,10 +45,9 @@ export function AirdropButton({ address }: { address: Address }) {
                     <Button
                         variant="outline"
                         color={error ? 'red' : undefined}
-                        disabled={isMainnet}
                         loading={isRunning}
                         type="button"
-                        onClick={() => dispatch()}
+                        onClick={() => dispatch(address, lamports(1_000_000_000n))}
                     >
                         Airdrop to fee payer
                     </Button>
