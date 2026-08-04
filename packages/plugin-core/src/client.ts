@@ -292,6 +292,11 @@ function toConfigurableDescriptors<T extends PropertyDescriptorMap>(descriptors:
  * If the client already implements `Symbol.dispose`, the existing dispose
  * logic is chained so that it runs after the new `cleanup` function.
  *
+ * Cleanups run in reverse order of registration, disposal is idempotent, and if more than one
+ * cleanup throws then the errors are aggregated into a `SuppressedError` chain. Runtimes that have
+ * not shipped explicit resource management are supported too, though a `using` declaration needs a
+ * `Symbol.dispose` polyfill there.
+ *
  * The return type is an {@link ExtendedClient}, which flattens the merged shape into a
  * single object literal so chained calls do not accumulate nested intersections in editor
  * tooltips and error messages.
@@ -314,13 +319,28 @@ function toConfigurableDescriptors<T extends PropertyDescriptorMap>(descriptors:
  *     };
  * }
  *
- * // Later, when the client is no longer needed:
- * using client = createClient().use(myPlugin();
+ * // Build the client in the scope that should own it:
+ * using client = createClient().use(myPlugin());
  * // `socket.close()` is called automatically when `client` goes out of scope.
+ * ```
+ *
+ * @example Disposing without a using declaration
+ * `using` requires explicit resource management, which Safari has not shipped as of Safari 27.
+ * Either dispose the client yourself, as below, or polyfill `Symbol.dispose` — installing the
+ * polyfill before any client is created, since a client registers its dispose method under
+ * whatever `Symbol.dispose` was at the time.
+ * ```ts
+ * const client = createClient().use(myPlugin());
+ *
+ * // Later, when the client is no longer needed:
+ * client[Symbol.dispose]();
+ * // `socket.close()` has now been called.
  * ```
  *
  * @see {@link extendClient}
  * @see {@link ExtendedClient}
+ * @remarks See https://caniuse.com/mdn-javascript_builtins_disposablestack for platform
+ * availability of `DisposableStack`.
  */
 export function withCleanup<TClient extends object>(
     client: TClient,
@@ -328,7 +348,7 @@ export function withCleanup<TClient extends object>(
 ): ExtendedClient<TClient, Disposable> {
     if (DISPOSABLE_STACK_PROPERTY in client) {
         return addCleanupToClientWithExistingStack(
-            client as Record<typeof DISPOSABLE_STACK_PROPERTY, DisposableStack> & TClient,
+            client as Record<typeof DISPOSABLE_STACK_PROPERTY, CleanupStack> & TClient,
             cleanup,
         );
     } else {
@@ -338,7 +358,7 @@ export function withCleanup<TClient extends object>(
 
 const DISPOSABLE_STACK_PROPERTY = '__PRIVATE__DISPOSABLE_STACK' as const;
 
-function addCleanupToClientWithExistingStack<TClient extends Record<typeof DISPOSABLE_STACK_PROPERTY, DisposableStack>>(
+function addCleanupToClientWithExistingStack<TClient extends Record<typeof DISPOSABLE_STACK_PROPERTY, CleanupStack>>(
     client: TClient,
     cleanup: () => void,
 ): ExtendedClient<TClient, Disposable> {
@@ -352,7 +372,7 @@ function addCleanupToClientWithoutExistingStack<TClient extends object>(
     client: TClient,
     cleanup: () => void,
 ): ExtendedClient<TClient, Disposable> {
-    const stack = new DisposableStack();
+    const stack = createCleanupStack();
 
     // If the client has an existing dispose method but not our stack, we maintain this existing cleanup by deferring it to the new stack
     if (Symbol.dispose in client) {
@@ -367,9 +387,93 @@ function addCleanupToClientWithoutExistingStack<TClient extends object>(
     const additions = {
         [DISPOSABLE_STACK_PROPERTY]: stack,
         [Symbol.dispose]() {
-            stack[Symbol.dispose]();
+            stack.dispose();
         },
     };
 
     return extendClient(client, additions) as unknown as ExtendedClient<TClient, Disposable>;
+}
+
+/**
+ * The slice of `DisposableStack` that {@link withCleanup} relies on.
+ *
+ * Deliberately narrow — `defer()` and the plain `dispose()` method only — so that it can be
+ * satisfied both by the platform's `DisposableStack` and by {@link createFallbackCleanupStack} on
+ * runtimes that lack one. Note that `dispose()` is used in preference to `[Symbol.dispose]()`
+ * because runtimes missing `DisposableStack` are missing `Symbol.dispose` as well.
+ */
+type CleanupStack = {
+    defer(cleanup: () => void): void;
+    dispose(): void;
+};
+
+function createCleanupStack(): CleanupStack {
+    // Always prefer the runtime's own implementation. The fallback exists only for runtimes that
+    // have not shipped explicit resource management — most notably Safari, which as of Safari 27
+    // provides neither `DisposableStack` nor `Symbol.dispose`.
+    return typeof globalThis.DisposableStack === 'function'
+        ? new globalThis.DisposableStack()
+        : createFallbackCleanupStack();
+}
+
+function createFallbackCleanupStack(): CleanupStack {
+    const cleanups: (() => void)[] = [];
+    let disposed = false;
+    return {
+        defer(cleanup) {
+            if (disposed) {
+                // Mirrors the `ReferenceError` thrown by `DisposableStack.prototype.defer` so that
+                // both stacks refuse a late cleanup the same way, rather than silently accepting
+                // one that will never run.
+                throw new ReferenceError('Cannot add values to a disposed stack');
+            }
+            if (typeof cleanup !== 'function') {
+                // `DisposableStack.prototype.defer` rejects a non-callable up front. Deferring that
+                // failure to disposal would surface it far from its cause, and would tangle it up in
+                // the error aggregation of unrelated cleanups.
+                throw new TypeError(`${String(cleanup)} is not a function`);
+            }
+            cleanups.push(cleanup);
+        },
+        dispose() {
+            if (disposed) {
+                return;
+            }
+            disposed = true;
+            let error: unknown;
+            let hasError = false;
+            // Cleanups run in reverse order of registration, and one that throws must not stop the
+            // rest from running; their errors are aggregated into a `SuppressedError` chain instead.
+            for (let ii = cleanups.length - 1; ii >= 0; ii--) {
+                try {
+                    cleanups[ii]();
+                } catch (e) {
+                    error = hasError ? createSuppressedError(e, error) : e;
+                    hasError = true;
+                }
+            }
+            cleanups.length = 0;
+            if (hasError) {
+                throw error;
+            }
+        },
+    };
+}
+
+function createSuppressedError(error: unknown, suppressed: unknown): Error {
+    // The message `DisposableStack` disposal produces. Passing it explicitly matters: the two-argument
+    // form of `SuppressedError` leaves the message empty, which would make an aggregated error read
+    // differently depending on which stack produced it.
+    const message = 'An error was suppressed during disposal';
+    if (typeof globalThis.SuppressedError === 'function') {
+        return new globalThis.SuppressedError(error, suppressed, message);
+    }
+    // A runtime without `DisposableStack` has no `SuppressedError` constructor either, so reproduce
+    // its shape on a plain error — including the non-enumerability of every property, so that
+    // serializing or spreading the error does not depend on which runtime built it.
+    return Object.defineProperties(new Error(message), {
+        error: { configurable: true, value: error, writable: true },
+        name: { configurable: true, value: 'SuppressedError', writable: true },
+        suppressed: { configurable: true, value: suppressed, writable: true },
+    });
 }

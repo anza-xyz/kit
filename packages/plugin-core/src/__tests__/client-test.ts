@@ -301,7 +301,27 @@ describe('extendClient', () => {
     });
 });
 
-describe('withCleanup', () => {
+const PLATFORM_DISPOSABLE_STACK = globalThis.DisposableStack;
+const PLATFORM_SUPPRESSED_ERROR = globalThis.SuppressedError;
+
+// `withCleanup` prefers the runtime's `DisposableStack` and falls back to an internal
+// implementation on runtimes that have not shipped explicit resource management (Safari, as of
+// Safari 27). The two paths must be indistinguishable, so this suite runs twice: once as the
+// runtime comes, and once with the platform class removed to force the fallback.
+describe.each([
+    { forceFallback: false, label: 'the platform `DisposableStack`' },
+    { forceFallback: true, label: 'the internal fallback stack' },
+])('withCleanup backed by $label', ({ forceFallback }) => {
+    beforeEach(() => {
+        if (forceFallback) {
+            // @ts-expect-error Removing the global forces `withCleanup` down its fallback path.
+            delete globalThis.DisposableStack;
+        }
+    });
+    afterEach(() => {
+        globalThis.DisposableStack = PLATFORM_DISPOSABLE_STACK;
+    });
+
     it('calls the cleanup function when disposed', () => {
         const cleanup = jest.fn();
         const result = withCleanup({}, cleanup);
@@ -385,5 +405,188 @@ describe('withCleanup', () => {
         const result = withCleanup(client, cleanup2);
         result[Symbol.dispose]();
         expect(callOrder).toStrictEqual(['cleanup2', 'cleanup1', 'parent']);
+    });
+
+    it('does not call the cleanup function again when disposed twice', () => {
+        const cleanup = jest.fn();
+        const result = withCleanup({}, cleanup);
+        result[Symbol.dispose]();
+        result[Symbol.dispose]();
+        expect(cleanup).toHaveBeenCalledTimes(1);
+    });
+
+    it('calls the remaining cleanups when an earlier one throws', () => {
+        const cleanup1 = jest.fn();
+        const cleanup2 = jest.fn(() => {
+            throw new Error('o no');
+        });
+        const client = withCleanup({}, cleanup1);
+        const result = withCleanup(client, cleanup2);
+        // Cleanups run LIFO, so `cleanup2` throws before `cleanup1` gets its turn.
+        expect(() => result[Symbol.dispose]()).toThrow('o no');
+        expect(cleanup1).toHaveBeenCalledTimes(1);
+    });
+
+    it('aggregates multiple cleanup errors into a `SuppressedError`', () => {
+        const firstError = new Error('first');
+        const secondError = new Error('second');
+        const client = withCleanup({}, () => {
+            throw firstError;
+        });
+        const result = withCleanup(client, () => {
+            throw secondError;
+        });
+        let thrown;
+        try {
+            result[Symbol.dispose]();
+        } catch (e) {
+            thrown = e;
+        }
+        // Cleanups run LIFO, so `secondError` is thrown first and then suppressed by `firstError`.
+        expect(thrown).toMatchObject({
+            error: firstError,
+            message: 'An error was suppressed during disposal',
+            name: 'SuppressedError',
+            suppressed: secondError,
+        });
+    });
+
+    it('does not expose enumerable properties on the aggregated error', () => {
+        const client = withCleanup({}, () => {
+            throw new Error('first');
+        });
+        const result = withCleanup(client, () => {
+            throw new Error('second');
+        });
+        let thrown;
+        try {
+            result[Symbol.dispose]();
+        } catch (e) {
+            thrown = e;
+        }
+        // Native `SuppressedError` keeps `error`/`suppressed` non-enumerable, so neither shows up
+        // when a consumer serializes or spreads the error.
+        expect(Object.keys(thrown as object)).toStrictEqual([]);
+    });
+
+    it('throws when the cleanup is not a function', () => {
+        expect(() => withCleanup({}, 42 as unknown as () => void)).toThrow(TypeError);
+    });
+
+    it('throws when a cleanup is added to an already-disposed client', () => {
+        const client = withCleanup({}, () => {});
+        client[Symbol.dispose]();
+        expect(() => withCleanup(client, () => {})).toThrow(ReferenceError);
+    });
+});
+
+describe('withCleanup on a runtime without explicit resource management', () => {
+    // Simulates Safari, which provides neither `DisposableStack` nor `SuppressedError`.
+    beforeEach(() => {
+        // @ts-expect-error Removing the global forces `withCleanup` down its fallback path.
+        delete globalThis.DisposableStack;
+        // @ts-expect-error Removing the global forces the fallback error aggregation.
+        delete globalThis.SuppressedError;
+    });
+    afterEach(() => {
+        globalThis.DisposableStack = PLATFORM_DISPOSABLE_STACK;
+        globalThis.SuppressedError = PLATFORM_SUPPRESSED_ERROR;
+    });
+
+    it('aggregates multiple cleanup errors without the `SuppressedError` constructor', () => {
+        const firstError = new Error('first');
+        const secondError = new Error('second');
+        const client = withCleanup({}, () => {
+            throw firstError;
+        });
+        const result = withCleanup(client, () => {
+            throw secondError;
+        });
+        let thrown;
+        try {
+            result[Symbol.dispose]();
+        } catch (e) {
+            thrown = e;
+        }
+        expect(thrown).toBeInstanceOf(Error);
+        expect(thrown).toMatchObject({
+            error: firstError,
+            message: 'An error was suppressed during disposal',
+            name: 'SuppressedError',
+            suppressed: secondError,
+        });
+        // The synthesized error must be shaped like the native one, whose properties are all
+        // non-enumerable, so that serializing or spreading it behaves the same either way.
+        expect(Object.keys(thrown as object)).toStrictEqual([]);
+    });
+});
+
+describe('withCleanup on a runtime without `Symbol.dispose`', () => {
+    // Safari lacks `Symbol.dispose` as well as `DisposableStack`, which makes the computed
+    // `[Symbol.dispose]` key degrade to the string `'undefined'`. Well-known symbols are
+    // non-configurable and so cannot be deleted, but swapping in a stand-in `Symbol` that never had
+    // `dispose` reproduces that runtime faithfully.
+    const PLATFORM_SYMBOL = globalThis.Symbol;
+    beforeEach(() => {
+        const symbolStandIn = ((description?: string) => PLATFORM_SYMBOL(description)) as unknown as SymbolConstructor;
+        for (const key of Reflect.ownKeys(PLATFORM_SYMBOL)) {
+            if (key === 'dispose' || key === 'asyncDispose') {
+                continue;
+            }
+            Object.defineProperty(symbolStandIn, key, {
+                ...Object.getOwnPropertyDescriptor(PLATFORM_SYMBOL, key),
+                configurable: true,
+            });
+        }
+        globalThis.Symbol = symbolStandIn;
+        // @ts-expect-error Removing the global forces `withCleanup` down its fallback path.
+        delete globalThis.DisposableStack;
+        // @ts-expect-error Removing the global forces the fallback error aggregation.
+        delete globalThis.SuppressedError;
+        if (Symbol.dispose !== undefined || globalThis.DisposableStack !== undefined) {
+            // Fail every test in this block rather than let one pass against a runtime that does
+            // have explicit resource management, which would prove nothing about Safari.
+            throw new Error('Failed to simulate a runtime without explicit resource management');
+        }
+    });
+    afterEach(() => {
+        globalThis.Symbol = PLATFORM_SYMBOL;
+        globalThis.DisposableStack = PLATFORM_DISPOSABLE_STACK;
+        globalThis.SuppressedError = PLATFORM_SUPPRESSED_ERROR;
+    });
+
+    it('disposes a client when the runtime has neither `DisposableStack` nor `Symbol.dispose`', () => {
+        const cleanup = jest.fn();
+        const client = withCleanup({}, cleanup);
+        // Registration and lookup coerce the missing symbol to the same string key, so explicit
+        // disposal works even though the `using` syntax could not.
+        client[Symbol.dispose]();
+        expect(cleanup).toHaveBeenCalledTimes(1);
+    });
+
+    it('chains an existing dispose method when the runtime has no `Symbol.dispose`', () => {
+        const callOrder: string[] = [];
+        const client = withCleanup({ [Symbol.dispose]: () => callOrder.push('parent') }, () =>
+            callOrder.push('cleanup'),
+        );
+        client[Symbol.dispose]();
+        expect(callOrder).toStrictEqual(['cleanup', 'parent']);
+    });
+});
+
+describe('withCleanup platform detection', () => {
+    afterEach(() => {
+        globalThis.DisposableStack = PLATFORM_DISPOSABLE_STACK;
+    });
+
+    it('defers cleanups to the platform `DisposableStack` when the runtime provides one', () => {
+        const defer = jest.fn();
+        const dispose = jest.fn();
+        globalThis.DisposableStack = jest.fn(() => ({ defer, dispose })) as unknown as typeof DisposableStack;
+        const cleanup = jest.fn();
+        const result = withCleanup({}, cleanup);
+        expect(defer).toHaveBeenCalledWith(cleanup);
+        result[Symbol.dispose]();
+        expect(dispose).toHaveBeenCalledTimes(1);
     });
 });
