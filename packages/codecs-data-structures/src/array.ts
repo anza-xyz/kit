@@ -178,7 +178,7 @@ export function getArrayDecoder<TTo>(item: Decoder<TTo>, config: ArrayCodecConfi
         ...(fixedSize !== null ? { fixedSize } : { maxSize }),
         read: (bytes: ReadonlyUint8Array | Uint8Array, offset) => {
             const array: TTo[] = [];
-            if (typeof size === 'object' && bytes.slice(offset).length === 0) {
+            if (typeof size === 'object' && offset >= bytes.length) {
                 return [array, offset];
             }
 
