@@ -224,6 +224,49 @@ function transferPlugin() {
 }
 ```
 
+### `ClientWithTransactionSigning`
+
+Represents a client that can sign transactions without sending them. It accepts the same flexible input as `ClientWithTransactionSending`, and returns results carrying the signed transactions — ready to broadcast later, or to pass to another party for their signature.
+
+```ts
+import { extendClient } from '@solana/plugin-core';
+import { ClientWithPayer, ClientWithTransactionSigning } from '@solana/plugin-interfaces';
+
+function transferPlugin() {
+    return <T extends ClientWithPayer & ClientWithTransactionSigning>(client: T) =>
+        extendClient(client, {
+            prepareTransfer: async (recipient: Address, amount: Lamports) => {
+                const instruction = getTransferSolInstruction({
+                    source: client.payer,
+                    destination: recipient,
+                    amount,
+                });
+                // Sign now, broadcast later.
+                return await client.signTransaction(instruction);
+            },
+        });
+}
+```
+
+### `ClientWithSignedTransactionSending`
+
+Represents a client that can broadcast transactions that were signed elsewhere. Keeping this capability separate from signing means a client can require only the half it uses, and lets signing and broadcasting happen at different times.
+
+```ts
+import { SuccessfulSingleTransactionPlanResultWithTransaction } from '@solana/instruction-plans';
+import { ClientWithSignedTransactionSending } from '@solana/plugin-interfaces';
+
+async function send(
+    client: ClientWithSignedTransactionSending,
+    signed: SuccessfulSingleTransactionPlanResultWithTransaction,
+) {
+    const result = await client.sendSignedTransaction(signed);
+    return result.context.signature;
+}
+```
+
+The `signed` argument is whatever `signTransaction` returned, so the client that broadcasts need not be the client that signed.
+
 ## Combining Interfaces
 
 Use TypeScript intersection types to require multiple capabilities from the client:

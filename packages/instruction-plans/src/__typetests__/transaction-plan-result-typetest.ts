@@ -34,9 +34,11 @@ import {
     SuccessfulSingleTransactionPlanResult,
     successfulSingleTransactionPlanResult,
     successfulSingleTransactionPlanResultFromTransaction,
+    SuccessfulSingleTransactionPlanResultWithTransaction,
     SuccessfulTransactionPlanResult,
     TransactionPlanResult,
     TransactionPlanResultContext,
+    TransactionPlanResultWithTransactions,
 } from '../index';
 
 const messageA = null as unknown as TransactionMessage & TransactionMessageWithFeePayer & { id: 'A' };
@@ -173,6 +175,16 @@ type CustomContext = { customData: string };
         result satisfies SuccessfulSingleTransactionPlanResult<CustomContext, typeof messageA>;
         result satisfies TransactionPlanResult;
     }
+
+    // It returns a signed result, because it always attaches the transaction.
+    {
+        const result = successfulSingleTransactionPlanResultFromTransaction(messageA, transactionA);
+        result satisfies SuccessfulSingleTransactionPlanResultWithTransaction<
+            TransactionPlanResultContext,
+            typeof messageA
+        >;
+        result.context.transaction satisfies Transaction;
+    }
 }
 
 // [DESCRIBE] successfulSingleTransactionPlanResult
@@ -192,6 +204,97 @@ type CustomContext = { customData: string };
         });
         result satisfies SuccessfulSingleTransactionPlanResult<CustomContext, typeof messageA>;
         result satisfies TransactionPlanResult;
+    }
+}
+
+// [DESCRIBE] SuccessfulSingleTransactionPlanResultWithTransaction
+{
+    // Its context requires a transaction.
+    {
+        const result = null as unknown as SuccessfulSingleTransactionPlanResultWithTransaction;
+        result.context.transaction satisfies Transaction;
+    }
+
+    // Its context still requires a signature.
+    {
+        const result = null as unknown as SuccessfulSingleTransactionPlanResultWithTransaction;
+        result.context.signature satisfies Signature;
+    }
+
+    // It is assignable to a plain successful single transaction plan result.
+    {
+        const result = null as unknown as SuccessfulSingleTransactionPlanResultWithTransaction;
+        result satisfies SuccessfulSingleTransactionPlanResult;
+        result satisfies TransactionPlanResult;
+    }
+
+    // A plain successful single transaction plan result is not assignable to it.
+    {
+        const result = null as unknown as SuccessfulSingleTransactionPlanResult;
+        // @ts-expect-error A plain successful result does not guarantee a transaction in its context.
+        result satisfies SuccessfulSingleTransactionPlanResultWithTransaction;
+    }
+
+    // It can include a custom context alongside the required transaction.
+    {
+        const result = null as unknown as SuccessfulSingleTransactionPlanResultWithTransaction<
+            CustomContext,
+            typeof messageA
+        >;
+        result.context.transaction satisfies Transaction;
+        result.context.customData satisfies string;
+        result.plannedMessage satisfies typeof messageA;
+    }
+}
+
+// [DESCRIBE] TransactionPlanResultWithTransactions
+{
+    // It is assignable to a plain transaction plan result.
+    {
+        const result = null as unknown as TransactionPlanResultWithTransactions;
+        result satisfies TransactionPlanResult;
+    }
+
+    // A plain transaction plan result is not assignable to it.
+    {
+        const result = null as unknown as TransactionPlanResult;
+        // @ts-expect-error Successful leaves are not guaranteed to carry a transaction.
+        result satisfies TransactionPlanResultWithTransactions;
+    }
+
+    // Its successful leaves require a transaction.
+    {
+        const result = null as unknown as TransactionPlanResultWithTransactions;
+        if (result.kind === 'single' && result.status === 'successful') {
+            result.context.transaction satisfies Transaction;
+        }
+    }
+
+    // Its failed leaves carry an error and need no transaction.
+    {
+        const result = null as unknown as TransactionPlanResultWithTransactions;
+        if (result.kind === 'single' && result.status === 'failed') {
+            result.error satisfies Error;
+        }
+    }
+
+    // A tree mixing signed, failed and canceled leaves satisfies it.
+    {
+        const signedLeaf = null as unknown as SuccessfulSingleTransactionPlanResultWithTransaction;
+        const failedLeaf = failedSingleTransactionPlanResult(messageA, error);
+        const canceledLeaf = canceledSingleTransactionPlanResult(messageA);
+        const result: TransactionPlanResultWithTransactions = {
+            kind: 'parallel',
+            planType: 'transactionPlanResult',
+            plans: [signedLeaf, failedLeaf, canceledLeaf],
+        };
+        result satisfies TransactionPlanResult;
+    }
+
+    // It can include a custom context.
+    {
+        const result = null as unknown as TransactionPlanResultWithTransactions<CustomContext>;
+        result satisfies TransactionPlanResult<CustomContext>;
     }
 }
 

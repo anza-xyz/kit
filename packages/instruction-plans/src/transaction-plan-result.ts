@@ -309,6 +309,82 @@ export type SuccessfulSingleTransactionPlanResult<
 };
 
 /**
+ * A {@link SuccessfulSingleTransactionPlanResult} whose context is guaranteed to contain
+ * the {@link Transaction}.
+ *
+ * A successful result carries its transaction whenever the executor that produced it
+ * returned one instead of a bare {@link Signature}, since the executor stores it in the
+ * context automatically. This type is how a producer of results advertises that guarantee,
+ * so that a consumer which needs the transaction itself — to sign it further, to store it,
+ * or to broadcast it later — can require one at the type level.
+ *
+ * The guarantee is exactly that and no more:
+ *
+ * - The transaction is not necessarily *fully* signed. A signing capability may
+ *   deliberately return a transaction that still needs signatures from other parties.
+ * - The type says nothing about whether the transaction has been sent. An executor that
+ *   sends a transaction and returns it, rather than just its signature, also produces
+ *   results of this type.
+ *
+ * @typeParam TContext - The type of the context object that may be passed along with the result.
+ * @typeParam TTransactionMessage - The type of the transaction message.
+ *
+ * @example
+ * ```ts
+ * const result = await client.signTransaction(instructions);
+ * result satisfies SuccessfulSingleTransactionPlanResultWithTransaction;
+ * result.context.transaction; // Guaranteed to be present.
+ * ```
+ *
+ * @see {@link SuccessfulSingleTransactionPlanResult}
+ * @see {@link TransactionPlanResultWithTransactions}
+ */
+export type SuccessfulSingleTransactionPlanResultWithTransaction<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+> = SuccessfulSingleTransactionPlanResult<TContext & { transaction: Transaction }, TTransactionMessage>;
+
+/**
+ * A {@link TransactionPlanResult} whose successful leaves are guaranteed to contain their
+ * {@link Transaction}.
+ *
+ * Every successful leaf is a {@link SuccessfulSingleTransactionPlanResultWithTransaction}.
+ * Failed and canceled leaves are left unconstrained, because a transaction that never got
+ * as far as being compiled has none to carry — which means a plan whose execution stopped
+ * part-way through is still representable by this type.
+ *
+ * As with the single-result form, this makes no claim that those transactions are fully
+ * signed, or whether they have been sent.
+ *
+ * @typeParam TContext - The type of the context object that may be passed along with results.
+ * @typeParam TTransactionMessage - The type of the transaction message.
+ *
+ * @example
+ * ```ts
+ * const result = await client.signTransactions(instructions);
+ * result satisfies TransactionPlanResultWithTransactions;
+ *
+ * // Broadcast the transactions later, or somewhere else entirely.
+ * await client.sendSignedTransactions(result);
+ * ```
+ *
+ * @see {@link SuccessfulSingleTransactionPlanResultWithTransaction}
+ * @see {@link TransactionPlanResult}
+ */
+export type TransactionPlanResultWithTransactions<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+> = TransactionPlanResult<
+    TContext,
+    TTransactionMessage,
+    | CanceledSingleTransactionPlanResult<TContext, TTransactionMessage>
+    | FailedSingleTransactionPlanResult<TContext, TTransactionMessage>
+    | SuccessfulSingleTransactionPlanResultWithTransaction<TContext, TTransactionMessage>
+>;
+
+/**
  * A {@link SingleTransactionPlanResult} with a 'failed' status.
  *
  * This type represents a single transaction that failed during execution.
@@ -486,6 +562,9 @@ export function parallelTransactionPlanResult<
  * @param transaction - The successfully executed transaction
  * @param context - Optional context object to be included with the result
  *
+ * The returned result is a {@link SuccessfulSingleTransactionPlanResultWithTransaction},
+ * since this function always attaches the transaction to the context.
+ *
  * @example
  * ```ts
  * const result = successfulSingleTransactionPlanResultFromTransaction(
@@ -496,6 +575,7 @@ export function parallelTransactionPlanResult<
  * ```
  *
  * @see {@link SingleTransactionPlanResult}
+ * @see {@link SuccessfulSingleTransactionPlanResultWithTransaction}
  */
 export function successfulSingleTransactionPlanResultFromTransaction<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
@@ -505,7 +585,7 @@ export function successfulSingleTransactionPlanResultFromTransaction<
     plannedMessage: TTransactionMessage,
     transaction: Transaction,
     context?: Omit<BaseTransactionPlanResultContext, 'signature' | 'transaction'> & TContext,
-): SuccessfulSingleTransactionPlanResult<TContext, TTransactionMessage> {
+): SuccessfulSingleTransactionPlanResultWithTransaction<TContext, TTransactionMessage> {
     const signature = getSignatureFromTransaction(transaction);
     return Object.freeze({
         context: Object.freeze({ ...((context ?? {}) as TContext), signature, transaction }),
