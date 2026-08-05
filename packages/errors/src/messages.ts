@@ -188,6 +188,7 @@ import {
     SOLANA_ERROR__NONCE_ACCOUNT_NOT_FOUND,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__ADDRESSES_CANNOT_SIGN_OFFCHAIN_MESSAGE,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__APPLICATION_DOMAIN_STRING_LENGTH_OUT_OF_RANGE,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__CONTENT_DOES_NOT_MATCH_EXPECTED,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__ENVELOPE_SIGNERS_MISMATCH,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__INVALID_APPLICATION_DOMAIN_BYTE_LENGTH,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__MAXIMUM_LENGTH_EXCEEDED,
@@ -197,6 +198,7 @@ import {
     SOLANA_ERROR__OFFCHAIN_MESSAGE__NUM_ENVELOPE_SIGNATURES_CANNOT_BE_ZERO,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__NUM_REQUIRED_SIGNERS_CANNOT_BE_ZERO,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__NUM_SIGNATURES_MISMATCH,
+    SOLANA_ERROR__OFFCHAIN_MESSAGE__REQUIRED_SIGNATORIES_DO_NOT_MATCH_EXPECTED,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__RESTRICTED_ASCII_BODY_CHARACTER_OUT_OF_RANGE,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATORIES_MUST_BE_SORTED,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATORIES_MUST_BE_UNIQUE,
@@ -631,6 +633,11 @@ export const SolanaErrorMessages: Readonly<{
         'Attempted to sign an offchain message with an address that is not a signer for it',
     [SOLANA_ERROR__OFFCHAIN_MESSAGE__APPLICATION_DOMAIN_STRING_LENGTH_OUT_OF_RANGE]:
         'Expected base58-encoded application domain string of length in the range [32, 44]. Actual length: $actualLength.',
+    [SOLANA_ERROR__OFFCHAIN_MESSAGE__CONTENT_DOES_NOT_MATCH_EXPECTED]:
+        'The content of the offchain message does not match the content that was expected. ' +
+        'Expected content with a byte-length of $expectedBytes; got content with a byte-length of ' +
+        '$actualBytes. The signer may have signed different data than was requested; do not trust ' +
+        'its signature.',
     [SOLANA_ERROR__OFFCHAIN_MESSAGE__ENVELOPE_SIGNERS_MISMATCH]:
         'The signer addresses in this offchain message envelope do not match the list of ' +
         'required signers in the message preamble. These unexpected signers were present in the ' +
@@ -650,6 +657,10 @@ export const SolanaErrorMessages: Readonly<{
         'Offchain message envelope must reserve space for at least one signature',
     [SOLANA_ERROR__OFFCHAIN_MESSAGE__NUM_SIGNATURES_MISMATCH]:
         'The offchain message preamble specifies $numRequiredSignatures required signature(s), got $signaturesLength.',
+    [SOLANA_ERROR__OFFCHAIN_MESSAGE__REQUIRED_SIGNATORIES_DO_NOT_MATCH_EXPECTED]:
+        'The offchain message lists different required signatories than was expected. ' +
+        'Expected [$expectedAddresses]. Got [$actualAddresses]. The signer may have signed ' +
+        'different data than was requested; do not trust its signature.',
     [SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATORIES_MUST_BE_SORTED]:
         'The signatories of this offchain message must be listed in lexicographical order',
     [SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATORIES_MUST_BE_UNIQUE]:
