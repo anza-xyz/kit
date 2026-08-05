@@ -28,6 +28,7 @@ import {
     successfulSingleTransactionPlanResultFromTransaction,
     type TransactionPlanResult,
     type TransactionPlanResultContext,
+    type TransactionPlanResultWithTransactions,
 } from './transaction-plan-result';
 
 /**
@@ -69,6 +70,61 @@ export type TransactionPlanExecutorConfig<
 };
 
 /**
+ * A {@link TransactionPlanExecutor} whose successful results are guaranteed to carry their
+ * {@link Transaction}.
+ *
+ * An executor produces results of this type whenever its `executeTransactionMessage`
+ * returns a transaction rather than a bare {@link Signature}: on that success path, the
+ * executor stores the transaction on the result's context and derives the {@link Signature}
+ * from it automatically, so every successful result carries both.
+ * {@link createTransactionPlanExecutor} infers this type for such an executor.
+ *
+ * The guarantee is only that the transaction is present. It says nothing about whether the
+ * transaction is fully signed, or whether it was sent — an executor that signs without
+ * sending and one that sends and returns the transaction both produce this type.
+ *
+ * @typeParam TContext - The type of the context object that may be passed along with results.
+ *
+ * @example
+ * ```ts
+ * const executor = createTransactionPlanExecutor({
+ *     executeTransactionMessage: async (context, message) =>
+ *         await signTransactionMessageWithSigners(message),
+ * });
+ * executor satisfies TransactionPlanExecutorWithTransactions;
+ * ```
+ *
+ * @see {@link TransactionPlanExecutor}
+ * @see {@link TransactionPlanResultWithTransactions}
+ */
+export type TransactionPlanExecutorWithTransactions<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+> = (
+    transactionPlan: TransactionPlan,
+    config?: { abortSignal?: AbortSignal },
+) => Promise<TransactionPlanResultWithTransactions<TContext>>;
+
+/**
+ * A {@link TransactionPlanExecutorConfig} whose `executeTransactionMessage` returns a
+ * {@link Transaction} rather than a {@link Signature}.
+ *
+ * @typeParam TContext - The type of the context object that may be passed along with results.
+ *
+ * @see {@link TransactionPlanExecutorConfig}
+ * @see {@link TransactionPlanExecutorWithTransactions}
+ */
+export type TransactionPlanExecutorConfigWithTransactions<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+> = {
+    /** Called whenever a transaction message must be executed, returning the transaction. */
+    executeTransactionMessage: (
+        context: BaseTransactionPlanResultContext & TContext,
+        transactionMessage: TransactionMessage & TransactionMessageWithFeePayer,
+        config?: { abortSignal?: AbortSignal },
+    ) => Promise<Transaction>;
+};
+
+/**
  * Creates a new transaction plan executor based on the provided configuration.
  *
  * The executor will traverse the provided `TransactionPlan` sequentially or in parallel,
@@ -91,6 +147,11 @@ export type TransactionPlanExecutorConfig<
  * failure is preserved in the resulting {@link FailedSingleTransactionPlanResult}.
  * - If the `abortSignal` is triggered, the executor will immediately stop processing the plan and
  * return a `TransactionPlanResult` with the status set to `canceled`.
+ *
+ * When `executeTransactionMessage` returns a {@link Transaction} rather than a bare
+ * {@link Signature}, the return type is inferred as {@link TransactionPlanExecutorWithTransactions}
+ * instead, so that the guarantee that every successful result carries its transaction survives
+ * the executor boundary.
  *
  * @param config - Configuration object containing the transaction message executor function.
  * @return A {@link TransactionPlanExecutor} function that can execute transaction plans.
@@ -118,6 +179,12 @@ export type TransactionPlanExecutorConfig<
  *
  * @see {@link TransactionPlanExecutorConfig}
  */
+export function createTransactionPlanExecutor<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+>(config: TransactionPlanExecutorConfigWithTransactions<TContext>): TransactionPlanExecutorWithTransactions<TContext>;
+export function createTransactionPlanExecutor<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+>(config: TransactionPlanExecutorConfig<TContext>): TransactionPlanExecutor<TContext>;
 export function createTransactionPlanExecutor<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
 >(config: TransactionPlanExecutorConfig<TContext>): TransactionPlanExecutor<TContext> {

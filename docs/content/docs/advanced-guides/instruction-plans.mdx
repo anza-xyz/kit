@@ -421,6 +421,40 @@ const transactionPlanExecutor = createTransactionPlanExecutor({
 });
 ```
 
+If `executeTransactionMessage` returns the signed `Transaction` itself — rather than a bare `Signature` — the executor stores that transaction on the result context automatically, and `createTransactionPlanExecutor` infers a `TransactionPlanExecutorWithTransactions` instead of a plain `TransactionPlanExecutor`. This is a `TransactionPlanExecutor` whose successful results are guaranteed to carry their `Transaction`, which is useful when downstream code needs to inspect or forward the transaction rather than just its signature.
+
+That guarantee only covers presence: it says nothing about whether the transaction is fully signed, or whether it was ever sent. An executor that signs a message and returns it without sending, and one that sends it and returns it afterwards, both produce this type. The config shape that selects this overload — one whose `executeTransactionMessage` returns a `Promise<Transaction>` — is named `TransactionPlanExecutorConfigWithTransactions`.
+
+{/* Using a plain `ts` fence because `TransactionPlanExecutorWithTransactions` isn't in a published `@solana/kit` yet; restore `ts twoslash` once it ships. */}
+
+```ts
+import {
+    createTransactionPlanExecutor,
+    flattenTransactionPlanResult,
+    signTransactionMessageWithSigners,
+    TransactionPlan,
+} from '@solana/kit';
+
+// `transactionPlan` comes from a transaction planner, as shown above.
+const transactionPlan = {} as unknown as TransactionPlan;
+
+const executor = createTransactionPlanExecutor({
+    executeTransactionMessage: async (context, message) => {
+        const transaction = await signTransactionMessageWithSigners(message);
+        context.transaction = transaction;
+        return transaction;
+    },
+});
+
+const result = await executor(transactionPlan);
+for (const single of flattenTransactionPlanResult(result)) {
+    if (single.status === 'successful') {
+        // `single.context.transaction` is guaranteed to be present here.
+        console.log('Signed transaction:', single.context.transaction);
+    }
+}
+```
+
 ### The execution context
 
 The `context` object passed to the `executeTransactionMessage` callback is a mutable object that you can populate incrementally as execution progresses. This context is preserved in the resulting `SingleTransactionPlanResult` regardless of the outcome — successful, failed, or canceled.

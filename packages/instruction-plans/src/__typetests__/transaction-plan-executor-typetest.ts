@@ -18,7 +18,9 @@ import {
     SuccessfulSingleTransactionPlanResult,
     type TransactionPlan,
     type TransactionPlanExecutor,
+    type TransactionPlanExecutorWithTransactions,
     type TransactionPlanResult,
+    type TransactionPlanResultWithTransactions,
 } from '../index';
 
 // [DESCRIBE] TransactionPlanExecutor
@@ -172,5 +174,35 @@ import {
         const promise = null as unknown as Promise<TransactionPlanResult>;
         const result = passthroughFailedTransactionPlanExecution(promise);
         void (result satisfies Promise<TransactionPlanResult>);
+    }
+}
+
+// [DESCRIBE] TransactionPlanExecutorWithTransactions
+{
+    // It is produced by an executor whose callback returns a transaction.
+    {
+        const executor = createTransactionPlanExecutor({
+            executeTransactionMessage: () => Promise.resolve(null as unknown as Transaction),
+        });
+        executor satisfies TransactionPlanExecutorWithTransactions;
+
+        const transactionPlan = null as unknown as TransactionPlan;
+        executor(transactionPlan) satisfies Promise<TransactionPlanResultWithTransactions>;
+    }
+
+    // It is assignable to the unconstrained executor type.
+    {
+        const executor = null as unknown as TransactionPlanExecutorWithTransactions;
+        executor satisfies TransactionPlanExecutor;
+    }
+
+    // An executor whose callback returns a signature carries no transaction guarantee.
+    {
+        const executor = createTransactionPlanExecutor({
+            executeTransactionMessage: () => Promise.resolve(null as unknown as Signature),
+        });
+        executor satisfies TransactionPlanExecutor;
+        // @ts-expect-error A signature-returning executor does not guarantee transactions.
+        executor satisfies TransactionPlanExecutorWithTransactions;
     }
 }
