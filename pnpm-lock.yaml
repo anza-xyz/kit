@@ -1726,8 +1726,8 @@ importers:
         specifier: ^1.0.1
         version: 1.0.1
       '@wallet-standard/ui-registry':
-        specifier: ^1.0.1
-        version: 1.0.1
+        specifier: ^1.1.1
+        version: 1.1.1
       typescript:
         specifier: '>=5.4.0'
         version: 5.9.3
