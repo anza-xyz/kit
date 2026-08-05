@@ -55,6 +55,8 @@ import {
     SOLANA_ERROR__CRYPTO__RANDOM_VALUES_FUNCTION_UNIMPLEMENTED,
     SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION,
     SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS,
+    SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTION,
+    SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTIONS,
     SOLANA_ERROR__FIXED_POINTS__ARITHMETIC_OVERFLOW,
     SOLANA_ERROR__FIXED_POINTS__DIVISION_BY_ZERO,
     SOLANA_ERROR__FIXED_POINTS__FRACTIONAL_BITS_EXCEED_TOTAL_BITS,
@@ -423,6 +425,8 @@ export const SolanaErrorMessages: Readonly<{
     [SOLANA_ERROR__CRYPTO__RANDOM_VALUES_FUNCTION_UNIMPLEMENTED]: 'No random values implementation could be found.',
     [SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION]: 'Failed to send transaction$causeMessage',
     [SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS]: 'Failed to send transactions$causeMessages',
+    [SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTION]: 'Failed to sign transaction$causeMessage',
+    [SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTIONS]: 'Failed to sign transactions$causeMessages',
     [SOLANA_ERROR__FIXED_POINTS__ARITHMETIC_OVERFLOW]:
         'Fixed-point operation `$operation` of kind `$kind` overflowed. Expected a raw bigint in [$min, $max], got $result.',
     [SOLANA_ERROR__FIXED_POINTS__DIVISION_BY_ZERO]:

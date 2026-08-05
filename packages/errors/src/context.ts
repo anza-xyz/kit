@@ -44,6 +44,8 @@ import {
     SOLANA_ERROR__CODECS__UNION_VARIANT_OUT_OF_RANGE,
     SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION,
     SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS,
+    SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTION,
+    SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTIONS,
     SOLANA_ERROR__FIXED_POINTS__ARITHMETIC_OVERFLOW,
     SOLANA_ERROR__FIXED_POINTS__DIVISION_BY_ZERO,
     SOLANA_ERROR__FIXED_POINTS__FRACTIONAL_BITS_EXCEED_TOTAL_BITS,
@@ -473,6 +475,22 @@ export type SolanaErrorContext = ReadonlyContextValue<
                 transactionPlanResult: unknown;
             };
             [SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS]: {
+                causeMessages: string;
+                failedTransactions: ReadonlyArray<{
+                    error: Error;
+                    index: number;
+                    logs?: readonly string[];
+                    preflightData?: Omit<RpcSimulateTransactionResult, 'err'>;
+                }>;
+                transactionPlanResult: unknown;
+            };
+            [SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTION]: {
+                causeMessage: string;
+                logs?: readonly string[];
+                preflightData?: Omit<RpcSimulateTransactionResult, 'err'>;
+                transactionPlanResult: unknown;
+            };
+            [SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTIONS]: {
                 causeMessages: string;
                 failedTransactions: ReadonlyArray<{
                     error: Error;

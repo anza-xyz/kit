@@ -3,6 +3,8 @@ import {
     type RpcSimulateTransactionResult,
     SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION,
     SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS,
+    SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTION,
+    SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTIONS,
     SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN,
     SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE,
     SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT,
@@ -56,36 +58,10 @@ export function createFailedToSendTransactionError(
     result: CanceledSingleTransactionPlanResult | FailedSingleTransactionPlanResult,
     abortReason?: unknown,
 ): SolanaError<typeof SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION> {
-    let causeMessage: string;
-    let cause: unknown;
-    let logs: readonly string[] | undefined;
-    let preflightData: PreflightData | undefined;
-
-    if (result.status === 'failed') {
-        const unwrapped = unwrapErrorWithPreflightData(result.error);
-        logs = unwrapped.logs;
-        preflightData = unwrapped.preflightData;
-        cause = unwrapped.unwrappedError;
-        const indicator = getFailedIndicator(!!preflightData, result.context.signature);
-        causeMessage = `${indicator}: ${(cause as Error).message}${formatLogSnippet(logs)}`;
-    } else {
-        cause = abortReason;
-        causeMessage = abortReason != null ? `. Canceled with abort reason: ${String(abortReason)}` : ': Canceled';
-    }
-
-    const context: Record<string, unknown> = {
-        cause,
-        causeMessage,
-        logs,
-        preflightData,
-    };
-    Object.defineProperty(context, 'transactionPlanResult', {
-        configurable: false,
-        enumerable: false,
-        value: result,
-        writable: false,
-    });
-    return new SolanaError(SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION, context);
+    return new SolanaError(
+        SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION,
+        getFailedTransactionErrorContext(result, abortReason),
+    );
 }
 
 /**
@@ -125,49 +101,72 @@ export function createFailedToSendTransactionsError(
     result: TransactionPlanResult,
     abortReason?: unknown,
 ): SolanaError<typeof SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS> {
-    const flattenedResults = flattenTransactionPlanResult(result);
+    return new SolanaError(
+        SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS,
+        getFailedTransactionsErrorContext(result, abortReason),
+    );
+}
 
-    const failedTransactions = flattenedResults.flatMap((singleResult, index) => {
-        if (singleResult.status !== 'failed') return [];
-        const unwrapped = unwrapErrorWithPreflightData(singleResult.error);
-        return [
-            {
-                error: unwrapped.unwrappedError as Error,
-                index,
-                logs: unwrapped.logs,
-                preflightData: unwrapped.preflightData,
-            },
-        ];
-    });
+/**
+ * Creates a {@link SolanaError} with the {@link SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTION}
+ * error code from a failed or canceled {@link SingleTransactionPlanResult}.
+ *
+ * This is the signing counterpart to {@link createFailedToSendTransactionError} and behaves
+ * identically, except that nothing was sent: the failure came from a signer refusing, a
+ * required signer being absent, or the simulation used to estimate resource limits failing.
+ *
+ * @param result - A failed or canceled single transaction plan result.
+ * @param abortReason - An optional abort reason if signing was canceled.
+ * @return A {@link SolanaError} with the appropriate error code, context, and cause.
+ *
+ * @example
+ * ```ts
+ * const error = createFailedToSignTransactionError(failedResult);
+ * console.log(error.message); // "Failed to sign transaction: The signer rejected the request"
+ * ```
+ *
+ * @see {@link createFailedToSignTransactionsError}
+ * @see {@link createFailedToSendTransactionError}
+ */
+export function createFailedToSignTransactionError(
+    result: CanceledSingleTransactionPlanResult | FailedSingleTransactionPlanResult,
+    abortReason?: unknown,
+): SolanaError<typeof SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTION> {
+    return new SolanaError(
+        SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTION,
+        getFailedTransactionErrorContext(result, abortReason),
+    );
+}
 
-    let causeMessages: string;
-    let cause: unknown;
-
-    if (failedTransactions.length > 0) {
-        cause = failedTransactions.length === 1 ? failedTransactions[0].error : undefined;
-        const failureLines = failedTransactions.map(({ error, index, preflightData }) => {
-            const indicator = getFailedIndicator(!!preflightData, flattenedResults[index].context.signature);
-            return `\n[Tx #${index + 1}${indicator}] ${error.message}`;
-        });
-        const logSnippet = failedTransactions.length === 1 ? formatLogSnippet(failedTransactions[0].logs) : '';
-        causeMessages = `.${failureLines.join('')}${logSnippet}${logSnippet ? '' : '\n'}`;
-    } else {
-        cause = abortReason;
-        causeMessages = abortReason != null ? `. Canceled with abort reason: ${String(abortReason)}` : ': Canceled';
-    }
-
-    const context: Record<string, unknown> = {
-        cause,
-        causeMessages,
-        failedTransactions,
-    };
-    Object.defineProperty(context, 'transactionPlanResult', {
-        configurable: false,
-        enumerable: false,
-        value: result,
-        writable: false,
-    });
-    return new SolanaError(SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS, context);
+/**
+ * Creates a {@link SolanaError} with the {@link SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTIONS}
+ * error code from a {@link TransactionPlanResult}.
+ *
+ * This is the signing counterpart to {@link createFailedToSendTransactionsError} and behaves
+ * identically, except that nothing was sent: each failure came from a signer refusing, a
+ * required signer being absent, or the simulation used to estimate resource limits failing.
+ *
+ * @param result - The full transaction plan result tree.
+ * @param abortReason - An optional abort reason if signing was canceled.
+ * @return A {@link SolanaError} with the appropriate error code, context, and cause.
+ *
+ * @example
+ * ```ts
+ * const error = createFailedToSignTransactionsError(planResult);
+ * console.log(error.message); // "Failed to sign transactions.\n[Tx #1] The signer rejected the request"
+ * ```
+ *
+ * @see {@link createFailedToSignTransactionError}
+ * @see {@link createFailedToSendTransactionsError}
+ */
+export function createFailedToSignTransactionsError(
+    result: TransactionPlanResult,
+    abortReason?: unknown,
+): SolanaError<typeof SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTIONS> {
+    return new SolanaError(
+        SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTIONS,
+        getFailedTransactionsErrorContext(result, abortReason),
+    );
 }
 
 /**
@@ -211,6 +210,86 @@ export function createFailedToExecuteTransactionPlanError(
         writable: false,
     });
     return new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, context);
+}
+
+function getFailedTransactionErrorContext(
+    result: CanceledSingleTransactionPlanResult | FailedSingleTransactionPlanResult,
+    abortReason: unknown,
+): Record<string, unknown> {
+    let causeMessage: string;
+    let cause: unknown;
+    let logs: readonly string[] | undefined;
+    let preflightData: PreflightData | undefined;
+
+    if (result.status === 'failed') {
+        const unwrapped = unwrapErrorWithPreflightData(result.error);
+        logs = unwrapped.logs;
+        preflightData = unwrapped.preflightData;
+        cause = unwrapped.unwrappedError;
+        const indicator = getFailedIndicator(!!preflightData, result.context.signature);
+        causeMessage = `${indicator}: ${(cause as Error).message}${formatLogSnippet(logs)}`;
+    } else {
+        cause = abortReason;
+        causeMessage = abortReason != null ? `. Canceled with abort reason: ${String(abortReason)}` : ': Canceled';
+    }
+
+    const context: Record<string, unknown> = { cause, causeMessage, logs, preflightData };
+    Object.defineProperty(context, 'transactionPlanResult', {
+        configurable: false,
+        enumerable: false,
+        value: result,
+        writable: false,
+    });
+    return context;
+}
+
+function getFailedTransactionsErrorContext(
+    result: TransactionPlanResult,
+    abortReason: unknown,
+): Record<string, unknown> {
+    const flattenedResults = flattenTransactionPlanResult(result);
+
+    const failedTransactions = flattenedResults.flatMap((singleResult, index) => {
+        if (singleResult.status !== 'failed') return [];
+        const unwrapped = unwrapErrorWithPreflightData(singleResult.error);
+        return [
+            {
+                error: unwrapped.unwrappedError as Error,
+                index,
+                logs: unwrapped.logs,
+                preflightData: unwrapped.preflightData,
+            },
+        ];
+    });
+
+    let causeMessages: string;
+    let cause: unknown;
+
+    if (failedTransactions.length > 0) {
+        cause = failedTransactions.length === 1 ? failedTransactions[0].error : undefined;
+        const failureLines = failedTransactions.map(({ error, index, preflightData }) => {
+            const indicator = getFailedIndicator(!!preflightData, flattenedResults[index].context.signature);
+            return `\n[Tx #${index + 1}${indicator}] ${error.message}`;
+        });
+        const logSnippet = failedTransactions.length === 1 ? formatLogSnippet(failedTransactions[0].logs) : '';
+        causeMessages = `.${failureLines.join('')}${logSnippet}${logSnippet ? '' : '\n'}`;
+    } else {
+        cause = abortReason;
+        causeMessages = abortReason != null ? `. Canceled with abort reason: ${String(abortReason)}` : ': Canceled';
+    }
+
+    const context: Record<string, unknown> = {
+        cause,
+        causeMessages,
+        failedTransactions,
+    };
+    Object.defineProperty(context, 'transactionPlanResult', {
+        configurable: false,
+        enumerable: false,
+        value: result,
+        writable: false,
+    });
+    return context;
 }
 
 function unwrapErrorWithPreflightData(error: Error): {

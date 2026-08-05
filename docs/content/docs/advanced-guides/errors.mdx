@@ -141,7 +141,7 @@ try {
 
 ## Failed transaction errors
 
-When a transaction fails to send, Kit raises one of two high-level error codes that wrap whatever actually went wrong with extra context useful for debugging.
+When a transaction fails to send, Kit raises one of two high-level error codes that wrap whatever actually went wrong with extra context useful for debugging. Signing has its own equivalent pair, raised when a transaction fails to sign before it ever reaches the network.
 
 ### `SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION` [#failed-to-send-transaction]
 
@@ -182,6 +182,47 @@ if (isSolanaError(error, SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS)) {
 ```
 
 Each individual `error` in the array has already been unwrapped from any preflight wrapper, so you can branch on its code directly the same way you would for a standalone `SolanaError`.
+
+### `SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTION` [#failed-to-sign-transaction]
+
+This is the error you get back when signing a single transaction fails — a signer refused, a required signer was missing, or the simulation used to estimate resource limits failed. Nothing was sent. The context exposes the underlying error, simulation logs, and the full `TransactionPlanResult`; `preflightData` is populated too, but since nothing was sent it carries the resource-limit-estimation simulation result rather than a preflight simulation.
+
+{/* Using a plain `ts` fence because `SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTION` isn't in a published `@solana/kit` yet; restore `ts twoslash` once it ships. */}
+
+```ts
+import { isSolanaError, SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTION, SolanaError } from '@solana/kit';
+
+// Substitute the error you actually caught, e.g. from awaiting a `TransactionPlanExecutor`.
+const error = null as unknown as SolanaError;
+
+if (isSolanaError(error, SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTION)) {
+    console.error(error.message);
+    console.error('Cause:', error.cause); // The underlying error that triggered the failure.
+    console.error('Logs:', error.context.logs); // Simulation logs, when available.
+    console.error('Simulation:', error.context.preflightData); // Resource-limit-estimation result, when available.
+}
+```
+
+As with the send variant, the full `TransactionPlanResult` is attached as the non-enumerable `error.context.transactionPlanResult`.
+
+### `SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTIONS` [#failed-to-sign-transactions]
+
+The plural variant is raised when signing more than one transaction fails. Its context exposes the same `failedTransactions` array as the send variant — one entry per failure, with the underlying error, its position in the plan, simulation logs, and the resource-limit-estimation simulation result — plus the non-enumerable `transactionPlanResult`.
+
+{/* Using a plain `ts` fence because `SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTIONS` isn't in a published `@solana/kit` yet; restore `ts twoslash` once it ships. */}
+
+```ts
+import { isSolanaError, SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTIONS, SolanaError } from '@solana/kit';
+
+// Substitute the error you actually caught, e.g. from awaiting a `TransactionPlanExecutor`.
+const error = null as unknown as SolanaError;
+
+if (isSolanaError(error, SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTIONS)) {
+    for (const { error: cause, index } of error.context.failedTransactions) {
+        console.error(`Transaction #${index + 1} failed to sign:`, cause.message);
+    }
+}
+```
 
 ## Walking transaction plan results
 
