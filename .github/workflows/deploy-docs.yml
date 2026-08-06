@@ -53,8 +53,30 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_DOCS_PROJECT_ID }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
-          vercel pull --token="$VERCEL_TOKEN" --yes --environment=production
-          vercel build --token="$VERCEL_TOKEN" --prod
+          # `vercel build` fails intermittently — it can be killed when `next build` exhausts the
+          # runner's memory
+          retry() {
+            # Label attempts with the command and subcommand (eg. `vercel build`) but not the
+            # remaining arguments, which include the Vercel token
+            local label="$1 $2"
+            local attempt
+            for attempt in 1 2 3; do
+              if "$@"; then
+                return 0
+              fi
+              if [ "$attempt" -lt 3 ]; then
+                echo "::warning::'$label' failed (attempt $attempt of 3); retrying in $((attempt * 15))s"
+                sleep "$((attempt * 15))"
+              fi
+            done
+            echo "::error::'$label' failed after 3 attempts"
+            return 1
+          }
+          retry vercel pull --token="$VERCEL_TOKEN" --yes --environment=production
+          retry vercel build --token="$VERCEL_TOKEN" --prod
+          # Deliberately not retried: this uploads the prebuilt output, so it's not subject to the
+          # memory issue above, and a failure *after* the deployment was created would result in a
+          # second deployment on retry
           vercel deploy --token="$VERCEL_TOKEN" --archive=tgz --prebuilt --prod
 
       - name: Synchronize InKeep Search Index
