@@ -40,13 +40,14 @@ export interface AccountSignerMeta<
 
 type AccountMetaWithoutSigner = Readonly<{ signer?: never }> & (AccountLookupMeta | AccountMeta);
 
+// Derived from `TransactionSigner`'s member types rather than hardcoded, so that a future signer
+// variant with a new method automatically excludes that method from a non-signer fee payer too.
+type UnionKeys<T> = T extends unknown ? keyof T : never;
+type TransactionSignerMethodKeys = Exclude<UnionKeys<TransactionSigner>, 'address'>;
+type WithoutSignerMethods = Readonly<{ [K in TransactionSignerMethodKeys]?: never }>;
+
 type TransactionMessageWithNonSignerFeePayer<TAddress extends string = string> = Readonly<{
-    feePayer: Readonly<{
-        modifyAndSignTransactions?: never;
-        signAndSendTransactions?: never;
-        signTransactions?: never;
-    }> &
-        TransactionMessageWithFeePayer<TAddress>['feePayer'];
+    feePayer: TransactionMessageWithFeePayer<TAddress>['feePayer'] & WithoutSignerMethods;
 }>;
 
 /**
