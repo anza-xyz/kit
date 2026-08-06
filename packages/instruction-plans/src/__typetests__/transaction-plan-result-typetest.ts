@@ -13,8 +13,10 @@ import {
     assertIsSuccessfulTransactionPlanResult,
     CanceledSingleTransactionPlanResult,
     canceledSingleTransactionPlanResult,
+    everyTransactionPlanResult,
     FailedSingleTransactionPlanResult,
     failedSingleTransactionPlanResult,
+    findTransactionPlanResult,
     flattenTransactionPlanResult,
     isCanceledSingleTransactionPlanResult,
     isFailedSingleTransactionPlanResult,
@@ -31,12 +33,17 @@ import {
     SequentialTransactionPlanResult,
     sequentialTransactionPlanResult,
     SingleTransactionPlanResult,
+    SingleTransactionPlanResultWithOptionalSignature,
     SuccessfulSingleTransactionPlanResult,
     successfulSingleTransactionPlanResult,
     successfulSingleTransactionPlanResultFromTransaction,
+    SuccessfulSingleTransactionPlanResultWithOptionalSignature,
     SuccessfulTransactionPlanResult,
+    summarizeTransactionPlanResult,
     TransactionPlanResult,
     TransactionPlanResultContext,
+    TransactionPlanResultSummary,
+    TransactionPlanResultWithOptionalSignature,
 } from '../index';
 
 const messageA = null as unknown as TransactionMessage & TransactionMessageWithFeePayer & { id: 'A' };
@@ -533,6 +540,79 @@ type CustomContext = { customData: string };
         const plan = null as unknown;
         if (isTransactionPlanResult(plan)) {
             plan satisfies TransactionPlanResult;
+        }
+    }
+}
+
+// [DESCRIBE] SuccessfulSingleTransactionPlanResultWithOptionalSignature
+{
+    // Its context signature is optional.
+    {
+        const result = null as unknown as SuccessfulSingleTransactionPlanResultWithOptionalSignature;
+        result.context.signature satisfies Signature | undefined;
+        // @ts-expect-error The signature may be absent.
+        result.context.signature satisfies Signature;
+    }
+
+    // A strict successful result is assignable to it.
+    {
+        const strict = null as unknown as SuccessfulSingleTransactionPlanResult;
+        strict satisfies SuccessfulSingleTransactionPlanResultWithOptionalSignature;
+    }
+
+    // A strict single result union is assignable to the loose single result union.
+    {
+        const strict = null as unknown as SingleTransactionPlanResult;
+        strict satisfies SingleTransactionPlanResultWithOptionalSignature;
+    }
+}
+
+// [DESCRIBE] TransactionPlanResultWithOptionalSignature
+{
+    // A loose result tree can be flattened, searched and tested.
+    {
+        const loose = null as unknown as TransactionPlanResultWithOptionalSignature;
+        flattenTransactionPlanResult(loose) satisfies SingleTransactionPlanResultWithOptionalSignature[];
+        findTransactionPlanResult(loose, () => true) satisfies TransactionPlanResultWithOptionalSignature | undefined;
+        everyTransactionPlanResult(loose, () => true) satisfies boolean;
+    }
+
+    // A strict result tree still flattens to strict single results.
+    {
+        const strict = null as unknown as TransactionPlanResult;
+        flattenTransactionPlanResult(strict) satisfies SingleTransactionPlanResult[];
+        flattenTransactionPlanResult(strict)[0].status satisfies 'canceled' | 'failed' | 'successful';
+    }
+}
+
+// [DESCRIBE] Summarizing and guarding loose result trees
+{
+    // Summarizing a loose tree yields successful transactions with an optional signature.
+    {
+        const loose = null as unknown as TransactionPlanResultWithOptionalSignature;
+        const summary = summarizeTransactionPlanResult(loose);
+        summary.successfulTransactions[0].context.signature satisfies Signature | undefined;
+        // @ts-expect-error The signature may be absent.
+        summary.successfulTransactions[0].context.signature satisfies Signature;
+        summary.failedTransactions[0].error satisfies Error;
+        summary.canceledTransactions[0].status satisfies 'canceled';
+    }
+
+    // Summarizing a strict tree still yields a required signature.
+    {
+        const strict = null as unknown as TransactionPlanResult;
+        const summary = summarizeTransactionPlanResult(strict);
+        summary.successfulTransactions[0].context.signature satisfies Signature;
+        summary satisfies TransactionPlanResultSummary;
+    }
+
+    // The success guard narrows a loose tree without inventing a signature.
+    {
+        const loose = null as unknown as TransactionPlanResultWithOptionalSignature;
+        if (isSuccessfulTransactionPlanResult(loose)) {
+            const single = flattenTransactionPlanResult(loose)[0];
+            single.status satisfies 'successful';
+            single.context.signature satisfies Signature | undefined;
         }
     }
 }

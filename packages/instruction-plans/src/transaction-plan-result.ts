@@ -6,7 +6,7 @@ import {
 } from '@solana/errors';
 import { Signature } from '@solana/keys';
 import { TransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
-import { getSignatureFromTransaction, Transaction } from '@solana/transactions';
+import { getSignatureFromTransaction, getSignatureFromTransactionIfPresent, Transaction } from '@solana/transactions';
 
 /**
  * The result of executing a transaction plan.
@@ -35,10 +35,8 @@ export type TransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
-    TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
-        TContext,
-        TTransactionMessage
-    >,
+    TSingle extends SingleTransactionPlanResultWithOptionalSignature<TContext, TTransactionMessage> =
+        SingleTransactionPlanResult<TContext, TTransactionMessage>,
 > =
     | ParallelTransactionPlanResult<TContext, TTransactionMessage, TSingle>
     | SequentialTransactionPlanResult<TContext, TTransactionMessage, TSingle>
@@ -67,11 +65,9 @@ export type SuccessfulTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
-> = TransactionPlanResult<
-    TContext,
-    TTransactionMessage,
-    SuccessfulSingleTransactionPlanResult<TContext, TTransactionMessage>
->;
+    TSingle extends SingleTransactionPlanResultWithOptionalSignature<TContext, TTransactionMessage> =
+        SingleTransactionPlanResult<TContext, TTransactionMessage>,
+> = TransactionPlanResult<TContext, TTransactionMessage, Extract<TSingle, { status: 'successful' }>>;
 
 /**
  * The context object associated with a {@link SingleTransactionPlanResult}.
@@ -163,10 +159,8 @@ export type SequentialTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
-    TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
-        TContext,
-        TTransactionMessage
-    >,
+    TSingle extends SingleTransactionPlanResultWithOptionalSignature<TContext, TTransactionMessage> =
+        SingleTransactionPlanResult<TContext, TTransactionMessage>,
 > = Readonly<{
     divisible: boolean;
     kind: 'sequential';
@@ -201,10 +195,8 @@ export type ParallelTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
-    TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
-        TContext,
-        TTransactionMessage
-    >,
+    TSingle extends SingleTransactionPlanResultWithOptionalSignature<TContext, TTransactionMessage> =
+        SingleTransactionPlanResult<TContext, TTransactionMessage>,
 > = Readonly<{
     kind: 'parallel';
     planType: 'transactionPlanResult';
@@ -265,6 +257,50 @@ export type SingleTransactionPlanResult<
     | SuccessfulSingleTransactionPlanResult<TContext, TTransactionMessage>;
 
 /**
+ * A {@link SingleTransactionPlanResult} whose successful variant may omit the transaction signature.
+ *
+ * This is the bound used by every result tree type and tree helper in this package, so that both
+ * strict and loose executor results flow through them. {@link SingleTransactionPlanResult} is
+ * assignable to this type.
+ *
+ * @typeParam TContext - The type of the context object that may be passed along with results.
+ * @typeParam TTransactionMessage - The type of the transaction message.
+ *
+ * @see {@link SingleTransactionPlanResult}
+ * @see {@link SuccessfulSingleTransactionPlanResultWithOptionalSignature}
+ */
+export type SingleTransactionPlanResultWithOptionalSignature<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+> =
+    | CanceledSingleTransactionPlanResult<TContext, TTransactionMessage>
+    | FailedSingleTransactionPlanResult<TContext, TTransactionMessage>
+    | SuccessfulSingleTransactionPlanResultWithOptionalSignature<TContext, TTransactionMessage>;
+
+/**
+ * A {@link TransactionPlanResult} tree whose successful leaves may omit the transaction signature.
+ *
+ * This is the return type of an executor created with `allowMissingFeePayerSignature: true`, and
+ * the type to annotate APIs that hand back partially signed transactions for later submission.
+ *
+ * @typeParam TContext - The type of the context object that may be passed along with results.
+ * @typeParam TTransactionMessage - The type of the transaction message.
+ *
+ * @see {@link TransactionPlanResult}
+ * @see {@link SingleTransactionPlanResultWithOptionalSignature}
+ */
+export type TransactionPlanResultWithOptionalSignature<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+> = TransactionPlanResult<
+    TContext,
+    TTransactionMessage,
+    SingleTransactionPlanResultWithOptionalSignature<TContext, TTransactionMessage>
+>;
+
+/**
  * A {@link SingleTransactionPlanResult} with a 'successful' status.
  *
  * This type represents a single transaction that was successfully executed.
@@ -302,6 +338,42 @@ export type SuccessfulSingleTransactionPlanResult<
         TransactionMessageWithFeePayer,
 > = {
     context: Readonly<SuccessfulBaseTransactionPlanResultContext & TContext>;
+    kind: 'single';
+    planType: 'transactionPlanResult';
+    plannedMessage: TTransactionMessage;
+    status: 'successful';
+};
+
+/**
+ * A {@link SingleTransactionPlanResult} with a 'successful' status whose transaction signature may
+ * not be known.
+ *
+ * This is a looser counterpart to {@link SuccessfulSingleTransactionPlanResult}, for executors
+ * created with `allowMissingFeePayerSignature`. Such executors may succeed with a transaction that
+ * has not yet been signed by its fee payer — for instance one partially signed by an authority
+ * wallet and destined for a relayer — in which case no signature exists to report.
+ *
+ * Every {@link SuccessfulSingleTransactionPlanResult} is assignable to this type.
+ *
+ * @typeParam TContext - The type of the context object that may be passed along with the result.
+ * @typeParam TTransactionMessage - The type of the transaction message.
+ *
+ * @example
+ * ```ts
+ * const result = successfulSingleTransactionPlanResultWithOptionalSignature(message, transaction);
+ * result satisfies SuccessfulSingleTransactionPlanResultWithOptionalSignature;
+ * result.context.signature; // Signature | undefined
+ * ```
+ *
+ * @see {@link successfulSingleTransactionPlanResultWithOptionalSignature}
+ * @see {@link SuccessfulSingleTransactionPlanResult}
+ */
+export type SuccessfulSingleTransactionPlanResultWithOptionalSignature<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+> = {
+    context: Readonly<BaseTransactionPlanResultContext & TContext>;
     kind: 'single';
     planType: 'transactionPlanResult';
     plannedMessage: TTransactionMessage;
@@ -416,7 +488,25 @@ export type CanceledSingleTransactionPlanResult<
  */
 export function sequentialTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
->(plans: TransactionPlanResult<TContext>[]): SequentialTransactionPlanResult<TContext> & { divisible: true } {
+>(plans: TransactionPlanResult<TContext>[]): SequentialTransactionPlanResult<TContext> & { divisible: true };
+export function sequentialTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+>(
+    plans: TransactionPlanResultWithOptionalSignature<TContext>[],
+): SequentialTransactionPlanResult<
+    TContext,
+    TransactionMessage & TransactionMessageWithFeePayer,
+    SingleTransactionPlanResultWithOptionalSignature<TContext>
+> & { divisible: true };
+export function sequentialTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+>(
+    plans: TransactionPlanResultWithOptionalSignature<TContext>[],
+): SequentialTransactionPlanResult<
+    TContext,
+    TransactionMessage & TransactionMessageWithFeePayer,
+    SingleTransactionPlanResultWithOptionalSignature<TContext>
+> & { divisible: true } {
     return Object.freeze({ divisible: true, kind: 'sequential', planType: 'transactionPlanResult', plans });
 }
 
@@ -443,7 +533,25 @@ export function sequentialTransactionPlanResult<
  */
 export function nonDivisibleSequentialTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
->(plans: TransactionPlanResult<TContext>[]): SequentialTransactionPlanResult<TContext> & { divisible: false } {
+>(plans: TransactionPlanResult<TContext>[]): SequentialTransactionPlanResult<TContext> & { divisible: false };
+export function nonDivisibleSequentialTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+>(
+    plans: TransactionPlanResultWithOptionalSignature<TContext>[],
+): SequentialTransactionPlanResult<
+    TContext,
+    TransactionMessage & TransactionMessageWithFeePayer,
+    SingleTransactionPlanResultWithOptionalSignature<TContext>
+> & { divisible: false };
+export function nonDivisibleSequentialTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+>(
+    plans: TransactionPlanResultWithOptionalSignature<TContext>[],
+): SequentialTransactionPlanResult<
+    TContext,
+    TransactionMessage & TransactionMessageWithFeePayer,
+    SingleTransactionPlanResultWithOptionalSignature<TContext>
+> & { divisible: false } {
     return Object.freeze({ divisible: false, kind: 'sequential', planType: 'transactionPlanResult', plans });
 }
 
@@ -469,7 +577,25 @@ export function nonDivisibleSequentialTransactionPlanResult<
  */
 export function parallelTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
->(plans: TransactionPlanResult<TContext>[]): ParallelTransactionPlanResult<TContext> {
+>(plans: TransactionPlanResult<TContext>[]): ParallelTransactionPlanResult<TContext>;
+export function parallelTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+>(
+    plans: TransactionPlanResultWithOptionalSignature<TContext>[],
+): ParallelTransactionPlanResult<
+    TContext,
+    TransactionMessage & TransactionMessageWithFeePayer,
+    SingleTransactionPlanResultWithOptionalSignature<TContext>
+>;
+export function parallelTransactionPlanResult<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+>(
+    plans: TransactionPlanResultWithOptionalSignature<TContext>[],
+): ParallelTransactionPlanResult<
+    TContext,
+    TransactionMessage & TransactionMessageWithFeePayer,
+    SingleTransactionPlanResultWithOptionalSignature<TContext>
+> {
     return Object.freeze({ kind: 'parallel', planType: 'transactionPlanResult', plans });
 }
 
@@ -509,6 +635,53 @@ export function successfulSingleTransactionPlanResultFromTransaction<
     const signature = getSignatureFromTransaction(transaction);
     return Object.freeze({
         context: Object.freeze({ ...((context ?? {}) as TContext), signature, transaction }),
+        kind: 'single',
+        planType: 'transactionPlanResult',
+        plannedMessage,
+        status: 'successful',
+    });
+}
+
+/**
+ * Creates a successful {@link SingleTransactionPlanResult} from a transaction that may not be
+ * signed by its fee payer.
+ *
+ * Unlike {@link successfulSingleTransactionPlanResultFromTransaction}, this does not require the
+ * transaction to carry a fee payer signature. The `signature` context property is populated when
+ * the fee payer slot is filled, and omitted entirely otherwise.
+ *
+ * @typeParam TContext - The type of the context object.
+ * @typeParam TTransactionMessage - The type of the transaction message.
+ * @param plannedMessage - The original transaction message.
+ * @param transaction - The resulting transaction, which need not be signed by its fee payer.
+ * @param context - Additional context to include with the result.
+ * @return A successful result whose `context.signature` may be absent.
+ *
+ * @example
+ * ```ts
+ * const result = successfulSingleTransactionPlanResultWithOptionalSignature(message, transaction);
+ * result satisfies SuccessfulSingleTransactionPlanResultWithOptionalSignature;
+ * ```
+ *
+ * @see {@link successfulSingleTransactionPlanResultFromTransaction}
+ * @see {@link SuccessfulSingleTransactionPlanResultWithOptionalSignature}
+ */
+export function successfulSingleTransactionPlanResultWithOptionalSignature<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
+        TransactionMessageWithFeePayer,
+>(
+    plannedMessage: TTransactionMessage,
+    transaction: Transaction,
+    context?: Omit<BaseTransactionPlanResultContext, 'signature' | 'transaction'> & TContext,
+): SuccessfulSingleTransactionPlanResultWithOptionalSignature<TContext, TTransactionMessage> {
+    const signature = getSignatureFromTransactionIfPresent(transaction);
+    return Object.freeze({
+        context: Object.freeze({
+            ...((context ?? {}) as TContext),
+            ...(signature != null ? { signature } : null),
+            transaction,
+        }),
         kind: 'single',
         planType: 'transactionPlanResult',
         plannedMessage,
@@ -693,10 +866,8 @@ export function isSingleTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
-    TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
-        TContext,
-        TTransactionMessage
-    >,
+    TSingle extends SingleTransactionPlanResultWithOptionalSignature<TContext, TTransactionMessage> =
+        SingleTransactionPlanResult<TContext, TTransactionMessage>,
 >(plan: TransactionPlanResult<TContext, TTransactionMessage, TSingle>): plan is TSingle {
     return plan.kind === 'single';
 }
@@ -723,10 +894,8 @@ export function assertIsSingleTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
-    TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
-        TContext,
-        TTransactionMessage
-    >,
+    TSingle extends SingleTransactionPlanResultWithOptionalSignature<TContext, TTransactionMessage> =
+        SingleTransactionPlanResult<TContext, TTransactionMessage>,
 >(plan: TransactionPlanResult<TContext, TTransactionMessage, TSingle>): asserts plan is TSingle {
     if (!isSingleTransactionPlanResult(plan)) {
         throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN_RESULT, {
@@ -759,9 +928,11 @@ export function isSuccessfulSingleTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
+    TSingle extends SingleTransactionPlanResultWithOptionalSignature<TContext, TTransactionMessage> =
+        SingleTransactionPlanResult<TContext, TTransactionMessage>,
 >(
-    plan: TransactionPlanResult<TContext, TTransactionMessage>,
-): plan is SuccessfulSingleTransactionPlanResult<TContext, TTransactionMessage> {
+    plan: TransactionPlanResult<TContext, TTransactionMessage, TSingle>,
+): plan is Extract<TSingle, { status: 'successful' }> {
     return plan.kind === 'single' && plan.status === 'successful';
 }
 
@@ -787,9 +958,11 @@ export function assertIsSuccessfulSingleTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
+    TSingle extends SingleTransactionPlanResultWithOptionalSignature<TContext, TTransactionMessage> =
+        SingleTransactionPlanResult<TContext, TTransactionMessage>,
 >(
-    plan: TransactionPlanResult<TContext, TTransactionMessage>,
-): asserts plan is SuccessfulSingleTransactionPlanResult<TContext, TTransactionMessage> {
+    plan: TransactionPlanResult<TContext, TTransactionMessage, TSingle>,
+): asserts plan is Extract<TSingle, { status: 'successful' }> {
     if (!isSuccessfulSingleTransactionPlanResult(plan)) {
         throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN_RESULT, {
             actualKind: plan.kind === 'single' ? `${plan.status} single` : plan.kind,
@@ -821,9 +994,9 @@ export function isFailedSingleTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
->(
-    plan: TransactionPlanResult<TContext, TTransactionMessage>,
-): plan is FailedSingleTransactionPlanResult<TContext, TTransactionMessage> {
+    TSingle extends SingleTransactionPlanResultWithOptionalSignature<TContext, TTransactionMessage> =
+        SingleTransactionPlanResult<TContext, TTransactionMessage>,
+>(plan: TransactionPlanResult<TContext, TTransactionMessage, TSingle>): plan is Extract<TSingle, { status: 'failed' }> {
     return plan.kind === 'single' && plan.status === 'failed';
 }
 
@@ -849,9 +1022,11 @@ export function assertIsFailedSingleTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
+    TSingle extends SingleTransactionPlanResultWithOptionalSignature<TContext, TTransactionMessage> =
+        SingleTransactionPlanResult<TContext, TTransactionMessage>,
 >(
-    plan: TransactionPlanResult<TContext, TTransactionMessage>,
-): asserts plan is FailedSingleTransactionPlanResult<TContext, TTransactionMessage> {
+    plan: TransactionPlanResult<TContext, TTransactionMessage, TSingle>,
+): asserts plan is Extract<TSingle, { status: 'failed' }> {
     if (!isFailedSingleTransactionPlanResult(plan)) {
         throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN_RESULT, {
             actualKind: plan.kind === 'single' ? `${plan.status} single` : plan.kind,
@@ -883,9 +1058,11 @@ export function isCanceledSingleTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
+    TSingle extends SingleTransactionPlanResultWithOptionalSignature<TContext, TTransactionMessage> =
+        SingleTransactionPlanResult<TContext, TTransactionMessage>,
 >(
-    plan: TransactionPlanResult<TContext, TTransactionMessage>,
-): plan is CanceledSingleTransactionPlanResult<TContext, TTransactionMessage> {
+    plan: TransactionPlanResult<TContext, TTransactionMessage, TSingle>,
+): plan is Extract<TSingle, { status: 'canceled' }> {
     return plan.kind === 'single' && plan.status === 'canceled';
 }
 
@@ -911,9 +1088,11 @@ export function assertIsCanceledSingleTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
+    TSingle extends SingleTransactionPlanResultWithOptionalSignature<TContext, TTransactionMessage> =
+        SingleTransactionPlanResult<TContext, TTransactionMessage>,
 >(
-    plan: TransactionPlanResult<TContext, TTransactionMessage>,
-): asserts plan is CanceledSingleTransactionPlanResult<TContext, TTransactionMessage> {
+    plan: TransactionPlanResult<TContext, TTransactionMessage, TSingle>,
+): asserts plan is Extract<TSingle, { status: 'canceled' }> {
     if (!isCanceledSingleTransactionPlanResult(plan)) {
         throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__UNEXPECTED_TRANSACTION_PLAN_RESULT, {
             actualKind: plan.kind === 'single' ? `${plan.status} single` : plan.kind,
@@ -945,10 +1124,8 @@ export function isSequentialTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
-    TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
-        TContext,
-        TTransactionMessage
-    >,
+    TSingle extends SingleTransactionPlanResultWithOptionalSignature<TContext, TTransactionMessage> =
+        SingleTransactionPlanResult<TContext, TTransactionMessage>,
 >(
     plan: TransactionPlanResult<TContext, TTransactionMessage, TSingle>,
 ): plan is SequentialTransactionPlanResult<TContext, TTransactionMessage, TSingle> {
@@ -977,10 +1154,8 @@ export function assertIsSequentialTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
-    TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
-        TContext,
-        TTransactionMessage
-    >,
+    TSingle extends SingleTransactionPlanResultWithOptionalSignature<TContext, TTransactionMessage> =
+        SingleTransactionPlanResult<TContext, TTransactionMessage>,
 >(
     plan: TransactionPlanResult<TContext, TTransactionMessage, TSingle>,
 ): asserts plan is SequentialTransactionPlanResult<TContext, TTransactionMessage, TSingle> {
@@ -1018,10 +1193,8 @@ export function isNonDivisibleSequentialTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
-    TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
-        TContext,
-        TTransactionMessage
-    >,
+    TSingle extends SingleTransactionPlanResultWithOptionalSignature<TContext, TTransactionMessage> =
+        SingleTransactionPlanResult<TContext, TTransactionMessage>,
 >(
     plan: TransactionPlanResult<TContext, TTransactionMessage, TSingle>,
 ): plan is SequentialTransactionPlanResult<TContext, TTransactionMessage, TSingle> & { divisible: false } {
@@ -1053,10 +1226,8 @@ export function assertIsNonDivisibleSequentialTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
-    TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
-        TContext,
-        TTransactionMessage
-    >,
+    TSingle extends SingleTransactionPlanResultWithOptionalSignature<TContext, TTransactionMessage> =
+        SingleTransactionPlanResult<TContext, TTransactionMessage>,
 >(
     plan: TransactionPlanResult<TContext, TTransactionMessage, TSingle>,
 ): asserts plan is SequentialTransactionPlanResult<TContext, TTransactionMessage, TSingle> & { divisible: false } {
@@ -1091,10 +1262,8 @@ export function isParallelTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
-    TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
-        TContext,
-        TTransactionMessage
-    >,
+    TSingle extends SingleTransactionPlanResultWithOptionalSignature<TContext, TTransactionMessage> =
+        SingleTransactionPlanResult<TContext, TTransactionMessage>,
 >(
     plan: TransactionPlanResult<TContext, TTransactionMessage, TSingle>,
 ): plan is ParallelTransactionPlanResult<TContext, TTransactionMessage, TSingle> {
@@ -1123,10 +1292,8 @@ export function assertIsParallelTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
-    TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
-        TContext,
-        TTransactionMessage
-    >,
+    TSingle extends SingleTransactionPlanResultWithOptionalSignature<TContext, TTransactionMessage> =
+        SingleTransactionPlanResult<TContext, TTransactionMessage>,
 >(
     plan: TransactionPlanResult<TContext, TTransactionMessage, TSingle>,
 ): asserts plan is ParallelTransactionPlanResult<TContext, TTransactionMessage, TSingle> {
@@ -1175,9 +1342,11 @@ export function isSuccessfulTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
+    TSingle extends SingleTransactionPlanResultWithOptionalSignature<TContext, TTransactionMessage> =
+        SingleTransactionPlanResult<TContext, TTransactionMessage>,
 >(
-    plan: TransactionPlanResult<TContext, TTransactionMessage>,
-): plan is SuccessfulTransactionPlanResult<TContext, TTransactionMessage> {
+    plan: TransactionPlanResult<TContext, TTransactionMessage, TSingle>,
+): plan is SuccessfulTransactionPlanResult<TContext, TTransactionMessage, TSingle> {
     return everyTransactionPlanResult(
         plan,
         r => !isSingleTransactionPlanResult(r) || isSuccessfulSingleTransactionPlanResult(r),
@@ -1221,9 +1390,11 @@ export function assertIsSuccessfulTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
+    TSingle extends SingleTransactionPlanResultWithOptionalSignature<TContext, TTransactionMessage> =
+        SingleTransactionPlanResult<TContext, TTransactionMessage>,
 >(
-    plan: TransactionPlanResult<TContext, TTransactionMessage>,
-): asserts plan is SuccessfulTransactionPlanResult<TContext, TTransactionMessage> {
+    plan: TransactionPlanResult<TContext, TTransactionMessage, TSingle>,
+): asserts plan is SuccessfulTransactionPlanResult<TContext, TTransactionMessage, TSingle> {
     if (!isSuccessfulTransactionPlanResult(plan)) {
         throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__EXPECTED_SUCCESSFUL_TRANSACTION_PLAN_RESULT, {
             transactionPlanResult: plan,
@@ -1269,10 +1440,8 @@ export function findTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
-    TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
-        TContext,
-        TTransactionMessage
-    >,
+    TSingle extends SingleTransactionPlanResultWithOptionalSignature<TContext, TTransactionMessage> =
+        SingleTransactionPlanResult<TContext, TTransactionMessage>,
 >(
     transactionPlanResult: TransactionPlanResult<TContext, TTransactionMessage, TSingle>,
     predicate: (result: TransactionPlanResult<TContext, TTransactionMessage, TSingle>) => boolean,
@@ -1402,10 +1571,8 @@ export function everyTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
-    TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
-        TContext,
-        TTransactionMessage
-    >,
+    TSingle extends SingleTransactionPlanResultWithOptionalSignature<TContext, TTransactionMessage> =
+        SingleTransactionPlanResult<TContext, TTransactionMessage>,
 >(
     transactionPlanResult: TransactionPlanResult<TContext, TTransactionMessage, TSingle>,
     predicate: (plan: TransactionPlanResult<TContext, TTransactionMessage, TSingle>) => boolean,
@@ -1506,10 +1673,8 @@ export function flattenTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
-    TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
-        TContext,
-        TTransactionMessage
-    >,
+    TSingle extends SingleTransactionPlanResultWithOptionalSignature<TContext, TTransactionMessage> =
+        SingleTransactionPlanResult<TContext, TTransactionMessage>,
 >(result: TransactionPlanResult<TContext, TTransactionMessage, TSingle>): TSingle[] {
     if (result.kind === 'single') {
         return [result];
@@ -1528,11 +1693,13 @@ export type TransactionPlanResultSummary<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
+    TSingle extends SingleTransactionPlanResultWithOptionalSignature<TContext, TTransactionMessage> =
+        SingleTransactionPlanResult<TContext, TTransactionMessage>,
 > = Readonly<{
-    canceledTransactions: CanceledSingleTransactionPlanResult<TContext, TTransactionMessage>[];
-    failedTransactions: FailedSingleTransactionPlanResult<TContext, TTransactionMessage>[];
+    canceledTransactions: Extract<TSingle, { status: 'canceled' }>[];
+    failedTransactions: Extract<TSingle, { status: 'failed' }>[];
     successful: boolean;
-    successfulTransactions: SuccessfulSingleTransactionPlanResult<TContext, TTransactionMessage>[];
+    successfulTransactions: Extract<TSingle, { status: 'successful' }>[];
 }>;
 
 /**
@@ -1547,10 +1714,12 @@ export function summarizeTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
+    TSingle extends SingleTransactionPlanResultWithOptionalSignature<TContext, TTransactionMessage> =
+        SingleTransactionPlanResult<TContext, TTransactionMessage>,
 >(
-    result: TransactionPlanResult<TContext, TTransactionMessage>,
-): TransactionPlanResultSummary<TContext, TTransactionMessage> {
-    type Out = TransactionPlanResultSummary<TContext, TTransactionMessage>;
+    result: TransactionPlanResult<TContext, TTransactionMessage, TSingle>,
+): TransactionPlanResultSummary<TContext, TTransactionMessage, TSingle> {
+    type Out = TransactionPlanResultSummary<TContext, TTransactionMessage, TSingle>;
     const successfulTransactions: Out['successfulTransactions'] = [];
     const failedTransactions: Out['failedTransactions'] = [];
     const canceledTransactions: Out['canceledTransactions'] = [];
@@ -1558,17 +1727,19 @@ export function summarizeTransactionPlanResult<
     const flattenedResults = flattenTransactionPlanResult(result);
 
     for (const singleResult of flattenedResults) {
+        // Narrowing a type parameter by a discriminant does not produce `Extract<TSingle, ...>`,
+        // so each branch needs to restate what the `status` check already guarantees.
         switch (singleResult.status) {
             case 'successful': {
-                successfulTransactions.push(singleResult);
+                successfulTransactions.push(singleResult as Extract<TSingle, { status: 'successful' }>);
                 break;
             }
             case 'failed': {
-                failedTransactions.push(singleResult);
+                failedTransactions.push(singleResult as Extract<TSingle, { status: 'failed' }>);
                 break;
             }
             case 'canceled': {
-                canceledTransactions.push(singleResult);
+                canceledTransactions.push(singleResult as Extract<TSingle, { status: 'canceled' }>);
                 break;
             }
         }

@@ -4,11 +4,13 @@ import {
     SOLANA_ERROR__INSTRUCTION_ERROR__INVALID_ARGUMENT,
     SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN,
     SOLANA_ERROR__INSTRUCTION_PLANS__NON_DIVISIBLE_TRANSACTION_PLANS_NOT_SUPPORTED,
+    SOLANA_ERROR__TRANSACTION__FEE_PAYER_SIGNATURE_MISSING,
     SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE,
     SolanaError,
 } from '@solana/errors';
 import { Signature } from '@solana/keys';
 import { TransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
+import type { Transaction } from '@solana/transactions';
 
 import {
     canceledSingleTransactionPlanResult,
@@ -23,9 +25,15 @@ import {
     singleTransactionPlan,
     successfulSingleTransactionPlanResult,
     successfulSingleTransactionPlanResultFromTransaction,
+    successfulSingleTransactionPlanResultWithOptionalSignature,
     TransactionPlanResult,
 } from '../index';
-import { createMessage, createTransaction, FOREVER_PROMISE } from './__setup__';
+import {
+    createMessage,
+    createTransaction,
+    createTransactionWithoutFeePayerSignature,
+    FOREVER_PROMISE,
+} from './__setup__';
 
 jest.useFakeTimers();
 
@@ -299,6 +307,63 @@ describe('createTransactionPlanExecutor', () => {
             );
         });
 
+        it('does not add a signature to a failed context when the transaction has no fee payer signature', async () => {
+            expect.assertions(2);
+            const messageA = createMessage('A');
+            const transactionA = createTransactionWithoutFeePayerSignature('A');
+            const cause = new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__INVALID_ARGUMENT, { index: 0 });
+            const throwCause = (): void => {
+                throw cause;
+            };
+            const executor = createTransactionPlanExecutor({
+                executeTransactionMessage: async context => {
+                    context.transaction = transactionA;
+                    throwCause();
+                    return await Promise.resolve(transactionA);
+                },
+            });
+
+            const promise = executor(singleTransactionPlan(messageA));
+            await expectFailedToExecute(
+                promise,
+                new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
+                    cause,
+                    transactionPlanResult: failedSingleTransactionPlanResult(messageA, cause, {
+                        transaction: transactionA,
+                    }),
+                }),
+            );
+        });
+
+        it('does not mask the failure cause when the transaction is malformed', async () => {
+            expect.assertions(2);
+            const messageA = createMessage('A');
+            // A buggy executor could put anything here, so reading its signature must not throw.
+            const malformedTransaction = Object.freeze({ id: 'A', signatures: undefined }) as unknown as Transaction;
+            const cause = new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__INVALID_ARGUMENT, { index: 0 });
+            const throwCause = (): void => {
+                throw cause;
+            };
+            const executor = createTransactionPlanExecutor({
+                executeTransactionMessage: async context => {
+                    context.transaction = malformedTransaction;
+                    throwCause();
+                    return await Promise.resolve(malformedTransaction);
+                },
+            });
+
+            const promise = executor(singleTransactionPlan(messageA));
+            await expectFailedToExecute(
+                promise,
+                new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
+                    cause,
+                    transactionPlanResult: failedSingleTransactionPlanResult(messageA, cause, {
+                        transaction: malformedTransaction,
+                    }),
+                }),
+            );
+        });
+
         it('can use any error object as a failure cause', async () => {
             expect.assertions(2);
             const messageA = createMessage('A');
@@ -391,6 +456,74 @@ describe('createTransactionPlanExecutor', () => {
 
             const result = await executor(singleTransactionPlan(createMessage('A')));
             expect(result).toBeFrozenObject();
+        });
+    });
+
+    describe('allowMissingFeePayerSignature', () => {
+        it('fails on a transaction without a fee payer signature by default', async () => {
+            expect.assertions(2);
+            const messageA = createMessage('A');
+            const transactionA = createTransactionWithoutFeePayerSignature('A');
+            const cause = new SolanaError(SOLANA_ERROR__TRANSACTION__FEE_PAYER_SIGNATURE_MISSING);
+            const executor = createTransactionPlanExecutor({
+                executeTransactionMessage: () => Promise.resolve(transactionA),
+            });
+
+            const promise = executor(singleTransactionPlan(messageA));
+            await expectFailedToExecute(
+                promise,
+                new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
+                    cause,
+                    transactionPlanResult: failedSingleTransactionPlanResult(messageA, cause),
+                }),
+            );
+        });
+
+        it('succeeds on a transaction without a fee payer signature when enabled', async () => {
+            expect.assertions(1);
+            const messageA = createMessage('A');
+            const transactionA = createTransactionWithoutFeePayerSignature('A');
+            const executor = createTransactionPlanExecutor({
+                allowMissingFeePayerSignature: true,
+                executeTransactionMessage: () => Promise.resolve(transactionA),
+            });
+
+            const promise = executor(singleTransactionPlan(messageA));
+            await expect(promise).resolves.toStrictEqual(
+                successfulSingleTransactionPlanResultWithOptionalSignature(messageA, transactionA),
+            );
+        });
+
+        it('still populates the signature of a signed transaction when enabled', async () => {
+            expect.assertions(1);
+            const messageA = createMessage('A');
+            const transactionA = createTransaction('A');
+            const executor = createTransactionPlanExecutor({
+                allowMissingFeePayerSignature: true,
+                executeTransactionMessage: () => Promise.resolve(transactionA),
+            });
+
+            const promise = executor(singleTransactionPlan(messageA));
+            await expect(promise).resolves.toStrictEqual(
+                successfulSingleTransactionPlanResult(messageA, {
+                    signature: 'A' as Signature,
+                    transaction: transactionA,
+                }),
+            );
+        });
+
+        it('still uses a returned signature verbatim when enabled', async () => {
+            expect.assertions(1);
+            const messageA = createMessage('A');
+            const executor = createTransactionPlanExecutor({
+                allowMissingFeePayerSignature: true,
+                executeTransactionMessage: () => Promise.resolve('A' as Signature),
+            });
+
+            const promise = executor(singleTransactionPlan(messageA));
+            await expect(promise).resolves.toStrictEqual(
+                successfulSingleTransactionPlanResult(messageA, { signature: 'A' as Signature }),
+            );
         });
     });
 

@@ -8,7 +8,7 @@ import {
 import type { Signature } from '@solana/keys';
 import { getAbortablePromise } from '@solana/promises';
 import type { TransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
-import { getSignatureFromTransaction, type Transaction } from '@solana/transactions';
+import { getSignatureFromTransactionIfPresent, type Transaction } from '@solana/transactions';
 
 import type {
     ParallelTransactionPlan,
@@ -24,10 +24,13 @@ import {
     parallelTransactionPlanResult,
     sequentialTransactionPlanResult,
     SingleTransactionPlanResult,
+    type SingleTransactionPlanResultWithOptionalSignature,
     successfulSingleTransactionPlanResult,
     successfulSingleTransactionPlanResultFromTransaction,
+    successfulSingleTransactionPlanResultWithOptionalSignature,
     type TransactionPlanResult,
     type TransactionPlanResultContext,
+    type TransactionPlanResultWithOptionalSignature,
 } from './transaction-plan-result';
 
 /**
@@ -37,6 +40,9 @@ import {
  * message and collecting results that mirror the structure of the original plan.
  *
  * @typeParam TContext - The type of the context object that may be passed along with results.
+ * @typeParam TSingle - The type of single transaction plan results this executor produces. Defaults
+ * to {@link SingleTransactionPlanResult}. Executors created with `allowMissingFeePayerSignature`
+ * produce {@link SingleTransactionPlanResultWithOptionalSignature} instead.
  * @param transactionPlan - The transaction plan to execute.
  * @param config - Optional configuration object that can include an `AbortSignal` to cancel execution.
  * @return A promise that resolves to the execution results.
@@ -45,10 +51,13 @@ import {
  * @see {@link TransactionPlanResult}
  * @see {@link createTransactionPlanExecutor}
  */
-export type TransactionPlanExecutor<TContext extends TransactionPlanResultContext = TransactionPlanResultContext> = (
+export type TransactionPlanExecutor<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TSingle extends SingleTransactionPlanResultWithOptionalSignature<TContext> = SingleTransactionPlanResult<TContext>,
+> = (
     transactionPlan: TransactionPlan,
     config?: { abortSignal?: AbortSignal },
-) => Promise<TransactionPlanResult<TContext>>;
+) => Promise<TransactionPlanResult<TContext, TransactionMessage & TransactionMessageWithFeePayer, TSingle>>;
 
 type ExecuteTransactionMessage<TContext extends TransactionPlanResultContext> = (
     context: BaseTransactionPlanResultContext & TContext,
@@ -63,7 +72,19 @@ type ExecuteTransactionMessage<TContext extends TransactionPlanResultContext> = 
  */
 export type TransactionPlanExecutorConfig<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TAllowMissingFeePayerSignature extends boolean = false,
 > = {
+    /**
+     * When `true`, a {@link Transaction} returned by `executeTransactionMessage` need not be signed
+     * by its fee payer. Successful results then type `context.signature` as optional, and populate
+     * it only when the fee payer slot happens to be filled.
+     *
+     * Use this for executors that hand transactions off rather than submitting them — for example
+     * signing with an authority wallet and passing the result to a relayer that will pay the fee.
+     *
+     * @defaultValue `false`
+     */
+    allowMissingFeePayerSignature?: TAllowMissingFeePayerSignature;
     /** Called whenever a transaction message must be sent to the blockchain. */
     executeTransactionMessage: ExecuteTransactionMessage<TContext>;
 };
@@ -116,12 +137,36 @@ export type TransactionPlanExecutorConfig<
  * });
  * ```
  *
+ * @example
+ * Producing partially signed transactions for a relayer to submit later:
+ * ```ts
+ * const executor = createTransactionPlanExecutor({
+ *   allowMissingFeePayerSignature: true,
+ *   executeTransactionMessage: async (context, message) => {
+ *     const transaction = await partiallySignTransactionMessageWithSigners(message);
+ *     context.transaction = transaction;
+ *     return transaction;
+ *   }
+ * });
+ * ```
+ *
  * @see {@link TransactionPlanExecutorConfig}
  */
 export function createTransactionPlanExecutor<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
->(config: TransactionPlanExecutorConfig<TContext>): TransactionPlanExecutor<TContext> {
-    return async (plan, { abortSignal } = {}): Promise<TransactionPlanResult<TContext>> => {
+    TAllowMissingFeePayerSignature extends boolean = false,
+>(
+    config: TransactionPlanExecutorConfig<TContext, TAllowMissingFeePayerSignature>,
+): TransactionPlanExecutor<
+    TContext,
+    [TAllowMissingFeePayerSignature] extends [false]
+        ? SingleTransactionPlanResult<TContext>
+        : SingleTransactionPlanResultWithOptionalSignature<TContext>
+> {
+    type TSingle = [TAllowMissingFeePayerSignature] extends [false]
+        ? SingleTransactionPlanResult<TContext>
+        : SingleTransactionPlanResultWithOptionalSignature<TContext>;
+    return async (plan, { abortSignal } = {}) => {
         const traverseConfig: TraverseConfig<TContext> = {
             ...config,
             abortSignal: abortSignal,
@@ -144,11 +189,20 @@ export function createTransactionPlanExecutor<
             throw createFailedToExecuteTransactionPlanError(transactionPlanResult, abortReason);
         }
 
-        return transactionPlanResult;
+        // The `allowMissingFeePayerSignature` branch in `traverseSingle` guarantees this, but the
+        // conditional type cannot be resolved while `TAllowMissingFeePayerSignature` is unresolved.
+        return transactionPlanResult as TransactionPlanResult<
+            TContext,
+            TransactionMessage & TransactionMessageWithFeePayer,
+            TSingle
+        >;
     };
 }
 
-type TraverseConfig<TContext extends TransactionPlanResultContext> = TransactionPlanExecutorConfig<TContext> & {
+type TraverseConfig<TContext extends TransactionPlanResultContext> = TransactionPlanExecutorConfig<
+    TContext,
+    boolean
+> & {
     abortSignal?: AbortSignal;
     canceled: boolean;
 };
@@ -156,7 +210,7 @@ type TraverseConfig<TContext extends TransactionPlanResultContext> = Transaction
 async function traverse<TContext extends TransactionPlanResultContext>(
     transactionPlan: TransactionPlan,
     traverseConfig: TraverseConfig<TContext>,
-): Promise<TransactionPlanResult<TContext>> {
+): Promise<TransactionPlanResultWithOptionalSignature<TContext>> {
     const kind = transactionPlan.kind;
     switch (kind) {
         case 'sequential':
@@ -174,12 +228,12 @@ async function traverse<TContext extends TransactionPlanResultContext>(
 async function traverseSequential<TContext extends TransactionPlanResultContext>(
     transactionPlan: SequentialTransactionPlan,
     traverseConfig: TraverseConfig<TContext>,
-): Promise<TransactionPlanResult<TContext>> {
+): Promise<TransactionPlanResultWithOptionalSignature<TContext>> {
     if (!transactionPlan.divisible) {
         throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__NON_DIVISIBLE_TRANSACTION_PLANS_NOT_SUPPORTED);
     }
 
-    const results: TransactionPlanResult<TContext>[] = [];
+    const results: TransactionPlanResultWithOptionalSignature<TContext>[] = [];
 
     for (const subPlan of transactionPlan.plans) {
         const result = await traverse(subPlan, traverseConfig);
@@ -192,7 +246,7 @@ async function traverseSequential<TContext extends TransactionPlanResultContext>
 async function traverseParallel<TContext extends TransactionPlanResultContext>(
     transactionPlan: ParallelTransactionPlan,
     traverseConfig: TraverseConfig<TContext>,
-): Promise<TransactionPlanResult<TContext>> {
+): Promise<TransactionPlanResultWithOptionalSignature<TContext>> {
     const results = await Promise.all(transactionPlan.plans.map(plan => traverse(plan, traverseConfig)));
     return parallelTransactionPlanResult(results);
 }
@@ -200,7 +254,7 @@ async function traverseParallel<TContext extends TransactionPlanResultContext>(
 async function traverseSingle<TContext extends TransactionPlanResultContext>(
     transactionPlan: SingleTransactionPlan,
     traverseConfig: TraverseConfig<TContext>,
-): Promise<TransactionPlanResult<TContext>> {
+): Promise<TransactionPlanResultWithOptionalSignature<TContext>> {
     const context = {} as BaseTransactionPlanResultContext & TContext;
     if (traverseConfig.canceled) {
         return canceledSingleTransactionPlanResult(transactionPlan.message, context);
@@ -215,15 +269,43 @@ async function traverseSingle<TContext extends TransactionPlanResultContext>(
         );
         return typeof result === 'string'
             ? successfulSingleTransactionPlanResult(transactionPlan.message, { ...context, signature: result })
-            : successfulSingleTransactionPlanResultFromTransaction(transactionPlan.message, result, context);
+            : traverseConfig.allowMissingFeePayerSignature
+              ? successfulSingleTransactionPlanResultWithOptionalSignature(transactionPlan.message, result, context)
+              : successfulSingleTransactionPlanResultFromTransaction(transactionPlan.message, result, context);
     } catch (error) {
         traverseConfig.canceled = true;
-        const contextWithSignature =
-            'transaction' in context && typeof context.transaction === 'object' && context.signature == null
-                ? { ...context, signature: getSignatureFromTransaction(context.transaction) }
-                : context;
-        return failedSingleTransactionPlanResult(transactionPlan.message, error as Error, contextWithSignature);
+        return failedSingleTransactionPlanResult(
+            transactionPlan.message,
+            error as Error,
+            withDerivedSignature(context),
+        );
     }
+}
+
+/**
+ * Fills in the `signature` of a context from its `transaction`, when the transaction is signed by
+ * its fee payer and no signature was recorded already.
+ *
+ * The key is omitted rather than set to `undefined` when the fee payer has not signed, so that
+ * `'signature' in context` stays meaningful.
+ *
+ * Deriving the signature is strictly best-effort. This runs while a failed result is being built,
+ * so a malformed `transaction` written by a buggy executor must not throw from here and displace
+ * the execution error that we are actually reporting.
+ */
+function withDerivedSignature<TContext extends TransactionPlanResultContext>(
+    context: BaseTransactionPlanResultContext & TContext,
+): BaseTransactionPlanResultContext & TContext {
+    if (context.signature != null || context.transaction == null) {
+        return context;
+    }
+    let signature: Signature | undefined;
+    try {
+        signature = getSignatureFromTransactionIfPresent(context.transaction);
+    } catch {
+        return context;
+    }
+    return signature == null ? context : { ...context, signature };
 }
 
 function assertDivisibleSequentialPlansOnly(transactionPlan: TransactionPlan): void {
@@ -263,6 +345,9 @@ function assertDivisibleSequentialPlansOnly(transactionPlan: TransactionPlan): v
  *
  * Any other errors are re-thrown as normal.
  *
+ * Results produced by an executor created with `allowMissingFeePayerSignature` are accepted too,
+ * and are returned with their successful leaves still typing `context.signature` as optional.
+ *
  * @param promise - A promise returned by a transaction plan executor.
  * @return A promise that resolves to the transaction plan result, even if some transactions failed.
  *
@@ -293,14 +378,22 @@ export async function passthroughFailedTransactionPlanExecution(
 export async function passthroughFailedTransactionPlanExecution(
     promise: Promise<TransactionPlanResult>,
 ): Promise<TransactionPlanResult>;
+// The strict overloads above must stay first, so that a strict argument keeps resolving to a strict
+// result exactly as it did before these looser overloads existed.
 export async function passthroughFailedTransactionPlanExecution(
-    promise: Promise<TransactionPlanResult>,
-): Promise<TransactionPlanResult> {
+    promise: Promise<SingleTransactionPlanResultWithOptionalSignature>,
+): Promise<SingleTransactionPlanResultWithOptionalSignature>;
+export async function passthroughFailedTransactionPlanExecution(
+    promise: Promise<TransactionPlanResultWithOptionalSignature>,
+): Promise<TransactionPlanResultWithOptionalSignature>;
+export async function passthroughFailedTransactionPlanExecution(
+    promise: Promise<TransactionPlanResultWithOptionalSignature>,
+): Promise<TransactionPlanResultWithOptionalSignature> {
     try {
         return await promise;
     } catch (error) {
         if (isSolanaError(error, SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN)) {
-            return error.context.transactionPlanResult as TransactionPlanResult;
+            return error.context.transactionPlanResult as TransactionPlanResultWithOptionalSignature;
         }
         throw error;
     }

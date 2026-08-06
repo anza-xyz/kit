@@ -1,0 +1,7 @@
+---
+'@solana/instruction-plans': minor
+---
+
+`createTransactionPlanExecutor` now accepts an `allowMissingFeePayerSignature` option. When set, the `executeTransactionMessage` callback may return a `Transaction` that has not been signed by its fee payer — for instance one partially signed by an authority wallet and destined for a relayer — and the executor will produce a successful result for it instead of throwing. Such executors return a `TransactionPlanResultWithOptionalSignature`, whose successful leaves type `context.signature` as optional and populate it only when the fee payer slot happens to be filled. Every result type, tree helper and guard in the package now accepts these looser results; existing executors are unaffected and keep their current types.
+
+Also fixes a bug where an executor whose `executeTransactionMessage` callback stored a transaction on the context and then threw would replace the original error with `SOLANA_ERROR__TRANSACTION__FEE_PAYER_SIGNATURE_MISSING` when that transaction had no fee payer signature. Deriving the signature of a failed result is now entirely best-effort: nothing thrown while reading the stored transaction can displace the execution error being reported.

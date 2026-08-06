@@ -14,7 +14,7 @@ import {
     type CanceledSingleTransactionPlanResult,
     type FailedSingleTransactionPlanResult,
     flattenTransactionPlanResult,
-    type TransactionPlanResult,
+    type TransactionPlanResultWithOptionalSignature,
 } from './transaction-plan-result';
 
 type PreflightData = Omit<RpcSimulateTransactionResult, 'err'>;
@@ -122,7 +122,7 @@ export function createFailedToSendTransactionError(
  * @see {@link createFailedToSendTransactionError}
  */
 export function createFailedToSendTransactionsError(
-    result: TransactionPlanResult,
+    result: TransactionPlanResultWithOptionalSignature,
     abortReason?: unknown,
 ): SolanaError<typeof SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS> {
     const flattenedResults = flattenTransactionPlanResult(result);
@@ -196,7 +196,7 @@ export function createFailedToSendTransactionsError(
  * @see {@link createFailedToSendTransactionsError}
  */
 export function createFailedToExecuteTransactionPlanError(
-    result: TransactionPlanResult,
+    result: TransactionPlanResultWithOptionalSignature,
     abortReason?: unknown,
 ): SolanaError<typeof SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN> {
     const context: Record<string, unknown> = {
@@ -234,7 +234,7 @@ function unwrapErrorWithPreflightData(error: Error): {
     return { logs: undefined, preflightData: undefined, unwrappedError: error };
 }
 
-function findErrorFromTransactionPlanResult(result: TransactionPlanResult): Error | undefined {
+function findErrorFromTransactionPlanResult(result: TransactionPlanResultWithOptionalSignature): Error | undefined {
     if (result.kind === 'single') {
         return result.status === 'failed' ? result.error : undefined;
     }

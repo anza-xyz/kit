@@ -37,10 +37,11 @@ import {
     sequentialTransactionPlanResult,
     successfulSingleTransactionPlanResult,
     successfulSingleTransactionPlanResultFromTransaction,
+    successfulSingleTransactionPlanResultWithOptionalSignature,
     summarizeTransactionPlanResult,
     transformTransactionPlanResult,
 } from '../index';
-import { createMessage, createTransaction } from './__setup__';
+import { createMessage, createTransaction, createTransactionWithoutFeePayerSignature } from './__setup__';
 
 describe('successfulSingleTransactionPlanResultFromTransaction', () => {
     it('creates SingleTransactionPlanResult objects with successful status', () => {
@@ -79,6 +80,43 @@ describe('successfulSingleTransactionPlanResultFromTransaction', () => {
         const transactionA = createTransaction('A');
         const result = successfulSingleTransactionPlanResultFromTransaction(messageA, transactionA);
         expect(result.status).toBeFrozenObject();
+    });
+});
+
+describe('successfulSingleTransactionPlanResultWithOptionalSignature', () => {
+    it('omits the signature when the transaction has no fee payer signature', () => {
+        const messageA = createMessage('A');
+        const transactionA = createTransactionWithoutFeePayerSignature('A');
+        const result = successfulSingleTransactionPlanResultWithOptionalSignature(messageA, transactionA);
+
+        expect(result).toStrictEqual({
+            context: { transaction: transactionA },
+            kind: 'single',
+            planType: 'transactionPlanResult',
+            plannedMessage: messageA,
+            status: 'successful',
+        });
+        expect('signature' in result.context).toBe(false);
+    });
+
+    it('populates the signature when the transaction is signed by its fee payer', () => {
+        const messageA = createMessage('A');
+        const transactionA = createTransaction('A');
+        const result = successfulSingleTransactionPlanResultWithOptionalSignature(messageA, transactionA);
+
+        expect(result.context.signature).toBe('A');
+    });
+
+    it('preserves custom context properties and freezes the result', () => {
+        const messageA = createMessage('A');
+        const transactionA = createTransactionWithoutFeePayerSignature('A');
+        const result = successfulSingleTransactionPlanResultWithOptionalSignature(messageA, transactionA, {
+            custom: 'custom value',
+        });
+
+        expect(result.context.custom).toBe('custom value');
+        expect(result).toBeFrozenObject();
+        expect(result.context).toBeFrozenObject();
     });
 });
 
@@ -1346,6 +1384,19 @@ describe('flattenTransactionPlanResult', () => {
 });
 
 describe('summarizeTransactionPlanResult', () => {
+    it('summarizes a result tree whose successful leaves have no signature', () => {
+        const messageA = createMessage('A');
+        const transactionA = createTransactionWithoutFeePayerSignature('A');
+        const result = parallelTransactionPlanResult([
+            successfulSingleTransactionPlanResultWithOptionalSignature(messageA, transactionA),
+        ]);
+
+        const summary = summarizeTransactionPlanResult(result);
+        expect(summary.successful).toBe(true);
+        expect(summary.successfulTransactions).toHaveLength(1);
+        expect(summary.successfulTransactions[0].context.signature).toBeUndefined();
+    });
+
     it('summarizes a single successful transaction', () => {
         const result = successfulSingleTransactionPlanResult(createMessage('A'), {
             signature: 'A' as Signature,

@@ -66,6 +66,12 @@ export function createTransaction<TId extends string>(id: TId): Transaction & { 
     return Object.freeze({ id, signatures }) as unknown as Transaction & { id: TId };
 }
 
+export function createTransactionWithoutFeePayerSignature<TId extends string>(id: TId): Transaction & { id: TId } {
+    // A `null` signature means the fee payer has not signed the transaction yet.
+    const signatures: SignaturesMap = { ['' as Address]: null };
+    return Object.freeze({ id, signatures }) as unknown as Transaction & { id: TId };
+}
+
 const signatureEncoder = getBase58Encoder();
 
 export function instructionFactory(baseSeed?: string) {
