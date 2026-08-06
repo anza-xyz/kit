@@ -21,6 +21,42 @@ export type FullySignedTransaction = NominalType<'transactionSignedness', 'fully
 let base58Decoder: Decoder<string> | undefined;
 
 /**
+ * Given a transaction, this method will return the {@link Signature} that uniquely identifies it,
+ * or `undefined` when its fee payer has not signed it yet.
+ *
+ * Use this in preference to {@link getSignatureFromTransaction} when a transaction is legitimately
+ * allowed to be unsigned by its fee payer — for instance one that has been partially signed by an
+ * authority and is destined for a relayer that will pay for it.
+ *
+ * @example
+ * ```ts
+ * import { getSignatureFromTransactionIfPresent } from '@solana/transactions';
+ *
+ * const signature = getSignatureFromTransactionIfPresent(tx);
+ * if (signature !== undefined) {
+ *     console.debug(`Inspect this transaction at https://explorer.solana.com/tx/${signature}`);
+ * }
+ * ```
+ *
+ * @returns The transaction's signature, or `undefined` if its fee payer has not signed it.
+ *
+ * @see {@link getSignatureFromTransaction} if you expect the transaction to have been signed by its
+ * fee payer and want to throw otherwise.
+ */
+export function getSignatureFromTransactionIfPresent(transaction: Transaction): Signature | undefined {
+    if (!base58Decoder) base58Decoder = getBase58Decoder();
+
+    // We have ordered signatures from the compiled message accounts
+    // first signature is the fee payer
+    const signatureBytes = Object.values(transaction.signatures)[0];
+    if (!signatureBytes) {
+        return undefined;
+    }
+    const transactionSignature = base58Decoder.decode(signatureBytes);
+    return transactionSignature as Signature;
+}
+
+/**
  * Given a transaction signed by its fee payer, this method will return the {@link Signature} that
  * uniquely identifies it. This string can be used to look up transactions at a later date, for
  * example on a Solana block explorer.
@@ -32,18 +68,19 @@ let base58Decoder: Decoder<string> | undefined;
  * const signature = getSignatureFromTransaction(tx);
  * console.debug(`Inspect this transaction at https://explorer.solana.com/tx/${signature}`);
  * ```
+ *
+ * @throws {SolanaError} with code {@link SOLANA_ERROR__TRANSACTION__FEE_PAYER_SIGNATURE_MISSING} if
+ * the transaction's fee payer has not signed it.
+ *
+ * @see {@link getSignatureFromTransactionIfPresent} if the transaction might legitimately not have
+ * been signed by its fee payer.
  */
 export function getSignatureFromTransaction(transaction: Transaction): Signature {
-    if (!base58Decoder) base58Decoder = getBase58Decoder();
-
-    // We have ordered signatures from the compiled message accounts
-    // first signature is the fee payer
-    const signatureBytes = Object.values(transaction.signatures)[0];
-    if (!signatureBytes) {
+    const transactionSignature = getSignatureFromTransactionIfPresent(transaction);
+    if (transactionSignature === undefined) {
         throw new SolanaError(SOLANA_ERROR__TRANSACTION__FEE_PAYER_SIGNATURE_MISSING);
     }
-    const transactionSignature = base58Decoder.decode(signatureBytes);
-    return transactionSignature as Signature;
+    return transactionSignature;
 }
 
 /**

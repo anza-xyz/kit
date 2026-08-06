@@ -65,6 +65,19 @@ const signature = getSignatureFromTransaction(tx);
 console.debug(`Inspect this transaction at https://explorer.solana.com/tx/${signature}`);
 ```
 
+#### `getSignatureFromTransactionIfPresent()`
+
+The same as `getSignatureFromTransaction()`, but returns `undefined` instead of throwing when the transaction's fee payer has not signed it. Use this when a transaction is legitimately allowed to be unsigned by its fee payer — for instance one that has been partially signed by an authority and is destined for a relayer that will pay for it.
+
+```ts
+import { getSignatureFromTransactionIfPresent } from '@solana/transactions';
+
+const signature = getSignatureFromTransactionIfPresent(tx);
+if (signature !== undefined) {
+    console.debug(`Inspect this transaction at https://explorer.solana.com/tx/${signature}`);
+}
+```
+
 ### `signTransaction()`
 
 Given an array of `CryptoKey` objects which are private keys pertaining to addresses that are required to sign a transaction, this method will return a new signed transaction of type `FullySignedTransaction`. This function will throw unless the resulting transaction is fully signed.

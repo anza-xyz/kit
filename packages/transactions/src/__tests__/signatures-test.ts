@@ -15,6 +15,7 @@ import { TransactionWithLifetime } from '../lifetime';
 import {
     assertIsFullySignedTransaction,
     getSignatureFromTransaction,
+    getSignatureFromTransactionIfPresent,
     isFullySignedTransaction,
     partiallySignTransaction,
     signTransaction,
@@ -51,6 +52,63 @@ describe('getSignatureFromTransaction', () => {
         expect(() => {
             getSignatureFromTransaction(transactionWithoutFeePayerSignature);
         }).toThrow(new SolanaError(SOLANA_ERROR__TRANSACTION__FEE_PAYER_SIGNATURE_MISSING));
+    });
+    it('does not throw when the fee payer slot is filled with zero-length bytes', () => {
+        // A filled slot counts as signed even when decoding it produces an empty string. Only a
+        // `null` or absent slot means that the fee payer has not signed.
+        const signatures: SignaturesMap = {};
+        signatures['123' as Address] = new Uint8Array() as SignatureBytes;
+        const transactionWithEmptyFeePayerSignature: Transaction & TransactionWithLifetime = {
+            lifetimeConstraint: MOCK_BLOCKHASH_LIFETIME,
+            messageBytes: new Uint8Array() as ReadonlyUint8Array as TransactionMessageBytes,
+            signatures,
+        };
+        expect(getSignatureFromTransaction(transactionWithEmptyFeePayerSignature)).toBe('');
+    });
+});
+
+describe('getSignatureFromTransactionIfPresent', () => {
+    it("returns the signature associated with a transaction's fee payer", () => {
+        const signatures: SignaturesMap = {};
+        signatures['123' as Address] = new Uint8Array(new Array(64).fill(9)) as SignatureBytes;
+        const transactionWithFeePayerSignature: Transaction & TransactionWithLifetime = {
+            lifetimeConstraint: MOCK_BLOCKHASH_LIFETIME,
+            messageBytes: new Uint8Array() as ReadonlyUint8Array as TransactionMessageBytes,
+            signatures,
+        };
+        expect(getSignatureFromTransactionIfPresent(transactionWithFeePayerSignature)).toBe(
+            'BUguQsv2ZuHus54HAFzjdJHzZBkygAjKhEeYwSG19tUfUyvvz3worsdQCdAXDNjakJHioSiyxhFiDJrm8XpSXRA',
+        );
+    });
+    it('returns undefined when supplied a transaction with no signatures at all', () => {
+        const transactionWithoutSignatures: Transaction & TransactionWithLifetime = {
+            lifetimeConstraint: MOCK_BLOCKHASH_LIFETIME,
+            messageBytes: new Uint8Array() as ReadonlyUint8Array as TransactionMessageBytes,
+            signatures: {},
+        };
+        expect(getSignatureFromTransactionIfPresent(transactionWithoutSignatures)).toBeUndefined();
+    });
+    it('returns undefined when the fee payer has not signed but another signer has', () => {
+        const signatures: SignaturesMap = {};
+        // The fee payer's slot comes first and is still empty.
+        signatures['123' as Address] = null;
+        signatures['456' as Address] = new Uint8Array(new Array(64).fill(9)) as SignatureBytes;
+        const partiallySignedTransaction: Transaction & TransactionWithLifetime = {
+            lifetimeConstraint: MOCK_BLOCKHASH_LIFETIME,
+            messageBytes: new Uint8Array() as ReadonlyUint8Array as TransactionMessageBytes,
+            signatures,
+        };
+        expect(getSignatureFromTransactionIfPresent(partiallySignedTransaction)).toBeUndefined();
+    });
+    it('returns an empty signature when the fee payer slot is filled with zero-length bytes', () => {
+        const signatures: SignaturesMap = {};
+        signatures['123' as Address] = new Uint8Array() as SignatureBytes;
+        const transactionWithEmptyFeePayerSignature: Transaction & TransactionWithLifetime = {
+            lifetimeConstraint: MOCK_BLOCKHASH_LIFETIME,
+            messageBytes: new Uint8Array() as ReadonlyUint8Array as TransactionMessageBytes,
+            signatures,
+        };
+        expect(getSignatureFromTransactionIfPresent(transactionWithEmptyFeePayerSignature)).toBe('');
     });
 });
 
