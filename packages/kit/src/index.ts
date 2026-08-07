@@ -29,6 +29,7 @@ export * from '@solana/transaction-introspection';
 export * from '@solana/transaction-messages';
 export * from '@solana/transactions';
 export * from './create-async-generator-with-initial-value-and-slot-tracking';
+export * from './create-client-with-interfaces-from-rpc';
 export * from './create-reactive-store-with-initial-value-and-slot-tracking';
 export * from './airdrop';
 export * from './compute-unit-limit-estimation';

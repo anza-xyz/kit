@@ -81,6 +81,18 @@ Returns a `TransactionMessage` from a `CompiledTransactionMessage`. If any of th
 
 Given a list of addresses belonging to address lookup tables, returns a map of lookup table addresses to an ordered array of the addresses they contain.
 
+### `createClientWithGetMinimumBalanceFromRpc(rpc)`
+
+Creates a `ClientWithGetMinimumBalance` from a raw `Rpc` object. The returned client computes the minimum balance for rent exemption using the `getMinimumBalanceForRentExemption` RPC method, adding the 128-byte account header by default (pass `{ withoutHeader: true }` to compute the data-only amount). This is a convenience helper for consumers that only have a raw `Rpc` object rather than a Kit client.
+
+### `createClientWithFetchAccountsFromRpc(rpc)`
+
+Creates a `ClientWithFetchAccounts` from a raw `Rpc` object. The returned client fetches the encoded content of accounts from their addresses, dispatching on the number of requested addresses: a single account uses `getAccountInfo`, multiple accounts use `getMultipleAccounts` in a single round-trip, and an empty list short-circuits to an empty array without any RPC call. Because a raw `Rpc` object's capabilities cannot be detected at runtime, the `Rpc` is required to support both methods. This is a convenience helper for consumers that only have a raw `Rpc` object rather than a Kit client.
+
+### `createClientWithInterfacesFromRpc(rpc)`
+
+Creates a client from a raw `Rpc` object, filling in whichever client interfaces the RPC supports — a `ClientWithGetMinimumBalance` when it supports `getMinimumBalanceForRentExemption`, and a `ClientWithFetchAccounts` when it supports both `getAccountInfo` and `getMultipleAccounts`. The return type narrows accordingly. Since a raw `Rpc` object's capabilities cannot be detected at runtime, the returned object always carries both methods at runtime; the return type is what restricts them to the interfaces your RPC declares. Note that this does not create a fully-fledged Kit client; use `createClient().use(solanaRpc(...))` for that.
+
 ### Compute Unit Limit Estimation
 
 Correctly budgeting a compute unit limit for your transaction message can increase the probability that your transaction will be accepted for processing. If you don't declare a compute unit limit on your transaction, validators will assume an upper limit of 200K compute units (CU) per instruction.
