@@ -2,6 +2,8 @@ import {
     type RpcSimulateTransactionResult,
     SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION,
     SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS,
+    SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTION,
+    SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTIONS,
     SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN,
     SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE,
     SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT,
@@ -15,6 +17,8 @@ import {
     createFailedToExecuteTransactionPlanError,
     createFailedToSendTransactionError,
     createFailedToSendTransactionsError,
+    createFailedToSignTransactionError,
+    createFailedToSignTransactionsError,
     failedSingleTransactionPlanResult,
     parallelTransactionPlanResult,
     sequentialTransactionPlanResult,
@@ -647,6 +651,226 @@ describe('createFailedToSendTransactionsError', () => {
         const result = sequentialTransactionPlanResult([failedSingleTransactionPlanResult(messageA, errorA)]);
         const error = createFailedToSendTransactionsError(result);
         expect(error.context.__code).toBe(SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS);
+    });
+});
+
+describe('createFailedToSignTransactionError', () => {
+    describe('given a failed result with a preflight error', () => {
+        it('unwraps the preflight error and sets the cause to the inner error', () => {
+            const innerError = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
+            const preflightError = createPreflightError(innerError, preflightContext);
+            const result = failedSingleTransactionPlanResult(createMessage('A'), preflightError);
+            const error = createFailedToSignTransactionError(result);
+            expect(error.cause).toBe(innerError);
+        });
+
+        it('sets preflightData and logs from the preflight error context', () => {
+            const innerError = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
+            const preflightError = createPreflightError(innerError, preflightContext);
+            const result = failedSingleTransactionPlanResult(createMessage('A'), preflightError);
+            const error = createFailedToSignTransactionError(result);
+            expect(error.context.preflightData).toEqual(preflightContext);
+            expect(error.context.logs).toEqual(preflightContext.logs);
+        });
+
+        it('produces the expected error message with no indicator', () => {
+            const innerError = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
+            const preflightError = createPreflightError(innerError, { ...preflightContext, logs: [] });
+            const result = failedSingleTransactionPlanResult(createMessage('A'), preflightError);
+            const error = createFailedToSignTransactionError(result);
+            expect(error.message).toBe(`Failed to sign transaction: ${innerError.message}`);
+            expect(error.message).not.toContain('(preflight)');
+        });
+
+        it('still appends the simulation logs to the message', () => {
+            const innerError = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
+            const preflightError = createPreflightError(innerError, preflightContext);
+            const result = failedSingleTransactionPlanResult(createMessage('A'), preflightError);
+            const error = createFailedToSignTransactionError(result);
+            expect(error.message).toContain('Logs:');
+            expect(error.message).toContain('Program failed: insufficient funds');
+        });
+    });
+
+    describe('given a failed result without a preflight error', () => {
+        it('uses the error directly as the cause', () => {
+            const plainError = new Error('The user rejected the signing request');
+            const result = failedSingleTransactionPlanResult(createMessage('A'), plainError);
+            const error = createFailedToSignTransactionError(result);
+            expect(error.cause).toBe(plainError);
+        });
+
+        it('produces the expected error message without an indicator', () => {
+            const plainError = new Error('The user rejected the signing request');
+            const result = failedSingleTransactionPlanResult(createMessage('A'), plainError);
+            const error = createFailedToSignTransactionError(result);
+            expect(error.message).toBe('Failed to sign transaction: The user rejected the signing request');
+        });
+    });
+
+    describe('given a failed result with a signature in the context', () => {
+        it('omits the signature from the error message', () => {
+            const plainError = new Error('Signing failed');
+            const signature =
+                '5wHu1qwD7q5ifaN5nwdcDQNbHUiCfnzJ6vaR98NLugS1CiVfCZLMGmmFaKCAVfPTFE5KPMhSaZaLo2v4xXSHVJk' as Signature;
+            const result = failedSingleTransactionPlanResult(createMessage('A'), plainError, { signature });
+            const error = createFailedToSignTransactionError(result);
+            expect(error.message).toBe('Failed to sign transaction: Signing failed');
+            expect(error.message).not.toContain(signature);
+        });
+
+        it('keeps preflightData and logs in the context even though the message omits the indicator', () => {
+            const innerError = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
+            const preflightError = createPreflightError(innerError, { ...preflightContext, logs: [] });
+            const signature =
+                '5wHu1qwD7q5ifaN5nwdcDQNbHUiCfnzJ6vaR98NLugS1CiVfCZLMGmmFaKCAVfPTFE5KPMhSaZaLo2v4xXSHVJk' as Signature;
+            const result = failedSingleTransactionPlanResult(createMessage('A'), preflightError, { signature });
+            const error = createFailedToSignTransactionError(result);
+            expect(error.message).toBe(`Failed to sign transaction: ${innerError.message}`);
+            expect(error.context.preflightData).toEqual({ ...preflightContext, logs: [] });
+        });
+    });
+
+    describe('given a canceled result', () => {
+        it('includes the abort reason in the error message', () => {
+            const abortReason = new Error('User canceled');
+            const result = canceledSingleTransactionPlanResult(createMessage('A'));
+            const error = createFailedToSignTransactionError(result, abortReason);
+            expect(error.cause).toBe(abortReason);
+            expect(error.message).toBe('Failed to sign transaction. Canceled with abort reason: Error: User canceled');
+        });
+
+        it('produces the expected error message without an abort reason', () => {
+            const result = canceledSingleTransactionPlanResult(createMessage('A'));
+            const error = createFailedToSignTransactionError(result);
+            expect(error.message).toBe('Failed to sign transaction: Canceled');
+            expect(error.cause).toBeUndefined();
+        });
+    });
+
+    it('sets transactionPlanResult as a non-enumerable property', () => {
+        const plainError = new Error('fail');
+        const result = failedSingleTransactionPlanResult(createMessage('A'), plainError);
+        const error = createFailedToSignTransactionError(result);
+        expect(error.context.transactionPlanResult).toBe(result);
+        expect(Object.keys(error.context)).not.toContain('transactionPlanResult');
+    });
+
+    it('has the correct error code', () => {
+        const plainError = new Error('fail');
+        const result = failedSingleTransactionPlanResult(createMessage('A'), plainError);
+        const error = createFailedToSignTransactionError(result);
+        expect(error.context.__code).toBe(SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTION);
+    });
+});
+
+describe('createFailedToSignTransactionsError', () => {
+    describe('given a result with mixed failed, canceled, and successful transactions', () => {
+        it('only includes failed transactions in failedTransactions, indexed within the flattened result', () => {
+            const errorB = new Error('B failed');
+            const result = sequentialTransactionPlanResult([
+                successfulSingleTransactionPlanResult(createMessage('A'), {
+                    signature: '11111111111111111111111111111111111111111111' as Signature,
+                }),
+                failedSingleTransactionPlanResult(createMessage('B'), errorB),
+                canceledSingleTransactionPlanResult(createMessage('C')),
+            ]);
+            const error = createFailedToSignTransactionsError(result);
+            expect(error.context.failedTransactions).toHaveLength(1);
+            expect(error.context.failedTransactions[0].index).toBe(1);
+        });
+
+        it('produces the expected error message', () => {
+            const result = sequentialTransactionPlanResult([
+                failedSingleTransactionPlanResult(createMessage('A'), new Error('A failed')),
+                failedSingleTransactionPlanResult(createMessage('B'), new Error('B failed')),
+            ]);
+            const error = createFailedToSignTransactionsError(result);
+            expect(error.message).toBe('Failed to sign transactions.\n[Tx #1] A failed\n[Tx #2] B failed\n');
+        });
+
+        it('sets the cause to the error when there is exactly one failure', () => {
+            const errorA = new Error('A failed');
+            const result = sequentialTransactionPlanResult([
+                failedSingleTransactionPlanResult(createMessage('A'), errorA),
+                canceledSingleTransactionPlanResult(createMessage('B')),
+            ]);
+            const error = createFailedToSignTransactionsError(result);
+            expect(error.cause).toBe(errorA);
+        });
+
+        it('does not set the cause when there are multiple failures', () => {
+            const result = sequentialTransactionPlanResult([
+                failedSingleTransactionPlanResult(createMessage('A'), new Error('A failed')),
+                failedSingleTransactionPlanResult(createMessage('B'), new Error('B failed')),
+            ]);
+            const error = createFailedToSignTransactionsError(result);
+            expect(error.cause).toBeUndefined();
+        });
+    });
+
+    describe('given failures with preflight errors', () => {
+        it('unwraps the error without adding a (preflight) indicator', () => {
+            const innerError = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
+            const preflightError = createPreflightError(innerError, preflightContext);
+            const result = sequentialTransactionPlanResult([
+                failedSingleTransactionPlanResult(createMessage('A'), preflightError),
+            ]);
+            const error = createFailedToSignTransactionsError(result);
+            expect(error.context.causeMessages).not.toContain('(preflight)');
+            expect(error.context.failedTransactions[0].error).toBe(innerError);
+            expect(error.context.failedTransactions[0].preflightData).toEqual(preflightContext);
+            expect(error.context.failedTransactions[0].logs).toEqual(preflightContext.logs);
+        });
+    });
+
+    describe('given failures with signatures in the context', () => {
+        it('omits the signatures from the error message', () => {
+            const signature =
+                '5wHu1qwD7q5ifaN5nwdcDQNbHUiCfnzJ6vaR98NLugS1CiVfCZLMGmmFaKCAVfPTFE5KPMhSaZaLo2v4xXSHVJk' as Signature;
+            const result = sequentialTransactionPlanResult([
+                failedSingleTransactionPlanResult(createMessage('A'), new Error('Signing failed'), { signature }),
+            ]);
+            const error = createFailedToSignTransactionsError(result);
+            expect(error.message).toBe('Failed to sign transactions.\n[Tx #1] Signing failed\n');
+            expect(error.message).not.toContain(signature);
+        });
+    });
+
+    describe('given all canceled results', () => {
+        it('includes the abort reason in the error message', () => {
+            const abortReason = new Error('User canceled');
+            const result = sequentialTransactionPlanResult([
+                canceledSingleTransactionPlanResult(createMessage('A')),
+                canceledSingleTransactionPlanResult(createMessage('B')),
+            ]);
+            const error = createFailedToSignTransactionsError(result, abortReason);
+            expect(error.cause).toBe(abortReason);
+            expect(error.message).toBe('Failed to sign transactions. Canceled with abort reason: Error: User canceled');
+        });
+
+        it('produces the expected error message without an abort reason', () => {
+            const result = sequentialTransactionPlanResult([canceledSingleTransactionPlanResult(createMessage('A'))]);
+            const error = createFailedToSignTransactionsError(result);
+            expect(error.message).toBe('Failed to sign transactions: Canceled');
+        });
+    });
+
+    it('sets transactionPlanResult as a non-enumerable property', () => {
+        const result = sequentialTransactionPlanResult([
+            failedSingleTransactionPlanResult(createMessage('A'), new Error('A failed')),
+        ]);
+        const error = createFailedToSignTransactionsError(result);
+        expect(error.context.transactionPlanResult).toBe(result);
+        expect(Object.keys(error.context)).not.toContain('transactionPlanResult');
+    });
+
+    it('has the correct error code', () => {
+        const result = sequentialTransactionPlanResult([
+            failedSingleTransactionPlanResult(createMessage('A'), new Error('A failed')),
+        ]);
+        const error = createFailedToSignTransactionsError(result);
+        expect(error.context.__code).toBe(SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTIONS);
     });
 });
 

@@ -3,6 +3,8 @@ import {
     type RpcSimulateTransactionResult,
     SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION,
     SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS,
+    SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTION,
+    SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTIONS,
     SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN,
     SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE,
     SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT,
@@ -55,6 +57,7 @@ type PreflightData = Omit<RpcSimulateTransactionResult, 'err'>;
  * ```
  *
  * @see {@link createFailedToSendTransactionsError}
+ * @see {@link createFailedToSignTransactionError}
  */
 export function createFailedToSendTransactionError<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
@@ -62,36 +65,61 @@ export function createFailedToSendTransactionError<
     result: CanceledSingleTransactionPlanResult<TContext> | FailedSingleTransactionPlanResult<TContext>,
     abortReason?: unknown,
 ): SolanaError<typeof SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION> {
-    let causeMessage: string;
-    let cause: unknown;
-    let logs: readonly string[] | undefined;
-    let preflightData: PreflightData | undefined;
+    return new SolanaError(
+        SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION,
+        getSingleFailureContext(result, abortReason, true /* includeSubmissionIndicator */),
+    );
+}
 
-    if (result.status === 'failed') {
-        const unwrapped = unwrapErrorWithPreflightData(result.error);
-        logs = unwrapped.logs;
-        preflightData = unwrapped.preflightData;
-        cause = unwrapped.unwrappedError;
-        const indicator = getFailedIndicator(!!preflightData, getSignatureFromContext(result.context));
-        causeMessage = `${indicator}: ${(cause as Error).message}${formatLogSnippet(logs)}`;
-    } else {
-        cause = abortReason;
-        causeMessage = abortReason != null ? `. Canceled with abort reason: ${String(abortReason)}` : ': Canceled';
-    }
-
-    const context: Record<string, unknown> = {
-        cause,
-        causeMessage,
-        logs,
-        preflightData,
-    };
-    Object.defineProperty(context, 'transactionPlanResult', {
-        configurable: false,
-        enumerable: false,
-        value: result,
-        writable: false,
-    });
-    return new SolanaError(SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION, context);
+/**
+ * Creates a {@link SolanaError} with the {@link SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTION}
+ * error code from a failed or canceled {@link SingleTransactionPlanResult}.
+ *
+ * This is the signing counterpart to {@link createFailedToSendTransactionError}, designed
+ * for user-facing failures raised by executors that sign a transaction without submitting
+ * it. It behaves identically — unwrapping simulation errors to expose the underlying
+ * transaction error as the `cause`, and extracting preflight data and logs into the error
+ * context — because signing executors typically estimate resource limits by simulating
+ * before they sign.
+ *
+ * Unlike the sending variant, the message carries no indicator of where the failure
+ * happened. That indicator locates a failure relative to network submission — `(preflight)`
+ * before it, or the transaction signature after it — and signing never submits, so neither
+ * applies. The `logs` and `preflightData` context properties are still populated whenever a
+ * simulation was responsible, and those logs still appear in the message, so nothing is lost
+ * beyond the prefix.
+ *
+ * @typeParam TContext - The type of the context object attached to the result. Any context is
+ * accepted, since this helper never reads from it.
+ * @param result - A failed or canceled single transaction plan result.
+ * @param abortReason - An optional abort reason if the transaction was canceled.
+ * @return A {@link SolanaError} with the appropriate error code, context, and cause.
+ *
+ * @example
+ * Creating an error from a failed transaction plan result.
+ * ```ts
+ * import { createFailedToSignTransactionError } from '@solana/instruction-plans';
+ *
+ * const error = createFailedToSignTransactionError(failedResult);
+ * console.log(error.message);
+ * // "Failed to sign transaction: The user rejected the signing request"
+ * console.log(error.cause);
+ * // The unwrapped signing error
+ * ```
+ *
+ * @see {@link createFailedToSignTransactionsError}
+ * @see {@link createFailedToSendTransactionError}
+ */
+export function createFailedToSignTransactionError<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+>(
+    result: CanceledSingleTransactionPlanResult<TContext> | FailedSingleTransactionPlanResult<TContext>,
+    abortReason?: unknown,
+): SolanaError<typeof SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTION> {
+    return new SolanaError(
+        SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTION,
+        getSingleFailureContext(result, abortReason, false /* includeSubmissionIndicator */),
+    );
 }
 
 /**
@@ -128,6 +156,7 @@ export function createFailedToSendTransactionError<
  * ```
  *
  * @see {@link createFailedToSendTransactionError}
+ * @see {@link createFailedToSignTransactionsError}
  */
 export function createFailedToSendTransactionsError<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
@@ -135,6 +164,119 @@ export function createFailedToSendTransactionsError<
     result: TransactionPlanResult<TContext>,
     abortReason?: unknown,
 ): SolanaError<typeof SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS> {
+    return new SolanaError(
+        SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS,
+        getMultipleFailuresContext(result, abortReason, true /* includeSubmissionIndicator */),
+    );
+}
+
+/**
+ * Creates a {@link SolanaError} with the {@link SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTIONS}
+ * error code from a {@link TransactionPlanResult}.
+ *
+ * This is the signing counterpart to {@link createFailedToSendTransactionsError}, designed
+ * for user-facing failures raised by executors that sign several transactions without
+ * submitting them. It walks the result tree, unwraps simulation errors from each failure,
+ * and builds the same `failedTransactions` array pairing each failure with its unwrapped
+ * error, logs, and preflight data.
+ *
+ * As with {@link createFailedToSignTransactionError}, each line names only the position of
+ * the failure in the plan. Nothing was submitted, so there is no preflight to flag and no
+ * transaction signature worth quoting.
+ *
+ * @typeParam TContext - The type of the context object attached to the results. Any context is
+ * accepted, since this helper never reads from it.
+ * @param result - The full transaction plan result tree.
+ * @param abortReason - An optional abort reason if the plan was aborted.
+ * @return A {@link SolanaError} with the appropriate error code, context, and cause.
+ *
+ * @example
+ * Creating an error from a failed transaction plan result.
+ * ```ts
+ * import { createFailedToSignTransactionsError } from '@solana/instruction-plans';
+ *
+ * const error = createFailedToSignTransactionsError(planResult);
+ * console.log(error.message);
+ * // "Failed to sign transactions.
+ * // [Tx #1] Insufficient funds for fee
+ * // [Tx #3] The user rejected the signing request"
+ * console.log(error.context.failedTransactions);
+ * // [{ index: 0, error: ..., logs: [...], preflightData: {...} }, ...]
+ * ```
+ *
+ * @see {@link createFailedToSignTransactionError}
+ * @see {@link createFailedToSendTransactionsError}
+ */
+export function createFailedToSignTransactionsError<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+>(
+    result: TransactionPlanResult<TContext>,
+    abortReason?: unknown,
+): SolanaError<typeof SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTIONS> {
+    return new SolanaError(
+        SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTIONS,
+        getMultipleFailuresContext(result, abortReason, false /* includeSubmissionIndicator */),
+    );
+}
+
+/**
+ * Builds the shared error context for the singular failed-to-send and failed-to-sign errors.
+ *
+ * @param includeSubmissionIndicator - Whether the message should indicate where the failure
+ * occurred relative to network submission: `(preflight)` before it, or the transaction
+ * signature after it. Signing never submits, so neither is meaningful there.
+ */
+function getSingleFailureContext<TContext extends TransactionPlanResultContext>(
+    result: CanceledSingleTransactionPlanResult<TContext> | FailedSingleTransactionPlanResult<TContext>,
+    abortReason: unknown,
+    includeSubmissionIndicator: boolean,
+): Record<string, unknown> {
+    let causeMessage: string;
+    let cause: unknown;
+    let logs: readonly string[] | undefined;
+    let preflightData: PreflightData | undefined;
+
+    if (result.status === 'failed') {
+        const unwrapped = unwrapErrorWithPreflightData(result.error);
+        logs = unwrapped.logs;
+        preflightData = unwrapped.preflightData;
+        cause = unwrapped.unwrappedError;
+        const indicator = includeSubmissionIndicator
+            ? getFailedIndicator(!!preflightData, getSignatureFromContext(result.context))
+            : '';
+        causeMessage = `${indicator}: ${(cause as Error).message}${formatLogSnippet(logs)}`;
+    } else {
+        cause = abortReason;
+        causeMessage = abortReason != null ? `. Canceled with abort reason: ${String(abortReason)}` : ': Canceled';
+    }
+
+    const context: Record<string, unknown> = {
+        cause,
+        causeMessage,
+        logs,
+        preflightData,
+    };
+    Object.defineProperty(context, 'transactionPlanResult', {
+        configurable: false,
+        enumerable: false,
+        value: result,
+        writable: false,
+    });
+    return context;
+}
+
+/**
+ * Builds the shared error context for the plural failed-to-send and failed-to-sign errors.
+ *
+ * @param includeSubmissionIndicator - Whether each line should indicate where that failure
+ * occurred relative to network submission: `(preflight)` before it, or the transaction
+ * signature after it. Signing never submits, so neither is meaningful there.
+ */
+function getMultipleFailuresContext<TContext extends TransactionPlanResultContext>(
+    result: TransactionPlanResult<TContext>,
+    abortReason: unknown,
+    includeSubmissionIndicator: boolean,
+): Record<string, unknown> {
     const flattenedResults = flattenTransactionPlanResult(result);
 
     const failedTransactions = flattenedResults.flatMap((singleResult, index) => {
@@ -156,10 +298,9 @@ export function createFailedToSendTransactionsError<
     if (failedTransactions.length > 0) {
         cause = failedTransactions.length === 1 ? failedTransactions[0].error : undefined;
         const failureLines = failedTransactions.map(({ error, index, preflightData }) => {
-            const indicator = getFailedIndicator(
-                !!preflightData,
-                getSignatureFromContext(flattenedResults[index].context),
-            );
+            const indicator = includeSubmissionIndicator
+                ? getFailedIndicator(!!preflightData, getSignatureFromContext(flattenedResults[index].context))
+                : '';
             return `\n[Tx #${index + 1}${indicator}] ${error.message}`;
         });
         const logSnippet = failedTransactions.length === 1 ? formatLogSnippet(failedTransactions[0].logs) : '';
@@ -180,7 +321,7 @@ export function createFailedToSendTransactionsError<
         value: result,
         writable: false,
     });
-    return new SolanaError(SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS, context);
+    return context;
 }
 
 /**
