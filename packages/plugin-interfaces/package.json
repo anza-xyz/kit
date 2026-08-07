@@ -40,6 +40,7 @@
         "maintained node versions"
     ],
     "dependencies": {
+        "@solana/accounts": "workspace:*",
         "@solana/addresses": "workspace:*",
         "@solana/instruction-plans": "workspace:*",
         "@solana/keys": "workspace:*",

@@ -138,6 +138,25 @@ function accountCreationPlugin() {
 }
 ```
 
+### `ClientWithFetchAccounts`
+
+Represents a client that can fetch the encoded content of accounts from their addresses. Different implementations may fetch accounts differently — for example, by calling the `getAccountInfo` and/or `getMultipleAccounts` RPC methods, or by using a locally cached value. The returned array matches the provided addresses in both length and order, using `MaybeEncodedAccount` to represent accounts that may not exist.
+
+```ts
+import { extendClient } from '@solana/plugin-core';
+import { ClientWithFetchAccounts } from '@solana/plugin-interfaces';
+
+function accountLoaderPlugin() {
+    return <T extends ClientWithFetchAccounts>(client: T) =>
+        extendClient(client, {
+            loadExistingAccounts: async (addresses: Address[]) => {
+                const accounts = await client.fetchAccounts(addresses);
+                return accounts.filter(account => account.exists);
+            },
+        });
+}
+```
+
 ### `ClientWithRpc<TRpcMethods>`
 
 Represents a client with access to a Solana RPC endpoint.
