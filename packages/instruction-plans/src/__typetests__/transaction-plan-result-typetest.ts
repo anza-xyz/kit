@@ -38,6 +38,7 @@ import {
     successfulSingleTransactionPlanResult,
     successfulSingleTransactionPlanResultFromTransaction,
     SuccessfulSingleTransactionPlanResultWithOptionalSignature,
+    successfulSingleTransactionPlanResultWithOptionalSignature,
     SuccessfulTransactionPlanResult,
     summarizeTransactionPlanResult,
     TransactionPlanResult,
@@ -179,6 +180,50 @@ type CustomContext = { customData: string };
         });
         result satisfies SuccessfulSingleTransactionPlanResult<CustomContext, typeof messageA>;
         result satisfies TransactionPlanResult;
+    }
+}
+
+// [DESCRIBE] successfulSingleTransactionPlanResultWithOptionalSignature
+{
+    // It satisfies the loose successful result and a loose result tree.
+    {
+        const result = successfulSingleTransactionPlanResultWithOptionalSignature(messageA, transactionA);
+        result satisfies SuccessfulSingleTransactionPlanResultWithOptionalSignature<
+            TransactionPlanResultContext,
+            typeof messageA
+        >;
+        result satisfies TransactionPlanResultWithOptionalSignature;
+    }
+
+    // Its context signature is optional.
+    {
+        const result = successfulSingleTransactionPlanResultWithOptionalSignature(messageA, transactionA);
+        result.context.signature satisfies Signature | undefined;
+        // @ts-expect-error The signature may be absent.
+        result.context.signature satisfies Signature;
+    }
+
+    // Its context transaction is guaranteed.
+    {
+        const result = successfulSingleTransactionPlanResultWithOptionalSignature(messageA, transactionA);
+        result.context.transaction satisfies Transaction;
+    }
+
+    // It can include a custom context.
+    {
+        const result = successfulSingleTransactionPlanResultWithOptionalSignature(messageA, transactionA, {
+            customData: 'test',
+        });
+        result satisfies SuccessfulSingleTransactionPlanResultWithOptionalSignature<CustomContext, typeof messageA>;
+        result.context.customData satisfies string;
+        result.context.transaction satisfies Transaction;
+    }
+
+    // It is not a strict successful result, since its signature may be absent.
+    {
+        const result = successfulSingleTransactionPlanResultWithOptionalSignature(messageA, transactionA);
+        // @ts-expect-error The signature may be absent.
+        result satisfies SuccessfulSingleTransactionPlanResult<TransactionPlanResultContext, typeof messageA>;
     }
 }
 

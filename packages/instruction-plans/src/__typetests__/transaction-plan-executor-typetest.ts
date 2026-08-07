@@ -19,8 +19,10 @@ import {
     type SingleTransactionPlanResultWithOptionalSignature,
     SuccessfulSingleTransactionPlanResult,
     type SuccessfulSingleTransactionPlanResultWithOptionalSignature,
+    summarizeTransactionPlanResult,
     type TransactionPlan,
     type TransactionPlanExecutor,
+    type TransactionPlanExecutorConfig,
     type TransactionPlanResult,
     type TransactionPlanResultContext,
     type TransactionPlanResultWithOptionalSignature,
@@ -189,6 +191,227 @@ import {
             single.context.signature satisfies Signature | undefined;
             // @ts-expect-error The signature may be absent.
             single.context.signature satisfies Signature;
+        })();
+    }
+}
+
+// [DESCRIBE] createTransactionPlanExecutor with allowMissingFeePayerSignature
+{
+    // Setting the flag narrows the callback to return a transaction.
+    {
+        createTransactionPlanExecutor({
+            allowMissingFeePayerSignature: true,
+            // @ts-expect-error A bare signature cannot be missing, so it is forbidden here.
+            executeTransactionMessage: () => Promise.resolve({} as Signature),
+        });
+    }
+
+    // Omitting the flag still allows either return value.
+    {
+        createTransactionPlanExecutor({
+            executeTransactionMessage: () => Promise.resolve({} as Signature),
+        });
+        createTransactionPlanExecutor({
+            allowMissingFeePayerSignature: false,
+            executeTransactionMessage: () => Promise.resolve({} as Signature),
+        });
+    }
+
+    // A non-literal boolean still allows either return value, and guarantees nothing.
+    {
+        void (async () => {
+            const allowMissingFeePayerSignature = {} as boolean;
+            const executor = createTransactionPlanExecutor({
+                allowMissingFeePayerSignature,
+                executeTransactionMessage: () => Promise.resolve({} as Signature),
+            });
+            const single = flattenTransactionPlanResult(await executor(null as unknown as TransactionPlan))[0];
+            if (single.status === 'successful') {
+                // @ts-expect-error Neither guarantee can be established for a dynamic flag.
+                single.context.transaction satisfies Transaction;
+                // @ts-expect-error Neither guarantee can be established for a dynamic flag.
+                single.context.signature satisfies Signature;
+            }
+        })();
+    }
+
+    // A successful result guarantees the transaction while leaving the signature optional.
+    {
+        void (async () => {
+            const executor = createTransactionPlanExecutor({
+                allowMissingFeePayerSignature: true,
+                executeTransactionMessage: () => Promise.resolve({} as Transaction),
+            });
+            const single = flattenTransactionPlanResult(await executor(null as unknown as TransactionPlan))[0];
+            if (single.status === 'successful') {
+                single.context.transaction satisfies Transaction;
+                single.context.signature satisfies Signature | undefined;
+                // @ts-expect-error The signature may be absent.
+                single.context.signature satisfies Signature;
+            }
+        })();
+    }
+
+    // Failed and canceled results do not inherit the transaction guarantee.
+    {
+        void (async () => {
+            const executor = createTransactionPlanExecutor({
+                allowMissingFeePayerSignature: true,
+                executeTransactionMessage: () => Promise.resolve({} as Transaction),
+            });
+            const single = flattenTransactionPlanResult(await executor(null as unknown as TransactionPlan))[0];
+            if (single.status === 'failed' || single.status === 'canceled') {
+                single.context.transaction satisfies Transaction | undefined;
+                // @ts-expect-error Execution may not have reached the point of building a transaction.
+                single.context.transaction satisfies Transaction;
+            }
+        })();
+    }
+
+    // The guarantee composes with a custom context.
+    {
+        void (async () => {
+            const executor = createTransactionPlanExecutor<{ custom: string }, true>({
+                allowMissingFeePayerSignature: true,
+                executeTransactionMessage: () => Promise.resolve({} as Transaction),
+            });
+            const single = flattenTransactionPlanResult(await executor(null as unknown as TransactionPlan))[0];
+            if (single.status === 'successful') {
+                single.context.custom satisfies string;
+                single.context.transaction satisfies Transaction;
+            }
+        })();
+    }
+}
+
+// [DESCRIBE] The transaction guarantee survives the consumer-facing helpers
+{
+    // summarizeTransactionPlanResult keeps it on successful transactions only.
+    {
+        void (async () => {
+            const executor = createTransactionPlanExecutor({
+                allowMissingFeePayerSignature: true,
+                executeTransactionMessage: () => Promise.resolve({} as Transaction),
+            });
+            const summary = summarizeTransactionPlanResult(await executor(null as unknown as TransactionPlan));
+            summary.successfulTransactions[0].context.transaction satisfies Transaction;
+            summary.successfulTransactions[0].context.signature satisfies Signature | undefined;
+            // @ts-expect-error The signature may be absent.
+            summary.successfulTransactions[0].context.signature satisfies Signature;
+            // @ts-expect-error A failed transaction may never have reached one.
+            summary.failedTransactions[0].context.transaction satisfies Transaction;
+            // @ts-expect-error A canceled transaction may never have reached one.
+            summary.canceledTransactions[0].context.transaction satisfies Transaction;
+        })();
+    }
+
+    // passthroughFailedTransactionPlanExecution keeps it.
+    //
+    // TRIPWIRE: this holds only because a loose result does not match the monomorphic strict
+    // overloads and so reaches the generic one. Should `SuccessfulSingleTransactionPlanResult` ever
+    // stop requiring `context.signature` — the breaking change that would let `TContext` carry both
+    // guarantees — strict and loose become structurally identical, the first strict overload starts
+    // matching loose results, and this assertion fails. The fix at that point is to delete the four
+    // monomorphic overloads and keep only the generic one, NOT to relax this assertion.
+    {
+        void (async () => {
+            const executor = createTransactionPlanExecutor({
+                allowMissingFeePayerSignature: true,
+                executeTransactionMessage: () => Promise.resolve({} as Transaction),
+            });
+            const result = await passthroughFailedTransactionPlanExecution(
+                executor(null as unknown as TransactionPlan),
+            );
+            const single = flattenTransactionPlanResult(result)[0];
+            if (single.status === 'successful') {
+                single.context.transaction satisfies Transaction;
+            }
+        })();
+    }
+}
+
+// [DESCRIBE] Which passthroughFailedTransactionPlanExecution overload is selected
+{
+    // A loose result reaches the generic overload, which preserves TContext.
+    {
+        void (async () => {
+            const executor = createTransactionPlanExecutor<{ custom: string }, true>({
+                allowMissingFeePayerSignature: true,
+                executeTransactionMessage: () => Promise.resolve({} as Transaction),
+            });
+            const result = await passthroughFailedTransactionPlanExecution(
+                executor(null as unknown as TransactionPlan),
+            );
+            flattenTransactionPlanResult(result)[0].context.custom satisfies string;
+        })();
+    }
+
+    // A strict result matches a monomorphic overload first, which discards TContext. This is
+    // pre-existing behaviour, unrelated to the signature and transaction guarantees. Together with
+    // the test above it pins which overload wins, so collapsing the overload set flips this one to
+    // an unused directive rather than failing silently.
+    {
+        void (async () => {
+            const executor = createTransactionPlanExecutor<{ custom: string }>({
+                executeTransactionMessage: () => Promise.resolve({} as Signature),
+            });
+            const result = await passthroughFailedTransactionPlanExecution(
+                executor(null as unknown as TransactionPlan),
+            );
+            // @ts-expect-error The strict overload discards the custom context.
+            flattenTransactionPlanResult(result)[0].context.custom satisfies string;
+        })();
+    }
+}
+
+// [DESCRIBE] createTransactionPlanExecutor call-site shapes found in the wild
+{
+    // It survives a `satisfies TransactionPlanExecutorConfig` annotation around a wrapped callback,
+    // as used by `rpcTransactionPlanExecutor` in the kit-plugins repo.
+    {
+        const limitFunction = <TArguments extends unknown[], TReturnType>(
+            fn: (...args: TArguments) => PromiseLike<TReturnType>,
+            _maxConcurrency: number,
+        ): ((...args: TArguments) => Promise<TReturnType>) => fn as never;
+        const sendAndConfirmTransaction = (_tx: Transaction, _config?: { abortSignal?: AbortSignal }) =>
+            Promise.resolve();
+        const signTransactionMessageWithSigners = (
+            _message: TransactionMessage & TransactionMessageWithFeePayer,
+            _config?: { abortSignal?: AbortSignal },
+        ) => Promise.resolve({} as Transaction);
+        const executor = createTransactionPlanExecutor({
+            executeTransactionMessage: limitFunction(async (context, transactionMessage, executorConfig) => {
+                const latestBlockhash = {} as unknown as Parameters<
+                    typeof setTransactionMessageLifetimeUsingBlockhash
+                >[0];
+                context.message = setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, transactionMessage);
+                const signedTransaction = await signTransactionMessageWithSigners(context.message, executorConfig);
+                context.transaction = signedTransaction;
+                await sendAndConfirmTransaction(signedTransaction, executorConfig);
+                return signedTransaction;
+            }, 10),
+        } satisfies TransactionPlanExecutorConfig);
+        executor satisfies TransactionPlanExecutor;
+    }
+
+    // A signing executor hands back a partially signed transaction and keeps the guarantee.
+    {
+        void (async () => {
+            const partiallySignTransactionMessageWithSigners = (
+                _message: TransactionMessage & TransactionMessageWithFeePayer,
+            ) => Promise.resolve({} as Transaction);
+            const executor = createTransactionPlanExecutor({
+                allowMissingFeePayerSignature: true,
+                executeTransactionMessage: async (context, message) => {
+                    const transaction = await partiallySignTransactionMessageWithSigners(message);
+                    context.transaction = transaction;
+                    return transaction;
+                },
+            });
+            const single = flattenTransactionPlanResult(await executor(null as unknown as TransactionPlan))[0];
+            if (single.status === 'successful') {
+                single.context.transaction satisfies Transaction;
+            }
         })();
     }
 }

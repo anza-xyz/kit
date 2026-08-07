@@ -278,6 +278,13 @@ export type SingleTransactionPlanResultWithOptionalSignature<
     | FailedSingleTransactionPlanResult<TContext, TTransactionMessage>
     | SuccessfulSingleTransactionPlanResultWithOptionalSignature<TContext, TTransactionMessage>;
 
+// Note: these `WithOptionalSignature` types are necessary because the current
+// version of `TransactionPlanResult` has `context.signature` mandatory.
+// In a future breaking change, we should remove that requirement, and then
+// delete these types. We would rely only on the `TContext` type.
+// Note that `createTransactionPlanExecutor` is already typed to make
+// guarantees on `TContext`, so consumers of results of executors created
+// with that helper would not break.
 /**
  * A {@link TransactionPlanResult} tree whose successful leaves may omit the transaction signature.
  *
@@ -650,17 +657,24 @@ export function successfulSingleTransactionPlanResultFromTransaction<
  * transaction to carry a fee payer signature. The `signature` context property is populated when
  * the fee payer slot is filled, and omitted entirely otherwise.
  *
+ * The `transaction` context property, on the other hand, is always populated — the transaction is
+ * the whole point of a result that may have no signature to report — so the returned type narrows
+ * `context.transaction` to be required.
+ *
  * @typeParam TContext - The type of the context object.
  * @typeParam TTransactionMessage - The type of the transaction message.
  * @param plannedMessage - The original transaction message.
  * @param transaction - The resulting transaction, which need not be signed by its fee payer.
  * @param context - Additional context to include with the result.
- * @return A successful result whose `context.signature` may be absent.
+ * @return A successful result whose `context.signature` may be absent, but whose
+ * `context.transaction` is guaranteed to be present.
  *
  * @example
  * ```ts
  * const result = successfulSingleTransactionPlanResultWithOptionalSignature(message, transaction);
  * result satisfies SuccessfulSingleTransactionPlanResultWithOptionalSignature;
+ * result.context.transaction; // Transaction
+ * result.context.signature; // Signature | undefined
  * ```
  *
  * @see {@link successfulSingleTransactionPlanResultFromTransaction}
@@ -674,7 +688,10 @@ export function successfulSingleTransactionPlanResultWithOptionalSignature<
     plannedMessage: TTransactionMessage,
     transaction: Transaction,
     context?: Omit<BaseTransactionPlanResultContext, 'signature' | 'transaction'> & TContext,
-): SuccessfulSingleTransactionPlanResultWithOptionalSignature<TContext, TTransactionMessage> {
+): SuccessfulSingleTransactionPlanResultWithOptionalSignature<
+    TContext & { transaction: Transaction },
+    TTransactionMessage
+> {
     const signature = getSignatureFromTransactionIfPresent(transaction);
     return Object.freeze({
         context: Object.freeze({

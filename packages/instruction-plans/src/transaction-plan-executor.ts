@@ -19,7 +19,9 @@ import type {
 import { createFailedToExecuteTransactionPlanError } from './transaction-plan-errors';
 import {
     BaseTransactionPlanResultContext,
+    type CanceledSingleTransactionPlanResult,
     canceledSingleTransactionPlanResult,
+    type FailedSingleTransactionPlanResult,
     failedSingleTransactionPlanResult,
     parallelTransactionPlanResult,
     sequentialTransactionPlanResult,
@@ -27,6 +29,7 @@ import {
     type SingleTransactionPlanResultWithOptionalSignature,
     successfulSingleTransactionPlanResult,
     successfulSingleTransactionPlanResultFromTransaction,
+    type SuccessfulSingleTransactionPlanResultWithOptionalSignature,
     successfulSingleTransactionPlanResultWithOptionalSignature,
     type TransactionPlanResult,
     type TransactionPlanResultContext,
@@ -42,7 +45,8 @@ import {
  * @typeParam TContext - The type of the context object that may be passed along with results.
  * @typeParam TSingle - The type of single transaction plan results this executor produces. Defaults
  * to {@link SingleTransactionPlanResult}. Executors created with `allowMissingFeePayerSignature`
- * produce {@link SingleTransactionPlanResultWithOptionalSignature} instead.
+ * produce results whose successful leaves type `context.signature` as optional and guarantee
+ * `context.transaction` instead.
  * @param transactionPlan - The transaction plan to execute.
  * @param config - Optional configuration object that can include an `AbortSignal` to cancel execution.
  * @return A promise that resolves to the execution results.
@@ -59,14 +63,48 @@ export type TransactionPlanExecutor<
     config?: { abortSignal?: AbortSignal },
 ) => Promise<TransactionPlanResult<TContext, TransactionMessage & TransactionMessageWithFeePayer, TSingle>>;
 
-type ExecuteTransactionMessage<TContext extends TransactionPlanResultContext> = (
+type ExecuteTransactionMessage<
+    TContext extends TransactionPlanResultContext,
+    TReturn extends Signature | Transaction = Signature | Transaction,
+> = (
     context: BaseTransactionPlanResultContext & TContext,
     transactionMessage: TransactionMessage & TransactionMessageWithFeePayer,
     config?: { abortSignal?: AbortSignal },
-) => Promise<Signature | Transaction>;
+) => Promise<TReturn>;
+
+/**
+ * The single results produced by an executor, given its `allowMissingFeePayerSignature` flag.
+ *
+ * Three states, each failing closed:
+ * - Literally `false` (or omitted): the runtime derives the signature via
+ *   `getSignatureFromTransaction`, which throws when the fee payer slot is empty, so
+ *   `context.signature` is guaranteed.
+ * - Literally `true`: the config narrows `executeTransactionMessage` to return a
+ *   {@link Transaction}, which makes `traverseSingle` take the branch that always stores it, so
+ *   `context.transaction` is guaranteed while `context.signature` is not.
+ * - A non-literal `boolean`: neither guarantee can be established, so the loosest results apply.
+ *
+ * Note that only the successful variant carries the transaction guarantee. A failed or canceled
+ * result may be produced before the callback ever returns, so it has nothing to guarantee.
+ */
+type ExecutorSingleResult<
+    TContext extends TransactionPlanResultContext,
+    TAllowMissingFeePayerSignature extends boolean,
+> = [TAllowMissingFeePayerSignature] extends [false]
+    ? SingleTransactionPlanResult<TContext>
+    : [TAllowMissingFeePayerSignature] extends [true]
+      ?
+            | CanceledSingleTransactionPlanResult<TContext>
+            | FailedSingleTransactionPlanResult<TContext>
+            | SuccessfulSingleTransactionPlanResultWithOptionalSignature<TContext & { transaction: Transaction }>
+      : SingleTransactionPlanResultWithOptionalSignature<TContext>;
 
 /**
  * Configuration object for creating a new transaction plan executor.
+ *
+ * @typeParam TContext - The type of the context object that may be passed along with results.
+ * @typeParam TAllowMissingFeePayerSignature - The literal type of the `allowMissingFeePayerSignature`
+ * option. Setting it to `true` narrows `executeTransactionMessage` to return a {@link Transaction}.
  *
  * @see {@link createTransactionPlanExecutor}
  */
@@ -82,11 +120,19 @@ export type TransactionPlanExecutorConfig<
      * Use this for executors that hand transactions off rather than submitting them — for example
      * signing with an authority wallet and passing the result to a relayer that will pay the fee.
      *
+     * Setting this narrows `executeTransactionMessage` to return a {@link Transaction} rather than
+     * a {@link Signature} or a {@link Transaction}. Returning a bare signature would defeat the
+     * point of the flag — a signature you already hold cannot be missing — and it is what lets
+     * successful results guarantee `context.transaction`.
+     *
      * @defaultValue `false`
      */
     allowMissingFeePayerSignature?: TAllowMissingFeePayerSignature;
     /** Called whenever a transaction message must be sent to the blockchain. */
-    executeTransactionMessage: ExecuteTransactionMessage<TContext>;
+    executeTransactionMessage: ExecuteTransactionMessage<
+        TContext,
+        [TAllowMissingFeePayerSignature] extends [true] ? Transaction : Signature | Transaction
+    >;
 };
 
 /**
@@ -103,7 +149,8 @@ export type TransactionPlanExecutorConfig<
  * means that if an error is thrown at any point in the callback, any attributes already
  * saved to the context will still be available in the plan result, which can be useful
  * for debugging failures or building recovery plans. The callback must return either a
- * {@link Signature} or a full {@link Transaction} object.
+ * {@link Signature} or a full {@link Transaction} object — or, when
+ * `allowMissingFeePayerSignature` is set, a {@link Transaction} specifically.
  *
  * - If that function is successful, the executor will return a successful `TransactionPlanResult`
  * for that message. The returned signature or transaction is stored in the context automatically.
@@ -113,6 +160,10 @@ export type TransactionPlanExecutorConfig<
  * - If the `abortSignal` is triggered, the executor will immediately stop processing the plan and
  * return a `TransactionPlanResult` with the status set to `canceled`.
  *
+ * @typeParam TContext - The type of the context object that may be passed along with results.
+ * @typeParam TAllowMissingFeePayerSignature - The literal type of the `allowMissingFeePayerSignature`
+ * option, which selects the guarantees the returned executor's results carry. Inferred from the
+ * config; a non-literal `boolean` yields the loosest results, so the unsafe direction fails closed.
  * @param config - Configuration object containing the transaction message executor function.
  * @return A {@link TransactionPlanExecutor} function that can execute transaction plans.
  *
@@ -157,20 +208,17 @@ export function createTransactionPlanExecutor<
     TAllowMissingFeePayerSignature extends boolean = false,
 >(
     config: TransactionPlanExecutorConfig<TContext, TAllowMissingFeePayerSignature>,
-): TransactionPlanExecutor<
-    TContext,
-    [TAllowMissingFeePayerSignature] extends [false]
-        ? SingleTransactionPlanResult<TContext>
-        : SingleTransactionPlanResultWithOptionalSignature<TContext>
-> {
-    type TSingle = [TAllowMissingFeePayerSignature] extends [false]
-        ? SingleTransactionPlanResult<TContext>
-        : SingleTransactionPlanResultWithOptionalSignature<TContext>;
+): TransactionPlanExecutor<TContext, ExecutorSingleResult<TContext, TAllowMissingFeePayerSignature>> {
+    type TSingle = ExecutorSingleResult<TContext, TAllowMissingFeePayerSignature>;
     return async (plan, { abortSignal } = {}) => {
         const traverseConfig: TraverseConfig<TContext> = {
             ...config,
             abortSignal: abortSignal,
             canceled: abortSignal?.aborted ?? false,
+            // `executeTransactionMessage` returns a narrower promise than the traversal needs when
+            // `allowMissingFeePayerSignature` is literally `true`, but the conditional type cannot
+            // be resolved while `TAllowMissingFeePayerSignature` is unresolved.
+            executeTransactionMessage: config.executeTransactionMessage as ExecuteTransactionMessage<TContext>,
         };
 
         // Fail early if there are non-divisible sequential plans in the
@@ -199,12 +247,11 @@ export function createTransactionPlanExecutor<
     };
 }
 
-type TraverseConfig<TContext extends TransactionPlanResultContext> = TransactionPlanExecutorConfig<
-    TContext,
-    boolean
-> & {
+type TraverseConfig<TContext extends TransactionPlanResultContext> = {
     abortSignal?: AbortSignal;
+    allowMissingFeePayerSignature?: boolean;
     canceled: boolean;
+    executeTransactionMessage: ExecuteTransactionMessage<TContext>;
 };
 
 async function traverse<TContext extends TransactionPlanResultContext>(
@@ -346,7 +393,10 @@ function assertDivisibleSequentialPlansOnly(transactionPlan: TransactionPlan): v
  * Any other errors are re-thrown as normal.
  *
  * Results produced by an executor created with `allowMissingFeePayerSignature` are accepted too,
- * and are returned with their successful leaves still typing `context.signature` as optional.
+ * and are returned with their successful leaves still typing `context.signature` as optional and
+ * still guaranteeing `context.transaction`. Such results resolve to the generic overload, which
+ * preserves whatever guarantees the executor established, adding only the failed and canceled
+ * variants that the failure path may introduce.
  *
  * @param promise - A promise returned by a transaction plan executor.
  * @return A promise that resolves to the transaction plan result, even if some transactions failed.
@@ -383,6 +433,21 @@ export async function passthroughFailedTransactionPlanExecution(
 export async function passthroughFailedTransactionPlanExecution(
     promise: Promise<SingleTransactionPlanResultWithOptionalSignature>,
 ): Promise<SingleTransactionPlanResultWithOptionalSignature>;
+export async function passthroughFailedTransactionPlanExecution<
+    TContext extends TransactionPlanResultContext,
+    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer,
+    TSingle extends SingleTransactionPlanResultWithOptionalSignature<TContext, TTransactionMessage>,
+>(
+    promise: Promise<TransactionPlanResult<TContext, TTransactionMessage, TSingle>>,
+): Promise<
+    TransactionPlanResult<
+        TContext,
+        TTransactionMessage,
+        | CanceledSingleTransactionPlanResult<TContext, TTransactionMessage>
+        | FailedSingleTransactionPlanResult<TContext, TTransactionMessage>
+        | TSingle
+    >
+>;
 export async function passthroughFailedTransactionPlanExecution(
     promise: Promise<TransactionPlanResultWithOptionalSignature>,
 ): Promise<TransactionPlanResultWithOptionalSignature>;

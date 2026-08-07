@@ -511,20 +511,6 @@ describe('createTransactionPlanExecutor', () => {
                 }),
             );
         });
-
-        it('still uses a returned signature verbatim when enabled', async () => {
-            expect.assertions(1);
-            const messageA = createMessage('A');
-            const executor = createTransactionPlanExecutor({
-                allowMissingFeePayerSignature: true,
-                executeTransactionMessage: () => Promise.resolve('A' as Signature),
-            });
-
-            const promise = executor(singleTransactionPlan(messageA));
-            await expect(promise).resolves.toStrictEqual(
-                successfulSingleTransactionPlanResult(messageA, { signature: 'A' as Signature }),
-            );
-        });
     });
 
     describe('sequential scenarios', () => {

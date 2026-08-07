@@ -431,7 +431,33 @@ The context object supports three optional base properties that have semantic me
 
 - **`message`**: The transaction message after any modifications (e.g., after setting a lifetime).
 - **`transaction`**: The signed transaction ready to be sent.
-- **`signature`**: The transaction signature. Note that this is automatically populated when you set the `transaction` property on the context and/or return a `Transaction`.
+- **`signature`**: The transaction signature. Note that this is automatically populated when you set the `transaction` property on the context and/or return a `Transaction`, since a transaction that reaches this point must be signed by its fee payer. The one exception is an executor created with `allowMissingFeePayerSignature`, described below.
+
+### Producing transactions without a fee payer signature
+
+By default, returning a `Transaction` that has not been signed by its fee payer fails the transaction: the executor derives the signature as it builds the result and throws `SOLANA_ERROR__TRANSACTION__FEE_PAYER_SIGNATURE_MISSING`. That is usually what you want, since an executor that sends transactions has nothing useful to report without a signature.
+
+Some executors, though, deliberately stop short of sending. An authority wallet might partially sign a transaction and hand it to a relayer that will pay the fee and submit it later. Pass `allowMissingFeePayerSignature` for those:
+
+```ts
+import {
+    createTransactionPlanExecutor,
+    partiallySignTransactionMessageWithSigners,
+} from '@solana/kit';
+// ---cut-before---
+const transactionPlanExecutor = createTransactionPlanExecutor({
+    allowMissingFeePayerSignature: true,
+    executeTransactionMessage: async (context, message) => {
+        const transaction = await partiallySignTransactionMessageWithSigners(message);
+        context.transaction = transaction;
+        return transaction;
+    },
+});
+```
+
+This trades one guarantee for another on successful results. `context.signature` becomes optional, populated only when the fee payer slot happens to be filled, so you must handle its absence. In exchange, `context.transaction` is guaranteed — which is why setting the flag also narrows `executeTransactionMessage` to return a `Transaction` rather than a `Signature` or a `Transaction`. Returning a bare signature would defeat the purpose, as a signature you already hold cannot be missing.
+
+Failed and canceled results are unaffected and keep every context property optional, since execution may stop before a transaction exists.
 
 You can also add any custom properties you need:
 
@@ -744,10 +770,7 @@ const rpc = {} as unknown as Rpc<SolanaRpcApi>;
 const rpcSubscriptions = {} as unknown as RpcSubscriptions<SolanaRpcSubscriptionsApi>;
 // ---cut-before---
 // [!code ++:4]
-import {
-    estimateAndSetResourceLimitsFactory,
-    estimateResourceLimitsFactory,
-} from '@solana/kit';
+import { estimateAndSetResourceLimitsFactory, estimateResourceLimitsFactory } from '@solana/kit';
 
 const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
 // [!code ++:2]
