@@ -223,6 +223,8 @@ function transactionCounterPlugin() {
 
 Represents a client that can send transactions to the Solana network. It supports flexible input formats including instructions, instruction plans, transaction messages, or transaction plans.
 
+The interface accepts an optional `TContext` type parameter describing the context attached to the results. It defaults to `TransactionPlanResultContextWithSignature`, so a successful result guarantees a `context.signature` unless a different context is supplied.
+
 ```ts
 import { extendClient } from '@solana/plugin-core';
 import { ClientWithPayer, ClientWithTransactionSending } from '@solana/plugin-interfaces';
@@ -238,6 +240,32 @@ function transferPlugin() {
                 });
                 const result = await client.sendTransaction(instruction);
                 return result.context.signature;
+            },
+        });
+}
+```
+
+### `ClientWithTransactionSigning`
+
+Represents a client that can sign transactions without sending them. It accepts the same flexible inputs as `ClientWithTransactionSending`, but hands back the signed transactions instead of submitting them — useful when another party, such as a relayer, will pay the fee and broadcast them.
+
+Unlike `ClientWithTransactionSending`, this interface has no default result context: what a signing result's context contains is entirely decided by the plugin providing the capability. Parameterise the interface with the context your code needs — typically one that guarantees `context.transaction` on successful results.
+
+```ts
+import { extendClient } from '@solana/plugin-core';
+import { ClientWithIdentity, ClientWithTransactionSigning } from '@solana/plugin-interfaces';
+
+function relayedTransferPlugin(relayerUrl: string) {
+    return <T extends ClientWithIdentity & ClientWithTransactionSigning<{ transaction: Transaction }>>(client: T) =>
+        extendClient(client, {
+            transferViaRelayer: async (recipient: Address, amount: Lamports) => {
+                const instruction = getTransferSolInstruction({
+                    source: client.identity,
+                    destination: recipient,
+                    amount,
+                });
+                const result = await client.signTransaction(instruction);
+                return await postToRelayer(relayerUrl, result.context.transaction);
             },
         });
 }

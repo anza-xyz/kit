@@ -62,6 +62,7 @@ Kit ships a small set of standard interfaces in `@solana/plugin-interfaces` (re-
 - `ClientWithGetMinimumBalance` — installs `client.getMinimumBalance`.
 - `ClientWithTransactionPlanning` — installs `client.planTransaction(s)`.
 - `ClientWithTransactionSending` — installs `client.sendTransaction(s)`.
+- `ClientWithTransactionSigning` — installs `client.signTransaction(s)`.
 
 Sticking to these interfaces lets plugins from any source compose freely with each other — and lets your application code take a `ClientWithRpc` rather than caring which specific plugin produced the RPC capability.
 

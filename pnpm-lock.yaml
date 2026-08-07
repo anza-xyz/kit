@@ -900,6 +900,9 @@ importers:
       '@solana/signers':
         specifier: workspace:*
         version: link:../signers
+      '@solana/transactions':
+        specifier: workspace:*
+        version: link:../transactions
       typescript:
         specifier: '>=5.4.0'
         version: 5.9.3

@@ -49,7 +49,7 @@ The most common interfaces are:
 - `ClientWithPayer` and `ClientWithIdentity` for signer roles.
 - `ClientWithRpc<TApi>` and `ClientWithRpcSubscriptions<TApi>` for transports.
 - `ClientWithAirdrop` and `ClientWithGetMinimumBalance` for funding helpers.
-- `ClientWithTransactionPlanning` and `ClientWithTransactionSending` for the transaction lifecycle.
+- `ClientWithTransactionPlanning`, `ClientWithTransactionSending` and `ClientWithTransactionSigning` for the transaction lifecycle.
 
 If your plugin's capability does not match any existing interface, define your own type and export it. If you think the capability is generally useful and there is a gap in the standard interfaces, consider opening a PR against [`anza-xyz/kit`](https://github.com/anza-xyz/kit) so other plugins can adopt it too. Treating capabilities as named interfaces makes them addressable from other code without naming the specific plugin that installed them.
 
