@@ -94,6 +94,7 @@ RPC method response types live in `packages/rpc-api/src/<methodName>.ts`; types 
 - `patch` for fixes, `minor` for features, `major` for breaking changes (while pre-1.0, `minor` may be treated as breaking).
 - No changeset needed for docs-only changes, CI config, dev dependency updates, or test-only changes.
 - All publishable packages are version-locked via the `fixed` config in `.changeset/config.json`.
+- **Re-check the calculated version after any `@changesets/cli` bump.** Keeping releases off a spurious major depends on `___experimentalUnsafeOptions_WILL_CHANGE_IN_PATCH.onlyUpdatePeerDependentsWhenOutOfRange` in `.changeset/config.json`, and that option is explicitly unstable — the name promises it may change in a patch. Since `@changesets/cli` is declared as `^2.31.1`, a routine Dependabot bump could alter or drop the behaviour. When reviewing a PR that upgrades `@changesets/cli`, run `npx changeset status` and confirm the calculated versions still match the highest bump among the pending changesets. Without the option, changesets bumps any package to `major` when a package it lists in `peerDependencies` gets a minor — `@solana/react` peer-depends on `@solana/kit`, so that alone would push all packages in the `fixed` group to a major. The peer range must also stay `workspace:^` rather than `workspace:*`, since changesets resolves `workspace:*` to an exact version that every bump leaves.
 
 ## CI
 
