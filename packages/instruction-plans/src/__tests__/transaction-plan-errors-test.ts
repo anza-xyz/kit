@@ -155,6 +155,15 @@ describe('createFailedToSendTransactionError', () => {
         });
     });
 
+    describe('given a failed result with a non-string signature in the context', () => {
+        it('omits the signature from the causeMessage', () => {
+            const plainError = new Error('Transaction failed');
+            const result = failedSingleTransactionPlanResult(createMessage('A'), plainError, { signature: 42 });
+            const error = createFailedToSendTransactionError(result);
+            expect(error.message).toBe('Failed to send transaction: Transaction failed');
+        });
+    });
+
     describe('given a failed result with a compute-limit simulation error', () => {
         it('unwraps the simulation error', () => {
             const innerError = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
@@ -423,6 +432,18 @@ describe('createFailedToSendTransactionsError', () => {
             ]);
             const error = createFailedToSendTransactionsError(result);
             expect(error.message).toBe(`Failed to send transactions.\n[Tx #1 (${signature})] Transaction failed\n`);
+        });
+    });
+
+    describe('given failures with non-string signatures in the context', () => {
+        it('omits the signature from causeMessages', () => {
+            const messageA = createMessage('A');
+            const plainError = new Error('Transaction failed');
+            const result = sequentialTransactionPlanResult([
+                failedSingleTransactionPlanResult(messageA, plainError, { signature: 42 }),
+            ]);
+            const error = createFailedToSendTransactionsError(result);
+            expect(error.message).toBe('Failed to send transactions.\n[Tx #1] Transaction failed\n');
         });
     });
 

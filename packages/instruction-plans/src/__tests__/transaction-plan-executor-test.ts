@@ -24,6 +24,7 @@ import {
     successfulSingleTransactionPlanResult,
     successfulSingleTransactionPlanResultFromTransaction,
     TransactionPlanResult,
+    TransactionPlanResultContextWithSignature,
 } from '../index';
 import { createMessage, createPartiallySignedTransaction, createTransaction, FOREVER_PROMISE } from './__setup__';
 
@@ -299,7 +300,9 @@ describe('createTransactionPlanExecutor', () => {
             expect.assertions(1);
             const messageA = createMessage('A');
             const messageB = createMessage('B');
-            const executor = createTransactionPlanExecutor<{ custom: string }>({
+            const executor = createTransactionPlanExecutor<
+                TransactionPlanResultContextWithSignature & { custom: string }
+            >({
                 executeTransactionMessage: context => {
                     context.custom = 'custom value';
                     context.message = messageB;
@@ -344,7 +347,9 @@ describe('createTransactionPlanExecutor', () => {
             const throwCause = (): void => {
                 throw cause;
             };
-            const executor = createTransactionPlanExecutor<{ afterFailure: string; beforeFailure: string }>({
+            const executor = createTransactionPlanExecutor<
+                TransactionPlanResultContextWithSignature & { afterFailure: string; beforeFailure: string }
+            >({
                 executeTransactionMessage: async context => {
                     context.beforeFailure = 'before failure';
                     context.message = messageB;

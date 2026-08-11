@@ -37,6 +37,7 @@ import {
     SuccessfulTransactionPlanResult,
     TransactionPlanResult,
     TransactionPlanResultContext,
+    TransactionPlanResultContextWithSignature,
 } from '../index';
 
 const messageA = null as unknown as TransactionMessage & TransactionMessageWithFeePayer & { id: 'A' };
@@ -172,6 +173,37 @@ type CustomContext = { customData: string };
         });
         result satisfies SuccessfulSingleTransactionPlanResult<CustomContext, typeof messageA>;
         result satisfies TransactionPlanResult;
+    }
+
+    // The result's context claims exactly what was passed — custom properties stay required —
+    // plus the signature and transaction derived from the transaction argument, both required.
+    {
+        const result = successfulSingleTransactionPlanResultFromTransaction(messageA, transactionA, {
+            customData: 'test',
+        });
+        result.context.customData satisfies string;
+        result.context.signature satisfies Signature;
+        result.context.transaction satisfies Transaction;
+    }
+
+    // It does not add the optional `message` property of the default context.
+    {
+        const result = successfulSingleTransactionPlanResultFromTransaction<CustomContext>(messageA, transactionA, {
+            customData: 'test',
+        });
+        // @ts-expect-error The context claims nothing but `customData`, `signature` and `transaction`.
+        void result.context.message;
+    }
+
+    // With an explicit type argument, a passed context must supply the declared properties;
+    // nothing but the derived `signature` and `transaction` is asserted on the caller's behalf.
+    {
+        successfulSingleTransactionPlanResultFromTransaction<CustomContext>(
+            messageA,
+            transactionA,
+            // @ts-expect-error The declared `customData` property is missing.
+            {},
+        );
     }
 }
 
@@ -533,6 +565,139 @@ type CustomContext = { customData: string };
         const plan = null as unknown;
         if (isTransactionPlanResult(plan)) {
             plan satisfies TransactionPlanResult;
+        }
+    }
+}
+
+// [DESCRIBE] TransactionPlanResultContextWithSignature
+{
+    // It requires a signature and leaves the other base fields optional.
+    {
+        const context = null as unknown as TransactionPlanResultContextWithSignature;
+        context.signature satisfies Signature;
+        context.message satisfies (TransactionMessage & TransactionMessageWithFeePayer) | undefined;
+        context.transaction satisfies Transaction | undefined;
+    }
+
+    // It satisfies the loose context constraint, so it is usable as a default.
+    {
+        const context = null as unknown as TransactionPlanResultContextWithSignature;
+        context satisfies TransactionPlanResultContext;
+    }
+
+    // It carries an index signature, so unknown custom properties can still be read.
+    {
+        const context = null as unknown as TransactionPlanResultContextWithSignature;
+        context.anythingElse satisfies unknown;
+    }
+}
+
+// Mutual-assignability equality. `Eq<A, B>` is `true` only when A and B accept each other.
+type Eq<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
+
+// [DESCRIBE] Zero-argument result shapes
+//
+// These spell out, structurally, the exact context you get when you name no context type at all.
+// Written this way rather than in terms of the context aliases, they would fail if a future change
+// to those aliases altered what the unparameterised result types deliver.
+{
+    // A successful context requires a signature and leaves the other base fields optional.
+    {
+        type Expected = Readonly<{
+            [key: number | string | symbol]: unknown;
+            message?: TransactionMessage & TransactionMessageWithFeePayer;
+            signature: Signature;
+            transaction?: Transaction;
+        }>;
+        type Actual = SuccessfulSingleTransactionPlanResult['context'];
+        true satisfies Eq<Expected, Actual>;
+    }
+
+    // A failed context guarantees nothing; every base field is optional.
+    {
+        type Expected = Readonly<{
+            [key: number | string | symbol]: unknown;
+            message?: TransactionMessage & TransactionMessageWithFeePayer;
+            signature?: Signature;
+            transaction?: Transaction;
+        }>;
+        type Actual = FailedSingleTransactionPlanResult['context'];
+        true satisfies Eq<Expected, Actual>;
+    }
+
+    // A canceled context guarantees nothing either.
+    {
+        type Expected = Readonly<{
+            [key: number | string | symbol]: unknown;
+            message?: TransactionMessage & TransactionMessageWithFeePayer;
+            signature?: Signature;
+            transaction?: Transaction;
+        }>;
+        type Actual = CanceledSingleTransactionPlanResult['context'];
+        true satisfies Eq<Expected, Actual>;
+    }
+
+    // A successful result guarantees a signature.
+    {
+        const result = null as unknown as SuccessfulSingleTransactionPlanResult;
+        result.context.signature satisfies Signature;
+    }
+
+    // A failed result does not.
+    {
+        const result = null as unknown as FailedSingleTransactionPlanResult;
+        result.context.signature satisfies Signature | undefined;
+        // @ts-expect-error A failed result guarantees no signature.
+        result.context.signature satisfies Signature;
+    }
+
+    // The index signature means custom properties can be read off an unparameterised result.
+    {
+        const result = null as unknown as SingleTransactionPlanResult;
+        result.context.startedAt satisfies unknown;
+    }
+}
+
+// [DESCRIBE] Explicitly parameterised result contexts
+{
+    // A bare custom context is exactly itself on the successful branch — no base fields are forced on it.
+    {
+        const result = null as unknown as SuccessfulSingleTransactionPlanResult<{ startedAt: number }>;
+        result.context.startedAt satisfies number;
+        // @ts-expect-error This context makes no promise about the signature.
+        result.context.signature satisfies Signature;
+    }
+
+    // Intersecting the default context back in restores the signature guarantee alongside it.
+    {
+        const result = null as unknown as SuccessfulSingleTransactionPlanResult<
+            TransactionPlanResultContextWithSignature & { startedAt: number }
+        >;
+        result.context.startedAt satisfies number;
+        result.context.signature satisfies Signature;
+    }
+
+    // Custom properties survive `Partial` on the failed branch as optionals, not as `unknown`.
+    {
+        const result = null as unknown as FailedSingleTransactionPlanResult<{ startedAt: number }>;
+        result.context.startedAt satisfies number | undefined;
+        // @ts-expect-error A failed result guarantees nothing about the context.
+        result.context.startedAt satisfies number;
+    }
+
+    // A context that guarantees a transaction rather than a signature narrows both branches as
+    // expected, which is what lets a result describe a transaction that was never submitted.
+    {
+        const result = null as unknown as SingleTransactionPlanResult<{ transaction: Transaction }>;
+        if (isSuccessfulSingleTransactionPlanResult(result)) {
+            result.context.transaction satisfies Transaction;
+            // @ts-expect-error This context declares no signature, so none is reported.
+            void result.context.signature;
+        }
+        if (isFailedSingleTransactionPlanResult(result)) {
+            result.context.transaction satisfies Transaction | undefined;
+            // @ts-expect-error A failed result's context makes every field optional, including transaction.
+            result.context.transaction satisfies Transaction;
         }
     }
 }

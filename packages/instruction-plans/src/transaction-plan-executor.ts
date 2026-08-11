@@ -24,11 +24,11 @@ import {
     parallelTransactionPlanResult,
     sequentialTransactionPlanResult,
     SingleTransactionPlanResult,
-    type SuccessfulBaseTransactionPlanResultContext,
     successfulSingleTransactionPlanResult,
     successfulSingleTransactionPlanResultFromTransaction,
     type TransactionPlanResult,
     type TransactionPlanResultContext,
+    type TransactionPlanResultContextWithSignature,
 } from './transaction-plan-result';
 
 /**
@@ -36,6 +36,10 @@ import {
  *
  * This function traverses the transaction plan tree, executing each transaction
  * message and collecting results that mirror the structure of the original plan.
+ *
+ * The zero-argument spelling defaults `TContext` to {@link TransactionPlanResultContextWithSignature},
+ * so its results guarantee a `context.signature` on every successful single result — but a different
+ * `TContext` may drop that guarantee entirely.
  *
  * @typeParam TContext - The type of the context object that may be passed along with results.
  * @param transactionPlan - The transaction plan to execute.
@@ -46,19 +50,18 @@ import {
  * @see {@link TransactionPlanResult}
  * @see {@link createTransactionPlanExecutor}
  */
-export type TransactionPlanExecutor<TContext extends TransactionPlanResultContext = TransactionPlanResultContext> = (
+export type TransactionPlanExecutor<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
+> = (
     transactionPlan: TransactionPlan,
     config?: { abortSignal?: AbortSignal },
 ) => Promise<TransactionPlanResult<TContext>>;
 
-type SuccessfulTransactionPlanResultContext<TContext extends TransactionPlanResultContext> =
-    SuccessfulBaseTransactionPlanResultContext & TContext;
-
 type ExecuteTransactionMessage<
     TContext extends TransactionPlanResultContext,
-    TReturn = Signature | SuccessfulTransactionPlanResultContext<TContext> | Transaction,
+    TReturn = Signature | TContext | Transaction,
 > = (
-    context: BaseTransactionPlanResultContext & TContext,
+    context: Partial<TContext>,
     transactionMessage: TransactionMessage & TransactionMessageWithFeePayer,
     config?: { abortSignal?: AbortSignal },
 ) => Promise<TReturn>;
@@ -74,8 +77,8 @@ export type TransactionPlanExecutorConfig<
     /**
      * Called whenever a transaction message must be sent to the blockchain.
      *
-     * It should return the context that the successful result must carry — which, since a
-     * successful result always has a signature, must include one. Returning a {@link Signature} or
+     * It should return the context that the successful result must carry — every property
+     * `TContext` promises, which by default includes a `signature`. Returning a {@link Signature} or
      * a {@link Transaction} instead is deprecated.
      */
     executeTransactionMessage: ExecuteTransactionMessage<TContext>;
@@ -105,7 +108,7 @@ export type TransactionPlanExecutorConfig<
  * @see {@link TransactionPlanExecutorConfig}
  */
 export function createTransactionPlanExecutor<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
 >(config: {
     executeTransactionMessage: ExecuteTransactionMessage<TContext, Signature | Transaction>;
 }): TransactionPlanExecutor<TContext>;
@@ -124,9 +127,9 @@ export function createTransactionPlanExecutor<
  * saved to the context will still be available in the plan result, which can be useful
  * for debugging failures or building recovery plans.
  *
- * The callback should return the context that a successful result must carry. Since a successful
- * result always has a signature, that context must include one — the executor derives nothing on
- * the callback's behalf. On success the returned context is merged over the one the callback
+ * The callback should return the context that a successful result must carry — every property
+ * `TContext` promises, which by default includes a `signature`, since the executor derives nothing
+ * on the callback's behalf. On success the returned context is merged over the one the callback
  * mutated, with the returned value taking precedence, so a property stored on the context but left
  * out of the return value is still reported.
  *
@@ -141,12 +144,7 @@ export function createTransactionPlanExecutor<
  * ```
  *
  * Note that the callback cannot simply return the context it was given, since every property on it
- * is optional. Build the return value from the values you have instead. Custom context properties
- * are typed by supplying `TContext` explicitly:
- *
- * ```ts
- * createTransactionPlanExecutor<{ startedAt: number }>(config);
- * ```
+ * is optional. Build the return value from the values you have instead.
  *
  * Returning a {@link Signature} or a full {@link Transaction} object instead of a context is
  * deprecated. Those return values are still honoured — a returned signature is stored as
@@ -154,6 +152,25 @@ export function createTransactionPlanExecutor<
  * signature derived from it — but deriving that signature throws
  * `SOLANA_ERROR__TRANSACTION__FEE_PAYER_SIGNATURE_MISSING` when
  * the fee payer has not signed, which returning a context avoids.
+ *
+ * `TContext` is the only thing that says what a context contains — the executor adds nothing of its
+ * own on top, in either direction. It defaults to {@link TransactionPlanResultContextWithSignature},
+ * which is why the zero-type-argument spelling hands the callback the familiar `message`,
+ * `transaction` and `signature` properties and guarantees a `context.signature` on every successful
+ * result. Supply a different `TContext` and you get exactly that instead, so intersect one of the
+ * base context types in if you want those properties alongside your own:
+ *
+ * ```ts
+ * createTransactionPlanExecutor<TransactionPlanResultContextWithSignature & { startedAt: number }>(config);
+ * ```
+ *
+ * Note the asymmetry between the callback and the result it produces. A fresh context is created for
+ * every single transaction plan, so on entry it is empty and *every* property of `TContext` is
+ * optional inside the callback — populating them is the callback's job, not a guarantee the executor
+ * makes. The `TransactionPlanExecutor` this factory returns, on the other hand, reports the context
+ * as fully populated. Declare the properties you intend to set as an explicit type argument to this
+ * function; a callback cannot annotate its own context parameter with required properties, because
+ * none of them are present when it is called.
  *
  * - If that function is successful, the executor will return a successful `TransactionPlanResult`
  * for that message, carrying the context described above.
@@ -195,10 +212,10 @@ export function createTransactionPlanExecutor<
  * @see {@link TransactionPlanExecutorConfig}
  */
 export function createTransactionPlanExecutor<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
 >(config: TransactionPlanExecutorConfig<TContext>): TransactionPlanExecutor<TContext>;
 export function createTransactionPlanExecutor<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
 >(config: TransactionPlanExecutorConfig<TContext>): TransactionPlanExecutor<TContext> {
     return async (plan, { abortSignal } = {}): Promise<TransactionPlanResult<TContext>> => {
         const traverseConfig: TraverseConfig<TContext> = {
@@ -215,7 +232,7 @@ export function createTransactionPlanExecutor<
             traverseConfig.canceled = true;
         };
         abortSignal?.addEventListener('abort', cancelHandler);
-        const transactionPlanResult = await traverse(plan, traverseConfig);
+        const transactionPlanResult = await traverse<TContext>(plan, traverseConfig);
         abortSignal?.removeEventListener('abort', cancelHandler);
 
         if (traverseConfig.canceled) {
@@ -280,9 +297,13 @@ async function traverseSingle<TContext extends TransactionPlanResultContext>(
     transactionPlan: SingleTransactionPlan,
     traverseConfig: TraverseConfig<TContext>,
 ): Promise<TransactionPlanResult<TContext>> {
-    const context = {} as BaseTransactionPlanResultContext & TContext;
+    // A fresh context is created for every single transaction plan, so nothing is populated
+    // yet. Filling it in is the `executeTransactionMessage` callback's job, which is why
+    // every property of `TContext` is optional here. Note that `TContext` is the only thing
+    // that says what a context contains; the executor adds no fields of its own.
+    const context: Partial<TContext> = {};
     if (traverseConfig.canceled) {
-        return canceledSingleTransactionPlanResult(transactionPlan.message, context);
+        return canceledSingleTransactionPlanResult<TContext>(transactionPlan.message, context);
     }
 
     try {
@@ -292,38 +313,61 @@ async function traverseSingle<TContext extends TransactionPlanResultContext>(
             }),
             traverseConfig.abortSignal,
         );
+        // Only on the happy path do we claim the context is fully populated. Except when the
+        // callback returned that context itself, we cannot verify that — the callback promised
+        // these properties by way of `TContext` and we take it at its word — so this is the one
+        // place an assertion is unavoidable.
         if (typeof result === 'string') {
-            return successfulSingleTransactionPlanResult(transactionPlan.message, { ...context, signature: result });
+            return successfulSingleTransactionPlanResult<TContext>(transactionPlan.message, {
+                ...context,
+                signature: result,
+            } as unknown as TContext);
         }
-        if (isSuccessfulContext(result)) {
+        if (!isTransaction(result)) {
             // The callback told us what context the result should carry, so we take it as-is and
             // derive nothing from it. Anything it stored on the mutable context but left out of its
             // return value is kept, since dropping it would lose data the callback deliberately
             // recorded.
-            return successfulSingleTransactionPlanResult(transactionPlan.message, { ...context, ...result });
+            return successfulSingleTransactionPlanResult<TContext>(transactionPlan.message, {
+                ...context,
+                ...result,
+            });
         }
-        return successfulSingleTransactionPlanResultFromTransaction(transactionPlan.message, result, context);
+        return successfulSingleTransactionPlanResultFromTransaction<TContext>(
+            transactionPlan.message,
+            result,
+            context as unknown as TContext,
+        );
     } catch (error) {
         traverseConfig.canceled = true;
+        // `TContext` no longer promises that a stored transaction is a `Transaction`, so this
+        // reads it back through the base context's shape before narrowing it at runtime.
+        const storedTransaction = context.transaction as BaseTransactionPlanResultContext['transaction'];
         const contextWithSignature =
-            'transaction' in context && typeof context.transaction === 'object' && context.signature == null
-                ? { ...context, signature: getSignatureFromTransaction(context.transaction) }
+            'transaction' in context && typeof storedTransaction === 'object' && context.signature == null
+                ? { ...context, signature: getSignatureFromTransaction(storedTransaction) }
                 : context;
-        return failedSingleTransactionPlanResult(transactionPlan.message, error as Error, contextWithSignature);
+        return failedSingleTransactionPlanResult<TContext>(
+            transactionPlan.message,
+            error as Error,
+            contextWithSignature,
+        );
     }
 }
 
 /**
  * Tells apart the two things the `executeTransactionMessage` callback may return once a
- * {@link Signature} has been ruled out: the context a successful result should carry, or the
- * deprecated {@link Transaction}. Every returned context has a `signature` — that is what a
- * successful result guarantees — and a `Transaction` never does, since it keeps its signatures in a
- * `signatures` map, so that property is a reliable discriminator.
+ * {@link Signature} has been ruled out: the deprecated {@link Transaction}, or the context a
+ * successful result should carry. Since `TContext` alone decides what a context contains, a
+ * returned context is not guaranteed to carry any particular property — not even a `signature` —
+ * so this discriminates on the shape of a `Transaction` instead. Every `Transaction` keeps its
+ * signatures in a `signatures` map, and no context type declares one, so that property is a
+ * reliable discriminator.
  */
-function isSuccessfulContext<TContext extends TransactionPlanResultContext>(
-    returnValue: SuccessfulTransactionPlanResultContext<TContext> | Transaction,
-): returnValue is SuccessfulTransactionPlanResultContext<TContext> {
-    return 'signature' in returnValue;
+function isTransaction<TContext extends TransactionPlanResultContext>(
+    returnValue: TContext | Transaction,
+): returnValue is Transaction {
+    return 'signatures' in returnValue;
 }
 
 function assertDivisibleSequentialPlansOnly(transactionPlan: TransactionPlan): void {
@@ -363,6 +407,8 @@ function assertDivisibleSequentialPlansOnly(transactionPlan: TransactionPlan): v
  *
  * Any other errors are re-thrown as normal.
  *
+ * @typeParam TContext - The type of the context object attached to the results. Any context is
+ * accepted, since this helper never reads from it.
  * @param promise - A promise returned by a transaction plan executor.
  * @return A promise that resolves to the transaction plan result, even if some transactions failed.
  *
@@ -387,20 +433,20 @@ function assertDivisibleSequentialPlansOnly(transactionPlan: TransactionPlan): v
  * @see {@link createTransactionPlanExecutor}
  * @see {@link summarizeTransactionPlanResult}
  */
-export async function passthroughFailedTransactionPlanExecution(
-    promise: Promise<SingleTransactionPlanResult>,
-): Promise<SingleTransactionPlanResult>;
-export async function passthroughFailedTransactionPlanExecution(
-    promise: Promise<TransactionPlanResult>,
-): Promise<TransactionPlanResult>;
-export async function passthroughFailedTransactionPlanExecution(
-    promise: Promise<TransactionPlanResult>,
-): Promise<TransactionPlanResult> {
+export async function passthroughFailedTransactionPlanExecution<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
+>(promise: Promise<SingleTransactionPlanResult<TContext>>): Promise<SingleTransactionPlanResult<TContext>>;
+export async function passthroughFailedTransactionPlanExecution<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
+>(promise: Promise<TransactionPlanResult<TContext>>): Promise<TransactionPlanResult<TContext>>;
+export async function passthroughFailedTransactionPlanExecution<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
+>(promise: Promise<TransactionPlanResult<TContext>>): Promise<TransactionPlanResult<TContext>> {
     try {
         return await promise;
     } catch (error) {
         if (isSolanaError(error, SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN)) {
-            return error.context.transactionPlanResult as TransactionPlanResult;
+            return error.context.transactionPlanResult as TransactionPlanResult<TContext>;
         }
         throw error;
     }

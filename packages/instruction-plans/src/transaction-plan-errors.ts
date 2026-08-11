@@ -15,6 +15,8 @@ import {
     type FailedSingleTransactionPlanResult,
     flattenTransactionPlanResult,
     type TransactionPlanResult,
+    type TransactionPlanResultContext,
+    type TransactionPlanResultContextWithSignature,
 } from './transaction-plan-result';
 
 type PreflightData = Omit<RpcSimulateTransactionResult, 'err'>;
@@ -32,6 +34,8 @@ type PreflightData = Omit<RpcSimulateTransactionResult, 'err'>;
  * preflight error or includes the on-chain transaction signature for easy
  * copy-pasting into block explorers.
  *
+ * @typeParam TContext - The type of the context object attached to the result. Any context is
+ * accepted; the signature is read from it only if one happens to be there.
  * @param result - A failed or canceled single transaction plan result.
  * @param abortReason - An optional abort reason if the transaction was canceled.
  * @return A {@link SolanaError} with the appropriate error code, context, and cause.
@@ -52,8 +56,10 @@ type PreflightData = Omit<RpcSimulateTransactionResult, 'err'>;
  *
  * @see {@link createFailedToSendTransactionsError}
  */
-export function createFailedToSendTransactionError(
-    result: CanceledSingleTransactionPlanResult | FailedSingleTransactionPlanResult,
+export function createFailedToSendTransactionError<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
+>(
+    result: CanceledSingleTransactionPlanResult<TContext> | FailedSingleTransactionPlanResult<TContext>,
     abortReason?: unknown,
 ): SolanaError<typeof SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION> {
     let causeMessage: string;
@@ -66,7 +72,7 @@ export function createFailedToSendTransactionError(
         logs = unwrapped.logs;
         preflightData = unwrapped.preflightData;
         cause = unwrapped.unwrappedError;
-        const indicator = getFailedIndicator(!!preflightData, result.context.signature);
+        const indicator = getFailedIndicator(!!preflightData, getSignatureFromContext(result.context));
         causeMessage = `${indicator}: ${(cause as Error).message}${formatLogSnippet(logs)}`;
     } else {
         cause = abortReason;
@@ -101,6 +107,8 @@ export function createFailedToSendTransactionError(
  * indicator showing whether it was a preflight error or includes the transaction
  * signature. When all transactions were canceled, the message is a single line.
  *
+ * @typeParam TContext - The type of the context object attached to the results. Any context is
+ * accepted; each signature is read from it only if one happens to be there.
  * @param result - The full transaction plan result tree.
  * @param abortReason - An optional abort reason if the plan was aborted.
  * @return A {@link SolanaError} with the appropriate error code, context, and cause.
@@ -121,8 +129,10 @@ export function createFailedToSendTransactionError(
  *
  * @see {@link createFailedToSendTransactionError}
  */
-export function createFailedToSendTransactionsError(
-    result: TransactionPlanResult,
+export function createFailedToSendTransactionsError<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
+>(
+    result: TransactionPlanResult<TContext>,
     abortReason?: unknown,
 ): SolanaError<typeof SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS> {
     const flattenedResults = flattenTransactionPlanResult(result);
@@ -146,7 +156,10 @@ export function createFailedToSendTransactionsError(
     if (failedTransactions.length > 0) {
         cause = failedTransactions.length === 1 ? failedTransactions[0].error : undefined;
         const failureLines = failedTransactions.map(({ error, index, preflightData }) => {
-            const indicator = getFailedIndicator(!!preflightData, flattenedResults[index].context.signature);
+            const indicator = getFailedIndicator(
+                !!preflightData,
+                getSignatureFromContext(flattenedResults[index].context),
+            );
             return `\n[Tx #${index + 1}${indicator}] ${error.message}`;
         });
         const logSnippet = failedTransactions.length === 1 ? formatLogSnippet(failedTransactions[0].logs) : '';
@@ -180,6 +193,8 @@ export function createFailedToSendTransactionsError(
  * property so that callers can inspect execution details without the result
  * being serialized with the error.
  *
+ * @typeParam TContext - The type of the context object attached to the results. Any context is
+ * accepted, since this helper never reads from it.
  * @param result - The full transaction plan result tree.
  * @param abortReason - An optional abort reason if the plan was aborted.
  * @return A {@link SolanaError} with the appropriate error code and context.
@@ -195,8 +210,10 @@ export function createFailedToSendTransactionsError(
  * @see {@link createFailedToSendTransactionError}
  * @see {@link createFailedToSendTransactionsError}
  */
-export function createFailedToExecuteTransactionPlanError(
-    result: TransactionPlanResult,
+export function createFailedToExecuteTransactionPlanError<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
+>(
+    result: TransactionPlanResult<TContext>,
     abortReason?: unknown,
 ): SolanaError<typeof SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN> {
     const context: Record<string, unknown> = {
@@ -234,7 +251,9 @@ function unwrapErrorWithPreflightData(error: Error): {
     return { logs: undefined, preflightData: undefined, unwrappedError: error };
 }
 
-function findErrorFromTransactionPlanResult(result: TransactionPlanResult): Error | undefined {
+function findErrorFromTransactionPlanResult<TContext extends TransactionPlanResultContext>(
+    result: TransactionPlanResult<TContext>,
+): Error | undefined {
     if (result.kind === 'single') {
         return result.status === 'failed' ? result.error : undefined;
     }
@@ -252,6 +271,16 @@ function formatLogSnippet(logs: readonly string[] | undefined): string {
     const lastLines = logs.slice(-maxLines);
     const header = logs.length > maxLines ? `\n\nLogs (last ${maxLines} of ${logs.length}):` : '\n\nLogs:';
     return `${header}\n${lastLines.map(line => `  > ${line}\n`).join('')}`;
+}
+
+/**
+ * Reads a signature out of an arbitrary result context.
+ *
+ * Nothing guarantees that a context has a signature — an executor may produce results for
+ * transactions it never submitted — so this narrows at runtime rather than trusting the type.
+ */
+function getSignatureFromContext(context: TransactionPlanResultContext): string | undefined {
+    return typeof context.signature === 'string' ? context.signature : undefined;
 }
 
 function getFailedIndicator(isPreflight: boolean, signature: string | undefined): string {

@@ -13,12 +13,15 @@ import {
     CanceledSingleTransactionPlanResult,
     createTransactionPlanExecutor,
     FailedSingleTransactionPlanResult,
+    flattenTransactionPlanResult,
     passthroughFailedTransactionPlanExecution,
     SingleTransactionPlanResult,
     SuccessfulSingleTransactionPlanResult,
+    summarizeTransactionPlanResult,
     type TransactionPlan,
     type TransactionPlanExecutor,
     type TransactionPlanResult,
+    type TransactionPlanResultContextWithSignature,
 } from '../index';
 
 // [DESCRIBE] TransactionPlanExecutor
@@ -64,11 +67,20 @@ import {
         });
     }
 
-    // It requires a returned context to carry the signature a successful result guarantees.
+    // A returned context needs no signature of its own; since `TContext` alone decides what a
+    // context carries, one inferred from the return value drops the signature guarantee.
     {
-        createTransactionPlanExecutor({
-            // @ts-expect-error A context without a signature is neither a valid context nor a `Transaction`.
-            executeTransactionMessage: () => Promise.resolve({ sent: true, transaction: {} as Transaction }),
+        const executor = createTransactionPlanExecutor({
+            executeTransactionMessage: () => Promise.resolve({ sent: true }),
+        });
+        executor satisfies TransactionPlanExecutor<{ sent: boolean }>;
+    }
+
+    // It requires a returned context to carry the signature when `TContext` guarantees one.
+    {
+        createTransactionPlanExecutor<TransactionPlanResultContextWithSignature>({
+            // @ts-expect-error The returned context is missing the guaranteed `signature` property.
+            executeTransactionMessage: () => Promise.resolve({ sent: true }),
         });
     }
 
@@ -89,6 +101,8 @@ import {
                 context.message satisfies (TransactionMessage & TransactionMessageWithFeePayer) | undefined;
                 context.transaction satisfies Transaction | undefined;
                 context.signature satisfies Signature | undefined;
+                // @ts-expect-error Populating the signature is the callback's job; it is absent on entry.
+                context.signature satisfies Signature;
                 return Promise.resolve({} as Signature);
             },
         });
@@ -109,28 +123,59 @@ import {
         });
     }
 
-    // It can use a custom context which is then assigned to the created TransactionPlanExecutor.
+    // It can infer a custom context from the callback, which is then assigned to the created TransactionPlanExecutor.
     {
         const executor = createTransactionPlanExecutor({
+            executeTransactionMessage: (_: { custom?: string }) => {
+                return Promise.resolve({} as Signature);
+            },
+        });
+        executor satisfies TransactionPlanExecutor<{ custom?: string }>;
+    }
+
+    // A callback cannot demand that a custom property is already populated. A fresh context is
+    // created for every single transaction plan, so anything the callback declares is its own job
+    // to fill in. Supply the context as an explicit type argument to guarantee it on the result.
+    {
+        createTransactionPlanExecutor({
+            // @ts-expect-error The context starts empty, so `custom` cannot be present on entry.
             executeTransactionMessage: (_: { custom: string }) => {
                 return Promise.resolve({} as Signature);
             },
         });
-        executor satisfies TransactionPlanExecutor<{ custom: string }>;
     }
 
-    // It can use a custom context with the base context.
+    // It can use a custom context with the base context, by intersecting one of the base context
+    // types into the type argument. Nothing is added to `TContext` on the caller's behalf.
     {
-        const executor = createTransactionPlanExecutor<{ custom: string }>({
+        const executor = createTransactionPlanExecutor<TransactionPlanResultContextWithSignature & { custom: string }>({
             executeTransactionMessage: context => {
+                context.custom satisfies string | undefined;
+                // @ts-expect-error Populating the custom property is the callback's job; it is absent on entry.
+                context.custom satisfies string;
+                context.custom = 'value';
                 context.custom satisfies string;
                 context.message satisfies (TransactionMessage & TransactionMessageWithFeePayer) | undefined;
                 context.transaction satisfies Transaction | undefined;
                 context.signature satisfies Signature | undefined;
+                // @ts-expect-error Populating the signature is the callback's job; it is absent on entry.
+                context.signature satisfies Signature;
                 return Promise.resolve({} as Signature);
             },
         });
-        executor satisfies TransactionPlanExecutor<{ custom: string }>;
+        executor satisfies TransactionPlanExecutor<TransactionPlanResultContextWithSignature & { custom: string }>;
+    }
+
+    // A bare custom context gets exactly what it declared — no base properties are injected.
+    {
+        createTransactionPlanExecutor<{ custom: string }>({
+            executeTransactionMessage: context => {
+                context.custom satisfies string | undefined;
+                // @ts-expect-error This context declares no `message`, so the executor does not add one.
+                void context.message;
+                return Promise.resolve({} as Signature);
+            },
+        });
     }
 
     // It can return a custom context.
@@ -207,5 +252,101 @@ import {
         const promise = null as unknown as Promise<TransactionPlanResult>;
         const result = passthroughFailedTransactionPlanExecution(promise);
         void (result satisfies Promise<TransactionPlanResult>);
+    }
+
+    // It accepts a result carrying an entirely custom context, and preserves it.
+    {
+        const promise = null as unknown as Promise<SingleTransactionPlanResult<{ custom: string }>>;
+        const result = passthroughFailedTransactionPlanExecution(promise);
+        void (result satisfies Promise<SingleTransactionPlanResult<{ custom: string }>>);
+    }
+}
+
+// [DESCRIBE] createTransactionPlanExecutor result contexts
+{
+    // Its results guarantee a signature by default, as they did before the context types were loosened.
+    {
+        const executor = createTransactionPlanExecutor({
+            executeTransactionMessage: () => Promise.resolve({} as Signature),
+        });
+        void executor(null as unknown as TransactionPlan).then(result => {
+            if (result.kind === 'single' && result.status === 'successful') {
+                result.context.signature satisfies Signature;
+            }
+        });
+    }
+
+    // Its failed results guarantee nothing.
+    {
+        const executor = createTransactionPlanExecutor({
+            executeTransactionMessage: () => Promise.resolve({} as Signature),
+        });
+        void executor(null as unknown as TransactionPlan).then(result => {
+            if (result.kind === 'single' && result.status === 'failed') {
+                result.context.signature satisfies Signature | undefined;
+                // @ts-expect-error A failed result guarantees no signature.
+                result.context.signature satisfies Signature;
+            }
+        });
+    }
+
+    // A custom context reports exactly what it declared. The signature guarantee comes from
+    // intersecting it in, not from the executor adding it behind the caller's back.
+    {
+        const executor = createTransactionPlanExecutor<TransactionPlanResultContextWithSignature & { custom: string }>({
+            executeTransactionMessage: context => {
+                context.custom = 'value';
+                return Promise.resolve({} as Signature);
+            },
+        });
+        void executor(null as unknown as TransactionPlan).then(result => {
+            if (result.kind === 'single' && result.status === 'successful') {
+                result.context.signature satisfies Signature;
+                result.context.custom satisfies string;
+            }
+        });
+    }
+
+    // A custom context that omits the signature does not get one back. The executor still
+    // populates `context.signature` at runtime, but it makes no type-level promise the caller
+    // did not ask for, which is what lets an executor be typed with no signature at all.
+    {
+        const executor = createTransactionPlanExecutor<{ custom: string }>({
+            executeTransactionMessage: context => {
+                context.custom = 'value';
+                return Promise.resolve({} as Signature);
+            },
+        });
+        void executor(null as unknown as TransactionPlan).then(result => {
+            if (result.kind === 'single' && result.status === 'successful') {
+                result.context.custom satisfies string;
+                // @ts-expect-error This context declared no signature, so none is reported.
+                void result.context.signature;
+            }
+        });
+    }
+}
+
+// [DESCRIBE] TransactionPlanExecutor with an optional signature
+{
+    // An executor can be typed to produce results that have a transaction but no signature.
+    {
+        const result = null as unknown as Awaited<ReturnType<TransactionPlanExecutor<{ transaction: Transaction }>>>;
+        if (result.kind === 'single' && result.status === 'successful') {
+            result.context.transaction satisfies Transaction;
+            // @ts-expect-error This executor makes no promise about the signature.
+            void result.context.signature;
+        }
+    }
+
+    // Such a result is still a TransactionPlanResult and works with the traversal helpers.
+    {
+        const result = null as unknown as TransactionPlanResult<{ transaction: Transaction }>;
+        const flattened = flattenTransactionPlanResult(result);
+        flattened satisfies SingleTransactionPlanResult<{ transaction: Transaction }>[];
+        const summary = summarizeTransactionPlanResult(result);
+        summary.successfulTransactions satisfies SuccessfulSingleTransactionPlanResult<{
+            transaction: Transaction;
+        }>[];
     }
 }

@@ -32,7 +32,7 @@ import { getSignatureFromTransaction, Transaction } from '@solana/transactions';
  * @see {@link SequentialTransactionPlanResult}
  */
 export type TransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
     TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
@@ -64,7 +64,7 @@ export type TransactionPlanResult<
  * @see {@link SuccessfulSingleTransactionPlanResult}
  */
 export type SuccessfulTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
 > = TransactionPlanResult<
@@ -80,31 +80,30 @@ export type SuccessfulTransactionPlanResult<
  * transaction plan results. It allows arbitrary additional properties that
  * consumers can use to pass along extra data with their results.
  *
- * Note that base context fields such as `message`, `signature`, and
- * `transaction` are currently intersected into this type in each
- * {@link SingleTransactionPlanResult} variant. That intersection will go away in
- * the next major version, after which the context of a result is exactly the
- * `TContext` you supply.
+ * Note that base context fields such as `message`, `signature`, and `transaction` are not part of
+ * this type. They come from the context a result is parameterised with, which defaults to
+ * {@link TransactionPlanResultContextWithSignature}. Supply a different context to change or drop
+ * those guarantees.
  *
  * @see {@link SingleTransactionPlanResult}
  * @see {@link SuccessfulSingleTransactionPlanResult}
  * @see {@link FailedSingleTransactionPlanResult}
  * @see {@link CanceledSingleTransactionPlanResult}
+ * @see {@link TransactionPlanResultContextWithSignature}
  */
 export type TransactionPlanResultContext = { [key: number | string | symbol]: unknown };
 
 /**
- * The base context fields that are common to all {@link SingleTransactionPlanResult} variants.
+ * The base context fields that {@link SuccessfulBaseTransactionPlanResultContext} builds upon.
  *
  * This type provides optional fields for the transaction message, signature, and
  * full transaction object. These fields may or may not be populated depending on
  * how far execution progressed before the result was produced.
  *
- * @deprecated This type will be removed in the next major version, together with the
- * intersections that graft it onto every {@link SingleTransactionPlanResult}. The context of a
- * result is becoming entirely caller-defined — it will be exactly the `TContext` you supply — so
- * there will be no separate base shape to merge in. If you refer to this type, declare whichever
- * of its fields you need on your own context type instead:
+ * @deprecated This type will be removed in the next major version. It is no longer part of any
+ * result type — the context of a result is entirely caller-defined, exactly the `TContext` you
+ * supply — so there is no separate base shape to merge in. If you refer to this type, declare
+ * whichever of its fields you need on your own context type instead:
  * ```ts
  * type MyContext = {
  *   message?: TransactionMessage & TransactionMessageWithFeePayer;
@@ -113,8 +112,8 @@ export type TransactionPlanResultContext = { [key: number | string | symbol]: un
  * };
  * ```
  *
- * @see {@link FailedSingleTransactionPlanResult}
- * @see {@link CanceledSingleTransactionPlanResult}
+ * @see {@link TransactionPlanResultContextWithSignature}
+ * @see {@link successfulSingleTransactionPlanResultFromTransaction}
  */
 export interface BaseTransactionPlanResultContext {
     message?: TransactionMessage & TransactionMessageWithFeePayer;
@@ -129,12 +128,42 @@ export interface BaseTransactionPlanResultContext {
  * successful transaction always produces one. The transaction message and full
  * transaction object remain optional.
  *
- * @see {@link SuccessfulSingleTransactionPlanResult}
+ * @deprecated use {@link TransactionPlanResultContextWithSignature} instead as the context type argument.
+ *
+ * @see {@link TransactionPlanResultContextWithSignature}
  * @see {@link BaseTransactionPlanResultContext}
  */
 export interface SuccessfulBaseTransactionPlanResultContext extends BaseTransactionPlanResultContext {
     signature: Signature;
 }
+
+/**
+ * A {@link TransactionPlanResultContext} that is guaranteed to include a {@link Signature}.
+ *
+ * This is the default context for every transaction plan result type, which is why a successful
+ * result exposes a required `context.signature` unless a different context is supplied.
+ *
+ * @example
+ * Intersect this type into a custom context to keep the signature guarantee alongside your own
+ * properties.
+ * ```ts
+ * const executor = createTransactionPlanExecutor<
+ *     TransactionPlanResultContextWithSignature & { startedAt: number }
+ * >({
+ *     executeTransactionMessage: async context => {
+ *         context.startedAt = Date.now();
+ *         // ...
+ *     },
+ * });
+ * ```
+ *
+ * @see {@link TransactionPlanResultContext}
+ */
+export type TransactionPlanResultContextWithSignature = TransactionPlanResultContext & {
+    message?: TransactionMessage & TransactionMessageWithFeePayer;
+    signature: Signature;
+    transaction?: Transaction;
+};
 
 /**
  * A result for a sequential transaction plan.
@@ -173,7 +202,7 @@ export interface SuccessfulBaseTransactionPlanResultContext extends BaseTransact
  * @see {@link nonDivisibleSequentialTransactionPlanResult}
  */
 export type SequentialTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
     TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
@@ -211,7 +240,7 @@ export type SequentialTransactionPlanResult<
  * @see {@link parallelTransactionPlanResult}
  */
 export type ParallelTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
     TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
@@ -269,7 +298,7 @@ export type ParallelTransactionPlanResult<
  * @see {@link canceledSingleTransactionPlanResult}
  */
 export type SingleTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
 > =
@@ -281,10 +310,10 @@ export type SingleTransactionPlanResult<
  * A {@link SingleTransactionPlanResult} with a 'successful' status.
  *
  * This type represents a single transaction that was successfully executed.
- * It includes the original planned message and a context object containing
- * the fields from {@link SuccessfulBaseTransactionPlanResultContext} — namely
- * a required transaction {@link Signature}, and optionally the
- * {@link TransactionMessage} and the full {@link Transaction} object.
+ * It includes the original planned message and a context object. That context defaults to
+ * {@link TransactionPlanResultContextWithSignature} — a required transaction {@link Signature},
+ * and optionally the {@link TransactionMessage} and the full {@link Transaction} object — but a
+ * different `TContext` may drop the signature requirement entirely.
  *
  * You may use the {@link successfulSingleTransactionPlanResult} helper to
  * create objects of this type.
@@ -308,11 +337,11 @@ export type SingleTransactionPlanResult<
  * @see {@link assertIsSuccessfulSingleTransactionPlanResult}
  */
 export type SuccessfulSingleTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
 > = {
-    context: Readonly<SuccessfulBaseTransactionPlanResultContext & TContext>;
+    context: Readonly<TContext>;
     kind: 'single';
     planType: 'transactionPlanResult';
     plannedMessage: TTransactionMessage;
@@ -324,7 +353,7 @@ export type SuccessfulSingleTransactionPlanResult<
  *
  * This type represents a single transaction that failed during execution.
  * It includes the original planned message, the {@link Error} that caused
- * the failure, and a context object containing optional
+ * the failure, and a context object in which every field is optional — including
  * {@link TransactionMessage}, {@link Signature}, and {@link Transaction}
  * fields that may or may not be populated depending on how far execution
  * progressed before the failure.
@@ -351,11 +380,11 @@ export type SuccessfulSingleTransactionPlanResult<
  * @see {@link assertIsFailedSingleTransactionPlanResult}
  */
 export type FailedSingleTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
 > = {
-    context: Readonly<BaseTransactionPlanResultContext & TContext>;
+    context: Readonly<Partial<TContext>>;
     error: Error;
     kind: 'single';
     planType: 'transactionPlanResult';
@@ -368,7 +397,7 @@ export type FailedSingleTransactionPlanResult<
  *
  * This type represents a single transaction whose execution was canceled
  * before it could complete. It includes the original planned message and
- * a context object containing optional
+ * a context object in which every field is optional — including
  * {@link TransactionMessage}, {@link Signature}, and {@link Transaction}
  * fields that may or may not be populated depending on how far execution
  * progressed before cancellation.
@@ -391,11 +420,11 @@ export type FailedSingleTransactionPlanResult<
  * @see {@link assertIsCanceledSingleTransactionPlanResult}
  */
 export type CanceledSingleTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
 > = {
-    context: Readonly<BaseTransactionPlanResultContext & TContext>;
+    context: Readonly<Partial<TContext>>;
     kind: 'single';
     planType: 'transactionPlanResult';
     plannedMessage: TTransactionMessage;
@@ -424,7 +453,7 @@ export type CanceledSingleTransactionPlanResult<
  * @see {@link SequentialTransactionPlanResult}
  */
 export function sequentialTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
 >(plans: TransactionPlanResult<TContext>[]): SequentialTransactionPlanResult<TContext> & { divisible: true } {
     return Object.freeze({ divisible: true, kind: 'sequential', planType: 'transactionPlanResult', plans });
 }
@@ -451,7 +480,7 @@ export function sequentialTransactionPlanResult<
  * @see {@link SequentialTransactionPlanResult}
  */
 export function nonDivisibleSequentialTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
 >(plans: TransactionPlanResult<TContext>[]): SequentialTransactionPlanResult<TContext> & { divisible: false } {
     return Object.freeze({ divisible: false, kind: 'sequential', planType: 'transactionPlanResult', plans });
 }
@@ -477,7 +506,7 @@ export function nonDivisibleSequentialTransactionPlanResult<
  * @see {@link ParallelTransactionPlanResult}
  */
 export function parallelTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
 >(plans: TransactionPlanResult<TContext>[]): ParallelTransactionPlanResult<TContext> {
     return Object.freeze({ kind: 'parallel', planType: 'transactionPlanResult', plans });
 }
@@ -493,7 +522,10 @@ export function parallelTransactionPlanResult<
  * @typeParam TTransactionMessage - The type of the transaction message
  * @param plannedMessage - The original transaction message
  * @param transaction - The successfully executed transaction
- * @param context - Optional context object to be included with the result
+ * @param context - Optional context object to be included with the result. The result's context
+ * claims exactly what you pass, plus the `signature` and `transaction` derived from the
+ * `transaction` argument. Anything you do pass for those two keys is overwritten by the derived
+ * values
  *
  * @example
  * ```ts
@@ -519,14 +551,17 @@ export function parallelTransactionPlanResult<
  * @see {@link SingleTransactionPlanResult}
  */
 export function successfulSingleTransactionPlanResultFromTransaction<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
 >(
     plannedMessage: TTransactionMessage,
     transaction: Transaction,
-    context?: Omit<BaseTransactionPlanResultContext, 'signature' | 'transaction'> & TContext,
-): SuccessfulSingleTransactionPlanResult<TContext, TTransactionMessage> {
+    context?: TContext,
+): SuccessfulSingleTransactionPlanResult<
+    TContext & { signature: Signature; transaction: Transaction },
+    TTransactionMessage
+> {
     const signature = getSignatureFromTransaction(transaction);
     return Object.freeze({
         context: Object.freeze({ ...((context ?? {}) as TContext), signature, transaction }),
@@ -542,12 +577,15 @@ export function successfulSingleTransactionPlanResultFromTransaction<
  *
  * This function creates a single result with a 'successful' status, indicating that
  * the transaction was successfully executed. It also includes the original transaction
- * message and a context object that must contain at least a {@link Signature}.
+ * message and a context object, which becomes the result's `context` as-is, typed as
+ * `TContext`. Passing a context containing a `signature` — the common case — yields the
+ * default {@link TransactionPlanResultContextWithSignature} shape; supply a different
+ * context shape when the transaction has no fee payer signature to report.
  *
  * @typeParam TContext - The type of the context object
  * @typeParam TTransactionMessage - The type of the transaction message
  * @param plannedMessage - The original transaction message
- * @param context - Context object to be included with the result, must include a `signature` property
+ * @param context - The context object to be included with the result, as `TContext`
  *
  * @example
  * ```ts
@@ -561,12 +599,12 @@ export function successfulSingleTransactionPlanResultFromTransaction<
  * @see {@link SingleTransactionPlanResult}
  */
 export function successfulSingleTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
 >(
     plannedMessage: TTransactionMessage,
-    context: SuccessfulBaseTransactionPlanResultContext & TContext,
+    context: TContext,
 ): SuccessfulSingleTransactionPlanResult<TContext, TTransactionMessage> {
     return Object.freeze({
         context: Object.freeze({ ...context }),
@@ -604,16 +642,16 @@ export function successfulSingleTransactionPlanResult<
  * @see {@link SingleTransactionPlanResult}
  */
 export function failedSingleTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
 >(
     plannedMessage: TTransactionMessage,
     error: Error,
-    context?: TContext,
+    context?: Partial<TContext>,
 ): FailedSingleTransactionPlanResult<TContext, TTransactionMessage> {
     return Object.freeze({
-        context: Object.freeze({ ...((context ?? {}) as TContext) }),
+        context: Object.freeze({ ...((context ?? {}) as Partial<TContext>) }),
         error,
         kind: 'single',
         planType: 'transactionPlanResult',
@@ -641,15 +679,15 @@ export function failedSingleTransactionPlanResult<
  * @see {@link SingleTransactionPlanResult}
  */
 export function canceledSingleTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
 >(
     plannedMessage: TTransactionMessage,
-    context?: TContext,
+    context?: Partial<TContext>,
 ): CanceledSingleTransactionPlanResult<TContext, TTransactionMessage> {
     return Object.freeze({
-        context: Object.freeze({ ...((context ?? {}) as TContext) }),
+        context: Object.freeze({ ...((context ?? {}) as Partial<TContext>) }),
         kind: 'single',
         planType: 'transactionPlanResult',
         plannedMessage,
@@ -711,7 +749,7 @@ export function isTransactionPlanResult(value: unknown): value is TransactionPla
  * @see {@link assertIsSingleTransactionPlanResult}
  */
 export function isSingleTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
     TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
@@ -741,7 +779,7 @@ export function isSingleTransactionPlanResult<
  * @see {@link isSingleTransactionPlanResult}
  */
 export function assertIsSingleTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
     TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
@@ -777,7 +815,7 @@ export function assertIsSingleTransactionPlanResult<
  * @see {@link assertIsSuccessfulSingleTransactionPlanResult}
  */
 export function isSuccessfulSingleTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
 >(
@@ -805,7 +843,7 @@ export function isSuccessfulSingleTransactionPlanResult<
  * @see {@link isSuccessfulSingleTransactionPlanResult}
  */
 export function assertIsSuccessfulSingleTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
 >(
@@ -839,7 +877,7 @@ export function assertIsSuccessfulSingleTransactionPlanResult<
  * @see {@link assertIsFailedSingleTransactionPlanResult}
  */
 export function isFailedSingleTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
 >(
@@ -867,7 +905,7 @@ export function isFailedSingleTransactionPlanResult<
  * @see {@link isFailedSingleTransactionPlanResult}
  */
 export function assertIsFailedSingleTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
 >(
@@ -901,7 +939,7 @@ export function assertIsFailedSingleTransactionPlanResult<
  * @see {@link assertIsCanceledSingleTransactionPlanResult}
  */
 export function isCanceledSingleTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
 >(
@@ -929,7 +967,7 @@ export function isCanceledSingleTransactionPlanResult<
  * @see {@link isCanceledSingleTransactionPlanResult}
  */
 export function assertIsCanceledSingleTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
 >(
@@ -963,7 +1001,7 @@ export function assertIsCanceledSingleTransactionPlanResult<
  * @see {@link assertIsSequentialTransactionPlanResult}
  */
 export function isSequentialTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
     TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
@@ -995,7 +1033,7 @@ export function isSequentialTransactionPlanResult<
  * @see {@link isSequentialTransactionPlanResult}
  */
 export function assertIsSequentialTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
     TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
@@ -1036,7 +1074,7 @@ export function assertIsSequentialTransactionPlanResult<
  * @see {@link assertIsNonDivisibleSequentialTransactionPlanResult}
  */
 export function isNonDivisibleSequentialTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
     TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
@@ -1071,7 +1109,7 @@ export function isNonDivisibleSequentialTransactionPlanResult<
  * @see {@link isNonDivisibleSequentialTransactionPlanResult}
  */
 export function assertIsNonDivisibleSequentialTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
     TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
@@ -1109,7 +1147,7 @@ export function assertIsNonDivisibleSequentialTransactionPlanResult<
  * @see {@link assertIsParallelTransactionPlanResult}
  */
 export function isParallelTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
     TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
@@ -1141,7 +1179,7 @@ export function isParallelTransactionPlanResult<
  * @see {@link isParallelTransactionPlanResult}
  */
 export function assertIsParallelTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
     TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
@@ -1193,7 +1231,7 @@ export function assertIsParallelTransactionPlanResult<
  * @see {@link isSuccessfulSingleTransactionPlanResult}
  */
 export function isSuccessfulTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
 >(
@@ -1239,7 +1277,7 @@ export function isSuccessfulTransactionPlanResult<
  * @see {@link assertIsSuccessfulSingleTransactionPlanResult}
  */
 export function assertIsSuccessfulTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
 >(
@@ -1287,7 +1325,7 @@ export function assertIsSuccessfulTransactionPlanResult<
  * @see {@link flattenTransactionPlanResult}
  */
 export function findTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
     TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
@@ -1346,7 +1384,7 @@ export function findTransactionPlanResult<
  * @see {@link findTransactionPlanResult}
  */
 export function getFirstFailedSingleTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
 >(
@@ -1420,7 +1458,7 @@ export function getFirstFailedSingleTransactionPlanResult<
  * @see {@link flattenTransactionPlanResult}
  */
 export function everyTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
     TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
@@ -1524,7 +1562,7 @@ export function transformTransactionPlanResult(
  * @see {@link transformTransactionPlanResult}
  */
 export function flattenTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
     TSingle extends SingleTransactionPlanResult<TContext, TTransactionMessage> = SingleTransactionPlanResult<
@@ -1546,7 +1584,7 @@ export function flattenTransactionPlanResult<
  * - `canceledTransactions`: An array of canceled transactions.
  */
 export type TransactionPlanResultSummary<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
 > = Readonly<{
@@ -1565,7 +1603,7 @@ export type TransactionPlanResultSummary<
  * @returns A summary of the transaction plan result
  */
 export function summarizeTransactionPlanResult<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
     TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
         TransactionMessageWithFeePayer,
 >(
