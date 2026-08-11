@@ -1,5 +1,6 @@
 import '@solana/test-matchers/toBeFrozenObject';
 
+import { Address } from '@solana/addresses';
 import {
     SOLANA_ERROR__INSTRUCTION_ERROR__INVALID_ARGUMENT,
     SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN,
@@ -9,6 +10,7 @@ import {
 } from '@solana/errors';
 import { Signature } from '@solana/keys';
 import { TransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
+import { Transaction } from '@solana/transactions';
 
 import {
     canceledSingleTransactionPlanResult,
@@ -25,7 +27,7 @@ import {
     successfulSingleTransactionPlanResultFromTransaction,
     TransactionPlanResult,
 } from '../index';
-import { createMessage, createTransaction, FOREVER_PROMISE } from './__setup__';
+import { createMessage, createPartiallySignedTransaction, createTransaction, FOREVER_PROMISE } from './__setup__';
 
 jest.useFakeTimers();
 
@@ -296,6 +298,56 @@ describe('createTransactionPlanExecutor', () => {
                         transaction: transactionA,
                     }),
                 }),
+            );
+        });
+
+        it('does not add a signature to a failed context when the fee payer has not signed the transaction', async () => {
+            expect.assertions(1);
+            const messageA = createMessage('A');
+            const transactionA = createPartiallySignedTransaction('A');
+            const cause = new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__INVALID_ARGUMENT, { index: 0 });
+            const throwCause = (): void => {
+                throw cause;
+            };
+            const executor = createTransactionPlanExecutor({
+                executeTransactionMessage: async context => {
+                    context.transaction = transactionA;
+                    throwCause();
+                    return await Promise.resolve(transactionA);
+                },
+            });
+
+            const promise = passthroughFailedTransactionPlanExecution(executor(singleTransactionPlan(messageA)));
+            await expect(promise).resolves.toStrictEqual(
+                failedSingleTransactionPlanResult(messageA, cause, { transaction: transactionA }),
+            );
+        });
+
+        it('does not add a signature to a failed context when the stored transaction is malformed', async () => {
+            expect.assertions(1);
+            const messageA = createMessage('A');
+            // A transaction whose fee payer signature slot holds something that is not signature bytes.
+            const transactionA = Object.freeze({
+                id: 'A',
+                // note: the test assumes that base58 decoding this throws
+                // (because it expects a Uint8Array)
+                signatures: { ['' as Address]: 'not signature bytes' },
+            }) as unknown as Transaction;
+            const cause = new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__INVALID_ARGUMENT, { index: 0 });
+            const throwCause = (): void => {
+                throw cause;
+            };
+            const executor = createTransactionPlanExecutor({
+                executeTransactionMessage: async context => {
+                    context.transaction = transactionA;
+                    throwCause();
+                    return await Promise.resolve(transactionA);
+                },
+            });
+
+            const promise = passthroughFailedTransactionPlanExecution(executor(singleTransactionPlan(messageA)));
+            await expect(promise).resolves.toStrictEqual(
+                failedSingleTransactionPlanResult(messageA, cause, { transaction: transactionA }),
             );
         });
 

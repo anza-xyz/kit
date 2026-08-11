@@ -218,11 +218,25 @@ async function traverseSingle<TContext extends TransactionPlanResultContext>(
             : successfulSingleTransactionPlanResultFromTransaction(transactionPlan.message, result, context);
     } catch (error) {
         traverseConfig.canceled = true;
-        const contextWithSignature =
-            'transaction' in context && typeof context.transaction === 'object' && context.signature == null
-                ? { ...context, signature: getSignatureFromTransaction(context.transaction) }
-                : context;
-        return failedSingleTransactionPlanResult(transactionPlan.message, error as Error, contextWithSignature);
+        // The callback may have stored a transaction on the context before throwing.
+        // If that transaction was signed by its fee payer, we can recover its signature.
+        // We may not be able to though, if it doesn't have a fee payer signature or
+        // is malformed in some way. In these cases we catch and ignore that error,
+        // maintaining the original error instead. We leave the `signature` property
+        // absent.
+        let signature: Signature | undefined;
+        if ('transaction' in context && typeof context.transaction === 'object' && context.signature == null) {
+            try {
+                signature = getSignatureFromTransaction(context.transaction);
+            } catch {
+                /* Swallowed on purpose. The error we are handling takes precedence. */
+            }
+        }
+        return failedSingleTransactionPlanResult(
+            transactionPlan.message,
+            error as Error,
+            signature !== undefined ? { ...context, signature } : context,
+        );
     }
 }
 

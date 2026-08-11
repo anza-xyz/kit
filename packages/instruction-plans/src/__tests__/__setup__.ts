@@ -66,6 +66,18 @@ export function createTransaction<TId extends string>(id: TId): Transaction & { 
     return Object.freeze({ id, signatures }) as unknown as Transaction & { id: TId };
 }
 
+/**
+ * Creates a transaction signed by someone other than its fee payer. Since the fee payer's signature
+ * slot — the first one in the signatures map — is empty, no signature can be derived from it.
+ */
+export function createPartiallySignedTransaction<TId extends string>(id: TId): Transaction & { id: TId } {
+    const signatures: SignaturesMap = {
+        ['' as Address]: null /* The fee payer has not signed this transaction yet. */,
+        ['someOtherSigner' as Address]: signatureEncoder.encode(id) as SignatureBytes,
+    };
+    return Object.freeze({ id, signatures }) as unknown as Transaction & { id: TId };
+}
+
 const signatureEncoder = getBase58Encoder();
 
 export function instructionFactory(baseSeed?: string) {
