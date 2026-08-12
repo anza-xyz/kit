@@ -300,6 +300,7 @@ function getAllowedNumericKeypaths(): AllowedNumericKeypaths<RpcApi<SolanaRpcApi
                     ...c,
                 ]),
                 ...messageConfig.map(c => ['transactions', KEYPATH_WILDCARD, 'transaction', 'message', ...c] as const),
+                ['transactions', KEYPATH_WILDCARD, 'version'],
                 ['rewards', KEYPATH_WILDCARD, 'commission'],
             ],
             getClusterNodes: [
@@ -348,6 +349,7 @@ function getAllowedNumericKeypaths(): AllowedNumericKeypaths<RpcApi<SolanaRpcApi
                 ['meta', 'rewards', KEYPATH_WILDCARD, 'commission'],
                 ...innerInstructionsConfigs.map(c => ['meta', 'innerInstructions', KEYPATH_WILDCARD, ...c]),
                 ...messageConfig.map(c => ['transaction', 'message', ...c] as const),
+                ['version'],
             ],
             getTransactionsForAddress: [
                 ['data', KEYPATH_WILDCARD, 'transactionIndex'],
@@ -365,6 +367,7 @@ function getAllowedNumericKeypaths(): AllowedNumericKeypaths<RpcApi<SolanaRpcApi
                     ...c,
                 ]),
                 ...messageConfig.map(c => ['data', KEYPATH_WILDCARD, 'transaction', 'message', ...c] as const),
+                ['data', KEYPATH_WILDCARD, 'version'],
             ],
             getVersion: [['feature-set']],
             getVoteAccounts: [
