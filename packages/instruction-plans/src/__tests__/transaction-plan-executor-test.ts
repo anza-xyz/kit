@@ -9,6 +9,7 @@ import {
 } from '@solana/errors';
 import { Signature } from '@solana/keys';
 import { TransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
+import { Transaction } from '@solana/transactions';
 
 import {
     canceledSingleTransactionPlanResult,
@@ -22,16 +23,16 @@ import {
     sequentialTransactionPlanResult,
     singleTransactionPlan,
     successfulSingleTransactionPlanResult,
-    successfulSingleTransactionPlanResultFromTransaction,
     TransactionPlanResult,
+    TransactionPlanResultContext,
     TransactionPlanResultContextWithSignature,
 } from '../index';
 import { createMessage, createPartiallySignedTransaction, createTransaction, FOREVER_PROMISE } from './__setup__';
 
 jest.useFakeTimers();
 
-async function expectFailedToExecute(
-    promise: Promise<TransactionPlanResult>,
+async function expectFailedToExecute<TContext extends TransactionPlanResultContext>(
+    promise: Promise<TransactionPlanResult<TContext>>,
     error: SolanaError<typeof SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN>,
 ): Promise<void> {
     const transactionPlanResult = error.context.transactionPlanResult;
@@ -50,10 +51,26 @@ async function expectFailedToExecute(
     );
 }
 
-function forwardId(_: unknown, message: TransactionMessage & TransactionMessageWithFeePayer) {
-    return Promise.resolve(
-        createTransaction((message as TransactionMessage & TransactionMessageWithFeePayer & { id: string }).id),
-    );
+function forwardId(
+    context: Partial<TransactionPlanResultContextWithSignature>,
+    message: TransactionMessage & TransactionMessageWithFeePayer,
+): Promise<TransactionPlanResultContextWithSignature> {
+    const { id } = message as TransactionMessage & TransactionMessageWithFeePayer & { id: string };
+    const transaction = createTransaction(id);
+    context.transaction = transaction;
+    return Promise.resolve({ signature: id as Signature, transaction });
+}
+
+/** Builds the successful result that executing `message` through the `forwardId` mock produces. */
+function successfulForwardIdResult(
+    message: TransactionMessage & TransactionMessageWithFeePayer & { id: string },
+    context: TransactionPlanResultContext = {},
+) {
+    return successfulSingleTransactionPlanResult<TransactionPlanResultContextWithSignature>(message, {
+        ...context,
+        signature: message.id as Signature,
+        transaction: createTransaction(message.id),
+    });
 }
 
 describe('createTransactionPlanExecutor', () => {
@@ -61,14 +78,11 @@ describe('createTransactionPlanExecutor', () => {
         it('successfully executes a single transaction message', async () => {
             expect.assertions(2);
             const messageA = createMessage('A');
-            const transactionA = createTransaction('A');
-            const executeTransactionMessage = jest.fn().mockResolvedValue(transactionA);
+            const executeTransactionMessage = jest.fn().mockImplementation(forwardId);
             const executor = createTransactionPlanExecutor({ executeTransactionMessage });
 
             const promise = executor(singleTransactionPlan(messageA));
-            await expect(promise).resolves.toStrictEqual(
-                successfulSingleTransactionPlanResultFromTransaction(messageA, transactionA),
-            );
+            await expect(promise).resolves.toStrictEqual(successfulForwardIdResult(messageA));
             expect(executeTransactionMessage).toHaveBeenNthCalledWith(1, expect.any(Object), messageA, {
                 abortSignal: undefined,
             });
@@ -79,18 +93,18 @@ describe('createTransactionPlanExecutor', () => {
             const messageA = createMessage('A');
             const abortController = new AbortController();
             const abortSignal = abortController.signal;
-            const executeTransactionMessage = jest.fn().mockResolvedValue(createTransaction('A'));
+            const executeTransactionMessage = jest.fn().mockImplementation(forwardId);
             const executor = createTransactionPlanExecutor({ executeTransactionMessage });
 
             await executor(singleTransactionPlan(messageA), { abortSignal });
             expect(executeTransactionMessage).toHaveBeenNthCalledWith(1, expect.any(Object), messageA, { abortSignal });
         });
 
-        it('uses the returned signature for the successful context', async () => {
+        it('uses the signature returned by the callback for the successful result', async () => {
             expect.assertions(1);
             const messageA = createMessage('A');
             const executor = createTransactionPlanExecutor({
-                executeTransactionMessage: () => Promise.resolve('A' as Signature),
+                executeTransactionMessage: () => Promise.resolve({ signature: 'A' as Signature }),
             });
 
             const promise = executor(singleTransactionPlan(messageA));
@@ -99,47 +113,14 @@ describe('createTransactionPlanExecutor', () => {
             );
         });
 
-        it('uses the signature from the returned transaction for the successful context', async () => {
-            expect.assertions(1);
-            const messageA = createMessage('A');
-            const transactionA = createTransaction('A');
-            const executor = createTransactionPlanExecutor({
-                executeTransactionMessage: () => Promise.resolve(transactionA),
-            });
-
-            const promise = executor(singleTransactionPlan(messageA));
-            await expect(promise).resolves.toStrictEqual(
-                successfulSingleTransactionPlanResult(messageA, {
-                    signature: 'A' as Signature,
-                    transaction: transactionA,
-                }),
-            );
-        });
-
-        it('override any set signature with the returned signature', async () => {
-            expect.assertions(1);
-            const messageA = createMessage('A');
-            const executor = createTransactionPlanExecutor({
-                executeTransactionMessage: context => {
-                    context.signature = 'CONTEXT_SIGNATURE' as Signature;
-                    return Promise.resolve('RETURNED_SIGNATURE' as Signature);
-                },
-            });
-
-            const promise = executor(singleTransactionPlan(messageA));
-            await expect(promise).resolves.toStrictEqual(
-                successfulSingleTransactionPlanResult(messageA, { signature: 'RETURNED_SIGNATURE' as Signature }),
-            );
-        });
-
-        it('override any set signature with the signature of the returned transaction', async () => {
+        it('keeps context properties that the callback stored but did not return', async () => {
             expect.assertions(1);
             const messageA = createMessage('A');
             const transactionA = createTransaction('A');
             const executor = createTransactionPlanExecutor({
                 executeTransactionMessage: context => {
-                    context.signature = 'CONTEXT_SIGNATURE' as Signature;
-                    return Promise.resolve(transactionA);
+                    context.transaction = transactionA;
+                    return Promise.resolve({ signature: 'A' as Signature });
                 },
             });
 
@@ -152,21 +133,33 @@ describe('createTransactionPlanExecutor', () => {
             );
         });
 
-        it('override any set transaction with the returned transaction', async () => {
+        it('prefers the returned context over the one stored on the context', async () => {
             expect.assertions(1);
             const messageA = createMessage('A');
-            const transactionA = createTransaction('A');
             const executor = createTransactionPlanExecutor({
                 executeTransactionMessage: context => {
-                    context.transaction = createTransaction('B');
-                    return Promise.resolve(transactionA);
+                    context.signature = 'stale' as Signature;
+                    return Promise.resolve({ signature: 'A' as Signature });
                 },
             });
 
             const promise = executor(singleTransactionPlan(messageA));
             await expect(promise).resolves.toStrictEqual(
-                successfulSingleTransactionPlanResult(messageA, {
-                    signature: 'A' as Signature,
+                successfulSingleTransactionPlanResult(messageA, { signature: 'A' as Signature }),
+            );
+        });
+
+        it('does not derive a signature from a transaction stored on the context', async () => {
+            expect.assertions(1);
+            const messageA = createMessage('A');
+            const transactionA = createTransaction('A');
+            const executor = createTransactionPlanExecutor<{ transaction: Transaction }>({
+                executeTransactionMessage: () => Promise.resolve({ transaction: transactionA }),
+            });
+
+            const promise = executor(singleTransactionPlan(messageA));
+            await expect(promise).resolves.toStrictEqual(
+                successfulSingleTransactionPlanResult<{ transaction: Transaction }>(messageA, {
                     transaction: transactionA,
                 }),
             );
@@ -191,84 +184,18 @@ describe('createTransactionPlanExecutor', () => {
             );
         });
 
-        it('keeps context properties that the callback stored but did not return', async () => {
-            expect.assertions(1);
-            const messageA = createMessage('A');
-            const messageB = createMessage('B');
-            const executor = createTransactionPlanExecutor({
-                executeTransactionMessage: context => {
-                    context.message = messageB;
-                    return Promise.resolve({ signature: 'A' as Signature });
-                },
-            });
-
-            const promise = executor(singleTransactionPlan(messageA));
-            await expect(promise).resolves.toStrictEqual(
-                successfulSingleTransactionPlanResult(messageA, {
-                    message: messageB,
-                    signature: 'A' as Signature,
-                }),
-            );
-        });
-
-        it('prefers the returned context over the context stored by the callback', async () => {
-            expect.assertions(1);
-            const messageA = createMessage('A');
-            const transactionA = createTransaction('A');
-            const executor = createTransactionPlanExecutor({
-                executeTransactionMessage: context => {
-                    context.signature = 'STALE_SIGNATURE' as Signature;
-                    context.transaction = createTransaction('B');
-                    return Promise.resolve({
-                        signature: 'RETURNED_SIGNATURE' as Signature,
-                        transaction: transactionA,
-                    });
-                },
-            });
-
-            const promise = executor(singleTransactionPlan(messageA));
-            await expect(promise).resolves.toStrictEqual(
-                successfulSingleTransactionPlanResult(messageA, {
-                    signature: 'RETURNED_SIGNATURE' as Signature,
-                    transaction: transactionA,
-                }),
-            );
-        });
-
-        it('succeeds when the transaction in the returned context has no fee payer signature', async () => {
+        it('succeeds when the stored transaction has no fee payer signature', async () => {
             expect.assertions(1);
             const messageA = createMessage('A');
             const partiallySignedTransactionA = createPartiallySignedTransaction('A');
-            const executor = createTransactionPlanExecutor({
-                executeTransactionMessage: () =>
-                    Promise.resolve({
-                        signature: 'RELAYER_SIGNATURE' as Signature,
-                        transaction: partiallySignedTransactionA,
-                    }),
+            const executor = createTransactionPlanExecutor<{ transaction: Transaction }>({
+                executeTransactionMessage: () => Promise.resolve({ transaction: partiallySignedTransactionA }),
             });
 
             const promise = executor(singleTransactionPlan(messageA));
             await expect(promise).resolves.toStrictEqual(
-                successfulSingleTransactionPlanResult(messageA, {
-                    signature: 'RELAYER_SIGNATURE' as Signature,
+                successfulSingleTransactionPlanResult<{ transaction: Transaction }>(messageA, {
                     transaction: partiallySignedTransactionA,
-                }),
-            );
-        });
-
-        it('stores custom properties from the returned context', async () => {
-            expect.assertions(1);
-            const messageA = createMessage('A');
-            const executor = createTransactionPlanExecutor<{ custom: string }>({
-                executeTransactionMessage: () =>
-                    Promise.resolve({ custom: 'custom value', signature: 'A' as Signature }),
-            });
-
-            const promise = executor(singleTransactionPlan(messageA));
-            await expect(promise).resolves.toStrictEqual(
-                successfulSingleTransactionPlanResult(messageA, {
-                    custom: 'custom value',
-                    signature: 'A' as Signature,
                 }),
             );
         });
@@ -278,12 +205,12 @@ describe('createTransactionPlanExecutor', () => {
             const messageA = createMessage('A');
             const transactionA = createTransaction('A');
             const executor = createTransactionPlanExecutor({
-                executeTransactionMessage: (context, _) => {
-                    context.message = createMessage('NEW A');
-                    context.transaction = transactionA;
-                    context.signature = 'A' as Signature;
-                    return Promise.resolve(transactionA);
-                },
+                executeTransactionMessage: () =>
+                    Promise.resolve({
+                        message: createMessage('NEW A'),
+                        signature: 'A' as Signature,
+                        transaction: transactionA,
+                    }),
             });
 
             const promise = executor(singleTransactionPlan(messageA));
@@ -303,11 +230,12 @@ describe('createTransactionPlanExecutor', () => {
             const executor = createTransactionPlanExecutor<
                 TransactionPlanResultContextWithSignature & { custom: string }
             >({
-                executeTransactionMessage: context => {
-                    context.custom = 'custom value';
-                    context.message = messageB;
-                    return Promise.resolve('A' as Signature);
-                },
+                executeTransactionMessage: () =>
+                    Promise.resolve({
+                        custom: 'custom value',
+                        message: messageB,
+                        signature: 'A' as Signature,
+                    }),
             });
 
             const promise = executor(singleTransactionPlan(messageA));
@@ -347,9 +275,11 @@ describe('createTransactionPlanExecutor', () => {
             const throwCause = (): void => {
                 throw cause;
             };
-            const executor = createTransactionPlanExecutor<
-                TransactionPlanResultContextWithSignature & { afterFailure: string; beforeFailure: string }
-            >({
+            type Context = TransactionPlanResultContextWithSignature & {
+                afterFailure: string;
+                beforeFailure: string;
+            };
+            const executor = createTransactionPlanExecutor<Context>({
                 executeTransactionMessage: async context => {
                     context.beforeFailure = 'before failure';
                     context.message = messageB;
@@ -357,7 +287,8 @@ describe('createTransactionPlanExecutor', () => {
                     context.signature = 'B' as Signature;
                     throwCause();
                     context.afterFailure = 'after failure';
-                    return await Promise.resolve('C' as Signature);
+                    await Promise.resolve();
+                    return context as Context; // Never reached; the callback always throws.
                 },
             });
 
@@ -376,7 +307,7 @@ describe('createTransactionPlanExecutor', () => {
             );
         });
 
-        it('adds the signature to a failed context if a transaction is present', async () => {
+        it('does not add a signature to a failed context when a transaction is present', async () => {
             expect.assertions(2);
             const messageA = createMessage('A');
             const transactionA = createTransaction('A');
@@ -388,7 +319,9 @@ describe('createTransactionPlanExecutor', () => {
                 executeTransactionMessage: async context => {
                     context.transaction = transactionA;
                     throwCause();
-                    return await Promise.resolve(transactionA);
+                    await Promise.resolve();
+                    // Never reached; the callback always throws.
+                    return context as TransactionPlanResultContextWithSignature;
                 },
             });
 
@@ -398,9 +331,40 @@ describe('createTransactionPlanExecutor', () => {
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
                     cause,
                     transactionPlanResult: failedSingleTransactionPlanResult(messageA, cause, {
-                        signature: 'A' as Signature,
                         transaction: transactionA,
                     }),
+                }),
+            );
+        });
+
+        it('preserves the original error when the stored transaction has no fee payer signature', async () => {
+            expect.assertions(2);
+            const messageA = createMessage('A');
+            const partiallySignedTransactionA = createPartiallySignedTransaction('A');
+            const cause = new SolanaError(SOLANA_ERROR__INSTRUCTION_ERROR__INVALID_ARGUMENT, { index: 0 });
+            const throwCause = (): void => {
+                throw cause;
+            };
+            const executor = createTransactionPlanExecutor<{ transaction: Transaction }>({
+                executeTransactionMessage: async context => {
+                    context.transaction = partiallySignedTransactionA;
+                    throwCause();
+                    await Promise.resolve();
+                    // Never reached; the callback always throws.
+                    return context as { transaction: Transaction };
+                },
+            });
+
+            const promise = executor(singleTransactionPlan(messageA));
+            await expectFailedToExecute(
+                promise,
+                new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
+                    cause,
+                    transactionPlanResult: failedSingleTransactionPlanResult<{ transaction: Transaction }>(
+                        messageA,
+                        cause,
+                        { transaction: partiallySignedTransactionA },
+                    ),
                 }),
             );
         });
@@ -511,8 +475,8 @@ describe('createTransactionPlanExecutor', () => {
             const promise = executor(sequentialTransactionPlan([messageA, messageB]));
             await expect(promise).resolves.toStrictEqual(
                 sequentialTransactionPlanResult([
-                    successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A')),
-                    successfulSingleTransactionPlanResultFromTransaction(messageB, createTransaction('B')),
+                    successfulForwardIdResult(messageA),
+                    successfulForwardIdResult(messageB),
                 ]),
             );
 
@@ -570,23 +534,22 @@ describe('createTransactionPlanExecutor', () => {
             expect.assertions(1);
             const messageA = createMessage('A');
             const messageB = createMessage('B');
-            const executor = createTransactionPlanExecutor<{ custom: string }>({
-                executeTransactionMessage: (context, message) => {
+            const executor = createTransactionPlanExecutor<
+                TransactionPlanResultContextWithSignature & { custom: string }
+            >({
+                executeTransactionMessage: async (context, message) => {
                     const id = (message as TransactionMessage & TransactionMessageWithFeePayer & { id: string }).id;
-                    context.custom = 'Message ' + id;
-                    return forwardId(context, message);
+                    const custom = 'Message ' + id;
+                    context.custom = custom;
+                    return { ...(await forwardId(context, message)), custom };
                 },
             });
 
             const promise = executor(sequentialTransactionPlan([messageA, messageB]));
             await expect(promise).resolves.toStrictEqual(
                 sequentialTransactionPlanResult([
-                    successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A'), {
-                        custom: 'Message A',
-                    }),
-                    successfulSingleTransactionPlanResultFromTransaction(messageB, createTransaction('B'), {
-                        custom: 'Message B',
-                    }),
+                    successfulForwardIdResult(messageA, { custom: 'Message A' }),
+                    successfulForwardIdResult(messageB, { custom: 'Message B' }),
                 ]),
             );
         });
@@ -605,7 +568,7 @@ describe('createTransactionPlanExecutor', () => {
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
                     cause,
                     transactionPlanResult: sequentialTransactionPlanResult([
-                        successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A')),
+                        successfulForwardIdResult(messageA),
                         failedSingleTransactionPlanResult(messageB, cause),
                     ]),
                 }),
@@ -672,7 +635,7 @@ describe('createTransactionPlanExecutor', () => {
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
                     cause,
                     transactionPlanResult: sequentialTransactionPlanResult([
-                        successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A')),
+                        successfulForwardIdResult(messageA),
                         failedSingleTransactionPlanResult(messageB, cause),
                         canceledSingleTransactionPlanResult(messageC),
                     ]),
@@ -733,8 +696,8 @@ describe('createTransactionPlanExecutor', () => {
             const promise = executor(parallelTransactionPlan([messageA, messageB]));
             await expect(promise).resolves.toStrictEqual(
                 parallelTransactionPlanResult([
-                    successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A')),
-                    successfulSingleTransactionPlanResultFromTransaction(messageB, createTransaction('B')),
+                    successfulForwardIdResult(messageA),
+                    successfulForwardIdResult(messageB),
                 ]),
             );
 
@@ -765,23 +728,22 @@ describe('createTransactionPlanExecutor', () => {
             expect.assertions(1);
             const messageA = createMessage('A');
             const messageB = createMessage('B');
-            const executor = createTransactionPlanExecutor<{ custom: string }>({
-                executeTransactionMessage: (context, message) => {
+            const executor = createTransactionPlanExecutor<
+                TransactionPlanResultContextWithSignature & { custom: string }
+            >({
+                executeTransactionMessage: async (context, message) => {
                     const id = (message as TransactionMessage & TransactionMessageWithFeePayer & { id: string }).id;
-                    context.custom = 'Message ' + id;
-                    return forwardId(context, message);
+                    const custom = 'Message ' + id;
+                    context.custom = custom;
+                    return { ...(await forwardId(context, message)), custom };
                 },
             });
 
             const promise = executor(parallelTransactionPlan([messageA, messageB]));
             await expect(promise).resolves.toStrictEqual(
                 parallelTransactionPlanResult([
-                    successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A'), {
-                        custom: 'Message A',
-                    }),
-                    successfulSingleTransactionPlanResultFromTransaction(messageB, createTransaction('B'), {
-                        custom: 'Message B',
-                    }),
+                    successfulForwardIdResult(messageA, { custom: 'Message A' }),
+                    successfulForwardIdResult(messageB, { custom: 'Message B' }),
                 ]),
             );
         });
@@ -808,9 +770,9 @@ describe('createTransactionPlanExecutor', () => {
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
                     cause,
                     transactionPlanResult: parallelTransactionPlanResult([
-                        successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A')),
+                        successfulForwardIdResult(messageA),
                         failedSingleTransactionPlanResult(messageB, cause),
-                        successfulSingleTransactionPlanResultFromTransaction(messageC, createTransaction('C')),
+                        successfulForwardIdResult(messageC),
                     ]),
                 }),
             );
@@ -845,9 +807,9 @@ describe('createTransactionPlanExecutor', () => {
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, {
                     cause,
                     transactionPlanResult: parallelTransactionPlanResult([
-                        successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A')),
+                        successfulForwardIdResult(messageA),
                         failedSingleTransactionPlanResult(messageB, cause),
-                        successfulSingleTransactionPlanResultFromTransaction(messageC, createTransaction('C')),
+                        successfulForwardIdResult(messageC),
                     ]),
                 }),
             );
@@ -914,17 +876,17 @@ describe('createTransactionPlanExecutor', () => {
             await expect(promise).resolves.toStrictEqual(
                 parallelTransactionPlanResult([
                     sequentialTransactionPlanResult([
-                        successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A')),
+                        successfulForwardIdResult(messageA),
                         parallelTransactionPlanResult([
-                            successfulSingleTransactionPlanResultFromTransaction(messageB, createTransaction('B')),
-                            successfulSingleTransactionPlanResultFromTransaction(messageC, createTransaction('C')),
+                            successfulForwardIdResult(messageB),
+                            successfulForwardIdResult(messageC),
                         ]),
-                        successfulSingleTransactionPlanResultFromTransaction(messageD, createTransaction('D')),
+                        successfulForwardIdResult(messageD),
                     ]),
-                    successfulSingleTransactionPlanResultFromTransaction(messageE, createTransaction('E')),
+                    successfulForwardIdResult(messageE),
                     sequentialTransactionPlanResult([
-                        successfulSingleTransactionPlanResultFromTransaction(messageF, createTransaction('F')),
-                        successfulSingleTransactionPlanResultFromTransaction(messageG, createTransaction('G')),
+                        successfulForwardIdResult(messageF),
+                        successfulForwardIdResult(messageG),
                     ]),
                 ]),
             );
@@ -966,17 +928,17 @@ describe('createTransactionPlanExecutor', () => {
                     cause,
                     transactionPlanResult: parallelTransactionPlanResult([
                         sequentialTransactionPlanResult([
-                            successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A')),
+                            successfulForwardIdResult(messageA),
                             parallelTransactionPlanResult([
-                                successfulSingleTransactionPlanResultFromTransaction(messageB, createTransaction('B')),
+                                successfulForwardIdResult(messageB),
                                 failedSingleTransactionPlanResult(messageC, cause),
                             ]),
                             canceledSingleTransactionPlanResult(messageD),
                         ]),
-                        successfulSingleTransactionPlanResultFromTransaction(messageE, createTransaction('E')),
+                        successfulForwardIdResult(messageE),
                         sequentialTransactionPlanResult([
-                            successfulSingleTransactionPlanResultFromTransaction(messageF, createTransaction('F')),
-                            successfulSingleTransactionPlanResultFromTransaction(messageG, createTransaction('G')),
+                            successfulForwardIdResult(messageF),
+                            successfulForwardIdResult(messageG),
                         ]),
                     ]),
                 }),
@@ -1025,17 +987,17 @@ describe('createTransactionPlanExecutor', () => {
                     cause,
                     transactionPlanResult: parallelTransactionPlanResult([
                         sequentialTransactionPlanResult([
-                            successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A')),
+                            successfulForwardIdResult(messageA),
                             parallelTransactionPlanResult([
-                                successfulSingleTransactionPlanResultFromTransaction(messageB, createTransaction('B')),
+                                successfulForwardIdResult(messageB),
                                 failedSingleTransactionPlanResult(messageC, cause),
                             ]),
                             canceledSingleTransactionPlanResult(messageD),
                         ]),
-                        successfulSingleTransactionPlanResultFromTransaction(messageE, createTransaction('E')),
+                        successfulForwardIdResult(messageE),
                         sequentialTransactionPlanResult([
-                            successfulSingleTransactionPlanResultFromTransaction(messageF, createTransaction('F')),
-                            successfulSingleTransactionPlanResultFromTransaction(messageG, createTransaction('G')),
+                            successfulForwardIdResult(messageF),
+                            successfulForwardIdResult(messageG),
                         ]),
                     ]),
                 }),
@@ -1095,7 +1057,7 @@ describe('createTransactionPlanExecutor', () => {
 describe('passthroughFailedTransactionPlanExecution', () => {
     it('returns the resolved result as-is', async () => {
         expect.assertions(1);
-        const result = successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A'));
+        const result = successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature });
         const promise = Promise.resolve(result);
         await expect(passthroughFailedTransactionPlanExecution(promise)).resolves.toBe(result);
     });

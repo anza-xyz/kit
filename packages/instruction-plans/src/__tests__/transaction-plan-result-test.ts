@@ -36,51 +36,10 @@ import {
     parallelTransactionPlanResult,
     sequentialTransactionPlanResult,
     successfulSingleTransactionPlanResult,
-    successfulSingleTransactionPlanResultFromTransaction,
     summarizeTransactionPlanResult,
     transformTransactionPlanResult,
 } from '../index';
-import { createMessage, createTransaction } from './__setup__';
-
-describe('successfulSingleTransactionPlanResultFromTransaction', () => {
-    it('creates SingleTransactionPlanResult objects with successful status', () => {
-        const messageA = createMessage('A');
-        const transactionA = createTransaction('A');
-        const result = successfulSingleTransactionPlanResultFromTransaction(messageA, transactionA);
-        expect(result).toEqual({
-            context: { signature: 'A', transaction: transactionA },
-            kind: 'single',
-            planType: 'transactionPlanResult',
-            plannedMessage: messageA,
-            status: 'successful',
-        });
-    });
-    it('accepts an optional context object', () => {
-        const messageA = createMessage('A');
-        const transactionA = createTransaction('A');
-        const context = { foo: 'bar' };
-        const result = successfulSingleTransactionPlanResultFromTransaction(messageA, transactionA, context);
-        expect(result).toEqual({
-            context: { ...context, signature: 'A', transaction: transactionA },
-            kind: 'single',
-            planType: 'transactionPlanResult',
-            plannedMessage: messageA,
-            status: 'successful',
-        });
-    });
-    it('freezes created SingleTransactionPlanResult objects', () => {
-        const messageA = createMessage('A');
-        const transactionA = createTransaction('A');
-        const result = successfulSingleTransactionPlanResultFromTransaction(messageA, transactionA);
-        expect(result).toBeFrozenObject();
-    });
-    it('freezes the status object of created SingleTransactionPlanResult objects', () => {
-        const messageA = createMessage('A');
-        const transactionA = createTransaction('A');
-        const result = successfulSingleTransactionPlanResultFromTransaction(messageA, transactionA);
-        expect(result.status).toBeFrozenObject();
-    });
-});
+import { createMessage } from './__setup__';
 
 describe('successfulSingleTransactionPlanResult', () => {
     it('creates SingleTransactionPlanResult objects with successful status', () => {
@@ -281,11 +240,6 @@ describe('isSingleTransactionPlanResult', () => {
     it('returns true for any SingleTransactionPlanResult', () => {
         expect(
             isSingleTransactionPlanResult(
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
-            ),
-        ).toBe(true);
-        expect(
-            isSingleTransactionPlanResult(
                 successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
             ),
         ).toBe(true);
@@ -308,11 +262,6 @@ describe('isSingleTransactionPlanResult', () => {
 
 describe('assertIsSingleTransactionPlanResult', () => {
     it('does nothing for any SingleTransactionPlanResult', () => {
-        expect(() =>
-            assertIsSingleTransactionPlanResult(
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
-            ),
-        ).not.toThrow();
         expect(() =>
             assertIsSingleTransactionPlanResult(
                 successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
@@ -347,11 +296,6 @@ describe('isSuccessfulSingleTransactionPlanResult', () => {
     it('returns true for successful SingleTransactionPlanResult', () => {
         expect(
             isSuccessfulSingleTransactionPlanResult(
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
-            ),
-        ).toBe(true);
-        expect(
-            isSuccessfulSingleTransactionPlanResult(
                 successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
             ),
         ).toBe(true);
@@ -376,11 +320,6 @@ describe('isSuccessfulSingleTransactionPlanResult', () => {
 
 describe('assertIsSuccessfulSingleTransactionPlanResult', () => {
     it('does nothing for successful SingleTransactionPlanResult', () => {
-        expect(() =>
-            assertIsSuccessfulSingleTransactionPlanResult(
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
-            ),
-        ).not.toThrow();
         expect(() =>
             assertIsSuccessfulSingleTransactionPlanResult(
                 successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
@@ -425,7 +364,7 @@ describe('isFailedSingleTransactionPlanResult', () => {
     it('returns false for other plans', () => {
         expect(
             isFailedSingleTransactionPlanResult(
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
+                successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
             ),
         ).toBe(false);
         expect(isFailedSingleTransactionPlanResult(canceledSingleTransactionPlanResult(createMessage('A')))).toBe(
@@ -451,7 +390,7 @@ describe('assertIsFailedSingleTransactionPlanResult', () => {
     it('throws for other plans', () => {
         expect(() =>
             assertIsFailedSingleTransactionPlanResult(
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
+                successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
             ),
         ).toThrow('Unexpected transaction plan result. Expected failed single plan, got successful single plan.');
         expect(() =>
@@ -478,7 +417,7 @@ describe('isCanceledSingleTransactionPlanResult', () => {
     it('returns false for other plans', () => {
         expect(
             isCanceledSingleTransactionPlanResult(
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
+                successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
             ),
         ).toBe(false);
         expect(
@@ -504,7 +443,7 @@ describe('assertIsCanceledSingleTransactionPlanResult', () => {
     it('throws for other plans', () => {
         expect(() =>
             assertIsCanceledSingleTransactionPlanResult(
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
+                successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
             ),
         ).toThrow('Unexpected transaction plan result. Expected canceled single plan, got successful single plan.');
         expect(() =>
@@ -535,7 +474,7 @@ describe('isSequentialTransactionPlanResult', () => {
     it('returns false for other plans', () => {
         expect(
             isSequentialTransactionPlanResult(
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
+                successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
             ),
         ).toBe(false);
         expect(
@@ -561,7 +500,7 @@ describe('assertIsSequentialTransactionPlanResult', () => {
     it('throws for other plans', () => {
         expect(() =>
             assertIsSequentialTransactionPlanResult(
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
+                successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
             ),
         ).toThrow('Unexpected transaction plan result. Expected sequential plan, got single plan.');
         expect(() =>
@@ -590,7 +529,7 @@ describe('isNonDivisibleSequentialTransactionPlanResult', () => {
     it('returns false for other plans', () => {
         expect(
             isNonDivisibleSequentialTransactionPlanResult(
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
+                successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
             ),
         ).toBe(false);
         expect(
@@ -618,7 +557,7 @@ describe('assertIsNonDivisibleSequentialTransactionPlanResult', () => {
     it('throws for other plans', () => {
         expect(() =>
             assertIsNonDivisibleSequentialTransactionPlanResult(
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
+                successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
             ),
         ).toThrow('Unexpected transaction plan result. Expected non-divisible sequential plan, got single plan.');
         expect(() =>
@@ -650,7 +589,7 @@ describe('isParallelTransactionPlanResult', () => {
     it('returns false for other plans', () => {
         expect(
             isParallelTransactionPlanResult(
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
+                successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
             ),
         ).toBe(false);
         expect(
@@ -674,7 +613,7 @@ describe('assertIsParallelTransactionPlanResult', () => {
     it('throws for other plans', () => {
         expect(() =>
             assertIsParallelTransactionPlanResult(
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
+                successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
             ),
         ).toThrow('Unexpected transaction plan result. Expected parallel plan, got single plan.');
         expect(() =>
@@ -701,16 +640,16 @@ describe('isSuccessfulTransactionPlanResult', () => {
     it('returns true for a single successful result', () => {
         expect(
             isSuccessfulTransactionPlanResult(
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
+                successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
             ),
         ).toBe(true);
     });
     it('returns true for nested results that are all successful', () => {
         const result = parallelTransactionPlanResult([
-            successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
+            successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
             sequentialTransactionPlanResult([
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('B'), createTransaction('B')),
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('C'), createTransaction('C')),
+                successfulSingleTransactionPlanResult(createMessage('B'), { signature: 'B' as Signature }),
+                successfulSingleTransactionPlanResult(createMessage('C'), { signature: 'C' as Signature }),
             ]),
         ]);
         expect(isSuccessfulTransactionPlanResult(result)).toBe(true);
@@ -723,7 +662,7 @@ describe('isSuccessfulTransactionPlanResult', () => {
     });
     it('returns false when any single result is failed', () => {
         const result = parallelTransactionPlanResult([
-            successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
+            successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
             failedSingleTransactionPlanResult(
                 createMessage('B'),
                 new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
@@ -733,7 +672,7 @@ describe('isSuccessfulTransactionPlanResult', () => {
     });
     it('returns false when any single result is canceled', () => {
         const result = sequentialTransactionPlanResult([
-            successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
+            successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
             canceledSingleTransactionPlanResult(createMessage('B')),
         ]);
         expect(isSuccessfulTransactionPlanResult(result)).toBe(false);
@@ -755,7 +694,7 @@ describe('isSuccessfulTransactionPlanResult', () => {
         const result = parallelTransactionPlanResult([
             sequentialTransactionPlanResult([
                 parallelTransactionPlanResult([
-                    successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
+                    successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
                     failedSingleTransactionPlanResult(
                         createMessage('B'),
                         new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
@@ -771,16 +710,16 @@ describe('assertIsSuccessfulTransactionPlanResult', () => {
     it('does nothing for a single successful result', () => {
         expect(() =>
             assertIsSuccessfulTransactionPlanResult(
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
+                successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
             ),
         ).not.toThrow();
     });
     it('does nothing for nested results that are all successful', () => {
         const result = parallelTransactionPlanResult([
-            successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
+            successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
             sequentialTransactionPlanResult([
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('B'), createTransaction('B')),
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('C'), createTransaction('C')),
+                successfulSingleTransactionPlanResult(createMessage('B'), { signature: 'B' as Signature }),
+                successfulSingleTransactionPlanResult(createMessage('C'), { signature: 'C' as Signature }),
             ]),
         ]);
         expect(() => assertIsSuccessfulTransactionPlanResult(result)).not.toThrow();
@@ -793,7 +732,7 @@ describe('assertIsSuccessfulTransactionPlanResult', () => {
     });
     it('throws when any single result is failed', () => {
         const result = parallelTransactionPlanResult([
-            successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
+            successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
             failedSingleTransactionPlanResult(
                 createMessage('B'),
                 new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
@@ -807,7 +746,7 @@ describe('assertIsSuccessfulTransactionPlanResult', () => {
     });
     it('throws when any single result is canceled', () => {
         const result = sequentialTransactionPlanResult([
-            successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
+            successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
             canceledSingleTransactionPlanResult(createMessage('B')),
         ]);
         expect(() => assertIsSuccessfulTransactionPlanResult(result)).toThrow(
@@ -937,7 +876,7 @@ describe('findTransactionPlanResult', () => {
         const error = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
         const failedResult = failedSingleTransactionPlanResult(messageB, error);
         const result = parallelTransactionPlanResult([
-            successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A')),
+            successfulSingleTransactionPlanResult(messageA, { signature: 'A' as Signature }),
             failedResult,
         ]);
         const found = findTransactionPlanResult(
@@ -950,7 +889,7 @@ describe('findTransactionPlanResult', () => {
     it('finds a successful single transaction result', () => {
         const messageA = createMessage('A');
         const messageB = createMessage('B');
-        const successfulResult = successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A'));
+        const successfulResult = successfulSingleTransactionPlanResult(messageA, { signature: 'A' as Signature });
         const result = sequentialTransactionPlanResult([
             successfulResult,
             canceledSingleTransactionPlanResult(messageB),
@@ -982,7 +921,7 @@ describe('everyTransactionPlanResult', () => {
         expect(result).toBe(false);
     });
     it('matches successful single transaction plans', () => {
-        const plan = successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A'));
+        const plan = successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature });
         // eslint-disable-next-line jest/no-conditional-in-test
         const result = everyTransactionPlanResult(plan, p => p.kind === 'single' && p.status === 'successful');
         expect(result).toBe(true);
@@ -1019,10 +958,7 @@ describe('everyTransactionPlanResult', () => {
         expect(result).toBe(true);
     });
     it('matches complex transaction plans', () => {
-        const resultA = successfulSingleTransactionPlanResultFromTransaction(
-            createMessage('A'),
-            createTransaction('A'),
-        );
+        const resultA = successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature });
         const resultB = failedSingleTransactionPlanResult(
             createMessage('B'),
             new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
@@ -1041,10 +977,7 @@ describe('everyTransactionPlanResult', () => {
         expect(result).toBe(true);
     });
     it('returns false on complex transaction plans', () => {
-        const resultA = successfulSingleTransactionPlanResultFromTransaction(
-            createMessage('A'),
-            createTransaction('A'),
-        );
+        const resultA = successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature });
         const resultB = failedSingleTransactionPlanResult(
             createMessage('B'),
             new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE),
@@ -1060,14 +993,8 @@ describe('everyTransactionPlanResult', () => {
     });
     it('fails fast before evaluating children', () => {
         const predicate = jest.fn().mockReturnValueOnce(false);
-        const messageA = successfulSingleTransactionPlanResultFromTransaction(
-            createMessage('A'),
-            createTransaction('A'),
-        );
-        const messageB = successfulSingleTransactionPlanResultFromTransaction(
-            createMessage('B'),
-            createTransaction('B'),
-        );
+        const messageA = successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature });
+        const messageB = successfulSingleTransactionPlanResult(createMessage('B'), { signature: 'B' as Signature });
         const plan = sequentialTransactionPlanResult([messageA, messageB]);
         const result = everyTransactionPlanResult(plan, predicate);
         expect(result).toBe(false);
@@ -1078,14 +1005,8 @@ describe('everyTransactionPlanResult', () => {
     });
     it('fails fast before evaluating siblings', () => {
         const predicate = jest.fn().mockReturnValueOnce(true).mockReturnValueOnce(false);
-        const messageA = successfulSingleTransactionPlanResultFromTransaction(
-            createMessage('A'),
-            createTransaction('A'),
-        );
-        const messageB = successfulSingleTransactionPlanResultFromTransaction(
-            createMessage('B'),
-            createTransaction('B'),
-        );
+        const messageA = successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature });
+        const messageB = successfulSingleTransactionPlanResult(createMessage('B'), { signature: 'B' as Signature });
         const plan = sequentialTransactionPlanResult([messageA, messageB]);
         const result = everyTransactionPlanResult(plan, predicate);
         expect(result).toBe(false);
@@ -1098,13 +1019,13 @@ describe('everyTransactionPlanResult', () => {
 
 describe('transformTransactionPlanResult', () => {
     it('transforms successful single transaction plan results', () => {
-        const plan = successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A'));
+        const plan = successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature });
         const transformedPlan = transformTransactionPlanResult(plan, p =>
             // eslint-disable-next-line jest/no-conditional-in-test
             p.kind === 'single' ? { ...p, plannedMessage: { ...p.plannedMessage, id: 'New A' } } : p,
         );
         expect(transformedPlan).toStrictEqual(
-            successfulSingleTransactionPlanResultFromTransaction(createMessage('New A'), createTransaction('A')),
+            successfulSingleTransactionPlanResult(createMessage('New A'), { signature: 'A' as Signature }),
         );
     });
     it('transforms failed single transaction plan results', () => {
@@ -1126,8 +1047,8 @@ describe('transformTransactionPlanResult', () => {
     });
     it('transforms sequential transaction plan results', () => {
         const plan = sequentialTransactionPlanResult([
-            successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
-            successfulSingleTransactionPlanResultFromTransaction(createMessage('B'), createTransaction('B')),
+            successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
+            successfulSingleTransactionPlanResult(createMessage('B'), { signature: 'B' as Signature }),
         ]);
         const transformedPlan = transformTransactionPlanResult(plan, p =>
             // eslint-disable-next-line jest/no-conditional-in-test
@@ -1135,15 +1056,15 @@ describe('transformTransactionPlanResult', () => {
         );
         expect(transformedPlan).toStrictEqual(
             sequentialTransactionPlanResult([
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('B'), createTransaction('B')),
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
+                successfulSingleTransactionPlanResult(createMessage('B'), { signature: 'B' as Signature }),
+                successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
             ]),
         );
     });
     it('transforms non-divisible sequential transaction plan results', () => {
         const plan = nonDivisibleSequentialTransactionPlanResult([
-            successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
-            successfulSingleTransactionPlanResultFromTransaction(createMessage('B'), createTransaction('B')),
+            successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
+            successfulSingleTransactionPlanResult(createMessage('B'), { signature: 'B' as Signature }),
         ]);
         const transformedPlan = transformTransactionPlanResult(plan, p =>
             // eslint-disable-next-line jest/no-conditional-in-test
@@ -1151,15 +1072,15 @@ describe('transformTransactionPlanResult', () => {
         );
         expect(transformedPlan).toStrictEqual(
             nonDivisibleSequentialTransactionPlanResult([
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('B'), createTransaction('B')),
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
+                successfulSingleTransactionPlanResult(createMessage('B'), { signature: 'B' as Signature }),
+                successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
             ]),
         );
     });
     it('transforms parallel transaction plan results', () => {
         const plan = parallelTransactionPlanResult([
-            successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
-            successfulSingleTransactionPlanResultFromTransaction(createMessage('B'), createTransaction('B')),
+            successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
+            successfulSingleTransactionPlanResult(createMessage('B'), { signature: 'B' as Signature }),
         ]);
         const transformedPlan = transformTransactionPlanResult(plan, p =>
             // eslint-disable-next-line jest/no-conditional-in-test
@@ -1167,18 +1088,18 @@ describe('transformTransactionPlanResult', () => {
         );
         expect(transformedPlan).toStrictEqual(
             parallelTransactionPlanResult([
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('B'), createTransaction('B')),
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
+                successfulSingleTransactionPlanResult(createMessage('B'), { signature: 'B' as Signature }),
+                successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
             ]),
         );
     });
     it('transforms using a bottom-up approach', () => {
         // Given the following nested plans.
         const plan = sequentialTransactionPlanResult([
-            successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
+            successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
             sequentialTransactionPlanResult([
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('B'), createTransaction('B')),
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('C'), createTransaction('C')),
+                successfulSingleTransactionPlanResult(createMessage('B'), { signature: 'B' as Signature }),
+                successfulSingleTransactionPlanResult(createMessage('C'), { signature: 'C' as Signature }),
             ]),
         ]);
 
@@ -1209,8 +1130,8 @@ describe('transformTransactionPlanResult', () => {
     });
     it('can be used to duplicate transaction results', () => {
         const plan = sequentialTransactionPlanResult([
-            successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
-            successfulSingleTransactionPlanResultFromTransaction(createMessage('B'), createTransaction('B')),
+            successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
+            successfulSingleTransactionPlanResult(createMessage('B'), { signature: 'B' as Signature }),
         ]);
         const transformedPlan = transformTransactionPlanResult(plan, p =>
             // eslint-disable-next-line jest/no-conditional-in-test
@@ -1219,20 +1140,20 @@ describe('transformTransactionPlanResult', () => {
         expect(transformedPlan).toStrictEqual(
             sequentialTransactionPlanResult([
                 sequentialTransactionPlanResult([
-                    successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
-                    successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
+                    successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
+                    successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
                 ]),
                 sequentialTransactionPlanResult([
-                    successfulSingleTransactionPlanResultFromTransaction(createMessage('B'), createTransaction('B')),
-                    successfulSingleTransactionPlanResultFromTransaction(createMessage('B'), createTransaction('B')),
+                    successfulSingleTransactionPlanResult(createMessage('B'), { signature: 'B' as Signature }),
+                    successfulSingleTransactionPlanResult(createMessage('B'), { signature: 'B' as Signature }),
                 ]),
             ]),
         );
     });
     it('can be used to remove parallelism', () => {
         const plan = parallelTransactionPlanResult([
-            successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
-            successfulSingleTransactionPlanResultFromTransaction(createMessage('B'), createTransaction('B')),
+            successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
+            successfulSingleTransactionPlanResult(createMessage('B'), { signature: 'B' as Signature }),
         ]);
         const transformedPlan = transformTransactionPlanResult(plan, p =>
             // eslint-disable-next-line jest/no-conditional-in-test
@@ -1240,22 +1161,22 @@ describe('transformTransactionPlanResult', () => {
         );
         expect(transformedPlan).toStrictEqual(
             sequentialTransactionPlanResult([
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('B'), createTransaction('B')),
+                successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
+                successfulSingleTransactionPlanResult(createMessage('B'), { signature: 'B' as Signature }),
             ]),
         );
     });
     it('can be used to flatten nested transaction plan results', () => {
         const plan = sequentialTransactionPlanResult([
             sequentialTransactionPlanResult([
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('B'), createTransaction('B')),
+                successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
+                successfulSingleTransactionPlanResult(createMessage('B'), { signature: 'B' as Signature }),
             ]),
             sequentialTransactionPlanResult([
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('C'), createTransaction('C')),
+                successfulSingleTransactionPlanResult(createMessage('C'), { signature: 'C' as Signature }),
                 sequentialTransactionPlanResult([
-                    successfulSingleTransactionPlanResultFromTransaction(createMessage('D'), createTransaction('D')),
-                    successfulSingleTransactionPlanResultFromTransaction(createMessage('E'), createTransaction('E')),
+                    successfulSingleTransactionPlanResult(createMessage('D'), { signature: 'D' as Signature }),
+                    successfulSingleTransactionPlanResult(createMessage('E'), { signature: 'E' as Signature }),
                 ]),
             ]),
         ]);
@@ -1270,16 +1191,16 @@ describe('transformTransactionPlanResult', () => {
         });
         expect(transformedPlan).toStrictEqual(
             sequentialTransactionPlanResult([
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('B'), createTransaction('B')),
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('C'), createTransaction('C')),
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('D'), createTransaction('D')),
-                successfulSingleTransactionPlanResultFromTransaction(createMessage('E'), createTransaction('E')),
+                successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
+                successfulSingleTransactionPlanResult(createMessage('B'), { signature: 'B' as Signature }),
+                successfulSingleTransactionPlanResult(createMessage('C'), { signature: 'C' as Signature }),
+                successfulSingleTransactionPlanResult(createMessage('D'), { signature: 'D' as Signature }),
+                successfulSingleTransactionPlanResult(createMessage('E'), { signature: 'E' as Signature }),
             ]),
         );
     });
     it('keeps transformed successful single transaction plan results frozen', () => {
-        const plan = successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A'));
+        const plan = successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature });
         const transformedPlan = transformTransactionPlanResult(plan, p => ({ ...p }));
         expect(transformedPlan).toBeFrozenObject();
     });
@@ -1298,14 +1219,14 @@ describe('transformTransactionPlanResult', () => {
     });
     it('keeps transformed sequential transaction plan results frozen', () => {
         const plan = sequentialTransactionPlanResult([
-            successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
+            successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
         ]);
         const transformedPlan = transformTransactionPlanResult(plan, p => ({ ...p }));
         expect(transformedPlan).toBeFrozenObject();
     });
     it('keeps transformed parallel transaction plan results frozen', () => {
         const plan = parallelTransactionPlanResult([
-            successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A')),
+            successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature }),
         ]);
         const transformedPlan = transformTransactionPlanResult(plan, p => ({ ...p }));
         expect(transformedPlan).toBeFrozenObject();
@@ -1313,9 +1234,9 @@ describe('transformTransactionPlanResult', () => {
 });
 
 describe('flattenTransactionPlanResult', () => {
-    const plan1 = successfulSingleTransactionPlanResultFromTransaction(createMessage('A'), createTransaction('A'));
-    const plan2 = successfulSingleTransactionPlanResultFromTransaction(createMessage('B'), createTransaction('B'));
-    const plan3 = successfulSingleTransactionPlanResultFromTransaction(createMessage('C'), createTransaction('C'));
+    const plan1 = successfulSingleTransactionPlanResult(createMessage('A'), { signature: 'A' as Signature });
+    const plan2 = successfulSingleTransactionPlanResult(createMessage('B'), { signature: 'B' as Signature });
+    const plan3 = successfulSingleTransactionPlanResult(createMessage('C'), { signature: 'C' as Signature });
 
     it('flattens a parallel transaction plan result', () => {
         const result = parallelTransactionPlanResult([plan1, plan2, plan3]);
@@ -1479,7 +1400,7 @@ describe('getFirstFailedSingleTransactionPlanResult', () => {
         const error = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
         const failedResult = failedSingleTransactionPlanResult(messageB, error);
         const parallelResult = parallelTransactionPlanResult([
-            successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A')),
+            successfulSingleTransactionPlanResult(messageA, { signature: 'A' as Signature }),
             failedResult,
         ]);
 
@@ -1493,7 +1414,7 @@ describe('getFirstFailedSingleTransactionPlanResult', () => {
         const error = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
         const failedResult = failedSingleTransactionPlanResult(messageB, error);
         const sequentialResult = sequentialTransactionPlanResult([
-            successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A')),
+            successfulSingleTransactionPlanResult(messageA, { signature: 'A' as Signature }),
             failedResult,
         ]);
 
@@ -1509,9 +1430,9 @@ describe('getFirstFailedSingleTransactionPlanResult', () => {
         const failedResult = failedSingleTransactionPlanResult(messageC, error);
         const nestedResult = parallelTransactionPlanResult([
             sequentialTransactionPlanResult([
-                successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A')),
+                successfulSingleTransactionPlanResult(messageA, { signature: 'A' as Signature }),
                 parallelTransactionPlanResult([
-                    successfulSingleTransactionPlanResultFromTransaction(messageB, createTransaction('B')),
+                    successfulSingleTransactionPlanResult(messageB, { signature: 'B' as Signature }),
                     failedResult,
                 ]),
             ]),
@@ -1537,8 +1458,8 @@ describe('getFirstFailedSingleTransactionPlanResult', () => {
         const messageA = createMessage('A');
         const messageB = createMessage('B');
         const successfulResult = parallelTransactionPlanResult([
-            successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A')),
-            successfulSingleTransactionPlanResultFromTransaction(messageB, createTransaction('B')),
+            successfulSingleTransactionPlanResult(messageA, { signature: 'A' as Signature }),
+            successfulSingleTransactionPlanResult(messageB, { signature: 'B' as Signature }),
         ]);
 
         expect(() => getFirstFailedSingleTransactionPlanResult(successfulResult)).toThrow(
@@ -1569,7 +1490,7 @@ describe('getFirstFailedSingleTransactionPlanResult', () => {
         const messageA = createMessage('A');
         const messageB = createMessage('B');
         const mixedResult = sequentialTransactionPlanResult([
-            successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A')),
+            successfulSingleTransactionPlanResult(messageA, { signature: 'A' as Signature }),
             canceledSingleTransactionPlanResult(messageB),
         ]);
 
@@ -1584,7 +1505,7 @@ describe('getFirstFailedSingleTransactionPlanResult', () => {
 
     it('throws an error where context contains transactionPlanResult as non-enumerable', () => {
         const messageA = createMessage('A');
-        const successfulResult = successfulSingleTransactionPlanResultFromTransaction(messageA, createTransaction('A'));
+        const successfulResult = successfulSingleTransactionPlanResult(messageA, { signature: 'A' as Signature });
 
         let caughtError:
             | SolanaError<typeof SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_SINGLE_TRANSACTION_PLAN_RESULT_NOT_FOUND>

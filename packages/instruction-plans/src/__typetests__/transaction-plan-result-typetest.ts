@@ -33,7 +33,6 @@ import {
     SingleTransactionPlanResult,
     SuccessfulSingleTransactionPlanResult,
     successfulSingleTransactionPlanResult,
-    successfulSingleTransactionPlanResultFromTransaction,
     SuccessfulTransactionPlanResult,
     TransactionPlanResult,
     TransactionPlanResultContext,
@@ -43,8 +42,6 @@ import {
 const messageA = null as unknown as TransactionMessage & TransactionMessageWithFeePayer & { id: 'A' };
 const messageB = null as unknown as TransactionMessage & TransactionMessageWithFeePayer & { id: 'B' };
 const messageC = null as unknown as TransactionMessage & TransactionMessageWithFeePayer & { id: 'C' };
-const transactionA = null as unknown as Transaction & { id: 'A' };
-const transactionB = null as unknown as Transaction & { id: 'B' };
 const error = null as unknown as Error;
 
 type CustomContext = { customData: string };
@@ -54,8 +51,8 @@ type CustomContext = { customData: string };
     // It satisfies ParallelTransactionPlanResult.
     {
         const result = parallelTransactionPlanResult([
-            successfulSingleTransactionPlanResultFromTransaction(messageA, transactionA),
-            successfulSingleTransactionPlanResultFromTransaction(messageB, transactionB),
+            successfulSingleTransactionPlanResult(messageA, { signature: 'A' as Signature }),
+            successfulSingleTransactionPlanResult(messageB, { signature: 'B' as Signature }),
         ]);
         result satisfies ParallelTransactionPlanResult;
         result satisfies TransactionPlanResult;
@@ -64,8 +61,8 @@ type CustomContext = { customData: string };
     // It can work with custom context.
     {
         const result = parallelTransactionPlanResult([
-            successfulSingleTransactionPlanResultFromTransaction(messageA, transactionA, { customData: 'A' }),
-            successfulSingleTransactionPlanResultFromTransaction(messageB, transactionB, { customData: 'B' }),
+            successfulSingleTransactionPlanResult(messageA, { customData: 'A', signature: 'A' as Signature }),
+            successfulSingleTransactionPlanResult(messageB, { customData: 'B', signature: 'B' as Signature }),
         ]);
         result satisfies ParallelTransactionPlanResult<CustomContext>;
         result satisfies TransactionPlanResult;
@@ -74,9 +71,9 @@ type CustomContext = { customData: string };
     // It can nest other result plans.
     {
         const result = parallelTransactionPlanResult([
-            successfulSingleTransactionPlanResultFromTransaction(messageA, transactionA),
+            successfulSingleTransactionPlanResult(messageA, { signature: 'A' as Signature }),
             parallelTransactionPlanResult([
-                successfulSingleTransactionPlanResultFromTransaction(messageB, transactionB),
+                successfulSingleTransactionPlanResult(messageB, { signature: 'B' as Signature }),
                 canceledSingleTransactionPlanResult(messageC),
             ]),
         ]);
@@ -90,8 +87,8 @@ type CustomContext = { customData: string };
     // It satisfies a divisible SequentialTransactionPlanResult.
     {
         const result = sequentialTransactionPlanResult([
-            successfulSingleTransactionPlanResultFromTransaction(messageA, transactionA),
-            successfulSingleTransactionPlanResultFromTransaction(messageB, transactionB),
+            successfulSingleTransactionPlanResult(messageA, { signature: 'A' as Signature }),
+            successfulSingleTransactionPlanResult(messageB, { signature: 'B' as Signature }),
         ]);
         result satisfies SequentialTransactionPlanResult & { divisible: true };
         result satisfies TransactionPlanResult;
@@ -100,8 +97,8 @@ type CustomContext = { customData: string };
     // It can work with custom context.
     {
         const result = sequentialTransactionPlanResult([
-            successfulSingleTransactionPlanResultFromTransaction(messageA, transactionA, { customData: 'A' }),
-            successfulSingleTransactionPlanResultFromTransaction(messageB, transactionB, { customData: 'B' }),
+            successfulSingleTransactionPlanResult(messageA, { customData: 'A', signature: 'A' as Signature }),
+            successfulSingleTransactionPlanResult(messageB, { customData: 'B', signature: 'B' as Signature }),
         ]);
         result satisfies SequentialTransactionPlanResult<CustomContext> & { divisible: true };
         result satisfies TransactionPlanResult;
@@ -110,9 +107,9 @@ type CustomContext = { customData: string };
     // It can nest other result plans.
     {
         const result = sequentialTransactionPlanResult([
-            successfulSingleTransactionPlanResultFromTransaction(messageA, transactionA),
+            successfulSingleTransactionPlanResult(messageA, { signature: 'A' as Signature }),
             sequentialTransactionPlanResult([
-                successfulSingleTransactionPlanResultFromTransaction(messageB, transactionB),
+                successfulSingleTransactionPlanResult(messageB, { signature: 'B' as Signature }),
                 canceledSingleTransactionPlanResult(messageC),
             ]),
         ]);
@@ -126,8 +123,8 @@ type CustomContext = { customData: string };
     // It satisfies a non-divisible SequentialTransactionPlanResult.
     {
         const result = nonDivisibleSequentialTransactionPlanResult([
-            successfulSingleTransactionPlanResultFromTransaction(messageA, transactionA),
-            successfulSingleTransactionPlanResultFromTransaction(messageB, transactionB),
+            successfulSingleTransactionPlanResult(messageA, { signature: 'A' as Signature }),
+            successfulSingleTransactionPlanResult(messageB, { signature: 'B' as Signature }),
         ]);
         result satisfies SequentialTransactionPlanResult & { divisible: false };
         result satisfies TransactionPlanResult;
@@ -136,8 +133,8 @@ type CustomContext = { customData: string };
     // It can work with custom context.
     {
         const result = nonDivisibleSequentialTransactionPlanResult([
-            successfulSingleTransactionPlanResultFromTransaction(messageA, transactionA, { customData: 'A' }),
-            successfulSingleTransactionPlanResultFromTransaction(messageB, transactionB, { customData: 'B' }),
+            successfulSingleTransactionPlanResult(messageA, { customData: 'A', signature: 'A' as Signature }),
+            successfulSingleTransactionPlanResult(messageB, { customData: 'B', signature: 'B' as Signature }),
         ]);
         result satisfies SequentialTransactionPlanResult<CustomContext> & { divisible: false };
         result satisfies TransactionPlanResult;
@@ -146,64 +143,14 @@ type CustomContext = { customData: string };
     // It can nest other result plans.
     {
         const result = nonDivisibleSequentialTransactionPlanResult([
-            successfulSingleTransactionPlanResultFromTransaction(messageA, transactionA),
+            successfulSingleTransactionPlanResult(messageA, { signature: 'A' as Signature }),
             nonDivisibleSequentialTransactionPlanResult([
-                successfulSingleTransactionPlanResultFromTransaction(messageB, transactionB),
+                successfulSingleTransactionPlanResult(messageB, { signature: 'B' as Signature }),
                 canceledSingleTransactionPlanResult(messageC),
             ]),
         ]);
         result satisfies SequentialTransactionPlanResult & { divisible: false };
         result satisfies TransactionPlanResult;
-    }
-}
-
-// [DESCRIBE] successfulSingleTransactionPlanResultFromTransaction
-{
-    // It satisfies SingleTransactionPlanResult with a successful status.
-    {
-        const result = successfulSingleTransactionPlanResultFromTransaction(messageA, transactionA);
-        result satisfies SuccessfulSingleTransactionPlanResult<TransactionPlanResultContext, typeof messageA>;
-        result satisfies TransactionPlanResult;
-    }
-
-    // It can include a custom context.
-    {
-        const result = successfulSingleTransactionPlanResultFromTransaction(messageA, transactionA, {
-            customData: 'test',
-        });
-        result satisfies SuccessfulSingleTransactionPlanResult<CustomContext, typeof messageA>;
-        result satisfies TransactionPlanResult;
-    }
-
-    // The result's context claims exactly what was passed — custom properties stay required —
-    // plus the signature and transaction derived from the transaction argument, both required.
-    {
-        const result = successfulSingleTransactionPlanResultFromTransaction(messageA, transactionA, {
-            customData: 'test',
-        });
-        result.context.customData satisfies string;
-        result.context.signature satisfies Signature;
-        result.context.transaction satisfies Transaction;
-    }
-
-    // It does not add the optional `message` property of the default context.
-    {
-        const result = successfulSingleTransactionPlanResultFromTransaction<CustomContext>(messageA, transactionA, {
-            customData: 'test',
-        });
-        // @ts-expect-error The context claims nothing but `customData`, `signature` and `transaction`.
-        void result.context.message;
-    }
-
-    // With an explicit type argument, a passed context must supply the declared properties;
-    // nothing but the derived `signature` and `transaction` is asserted on the caller's behalf.
-    {
-        successfulSingleTransactionPlanResultFromTransaction<CustomContext>(
-            messageA,
-            transactionA,
-            // @ts-expect-error The declared `customData` property is missing.
-            {},
-        );
     }
 }
 
@@ -265,7 +212,7 @@ type CustomContext = { customData: string };
 {
     // It extracts single plan results from a simple plan result.
     {
-        const result = successfulSingleTransactionPlanResultFromTransaction(messageA, transactionA);
+        const result = successfulSingleTransactionPlanResult(messageA, { signature: 'A' as Signature });
         const results = flattenTransactionPlanResult(result);
         results satisfies SingleTransactionPlanResult[];
     }
@@ -274,8 +221,8 @@ type CustomContext = { customData: string };
     {
         const result = parallelTransactionPlanResult([
             sequentialTransactionPlanResult([
-                successfulSingleTransactionPlanResultFromTransaction(messageA, transactionA),
-                successfulSingleTransactionPlanResultFromTransaction(messageB, transactionB),
+                successfulSingleTransactionPlanResult(messageA, { signature: 'A' as Signature }),
+                successfulSingleTransactionPlanResult(messageB, { signature: 'B' as Signature }),
             ]),
         ]);
         const results = flattenTransactionPlanResult(result);

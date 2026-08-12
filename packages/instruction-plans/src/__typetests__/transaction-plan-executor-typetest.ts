@@ -46,41 +46,66 @@ import {
 
 // [DESCRIBE] createTransactionPlanExecutor
 {
-    // It can still return a signature or a full transaction, using the deprecated overload.
-    {
-        createTransactionPlanExecutor({
-            executeTransactionMessage: () => Promise.resolve({} as Signature),
-        });
-        createTransactionPlanExecutor({
-            executeTransactionMessage: () => Promise.resolve({} as Transaction),
-        });
-    }
-
-    // It can return the context that a successful result should carry.
+    // Its callback returns the context that a successful result should carry.
     {
         createTransactionPlanExecutor({
             executeTransactionMessage: () => Promise.resolve({ signature: {} as Signature }),
         });
         createTransactionPlanExecutor({
-            executeTransactionMessage: () =>
-                Promise.resolve({ signature: {} as Signature, transaction: {} as Transaction }),
+            // @ts-expect-error The context is no longer the callback's only output; it must be returned.
+            executeTransactionMessage: () => Promise.resolve(),
+        });
+        createTransactionPlanExecutor<TransactionPlanResultContextWithSignature>({
+            // @ts-expect-error A bare signature is not a context; it belongs under a `signature` key.
+            executeTransactionMessage: () => Promise.resolve({} as Signature),
         });
     }
 
-    // A returned context needs no signature of its own; since `TContext` alone decides what a
-    // context carries, one inferred from the return value drops the signature guarantee.
-    {
-        const executor = createTransactionPlanExecutor({
-            executeTransactionMessage: () => Promise.resolve({ sent: true }),
-        });
-        executor satisfies TransactionPlanExecutor<{ sent: boolean }>;
-    }
-
-    // It requires a returned context to carry the signature when `TContext` guarantees one.
+    // Its callback must produce every property its context requires. This is what stops a
+    // successful result from promising a property that was never populated.
     {
         createTransactionPlanExecutor<TransactionPlanResultContextWithSignature>({
-            // @ts-expect-error The returned context is missing the guaranteed `signature` property.
-            executeTransactionMessage: () => Promise.resolve({ sent: true }),
+            // @ts-expect-error This context requires a signature and the callback returns none.
+            executeTransactionMessage: () => Promise.resolve({ transaction: {} as Transaction }),
+        });
+        createTransactionPlanExecutor<{ custom: string; other: string }>({
+            // @ts-expect-error This context requires an `other` property and the callback returns none.
+            executeTransactionMessage: () => Promise.resolve({ custom: 'value' }),
+        });
+        createTransactionPlanExecutor<TransactionPlanResultContextWithSignature & { custom: string }>({
+            // @ts-expect-error Mutating the context does not discharge the obligation to return it.
+            executeTransactionMessage: context => {
+                context.custom = 'value';
+                return Promise.resolve({ signature: {} as Signature });
+            },
+        });
+    }
+
+    // Its callback cannot return the context it was given, since every property on it is optional.
+    {
+        createTransactionPlanExecutor({
+            // @ts-expect-error The mutable context does not satisfy `TContext` on its own.
+            executeTransactionMessage: context => Promise.resolve(context),
+        });
+        createTransactionPlanExecutor({
+            // @ts-expect-error Spreading it does not help; the spread is optional throughout.
+            executeTransactionMessage: context => Promise.resolve({ ...context }),
+        });
+    }
+
+    // When the callback declares no parameters, `TContext` is inferred from the context it
+    // returns rather than falling back to the default. Declaring a parameter — which any callback
+    // that needs the message must do — makes the callback context-sensitive, at which point the
+    // default applies and the returned context must satisfy it.
+    {
+        const executor = createTransactionPlanExecutor({
+            executeTransactionMessage: () => Promise.resolve({ transaction: {} as Transaction }),
+        });
+        executor satisfies TransactionPlanExecutor<{ transaction: Transaction }>;
+
+        createTransactionPlanExecutor({
+            // @ts-expect-error The default context applies here, and it requires a signature.
+            executeTransactionMessage: (_, _message) => Promise.resolve({ transaction: {} as Transaction }),
         });
     }
 
@@ -89,7 +114,7 @@ import {
         createTransactionPlanExecutor({
             executeTransactionMessage: (_, message) => {
                 message satisfies TransactionMessage & TransactionMessageWithFeePayer;
-                return Promise.resolve({} as Transaction);
+                return Promise.resolve({ signature: {} as Signature });
             },
         });
     }
@@ -103,7 +128,7 @@ import {
                 context.signature satisfies Signature | undefined;
                 // @ts-expect-error Populating the signature is the callback's job; it is absent on entry.
                 context.signature satisfies Signature;
-                return Promise.resolve({} as Signature);
+                return Promise.resolve({ signature: {} as Signature });
             },
         });
     }
@@ -118,7 +143,7 @@ import {
                 const mySignedTransaction = {} as unknown as Transaction;
                 context.transaction = mySignedTransaction;
                 context.transaction satisfies Transaction;
-                return Promise.resolve(context.transaction);
+                return Promise.resolve({ signature: {} as Signature });
             },
         });
     }
@@ -127,7 +152,7 @@ import {
     {
         const executor = createTransactionPlanExecutor({
             executeTransactionMessage: (_: { custom?: string }) => {
-                return Promise.resolve({} as Signature);
+                return Promise.resolve({ custom: 'value' });
             },
         });
         executor satisfies TransactionPlanExecutor<{ custom?: string }>;
@@ -140,7 +165,7 @@ import {
         createTransactionPlanExecutor({
             // @ts-expect-error The context starts empty, so `custom` cannot be present on entry.
             executeTransactionMessage: (_: { custom: string }) => {
-                return Promise.resolve({} as Signature);
+                return Promise.resolve({ custom: 'value' });
             },
         });
     }
@@ -160,7 +185,7 @@ import {
                 context.signature satisfies Signature | undefined;
                 // @ts-expect-error Populating the signature is the callback's job; it is absent on entry.
                 context.signature satisfies Signature;
-                return Promise.resolve({} as Signature);
+                return Promise.resolve({ custom: 'value', signature: {} as Signature });
             },
         });
         executor satisfies TransactionPlanExecutor<TransactionPlanResultContextWithSignature & { custom: string }>;
@@ -173,7 +198,7 @@ import {
                 context.custom satisfies string | undefined;
                 // @ts-expect-error This context declares no `message`, so the executor does not add one.
                 void context.message;
-                return Promise.resolve({} as Signature);
+                return Promise.resolve({ custom: 'value' });
             },
         });
     }
@@ -205,7 +230,7 @@ import {
                 messageWithBlockhash satisfies TransactionMessageWithBlockhashLifetime;
                 const transaction = compileTransaction(messageWithBlockhash);
                 transaction satisfies TransactionWithBlockhashLifetime;
-                return Promise.resolve(transaction);
+                return Promise.resolve({ signature: {} as Signature });
             },
         });
     }
@@ -267,7 +292,7 @@ import {
     // Its results guarantee a signature by default, as they did before the context types were loosened.
     {
         const executor = createTransactionPlanExecutor({
-            executeTransactionMessage: () => Promise.resolve({} as Signature),
+            executeTransactionMessage: () => Promise.resolve({ signature: {} as Signature }),
         });
         void executor(null as unknown as TransactionPlan).then(result => {
             if (result.kind === 'single' && result.status === 'successful') {
@@ -279,7 +304,7 @@ import {
     // Its failed results guarantee nothing.
     {
         const executor = createTransactionPlanExecutor({
-            executeTransactionMessage: () => Promise.resolve({} as Signature),
+            executeTransactionMessage: () => Promise.resolve({ signature: {} as Signature }),
         });
         void executor(null as unknown as TransactionPlan).then(result => {
             if (result.kind === 'single' && result.status === 'failed') {
@@ -294,10 +319,7 @@ import {
     // intersecting it in, not from the executor adding it behind the caller's back.
     {
         const executor = createTransactionPlanExecutor<TransactionPlanResultContextWithSignature & { custom: string }>({
-            executeTransactionMessage: context => {
-                context.custom = 'value';
-                return Promise.resolve({} as Signature);
-            },
+            executeTransactionMessage: () => Promise.resolve({ custom: 'value', signature: {} as Signature }),
         });
         void executor(null as unknown as TransactionPlan).then(result => {
             if (result.kind === 'single' && result.status === 'successful') {
@@ -307,15 +329,12 @@ import {
         });
     }
 
-    // A custom context that omits the signature does not get one back. The executor still
-    // populates `context.signature` at runtime, but it makes no type-level promise the caller
-    // did not ask for, which is what lets an executor be typed with no signature at all.
+    // A custom context that omits the signature does not get one back. Nothing writes to the
+    // context but the callback, so a context that never mentions a signature reports none — at
+    // the type level and at runtime alike.
     {
         const executor = createTransactionPlanExecutor<{ custom: string }>({
-            executeTransactionMessage: context => {
-                context.custom = 'value';
-                return Promise.resolve({} as Signature);
-            },
+            executeTransactionMessage: () => Promise.resolve({ custom: 'value' }),
         });
         void executor(null as unknown as TransactionPlan).then(result => {
             if (result.kind === 'single' && result.status === 'successful') {
@@ -337,6 +356,15 @@ import {
             // @ts-expect-error This executor makes no promise about the signature.
             void result.context.signature;
         }
+    }
+
+    // `createTransactionPlanExecutor` builds one. Returning a transaction the fee payer has not
+    // signed is enough, because nothing downstream tries to read a signature out of it.
+    {
+        const executor = createTransactionPlanExecutor<{ transaction: Transaction }>({
+            executeTransactionMessage: () => Promise.resolve({ transaction: {} as Transaction }),
+        });
+        executor satisfies TransactionPlanExecutor<{ transaction: Transaction }>;
     }
 
     // Such a result is still a TransactionPlanResult and works with the traversal helpers.

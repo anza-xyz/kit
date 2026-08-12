@@ -6,7 +6,7 @@ import {
 } from '@solana/errors';
 import { Signature } from '@solana/keys';
 import { TransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
-import { getSignatureFromTransaction, Transaction } from '@solana/transactions';
+import { Transaction } from '@solana/transactions';
 
 /**
  * The result of executing a transaction plan.
@@ -94,47 +94,19 @@ export type SuccessfulTransactionPlanResult<
 export type TransactionPlanResultContext = { [key: number | string | symbol]: unknown };
 
 /**
- * The base context fields that {@link SuccessfulBaseTransactionPlanResultContext} builds upon.
- *
- * This type provides optional fields for the transaction message, signature, and
- * full transaction object. These fields may or may not be populated depending on
- * how far execution progressed before the result was produced.
- *
- * @deprecated This type will be removed in the next major version. It is no longer part of any
- * result type — the context of a result is entirely caller-defined, exactly the `TContext` you
- * supply — so there is no separate base shape to merge in. If you refer to this type, declare
- * whichever of its fields you need on your own context type instead:
- * ```ts
- * type MyContext = {
- *   message?: TransactionMessage & TransactionMessageWithFeePayer;
- *   signature?: Signature;
- *   transaction?: Transaction;
- * };
- * ```
- *
- * @see {@link TransactionPlanResultContextWithSignature}
- * @see {@link successfulSingleTransactionPlanResultFromTransaction}
- */
-export interface BaseTransactionPlanResultContext {
-    message?: TransactionMessage & TransactionMessageWithFeePayer;
-    signature?: Signature;
-    transaction?: Transaction;
-}
-
-/**
  * The base context fields for a {@link SuccessfulSingleTransactionPlanResult}.
  *
- * This extends the base context by requiring a {@link Signature}, since a
- * successful transaction always produces one. The transaction message and full
- * transaction object remain optional.
+ * This requires a {@link Signature}, since a successful transaction always produces
+ * one. The transaction message and full transaction object remain optional.
  *
  * @deprecated use {@link TransactionPlanResultContextWithSignature} instead as the context type argument.
  *
  * @see {@link TransactionPlanResultContextWithSignature}
- * @see {@link BaseTransactionPlanResultContext}
  */
-export interface SuccessfulBaseTransactionPlanResultContext extends BaseTransactionPlanResultContext {
+export interface SuccessfulBaseTransactionPlanResultContext {
+    message?: TransactionMessage & TransactionMessageWithFeePayer;
     signature: Signature;
+    transaction?: Transaction;
 }
 
 /**
@@ -150,9 +122,11 @@ export interface SuccessfulBaseTransactionPlanResultContext extends BaseTransact
  * const executor = createTransactionPlanExecutor<
  *     TransactionPlanResultContextWithSignature & { startedAt: number }
  * >({
- *     executeTransactionMessage: async context => {
- *         context.startedAt = Date.now();
- *         // ...
+ *     executeTransactionMessage: async (context, message) => {
+ *         const startedAt = Date.now();
+ *         context.startedAt = startedAt;
+ *         const signature = await sendAndConfirm(message);
+ *         return { signature, startedAt };
  *     },
  * });
  * ```
@@ -509,67 +483,6 @@ export function parallelTransactionPlanResult<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
 >(plans: TransactionPlanResult<TContext>[]): ParallelTransactionPlanResult<TContext> {
     return Object.freeze({ kind: 'parallel', planType: 'transactionPlanResult', plans });
-}
-
-/**
- * Creates a successful {@link SingleTransactionPlanResult} from a transaction message and transaction.
- *
- * This function creates a single result with a 'successful' status, indicating that
- * the transaction was successfully executed. It also includes the original transaction
- * message, the executed transaction, and an optional context object.
- *
- * @typeParam TContext - The type of the context object
- * @typeParam TTransactionMessage - The type of the transaction message
- * @param plannedMessage - The original transaction message
- * @param transaction - The successfully executed transaction
- * @param context - Optional context object to be included with the result. The result's context
- * claims exactly what you pass, plus the `signature` and `transaction` derived from the
- * `transaction` argument. Anything you do pass for those two keys is overwritten by the derived
- * values
- *
- * @example
- * ```ts
- * const result = successfulSingleTransactionPlanResultFromTransaction(
- *   transactionMessage,
- *   transaction
- * );
- * result satisfies SingleTransactionPlanResult;
- * ```
- *
- * @deprecated Call {@link successfulSingleTransactionPlanResult} instead, passing the context
- * explicitly. This helper derives the `signature` for you by calling
- * {@link getSignatureFromTransaction}, which throws when the transaction's fee payer has not
- * signed it — the explicit spelling makes that step visible and avoidable:
- * ```diff
- * - successfulSingleTransactionPlanResultFromTransaction(message, transaction);
- * + successfulSingleTransactionPlanResult(message, {
- * +   signature: getSignatureFromTransaction(transaction),
- * +   transaction,
- * + });
- * ```
- *
- * @see {@link SingleTransactionPlanResult}
- */
-export function successfulSingleTransactionPlanResultFromTransaction<
-    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
-    TTransactionMessage extends TransactionMessage & TransactionMessageWithFeePayer = TransactionMessage &
-        TransactionMessageWithFeePayer,
->(
-    plannedMessage: TTransactionMessage,
-    transaction: Transaction,
-    context?: TContext,
-): SuccessfulSingleTransactionPlanResult<
-    TContext & { signature: Signature; transaction: Transaction },
-    TTransactionMessage
-> {
-    const signature = getSignatureFromTransaction(transaction);
-    return Object.freeze({
-        context: Object.freeze({ ...((context ?? {}) as TContext), signature, transaction }),
-        kind: 'single',
-        planType: 'transactionPlanResult',
-        plannedMessage,
-        status: 'successful',
-    });
 }
 
 /**
