@@ -102,6 +102,12 @@ RPC method response types live in `packages/rpc-api/src/<methodName>.ts`; types 
 - **Bundle size**: Monitored via BundleMon on every PR.
 - **Publishing**: On merge to `main`, changesets action creates a "Version Packages" PR or publishes to npm. Canary snapshots are published on every push to `main`.
 
+## Docs
+
+- The docs are built against the **published** version of `@solana/kit`.
+- They cannot use new types that are not yet in a published version. Doing so will fail in CI.
+- This means that some docs updates need to be delayed until after a version is published and cannot be part of a PR.
+
 <!-- skills-inject:start -->
 
 ## Skill Instructions
