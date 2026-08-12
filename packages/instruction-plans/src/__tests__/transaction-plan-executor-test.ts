@@ -25,7 +25,7 @@ import {
     successfulSingleTransactionPlanResultFromTransaction,
     TransactionPlanResult,
 } from '../index';
-import { createMessage, createTransaction, FOREVER_PROMISE } from './__setup__';
+import { createMessage, createPartiallySignedTransaction, createTransaction, FOREVER_PROMISE } from './__setup__';
 
 jest.useFakeTimers();
 
@@ -167,6 +167,107 @@ describe('createTransactionPlanExecutor', () => {
                 successfulSingleTransactionPlanResult(messageA, {
                     signature: 'A' as Signature,
                     transaction: transactionA,
+                }),
+            );
+        });
+
+        it('uses the context returned by the callback for the successful context', async () => {
+            expect.assertions(1);
+            const messageA = createMessage('A');
+            const transactionA = createTransaction('A');
+            const executor = createTransactionPlanExecutor({
+                executeTransactionMessage: () =>
+                    // Note that the signature of `transactionA` is `A`; it is not derived here.
+                    Promise.resolve({ signature: 'RETURNED_SIGNATURE' as Signature, transaction: transactionA }),
+            });
+
+            const promise = executor(singleTransactionPlan(messageA));
+            await expect(promise).resolves.toStrictEqual(
+                successfulSingleTransactionPlanResult(messageA, {
+                    signature: 'RETURNED_SIGNATURE' as Signature,
+                    transaction: transactionA,
+                }),
+            );
+        });
+
+        it('keeps context properties that the callback stored but did not return', async () => {
+            expect.assertions(1);
+            const messageA = createMessage('A');
+            const messageB = createMessage('B');
+            const executor = createTransactionPlanExecutor({
+                executeTransactionMessage: context => {
+                    context.message = messageB;
+                    return Promise.resolve({ signature: 'A' as Signature });
+                },
+            });
+
+            const promise = executor(singleTransactionPlan(messageA));
+            await expect(promise).resolves.toStrictEqual(
+                successfulSingleTransactionPlanResult(messageA, {
+                    message: messageB,
+                    signature: 'A' as Signature,
+                }),
+            );
+        });
+
+        it('prefers the returned context over the context stored by the callback', async () => {
+            expect.assertions(1);
+            const messageA = createMessage('A');
+            const transactionA = createTransaction('A');
+            const executor = createTransactionPlanExecutor({
+                executeTransactionMessage: context => {
+                    context.signature = 'STALE_SIGNATURE' as Signature;
+                    context.transaction = createTransaction('B');
+                    return Promise.resolve({
+                        signature: 'RETURNED_SIGNATURE' as Signature,
+                        transaction: transactionA,
+                    });
+                },
+            });
+
+            const promise = executor(singleTransactionPlan(messageA));
+            await expect(promise).resolves.toStrictEqual(
+                successfulSingleTransactionPlanResult(messageA, {
+                    signature: 'RETURNED_SIGNATURE' as Signature,
+                    transaction: transactionA,
+                }),
+            );
+        });
+
+        it('succeeds when the transaction in the returned context has no fee payer signature', async () => {
+            expect.assertions(1);
+            const messageA = createMessage('A');
+            const partiallySignedTransactionA = createPartiallySignedTransaction('A');
+            const executor = createTransactionPlanExecutor({
+                executeTransactionMessage: () =>
+                    Promise.resolve({
+                        signature: 'RELAYER_SIGNATURE' as Signature,
+                        transaction: partiallySignedTransactionA,
+                    }),
+            });
+
+            const promise = executor(singleTransactionPlan(messageA));
+            await expect(promise).resolves.toStrictEqual(
+                successfulSingleTransactionPlanResult(messageA, {
+                    signature: 'RELAYER_SIGNATURE' as Signature,
+                    transaction: partiallySignedTransactionA,
+                }),
+            );
+        });
+
+        it('stores custom properties from the returned context', async () => {
+            expect.assertions(1);
+            const messageA = createMessage('A');
+            const executor = createTransactionPlanExecutor<{ custom: string }>({
+                executeTransactionMessage: () =>
+                    Promise.resolve({ custom: 'custom value', signature: 'A' as Signature }),
+            });
+
+            const promise = executor(singleTransactionPlan(messageA));
+            await expect(promise).resolves.toStrictEqual(
+                successfulSingleTransactionPlanResult(messageA, {
+                    custom: 'custom value',
+                    signature: 'A' as Signature,
                 }),
             );
         });

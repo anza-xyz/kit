@@ -207,7 +207,9 @@ const transactionExecutor = createTransactionPlanExecutor({
             { signature },
             `[transaction executor] Transaction confirmed: https://explorer.solana.com/tx/${signature}?cluster=custom&customUrl=127.0.0.1:8899`,
         );
-        return signedTransaction;
+
+        // Return the context that the successful result should carry.
+        return { message: updatedMessage, signature, transaction: signedTransaction };
     },
 });
 

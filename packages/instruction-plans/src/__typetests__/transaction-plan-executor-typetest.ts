@@ -43,13 +43,32 @@ import {
 
 // [DESCRIBE] createTransactionPlanExecutor
 {
-    // It can return a signature or a full transaction.
+    // It can still return a signature or a full transaction, using the deprecated overload.
     {
         createTransactionPlanExecutor({
             executeTransactionMessage: () => Promise.resolve({} as Signature),
         });
         createTransactionPlanExecutor({
             executeTransactionMessage: () => Promise.resolve({} as Transaction),
+        });
+    }
+
+    // It can return the context that a successful result should carry.
+    {
+        createTransactionPlanExecutor({
+            executeTransactionMessage: () => Promise.resolve({ signature: {} as Signature }),
+        });
+        createTransactionPlanExecutor({
+            executeTransactionMessage: () =>
+                Promise.resolve({ signature: {} as Signature, transaction: {} as Transaction }),
+        });
+    }
+
+    // It requires a returned context to carry the signature a successful result guarantees.
+    {
+        createTransactionPlanExecutor({
+            // @ts-expect-error A context without a signature is neither a valid context nor a `Transaction`.
+            executeTransactionMessage: () => Promise.resolve({ sent: true, transaction: {} as Transaction }),
         });
     }
 
@@ -112,6 +131,22 @@ import {
             },
         });
         executor satisfies TransactionPlanExecutor<{ custom: string }>;
+    }
+
+    // It can return a custom context.
+    {
+        const executor = createTransactionPlanExecutor<{ custom: string }>({
+            executeTransactionMessage: () => Promise.resolve({ custom: 'custom value', signature: {} as Signature }),
+        });
+        executor satisfies TransactionPlanExecutor<{ custom: string }>;
+    }
+
+    // It requires a returned context to carry the custom context.
+    {
+        createTransactionPlanExecutor<{ custom: string }>({
+            // @ts-expect-error The returned context is missing the `custom` property.
+            executeTransactionMessage: () => Promise.resolve({ signature: {} as Signature }),
+        });
     }
 
     // It transfers the lifetime to the compiled transaction.
