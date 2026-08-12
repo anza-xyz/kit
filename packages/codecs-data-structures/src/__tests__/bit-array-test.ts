@@ -70,6 +70,16 @@ describe('getBitArrayCodec', () => {
         );
     });
 
+    it('writes at a non-zero offset and returns the next offset', () => {
+        const a = (bits: string) => [...bits].map(bit => bit === '1');
+        // Writing at a non-zero offset must place the bytes at `offset` and
+        // return `offset + size`, so a following field is written after it
+        // rather than overwriting the bit array.
+        const bytes = new Uint8Array(2);
+        expect(bitArray(1).write(a('10100000'), bytes, 1)).toBe(2);
+        expect(bytes).toStrictEqual(b('00a0'));
+    });
+
     it('has the right sizes', () => {
         expect(bitArray(42).fixedSize).toBe(42);
     });

@@ -83,7 +83,7 @@ export function getBitArrayEncoder<TSize extends number>(
             }
 
             bytes.set(bytesToAdd, offset);
-            return size;
+            return offset + size;
         },
     });
 }
