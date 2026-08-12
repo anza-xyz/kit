@@ -427,13 +427,13 @@ The `context` object passed to the `executeTransactionMessage` callback is a mut
 
 This is particularly useful for debugging failures or building recovery plans. If an error is thrown at any point in the callback, any attributes you've already saved to the context will still be available in the `FailedSingleTransactionPlanResult`.
 
-The context object supports three optional base properties that have semantic meaning:
+By default the context object supports three optional base properties that have semantic meaning:
 
 - **`message`**: The transaction message after any modifications (e.g., after setting a lifetime).
 - **`transaction`**: The signed transaction ready to be sent.
 - **`signature`**: The transaction signature. Note that this is automatically populated when you set the `transaction` property on the context and/or return a `Transaction`.
 
-You can also add any custom properties you need:
+You can also add any custom properties you need. Because the context type is entirely yours to declare, intersect `TransactionPlanResultContextWithSignature` into it to keep the three base properties above alongside your own:
 
 ```ts twoslash
 import {
@@ -483,29 +483,64 @@ const transactionPlanExecutor = createTransactionPlanExecutor({
 });
 ```
 
+A fresh context is created for every transaction message, so it is empty when your callback receives
+it and every property on it — base or custom — is optional. That means your callback cannot annotate
+its `context` parameter with required properties. If you want a custom property to be guaranteed on
+the result, declare it as an explicit type argument to `createTransactionPlanExecutor` instead:
+
+{/* TODO: Restore `twoslash` on this block once `TransactionPlanResultContextWithSignature` ships. */}
+
+```ts
+import {
+    createTransactionPlanExecutor,
+    TransactionPlanResultContextWithSignature,
+} from '@solana/kit';
+
+const transactionPlanExecutor = createTransactionPlanExecutor<
+    TransactionPlanResultContextWithSignature & { startedAt: number }
+>({
+    executeTransactionMessage: async (context, message) => {
+        // Inside the callback, `context.startedAt` is `number | undefined`.
+        context.startedAt = Date.now();
+        /* ... sign the message, send the transaction, and return it ... */
+    },
+});
+```
+
 When accessing the context from a result, you can retrieve both the base properties and your custom properties:
 
-```ts twoslash
+{/* TODO: Restore `twoslash` on this block once `TransactionPlanResultContextWithSignature` ships. */}
+
+```ts
 import {
     SingleTransactionPlanResult,
+    TransactionPlanResultContextWithSignature,
     isSuccessfulSingleTransactionPlanResult,
     isFailedSingleTransactionPlanResult,
 } from '@solana/kit';
-const result = {} as unknown as SingleTransactionPlanResult<{ startedAt: number }>;
-// ---cut-before---
-if (isSuccessfulSingleTransactionPlanResult(result)) {
-    console.log(result.context.signature); // Always available for successful results.
-    console.log(result.context.transaction); // Available if you stored it.
-    console.log(result.context.startedAt); // Custom context property.
-}
 
-if (isFailedSingleTransactionPlanResult(result)) {
-    console.log(result.error); // The error that caused the failure.
-    console.log(result.context.message); // Available if stored before the failure.
-    console.log(result.context.transaction); // Available if stored before the failure.
-    console.log(result.context.startedAt); // Custom context property.
+type MyContext = TransactionPlanResultContextWithSignature & { startedAt: number };
+
+function logResult(result: SingleTransactionPlanResult<MyContext>) {
+    if (isSuccessfulSingleTransactionPlanResult(result)) {
+        console.log(result.context.signature); // Guaranteed by TransactionPlanResultContextWithSignature.
+        console.log(result.context.transaction); // Available if you stored it.
+        console.log(result.context.startedAt); // Custom context property.
+    }
+
+    if (isFailedSingleTransactionPlanResult(result)) {
+        console.log(result.error); // The error that caused the failure.
+        console.log(result.context.message); // Available if stored before the failure.
+        console.log(result.context.transaction); // Available if stored before the failure.
+        console.log(result.context.startedAt); // Custom context property.
+    }
 }
 ```
+
+A custom context replaces the default rather than extending it, so intersect
+`TransactionPlanResultContextWithSignature` when you want to keep the guarantee that every successful
+result carries a `signature`. Nothing is added to your context on your behalf: the context type you
+declare is the context type you get, both inside the callback and on the result.
 
 Check out the [Recipes section](#recipes) at this end of this guide for ideas of what can be achieved with this API.
 
@@ -744,10 +779,7 @@ const rpc = {} as unknown as Rpc<SolanaRpcApi>;
 const rpcSubscriptions = {} as unknown as RpcSubscriptions<SolanaRpcSubscriptionsApi>;
 // ---cut-before---
 // [!code ++:4]
-import {
-    estimateAndSetResourceLimitsFactory,
-    estimateResourceLimitsFactory,
-} from '@solana/kit';
+import { estimateAndSetResourceLimitsFactory, estimateResourceLimitsFactory } from '@solana/kit';
 
 const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
 // [!code ++:2]
