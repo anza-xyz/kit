@@ -46,6 +46,16 @@ export const innerInstructionsConfigs = [
     ['instructions', KEYPATH_WILDCARD, 'programIdIndex'],
     ['instructions', KEYPATH_WILDCARD, 'stackHeight'],
 ];
+/**
+ * Keypaths, relative to a token balance, at the end of which you will find a numeric value that
+ * should not be upcast to a `bigint`. `accountIndex` and `decimals` are small bounded integers, and
+ * `uiAmount` is an `f64`.
+ */
+export const tokenBalancesConfigs = [
+    ['accountIndex'],
+    ['uiTokenAmount', 'decimals'],
+    ['uiTokenAmount', 'uiAmount'],
+] as const;
 export const messageConfig = [
     ['addressTableLookups', KEYPATH_WILDCARD, 'writableIndexes', KEYPATH_WILDCARD],
     ['addressTableLookups', KEYPATH_WILDCARD, 'readonlyIndexes', KEYPATH_WILDCARD],

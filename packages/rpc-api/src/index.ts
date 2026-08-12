@@ -34,6 +34,7 @@ import {
     KEYPATH_WILDCARD,
     messageConfig,
     RequestTransformerConfig,
+    tokenBalancesConfigs,
 } from '@solana/rpc-transformers';
 
 import { GetAccountInfoApi } from './getAccountInfo';
@@ -270,26 +271,10 @@ function getAllowedNumericKeypaths(): AllowedNumericKeypaths<RpcApi<SolanaRpcApi
         memoizedKeypaths = {
             getAccountInfo: jsonParsedAccountsConfigs.map(c => ['value', ...c]),
             getBlock: [
-                ['transactions', KEYPATH_WILDCARD, 'meta', 'preTokenBalances', KEYPATH_WILDCARD, 'accountIndex'],
-                [
-                    'transactions',
-                    KEYPATH_WILDCARD,
-                    'meta',
-                    'preTokenBalances',
-                    KEYPATH_WILDCARD,
-                    'uiTokenAmount',
-                    'decimals',
-                ],
-                ['transactions', KEYPATH_WILDCARD, 'meta', 'postTokenBalances', KEYPATH_WILDCARD, 'accountIndex'],
-                [
-                    'transactions',
-                    KEYPATH_WILDCARD,
-                    'meta',
-                    'postTokenBalances',
-                    KEYPATH_WILDCARD,
-                    'uiTokenAmount',
-                    'decimals',
-                ],
+                ...tokenBalancesConfigs.flatMap(c => [
+                    ['transactions', KEYPATH_WILDCARD, 'meta', 'preTokenBalances', KEYPATH_WILDCARD, ...c],
+                    ['transactions', KEYPATH_WILDCARD, 'meta', 'postTokenBalances', KEYPATH_WILDCARD, ...c],
+                ]),
                 ['transactions', KEYPATH_WILDCARD, 'meta', 'rewards', KEYPATH_WILDCARD, 'commission'],
                 ...innerInstructionsConfigs.map(c => [
                     'transactions',
@@ -342,10 +327,10 @@ function getAllowedNumericKeypaths(): AllowedNumericKeypaths<RpcApi<SolanaRpcApi
                 ['value', 'uiAmount'],
             ],
             getTransaction: [
-                ['meta', 'preTokenBalances', KEYPATH_WILDCARD, 'accountIndex'],
-                ['meta', 'preTokenBalances', KEYPATH_WILDCARD, 'uiTokenAmount', 'decimals'],
-                ['meta', 'postTokenBalances', KEYPATH_WILDCARD, 'accountIndex'],
-                ['meta', 'postTokenBalances', KEYPATH_WILDCARD, 'uiTokenAmount', 'decimals'],
+                ...tokenBalancesConfigs.flatMap(c => [
+                    ['meta', 'preTokenBalances', KEYPATH_WILDCARD, ...c],
+                    ['meta', 'postTokenBalances', KEYPATH_WILDCARD, ...c],
+                ]),
                 ['meta', 'rewards', KEYPATH_WILDCARD, 'commission'],
                 ...innerInstructionsConfigs.map(c => ['meta', 'innerInstructions', KEYPATH_WILDCARD, ...c]),
                 ...messageConfig.map(c => ['transaction', 'message', ...c] as const),
@@ -353,10 +338,10 @@ function getAllowedNumericKeypaths(): AllowedNumericKeypaths<RpcApi<SolanaRpcApi
             ],
             getTransactionsForAddress: [
                 ['data', KEYPATH_WILDCARD, 'transactionIndex'],
-                ['data', KEYPATH_WILDCARD, 'meta', 'preTokenBalances', KEYPATH_WILDCARD, 'accountIndex'],
-                ['data', KEYPATH_WILDCARD, 'meta', 'preTokenBalances', KEYPATH_WILDCARD, 'uiTokenAmount', 'decimals'],
-                ['data', KEYPATH_WILDCARD, 'meta', 'postTokenBalances', KEYPATH_WILDCARD, 'accountIndex'],
-                ['data', KEYPATH_WILDCARD, 'meta', 'postTokenBalances', KEYPATH_WILDCARD, 'uiTokenAmount', 'decimals'],
+                ...tokenBalancesConfigs.flatMap(c => [
+                    ['data', KEYPATH_WILDCARD, 'meta', 'preTokenBalances', KEYPATH_WILDCARD, ...c],
+                    ['data', KEYPATH_WILDCARD, 'meta', 'postTokenBalances', KEYPATH_WILDCARD, ...c],
+                ]),
                 ['data', KEYPATH_WILDCARD, 'meta', 'rewards', KEYPATH_WILDCARD, 'commission'],
                 ...innerInstructionsConfigs.map(c => [
                     'data',
@@ -380,6 +365,10 @@ function getAllowedNumericKeypaths(): AllowedNumericKeypaths<RpcApi<SolanaRpcApi
                 ['value', 'loadedAccountsDataSize'],
                 ...jsonParsedAccountsConfigs.map(c => ['value', 'accounts', KEYPATH_WILDCARD, ...c]),
                 ...innerInstructionsConfigs.map(c => ['value', 'innerInstructions', KEYPATH_WILDCARD, ...c]),
+                ...tokenBalancesConfigs.flatMap(c => [
+                    ['value', 'preTokenBalances', KEYPATH_WILDCARD, ...c],
+                    ['value', 'postTokenBalances', KEYPATH_WILDCARD, ...c],
+                ]),
             ],
         };
     }
