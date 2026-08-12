@@ -379,7 +379,7 @@ The `executeTransactionMessage` callback receives the following arguments:
 - **`message`**: The transaction message to execute.
 - **`config`**: An optional configuration object that may include an `abortSignal`.
 
-The callback must return either a `Signature` or a full `Transaction` object directly.
+The callback returns nothing. Everything it wants to report — the signature, the transaction, anything custom — it stores on the `context` object.
 
 For instance, in the example below we create a new executor such that each transaction message will be assigned the latest blockhash lifetime before being signed and sent to the network using the provided RPC client.
 
@@ -395,6 +395,7 @@ import {
     signTransactionMessageWithSigners,
     assertIsSendableTransaction,
     assertIsTransactionWithBlockhashLifetime,
+    getSignatureFromTransaction,
     TransactionMessage,
     TransactionMessageWithFeePayer,
 } from '@solana/kit';
@@ -413,10 +414,10 @@ const transactionPlanExecutor = createTransactionPlanExecutor({
         context.message = messageWithBlockhash;
         const transaction = await signTransactionMessageWithSigners(messageWithBlockhash);
         context.transaction = transaction;
+        context.signature = getSignatureFromTransaction(transaction);
         assertIsSendableTransaction(transaction);
         assertIsTransactionWithBlockhashLifetime(transaction);
         await sendAndConfirmTransaction(transaction, { commitment: 'confirmed' });
-        return transaction;
     },
 });
 ```
@@ -427,13 +428,13 @@ The `context` object passed to the `executeTransactionMessage` callback is a mut
 
 This is particularly useful for debugging failures or building recovery plans. If an error is thrown at any point in the callback, any attributes you've already saved to the context will still be available in the `FailedSingleTransactionPlanResult`.
 
-By default the context object supports three optional base properties that have semantic meaning:
+The context object supports three optional base properties that have semantic meaning:
 
 - **`message`**: The transaction message after any modifications (e.g., after setting a lifetime).
 - **`transaction`**: The signed transaction ready to be sent.
-- **`signature`**: The transaction signature. Note that this is automatically populated when you set the `transaction` property on the context and/or return a `Transaction`.
+- **`signature`**: The transaction signature. Nothing populates this for you — store it yourself, typically via `getSignatureFromTransaction`. An executor that produces transactions its fee payer has not signed can simply leave it out and declare a context type that does not require it.
 
-You can also add any custom properties you need. Because the context type is entirely yours to declare, intersect `TransactionPlanResultContextWithSignature` into it to keep the three base properties above alongside your own:
+You can also add any custom properties you need:
 
 ```ts twoslash
 import {
@@ -443,6 +444,7 @@ import {
     sendAndConfirmTransactionFactory,
     assertIsSendableTransaction,
     assertIsTransactionWithBlockhashLifetime,
+    getSignatureFromTransaction,
     Rpc,
     SolanaRpcApi,
     RpcSubscriptions,
@@ -468,8 +470,9 @@ const transactionPlanExecutor = createTransactionPlanExecutor({
 
         const transaction = await signTransactionMessageWithSigners(messageWithBlockhash);
 
-        // Store the transaction about to be sent.
+        // Store the transaction about to be sent, and its signature.
         context.transaction = transaction;
+        context.signature = getSignatureFromTransaction(transaction);
 
         assertIsSendableTransaction(transaction);
         assertIsTransactionWithBlockhashLifetime(transaction);
@@ -477,8 +480,6 @@ const transactionPlanExecutor = createTransactionPlanExecutor({
 
         // Store the confirmation time (custom context).
         context.confirmedAt = Date.now();
-
-        return transaction;
     },
 });
 ```
@@ -488,52 +489,46 @@ it and every property on it — base or custom — is optional. That means your 
 its `context` parameter with required properties. If you want a custom property to be guaranteed on
 the result, declare it as an explicit type argument to `createTransactionPlanExecutor` instead:
 
-{/* TODO: Restore `twoslash` on this block once `TransactionPlanResultContextWithSignature` ships. */}
-
-```ts
+```ts twoslash
 import {
     createTransactionPlanExecutor,
+    Signature,
     TransactionPlanResultContextWithSignature,
 } from '@solana/kit';
-
+// ---cut-before---
 const transactionPlanExecutor = createTransactionPlanExecutor<
     TransactionPlanResultContextWithSignature & { startedAt: number }
 >({
-    executeTransactionMessage: async (context, message) => {
-        // Inside the callback, `context.startedAt` is `number | undefined`.
+    executeTransactionMessage: async (context) => {
+        context.startedAt satisfies number | undefined; // Optional inside the callback.
         context.startedAt = Date.now();
-        /* ... sign the message, send the transaction, and return it ... */
+        // ...
+        context.signature = {} as Signature;
     },
 });
 ```
 
 When accessing the context from a result, you can retrieve both the base properties and your custom properties:
 
-{/* TODO: Restore `twoslash` on this block once `TransactionPlanResultContextWithSignature` ships. */}
-
-```ts
+```ts twoslash
 import {
     SingleTransactionPlanResult,
-    TransactionPlanResultContextWithSignature,
     isSuccessfulSingleTransactionPlanResult,
     isFailedSingleTransactionPlanResult,
 } from '@solana/kit';
+const result = {} as unknown as SingleTransactionPlanResult<{ startedAt: number }>;
+// ---cut-before---
+if (isSuccessfulSingleTransactionPlanResult(result)) {
+    console.log(result.context.signature); // Always available for successful results.
+    console.log(result.context.transaction); // Available if you stored it.
+    console.log(result.context.startedAt); // Custom context property.
+}
 
-type MyContext = TransactionPlanResultContextWithSignature & { startedAt: number };
-
-function logResult(result: SingleTransactionPlanResult<MyContext>) {
-    if (isSuccessfulSingleTransactionPlanResult(result)) {
-        console.log(result.context.signature); // Guaranteed by TransactionPlanResultContextWithSignature.
-        console.log(result.context.transaction); // Available if you stored it.
-        console.log(result.context.startedAt); // Custom context property.
-    }
-
-    if (isFailedSingleTransactionPlanResult(result)) {
-        console.log(result.error); // The error that caused the failure.
-        console.log(result.context.message); // Available if stored before the failure.
-        console.log(result.context.transaction); // Available if stored before the failure.
-        console.log(result.context.startedAt); // Custom context property.
-    }
+if (isFailedSingleTransactionPlanResult(result)) {
+    console.log(result.error); // The error that caused the failure.
+    console.log(result.context.message); // Available if stored before the failure.
+    console.log(result.context.transaction); // Available if stored before the failure.
+    console.log(result.context.startedAt); // Custom context property.
 }
 ```
 
@@ -541,6 +536,28 @@ A custom context replaces the default rather than extending it, so intersect
 `TransactionPlanResultContextWithSignature` when you want to keep the guarantee that every successful
 result carries a `signature`. Nothing is added to your context on your behalf: the context type you
 declare is the context type you get, both inside the callback and on the result.
+
+That is what lets an executor sign transactions without sending them. A transaction that its fee
+payer has not signed has no signature to report, so declare a context that does not ask for one and
+store only the transaction:
+
+```ts twoslash
+import {
+    createTransactionPlanExecutor,
+    signTransactionMessageWithSigners,
+    Transaction,
+} from '@solana/kit';
+// ---cut-before---
+const transactionPlanExecutor = createTransactionPlanExecutor<{ transaction: Transaction }>({
+    executeTransactionMessage: async (context, message) => {
+        // Signed by the authority only. A relayer will pay for and submit it later.
+        context.transaction = await signTransactionMessageWithSigners(message);
+    },
+});
+```
+
+Every successful result from this executor carries a `context.transaction` and no `context.signature`
+at all.
 
 Check out the [Recipes section](#recipes) at this end of this guide for ideas of what can be achieved with this API.
 
@@ -772,6 +789,7 @@ import {
     signTransactionMessageWithSigners,
     assertIsSendableTransaction,
     assertIsTransactionWithBlockhashLifetime,
+    getSignatureFromTransaction,
     TransactionMessage,
     TransactionMessageWithFeePayer,
 } from '@solana/kit';
@@ -779,7 +797,10 @@ const rpc = {} as unknown as Rpc<SolanaRpcApi>;
 const rpcSubscriptions = {} as unknown as RpcSubscriptions<SolanaRpcSubscriptionsApi>;
 // ---cut-before---
 // [!code ++:4]
-import { estimateAndSetResourceLimitsFactory, estimateResourceLimitsFactory } from '@solana/kit';
+import {
+    estimateAndSetResourceLimitsFactory,
+    estimateResourceLimitsFactory,
+} from '@solana/kit';
 
 const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
 // [!code ++:2]
@@ -798,10 +819,10 @@ const transactionPlanExecutor = createTransactionPlanExecutor({
         context.message = estimatedMessage; // [!code ++]
         const transaction = await signTransactionMessageWithSigners(estimatedMessage);
         context.transaction = transaction;
+        context.signature = getSignatureFromTransaction(transaction);
         assertIsSendableTransaction(transaction);
         assertIsTransactionWithBlockhashLifetime(transaction);
         await sendAndConfirmTransaction(transaction, { commitment: 'confirmed' });
-        return transaction;
     },
 });
 ```
@@ -855,6 +876,7 @@ import {
     SolanaRpcSubscriptionsApi,
     signTransactionMessageWithSigners,
     assertIsSendableTransaction,
+    getSignatureFromTransaction,
     TransactionMessage,
     TransactionMessageWithFeePayer,
     assertIsTransactionWithDurableNonceLifetime,
@@ -880,10 +902,10 @@ const transactionPlanExecutor = createTransactionPlanExecutor({
         context.message = message;
         const transaction = await signTransactionMessageWithSigners(message);
         context.transaction = transaction;
+        context.signature = getSignatureFromTransaction(transaction);
         assertIsSendableTransaction(transaction);
         assertIsTransactionWithDurableNonceLifetime(transaction);
         await sendAndConfirmDurableNonceTransaction(transaction, { commitment: 'confirmed' }); // [!code ++]
-        return transaction;
     },
 });
 ```
