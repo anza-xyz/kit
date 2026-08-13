@@ -102,6 +102,27 @@ describe('the default response transformer for the Solana RPC', () => {
                 .send();
             expect(result.data[0].version).toBe(0);
         });
+        it('leaves token balance `decimals` and `uiAmount` as numbers', async () => {
+            expect.assertions(2);
+            const rpc = createMockRpc<GetTransactionsForAddressApi>({
+                data: [{ meta: { postTokenBalances: [MOCK_TOKEN_BALANCE], preTokenBalances: [MOCK_TOKEN_BALANCE] } }],
+            });
+            const result = await rpc
+                .getTransactionsForAddress('11111111111111111111111111111111' as Address, {
+                    encoding: 'json',
+                    maxSupportedTransactionVersion: 0,
+                    transactionDetails: 'full',
+                })
+                .send();
+            expect(result.data[0].meta?.preTokenBalances?.[0].uiTokenAmount).toMatchObject({
+                decimals: 9,
+                uiAmount: 1,
+            });
+            expect(result.data[0].meta?.postTokenBalances?.[0].uiTokenAmount).toMatchObject({
+                decimals: 9,
+                uiAmount: 1,
+            });
+        });
     });
 
     describe('simulateTransaction', () => {
