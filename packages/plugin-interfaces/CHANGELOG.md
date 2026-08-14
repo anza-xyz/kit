@@ -1,5 +1,25 @@
 # @solana/plugin-interfaces
 
+## 7.1.0
+
+### Minor Changes
+
+- [#1897](https://github.com/anza-xyz/kit/pull/1897) [`aa0b625`](https://github.com/anza-xyz/kit/commit/aa0b625e04884ea17a0f06c59168e8b14169cad1) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add a `ClientWithFetchAccounts` interface
+
+    This new plugin interface represents a client that can fetch the encoded content of accounts from their addresses via a `fetchAccounts(addresses, config?)` method. Like the other `@solana/plugin-interfaces` capabilities, it lets plugins provide or require account-fetching without coupling to a concrete RPC. The returned array matches the provided addresses in length and order, using `MaybeEncodedAccount` to represent accounts that may not exist.
+
+### Patch Changes
+
+- Updated dependencies [[`9e7daea`](https://github.com/anza-xyz/kit/commit/9e7daeae57e49efa7624aeb6daa74a78654a7d9a)]:
+    - @solana/instruction-plans@7.1.0
+    - @solana/rpc-spec@7.1.0
+    - @solana/rpc-subscriptions-spec@7.1.0
+    - @solana/accounts@7.1.0
+    - @solana/addresses@7.1.0
+    - @solana/keys@7.1.0
+    - @solana/rpc-types@7.1.0
+    - @solana/signers@7.1.0
+
 ## 7.0.0
 
 ### Patch Changes

@@ -1,5 +1,22 @@
 # @solana/codecs-data-structures
 
+## 7.1.0
+
+### Patch Changes
+
+- [#1911](https://github.com/anza-xyz/kit/pull/1911) [`8c9eece`](https://github.com/anza-xyz/kit/commit/8c9eece4fc91bd070320b78449aae00e476a42f4) Thanks [@latent-9](https://github.com/latent-9)! - Fix `getBitArrayEncoder` returning the wrong next offset. Its `write` returned `size` instead of `offset + size`, so a bit array placed before another field in a struct or tuple was overwritten by the following field. It now returns `offset + size`, matching the decoder and the other codecs.
+
+- [#1884](https://github.com/anza-xyz/kit/pull/1884) [`da10c5a`](https://github.com/anza-xyz/kit/commit/da10c5a0d94283ca27fbb3cde676d3ab1883541c) Thanks [@Swift42](https://github.com/Swift42)! - Avoid copying the remaining buffer in `getArrayDecoder`'s emptiness check
+
+    `getArrayDecoder`'s `read()` tested for an empty byte array with `bytes.slice(offset).length === 0`, which allocates and copies every byte from `offset` to the end just to read `.length` off the result. On large accounts containing many prefixed arrays, maps, or sets this made decoding quadratic in account size. The check is now the equivalent O(1) comparison `offset >= bytes.length`. `getMapDecoder` and `getSetDecoder` delegate to `getArrayDecoder` and benefit as well.
+
+- [#1809](https://github.com/anza-xyz/kit/pull/1809) [`204ed6e`](https://github.com/anza-xyz/kit/commit/204ed6e19bbf87e39184bf1f2201c91d155e3e0c) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Allow boolean predicates passed to `getPatternMatchCodec` and `getPatternMatchEncoder` to narrow to a subtype of the variant's value type. Previously, matching against codecs whose value type is a union — such as the number codecs, whose encode type is `number | bigint` — forced predicates to be typed against the full union (e.g. `(value: number | bigint) => …`). The predicate parameter is now checked bivariantly, so a narrower predicate like `(value: number) => …` is accepted, mirroring the ergonomics of `getPredicateCodec` and `getPredicateEncoder`.
+
+- Updated dependencies [[`7022c26`](https://github.com/anza-xyz/kit/commit/7022c262ba75bdd243c148c4f0759c2546159b6f), [`14a3e5b`](https://github.com/anza-xyz/kit/commit/14a3e5b600e6a034749616fb25f762aed01a7a43)]:
+    - @solana/errors@7.1.0
+    - @solana/codecs-core@7.1.0
+    - @solana/codecs-numbers@7.1.0
+
 ## 7.0.0
 
 ### Major Changes

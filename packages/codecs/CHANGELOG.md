@@ -1,5 +1,17 @@
 # @solana/codecs
 
+## 7.1.0
+
+### Patch Changes
+
+- Updated dependencies [[`8c9eece`](https://github.com/anza-xyz/kit/commit/8c9eece4fc91bd070320b78449aae00e476a42f4), [`da10c5a`](https://github.com/anza-xyz/kit/commit/da10c5a0d94283ca27fbb3cde676d3ab1883541c), [`204ed6e`](https://github.com/anza-xyz/kit/commit/204ed6e19bbf87e39184bf1f2201c91d155e3e0c)]:
+    - @solana/codecs-data-structures@7.1.0
+    - @solana/codecs-core@7.1.0
+    - @solana/codecs-numbers@7.1.0
+    - @solana/codecs-strings@7.1.0
+    - @solana/fixed-points@7.1.0
+    - @solana/options@7.1.0
+
 ## 7.0.0
 
 ### Patch Changes

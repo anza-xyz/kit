@@ -1,5 +1,26 @@
 # @solana/rpc-transformers
 
+## 7.1.0
+
+### Minor Changes
+
+- [#1919](https://github.com/anza-xyz/kit/pull/1919) [`80b3756`](https://github.com/anza-xyz/kit/commit/80b37562478a7f11f49e99a131b3c35b2a7fbf41) Thanks [@amilz](https://github.com/amilz)! - Stop upcasting token balance `uiAmount` and related numerics to `bigint`
+
+    The response transformer upcasts every JSON integer to a `bigint` unless its keypath appears in an allow-list. Because the upcast only applies to integers, `uiTokenAmount.uiAmount` — an `f64` on the server — arrived as a `bigint` when the balance happened to be a whole number and as a `number` when it was fractional, so its declared type was correct for some values and wrong for others.
+    - `uiTokenAmount.uiAmount` is now allow-listed on `getTransaction`, `getBlock`, and `getTransactionsForAddress` token balances.
+    - `simulateTransaction` had no token balance keypaths allow-listed at all, so `accountIndex` and `uiTokenAmount.decimals` were upcast there as well. All three are now allow-listed.
+
+    `@solana/rpc-transformers` additionally exports a new `tokenBalancesConfigs` array of token-balance-relative keypaths, alongside the existing `innerInstructionsConfigs` and `messageConfig`.
+
+### Patch Changes
+
+- Updated dependencies [[`7022c26`](https://github.com/anza-xyz/kit/commit/7022c262ba75bdd243c148c4f0759c2546159b6f), [`14a3e5b`](https://github.com/anza-xyz/kit/commit/14a3e5b600e6a034749616fb25f762aed01a7a43)]:
+    - @solana/errors@7.1.0
+    - @solana/rpc-spec-types@7.1.0
+    - @solana/rpc-types@7.1.0
+    - @solana/functional@7.1.0
+    - @solana/nominal-types@7.1.0
+
 ## 7.0.0
 
 ### Major Changes

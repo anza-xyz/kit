@@ -1,5 +1,20 @@
 # @solana/rpc
 
+## 7.1.0
+
+### Patch Changes
+
+- Updated dependencies [[`7022c26`](https://github.com/anza-xyz/kit/commit/7022c262ba75bdd243c148c4f0759c2546159b6f), [`c8235ca`](https://github.com/anza-xyz/kit/commit/c8235ca25a093467a24058c188d734725d2cdea0), [`80b3756`](https://github.com/anza-xyz/kit/commit/80b37562478a7f11f49e99a131b3c35b2a7fbf41), [`82c4ceb`](https://github.com/anza-xyz/kit/commit/82c4cebe3b7ed14108de3536812ba423aeea073f), [`14a3e5b`](https://github.com/anza-xyz/kit/commit/14a3e5b600e6a034749616fb25f762aed01a7a43)]:
+    - @solana/errors@7.1.0
+    - @solana/rpc-api@7.1.0
+    - @solana/rpc-transformers@7.1.0
+    - @solana/rpc-spec@7.1.0
+    - @solana/rpc-spec-types@7.1.0
+    - @solana/rpc-transport-http@7.1.0
+    - @solana/rpc-types@7.1.0
+    - @solana/fast-stable-stringify@7.1.0
+    - @solana/functional@7.1.0
+
 ## 7.0.0
 
 ### Patch Changes

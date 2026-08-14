@@ -1,5 +1,19 @@
 # @solana/errors
 
+## 7.1.0
+
+### Minor Changes
+
+- [#1811](https://github.com/anza-xyz/kit/pull/1811) [`7022c26`](https://github.com/anza-xyz/kit/commit/7022c262ba75bdd243c148c4f0759c2546159b6f) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `bridgeStoreToAsyncIterable` to `@solana/subscribable`
+
+    `bridgeStoreToAsyncIterable` adapts a `ReactiveStreamStore` into the pull-based `AsyncIterable` contract that consumers like TanStack Query's `experimental_streamedQuery` expect. It is now a public export of `@solana/subscribable` (and re-exported from `@solana/kit`). It was previously an internal helper of `@solana/react`, but it is not React- or TanStack-specific and is useful to any consumer that needs to drive a stream store by `for await`-ing it.
+
+    The bridge only observes the store — consistent with the rest of the ecosystem, the caller owns the store's lifecycle (`connect()` it yourself, bound to the same signal, and `reset()` it when done). The bridge subscribes, seeds from the store's current snapshot, yields values, and unsubscribes when iteration ends.
+
+    It throws the new `SOLANA_ERROR__SUBSCRIBABLE__STREAM_CLOSED_WITHOUT_ERROR` when a store closes in an error state with a nullish payload. This is the error `useSubscriptionQuery` and `useTrackedDataQuery` now surface in that case; the SWR bridge is unaffected.
+
+- [#1888](https://github.com/anza-xyz/kit/pull/1888) [`14a3e5b`](https://github.com/anza-xyz/kit/commit/14a3e5b600e6a034749616fb25f762aed01a7a43) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add an `assertOffchainMessageV1Equal` helper that asserts that a version 1 offchain message you received from an untrusted signer (eg. a wallet) is the message you expected it to sign. Verifying a signature proves only that the signer produced it over the bytes it handed back, not that those bytes represent the message you asked for, so assert this before verifying signatures with `verifyOffchainMessageEnvelope`. The helper compares the content and the required signatories, and reports each kind of mismatch with its own error code: the new `SOLANA_ERROR__OFFCHAIN_MESSAGE__CONTENT_DOES_NOT_MATCH_EXPECTED` and `SOLANA_ERROR__OFFCHAIN_MESSAGE__REQUIRED_SIGNATORIES_DO_NOT_MATCH_EXPECTED`. Required signatories are compared without regard to order, since a decoded message lists them in the order the specification mandates while yours may be in any order. It accepts an `OffchainMessageV1` rather than the `OffchainMessage` union that decoding produces, so narrow the decoded message to a version 1 message before calling it.
+
 ## 7.0.0
 
 ### Minor Changes

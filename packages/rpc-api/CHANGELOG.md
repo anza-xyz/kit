@@ -1,5 +1,42 @@
 # @solana/rpc-api
 
+## 7.1.0
+
+### Minor Changes
+
+- [#1776](https://github.com/anza-xyz/kit/pull/1776) [`c8235ca`](https://github.com/anza-xyz/kit/commit/c8235ca25a093467a24058c188d734725d2cdea0) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add the `getTransactionsForAddress` RPC method type. This method combines address-history discovery and per-transaction fetching into a single query, with server-side filtering, bidirectional sorting, and cursor-based pagination. It will be part of the upcoming solana-rpc spec and is part of the `solana-rpc/superbank` project, and is already available from major RPC providers.
+
+    It supports both `signatures` and `full` (`json`/`jsonParsed`/`base58`/`base64`) response modes. The shared transaction metadata types also gain an optional `meta.costUnits` field, which surfaces on `getTransaction` as well.
+
+### Patch Changes
+
+- [#1919](https://github.com/anza-xyz/kit/pull/1919) [`80b3756`](https://github.com/anza-xyz/kit/commit/80b37562478a7f11f49e99a131b3c35b2a7fbf41) Thanks [@amilz](https://github.com/amilz)! - Stop upcasting token balance `uiAmount` and related numerics to `bigint`
+
+    The response transformer upcasts every JSON integer to a `bigint` unless its keypath appears in an allow-list. Because the upcast only applies to integers, `uiTokenAmount.uiAmount` — an `f64` on the server — arrived as a `bigint` when the balance happened to be a whole number and as a `number` when it was fractional, so its declared type was correct for some values and wrong for others.
+    - `uiTokenAmount.uiAmount` is now allow-listed on `getTransaction`, `getBlock`, and `getTransactionsForAddress` token balances.
+    - `simulateTransaction` had no token balance keypaths allow-listed at all, so `accountIndex` and `uiTokenAmount.decimals` were upcast there as well. All three are now allow-listed.
+
+    `@solana/rpc-transformers` additionally exports a new `tokenBalancesConfigs` array of token-balance-relative keypaths, alongside the existing `innerInstructionsConfigs` and `messageConfig`.
+
+- [#1917](https://github.com/anza-xyz/kit/pull/1917) [`82c4ceb`](https://github.com/anza-xyz/kit/commit/82c4cebe3b7ed14108de3536812ba423aeea073f) Thanks [@amilz](https://github.com/amilz)! - Stop upcasting transaction `version` to `bigint`
+
+    The response transformer upcasts every JSON integer to a `bigint` unless its keypath appears in an allow-list. `version` was missing from that allow-list on `getTransaction`, `getBlock` transactions, and `getTransactionsForAddress`, so it arrived at runtime as `0n` while still typechecking as `TransactionVersion` (`'legacy' | 0 | 1`).
+
+    A check like `if (transaction.version === 0)` therefore compiled cleanly and was always false, with no compiler error and no runtime error. The keypath is now allow-listed and `version` arrives as a number, matching its declared type.
+
+- Updated dependencies [[`7022c26`](https://github.com/anza-xyz/kit/commit/7022c262ba75bdd243c148c4f0759c2546159b6f), [`80b3756`](https://github.com/anza-xyz/kit/commit/80b37562478a7f11f49e99a131b3c35b2a7fbf41), [`327760c`](https://github.com/anza-xyz/kit/commit/327760c101bf4bebd8602581ad4894aa6ff9c731), [`14a3e5b`](https://github.com/anza-xyz/kit/commit/14a3e5b600e6a034749616fb25f762aed01a7a43)]:
+    - @solana/errors@7.1.0
+    - @solana/rpc-transformers@7.1.0
+    - @solana/transaction-messages@7.1.0
+    - @solana/rpc-spec@7.1.0
+    - @solana/addresses@7.1.0
+    - @solana/codecs-core@7.1.0
+    - @solana/codecs-strings@7.1.0
+    - @solana/keys@7.1.0
+    - @solana/rpc-types@7.1.0
+    - @solana/transactions@7.1.0
+    - @solana/rpc-parsed-types@7.1.0
+
 ## 7.0.0
 
 ### Major Changes

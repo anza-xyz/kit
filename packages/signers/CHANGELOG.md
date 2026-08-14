@@ -1,5 +1,20 @@
 # @solana/signers
 
+## 7.1.0
+
+### Patch Changes
+
+- Updated dependencies [[`7022c26`](https://github.com/anza-xyz/kit/commit/7022c262ba75bdd243c148c4f0759c2546159b6f), [`327760c`](https://github.com/anza-xyz/kit/commit/327760c101bf4bebd8602581ad4894aa6ff9c731), [`14a3e5b`](https://github.com/anza-xyz/kit/commit/14a3e5b600e6a034749616fb25f762aed01a7a43)]:
+    - @solana/errors@7.1.0
+    - @solana/transaction-messages@7.1.0
+    - @solana/offchain-messages@7.1.0
+    - @solana/addresses@7.1.0
+    - @solana/codecs-core@7.1.0
+    - @solana/instructions@7.1.0
+    - @solana/keys@7.1.0
+    - @solana/transactions@7.1.0
+    - @solana/nominal-types@7.1.0
+
 ## 7.0.0
 
 ### Patch Changes

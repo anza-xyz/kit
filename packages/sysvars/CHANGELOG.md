@@ -1,5 +1,17 @@
 # @solana/sysvars
 
+## 7.1.0
+
+### Patch Changes
+
+- Updated dependencies [[`7022c26`](https://github.com/anza-xyz/kit/commit/7022c262ba75bdd243c148c4f0759c2546159b6f), [`8c9eece`](https://github.com/anza-xyz/kit/commit/8c9eece4fc91bd070320b78449aae00e476a42f4), [`da10c5a`](https://github.com/anza-xyz/kit/commit/da10c5a0d94283ca27fbb3cde676d3ab1883541c), [`204ed6e`](https://github.com/anza-xyz/kit/commit/204ed6e19bbf87e39184bf1f2201c91d155e3e0c), [`14a3e5b`](https://github.com/anza-xyz/kit/commit/14a3e5b600e6a034749616fb25f762aed01a7a43)]:
+    - @solana/errors@7.1.0
+    - @solana/codecs-data-structures@7.1.0
+    - @solana/accounts@7.1.0
+    - @solana/codecs-core@7.1.0
+    - @solana/codecs-numbers@7.1.0
+    - @solana/rpc-types@7.1.0
+
 ## 7.0.0
 
 ### Patch Changes

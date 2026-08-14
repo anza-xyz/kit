@@ -1,5 +1,23 @@
 # @solana/offchain-messages
 
+## 7.1.0
+
+### Minor Changes
+
+- [#1888](https://github.com/anza-xyz/kit/pull/1888) [`14a3e5b`](https://github.com/anza-xyz/kit/commit/14a3e5b600e6a034749616fb25f762aed01a7a43) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add an `assertOffchainMessageV1Equal` helper that asserts that a version 1 offchain message you received from an untrusted signer (eg. a wallet) is the message you expected it to sign. Verifying a signature proves only that the signer produced it over the bytes it handed back, not that those bytes represent the message you asked for, so assert this before verifying signatures with `verifyOffchainMessageEnvelope`. The helper compares the content and the required signatories, and reports each kind of mismatch with its own error code: the new `SOLANA_ERROR__OFFCHAIN_MESSAGE__CONTENT_DOES_NOT_MATCH_EXPECTED` and `SOLANA_ERROR__OFFCHAIN_MESSAGE__REQUIRED_SIGNATORIES_DO_NOT_MATCH_EXPECTED`. Required signatories are compared without regard to order, since a decoded message lists them in the order the specification mandates while yours may be in any order. It accepts an `OffchainMessageV1` rather than the `OffchainMessage` union that decoding produces, so narrow the decoded message to a version 1 message before calling it.
+
+### Patch Changes
+
+- Updated dependencies [[`7022c26`](https://github.com/anza-xyz/kit/commit/7022c262ba75bdd243c148c4f0759c2546159b6f), [`8c9eece`](https://github.com/anza-xyz/kit/commit/8c9eece4fc91bd070320b78449aae00e476a42f4), [`da10c5a`](https://github.com/anza-xyz/kit/commit/da10c5a0d94283ca27fbb3cde676d3ab1883541c), [`204ed6e`](https://github.com/anza-xyz/kit/commit/204ed6e19bbf87e39184bf1f2201c91d155e3e0c), [`14a3e5b`](https://github.com/anza-xyz/kit/commit/14a3e5b600e6a034749616fb25f762aed01a7a43)]:
+    - @solana/errors@7.1.0
+    - @solana/codecs-data-structures@7.1.0
+    - @solana/addresses@7.1.0
+    - @solana/codecs-core@7.1.0
+    - @solana/codecs-numbers@7.1.0
+    - @solana/codecs-strings@7.1.0
+    - @solana/keys@7.1.0
+    - @solana/nominal-types@7.1.0
+
 ## 7.0.0
 
 ### Patch Changes

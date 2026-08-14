@@ -1,5 +1,45 @@
 # @solana/react
 
+## 7.1.0
+
+### Minor Changes
+
+- [#1811](https://github.com/anza-xyz/kit/pull/1811) [`7022c26`](https://github.com/anza-xyz/kit/commit/7022c262ba75bdd243c148c4f0759c2546159b6f) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `bridgeStoreToAsyncIterable` to `@solana/subscribable`
+
+    `bridgeStoreToAsyncIterable` adapts a `ReactiveStreamStore` into the pull-based `AsyncIterable` contract that consumers like TanStack Query's `experimental_streamedQuery` expect. It is now a public export of `@solana/subscribable` (and re-exported from `@solana/kit`). It was previously an internal helper of `@solana/react`, but it is not React- or TanStack-specific and is useful to any consumer that needs to drive a stream store by `for await`-ing it.
+
+    The bridge only observes the store — consistent with the rest of the ecosystem, the caller owns the store's lifecycle (`connect()` it yourself, bound to the same signal, and `reset()` it when done). The bridge subscribes, seeds from the store's current snapshot, yields values, and unsubscribes when iteration ends.
+
+    It throws the new `SOLANA_ERROR__SUBSCRIBABLE__STREAM_CLOSED_WITHOUT_ERROR` when a store closes in an error state with a nullish payload. This is the error `useSubscriptionQuery` and `useTrackedDataQuery` now surface in that case; the SWR bridge is unaffected.
+
+- [#1876](https://github.com/anza-xyz/kit/pull/1876) [`d6a1adb`](https://github.com/anza-xyz/kit/commit/d6a1adbd356d55309e350e938cc3734810eb410b) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `usePayer` and `useIdentity` React hooks. Each reads the corresponding value off the client and, when the client advertises `subscribeToPayer`/`subscribeToIdentity`, subscribes so the returned signer always reflects the latest payer/identity. Clients whose value is fixed fall back to a one-time read.
+
+    If the plugin value throws (for example as the wallet plugin does when it owns payer/identity and a wallet is not connected), this is surfaced as `undefined` in the hooks.
+
+- [#1841](https://github.com/anza-xyz/kit/pull/1841) [`94f49bb`](https://github.com/anza-xyz/kit/commit/94f49bb2e7126d5d40465516a680c44ae86c396e) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Make the `TClient` type parameter of `useClient` required by removing its `object` default, matching `useClientCapability`. Callers should always pass their client's shape (typically an exported `AppClient` type) so installed capabilities are typed at the call site.
+
+    ```diff
+    - const client = useClient();
+    + const client = useClient<AppClient>();
+    ```
+
+- [#1869](https://github.com/anza-xyz/kit/pull/1869) [`2193459`](https://github.com/anza-xyz/kit/commit/21934595f0a004c4f17dce54177752983707d9ef) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `usePlanTransaction`, `usePlanTransactions`, `useSendTransaction`, and `useSendTransactions` hooks for driving a client's transaction-planning and -sending capabilities as reactive actions.
+
+- [#1879](https://github.com/anza-xyz/kit/pull/1879) [`c27ce2f`](https://github.com/anza-xyz/kit/commit/c27ce2f73454f5422cf08dfd6b704b16567efd41) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add a `useAirdrop` hook that wraps a client's `airdrop` capability (`ClientWithAirdrop`) as a tracked `useAction`. `dispatch(address, amount)` requests an airdrop with an injected `AbortSignal`, resolving with the transaction `Signature` (or `undefined` when the airdrop is applied without a transaction).
+
+### Patch Changes
+
+- [#1907](https://github.com/anza-xyz/kit/pull/1907) [`9d6be07`](https://github.com/anza-xyz/kit/commit/9d6be077e52056b9c5b7f0e7c4e5a8f0ae5f5558) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Widen the `@solana/kit` peer dependency of `@solana/react` from an exact version to a caret range. `@solana/react` previously declared `"@solana/kit": "workspace:*"`, which publishes as an exact pin (`"@solana/kit": "7.0.0"`), so a consumer who advanced `@solana/kit` without advancing `@solana/react` in the same step hit an unsatisfiable peer range even though the two are compatible. It now declares `workspace:^` and publishes as `^7.1.0`. The two packages continue to be released in lockstep at identical versions, so this does not loosen which combinations are actually shipped — it only stops describing a compatible pair as incompatible.
+
+- [#1825](https://github.com/anza-xyz/kit/pull/1825) [`d54b899`](https://github.com/anza-xyz/kit/commit/d54b899d89b34fb91324852b5e404930d9609366) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Bump the `@wallet-standard/ui` and `@wallet-standard/ui-registry` dependencies to `^1.0.3` and `^1.1.1` respectively. The `1.1.x` registry line is a backward-compatible superset that continues to export the names `@solana/react` relies on, and aligning with it lets consumers that also pull in `@solana/kit-plugin-wallet` resolve a single, shared copy of the wallet-standard UI registry (which is a runtime singleton) instead of splitting across two incompatible copies.
+
+- Updated dependencies [[`7022c26`](https://github.com/anza-xyz/kit/commit/7022c262ba75bdd243c148c4f0759c2546159b6f), [`327760c`](https://github.com/anza-xyz/kit/commit/327760c101bf4bebd8602581ad4894aa6ff9c731)]:
+    - @solana/subscribable@7.1.0
+    - @solana/transaction-messages@7.1.0
+    - @solana/signers@7.1.0
+    - @solana/transactions@7.1.0
+    - @solana/promises@7.1.0
+
 ## 7.0.0
 
 ### Major Changes
