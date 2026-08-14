@@ -379,7 +379,7 @@ The `executeTransactionMessage` callback receives the following arguments:
 - **`message`**: The transaction message to execute.
 - **`config`**: An optional configuration object that may include an `abortSignal`.
 
-The callback must return either a `Signature` or a full `Transaction` object directly.
+The callback must return the context object that the successful result should carry — at minimum, an object containing the transaction `signature`. Anything stored on the mutable `context` argument but left out of the return value is preserved as well, with the returned value taking precedence.
 
 For instance, in the example below we create a new executor such that each transaction message will be assigned the latest blockhash lifetime before being signed and sent to the network using the provided RPC client.
 
@@ -387,6 +387,7 @@ For instance, in the example below we create a new executor such that each trans
 import {
     sendAndConfirmTransactionFactory,
     createTransactionPlanExecutor,
+    getSignatureFromTransaction,
     Rpc,
     SolanaRpcApi,
     RpcSubscriptions,
@@ -413,10 +414,11 @@ const transactionPlanExecutor = createTransactionPlanExecutor({
         context.message = messageWithBlockhash;
         const transaction = await signTransactionMessageWithSigners(messageWithBlockhash);
         context.transaction = transaction;
+        const signature = getSignatureFromTransaction(transaction);
         assertIsSendableTransaction(transaction);
         assertIsTransactionWithBlockhashLifetime(transaction);
         await sendAndConfirmTransaction(transaction, { commitment: 'confirmed' });
-        return transaction;
+        return { signature, transaction };
     },
 });
 ```
@@ -431,13 +433,14 @@ The context object supports three optional base properties that have semantic me
 
 - **`message`**: The transaction message after any modifications (e.g., after setting a lifetime).
 - **`transaction`**: The signed transaction ready to be sent.
-- **`signature`**: The transaction signature. Note that this is automatically populated when you set the `transaction` property on the context and/or return a `Transaction`.
+- **`signature`**: The transaction signature. For successful results, provide it in the context returned by your callback; for failed results, it is derived automatically from any `transaction` stored on the context.
 
 You can also add any custom properties you need:
 
 ```ts twoslash
 import {
     createTransactionPlanExecutor,
+    getSignatureFromTransaction,
     setTransactionMessageLifetimeUsingBlockhash,
     signTransactionMessageWithSigners,
     sendAndConfirmTransactionFactory,
@@ -475,10 +478,12 @@ const transactionPlanExecutor = createTransactionPlanExecutor({
         assertIsTransactionWithBlockhashLifetime(transaction);
         await sendAndConfirmTransaction(transaction, { commitment: 'confirmed' });
 
-        // Store the confirmation time (custom context).
-        context.confirmedAt = Date.now();
-
-        return transaction;
+        // Return the successful context, including the confirmation time (custom context).
+        return {
+            confirmedAt: Date.now(),
+            signature: getSignatureFromTransaction(transaction),
+            transaction,
+        };
     },
 });
 ```
@@ -532,11 +537,12 @@ import {
     parallelTransactionPlan,
     singleTransactionPlan,
     parallelTransactionPlanResult,
-    successfulSingleTransactionPlanResultFromTransaction,
+    successfulSingleTransactionPlanResult,
     failedSingleTransactionPlanResult,
     isSuccessfulSingleTransactionPlanResult,
     isFailedSingleTransactionPlanResult,
     SolanaError,
+    Signature,
     TransactionMessage,
     TransactionMessageWithFeePayer,
     Transaction,
@@ -544,6 +550,7 @@ import {
 const messageA = {} as unknown as TransactionMessage & TransactionMessageWithFeePayer;
 const messageB = {} as unknown as TransactionMessage & TransactionMessageWithFeePayer;
 const transactionA = {} as unknown as Transaction;
+const signatureA = {} as unknown as Signature;
 const error = {} as unknown as SolanaError;
 // ---cut-before---
 // If your transaction plan looked like this:
@@ -554,7 +561,7 @@ const plan = parallelTransactionPlan([
 
 // Your result may look like this:
 const result = parallelTransactionPlanResult([
-    successfulSingleTransactionPlanResultFromTransaction(messageA, transactionA),
+    successfulSingleTransactionPlanResult(messageA, { signature: signatureA, transaction: transactionA }),
     failedSingleTransactionPlanResult(messageB, error),
 ]);
 
@@ -729,6 +736,7 @@ Then, pair [`estimateResourceLimitsFactory`](/api/functions/estimateResourceLimi
 import {
     sendAndConfirmTransactionFactory,
     createTransactionPlanExecutor,
+    getSignatureFromTransaction,
     Rpc,
     SolanaRpcApi,
     RpcSubscriptions,
@@ -766,10 +774,11 @@ const transactionPlanExecutor = createTransactionPlanExecutor({
         context.message = estimatedMessage; // [!code ++]
         const transaction = await signTransactionMessageWithSigners(estimatedMessage);
         context.transaction = transaction;
+        const signature = getSignatureFromTransaction(transaction);
         assertIsSendableTransaction(transaction);
         assertIsTransactionWithBlockhashLifetime(transaction);
         await sendAndConfirmTransaction(transaction, { commitment: 'confirmed' });
-        return transaction;
+        return { signature, transaction };
     },
 });
 ```
@@ -817,6 +826,7 @@ Then, make sure to use the `sendAndConfirmDurableNonceTransactionFactory` helper
 ```ts twoslash
 import {
     createTransactionPlanExecutor,
+    getSignatureFromTransaction,
     Rpc,
     SolanaRpcApi,
     RpcSubscriptions,
@@ -848,10 +858,11 @@ const transactionPlanExecutor = createTransactionPlanExecutor({
         context.message = message;
         const transaction = await signTransactionMessageWithSigners(message);
         context.transaction = transaction;
+        const signature = getSignatureFromTransaction(transaction);
         assertIsSendableTransaction(transaction);
         assertIsTransactionWithDurableNonceLifetime(transaction);
         await sendAndConfirmDurableNonceTransaction(transaction, { commitment: 'confirmed' }); // [!code ++]
-        return transaction;
+        return { signature, transaction };
     },
 });
 ```

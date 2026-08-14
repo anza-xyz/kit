@@ -81,9 +81,10 @@ export type SuccessfulTransactionPlanResult<
  * consumers can use to pass along extra data with their results.
  *
  * Note that base context fields such as `message`, `signature`, and
- * `transaction` are provided separately by {@link BaseTransactionPlanResultContext}
- * and {@link SuccessfulBaseTransactionPlanResultContext}, which are intersected
- * with this type in each {@link SingleTransactionPlanResult} variant.
+ * `transaction` are currently intersected into this type in each
+ * {@link SingleTransactionPlanResult} variant. That intersection will go away in
+ * the next major version, after which the context of a result is exactly the
+ * `TContext` you supply.
  *
  * @see {@link SingleTransactionPlanResult}
  * @see {@link SuccessfulSingleTransactionPlanResult}
@@ -99,9 +100,21 @@ export type TransactionPlanResultContext = { [key: number | string | symbol]: un
  * full transaction object. These fields may or may not be populated depending on
  * how far execution progressed before the result was produced.
  *
+ * @deprecated This type will be removed in the next major version, together with the
+ * intersections that graft it onto every {@link SingleTransactionPlanResult}. The context of a
+ * result is becoming entirely caller-defined — it will be exactly the `TContext` you supply — so
+ * there will be no separate base shape to merge in. If you refer to this type, declare whichever
+ * of its fields you need on your own context type instead:
+ * ```ts
+ * type MyContext = {
+ *   message?: TransactionMessage & TransactionMessageWithFeePayer;
+ *   signature?: Signature;
+ *   transaction?: Transaction;
+ * };
+ * ```
+ *
  * @see {@link FailedSingleTransactionPlanResult}
  * @see {@link CanceledSingleTransactionPlanResult}
- * @see {@link SuccessfulBaseTransactionPlanResultContext}
  */
 export interface BaseTransactionPlanResultContext {
     message?: TransactionMessage & TransactionMessageWithFeePayer;
@@ -217,7 +230,7 @@ export type ParallelTransactionPlanResult<
  * This represents the execution result of a {@link SingleTransactionPlan} and
  * contains the original transaction message along with its execution status.
  *
- * You may use the {@link successfulSingleTransactionPlanResultFromTransaction},
+ * You may use the {@link successfulSingleTransactionPlanResult},
  * {@link failedSingleTransactionPlanResult}, or {@link canceledSingleTransactionPlanResult}
  * helpers to create objects of this type.
  *
@@ -225,11 +238,11 @@ export type ParallelTransactionPlanResult<
  * @typeParam TTransactionMessage - The type of the transaction message
  *
  * @example
- * Successful result with a transaction and context.
+ * Successful result with a signature in its context.
  * ```ts
- * const result = successfulSingleTransactionPlanResultFromTransaction(
+ * const result = successfulSingleTransactionPlanResult(
  *   transactionMessage,
- *   transaction
+ *   { signature },
  * );
  * result satisfies SingleTransactionPlanResult;
  * ```
@@ -251,7 +264,7 @@ export type ParallelTransactionPlanResult<
  * result satisfies SingleTransactionPlanResult;
  * ```
  *
- * @see {@link successfulSingleTransactionPlanResultFromTransaction}
+ * @see {@link successfulSingleTransactionPlanResult}
  * @see {@link failedSingleTransactionPlanResult}
  * @see {@link canceledSingleTransactionPlanResult}
  */
@@ -273,25 +286,23 @@ export type SingleTransactionPlanResult<
  * a required transaction {@link Signature}, and optionally the
  * {@link TransactionMessage} and the full {@link Transaction} object.
  *
- * You may use the {@link successfulSingleTransactionPlanResultFromTransaction} or
- * {@link successfulSingleTransactionPlanResult} helpers to
+ * You may use the {@link successfulSingleTransactionPlanResult} helper to
  * create objects of this type.
  *
  * @typeParam TContext - The type of the context object that may be passed along with the result.
  * @typeParam TTransactionMessage - The type of the transaction message.
  *
  * @example
- * Creating a successful result from a transaction.
+ * Creating a successful result from a transaction message and signature.
  * ```ts
- * const result = successfulSingleTransactionPlanResultFromTransaction(
+ * const result = successfulSingleTransactionPlanResult(
  *   transactionMessage,
- *   transaction,
+ *   { signature },
  * );
  * result satisfies SuccessfulSingleTransactionPlanResult;
  * result.context.signature; // The transaction signature.
  * ```
  *
- * @see {@link successfulSingleTransactionPlanResultFromTransaction}
  * @see {@link successfulSingleTransactionPlanResult}
  * @see {@link isSuccessfulSingleTransactionPlanResult}
  * @see {@link assertIsSuccessfulSingleTransactionPlanResult}
@@ -313,8 +324,7 @@ export type SuccessfulSingleTransactionPlanResult<
  *
  * This type represents a single transaction that failed during execution.
  * It includes the original planned message, the {@link Error} that caused
- * the failure, and a context object containing the fields from
- * {@link BaseTransactionPlanResultContext} — namely optional
+ * the failure, and a context object containing optional
  * {@link TransactionMessage}, {@link Signature}, and {@link Transaction}
  * fields that may or may not be populated depending on how far execution
  * progressed before the failure.
@@ -358,8 +368,7 @@ export type FailedSingleTransactionPlanResult<
  *
  * This type represents a single transaction whose execution was canceled
  * before it could complete. It includes the original planned message and
- * a context object containing the fields from
- * {@link BaseTransactionPlanResultContext} — namely optional
+ * a context object containing optional
  * {@link TransactionMessage}, {@link Signature}, and {@link Transaction}
  * fields that may or may not be populated depending on how far execution
  * progressed before cancellation.
@@ -493,6 +502,18 @@ export function parallelTransactionPlanResult<
  *   transaction
  * );
  * result satisfies SingleTransactionPlanResult;
+ * ```
+ *
+ * @deprecated Call {@link successfulSingleTransactionPlanResult} instead, passing the context
+ * explicitly. This helper derives the `signature` for you by calling
+ * {@link getSignatureFromTransaction}, which throws when the transaction's fee payer has not
+ * signed it — the explicit spelling makes that step visible and avoidable:
+ * ```diff
+ * - successfulSingleTransactionPlanResultFromTransaction(message, transaction);
+ * + successfulSingleTransactionPlanResult(message, {
+ * +   signature: getSignatureFromTransaction(transaction),
+ * +   transaction,
+ * + });
  * ```
  *
  * @see {@link SingleTransactionPlanResult}
@@ -679,7 +700,7 @@ export function isTransactionPlanResult(value: unknown): value is TransactionPla
  *
  * @example
  * ```ts
- * const result: TransactionPlanResult = successfulSingleTransactionPlanResultFromTransaction(message, transaction);
+ * const result: TransactionPlanResult = successfulSingleTransactionPlanResult(message, { signature });
  *
  * if (isSingleTransactionPlanResult(result)) {
  *   console.log(result.status); // TypeScript knows this is a SingleTransactionPlanResult.
@@ -710,7 +731,7 @@ export function isSingleTransactionPlanResult<
  *
  * @example
  * ```ts
- * const result: TransactionPlanResult = successfulSingleTransactionPlanResultFromTransaction(message, transaction);
+ * const result: TransactionPlanResult = successfulSingleTransactionPlanResult(message, { signature });
  *
  * assertIsSingleTransactionPlanResult(result);
  * console.log(result.status); // TypeScript knows this is a SingleTransactionPlanResult.
@@ -745,7 +766,7 @@ export function assertIsSingleTransactionPlanResult<
  *
  * @example
  * ```ts
- * const result: TransactionPlanResult = successfulSingleTransactionPlanResultFromTransaction(message, transaction);
+ * const result: TransactionPlanResult = successfulSingleTransactionPlanResult(message, { signature });
  *
  * if (isSuccessfulSingleTransactionPlanResult(result)) {
  *   console.log(result.context.signature); // TypeScript knows this is a successful result.
@@ -774,7 +795,7 @@ export function isSuccessfulSingleTransactionPlanResult<
  *
  * @example
  * ```ts
- * const result: TransactionPlanResult = successfulSingleTransactionPlanResultFromTransaction(message, transaction);
+ * const result: TransactionPlanResult = successfulSingleTransactionPlanResult(message, { signature });
  *
  * assertIsSuccessfulSingleTransactionPlanResult(result);
  * console.log(result.context.signature); // TypeScript knows this is a successful result.
@@ -1157,8 +1178,8 @@ export function assertIsParallelTransactionPlanResult<
  * @example
  * ```ts
  * const result: TransactionPlanResult = parallelTransactionPlanResult([
- *   successfulSingleTransactionPlanResultFromTransaction(messageA, transactionA),
- *   successfulSingleTransactionPlanResultFromTransaction(messageB, transactionB),
+ *   successfulSingleTransactionPlanResult(messageA, { signature: signatureA }),
+ *   successfulSingleTransactionPlanResult(messageB, { signature: signatureB }),
  * ]);
  *
  * if (isSuccessfulTransactionPlanResult(result)) {
@@ -1204,8 +1225,8 @@ export function isSuccessfulTransactionPlanResult<
  * @example
  * ```ts
  * const result: TransactionPlanResult = parallelTransactionPlanResult([
- *   successfulSingleTransactionPlanResultFromTransaction(messageA, transactionA),
- *   successfulSingleTransactionPlanResultFromTransaction(messageB, transactionB),
+ *   successfulSingleTransactionPlanResult(messageA, { signature: signatureA }),
+ *   successfulSingleTransactionPlanResult(messageB, { signature: signatureB }),
  * ]);
  *
  * assertIsSuccessfulTransactionPlanResult(result);
@@ -1249,7 +1270,7 @@ export function assertIsSuccessfulTransactionPlanResult<
  * Finding a failed transaction result.
  * ```ts
  * const result = parallelTransactionPlanResult([
- *   successfulSingleTransactionPlanResultFromTransaction(messageA, transactionA),
+ *   successfulSingleTransactionPlanResult(messageA, { signature: signatureA }),
  *   failedSingleTransactionPlanResult(messageB, error),
  * ]);
  *
@@ -1312,7 +1333,7 @@ export function findTransactionPlanResult<
  * Retrieving the first failed result from a parallel execution.
  * ```ts
  * const result = parallelTransactionPlanResult([
- *   successfulSingleTransactionPlanResultFromTransaction(messageA, transactionA),
+ *   successfulSingleTransactionPlanResult(messageA, { signature: signatureA }),
  *   failedSingleTransactionPlanResult(messageB, error),
  *   failedSingleTransactionPlanResult(messageC, anotherError),
  * ]);
@@ -1371,8 +1392,8 @@ export function getFirstFailedSingleTransactionPlanResult<
  * Checking if all transactions were successful.
  * ```ts
  * const result = parallelTransactionPlanResult([
- *   successfulSingleTransactionPlanResultFromTransaction(messageA, transactionA),
- *   successfulSingleTransactionPlanResultFromTransaction(messageB, transactionB),
+ *   successfulSingleTransactionPlanResult(messageA, { signature: signatureA }),
+ *   successfulSingleTransactionPlanResult(messageB, { signature: signatureB }),
  * ]);
  *
  * const allSuccessful = everyTransactionPlanResult(
@@ -1437,7 +1458,7 @@ export function everyTransactionPlanResult<
  * Converting all canceled results to failed results.
  * ```ts
  * const result = parallelTransactionPlanResult([
- *   successfulSingleTransactionPlanResultFromTransaction(messageA, transactionA),
+ *   successfulSingleTransactionPlanResult(messageA, { signature: signatureA }),
  *   canceledSingleTransactionPlanResult(messageB),
  * ]);
  *
