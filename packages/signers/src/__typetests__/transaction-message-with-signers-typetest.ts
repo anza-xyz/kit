@@ -2,10 +2,11 @@ import { Address } from '@solana/addresses';
 import { AccountRole } from '@solana/instructions';
 import { createTransactionMessage } from '@solana/transaction-messages';
 
-import { TransactionMessageWithSigners } from '../account-signer-meta';
+import { InstructionWithSigners, TransactionMessageWithSigners } from '../account-signer-meta';
 import { setTransactionMessageFeePayerSigner } from '../fee-payer-signer';
 import { TransactionModifyingSigner } from '../transaction-modifying-signer';
 import { TransactionPartialSigner } from '../transaction-partial-signer';
+import { TransactionSendingSigner } from '../transaction-sending-signer';
 
 // [DESCRIBE] TransactionMessageWithSigners
 {
@@ -81,5 +82,25 @@ import { TransactionPartialSigner } from '../transaction-partial-signer';
 
         // @ts-expect-error The instruction signer is not a TransactionPartialSigner.
         transactionMessage satisfies TransactionMessageWithSigners<Address, TransactionPartialSigner>;
+    }
+
+    // It accepts mixed signer kinds when using the default signer type parameter
+    {
+        const feePayer = null as unknown as TransactionModifyingSigner;
+        const instructionSigner = null as unknown as TransactionSendingSigner;
+        const instruction = {
+            accounts: [
+                {
+                    address: instructionSigner.address,
+                    role: AccountRole.READONLY_SIGNER,
+                    signer: instructionSigner,
+                },
+            ],
+            programAddress: instructionSigner.address,
+        } as const satisfies InstructionWithSigners & { programAddress: Address };
+        ({
+            feePayer,
+            instructions: [instruction],
+        }) satisfies TransactionMessageWithSigners;
     }
 }
