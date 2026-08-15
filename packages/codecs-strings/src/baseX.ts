@@ -93,7 +93,7 @@ export const getBaseXDecoder = (alphabet: string): VariableSizeDecoder<string> =
     return createDecoder({
         read(rawBytes, offset): [string, number] {
             const bytes = offset === 0 || offset <= -rawBytes.byteLength ? rawBytes : rawBytes.slice(offset);
-            if (bytes.length === 0) return ['', 0];
+            if (bytes.length === 0) return ['', rawBytes.length];
 
             // Handle leading zeroes.
             let trailIndex = bytes.findIndex(n => n !== 0);

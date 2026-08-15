@@ -98,4 +98,13 @@ describe('getBase58Codec', () => {
         ]);
         expect(base58.read(bytes, -(bytes.byteLength + 1))).toStrictEqual(base58.read(bytes, 0));
     });
+
+    it('returns the end of the buffer as the next offset when no bytes remain to decode', () => {
+        const base58 = getBase58Codec();
+        // Reading at an offset that leaves nothing to consume must report the end of the
+        // buffer as the next offset, like every other read() path. Rewinding to 0 here
+        // corrupts the cursor of any decoder composed after this one.
+        const bytes = new Uint8Array([255]);
+        expect(base58.read(bytes, 1)).toStrictEqual(['', 1]);
+    });
 });
