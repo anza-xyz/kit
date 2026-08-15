@@ -31,6 +31,22 @@ type RpcNotification<TNotification> = Readonly<{
 
 type RpcSubscriptionId = number;
 
+/**
+ * The numeric allow-list is keyed by API method names (`blockNotifications`), but the
+ * notification payload's `method` field is the singular wire name (`blockNotification`).
+ * Map that (or a leftover `*Subscribe` name) back to the API key so the transformer
+ * does not fall through to an empty keypath list.
+ */
+function getApiMethodNameFromNotificationMethod(notificationMethod: string): string {
+    if (notificationMethod.endsWith('Subscribe')) {
+        return `${notificationMethod.slice(0, -'Subscribe'.length)}Notifications`;
+    }
+    if (notificationMethod.endsWith('Notification') && !notificationMethod.endsWith('Notifications')) {
+        return `${notificationMethod}s`;
+    }
+    return notificationMethod;
+}
+
 type RpcSubscriptionNotificationEvents<TNotification> = Omit<RpcSubscriptionChannelEvents<TNotification>, 'message'> & {
     notification: TNotification;
 };
@@ -93,7 +109,10 @@ function getMemoizedDemultiplexedNotificationPublisherFromChannelAndResponseTran
                     return;
                 }
                 const transformedNotification = responseTransformer
-                    ? responseTransformer(message.params.result, subscribeRequest)
+                    ? responseTransformer(message.params.result, {
+                          methodName: getApiMethodNameFromNotificationMethod(message.method),
+                          params: subscribeRequest.params,
+                      })
                     : message.params.result;
                 return [`notification:${message.params.subscription}`, transformedNotification];
             })),

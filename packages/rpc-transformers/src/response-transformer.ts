@@ -62,11 +62,21 @@ export function getDefaultResponseTransformerForSolanaRpc<TApi>(
  * });
  * ```
  */
+function toAllowedNumericMethodName(methodName: string): string {
+    if (methodName.endsWith('Subscribe')) {
+        return `${methodName.slice(0, -'Subscribe'.length)}Notifications`;
+    }
+    if (methodName.endsWith('Notification') && !methodName.endsWith('Notifications')) {
+        return `${methodName}s`;
+    }
+    return methodName;
+}
+
 export function getDefaultResponseTransformerForSolanaRpcSubscriptions<TApi>(
     config?: ResponseTransformerConfig<TApi>,
 ): RpcResponseTransformer {
     return (response: RpcResponse, request: RpcRequest): RpcResponse => {
-        const methodName = request.methodName as keyof TApi;
+        const methodName = toAllowedNumericMethodName(request.methodName) as keyof TApi;
         const keyPaths =
             config?.allowedNumericKeyPaths && methodName ? config.allowedNumericKeyPaths[methodName] : undefined;
         return pipe(response, r => getBigIntUpcastResponseTransformer(keyPaths ?? [])(r, request));

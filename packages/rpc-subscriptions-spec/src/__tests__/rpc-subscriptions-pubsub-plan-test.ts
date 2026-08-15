@@ -214,6 +214,60 @@ describe('executeRpcPubSubSubscriptionPlan', () => {
             });
             expect(notificationListener).toHaveBeenCalledWith('now hear this: hi');
         });
+        it('calls the response transformer with the API method name derived from the notification, not the subscribe request', async () => {
+            expect.assertions(1);
+            const publisher = await publisherPromise;
+            publisher.on('notification', jest.fn());
+            receiveMessage({
+                jsonrpc: '2.0',
+                method: 'thingNotification',
+                params: {
+                    result: 'hi',
+                    subscription: expectedSubscriptionId,
+                },
+            });
+            expect(mockResponseTransformer).toHaveBeenCalledWith('hi', {
+                methodName: 'thingNotifications',
+                params: [],
+            });
+        });
+        it('derives the transformer method name from each notification when subscriptions share a channel', async () => {
+            expect.assertions(2);
+            const publisher = await publisherPromise;
+            publisher.on('notification', jest.fn());
+            receiveMessage({
+                jsonrpc: '2.0',
+                method: 'accountNotification',
+                params: {
+                    result: { lamports: 1 },
+                    subscription: expectedSubscriptionId,
+                },
+            });
+            receiveMessage({
+                jsonrpc: '2.0',
+                method: 'blockNotification',
+                params: {
+                    result: { version: 0 },
+                    subscription: expectedSubscriptionId,
+                },
+            });
+            expect(mockResponseTransformer).toHaveBeenNthCalledWith(
+                1,
+                { lamports: 1 },
+                {
+                    methodName: 'accountNotifications',
+                    params: [],
+                },
+            );
+            expect(mockResponseTransformer).toHaveBeenNthCalledWith(
+                2,
+                { version: 0 },
+                {
+                    methodName: 'blockNotifications',
+                    params: [],
+                },
+            );
+        });
         it('calls the response transformer only once per notification, even when there are multiple subscribers', async () => {
             expect.assertions(1);
             const publisher = await publisherPromise;
