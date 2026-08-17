@@ -1,3 +1,5 @@
+import { RpcSubscriptionsChannel } from '@solana/rpc-subscriptions-spec';
+
 import { createSolanaRpcSubscriptionsApi_UNSTABLE } from '../index';
 
 const MOCK_TOKEN_BALANCE = {
@@ -12,50 +14,57 @@ const MOCK_TOKEN_BALANCE = {
 };
 
 function createMockChannel() {
-    const listeners: Record<string, ((payload: unknown) => void)[]> = { error: [], message: [] };
+    const messageListeners: ((message: unknown) => void)[] = [];
     let lastSent: { id?: number } | undefined;
-    return {
-        lastSent: () => lastSent,
-        listeners,
-        on(type: string, listener: (payload: unknown) => void) {
-            listeners[type] ??= [];
-            listeners[type].push(listener);
+    const channel: RpcSubscriptionsChannel<unknown, unknown> = {
+        on(type, listener) {
+            if (type === 'message') {
+                messageListeners.push(listener as (message: unknown) => void);
+            }
             return () => {};
         },
-        async send(payload: { id?: number }) {
-            lastSent = payload;
+        send(message) {
+            lastSent = message as { id?: number };
+            return Promise.resolve();
         },
+    };
+    return {
+        channel,
+        /** Delivers `message` to everything subscribed to the channel's `message` events. */
+        receive(message: unknown) {
+            for (const listener of messageListeners) {
+                listener(message);
+            }
+        },
+        /** The last message the subject under test sent over the channel, if any. */
+        sentMessage: () => lastSent,
     };
 }
 
 async function subscribeAndNotify(
     execute: (config: {
-        channel: ReturnType<typeof createMockChannel>;
+        channel: RpcSubscriptionsChannel<unknown, unknown>;
         signal: AbortSignal;
     }) => Promise<{ on(type: string, listener: (data: unknown) => void): void }>,
     notificationMethod: string,
     result: unknown,
 ) {
-    const channel = createMockChannel();
+    const { channel, receive, sentMessage } = createMockChannel();
     const publisherPromise = execute({
         channel,
         signal: new AbortController().signal,
     });
     await Promise.resolve();
     const subscriptionId = 42;
-    for (const listener of channel.listeners.message) {
-        listener({ id: channel.lastSent()?.id, jsonrpc: '2.0', result: subscriptionId });
-    }
+    receive({ id: sentMessage()?.id, jsonrpc: '2.0', result: subscriptionId });
     const publisher = await publisherPromise;
     const notificationListener = jest.fn();
     publisher.on('notification', notificationListener);
-    for (const listener of channel.listeners.message) {
-        listener({
-            jsonrpc: '2.0',
-            method: notificationMethod,
-            params: { result, subscription: subscriptionId },
-        });
-    }
+    receive({
+        jsonrpc: '2.0',
+        method: notificationMethod,
+        params: { result, subscription: subscriptionId },
+    });
     if (!notificationListener.mock.calls.length) {
         throw new Error('notification listener was never called');
     }
