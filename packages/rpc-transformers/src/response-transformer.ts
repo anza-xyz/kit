@@ -49,6 +49,25 @@ export function getDefaultResponseTransformerForSolanaRpc<TApi>(
 }
 
 /**
+ * Map a subscribe request name (`blockSubscribe`) or a wire notification name
+ * (`blockNotification`) onto the API key used by the numeric allow-list
+ * (`blockNotifications`). Custom plan executors may still pass either form.
+ *
+ * The same mapping lives in `@solana/rpc-subscriptions-spec` as
+ * `getApiMethodNameFromNotificationMethod`, kept local so that package does
+ * not depend on this one. Update both if the wire naming changes.
+ */
+function toAllowedNumericMethodName(methodName: string): string {
+    if (methodName.endsWith('Subscribe')) {
+        return `${methodName.slice(0, -'Subscribe'.length)}Notifications`;
+    }
+    if (methodName.endsWith('Notification') && !methodName.endsWith('Notifications')) {
+        return `${methodName}s`;
+    }
+    return methodName;
+}
+
+/**
  * Returns the default response transformer for the Solana RPC Subscriptions API.
  *
  * Under the hood, this function composes the {@link getBigIntUpcastResponseTransformer}.
@@ -62,16 +81,6 @@ export function getDefaultResponseTransformerForSolanaRpc<TApi>(
  * });
  * ```
  */
-function toAllowedNumericMethodName(methodName: string): string {
-    if (methodName.endsWith('Subscribe')) {
-        return `${methodName.slice(0, -'Subscribe'.length)}Notifications`;
-    }
-    if (methodName.endsWith('Notification') && !methodName.endsWith('Notifications')) {
-        return `${methodName}s`;
-    }
-    return methodName;
-}
-
 export function getDefaultResponseTransformerForSolanaRpcSubscriptions<TApi>(
     config?: ResponseTransformerConfig<TApi>,
 ): RpcResponseTransformer {

@@ -56,6 +56,9 @@ async function subscribeAndNotify(
             params: { result, subscription: subscriptionId },
         });
     }
+    if (!notificationListener.mock.calls.length) {
+        throw new Error('notification listener was never called');
+    }
     return notificationListener.mock.calls[0][0];
 }
 

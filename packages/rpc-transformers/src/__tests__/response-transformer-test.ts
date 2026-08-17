@@ -77,13 +77,13 @@ describe('getDefaultResponseTransformerForSolanaRpcSubscriptions', () => {
             allowedNumericKeyPaths: { blockNotifications: [['version']] },
         });
         const request = { methodName: 'blockSubscribe', params: [] } as RpcRequest;
-        expect(transformer({ version: 0, slot: 1 }, request)).toStrictEqual({ version: 0, slot: 1n });
+        expect(transformer({ slot: 1, version: 0 }, request)).toStrictEqual({ slot: 1n, version: 0 });
     });
     it('looks up the allow-list using the Notifications API name when given a wire Notification method', () => {
         const transformer = getDefaultResponseTransformerForSolanaRpcSubscriptions({
             allowedNumericKeyPaths: { blockNotifications: [['version']] },
         });
         const request = { methodName: 'blockNotification', params: [] } as RpcRequest;
-        expect(transformer({ version: 0, slot: 1 }, request)).toStrictEqual({ version: 0, slot: 1n });
+        expect(transformer({ slot: 1, version: 0 }, request)).toStrictEqual({ slot: 1n, version: 0 });
     });
 });
