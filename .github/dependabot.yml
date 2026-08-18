@@ -65,3 +65,8 @@ updates:
       interval: daily
     cooldown:
       default-days: 3
+    ignore:
+      # changesets/action v2 requires Changesets CLI v3, but this repo uses
+      # CLI v2. Remove this once the CLI is upgraded to v3.
+      - dependency-name: "changesets/action"
+        update-types: ["version-update:semver-major"]
