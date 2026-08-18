@@ -23,7 +23,7 @@
         "next": "^16.2.11",
         "react": "^19.2.8",
         "react-dom": "^19.2.8",
-        "tailwind-merge": "^3.4.0",
+        "tailwind-merge": "^3.6.0",
         "twoslash": "^0.3.6"
     },
     "devDependencies": {
