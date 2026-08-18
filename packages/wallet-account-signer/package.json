@@ -81,12 +81,12 @@
         "@solana/signers": "workspace:*",
         "@solana/transaction-messages": "workspace:*",
         "@solana/transactions": "workspace:*",
-        "@solana/wallet-standard-chains": "^1.1.1",
+        "@solana/wallet-standard-chains": "^1.1.2",
         "@solana/wallet-standard-features": "^1.4.0",
-        "@wallet-standard/base": "^1.1.0",
+        "@wallet-standard/base": "^1.1.1",
         "@wallet-standard/errors": "^0.1.2",
-        "@wallet-standard/ui": "^1.0.1",
-        "@wallet-standard/ui-registry": "^1.0.1"
+        "@wallet-standard/ui": "^1.0.3",
+        "@wallet-standard/ui-registry": "^1.1.1"
     },
     "devDependencies": {
         "@solana/errors": "workspace:*"
