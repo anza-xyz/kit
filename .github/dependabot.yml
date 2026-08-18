@@ -30,6 +30,10 @@ updates:
         patterns:
           - 'undici'
           - 'undici-types'
+      wallet-standard:
+        patterns:
+          - '@wallet-standard/*'
+          - '@solana/wallet-standard-*'
   - package-ecosystem: 'npm'
     directory: '/docs'
     schedule:
