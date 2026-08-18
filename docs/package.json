@@ -12,7 +12,7 @@
     },
     "dependencies": {
         "@inkeep/cxkit-react": "^0.5.119",
-        "@radix-ui/react-popover": "^1.1.15",
+        "@radix-ui/react-popover": "^1.1.23",
         "class-variance-authority": "^0.7.1",
         "fumadocs-core": "15.2.10",
         "fumadocs-docgen": "^2.1.0",
