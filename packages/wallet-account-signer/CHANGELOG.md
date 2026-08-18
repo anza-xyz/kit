@@ -1,5 +1,18 @@
 # @solana/wallet-account-signer
 
+## 7.1.1
+
+### Patch Changes
+
+- Updated dependencies [[`0a989a4`](https://github.com/anza-xyz/kit/commit/0a989a4f29bf9706f3086c3b16797cb18170f6f3)]:
+    - @solana/signers@7.1.1
+    - @solana/addresses@7.1.1
+    - @solana/keys@7.1.1
+    - @solana/transaction-messages@7.1.1
+    - @solana/transactions@7.1.1
+    - @solana/codecs-core@7.1.1
+    - @solana/promises@7.1.1
+
 ## 7.1.0
 
 ### Patch Changes

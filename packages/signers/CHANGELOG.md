@@ -1,5 +1,22 @@
 # @solana/signers
 
+## 7.1.1
+
+### Patch Changes
+
+- [#1851](https://github.com/anza-xyz/kit/pull/1851) [`0a989a4`](https://github.com/anza-xyz/kit/commit/0a989a4f29bf9706f3086c3b16797cb18170f6f3) Thanks [@rajanpanth](https://github.com/rajanpanth)! - Fix `TransactionMessageWithSigners` so its signer type parameter rejects fee payer and instruction signers of other transaction signer kinds.
+
+- Updated dependencies []:
+    - @solana/addresses@7.1.1
+    - @solana/keys@7.1.1
+    - @solana/offchain-messages@7.1.1
+    - @solana/transaction-messages@7.1.1
+    - @solana/transactions@7.1.1
+    - @solana/instructions@7.1.1
+    - @solana/codecs-core@7.1.1
+    - @solana/errors@7.1.1
+    - @solana/nominal-types@7.1.1
+
 ## 7.1.0
 
 ### Patch Changes

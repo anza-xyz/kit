@@ -1,5 +1,12 @@
 # @solana/assertions
 
+## 7.1.1
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/errors@7.1.1
+
 ## 7.1.0
 
 ### Patch Changes

@@ -1,5 +1,24 @@
 # @solana/rpc-transformers
 
+## 7.1.1
+
+### Patch Changes
+
+- [#1925](https://github.com/anza-xyz/kit/pull/1925) [`90e371b`](https://github.com/anza-xyz/kit/commit/90e371b1058e53e50b2afb2d64c3a565c6a305a0) Thanks [@o-mid](https://github.com/o-mid)! - Consult the subscriptions numeric allow-list for each notification
+
+    The allow-list is keyed by API names like `blockNotifications`, but the plan executor invoked the transformer with the rewritten subscribe request (`blockSubscribe`). The lookup missed and every notification numeric was upcast to `bigint` while still typechecking as `number`.
+
+    The transformer now maps `*Subscribe` / `*Notification` names back to `*Notifications`, and the plan executor derives the method name from each notification payload so subscriptions that share a channel are not transformed under whichever request created the publisher.
+
+    `blockNotifications` is also derived from the same `innerInstructionsConfigs` / `messageConfig` / `tokenBalancesConfigs` as `getBlock`, so transaction `version`, token balance `uiAmount`, and `stackHeight` stay numbers.
+
+- Updated dependencies [[`9f8e4d0`](https://github.com/anza-xyz/kit/commit/9f8e4d0660ab2d7aa889cc3dc8efe6039dafcc77)]:
+    - @solana/rpc-spec-types@7.1.1
+    - @solana/rpc-types@7.1.1
+    - @solana/errors@7.1.1
+    - @solana/functional@7.1.1
+    - @solana/nominal-types@7.1.1
+
 ## 7.1.0
 
 ### Minor Changes

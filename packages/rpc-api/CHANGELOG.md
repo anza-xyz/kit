@@ -1,5 +1,22 @@
 # @solana/rpc-api
 
+## 7.1.1
+
+### Patch Changes
+
+- Updated dependencies [[`90e371b`](https://github.com/anza-xyz/kit/commit/90e371b1058e53e50b2afb2d64c3a565c6a305a0), [`9f8e4d0`](https://github.com/anza-xyz/kit/commit/9f8e4d0660ab2d7aa889cc3dc8efe6039dafcc77), [`1d074ed`](https://github.com/anza-xyz/kit/commit/1d074ed874c9ad8ba03d3498be212956695db34e)]:
+    - @solana/rpc-transformers@7.1.1
+    - @solana/rpc-spec@7.1.1
+    - @solana/codecs-strings@7.1.1
+    - @solana/addresses@7.1.1
+    - @solana/keys@7.1.1
+    - @solana/rpc-types@7.1.1
+    - @solana/transaction-messages@7.1.1
+    - @solana/transactions@7.1.1
+    - @solana/rpc-parsed-types@7.1.1
+    - @solana/codecs-core@7.1.1
+    - @solana/errors@7.1.1
+
 ## 7.1.0
 
 ### Minor Changes

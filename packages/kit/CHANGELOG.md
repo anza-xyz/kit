@@ -1,5 +1,38 @@
 # @solana/kit
 
+## 7.1.1
+
+### Patch Changes
+
+- Updated dependencies [[`9f8e4d0`](https://github.com/anza-xyz/kit/commit/9f8e4d0660ab2d7aa889cc3dc8efe6039dafcc77), [`0a989a4`](https://github.com/anza-xyz/kit/commit/0a989a4f29bf9706f3086c3b16797cb18170f6f3), [`769da66`](https://github.com/anza-xyz/kit/commit/769da66f2aeba1eb043da05d1a639ee6deb92b50)]:
+    - @solana/rpc-spec-types@7.1.1
+    - @solana/signers@7.1.1
+    - @solana/instruction-plans@7.1.1
+    - @solana/plugin-interfaces@7.1.1
+    - @solana/rpc-subscriptions@7.1.1
+    - @solana/rpc@7.1.1
+    - @solana/rpc-api@7.1.1
+    - @solana/accounts@7.1.1
+    - @solana/sysvars@7.1.1
+    - @solana/addresses@7.1.1
+    - @solana/codecs@7.1.1
+    - @solana/keys@7.1.1
+    - @solana/offchain-messages@7.1.1
+    - @solana/rpc-types@7.1.1
+    - @solana/transaction-confirmation@7.1.1
+    - @solana/transaction-introspection@7.1.1
+    - @solana/transaction-messages@7.1.1
+    - @solana/transactions@7.1.1
+    - @solana/program-client-core@7.1.1
+    - @solana/instructions@7.1.1
+    - @solana/programs@7.1.1
+    - @solana/rpc-parsed-types@7.1.1
+    - @solana/errors@7.1.1
+    - @solana/functional@7.1.1
+    - @solana/plugin-core@7.1.1
+    - @solana/promises@7.1.1
+    - @solana/subscribable@7.1.1
+
 ## 7.1.0
 
 ### Minor Changes

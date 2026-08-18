@@ -1,5 +1,14 @@
 # @solana/rpc-transport-http
 
+## 7.1.1
+
+### Patch Changes
+
+- Updated dependencies [[`9f8e4d0`](https://github.com/anza-xyz/kit/commit/9f8e4d0660ab2d7aa889cc3dc8efe6039dafcc77)]:
+    - @solana/rpc-spec@7.1.1
+    - @solana/rpc-spec-types@7.1.1
+    - @solana/errors@7.1.1
+
 ## 7.1.0
 
 ### Patch Changes

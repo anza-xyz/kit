@@ -1,5 +1,7 @@
 # @solana/errors
 
+## 7.1.1
+
 ## 7.1.0
 
 ### Minor Changes

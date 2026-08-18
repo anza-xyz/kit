@@ -1,5 +1,20 @@
 # @solana/transaction-messages
 
+## 7.1.1
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/addresses@7.1.1
+    - @solana/codecs-data-structures@7.1.1
+    - @solana/rpc-types@7.1.1
+    - @solana/instructions@7.1.1
+    - @solana/codecs-core@7.1.1
+    - @solana/codecs-numbers@7.1.1
+    - @solana/errors@7.1.1
+    - @solana/functional@7.1.1
+    - @solana/nominal-types@7.1.1
+
 ## 7.1.0
 
 ### Patch Changes

@@ -1,5 +1,16 @@
 # @solana/rpc-spec
 
+## 7.1.1
+
+### Patch Changes
+
+- [#1748](https://github.com/anza-xyz/kit/pull/1748) [`9f8e4d0`](https://github.com/anza-xyz/kit/commit/9f8e4d0660ab2d7aa889cc3dc8efe6039dafcc77) Thanks [@ChargingFoxSec](https://github.com/ChargingFoxSec)! - Avoid treating JavaScript protocol hooks and Object prototype properties as RPC method names in proxy-backed RPC objects.
+
+- Updated dependencies [[`9f8e4d0`](https://github.com/anza-xyz/kit/commit/9f8e4d0660ab2d7aa889cc3dc8efe6039dafcc77)]:
+    - @solana/rpc-spec-types@7.1.1
+    - @solana/errors@7.1.1
+    - @solana/subscribable@7.1.1
+
 ## 7.1.0
 
 ### Patch Changes

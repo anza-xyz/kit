@@ -1,5 +1,17 @@
 # @solana/accounts
 
+## 7.1.1
+
+### Patch Changes
+
+- Updated dependencies [[`9f8e4d0`](https://github.com/anza-xyz/kit/commit/9f8e4d0660ab2d7aa889cc3dc8efe6039dafcc77), [`1d074ed`](https://github.com/anza-xyz/kit/commit/1d074ed874c9ad8ba03d3498be212956695db34e)]:
+    - @solana/rpc-spec@7.1.1
+    - @solana/codecs-strings@7.1.1
+    - @solana/addresses@7.1.1
+    - @solana/rpc-types@7.1.1
+    - @solana/codecs-core@7.1.1
+    - @solana/errors@7.1.1
+
 ## 7.1.0
 
 ### Patch Changes

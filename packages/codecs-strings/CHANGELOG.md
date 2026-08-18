@@ -1,5 +1,16 @@
 # @solana/codecs-strings
 
+## 7.1.1
+
+### Patch Changes
+
+- [#1926](https://github.com/anza-xyz/kit/pull/1926) [`1d074ed`](https://github.com/anza-xyz/kit/commit/1d074ed874c9ad8ba03d3498be212956695db34e) Thanks [@latent-9](https://github.com/latent-9)! - Fix `getBaseXDecoder` returning an offset of `0` instead of the buffer length when there are no bytes left to decode, which corrupted the offset of any decoder composed after it.
+
+- Updated dependencies []:
+    - @solana/codecs-core@7.1.1
+    - @solana/codecs-numbers@7.1.1
+    - @solana/errors@7.1.1
+
 ## 7.1.0
 
 ### Patch Changes

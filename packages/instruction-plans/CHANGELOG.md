@@ -1,5 +1,42 @@
 # @solana/instruction-plans
 
+## 7.1.1
+
+### Patch Changes
+
+- [#1924](https://github.com/anza-xyz/kit/pull/1924) [`769da66`](https://github.com/anza-xyz/kit/commit/769da66f2aeba1eb043da05d1a639ee6deb92b50) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Deprecate transaction plan result APIs being removed in v8
+
+    Both of the following are deprecated and will be removed in the next major version.
+
+    `successfulSingleTransactionPlanResultFromTransaction` derives the transaction `signature` on your behalf by calling `getSignatureFromTransaction`, which throws when the transaction's fee payer has not signed it. Construct results with `successfulSingleTransactionPlanResult` instead, passing the context explicitly:
+
+    ```diff
+    - successfulSingleTransactionPlanResultFromTransaction(message, transaction, context);
+    + successfulSingleTransactionPlanResult(message, {
+    +   ...context,
+    +   signature: getSignatureFromTransaction(transaction),
+    +   transaction,
+    + });
+    ```
+
+    `BaseTransactionPlanResultContext` goes away together with the intersections that graft it onto every `SingleTransactionPlanResult`. The context of a result is becoming entirely caller-defined — it will be exactly the `TContext` you supply — so there will be no separate base shape to merge in. If you refer to this type, declare whichever of its fields you need on your own context type instead:
+
+    ```ts
+    type MyContext = {
+        message?: TransactionMessage & TransactionMessageWithFeePayer;
+        signature?: Signature;
+        transaction?: Transaction;
+    };
+    ```
+
+- Updated dependencies []:
+    - @solana/keys@7.1.1
+    - @solana/transaction-messages@7.1.1
+    - @solana/transactions@7.1.1
+    - @solana/instructions@7.1.1
+    - @solana/errors@7.1.1
+    - @solana/promises@7.1.1
+
 ## 7.1.0
 
 ### Minor Changes
