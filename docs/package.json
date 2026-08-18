@@ -24,7 +24,7 @@
         "react": "^19.2.8",
         "react-dom": "^19.2.8",
         "tailwind-merge": "^3.6.0",
-        "twoslash": "^0.3.6"
+        "twoslash": "^0.3.9"
     },
     "devDependencies": {
         "@solana-program/address-lookup-table": "^0.12.1",
