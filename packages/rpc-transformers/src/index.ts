@@ -5,7 +5,6 @@
  * @packageDocumentation
  */
 export * from './request-transformer';
-export * from './request-transformer-bigint-downcast';
 export * from './request-transformer-default-commitment';
 export * from './request-transformer-integer-overflow';
 export * from './response-transformer';

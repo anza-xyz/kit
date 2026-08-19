@@ -94,22 +94,6 @@ export type SuccessfulTransactionPlanResult<
 export type TransactionPlanResultContext = { [key: number | string | symbol]: unknown };
 
 /**
- * The base context fields for a {@link SuccessfulSingleTransactionPlanResult}.
- *
- * This requires a {@link Signature}, since a successful transaction always produces
- * one. The transaction message and full transaction object remain optional.
- *
- * @deprecated use {@link TransactionPlanResultContextWithSignature} instead as the context type argument.
- *
- * @see {@link TransactionPlanResultContextWithSignature}
- */
-export interface SuccessfulBaseTransactionPlanResultContext {
-    message?: TransactionMessage & TransactionMessageWithFeePayer;
-    signature: Signature;
-    transaction?: Transaction;
-}
-
-/**
  * A {@link TransactionPlanResultContext} that is guaranteed to include a {@link Signature}.
  *
  * This is the default context for every transaction plan result type, which is why a successful

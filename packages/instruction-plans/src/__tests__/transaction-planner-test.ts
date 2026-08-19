@@ -17,7 +17,7 @@ import {
     TransactionMessage,
     TransactionMessageWithFeePayer,
 } from '@solana/transaction-messages';
-import { getTransactionMessageSize, TRANSACTION_SIZE_LIMIT } from '@solana/transactions';
+import { getTransactionMessageSize } from '@solana/transactions';
 
 import {
     createTransactionPlanner,
@@ -45,6 +45,8 @@ import {
     instructionFactory,
     transactionPercentFactory,
 } from './__setup__';
+
+const legacyTransactionSizeLimit = 1232;
 
 function createMockTransactionMessage(): TransactionMessage & TransactionMessageWithFeePayer {
     return createMessage('mock-message');
@@ -96,7 +98,7 @@ describe('createTransactionPlanner', () => {
             await expect(planner(instructionPlan)).rejects.toThrow(
                 new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN, {
                     numBytesRequired: impossibleMessageSize - newMessageSize,
-                    numFreeBytes: TRANSACTION_SIZE_LIMIT - newMessageSize,
+                    numFreeBytes: legacyTransactionSizeLimit - newMessageSize,
                 }),
             );
         });

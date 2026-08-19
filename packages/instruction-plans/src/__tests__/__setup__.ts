@@ -11,7 +11,7 @@ import {
     type TransactionMessage,
     type TransactionMessageWithFeePayer,
 } from '@solana/transaction-messages';
-import { getTransactionMessageSize, SignaturesMap, Transaction, TRANSACTION_SIZE_LIMIT } from '@solana/transactions';
+import { getTransactionMessageSize, SignaturesMap, Transaction } from '@solana/transactions';
 
 import { MessagePackerInstructionPlan } from '../index';
 
@@ -97,11 +97,13 @@ export function instructionFactory(baseSeed?: string) {
     };
 }
 
+const legacyTransactionSizeLimit = 1232;
+
 export function transactionPercentFactory(
     createTransactionMessage: () => TransactionMessage & TransactionMessageWithFeePayer,
 ) {
     const minimumTransactionSize = getTransactionMessageSize(createTransactionMessage());
-    const remainingSize = TRANSACTION_SIZE_LIMIT - minimumTransactionSize - 1; /* For shortU16. */
+    const remainingSize = legacyTransactionSizeLimit - minimumTransactionSize - 1; /* For shortU16. */
     return (percent: number) => Math.floor((remainingSize * percent) / 100);
 }
 
@@ -129,7 +131,7 @@ export function createMessagePackerInstructionPlan(
                         appendTransactionMessageInstruction(baseInstruction, message),
                     );
                     const freeSpace =
-                        TRANSACTION_SIZE_LIMIT -
+                        legacyTransactionSizeLimit -
                         messageSizeWithBaseInstruction /* Includes the base instruction (length: 0). */ -
                         1; /* Leeway for shortU16 numbers in transaction headers. */
 
@@ -140,7 +142,7 @@ export function createMessagePackerInstructionPlan(
                             // there is no point packing the base instruction alone.
                             numBytesRequired: messageSizeWithBaseInstruction - messageSize + 1,
                             // (-1) Leeway for shortU16 numbers in transaction headers.
-                            numFreeBytes: TRANSACTION_SIZE_LIMIT - messageSize - 1,
+                            numFreeBytes: legacyTransactionSizeLimit - messageSize - 1,
                         });
                     }
 

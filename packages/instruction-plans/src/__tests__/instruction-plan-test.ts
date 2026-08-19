@@ -17,7 +17,7 @@ import {
     TransactionMessage,
     TransactionMessageWithFeePayer,
 } from '@solana/transaction-messages';
-import { getTransactionMessageSize, TRANSACTION_SIZE_LIMIT } from '@solana/transactions';
+import { getTransactionMessageSize } from '@solana/transactions';
 
 import {
     assertIsMessagePackerInstructionPlan,
@@ -49,6 +49,8 @@ jest.mock('@solana/transactions', () => ({
     ...jest.requireActual('@solana/transactions'),
     getTransactionMessageSize: jest.fn(),
 }));
+
+const legacyTransactionSizeLimit = 1232;
 
 function createInstruction<TId extends string>(id: TId): Instruction & { id: TId } {
     return { id, programAddress: '11111111111111111111111111111111' as Address };
@@ -237,7 +239,7 @@ describe('getLinearMessagePackerInstructionPlan', () => {
     });
     it('creates MessagePackerInstructionPlan objects by splitting instructions until we reach the total bytes required', () => {
         jest.mocked(getTransactionMessageSize).mockReturnValue(100);
-        const expectedLength = TRANSACTION_SIZE_LIMIT - 100 - 1;
+        const expectedLength = legacyTransactionSizeLimit - 100 - 1;
 
         const plan = getLinearMessagePackerInstructionPlan({
             getInstruction: (offset: number, length: number) => createInstruction(`[${offset},${offset + length})`),
@@ -266,8 +268,8 @@ describe('getLinearMessagePackerInstructionPlan', () => {
         expect(plan).toBeFrozenObject();
     });
     it("throws if there isn't enough space on the provided message", () => {
-        jest.mocked(getTransactionMessageSize).mockReturnValueOnce(TRANSACTION_SIZE_LIMIT + 50);
-        jest.mocked(getTransactionMessageSize).mockReturnValueOnce(TRANSACTION_SIZE_LIMIT - 50);
+        jest.mocked(getTransactionMessageSize).mockReturnValueOnce(legacyTransactionSizeLimit + 50);
+        jest.mocked(getTransactionMessageSize).mockReturnValueOnce(legacyTransactionSizeLimit - 50);
         const plan = getLinearMessagePackerInstructionPlan({
             getInstruction: () => createInstruction('ignored'),
             totalLength: 2000,
@@ -384,8 +386,8 @@ describe('getMessagePackerInstructionPlanFromInstructions', () => {
         );
     });
     it("throws if there isn't enough space on the provided message", () => {
-        jest.mocked(getTransactionMessageSize).mockReturnValueOnce(TRANSACTION_SIZE_LIMIT - 100);
-        jest.mocked(getTransactionMessageSize).mockReturnValueOnce(TRANSACTION_SIZE_LIMIT + 50);
+        jest.mocked(getTransactionMessageSize).mockReturnValueOnce(legacyTransactionSizeLimit - 100);
+        jest.mocked(getTransactionMessageSize).mockReturnValueOnce(legacyTransactionSizeLimit + 50);
         const plan = getMessagePackerInstructionPlanFromInstructions([createInstruction('A'), createInstruction('B')]);
 
         const messagePacker = plan.getMessagePacker();
@@ -431,8 +433,8 @@ describe('getReallocMessagePackerInstructionPlan', () => {
         );
     });
     it("throws if there isn't enough space on the provided message", () => {
-        jest.mocked(getTransactionMessageSize).mockReturnValueOnce(TRANSACTION_SIZE_LIMIT - 100);
-        jest.mocked(getTransactionMessageSize).mockReturnValueOnce(TRANSACTION_SIZE_LIMIT + 50);
+        jest.mocked(getTransactionMessageSize).mockReturnValueOnce(legacyTransactionSizeLimit - 100);
+        jest.mocked(getTransactionMessageSize).mockReturnValueOnce(legacyTransactionSizeLimit + 50);
         const plan = getReallocMessagePackerInstructionPlan({
             getInstruction: () => createInstruction('ignored'),
             totalSize: 15_000,

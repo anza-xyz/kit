@@ -7,32 +7,6 @@ import { Transaction } from './transaction';
 import { LEGACY_TRANSACTION_SIZE_LIMIT, V1_TRANSACTION_SIZE_LIMIT } from './transaction-size-limits';
 
 /**
- * The maximum size of a transaction packet in bytes.
- *
- * @deprecated Transaction size is no longer constant as v1 transactions have a larger size limit. Use `getTransactionSizeLimit` instead to get the size limit for a specific transaction based on its version.
- */
-export const TRANSACTION_PACKET_SIZE = 1280;
-
-/**
- * The size of the transaction packet header in bytes.
- * This includes the IPv6 header and the fragment header.
- *
- * @deprecated Transaction size is no longer constant as v1 transactions have a larger size limit. Use `getTransactionSizeLimit` instead to get the size limit for a specific transaction based on its version.
- */
-export const TRANSACTION_PACKET_HEADER =
-    40 /* 40 bytes is the size of the IPv6 header. */ + 8; /* 8 bytes is the size of the fragment header. */
-
-/**
- * The maximum size of a transaction in bytes.
- *
- * Note that this excludes the transaction packet header.
- * In other words, this is how much content we can fit in a transaction packet.
- *
- * @deprecated Transaction size is no longer constant as v1 transactions have a larger size limit. Use `getTransactionSizeLimit` instead to get the size limit for a specific transaction based on its version.
- */
-export const TRANSACTION_SIZE_LIMIT = TRANSACTION_PACKET_SIZE - TRANSACTION_PACKET_HEADER;
-
-/**
  * Gets the size of a given transaction in bytes.
  *
  * @example

@@ -32,7 +32,6 @@ export * from './create-async-generator-with-initial-value-and-slot-tracking';
 export * from './create-client-with-interfaces-from-rpc';
 export * from './create-reactive-store-with-initial-value-and-slot-tracking';
 export * from './airdrop';
-export * from './compute-unit-limit-estimation';
 export * from './decompile-transaction-message-fetching-lookup-tables';
 export * from './resource-limit-estimation';
 export * from './fetch-lookup-tables';
