@@ -88,7 +88,7 @@ importers:
         version: 0.13.0(@solana/kit@7.1.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))
       '@solana/react':
         specifier: 7.1.0
-        version: 7.1.0(@solana/kit@7.1.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))(@tanstack/react-query@5.101.4(react@19.2.8))(fastestsmallesttextencoderdecoder@1.0.22)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(swr@2.4.2(react@19.2.8))(typescript@5.9.3)
+        version: 7.1.0(@solana/kit@7.1.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))(@tanstack/react-query@5.101.4(react@19.2.8))(fastestsmallesttextencoderdecoder@1.0.22)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(swr@2.5.1(react@19.2.8))(typescript@5.9.3)
       '@solana/wallet-account-signer':
         specifier: 7.1.0
         version: 7.1.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)
@@ -129,8 +129,8 @@ importers:
         specifier: ^8.5.26
         version: 8.5.26
       swr:
-        specifier: ^2.4.1
-        version: 2.4.2(react@19.2.8)
+        specifier: ^2.5.1
+        version: 2.5.1(react@19.2.8)
       tailwindcss:
         specifier: ^4.3.3
         version: 4.3.3
@@ -6284,8 +6284,8 @@ packages:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
     engines: {node: '>= 0.4'}
 
-  swr@2.4.2:
-    resolution: {integrity: sha512-ej644Y2bvkIajfR32KGeSSdBXQW+ScjGjkybZgSE7kFpk9eGnV44XY9FJylXi+W75pavSX1PVNB57W5EbhGIYw==}
+  swr@2.5.1:
+    resolution: {integrity: sha512-BRw55e8r0B7SpDN20CAzoQAHl7y1yP7/Zt7oqUjMv0vSt2u2Xnkm88Ws+VypbV9BXHQVuSuyVq7zMjO16wSExw==}
     peerDependencies:
       react: ^16.11.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
@@ -9175,7 +9175,7 @@ snapshots:
     optionalDependencies:
       typescript: 5.9.3
 
-  '@solana/react@7.1.0(@solana/kit@7.1.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))(@tanstack/react-query@5.101.4(react@19.2.8))(fastestsmallesttextencoderdecoder@1.0.22)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(swr@2.4.2(react@19.2.8))(typescript@5.9.3)':
+  '@solana/react@7.1.0(@solana/kit@7.1.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))(@tanstack/react-query@5.101.4(react@19.2.8))(fastestsmallesttextencoderdecoder@1.0.22)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(swr@2.5.1(react@19.2.8))(typescript@5.9.3)':
     dependencies:
       '@solana/kit': 7.1.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@solana/promises': 7.1.0(typescript@5.9.3)
@@ -9192,7 +9192,7 @@ snapshots:
     optionalDependencies:
       '@tanstack/react-query': 5.101.4(react@19.2.8)
       react: 19.2.8
-      swr: 2.4.2(react@19.2.8)
+      swr: 2.5.1(react@19.2.8)
     transitivePeerDependencies:
       - fastestsmallesttextencoderdecoder
       - react-dom
@@ -13761,7 +13761,7 @@ snapshots:
 
   supports-preserve-symlinks-flag@1.0.0: {}
 
-  swr@2.4.2(react@19.2.8):
+  swr@2.5.1(react@19.2.8):
     dependencies:
       dequal: 2.0.3
       react: 19.2.8
