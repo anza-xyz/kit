@@ -46,6 +46,13 @@ export const transactionTypeDefs = /* GraphQL */ `
         writableIndexes: [Int]
     }
 
+    type TransactionMessageConfig {
+        computeUnitLimit: Int
+        heapSize: Int
+        loadedAccountsDataSizeLimit: Int
+        priorityFee: BigInt
+    }
+
     type TransactionMessageHeader {
         numReadonlySignedAccounts: Int
         numReadonlyUnsignedAccounts: Int
@@ -58,6 +65,7 @@ export const transactionTypeDefs = /* GraphQL */ `
         header: TransactionMessageHeader
         instructions: [TransactionInstruction]
         recentBlockhash: Hash
+        transactionConfig: TransactionMessageConfig
     }
 
     """

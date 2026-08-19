@@ -13,6 +13,13 @@ import {
 const MOCK_SIGNATURE =
     '4nHvMbxHURt2AXd7yQpKSKM5XCVKQiNbfsFmvPtHNJnJPSJHFT6cGUUNQGYK3wcxDCTvBMTLpQFf6HGqhLTUsxwj' as Signature;
 
+const MOCK_TRANSACTION_CONFIG = {
+    computeUnitLimit: 20_000,
+    heapSize: 32_768,
+    loadedAccountsDataSizeLimit: 65_536,
+    priorityFee: 5_000,
+};
+
 const MOCK_TOKEN_BALANCE = {
     accountIndex: 1,
     mint: 'So11111111111111111111111111111111111111112',
@@ -49,6 +56,23 @@ describe('the default response transformer for the Solana RPC', () => {
                 .send();
             expect(result?.version).toBe('legacy');
         });
+        it('leaves the `u32` fields of `transactionConfig` as numbers but upcasts `priorityFee`', async () => {
+            expect.assertions(4);
+            const rpc = createMockRpc<GetTransactionApi>({
+                meta: null,
+                slot: 1,
+                transaction: { message: { transactionConfig: MOCK_TRANSACTION_CONFIG } },
+                version: 1,
+            });
+            const result = await rpc
+                .getTransaction(MOCK_SIGNATURE, { encoding: 'json', maxSupportedTransactionVersion: 0 })
+                .send();
+            const transactionConfig = result?.transaction.message.transactionConfig;
+            expect(transactionConfig?.computeUnitLimit).toBe(20_000);
+            expect(transactionConfig?.heapSize).toBe(32_768);
+            expect(transactionConfig?.loadedAccountsDataSizeLimit).toBe(65_536);
+            expect(transactionConfig?.priorityFee).toBe(5_000n);
+        });
         it('leaves token balance `decimals` and `uiAmount` as numbers', async () => {
             expect.assertions(2);
             const rpc = createMockRpc<GetTransactionApi>({
@@ -72,6 +96,25 @@ describe('the default response transformer for the Solana RPC', () => {
             });
             const result = await rpc.getBlock(1n, { encoding: 'json', maxSupportedTransactionVersion: 0 }).send();
             expect(result?.transactions[0].version).toBe(0);
+        });
+        it('leaves the `u32` fields of `transactionConfig` as numbers but upcasts `priorityFee`', async () => {
+            expect.assertions(4);
+            const rpc = createMockRpc<GetBlockApi>({
+                blockhash: '4nHvMbxHURt2AXd7yQpKSKM5XCVKQiNbfsFmvPtHNJnJ',
+                transactions: [
+                    {
+                        meta: null,
+                        transaction: { message: { transactionConfig: MOCK_TRANSACTION_CONFIG } },
+                        version: 1,
+                    },
+                ],
+            });
+            const result = await rpc.getBlock(1n, { encoding: 'json', maxSupportedTransactionVersion: 0 }).send();
+            const transactionConfig = result?.transactions[0].transaction.message.transactionConfig;
+            expect(transactionConfig?.computeUnitLimit).toBe(20_000);
+            expect(transactionConfig?.heapSize).toBe(32_768);
+            expect(transactionConfig?.loadedAccountsDataSizeLimit).toBe(65_536);
+            expect(transactionConfig?.priorityFee).toBe(5_000n);
         });
         it('leaves token balance `decimals` and `uiAmount` as numbers', async () => {
             expect.assertions(1);

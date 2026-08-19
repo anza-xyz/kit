@@ -6,6 +6,7 @@ import type {
     Lamports,
     Reward,
     TokenBalance,
+    TransactionConfig,
     TransactionError,
     TransactionStatus,
 } from '@solana/rpc-types';
@@ -92,6 +93,13 @@ export type TransactionBase = Readonly<{
          * the nonce value.
          */
         recentBlockhash: Blockhash;
+        /**
+         * The compute budget declared by a version 1 transaction message.
+         *
+         * Omitted for legacy and version 0 transaction messages, which express their compute budget
+         * through `ComputeBudget` program instructions instead.
+         */
+        transactionConfig?: TransactionConfig;
     };
     /**
      * An ordered list of signatures belonging to the accounts required to sign this transaction.

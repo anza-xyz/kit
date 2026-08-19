@@ -65,4 +65,7 @@ export const messageConfig = [
     ['instructions', KEYPATH_WILDCARD, 'accounts', KEYPATH_WILDCARD],
     ['instructions', KEYPATH_WILDCARD, 'programIdIndex'],
     ['instructions', KEYPATH_WILDCARD, 'stackHeight'],
+    ['transactionConfig', 'computeUnitLimit'],
+    ['transactionConfig', 'heapSize'],
+    ['transactionConfig', 'loadedAccountsDataSizeLimit'],
 ] as const;

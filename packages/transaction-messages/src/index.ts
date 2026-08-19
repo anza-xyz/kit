@@ -46,3 +46,4 @@ export * from './loaded-accounts-data-size-limit';
 export * from './priority-fee-lamports';
 export * from './transaction-message-size';
 export * from './transaction-message';
+export * from './v1-transaction-config';

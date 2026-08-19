@@ -13,8 +13,10 @@ export type V1TransactionConfig = {
     /**
      * Maximum number of compute units the transaction may consume.
      *
-     * If not specified, defaults to 200,000 CUs per instruction. The maximum
-     * allowed value is 1,400,000 CUs.
+     * Unlike legacy and version 0 transactions, which fall back to 200,000 compute units per
+     * instruction when no `SetComputeUnitLimit` instruction is present, a version 1 transaction that
+     * leaves this field unset is budgeted **zero** compute units and will fail at execution. Set it
+     * explicitly on every version 1 transaction. The maximum allowed value is 1,400,000 CUs.
      */
     computeUnitLimit?: number;
     /**
@@ -23,14 +25,28 @@ export type V1TransactionConfig = {
     heapSize?: number;
     /**
      * Maximum size in bytes for loaded account data.
+     *
+     * As with {@link V1TransactionConfig.computeUnitLimit}, leaving this field unset budgets
+     * **zero** bytes rather than applying a default, so any transaction that loads account data
+     * must set it explicitly.
      */
     loadedAccountsDataSizeLimit?: number;
     /**
      * Total priority fee in lamports to pay for transaction prioritization.
+     *
+     * Unlike legacy and version 0 transactions, where the priority fee is derived from a price per
+     * compute unit, this is the total fee paid for the whole transaction. If not specified, no
+     * priority fee is paid.
      */
     priorityFeeLamports?: bigint;
 };
 
+/**
+ * Determines whether a transaction config has no fields set.
+ *
+ * @param config - The config to inspect.
+ * @return `true` if every field of the config is `undefined`, `false` otherwise.
+ */
 export function isV1ConfigEmpty(config: V1TransactionConfig): boolean {
     return (
         config.computeUnitLimit === undefined &&
@@ -40,6 +56,13 @@ export function isV1ConfigEmpty(config: V1TransactionConfig): boolean {
     );
 }
 
+/**
+ * Determines whether two transaction configs set the same value for every field.
+ *
+ * @param config1 - The first config to compare.
+ * @param config2 - The second config to compare.
+ * @return `true` if all four fields are equal between the two configs, `false` otherwise.
+ */
 export function areV1ConfigsEqual(config1: V1TransactionConfig, config2: V1TransactionConfig) {
     return (
         config1.computeUnitLimit === config2.computeUnitLimit &&

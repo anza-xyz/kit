@@ -85,6 +85,35 @@ type TransactionInstruction = InstructionWithData &
         programIdIndex: number;
     }>;
 
+/**
+ * The compute budget a version 1 transaction message declares inline, in place of the
+ * `ComputeBudget` program instructions used by legacy and version 0 transaction messages.
+ */
+export type TransactionConfig = Readonly<{
+    /**
+     * The maximum number of compute units the transaction may consume, or `null` if the transaction
+     * did not request one.
+     *
+     * A version 1 transaction that requests no compute unit limit is budgeted zero compute units.
+     */
+    computeUnitLimit: number | null;
+    /**
+     * The heap frame size in bytes requested for the transaction's execution, or `null` if the
+     * transaction did not request one, in which case the runtime allocated the default 32,768 bytes.
+     */
+    heapSize: number | null;
+    /**
+     * The maximum size in bytes of account data the transaction may load, or `null` if the
+     * transaction did not request one, in which case it was budgeted zero bytes.
+     */
+    loadedAccountsDataSizeLimit: number | null;
+    /**
+     * The total priority fee in {@link Lamports} the transaction paid for prioritization, or `null`
+     * if the transaction paid none.
+     */
+    priorityFee: Lamports | null;
+}>;
+
 type TransactionMessageBase = Readonly<{
     header: {
         /**
@@ -119,6 +148,13 @@ type TransactionMessageBase = Readonly<{
      * and for transactions whose lifetime is specified by a durable nonce, this is the nonce value.
      */
     recentBlockhash: Blockhash;
+    /**
+     * The compute budget declared by a version 1 transaction message.
+     *
+     * Omitted for legacy and version 0 transaction messages, which express their compute budget
+     * through `ComputeBudget` program instructions instead.
+     */
+    transactionConfig?: TransactionConfig;
 }>;
 
 type TransactionParsedAccountBase = Readonly<{
