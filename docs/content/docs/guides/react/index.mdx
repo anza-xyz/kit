@@ -149,6 +149,16 @@ Once a provider is mounted, pick a hook by what you are trying to do:
 
 The [SWR](/docs/guides/react/swr) and [TanStack Query](/docs/guides/react/query) adapters route the read hooks through those libraries' caches. These add features such as deduplication and devtools.
 
+## Plugin hooks
+
+Some plugins ship React bindings from a `/react` subpath of their own package. Those hooks take the client as an argument rather than reading `ClientProvider`, so they stay colocated with the plugin that owns the state.
+
+| You want to…                     | Package                           | Guide                                     |
+| -------------------------------- | --------------------------------- | ----------------------------------------- |
+| Connect a Wallet Standard wallet | `@solana/kit-plugin-wallet/react` | [Wallet hooks](/docs/guides/react/wallet) |
+
+Browser apps typically install [`walletSigner()`](/docs/guides/setting-up-signers#use-a-browser-wallet) instead of `generatedSigner()` on the client they pass to `ClientProvider`.
+
 ## Server rendering
 
 Every hook is safe to render on the server. The fetch or subscription is committed in an effect, which never runs during SSR, so no request opens and no socket connects until the component hydrates on the client. On the server - and on the first client render, before hydration - each hook reports its pre-fetch status: `fetching` for `useRequest`, `loading` for `useSubscription` and `useTrackedData`, and `idle` for `useAction` (which only ever fires on demand). Server and client markup therefore match, and the live work begins after hydration.

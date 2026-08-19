@@ -75,11 +75,91 @@ This is convenient for command-line tools, scripts, and backend services that al
     excluded from version control and from any production build artifact.
 </Callout>
 
-## Use a browser wallet signer
+## Use a browser wallet
 
-A dedicated wallet signer plugin is on its way and will be documented here once it lands. It will use the [Wallet Standard](https://github.com/wallet-standard/wallet-standard) under the hood and expose a framework-agnostic reactive layer, so it can be used from any UI framework — not just React.
+The [`@solana/kit-plugin-wallet`](https://www.npmjs.com/package/@solana/kit-plugin-wallet) package discovers [Wallet Standard](https://github.com/wallet-standard/wallet-standard) wallets in the browser, manages connect / disconnect / sign-in, and can install the connected wallet as the client's `payer` and/or `identity`. The same `client.wallet` namespace works from any UI framework; React bindings live in [`@solana/kit-plugin-wallet/react`](/docs/guides/react/wallet).
 
-Until then, the [`@solana/react`](/api) hooks can produce a `TransactionSigner` from a connected wallet account, and you can install that signer on a Kit client with the `signer(...)`, `payer(...)`, or `identity(...)` plugins shown above.
+```package-install
+@solana/kit @solana/kit-plugin-wallet
+```
+
+`walletSigner(...)` is the usual choice for a dApp: it installs `client.wallet` and syncs the connected wallet to both `payer` and `identity`. Pass the [Wallet Standard chain identifier](https://github.com/solana-labs/wallet-standard) that matches the RPC cluster you will talk to — one client targets one chain.
+
+```ts twoslash
+import { createClient } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { walletSigner } from '@solana/kit-plugin-wallet';
+
+const client = createClient()
+    .use(walletSigner({ chain: 'solana:devnet' }))
+    .use(solanaDevnetRpc());
+```
+
+Read discovered wallets from `client.wallet.getState()` and connect one. Once a signing-capable wallet is connected, `client.payer` and `client.identity` are that wallet's signer, so `client.sendTransaction(...)` prompts the wallet as usual.
+
+```ts twoslash
+import { createClient } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { walletSigner } from '@solana/kit-plugin-wallet';
+const client = createClient()
+    .use(walletSigner({ chain: 'solana:devnet' }))
+    .use(solanaDevnetRpc());
+declare const selectedWallet: import('@wallet-standard/ui').UiWallet;
+// ---cut-before---
+const { wallets } = client.wallet.getState();
+
+await client.wallet.connect(selectedWallet);
+
+// `client.payer` and `client.identity` are now the connected wallet's signer.
+```
+
+Accessing `client.payer` or `client.identity` **throws** while disconnected or when the connected wallet is read-only. Gate any send on `getState().connected?.signer` (or the React equivalents) so you never read those getters too early.
+
+The other three plugin variants cover the cases where fee payment and user identity should not both come from the wallet:
+
+| Plugin                | `client.payer` | `client.identity` | When to use                                                          |
+| --------------------- | -------------- | ----------------- | -------------------------------------------------------------------- |
+| `walletSigner`        | wallet signer  | wallet signer     | Most dApps — the wallet pays fees and signs as the user.             |
+| `walletPayer`         | wallet signer  | —                 | The wallet pays fees; identity is installed separately.              |
+| `walletIdentity`      | —              | wallet signer     | A relayer or backend key pays fees; the wallet is the user identity. |
+| `walletWithoutSigner` | —              | —                 | Wallet state only; read `getState().connected?.signer` yourself.     |
+
+```ts twoslash
+import { createClient, generateKeyPairSigner } from '@solana/kit';
+import { payer } from '@solana/kit-plugin-signer';
+import { walletIdentity } from '@solana/kit-plugin-wallet';
+
+const relayer = await generateKeyPairSigner();
+
+const client = createClient()
+    .use(payer(relayer))
+    .use(walletIdentity({ chain: 'solana:devnet' }));
+
+// `client.payer` is always the relayer.
+// `client.identity` is the connected wallet's signer.
+```
+
+By default the plugin persists the last connected account in `localStorage` and silently reconnects on the next page load. Pass `storage: null` to disable that, or `autoConnect: false` to persist without reconnecting. `filter` lets you keep only wallets that advertise a given feature.
+
+```ts twoslash
+import { walletSigner } from '@solana/kit-plugin-wallet';
+
+walletSigner({
+    chain: 'solana:devnet',
+    autoConnect: true,
+    storage: null, // disable persistence
+    filter: (w) => w.features.includes('solana:signAndSendTransaction'),
+});
+```
+
+`client.wallet` also exposes `disconnect`, `selectAccount`, `signMessage`, and `signIn` (Sign In With Solana). Subscribe with `client.wallet.subscribe` to bind the same state to Vue, Svelte, or any other UI library. In React, prefer the [wallet hooks](/docs/guides/react/wallet) instead of wiring `useSyncExternalStore` yourself.
+
+<Callout type="info">
+    All four wallet plugins are safe to include in a client that is created on the server. On the
+    server — and in React Native, where Wallet Standard browser discovery is not available —
+    `status` stays `'pending'`, actions throw, and no storage or registry listeners are touched. In
+    the browser the plugin initializes normally.
+</Callout>
 
 ## Generate signers for tests
 
@@ -118,6 +198,7 @@ The order matters: the signer must exist before the RPC bundle is added (so the 
 
 ## Next steps
 
+- [React — Wallet hooks](/docs/guides/react/wallet) — connect, disconnect, and gate UI on auto-reconnect from React.
 - [Sending transactions](/docs/guides/sending-transactions) — use your client to send and confirm transactions.
 - [Testing and local development](/docs/guides/testing-and-local-development) — set up local validators or LiteSVM for testing.
 - [Advanced guides — Signers](/docs/advanced-guides/signers) — learn the signer interfaces in depth.

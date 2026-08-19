@@ -3,6 +3,7 @@
     "pages": [
         "index",
         "core-hooks",
+        "wallet",
         "query",
         "swr"
     ]

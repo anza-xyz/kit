@@ -1,0 +1,188 @@
+---
+title: Wallet hooks
+description: React hooks from @solana/kit-plugin-wallet
+---
+
+`@solana/kit-plugin-wallet/react` is the React binding for the [wallet plugin](/docs/guides/setting-up-signers#use-a-browser-wallet). The hooks live next to the plugin rather than in `@solana/react`, and every one of them takes your wallet-enabled client as its first argument. That is the same pattern other plugin packages will follow for their own React APIs.
+
+```package-install
+@solana/kit @solana/kit-plugin-rpc @solana/kit-plugin-wallet @solana/react
+```
+
+## Set up the client
+
+Install `walletSigner(...)` on the client you already pass to `ClientProvider`. Export the client's type so components can call `useClient<AppClient>()` and then hand that client to the wallet hooks.
+
+```ts twoslash
+import { createClient } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { walletSigner } from '@solana/kit-plugin-wallet';
+
+export const client = createClient()
+    .use(walletSigner({ chain: 'solana:devnet' }))
+    .use(solanaDevnetRpc());
+
+export type AppClient = Awaited<typeof client>;
+```
+
+The hooks subscribe to `client.wallet` directly. They do not read `ClientProvider`, so they still work if you pass the client down as a prop — using `useClient` just keeps the client identity in lockstep with the rest of `@solana/react`.
+
+## Choosing a hook
+
+| You want to…                                    | Hook / component         | What you get back                                                              |
+| ----------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------ |
+| Know whether auto-reconnect has settled         | `useIsWalletReady`       | `false` during `'pending'` / `'reconnecting'`, then `true`.                    |
+| Hide a subtree until that warm-up finishes      | `WalletReadyGate`        | Renders `fallback`, then `children`. Synchronous — no `<Suspense>` needed.     |
+| List discovered wallets                         | `useWallets`             | The wallets that support the client's chain.                                   |
+| Read the active connection                      | `useConnectedWallet`     | `{ account, signer, wallet }` or `null`.                                       |
+| Read the connection status                      | `useWalletStatus`        | `'pending'`, `'disconnected'`, `'connecting'`, `'connected'`, …                |
+| See which persisted account is reconnecting     | `useReconnectingAccount` | That account, or `null`.                                                       |
+| Connect / disconnect / sign in / sign a message | `useConnect` and friends | An [`ActionResult`](/docs/guides/react/core-hooks#useaction) from `useAction`. |
+| Switch account without reconnecting             | `useSelectAccount`       | The synchronous `selectAccount` callback.                                      |
+
+## Gate UI on the initial warm-up
+
+A freshly built client silently reconnects to the last persisted wallet. It passes through `'pending'` and `'reconnecting'` before it settles, and rendering a connect button during that window flashes "disconnected" for a frame. Hold wallet-dependent UI back until the warm-up finishes.
+
+```tsx twoslash
+import { createClient } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { walletSigner } from '@solana/kit-plugin-wallet';
+const client = createClient()
+    .use(walletSigner({ chain: 'solana:devnet' }))
+    .use(solanaDevnetRpc());
+type AppClient = Awaited<typeof client>;
+function Dashboard() {
+    return null;
+}
+// ---cut-before---
+import { useClient } from '@solana/react';
+import { WalletReadyGate } from '@solana/kit-plugin-wallet/react';
+
+function App() {
+    const client = useClient<AppClient>();
+    return (
+        <WalletReadyGate client={client} fallback={<p>Loading wallets…</p>}>
+            <Dashboard />
+        </WalletReadyGate>
+    );
+}
+```
+
+`WalletReadyGate` is a thin wrapper over `useIsWalletReady`. Use the boolean directly when you want finer control, such as disabling a button rather than hiding a whole subtree.
+
+```tsx twoslash
+import { createClient } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { walletSigner } from '@solana/kit-plugin-wallet';
+const client = createClient()
+    .use(walletSigner({ chain: 'solana:devnet' }))
+    .use(solanaDevnetRpc());
+type AppClient = Awaited<typeof client>;
+// ---cut-before---
+import { useClient } from '@solana/react';
+import { useIsWalletReady } from '@solana/kit-plugin-wallet/react';
+
+function ConnectButton() {
+    const client = useClient<AppClient>();
+    const isReady = useIsWalletReady(client);
+    return <button disabled={!isReady}>Connect</button>;
+}
+```
+
+Neither helper waits on user-initiated `'connecting'` / `'disconnecting'`, so a normal connect stays interactive.
+
+## Reading wallet state
+
+Each state hook subscribes to a single slice of `client.wallet.getState()`, so a component only re-renders when that slice changes.
+
+### `useWallets` / `useConnectedWallet` / `useConnect`
+
+```tsx twoslash
+import { createClient } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { walletSigner } from '@solana/kit-plugin-wallet';
+const client = createClient()
+    .use(walletSigner({ chain: 'solana:devnet' }))
+    .use(solanaDevnetRpc());
+type AppClient = Awaited<typeof client>;
+// ---cut-before---
+import { useClient } from '@solana/react';
+import {
+    useConnect,
+    useConnectedWallet,
+    useDisconnect,
+    useWallets,
+} from '@solana/kit-plugin-wallet/react';
+
+function WalletButton() {
+    const client = useClient<AppClient>();
+    const wallets = useWallets(client);
+    const connected = useConnectedWallet(client);
+    const { dispatch: connect, isRunning } = useConnect(client);
+    const { dispatch: disconnect } = useDisconnect(client);
+
+    if (connected) {
+        return (
+            <div>
+                <p>Connected: {connected.account.address}</p>
+                <button onClick={() => disconnect()}>Disconnect</button>
+            </div>
+        );
+    }
+
+    return wallets.map((wallet) => (
+        <button key={wallet.name} disabled={isRunning} onClick={() => connect(wallet)}>
+            Connect {wallet.name}
+        </button>
+    ));
+}
+```
+
+`connect` / `disconnect` / `signIn` / `signMessage` wrap the matching `client.wallet` methods with [`useAction`](/docs/guides/react/core-hooks#useaction). `dispatch` is fire-and-forget and never throws; use `dispatchAsync` when you need the resolved value or to propagate errors. A newer dispatch aborts the in-flight one — filter that rejection with `isAbortError` from `@solana/kit`.
+
+If another `connect` or `signIn` starts before the current one resolves (an accidental double-click, for example), the newer request wins. The superseded call rejects with an abort error, and a failed attempt to connect a _different_ wallet leaves the existing connection in place.
+
+### `useSignIn` / `useSignMessage` / `useSelectAccount`
+
+`useSignIn` is Sign In With Solana as connect: it establishes a full connection, then calls `solana:signIn`. Pass `{}` when you do not need to customize the input.
+
+```tsx twoslash
+import { createClient } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { walletSigner } from '@solana/kit-plugin-wallet';
+const client = createClient()
+    .use(walletSigner({ chain: 'solana:devnet' }))
+    .use(solanaDevnetRpc());
+type AppClient = Awaited<typeof client>;
+declare const wallet: import('@wallet-standard/ui').UiWallet;
+declare const account: import('@wallet-standard/ui').UiWalletAccount;
+// ---cut-before---
+import { useClient } from '@solana/react';
+import { useSelectAccount, useSignIn, useSignMessage } from '@solana/kit-plugin-wallet/react';
+
+function WalletActions() {
+    const client = useClient<AppClient>();
+    const { dispatch: signIn } = useSignIn(client);
+    const { dispatch: signMessage } = useSignMessage(client);
+    const selectAccount = useSelectAccount(client);
+
+    return (
+        <>
+            <button onClick={() => signIn(wallet, { domain: 'example.com' })}>Sign in</button>
+            <button onClick={() => signMessage(new TextEncoder().encode('Hello'))}>
+                Sign message
+            </button>
+            <button onClick={() => selectAccount(account)}>Use this account</button>
+        </>
+    );
+}
+```
+
+`useSelectAccount` is the odd one out: `selectAccount` is synchronous, so the hook returns the bound function directly rather than an `ActionResult`. The account may belong to any currently authorized wallet, not only the active one.
+
+## Next steps
+
+- [Setting up signers](/docs/guides/setting-up-signers#use-a-browser-wallet) — plugin variants, persistence, and the framework-agnostic `client.wallet` API.
+- [Core hooks](/docs/guides/react/core-hooks) — `useClient`, `useAction`, and the read/subscribe hooks.
+- [Available plugins](/docs/plugins/available-plugins#wallet-plugins) — the four wallet plugin variants at a glance.
