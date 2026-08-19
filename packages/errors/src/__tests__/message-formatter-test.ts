@@ -1,9 +1,7 @@
-import { SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN, SolanaErrorCode } from '../codes';
-import { encodeContextObject } from '../context';
-import { getErrorMessage } from '../message-formatter';
+import { SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN } from '../codes';
+import { getHumanReadableErrorMessage } from '../message-formatter';
 import * as MessagesModule from '../messages';
 
-jest.mock('../context');
 jest.mock('../messages', () => ({
     get SolanaErrorMessages() {
         return {};
@@ -11,71 +9,15 @@ jest.mock('../messages', () => ({
     __esModule: true,
 }));
 
-describe('getErrorMessage', () => {
-    describe('in production mode', () => {
-        beforeEach(() => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (globalThis as any).__DEV__ = false;
-        });
-        it('renders advice on where to decode a context-less error', () => {
-            const message = getErrorMessage(
-                // @ts-expect-error Mock error codes don't conform to `SolanaErrorCode`
-                123,
-            );
-            expect(message).toBe('Solana error #123; Decode this error by running `npx @solana/errors decode -- 123`');
-        });
-        it('does not call the context encoder when the error has no context', () => {
-            getErrorMessage(
-                // @ts-expect-error Mock error codes don't conform to `SolanaErrorCode`
-                123,
-            );
-            expect(encodeContextObject).not.toHaveBeenCalled();
-        });
-        it('does not call the context encoder when the error context has no keys', () => {
-            const context = {};
-            getErrorMessage(
-                // @ts-expect-error Mock error codes don't conform to `SolanaErrorCode`
-                123,
-                context,
-            );
-            expect(encodeContextObject).not.toHaveBeenCalled();
-        });
-        it('calls the context encoder with the context', () => {
-            const context = { foo: 'bar' };
-            getErrorMessage(
-                // @ts-expect-error Mock error codes don't conform to `SolanaErrorCode`
-                123,
-                context,
-            );
-            expect(encodeContextObject).toHaveBeenCalledWith(context);
-        });
-        it('renders advice on where to decode an error with encoded context', () => {
-            jest.mocked(encodeContextObject).mockReturnValue('ENCODED_CONTEXT');
-            const context = { foo: 'bar' };
-            const message = getErrorMessage(123 as SolanaErrorCode, context);
-            expect(message).toBe(
-                "Solana error #123; Decode this error by running `npx @solana/errors decode -- 123 'ENCODED_CONTEXT'`",
-            );
-        });
-        it('renders no encoded context in the decoding advice when the context has no keys', () => {
-            jest.mocked(encodeContextObject).mockReturnValue('ENCODED_CONTEXT');
-            const context = {};
-            const message = getErrorMessage(123 as SolanaErrorCode, context);
-            expect(message).toBe('Solana error #123; Decode this error by running `npx @solana/errors decode -- 123`');
-        });
-    });
+describe('getHumanReadableErrorMessage', () => {
     describe('in dev mode', () => {
-        beforeEach(() => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (globalThis as any).__DEV__ = true;
-        });
         it('renders static error messages', () => {
             const messagesSpy = jest.spyOn(MessagesModule, 'SolanaErrorMessages', 'get');
             messagesSpy.mockReturnValue({
                 // @ts-expect-error Mock error config doesn't conform to exported config.
                 123: 'static error message',
             });
-            const message = getErrorMessage(
+            const message = getHumanReadableErrorMessage(
                 // @ts-expect-error Mock error config doesn't conform to exported config.
                 123,
             );
@@ -139,7 +81,7 @@ describe('getErrorMessage', () => {
                 // @ts-expect-error Mock error config doesn't conform to exported config.
                 123: input,
             });
-            const message = getErrorMessage(
+            const message = getHumanReadableErrorMessage(
                 // @ts-expect-error Mock error context doesn't conform to exported context.
                 123,
                 { foo: 'bar', severity: 'awful' },
@@ -152,7 +94,7 @@ describe('getErrorMessage', () => {
                 // @ts-expect-error Mock error config doesn't conform to exported config.
                 123: 'Here is some data: $data',
             });
-            const message = getErrorMessage(
+            const message = getHumanReadableErrorMessage(
                 // @ts-expect-error Mock error context doesn't conform to exported context.
                 123,
                 { data: new Uint8Array([1, 2, 3, 4]) },
@@ -165,7 +107,7 @@ describe('getErrorMessage', () => {
                 // @ts-expect-error Mock error config doesn't conform to exported config.
                 123: 'Here is a variable: $variable',
             });
-            const message = getErrorMessage(
+            const message = getHumanReadableErrorMessage(
                 // @ts-expect-error Mock error context doesn't conform to exported context.
                 123,
                 { variable: undefined },
@@ -178,7 +120,7 @@ describe('getErrorMessage', () => {
             messagesSpy.mockReturnValue({
                 [SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN]: 'Some instruction error',
             });
-            const message = getErrorMessage(SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN, { index: 0 });
+            const message = getHumanReadableErrorMessage(SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN, { index: 0 });
             expect(message).toBe('Some instruction error (instruction #1)');
         });
         it('uses one-based instruction numbering', () => {
@@ -187,7 +129,7 @@ describe('getErrorMessage', () => {
             messagesSpy.mockReturnValue({
                 [SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN]: 'Some instruction error',
             });
-            const message = getErrorMessage(SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN, { index: 5 });
+            const message = getHumanReadableErrorMessage(SOLANA_ERROR__INSTRUCTION_ERROR__UNKNOWN, { index: 5 });
             expect(message).toBe('Some instruction error (instruction #6)');
         });
         it('appends the instruction number to error codes at the end of the instruction error range', () => {
@@ -197,7 +139,7 @@ describe('getErrorMessage', () => {
             messagesSpy.mockReturnValue({
                 [lastInstructionErrorCode]: 'Some instruction error',
             });
-            const message = getErrorMessage(
+            const message = getHumanReadableErrorMessage(
                 // @ts-expect-error Mock error code doesn't conform to exported config.
                 lastInstructionErrorCode,
                 { index: 2 },
@@ -210,7 +152,7 @@ describe('getErrorMessage', () => {
                 // @ts-expect-error Mock error config doesn't conform to exported config.
                 123: 'some other error',
             });
-            const message = getErrorMessage(
+            const message = getHumanReadableErrorMessage(
                 // @ts-expect-error Mock error context doesn't conform to exported context.
                 123,
                 { index: 0 },
