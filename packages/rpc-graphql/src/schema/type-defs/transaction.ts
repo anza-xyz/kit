@@ -50,7 +50,7 @@ export const transactionTypeDefs = /* GraphQL */ `
         computeUnitLimit: Int
         heapSize: Int
         loadedAccountsDataSizeLimit: Int
-        priorityFee: BigInt
+        priorityFee: Lamports
     }
 
     type TransactionMessageHeader {

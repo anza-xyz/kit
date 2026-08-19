@@ -65,7 +65,7 @@ describe('the default response transformer for the Solana RPC', () => {
                 version: 1,
             });
             const result = await rpc
-                .getTransaction(MOCK_SIGNATURE, { encoding: 'json', maxSupportedTransactionVersion: 0 })
+                .getTransaction(MOCK_SIGNATURE, { encoding: 'json', maxSupportedTransactionVersion: 1 })
                 .send();
             const transactionConfig = result?.transaction.message.transactionConfig;
             expect(transactionConfig?.computeUnitLimit).toBe(20_000);
@@ -109,7 +109,7 @@ describe('the default response transformer for the Solana RPC', () => {
                     },
                 ],
             });
-            const result = await rpc.getBlock(1n, { encoding: 'json', maxSupportedTransactionVersion: 0 }).send();
+            const result = await rpc.getBlock(1n, { encoding: 'json', maxSupportedTransactionVersion: 1 }).send();
             const transactionConfig = result?.transactions[0].transaction.message.transactionConfig;
             expect(transactionConfig?.computeUnitLimit).toBe(20_000);
             expect(transactionConfig?.heapSize).toBe(32_768);
