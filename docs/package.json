@@ -51,7 +51,7 @@
         "eslint": "^10",
         "eslint-config-next": "^16.1.6",
         "postcss": "^8.5.26",
-        "swr": "^2.4.1",
+        "swr": "^2.5.1",
         "tailwindcss": "^4.3.3",
         "typescript": "^5.9.3",
         "vercel": "^52.2.0"
