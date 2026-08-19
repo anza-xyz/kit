@@ -75,7 +75,6 @@ This package supports the following Solana sysvars:
 - [`Clock`](https://github.com/anza-xyz/kit/tree/main/packages/sysvars/src/clock.ts)
 - [`EpochRewards`](https://github.com/anza-xyz/kit/tree/main/packages/sysvars/src/epoch-rewards.ts)
 - [`EpochSchedule`](https://github.com/anza-xyz/kit/tree/main/packages/sysvars/src/epoch-schedule.ts)
-- [`Fees`](https://github.com/anza-xyz/kit/tree/main/packages/sysvars/src/fees.ts)
 - [`LastRestartSlot`](https://github.com/anza-xyz/kit/tree/main/packages/sysvars/src/last-restart-slot.ts)
 - [`RecentBlockhashes`](https://github.com/anza-xyz/kit/tree/main/packages/sysvars/src/recent-blockhashes.ts)
 - [`Rent`](https://github.com/anza-xyz/kit/tree/main/packages/sysvars/src/rent.ts)

@@ -11,7 +11,6 @@
  * - `Clock`
  * - `EpochRewards`
  * - `EpochSchedule`
- * - `Fees`
  * - `LastRestartSlot`
  * - `RecentBlockhashes`
  * - `Rent`
