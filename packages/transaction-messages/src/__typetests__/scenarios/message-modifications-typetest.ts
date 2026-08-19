@@ -28,15 +28,11 @@ const compiledTransactionMessage = null as unknown as Parameters<typeof decompil
 const feePayer = null as unknown as Address;
 const instruction = null as unknown as Instruction;
 
-// Temporary, until we support v1 transactions in `createTransactionMessage`
-// When this is removed, use `TransactionVersion`
-type TransactionVersionWithoutV1 = Exclude<TransactionVersion, 1>;
-
 // [DESCRIBE] setTransactionMessageLifetimeUsingBlockhash
 {
     // It sets the blockhash after `createTransactionMessage`
     {
-        const message = pipe(createTransactionMessage({ version: null as unknown as TransactionVersionWithoutV1 }), m =>
+        const message = pipe(createTransactionMessage({ version: null as unknown as TransactionVersion }), m =>
             setTransactionMessageLifetimeUsingBlockhash(blockhashLifetime, m),
         );
         message satisfies TransactionMessage & TransactionMessageWithBlockhashLifetime;
@@ -45,7 +41,7 @@ type TransactionVersionWithoutV1 = Exclude<TransactionVersion, 1>;
     // It sets the blockhash after other transformations
     {
         const message = pipe(
-            createTransactionMessage({ version: null as unknown as TransactionVersionWithoutV1 }),
+            createTransactionMessage({ version: null as unknown as TransactionVersion }),
             m => setTransactionMessageFeePayer(null as unknown as Address, m),
             m => setTransactionMessageLifetimeUsingBlockhash(blockhashLifetime, m),
         );
@@ -55,7 +51,7 @@ type TransactionVersionWithoutV1 = Exclude<TransactionVersion, 1>;
     // It sets the blockhash after a durable nonce lifetime
     {
         const messageWithDurableNonce = pipe(
-            createTransactionMessage({ version: null as unknown as TransactionVersionWithoutV1 }),
+            createTransactionMessage({ version: null as unknown as TransactionVersion }),
             m => setTransactionMessageLifetimeUsingDurableNonce(durableNonceLifetime, m),
         );
         messageWithDurableNonce satisfies TransactionMessage & TransactionMessageWithDurableNonceLifetime;
@@ -90,7 +86,7 @@ type TransactionVersionWithoutV1 = Exclude<TransactionVersion, 1>;
     // It sets the blockhash with instructions
     {
         const message = pipe(
-            createTransactionMessage({ version: null as unknown as TransactionVersionWithoutV1 }),
+            createTransactionMessage({ version: null as unknown as TransactionVersion }),
             m => appendTransactionMessageInstruction(instruction, m),
             m => prependTransactionMessageInstruction(instruction, m),
             m => appendTransactionMessageInstructions([instruction], m),
@@ -103,7 +99,7 @@ type TransactionVersionWithoutV1 = Exclude<TransactionVersion, 1>;
     // It sets the blockhash multiple times
     {
         const message = pipe(
-            createTransactionMessage({ version: null as unknown as TransactionVersionWithoutV1 }),
+            createTransactionMessage({ version: null as unknown as TransactionVersion }),
             m => setTransactionMessageLifetimeUsingBlockhash(blockhashLifetime, m),
             m => setTransactionMessageLifetimeUsingBlockhash(blockhashLifetime, m),
             m => setTransactionMessageLifetimeUsingBlockhash(blockhashLifetime, m),
@@ -116,7 +112,7 @@ type TransactionVersionWithoutV1 = Exclude<TransactionVersion, 1>;
 {
     // It sets the durable nonce after `createTransactionMessage`
     {
-        const message = pipe(createTransactionMessage({ version: null as unknown as TransactionVersionWithoutV1 }), m =>
+        const message = pipe(createTransactionMessage({ version: null as unknown as TransactionVersion }), m =>
             setTransactionMessageLifetimeUsingDurableNonce(durableNonceLifetime, m),
         );
         message satisfies TransactionMessage & TransactionMessageWithDurableNonceLifetime;
@@ -125,7 +121,7 @@ type TransactionVersionWithoutV1 = Exclude<TransactionVersion, 1>;
     // It sets the durable nonce after other transformations
     {
         const message = pipe(
-            createTransactionMessage({ version: null as unknown as TransactionVersionWithoutV1 }),
+            createTransactionMessage({ version: null as unknown as TransactionVersion }),
             m => setTransactionMessageFeePayer(null as unknown as Address, m),
             m => setTransactionMessageLifetimeUsingDurableNonce(durableNonceLifetime, m),
         );
@@ -137,7 +133,7 @@ type TransactionVersionWithoutV1 = Exclude<TransactionVersion, 1>;
     // It sets the durable nonce after a blockhash lifetime
     {
         const messageWithBlockhash = pipe(
-            createTransactionMessage({ version: null as unknown as TransactionVersionWithoutV1 }),
+            createTransactionMessage({ version: null as unknown as TransactionVersion }),
             m => setTransactionMessageLifetimeUsingBlockhash(blockhashLifetime, m),
         );
         messageWithBlockhash satisfies TransactionMessage & TransactionMessageWithBlockhashLifetime;
@@ -172,7 +168,7 @@ type TransactionVersionWithoutV1 = Exclude<TransactionVersion, 1>;
     // It sets the durable nonce with instructions
     {
         const message = pipe(
-            createTransactionMessage({ version: null as unknown as TransactionVersionWithoutV1 }),
+            createTransactionMessage({ version: null as unknown as TransactionVersion }),
             m => appendTransactionMessageInstruction(instruction, m),
             m => prependTransactionMessageInstruction(instruction, m),
             m => appendTransactionMessageInstructions([instruction], m),
@@ -185,7 +181,7 @@ type TransactionVersionWithoutV1 = Exclude<TransactionVersion, 1>;
     // It sets the durable nonce multiple times
     {
         const message = pipe(
-            createTransactionMessage({ version: null as unknown as TransactionVersionWithoutV1 }),
+            createTransactionMessage({ version: null as unknown as TransactionVersion }),
             m => setTransactionMessageLifetimeUsingDurableNonce(durableNonceLifetime, m),
             m => setTransactionMessageLifetimeUsingDurableNonce(durableNonceLifetime, m),
             m => setTransactionMessageLifetimeUsingDurableNonce(durableNonceLifetime, m),
@@ -253,14 +249,14 @@ type TransactionVersionWithoutV1 = Exclude<TransactionVersion, 1>;
 {
     // It sets the fee payer after `createTransactionMessage`
     {
-        const message = createTransactionMessage({ version: null as unknown as TransactionVersionWithoutV1 });
+        const message = createTransactionMessage({ version: null as unknown as TransactionVersion });
         const newMessage = setTransactionMessageFeePayer(feePayer, message);
         newMessage satisfies TransactionMessage & TransactionMessageWithFeePayer;
     }
 
     // It sets the fee payer after setting a blockhash lifetime
     {
-        const message = pipe(createTransactionMessage({ version: null as unknown as TransactionVersionWithoutV1 }), m =>
+        const message = pipe(createTransactionMessage({ version: null as unknown as TransactionVersion }), m =>
             setTransactionMessageLifetimeUsingBlockhash(blockhashLifetime, m),
         );
         const newMessage = setTransactionMessageFeePayer(feePayer, message);
@@ -271,7 +267,7 @@ type TransactionVersionWithoutV1 = Exclude<TransactionVersion, 1>;
 
     // It sets the fee payer after setting a durable nonce lifetime
     {
-        const message = pipe(createTransactionMessage({ version: null as unknown as TransactionVersionWithoutV1 }), m =>
+        const message = pipe(createTransactionMessage({ version: null as unknown as TransactionVersion }), m =>
             setTransactionMessageLifetimeUsingDurableNonce(durableNonceLifetime, m),
         );
         const newMessage = setTransactionMessageFeePayer(feePayer, message);
@@ -283,7 +279,7 @@ type TransactionVersionWithoutV1 = Exclude<TransactionVersion, 1>;
     // It sets the fee payer multiple times
     {
         const message = pipe(
-            createTransactionMessage({ version: null as unknown as TransactionVersionWithoutV1 }),
+            createTransactionMessage({ version: null as unknown as TransactionVersion }),
             m => setTransactionMessageFeePayer(feePayer, m),
             m => setTransactionMessageFeePayer(feePayer, m),
             m => setTransactionMessageFeePayer(feePayer, m),
@@ -297,7 +293,7 @@ type TransactionVersionWithoutV1 = Exclude<TransactionVersion, 1>;
     // It can call instruction functions after `createTransactionMessage`
     {
         const message = pipe(
-            createTransactionMessage({ version: null as unknown as TransactionVersionWithoutV1 }),
+            createTransactionMessage({ version: null as unknown as TransactionVersion }),
             m => appendTransactionMessageInstruction(instruction, m),
             m => prependTransactionMessageInstruction(instruction, m),
             m => appendTransactionMessageInstructions([instruction], m),
@@ -309,7 +305,7 @@ type TransactionVersionWithoutV1 = Exclude<TransactionVersion, 1>;
     // It can call instruction functions after setting a blockhash lifetime
     {
         const message = pipe(
-            createTransactionMessage({ version: null as unknown as TransactionVersionWithoutV1 }),
+            createTransactionMessage({ version: null as unknown as TransactionVersion }),
             m => setTransactionMessageLifetimeUsingBlockhash(blockhashLifetime, m),
             m => appendTransactionMessageInstruction(instruction, m),
             m => prependTransactionMessageInstruction(instruction, m),
@@ -322,7 +318,7 @@ type TransactionVersionWithoutV1 = Exclude<TransactionVersion, 1>;
     // It can call append instruction functions after setting a durable nonce lifetime
     {
         const message = pipe(
-            createTransactionMessage({ version: null as unknown as TransactionVersionWithoutV1 }),
+            createTransactionMessage({ version: null as unknown as TransactionVersion }),
             m => setTransactionMessageLifetimeUsingDurableNonce(durableNonceLifetime, m),
             m => appendTransactionMessageInstruction(instruction, m),
             m => appendTransactionMessageInstructions([instruction], m),
@@ -334,7 +330,7 @@ type TransactionVersionWithoutV1 = Exclude<TransactionVersion, 1>;
     // the durable nonce lifetime is stripped because the first instruction must be the AdvanceNonceAccount instruction
     {
         const message = pipe(
-            createTransactionMessage({ version: null as unknown as TransactionVersionWithoutV1 }),
+            createTransactionMessage({ version: null as unknown as TransactionVersion }),
             m => setTransactionMessageLifetimeUsingDurableNonce(durableNonceLifetime, m),
             m => prependTransactionMessageInstruction(instruction, m),
             m => prependTransactionMessageInstructions([instruction], m),
@@ -347,7 +343,7 @@ type TransactionVersionWithoutV1 = Exclude<TransactionVersion, 1>;
     // It can call instruction functions after setting a fee payer
     {
         const message = pipe(
-            createTransactionMessage({ version: null as unknown as TransactionVersionWithoutV1 }),
+            createTransactionMessage({ version: null as unknown as TransactionVersion }),
             m => setTransactionMessageFeePayer(feePayer, m),
             m => appendTransactionMessageInstruction(instruction, m),
             m => prependTransactionMessageInstruction(instruction, m),

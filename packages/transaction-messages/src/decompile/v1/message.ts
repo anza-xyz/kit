@@ -39,10 +39,8 @@ export function decompileTransactionMessage(
     );
 
     return pipe(
-        // @ts-expect-error We don't expose v1 on `createTransactionMessage` yet
         createTransactionMessage({ version: 1 }),
-        // Won't need this cast after we support v1 on `createTransactionMessage`
-        m => setTransactionMessageConfig(transactionConfig, m as unknown as TransactionMessage & { version: 1 }),
+        m => setTransactionMessageConfig(transactionConfig, m),
         m => setTransactionMessageFeePayer(feePayer, m),
         m => appendTransactionMessageInstructions(instructions, m),
         m =>

@@ -43,7 +43,6 @@ const OVERSIZED_TRANSACTION = compileTransaction(
 );
 
 const SMALL_V1_TRANSACTION_MESSAGE = pipe(
-    // @ts-expect-error v1 not yet included in type for `createTransactionMessage`
     createTransactionMessage({ version: 1 }),
     m => setTransactionMessageLifetimeUsingBlockhash(MOCK_BLOCKHASH, m),
     m => setTransactionMessageFeePayer(address('22222222222222222222222222222222222222222222'), m),
