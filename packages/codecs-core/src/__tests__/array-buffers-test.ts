@@ -21,6 +21,18 @@ describe('toArrayBuffer', () => {
             expect(toArrayBuffer(byteArray, offset, length)).toBe(byteArray.buffer);
         },
     );
+    it('returns a new buffer when the byte array is an offset-zero view over a larger buffer', () => {
+        const byteArray = new Uint8Array([1, 2, 3, 4, 5]).subarray(0, 3);
+        const arrayBuffer = toArrayBuffer(byteArray);
+        expect(arrayBuffer).not.toBe(byteArray.buffer);
+        expect(new Uint8Array(arrayBuffer)).toStrictEqual(new Uint8Array([1, 2, 3]));
+    });
+    it('returns a new buffer when the specified slice encompasses an entire offset-zero view over a larger buffer', () => {
+        const byteArray = new Uint8Array([1, 2, 3, 4, 5]).subarray(0, 3);
+        const arrayBuffer = toArrayBuffer(byteArray, 0, 3);
+        expect(arrayBuffer).not.toBe(byteArray.buffer);
+        expect(new Uint8Array(arrayBuffer)).toStrictEqual(new Uint8Array([1, 2, 3]));
+    });
     it.each([
         [-3, 0],
         [-3, 1],

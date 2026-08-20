@@ -19,7 +19,7 @@ export function toArrayBuffer(bytes: ReadonlyUint8Array | Uint8Array, offset?: n
     } else {
         buffer = bytes.buffer;
     }
-    return (bytesOffset === 0 || bytesOffset === -bytes.byteLength) && bytesLength === bytes.byteLength
+    return (bytesOffset === 0 || bytesOffset === -buffer.byteLength) && bytesLength === buffer.byteLength
         ? buffer
         : buffer.slice(bytesOffset, bytesOffset + bytesLength);
 }
