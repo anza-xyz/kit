@@ -54,9 +54,13 @@ export type SetTransactionWithinSizeLimitFromTransactionMessage<
  * @see {@link assertIsTransactionWithinSizeLimit}
  */
 export function getTransactionSizeLimit(transaction: Transaction): number {
-    const VERSION_FLAG_MASK = 0b01111111;
+    const VERSION_FLAG_MASK = 0b10000000;
+    const VERSION_NUMBER_MASK = 0b01111111;
     const firstByte = transaction.messageBytes[0];
-    return (firstByte & VERSION_FLAG_MASK) === 1 ? V1_TRANSACTION_SIZE_LIMIT : LEGACY_TRANSACTION_SIZE_LIMIT;
+    // Legacy messages have no version byte — their first byte is the number of required
+    // signatures, which has the version flag (high bit) unset.
+    const isVersionOne = (firstByte & VERSION_FLAG_MASK) !== 0 && (firstByte & VERSION_NUMBER_MASK) === 1;
+    return isVersionOne ? V1_TRANSACTION_SIZE_LIMIT : LEGACY_TRANSACTION_SIZE_LIMIT;
 }
 
 /**
