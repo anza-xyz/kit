@@ -43,6 +43,6 @@
         "eslint-plugin-react-refresh": "^0.5.4",
         "globals": "^17.7.0",
         "jest": "^30.0.0-alpha.6",
-        "vite": "^8.0.16"
+        "vite": "^8.2.1"
     }
 }
