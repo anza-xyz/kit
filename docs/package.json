@@ -44,7 +44,7 @@
         "@tailwindcss/postcss": "^4.3.3",
         "@tanstack/react-query": "^5.101.4",
         "@types/mdx": "^2.0.13",
-        "@types/node": "25.4.0",
+        "@types/node": "26.2.0",
         "@types/react": "^19.2.17",
         "@types/react-dom": "^19.2.4",
         "@wallet-standard/ui": "^1.0.3",
