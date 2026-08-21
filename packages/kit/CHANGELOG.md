@@ -1,5 +1,84 @@
 # @solana/kit
 
+## 8.0.0
+
+### Major Changes
+
+- [#1948](https://github.com/anza-xyz/kit/pull/1948) [`34568a9`](https://github.com/anza-xyz/kit/commit/34568a9f70933017284f2203c6aa7d024fe492e6) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Remove APIs that were deprecated in previous versions: the compute-unit-limit estimation helpers in `@solana/kit`, the `getBigIntDowncastRequestTransformer` in `@solana/rpc-transformers`, the fixed transaction size constants in `@solana/transactions`, and the `SuccessfulBaseTransactionPlanResultContext` type in `@solana/instruction-plans`.
+
+    **BREAKING CHANGES**
+
+    **`estimateComputeUnitLimitFactory` removed from `@solana/kit`.** Use `estimateResourceLimitsFactory` instead. The resource-limits estimator returns both the compute unit limit and (for version 1 transactions) the loaded accounts data size limit from a single simulation call.
+
+    ```diff
+    - const estimateComputeUnitLimit = estimateComputeUnitLimitFactory({ rpc });
+    - const computeUnitLimit = await estimateComputeUnitLimit(transactionMessage);
+    + const estimateResourceLimits = estimateResourceLimitsFactory({ rpc });
+    + const { computeUnitLimit } = await estimateResourceLimits(transactionMessage);
+    ```
+
+    **`estimateAndSetComputeUnitLimitFactory` removed from `@solana/kit`.** Use `estimateAndSetResourceLimitsFactory` instead, which additionally sets the loaded accounts data size limit for version 1 transactions.
+
+    ```diff
+    - const estimateAndSet = estimateAndSetComputeUnitLimitFactory(estimateComputeUnitLimitFactory({ rpc }));
+    + const estimateAndSet = estimateAndSetResourceLimitsFactory(estimateResourceLimitsFactory({ rpc }));
+      const updatedMessage = await estimateAndSet(transactionMessage);
+    ```
+
+    **`fillTransactionMessageProvisoryComputeUnitLimit` removed from `@solana/kit`.** Use `fillTransactionMessageProvisoryResourceLimits` instead, which additionally reserves space for the loaded accounts data size limit on version 1 transactions.
+
+    ```diff
+    - const filledMessage = fillTransactionMessageProvisoryComputeUnitLimit(transactionMessage);
+    + const filledMessage = fillTransactionMessageProvisoryResourceLimits(transactionMessage);
+    ```
+
+    **`getBigIntDowncastRequestTransformer` removed from `@solana/rpc-transformers`.** This transformer was no longer used by the default Solana RPC request transformer. The Solana RPC transport serializes `bigint` values losslessly as large integer literals, and Agave parses JSON integers across the full `u64` range without precision loss, so downcasting `bigint`s to (potentially lossy) `number`s is unnecessary. If you still need this behavior, recreate it with `getTreeWalkerRequestTransformer`.
+
+    **`TRANSACTION_PACKET_SIZE`, `TRANSACTION_PACKET_HEADER`, and `TRANSACTION_SIZE_LIMIT` removed from `@solana/transactions`.** Transaction size is no longer constant, as version 1 transactions have a larger size limit. Use `getTransactionSizeLimit` to get the size limit for a specific transaction based on its version, or the `LEGACY_TRANSACTION_SIZE_LIMIT` and `V1_TRANSACTION_SIZE_LIMIT` constants for a specific version.
+
+    ```diff
+    - const numFreeBytes = TRANSACTION_SIZE_LIMIT - getTransactionSize(transaction);
+    + const numFreeBytes = getTransactionSizeLimit(transaction) - getTransactionSize(transaction);
+    ```
+
+    **`SuccessfulBaseTransactionPlanResultContext` removed from `@solana/instruction-plans`.** Use `TransactionPlanResultContextWithSignature` instead as the context type argument.
+
+    ```diff
+    - function processResult(result: SuccessfulSingleTransactionPlanResult<SuccessfulBaseTransactionPlanResultContext>) {
+    + function processResult(result: SuccessfulSingleTransactionPlanResult<TransactionPlanResultContextWithSignature>) {
+    ```
+
+### Patch Changes
+
+- Updated dependencies [[`5d526f7`](https://github.com/anza-xyz/kit/commit/5d526f713789068a93e265da70a9bfafb14b6036), [`80368eb`](https://github.com/anza-xyz/kit/commit/80368eb97c21fb42f3914fc2bfc8a2d75ad81c01), [`82a88d8`](https://github.com/anza-xyz/kit/commit/82a88d8fb0deec9e88b3c38aaee207a876e6a433), [`34568a9`](https://github.com/anza-xyz/kit/commit/34568a9f70933017284f2203c6aa7d024fe492e6), [`ca01807`](https://github.com/anza-xyz/kit/commit/ca018075c9d33764f9d7760af0147fb83786e9a8), [`94adb60`](https://github.com/anza-xyz/kit/commit/94adb60d0c67dc06f67b27bd11d77ed66302c9cb), [`cb09af6`](https://github.com/anza-xyz/kit/commit/cb09af68d23207d3b75974d2f971dacb7f72c0cb), [`7b983ba`](https://github.com/anza-xyz/kit/commit/7b983ba1f160c9436018badf7c5a7ca6be91f406)]:
+    - @solana/transactions@8.0.0
+    - @solana/instruction-plans@8.0.0
+    - @solana/plugin-interfaces@8.0.0
+    - @solana/transaction-messages@8.0.0
+    - @solana/rpc-types@8.0.0
+    - @solana/rpc-api@8.0.0
+    - @solana/errors@8.0.0
+    - @solana/signers@8.0.0
+    - @solana/transaction-confirmation@8.0.0
+    - @solana/transaction-introspection@8.0.0
+    - @solana/program-client-core@8.0.0
+    - @solana/rpc@8.0.0
+    - @solana/rpc-subscriptions@8.0.0
+    - @solana/programs@8.0.0
+    - @solana/accounts@8.0.0
+    - @solana/rpc-parsed-types@8.0.0
+    - @solana/sysvars@8.0.0
+    - @solana/addresses@8.0.0
+    - @solana/codecs@8.0.0
+    - @solana/instructions@8.0.0
+    - @solana/keys@8.0.0
+    - @solana/offchain-messages@8.0.0
+    - @solana/rpc-spec-types@8.0.0
+    - @solana/subscribable@8.0.0
+    - @solana/functional@8.0.0
+    - @solana/plugin-core@8.0.0
+    - @solana/promises@8.0.0
+
 ## 7.1.1
 
 ### Patch Changes
