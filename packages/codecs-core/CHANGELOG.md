@@ -1,5 +1,14 @@
 # @solana/codecs-core
 
+## 8.0.0
+
+### Patch Changes
+
+- [#1957](https://github.com/anza-xyz/kit/pull/1957) [`1b30374`](https://github.com/anza-xyz/kit/commit/1b303745dac8ba87e84dfb8d120ba8642ac66e4b) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Fix `toArrayBuffer` returning the entire backing buffer when given a `Uint8Array` view that starts at byte offset zero but is shorter than its underlying `ArrayBuffer`. This caused `signBytes` and `verifySignature` to operate on the wrong bytes — and `getBase64Decoder().decode()` to include trailing data — for such views, most notably the `messageBytes` of a decoded version 1 transaction, whose wire envelope places the message first and the signatures last
+
+- Updated dependencies [[`cb09af6`](https://github.com/anza-xyz/kit/commit/cb09af68d23207d3b75974d2f971dacb7f72c0cb)]:
+    - @solana/errors@8.0.0
+
 ## 7.1.1
 
 ### Patch Changes

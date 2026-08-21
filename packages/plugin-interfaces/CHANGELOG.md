@@ -1,5 +1,26 @@
 # @solana/plugin-interfaces
 
+## 8.0.0
+
+### Minor Changes
+
+- [#1899](https://github.com/anza-xyz/kit/pull/1899) [`82a88d8`](https://github.com/anza-xyz/kit/commit/82a88d8fb0deec9e88b3c38aaee207a876e6a433) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add a `ClientWithTransactionSigning` interface providing `signTransaction` and `signTransactions`. These accept the same flexible inputs as their `ClientWithTransactionSending` counterparts, but hand back the signed transactions instead of submitting them. The interface is parameterised over the context attached to its results and makes no default guarantees about that context: what it contains is entirely decided by the plugin providing the capability — typically a `context.transaction` on successful results.
+
+    `ClientWithTransactionSending` now also accepts an optional `TContext` type parameter that flows through to the results of `sendTransaction` and `sendTransactions`. Unlike the signing interface, it defaults to `TransactionPlanResultContextWithSignature` for backward compatibility, so existing usage keeps the required `context.signature` on successful results.
+
+### Patch Changes
+
+- Updated dependencies [[`5d526f7`](https://github.com/anza-xyz/kit/commit/5d526f713789068a93e265da70a9bfafb14b6036), [`80368eb`](https://github.com/anza-xyz/kit/commit/80368eb97c21fb42f3914fc2bfc8a2d75ad81c01), [`34568a9`](https://github.com/anza-xyz/kit/commit/34568a9f70933017284f2203c6aa7d024fe492e6), [`94adb60`](https://github.com/anza-xyz/kit/commit/94adb60d0c67dc06f67b27bd11d77ed66302c9cb), [`cb09af6`](https://github.com/anza-xyz/kit/commit/cb09af68d23207d3b75974d2f971dacb7f72c0cb), [`7b983ba`](https://github.com/anza-xyz/kit/commit/7b983ba1f160c9436018badf7c5a7ca6be91f406)]:
+    - @solana/transactions@8.0.0
+    - @solana/instruction-plans@8.0.0
+    - @solana/rpc-types@8.0.0
+    - @solana/signers@8.0.0
+    - @solana/accounts@8.0.0
+    - @solana/addresses@8.0.0
+    - @solana/keys@8.0.0
+    - @solana/rpc-spec@8.0.0
+    - @solana/rpc-subscriptions-spec@8.0.0
+
 ## 7.1.1
 
 ### Patch Changes

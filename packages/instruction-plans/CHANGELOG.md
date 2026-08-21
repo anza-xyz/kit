@@ -1,5 +1,154 @@
 # @solana/instruction-plans
 
+## 8.0.0
+
+### Major Changes
+
+- [#1913](https://github.com/anza-xyz/kit/pull/1913) [`80368eb`](https://github.com/anza-xyz/kit/commit/80368eb97c21fb42f3914fc2bfc8a2d75ad81c01) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Stop writing to the execution context in `createTransactionPlanExecutor`
+
+    The `executeTransactionMessage` callback can no longer return a `Signature` or a `Transaction`. Those return values were deprecated when the callback gained the ability to return the context that a successful result should carry, and they are now gone: that context, a complete `TContext`, is the only thing the callback returns. Nothing is written to it on your behalf.
+
+    ```diff
+    const transactionPlanExecutor = createTransactionPlanExecutor({
+      executeTransactionMessage: async (context, message) => {
+        const transaction = await signTransactionMessageWithSigners(message);
+        context.transaction = transaction;
+    +   const signature = getSignatureFromTransaction(transaction);
+        await sendAndConfirmTransaction(transaction, { commitment: 'confirmed' });
+    -   return transaction;
+    +   return { signature, transaction };
+      },
+    });
+    ```
+
+    The mutable `context` argument is still there, and still serves the failure path: whatever the callback stores on it before it throws is preserved in the resulting `FailedSingleTransactionPlanResult`. The two channels differ only in which outcome they feed. Mutating the context makes a value available to a failed result; returning it makes a value available to a successful one. On success the two are merged, with the returned value taking precedence, so a property stored but not returned is still reported.
+
+    Note that the callback cannot simply return the context it was given — every property on it is optional, so it does not satisfy `TContext`. Build the return value from the values you have instead. This is the point of the return type: a callback that declares a context with a required `signature` and never produces one now fails to compile, rather than yielding a successful result whose `context.signature` is typed but `undefined` at runtime.
+
+    **This unblocks executors that never obtain a fee payer signature.** Previously the executor derived `context.signature` by calling `getSignatureFromTransaction` on a returned transaction, and on any transaction found on the context while handling a failure. That call throws `SOLANA_ERROR__TRANSACTION__FEE_PAYER_SIGNATURE_MISSING` when the fee payer slot is empty, so an executor that deliberately produces partially signed transactions — signed by an authority, to be paid for and submitted by a relayer later — could not succeed, and one that stored such a transaction before failing had its original error replaced by that one. Neither derivation exists any more, so both cases now work. Declare a context type that does not require a signature and store just the transaction:
+
+    ```ts
+    const transactionPlanExecutor = createTransactionPlanExecutor<{ transaction: Transaction }>({
+        executeTransactionMessage: async (_context, message) => {
+            return { transaction: await signTransactionMessageWithSigners(message) };
+        },
+    });
+    ```
+
+    **Signatures are no longer added behind your back.** An executor whose `TContext` requires a `signature` — including the default `TransactionPlanResultContextWithSignature` — must now produce one itself, and the compiler holds it to that. Failed results carry only what the callback stored on the context before it threw; a `signature` is no longer recovered from a stored transaction.
+
+    **`BaseTransactionPlanResultContext` is removed.** It described the fields the executor used to write on your behalf, and nothing writes them any more — what a context holds is entirely `TContext`'s business. Use `TransactionPlanResultContextWithSignature` where you want the signature guarantee, or declare the optional `message` / `signature` / `transaction` fields your own context actually needs.
+
+    **`successfulSingleTransactionPlanResultFromTransaction` is removed.** It was the last place that derived a `signature` on your behalf — by calling `getSignatureFromTransaction`, with the same fee-payer-signature requirement described above — and the executor no longer uses it. Construct results with `successfulSingleTransactionPlanResult` instead, passing the context explicitly:
+
+    ```diff
+    - successfulSingleTransactionPlanResultFromTransaction(message, transaction);
+    + successfulSingleTransactionPlanResult(message, {
+    +   signature: getSignatureFromTransaction(transaction),
+    +   transaction,
+    + });
+    ```
+
+- [#1948](https://github.com/anza-xyz/kit/pull/1948) [`34568a9`](https://github.com/anza-xyz/kit/commit/34568a9f70933017284f2203c6aa7d024fe492e6) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Remove APIs that were deprecated in previous versions: the compute-unit-limit estimation helpers in `@solana/kit`, the `getBigIntDowncastRequestTransformer` in `@solana/rpc-transformers`, the fixed transaction size constants in `@solana/transactions`, and the `SuccessfulBaseTransactionPlanResultContext` type in `@solana/instruction-plans`.
+
+    **BREAKING CHANGES**
+
+    **`estimateComputeUnitLimitFactory` removed from `@solana/kit`.** Use `estimateResourceLimitsFactory` instead. The resource-limits estimator returns both the compute unit limit and (for version 1 transactions) the loaded accounts data size limit from a single simulation call.
+
+    ```diff
+    - const estimateComputeUnitLimit = estimateComputeUnitLimitFactory({ rpc });
+    - const computeUnitLimit = await estimateComputeUnitLimit(transactionMessage);
+    + const estimateResourceLimits = estimateResourceLimitsFactory({ rpc });
+    + const { computeUnitLimit } = await estimateResourceLimits(transactionMessage);
+    ```
+
+    **`estimateAndSetComputeUnitLimitFactory` removed from `@solana/kit`.** Use `estimateAndSetResourceLimitsFactory` instead, which additionally sets the loaded accounts data size limit for version 1 transactions.
+
+    ```diff
+    - const estimateAndSet = estimateAndSetComputeUnitLimitFactory(estimateComputeUnitLimitFactory({ rpc }));
+    + const estimateAndSet = estimateAndSetResourceLimitsFactory(estimateResourceLimitsFactory({ rpc }));
+      const updatedMessage = await estimateAndSet(transactionMessage);
+    ```
+
+    **`fillTransactionMessageProvisoryComputeUnitLimit` removed from `@solana/kit`.** Use `fillTransactionMessageProvisoryResourceLimits` instead, which additionally reserves space for the loaded accounts data size limit on version 1 transactions.
+
+    ```diff
+    - const filledMessage = fillTransactionMessageProvisoryComputeUnitLimit(transactionMessage);
+    + const filledMessage = fillTransactionMessageProvisoryResourceLimits(transactionMessage);
+    ```
+
+    **`getBigIntDowncastRequestTransformer` removed from `@solana/rpc-transformers`.** This transformer was no longer used by the default Solana RPC request transformer. The Solana RPC transport serializes `bigint` values losslessly as large integer literals, and Agave parses JSON integers across the full `u64` range without precision loss, so downcasting `bigint`s to (potentially lossy) `number`s is unnecessary. If you still need this behavior, recreate it with `getTreeWalkerRequestTransformer`.
+
+    **`TRANSACTION_PACKET_SIZE`, `TRANSACTION_PACKET_HEADER`, and `TRANSACTION_SIZE_LIMIT` removed from `@solana/transactions`.** Transaction size is no longer constant, as version 1 transactions have a larger size limit. Use `getTransactionSizeLimit` to get the size limit for a specific transaction based on its version, or the `LEGACY_TRANSACTION_SIZE_LIMIT` and `V1_TRANSACTION_SIZE_LIMIT` constants for a specific version.
+
+    ```diff
+    - const numFreeBytes = TRANSACTION_SIZE_LIMIT - getTransactionSize(transaction);
+    + const numFreeBytes = getTransactionSizeLimit(transaction) - getTransactionSize(transaction);
+    ```
+
+    **`SuccessfulBaseTransactionPlanResultContext` removed from `@solana/instruction-plans`.** Use `TransactionPlanResultContextWithSignature` instead as the context type argument.
+
+    ```diff
+    - function processResult(result: SuccessfulSingleTransactionPlanResult<SuccessfulBaseTransactionPlanResultContext>) {
+    + function processResult(result: SuccessfulSingleTransactionPlanResult<TransactionPlanResultContextWithSignature>) {
+    ```
+
+- [#1910](https://github.com/anza-xyz/kit/pull/1910) [`7b983ba`](https://github.com/anza-xyz/kit/commit/7b983ba1f160c9436018badf7c5a7ca6be91f406) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Let `TContext` decide what a transaction plan result context contains
+
+    The context attached to a transaction plan result was never entirely controlled by the executor. `SuccessfulSingleTransactionPlanResult` hardcoded it as `SuccessfulBaseTransactionPlanResultContext & TContext`, and `createTransactionPlanExecutor` mixed further properties into both the callback's context and the executor's result type. Because intersections only ever narrow, no choice of `TContext` could relax the required `signature` — which made it impossible to type an executor that partially signs transactions for a relayer to submit later.
+
+    `TContext` is now the only thing that says what a context contains. The signature guarantee moved out of the _structure_ of the result types and into the _default_ value of `TContext`, so every zero-type-argument spelling behaves exactly as it did before.
+
+    **A new context type.** `TransactionPlanResultContextWithSignature` guarantees a `signature` and is the new default everywhere. `SuccessfulBaseTransactionPlanResultContext` is deprecated in favour of it.
+
+    **Explicit context types must be migrated.** Intersect the new default to keep the signature guarantee:
+
+    ```diff
+    - SingleTransactionPlanResult<{ startedAt: number }>
+    + SingleTransactionPlanResult<TransactionPlanResultContextWithSignature & { startedAt: number }>
+    ```
+
+    **The executor callback now receives `Partial<TContext>`.** A fresh, empty context is created for every transaction message and filling it in is the callback's job, but its properties used to be typed as required — so a callback could read one before writing it, be told a value was there, and get `undefined` at runtime. Everything is optional on entry now. Writing still narrows, so a read after `context.custom = 'value'` gives the non-optional type.
+
+    One consequence is that a callback can no longer annotate its own parameter with required properties, which was a common way to infer a custom context. Use a type argument instead:
+
+    ```diff
+    - createTransactionPlanExecutor({
+    -     executeTransactionMessage: async (context: { startedAt: number }) => { /* ... */ },
+    - })
+    + createTransactionPlanExecutor<TransactionPlanResultContextWithSignature & { startedAt: number }>({
+    +     executeTransactionMessage: async context => { /* ... */ },
+    + })
+    ```
+
+    **A returned context no longer has to carry a `signature`.** The `executeTransactionMessage` callback may return the context that a successful result should carry, and that context used to need a signature because the result type hardcoded one. `TContext` decides now: the default still requires it, and a custom `TContext` that omits it is accepted — which is what makes the relayer case above expressible end to end, rather than merely possible at runtime. Consequently the executor no longer tells a returned context apart from a returned `Transaction` by looking for a `signature` on it, since a context may not have one; it looks for the `signatures` map that only a `Transaction` has.
+
+    **Failed and canceled results type their context as `Readonly<Partial<TContext>>`.** Those branches never guaranteed custom properties at runtime — the context is built incrementally and the callback may throw at any point — so the types now say so.
+
+    **Inference from object literals is narrower**, since the result constructors no longer add properties you did not pass. `successfulSingleTransactionPlanResult(message, { signature })` infers `Readonly<{ signature: Signature }>` rather than a context that also carried optional `message` and `transaction` fields plus an index signature, so reading `result.context.message` off it is now an error. On the failed and canceled constructors the `Partial` goes further: even a field you did pass comes back optional, so `failedSingleTransactionPlanResult(message, error, { transaction }).context.transaction` is `Transaction | undefined`. Pass an explicit type argument wherever you need a field to type as required. Relatedly, `successfulSingleTransactionPlanResultFromTransaction`'s optional `context` parameter changes from `Omit<BaseTransactionPlanResultContext, 'signature' | 'transaction'> & TContext` to `TContext`; `signature` and `transaction` are still derived from the `transaction` argument and intersected into the result's context type.
+
+    **Helpers that consume results now accept any context.** `passthroughFailedTransactionPlanExecution`, `createFailedToSendTransactionError`, `createFailedToSendTransactionsError` and `createFailedToExecuteTransactionPlanError` were non-generic, so they implicitly demanded the default signature-guaranteeing context and rejected results parameterised with anything else. They are now generic over `TContext` and preserve it. Where they read a signature to build an error message they narrow it at runtime, so a result without one simply omits it from the message.
+
+    **Execution behaviour is unchanged.** The executor still populates `context.signature` from the signature or transaction your callback returns, and still recovers one for failed results from a `transaction` left on the context. Those writes just no longer show up in the result type unless your `TContext` asked for them. The behavioural changes are the two described above: an error message built from a context whose `signature` is absent, or is not a string, now omits it rather than interpolating whatever was there, and a returned context is recognised by the absence of a `signatures` map rather than the presence of a `signature`.
+
+### Minor Changes
+
+- [#1902](https://github.com/anza-xyz/kit/pull/1902) [`cb09af6`](https://github.com/anza-xyz/kit/commit/cb09af68d23207d3b75974d2f971dacb7f72c0cb) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTION` and `SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTIONS` error codes, together with the `createFailedToSignTransactionError` and `createFailedToSignTransactionsError` factories that raise them. These are the signing counterparts to the existing failed-to-send codes and factories, intended for high-level wrappers that sign transactions without submitting them: such a wrapper can now translate the low-level `SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN` thrown by an executor into a user-facing error, exactly as the sending wrappers already do.
+
+    The signing errors carry the same context as their sending counterparts, including the non-enumerable `transactionPlanResult` and the optional simulation `logs` and `preflightData`. Those simulation fields are populated for signing too, because executors typically estimate resource limits by simulating before they sign, so a failed estimation reaches the error the same way it does when sending.
+
+    They differ from the sending errors in one respect: the message carries no indicator of where the failure happened. That indicator exists to locate a failure relative to network submission — `(preflight)` before it, or the transaction signature after it — and signing never submits, so neither applies. A signature would be particularly misleading, since quoting one implies the transaction reached the network when it never did. The `logs` and `preflightData` context properties are still populated whenever a simulation was responsible, and those logs still appear in the message, so only the prefix is dropped.
+
+### Patch Changes
+
+- Updated dependencies [[`5d526f7`](https://github.com/anza-xyz/kit/commit/5d526f713789068a93e265da70a9bfafb14b6036), [`34568a9`](https://github.com/anza-xyz/kit/commit/34568a9f70933017284f2203c6aa7d024fe492e6), [`ca01807`](https://github.com/anza-xyz/kit/commit/ca018075c9d33764f9d7760af0147fb83786e9a8), [`94adb60`](https://github.com/anza-xyz/kit/commit/94adb60d0c67dc06f67b27bd11d77ed66302c9cb), [`cb09af6`](https://github.com/anza-xyz/kit/commit/cb09af68d23207d3b75974d2f971dacb7f72c0cb)]:
+    - @solana/transactions@8.0.0
+    - @solana/transaction-messages@8.0.0
+    - @solana/errors@8.0.0
+    - @solana/instructions@8.0.0
+    - @solana/keys@8.0.0
+    - @solana/promises@8.0.0
+
 ## 7.1.1
 
 ### Patch Changes

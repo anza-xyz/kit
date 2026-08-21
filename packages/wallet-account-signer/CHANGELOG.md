@@ -1,5 +1,18 @@
 # @solana/wallet-account-signer
 
+## 8.0.0
+
+### Patch Changes
+
+- Updated dependencies [[`5d526f7`](https://github.com/anza-xyz/kit/commit/5d526f713789068a93e265da70a9bfafb14b6036), [`34568a9`](https://github.com/anza-xyz/kit/commit/34568a9f70933017284f2203c6aa7d024fe492e6), [`ca01807`](https://github.com/anza-xyz/kit/commit/ca018075c9d33764f9d7760af0147fb83786e9a8), [`94adb60`](https://github.com/anza-xyz/kit/commit/94adb60d0c67dc06f67b27bd11d77ed66302c9cb), [`1b30374`](https://github.com/anza-xyz/kit/commit/1b303745dac8ba87e84dfb8d120ba8642ac66e4b)]:
+    - @solana/transactions@8.0.0
+    - @solana/transaction-messages@8.0.0
+    - @solana/codecs-core@8.0.0
+    - @solana/signers@8.0.0
+    - @solana/addresses@8.0.0
+    - @solana/keys@8.0.0
+    - @solana/promises@8.0.0
+
 ## 7.1.1
 
 ### Patch Changes

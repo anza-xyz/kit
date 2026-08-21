@@ -1,5 +1,71 @@
 # @solana/transactions
 
+## 8.0.0
+
+### Major Changes
+
+- [#1948](https://github.com/anza-xyz/kit/pull/1948) [`34568a9`](https://github.com/anza-xyz/kit/commit/34568a9f70933017284f2203c6aa7d024fe492e6) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Remove APIs that were deprecated in previous versions: the compute-unit-limit estimation helpers in `@solana/kit`, the `getBigIntDowncastRequestTransformer` in `@solana/rpc-transformers`, the fixed transaction size constants in `@solana/transactions`, and the `SuccessfulBaseTransactionPlanResultContext` type in `@solana/instruction-plans`.
+
+    **BREAKING CHANGES**
+
+    **`estimateComputeUnitLimitFactory` removed from `@solana/kit`.** Use `estimateResourceLimitsFactory` instead. The resource-limits estimator returns both the compute unit limit and (for version 1 transactions) the loaded accounts data size limit from a single simulation call.
+
+    ```diff
+    - const estimateComputeUnitLimit = estimateComputeUnitLimitFactory({ rpc });
+    - const computeUnitLimit = await estimateComputeUnitLimit(transactionMessage);
+    + const estimateResourceLimits = estimateResourceLimitsFactory({ rpc });
+    + const { computeUnitLimit } = await estimateResourceLimits(transactionMessage);
+    ```
+
+    **`estimateAndSetComputeUnitLimitFactory` removed from `@solana/kit`.** Use `estimateAndSetResourceLimitsFactory` instead, which additionally sets the loaded accounts data size limit for version 1 transactions.
+
+    ```diff
+    - const estimateAndSet = estimateAndSetComputeUnitLimitFactory(estimateComputeUnitLimitFactory({ rpc }));
+    + const estimateAndSet = estimateAndSetResourceLimitsFactory(estimateResourceLimitsFactory({ rpc }));
+      const updatedMessage = await estimateAndSet(transactionMessage);
+    ```
+
+    **`fillTransactionMessageProvisoryComputeUnitLimit` removed from `@solana/kit`.** Use `fillTransactionMessageProvisoryResourceLimits` instead, which additionally reserves space for the loaded accounts data size limit on version 1 transactions.
+
+    ```diff
+    - const filledMessage = fillTransactionMessageProvisoryComputeUnitLimit(transactionMessage);
+    + const filledMessage = fillTransactionMessageProvisoryResourceLimits(transactionMessage);
+    ```
+
+    **`getBigIntDowncastRequestTransformer` removed from `@solana/rpc-transformers`.** This transformer was no longer used by the default Solana RPC request transformer. The Solana RPC transport serializes `bigint` values losslessly as large integer literals, and Agave parses JSON integers across the full `u64` range without precision loss, so downcasting `bigint`s to (potentially lossy) `number`s is unnecessary. If you still need this behavior, recreate it with `getTreeWalkerRequestTransformer`.
+
+    **`TRANSACTION_PACKET_SIZE`, `TRANSACTION_PACKET_HEADER`, and `TRANSACTION_SIZE_LIMIT` removed from `@solana/transactions`.** Transaction size is no longer constant, as version 1 transactions have a larger size limit. Use `getTransactionSizeLimit` to get the size limit for a specific transaction based on its version, or the `LEGACY_TRANSACTION_SIZE_LIMIT` and `V1_TRANSACTION_SIZE_LIMIT` constants for a specific version.
+
+    ```diff
+    - const numFreeBytes = TRANSACTION_SIZE_LIMIT - getTransactionSize(transaction);
+    + const numFreeBytes = getTransactionSizeLimit(transaction) - getTransactionSize(transaction);
+    ```
+
+    **`SuccessfulBaseTransactionPlanResultContext` removed from `@solana/instruction-plans`.** Use `TransactionPlanResultContextWithSignature` instead as the context type argument.
+
+    ```diff
+    - function processResult(result: SuccessfulSingleTransactionPlanResult<SuccessfulBaseTransactionPlanResultContext>) {
+    + function processResult(result: SuccessfulSingleTransactionPlanResult<TransactionPlanResultContextWithSignature>) {
+    ```
+
+### Patch Changes
+
+- [#1958](https://github.com/anza-xyz/kit/pull/1958) [`5d526f7`](https://github.com/anza-xyz/kit/commit/5d526f713789068a93e265da70a9bfafb14b6036) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Fix `getTransactionSizeLimit` misclassifying single-signer legacy transactions as version 1. A legacy message has no version byte, so its first byte is the number of required signatures — `1` for every single-signer transaction — which was mistaken for a v1 version byte. As a result, `isTransactionWithinSizeLimit`, `assertIsTransactionWithinSizeLimit`, and `assertIsSendableTransaction` accepted legacy transactions of up to 4096 bytes that the network rejects at 1232 bytes. The version flag (high bit) of the first message byte is now required to be set before treating a transaction as version 1
+
+- Updated dependencies [[`ca01807`](https://github.com/anza-xyz/kit/commit/ca018075c9d33764f9d7760af0147fb83786e9a8), [`94adb60`](https://github.com/anza-xyz/kit/commit/94adb60d0c67dc06f67b27bd11d77ed66302c9cb), [`1b30374`](https://github.com/anza-xyz/kit/commit/1b303745dac8ba87e84dfb8d120ba8642ac66e4b), [`cb09af6`](https://github.com/anza-xyz/kit/commit/cb09af68d23207d3b75974d2f971dacb7f72c0cb)]:
+    - @solana/transaction-messages@8.0.0
+    - @solana/rpc-types@8.0.0
+    - @solana/codecs-core@8.0.0
+    - @solana/errors@8.0.0
+    - @solana/addresses@8.0.0
+    - @solana/codecs-data-structures@8.0.0
+    - @solana/codecs-numbers@8.0.0
+    - @solana/codecs-strings@8.0.0
+    - @solana/instructions@8.0.0
+    - @solana/keys@8.0.0
+    - @solana/functional@8.0.0
+    - @solana/nominal-types@8.0.0
+
 ## 7.1.1
 
 ### Patch Changes

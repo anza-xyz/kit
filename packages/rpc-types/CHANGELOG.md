@@ -1,5 +1,28 @@
 # @solana/rpc-types
 
+## 8.0.0
+
+### Minor Changes
+
+- [#1951](https://github.com/anza-xyz/kit/pull/1951) [`94adb60`](https://github.com/anza-xyz/kit/commit/94adb60d0c67dc06f67b27bd11d77ed66302c9cb) Thanks [@amilz](https://github.com/amilz)! - Fill in several gaps in transaction v1 (SIMD-0385) support.
+
+    `@solana/transaction-messages` now exports its `v1-transaction-config` module, so `setTransactionMessageConfig`, the `V1TransactionConfig` type and the transaction config bit-mask helpers are importable. Previously the module was built and shipped but omitted from the package index, forcing consumers onto the four single-field setters and to derive the config type by hand.
+
+    The `V1TransactionConfig.computeUnitLimit` docstring incorrectly described the legacy fallback of 200,000 compute units per instruction. On version 1 an unset `computeUnitLimit` resolves to zero and the transaction fails at execution, so the docstring now says so, as does the one for `loadedAccountsDataSizeLimit`.
+
+    `@solana/rpc-types` transaction message types now carry the `transactionConfig` that the server returns for version 1 transactions, so reading a transaction's compute budget no longer requires a cast. Its three `u32` fields are typed and transformed as `number` rather than being upcast to `bigint`, leaving `priorityFee` as the only `Lamports` among them. `@solana/rpc-api` carries the same field on the message shape it uses for the `json` and `jsonParsed` encodings of `getTransaction` and `getTransactionsForAddress`. The same field is exposed on the `TransactionMessage` type in `@solana/rpc-graphql`.
+
+### Patch Changes
+
+- Updated dependencies [[`1b30374`](https://github.com/anza-xyz/kit/commit/1b303745dac8ba87e84dfb8d120ba8642ac66e4b), [`cb09af6`](https://github.com/anza-xyz/kit/commit/cb09af68d23207d3b75974d2f971dacb7f72c0cb)]:
+    - @solana/codecs-core@8.0.0
+    - @solana/errors@8.0.0
+    - @solana/addresses@8.0.0
+    - @solana/codecs-numbers@8.0.0
+    - @solana/codecs-strings@8.0.0
+    - @solana/fixed-points@8.0.0
+    - @solana/nominal-types@8.0.0
+
 ## 7.1.1
 
 ### Patch Changes
