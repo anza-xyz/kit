@@ -1,10 +1,12 @@
 name: Preview Documentation
 
 on:
+  merge_group:
   pull_request:
     paths:
       - 'docs/**'
       - '.github/workflows/preview-docs.yml'
+      - '.github/workflows/preview-docs-skipped.yml'
 
 permissions:
   contents: read
@@ -29,22 +31,30 @@ jobs:
     runs-on: ubuntu-latest
     name: Build Documentation Preview
     steps:
+      # Every step below is skipped on merge_group events, so the job reports
+      # success immediately there. This required check already gated the pull
+      # request itself; rebuilding the docs in the merge queue would only slow
+      # every queue entry down.
       - name: Checkout
+        if: github.event_name == 'pull_request'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Install Dependencies
+        if: github.event_name == 'pull_request'
         uses: ./.github/workflows/actions/install-dependencies
 
       - name: Install Isolated Docs Dependencies
+        if: github.event_name == 'pull_request'
         working-directory: ./docs/
         shell: bash
         run: pnpm install --ignore-workspace
 
       - name: Install Vercel CLI
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'
         run: pnpm install -g vercel
 
       - name: Deploy to Vercel
-        if: github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'
         shell: bash
         id: vercel_deploy
         env:
@@ -63,6 +73,16 @@ jobs:
           fi
           DEPLOY_URL=$(echo "$DEPLOY_OUTPUT" | grep -o 'https://[a-zA-Z0-9.-]*\.vercel\.app' | tail -1)
           echo "preview_url=$DEPLOY_URL" >> "$GITHUB_OUTPUT"
+
+      # Dependabot and fork pull requests cannot read the Vercel secrets, so
+      # build the docs without deploying a preview. This keeps the check
+      # meaningful for those pull requests: a broken docs build fails here
+      # instead of being silently skipped.
+      - name: Build Documentation (no deploy)
+        if: github.event_name == 'pull_request' && (github.event.pull_request.head.repo.full_name != github.repository || github.actor == 'dependabot[bot]')
+        working-directory: ./docs/
+        shell: bash
+        run: pnpm build
 
       - name: Comment on PR with Preview URL
         if: steps.vercel_deploy.outcome == 'success'

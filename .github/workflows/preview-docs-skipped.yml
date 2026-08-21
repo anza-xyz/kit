@@ -1,0 +1,28 @@
+# Companion to preview-docs.yml, following GitHub's documented pattern for
+# path-filtered required status checks ("Handling skipped but required
+# checks"). It reports a passing "Build Documentation Preview" check on pull
+# requests that don't touch the docs, so that the check can be marked as
+# required in the branch ruleset without blocking those pull requests forever
+# on a check that never runs.
+#
+# The paths-ignore list below must stay the mirror image of the paths list in
+# preview-docs.yml.
+name: Preview Documentation (skipped)
+
+on:
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '.github/workflows/preview-docs.yml'
+      - '.github/workflows/preview-docs-skipped.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  preview-docs:
+    runs-on: ubuntu-latest
+    name: Build Documentation Preview
+    steps:
+      - name: Report Success
+        run: echo "No documentation changes detected. Nothing to build."
