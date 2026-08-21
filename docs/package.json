@@ -43,7 +43,7 @@
         "@solana/webcrypto-ed25519-polyfill": "7.1.0",
         "@tailwindcss/postcss": "^4.3.3",
         "@tanstack/react-query": "^5.101.4",
-        "@types/mdx": "^2.0.13",
+        "@types/mdx": "^2.0.14",
         "@types/node": "25.4.0",
         "@types/react": "^19.2.18",
         "@types/react-dom": "^19.2.4",
