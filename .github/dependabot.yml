@@ -40,7 +40,21 @@ updates:
       interval: daily
       time: '01:00'
       timezone: America/Los_Angeles
+    ignore:
+      # The fumadocs packages must be upgraded to v16 together (fumadocs-ui
+      # pins an exact fumadocs-core version) and the upgrade requires code
+      # changes to the docs app. Remove this once the docs are migrated to
+      # fumadocs v16.
+      - dependency-name: 'fumadocs-core'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'fumadocs-ui'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'fumadocs-mdx'
+        update-types: ['version-update:semver-major']
     groups:
+      fumadocs:
+        patterns:
+          - 'fumadocs*'
       eslint:
         patterns:
           - 'eslint*'
