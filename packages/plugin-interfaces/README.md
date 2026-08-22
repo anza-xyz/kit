@@ -24,6 +24,43 @@ These interfaces serve two purposes:
 
 This enables a composable plugin architecture where plugins can build on top of each other's capabilities.
 
+## Runtime capability checks
+
+Every `ClientWithX` interface has a matching `isClientWithX` type guard and `assertIsClientWithX` assertion. These helpers let plugins validate clients received at runtime while narrowing their TypeScript types. Interfaces that represent a group of methods are checked as a group; for example, a transaction-planning client must provide both `planTransaction` and `planTransactions`.
+
+```ts
+import { assertIsClientWithTransactionPlanning, isClientWithPayer } from '@solana/plugin-interfaces';
+
+function transactionPlugin() {
+    return (client: object) => {
+        assertIsClientWithTransactionPlanning(client);
+
+        if (isClientWithPayer(client)) {
+            // The client is narrowed to ClientWithTransactionPlanning & ClientWithPayer.
+            return client.planTransactions(createTransferInstruction({ payer: client.payer /* ... */ }));
+        }
+
+        return client.planTransactions(createReadOnlyInstruction(/* ... */));
+    };
+}
+```
+
+Assertion helpers throw a `SolanaError` with the `SOLANA_ERROR__PLUGIN_INTERFACES__MISSING_CLIENT_CAPABILITIES` code. Its context lists only the capability names that are missing. Property-based capabilities such as `payer` and `identity` are detected without reading their values, which supports reactive wallet getters that may temporarily throw while disconnected.
+
+| Interface                       | Type guard                        | Assertion                               |
+| ------------------------------- | --------------------------------- | --------------------------------------- |
+| `ClientWithAirdrop`             | `isClientWithAirdrop`             | `assertIsClientWithAirdrop`             |
+| `ClientWithFetchAccounts`       | `isClientWithFetchAccounts`       | `assertIsClientWithFetchAccounts`       |
+| `ClientWithGetMinimumBalance`   | `isClientWithGetMinimumBalance`   | `assertIsClientWithGetMinimumBalance`   |
+| `ClientWithIdentity`            | `isClientWithIdentity`            | `assertIsClientWithIdentity`            |
+| `ClientWithPayer`               | `isClientWithPayer`               | `assertIsClientWithPayer`               |
+| `ClientWithRpc`                 | `isClientWithRpc`                 | `assertIsClientWithRpc`                 |
+| `ClientWithRpcSubscriptions`    | `isClientWithRpcSubscriptions`    | `assertIsClientWithRpcSubscriptions`    |
+| `ClientWithSubscribeToIdentity` | `isClientWithSubscribeToIdentity` | `assertIsClientWithSubscribeToIdentity` |
+| `ClientWithSubscribeToPayer`    | `isClientWithSubscribeToPayer`    | `assertIsClientWithSubscribeToPayer`    |
+| `ClientWithTransactionPlanning` | `isClientWithTransactionPlanning` | `assertIsClientWithTransactionPlanning` |
+| `ClientWithTransactionSending`  | `isClientWithTransactionSending`  | `assertIsClientWithTransactionSending`  |
+
 ## Installation
 
 ```bash

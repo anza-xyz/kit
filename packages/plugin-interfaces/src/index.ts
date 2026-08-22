@@ -6,6 +6,7 @@
  * @packageDocumentation
  */
 export * from './airdrop';
+export * from './client-assertions';
 export * from './fetch-accounts';
 export * from './instruction-plans';
 export * from './get-minimum-balance';
