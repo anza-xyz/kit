@@ -82,6 +82,9 @@ type GetDecoderTypeFromFields<TFields extends Fields<Decoder<any>>> = DrainOuter
  *
  * @see {@link getStructCodec}
  */
+export function getStructEncoder<const TFields extends readonly [readonly [string, FixedSizeEncoder<any>]]>(
+    fields: TFields,
+): FixedSizeEncoder<GetEncoderTypeFromFields<TFields>, TFields[0][1]['fixedSize']>;
 export function getStructEncoder<const TFields extends Fields<FixedSizeEncoder<any>>>(
     fields: TFields,
 ): FixedSizeEncoder<GetEncoderTypeFromFields<TFields>>;
@@ -144,6 +147,9 @@ export function getStructEncoder<const TFields extends Fields<Encoder<any>>>(
  *
  * @see {@link getStructCodec}
  */
+export function getStructDecoder<const TFields extends readonly [readonly [string, FixedSizeDecoder<any>]]>(
+    fields: TFields,
+): FixedSizeDecoder<GetDecoderTypeFromFields<TFields>, TFields[0][1]['fixedSize']>;
 export function getStructDecoder<const TFields extends Fields<FixedSizeDecoder<any>>>(
     fields: TFields,
 ): FixedSizeDecoder<GetDecoderTypeFromFields<TFields>>;
@@ -217,6 +223,13 @@ export function getStructDecoder<const TFields extends Fields<Decoder<any>>>(
  * @see {@link getStructEncoder}
  * @see {@link getStructDecoder}
  */
+export function getStructCodec<const TFields extends readonly [readonly [string, FixedSizeCodec<any>]]>(
+    fields: TFields,
+): FixedSizeCodec<
+    GetEncoderTypeFromFields<TFields>,
+    GetDecoderTypeFromFields<TFields> & GetEncoderTypeFromFields<TFields>,
+    TFields[0][1]['fixedSize']
+>;
 export function getStructCodec<const TFields extends Fields<FixedSizeCodec<any>>>(
     fields: TFields,
 ): FixedSizeCodec<
