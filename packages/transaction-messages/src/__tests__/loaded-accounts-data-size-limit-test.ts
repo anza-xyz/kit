@@ -15,7 +15,7 @@ import { TransactionMessage } from '../transaction-message';
 
 const COMPUTE_UNIT_LIMIT_A = 200_000;
 
-const HEAP_SIZE_A = 30_000;
+const HEAP_SIZE_A = 32_768; // 32 KiB
 
 const LOADED_ACCOUNTS_DATA_SIZE_LIMIT_A = 60_000;
 const LOADED_ACCOUNTS_DATA_SIZE_LIMIT_B = 100_000;

@@ -8,6 +8,7 @@ import {
     replaceTransactionMessageInstruction,
 } from './compute-budget-instruction';
 import { appendTransactionMessageInstruction } from './instructions';
+import { assertIsValidComputeUnitLimit } from './resource-limit-validation';
 import { TransactionMessage } from './transaction-message';
 import { areV1ConfigsEqual, isV1ConfigEmpty } from './v1-transaction-config';
 
@@ -74,6 +75,9 @@ export function setTransactionMessageComputeUnitLimit<TTransactionMessage extend
     computeUnitLimit: number | undefined,
     transactionMessage: TTransactionMessage,
 ): TTransactionMessage {
+    if (computeUnitLimit !== undefined) {
+        assertIsValidComputeUnitLimit(computeUnitLimit);
+    }
     switch (transactionMessage.version) {
         case 1:
             return setTransactionMessageComputeUnitLimitUsingConfig(

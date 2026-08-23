@@ -1,6 +1,7 @@
 import '@solana/test-matchers/toBeFrozenObject';
 
 import { Address } from '@solana/addresses';
+import { SOLANA_ERROR__TRANSACTION__COMPUTE_UNIT_LIMIT_OUT_OF_RANGE, SolanaError } from '@solana/errors';
 
 import {
     COMPUTE_BUDGET_PROGRAM_ADDRESS,
@@ -205,6 +206,55 @@ describe('getTransactionMessageComputeUnitLimit', () => {
                     version,
                 };
                 expect(getTransactionMessageComputeUnitLimit(tx)).toBe(COMPUTE_UNIT_LIMIT_A);
+            });
+        },
+    );
+});
+
+describe('setTransactionMessageComputeUnitLimit validation', () => {
+    const MAX_COMPUTE_UNIT_LIMIT = 1_400_000;
+
+    function expectOutOfRange(computeUnitLimit: number) {
+        return new SolanaError(SOLANA_ERROR__TRANSACTION__COMPUTE_UNIT_LIMIT_OUT_OF_RANGE, {
+            computeUnitLimit,
+            maxComputeUnitLimit: MAX_COMPUTE_UNIT_LIMIT,
+        });
+    }
+
+    describe.each([{ version: 'legacy' as const }, { version: 0 as const }, { version: 1 as const }])(
+        'given a $version transaction',
+        ({ version }) => {
+            const baseTx = { instructions: [], version } as TransactionMessage;
+
+            it('throws when the compute unit limit exceeds the maximum', () => {
+                expect(() => setTransactionMessageComputeUnitLimit(MAX_COMPUTE_UNIT_LIMIT + 1, baseTx)).toThrow(
+                    expectOutOfRange(MAX_COMPUTE_UNIT_LIMIT + 1),
+                );
+            });
+
+            it('throws when the compute unit limit is negative', () => {
+                expect(() => setTransactionMessageComputeUnitLimit(-1, baseTx)).toThrow(expectOutOfRange(-1));
+            });
+
+            it('accepts the maximum compute unit limit', () => {
+                expect(() => setTransactionMessageComputeUnitLimit(MAX_COMPUTE_UNIT_LIMIT, baseTx)).not.toThrow();
+            });
+
+            it.each([NaN, Infinity, -Infinity, 1.5, 200_000.7])(
+                'throws when the compute unit limit is %p',
+                (computeUnitLimit: number) => {
+                    expect(() => setTransactionMessageComputeUnitLimit(computeUnitLimit, baseTx)).toThrow(
+                        expectOutOfRange(computeUnitLimit),
+                    );
+                },
+            );
+
+            it('accepts a zero compute unit limit', () => {
+                expect(() => setTransactionMessageComputeUnitLimit(0, baseTx)).not.toThrow();
+            });
+
+            it('does not throw when clearing the compute unit limit', () => {
+                expect(() => setTransactionMessageComputeUnitLimit(undefined, baseTx)).not.toThrow();
             });
         },
     );

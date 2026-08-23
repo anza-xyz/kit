@@ -1,5 +1,6 @@
 import { SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_MASK_PRIORITY_FEE_BITS, SolanaError } from '@solana/errors';
 
+import { assertIsValidComputeUnitLimit, assertIsValidHeapSize } from './resource-limit-validation';
 import { TransactionMessage, TransactionVersion } from './transaction-message';
 
 /**
@@ -119,6 +120,12 @@ type SupportedTransactionVersions = Extract<TransactionVersion, 1>;
 export function setTransactionMessageConfig<
     TTransactionMessage extends TransactionMessage & { version: SupportedTransactionVersions },
 >(config: V1TransactionConfig, transactionMessage: TTransactionMessage): TTransactionMessage {
+    if (config.computeUnitLimit !== undefined) {
+        assertIsValidComputeUnitLimit(config.computeUnitLimit);
+    }
+    if (config.heapSize !== undefined) {
+        assertIsValidHeapSize(config.heapSize);
+    }
     const mergedConfig = {
         ...transactionMessage.config,
         ...config,

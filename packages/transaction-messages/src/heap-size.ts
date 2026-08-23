@@ -8,6 +8,7 @@ import {
     replaceTransactionMessageInstruction,
 } from './compute-budget-instruction';
 import { appendTransactionMessageInstruction } from './instructions';
+import { assertIsValidHeapSize } from './resource-limit-validation';
 import { TransactionMessage } from './transaction-message';
 import { areV1ConfigsEqual, isV1ConfigEmpty } from './v1-transaction-config';
 
@@ -70,6 +71,9 @@ export function setTransactionMessageHeapSize<TTransactionMessage extends Transa
     heapSize: number | undefined,
     transactionMessage: TTransactionMessage,
 ): TTransactionMessage {
+    if (heapSize !== undefined) {
+        assertIsValidHeapSize(heapSize);
+    }
     switch (transactionMessage.version) {
         case 1:
             return setTransactionMessageHeapSizeUsingConfig(heapSize, transactionMessage) as TTransactionMessage;

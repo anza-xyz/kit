@@ -1,6 +1,7 @@
 import '@solana/test-matchers/toBeFrozenObject';
 
 import { Address } from '@solana/addresses';
+import { SOLANA_ERROR__TRANSACTION__INVALID_HEAP_SIZE, SolanaError } from '@solana/errors';
 
 import {
     COMPUTE_BUDGET_PROGRAM_ADDRESS,
@@ -12,8 +13,8 @@ import { TransactionMessage } from '../transaction-message';
 
 const COMPUTE_UNIT_LIMIT_A = 200_000;
 
-const HEAP_SIZE_A = 30_000;
-const HEAP_SIZE_B = 50_000;
+const HEAP_SIZE_A = 32_768; // 32 KiB
+const HEAP_SIZE_B = 65_536; // 64 KiB
 
 const PRIORITY_FEE_LAMPORTS_A = 5_000n;
 
@@ -205,6 +206,61 @@ describe('getTransactionMessageHeapSize', () => {
                     version,
                 };
                 expect(getTransactionMessageHeapSize(tx)).toBe(HEAP_SIZE_A);
+            });
+        },
+    );
+});
+
+describe('setTransactionMessageHeapSize validation', () => {
+    const MIN_HEAP_SIZE = 32 * 1024;
+    const MAX_HEAP_SIZE = 256 * 1024;
+
+    function expectInvalid(heapSize: number) {
+        return new SolanaError(SOLANA_ERROR__TRANSACTION__INVALID_HEAP_SIZE, {
+            heapSize,
+            maxHeapSize: MAX_HEAP_SIZE,
+            minHeapSize: MIN_HEAP_SIZE,
+            multipleOf: 1024,
+        });
+    }
+
+    describe.each([{ version: 'legacy' as const }, { version: 0 as const }, { version: 1 as const }])(
+        'given a $version transaction',
+        ({ version }) => {
+            const baseTx = { instructions: [], version } as TransactionMessage;
+
+            it('throws when the heap size is below the minimum', () => {
+                expect(() => setTransactionMessageHeapSize(MIN_HEAP_SIZE - 1024, baseTx)).toThrow(
+                    expectInvalid(MIN_HEAP_SIZE - 1024),
+                );
+            });
+
+            it('throws when the heap size is above the maximum', () => {
+                expect(() => setTransactionMessageHeapSize(MAX_HEAP_SIZE + 1024, baseTx)).toThrow(
+                    expectInvalid(MAX_HEAP_SIZE + 1024),
+                );
+            });
+
+            it('throws when the heap size is not a multiple of 1 KiB', () => {
+                expect(() => setTransactionMessageHeapSize(MIN_HEAP_SIZE + 1, baseTx)).toThrow(
+                    expectInvalid(MIN_HEAP_SIZE + 1),
+                );
+            });
+
+            it.each([NaN, Infinity, -Infinity, 32_768.5])('throws when the heap size is %p', (heapSize: number) => {
+                expect(() => setTransactionMessageHeapSize(heapSize, baseTx)).toThrow(expectInvalid(heapSize));
+            });
+
+            it('accepts the minimum heap size', () => {
+                expect(() => setTransactionMessageHeapSize(MIN_HEAP_SIZE, baseTx)).not.toThrow();
+            });
+
+            it('accepts the maximum heap size', () => {
+                expect(() => setTransactionMessageHeapSize(MAX_HEAP_SIZE, baseTx)).not.toThrow();
+            });
+
+            it('does not throw when clearing the heap size', () => {
+                expect(() => setTransactionMessageHeapSize(undefined, baseTx)).not.toThrow();
             });
         },
     );

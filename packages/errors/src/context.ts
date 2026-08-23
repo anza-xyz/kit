@@ -206,6 +206,7 @@ import {
     SOLANA_ERROR__TIMESTAMP_OUT_OF_RANGE,
     SOLANA_ERROR__TRANSACTION__ADDRESS_MISSING,
     SOLANA_ERROR__TRANSACTION__ADDRESSES_CANNOT_SIGN_TRANSACTION,
+    SOLANA_ERROR__TRANSACTION__COMPUTE_UNIT_LIMIT_OUT_OF_RANGE,
     SOLANA_ERROR__TRANSACTION__EXCEEDS_SIZE_LIMIT,
     SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_ADDRESS_LOOKUP_TABLE_CONTENTS_MISSING,
     SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_ADDRESS_LOOKUP_TABLE_INDEX_OUT_OF_RANGE,
@@ -216,6 +217,7 @@ import {
     SOLANA_ERROR__TRANSACTION__INSTRUCTION_HEADERS_PAYLOADS_MISMATCH,
     SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_MASK_PRIORITY_FEE_BITS,
     SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_VALUE_KIND,
+    SOLANA_ERROR__TRANSACTION__INVALID_HEAP_SIZE,
     SOLANA_ERROR__TRANSACTION__INVALID_NONCE_ACCOUNT_INDEX,
     SOLANA_ERROR__TRANSACTION__INVOKED_PROGRAMS_CANNOT_PAY_FEES,
     SOLANA_ERROR__TRANSACTION__INVOKED_PROGRAMS_MUST_NOT_BE_WRITABLE,
@@ -922,6 +924,10 @@ export type SolanaErrorContext = ReadonlyContextValue<
             [SOLANA_ERROR__TRANSACTION__ADDRESS_MISSING]: {
                 index: number;
             };
+            [SOLANA_ERROR__TRANSACTION__COMPUTE_UNIT_LIMIT_OUT_OF_RANGE]: {
+                computeUnitLimit: number;
+                maxComputeUnitLimit: number;
+            };
             [SOLANA_ERROR__TRANSACTION__EXCEEDS_SIZE_LIMIT]: {
                 transactionSize: Bytes;
                 transactionSizeLimit: Bytes;
@@ -959,6 +965,12 @@ export type SolanaErrorContext = ReadonlyContextValue<
                 actualKind: 'u32' | 'u64';
                 configName: string;
                 expectedKind: 'u32' | 'u64';
+            };
+            [SOLANA_ERROR__TRANSACTION__INVALID_HEAP_SIZE]: {
+                heapSize: number;
+                maxHeapSize: number;
+                minHeapSize: number;
+                multipleOf: number;
             };
             [SOLANA_ERROR__TRANSACTION__INVALID_NONCE_ACCOUNT_INDEX]: {
                 nonce: string;

@@ -8,7 +8,7 @@ import { setTransactionMessageFeePayer, TransactionMessageWithFeePayer } from '.
 import { appendTransactionMessageInstructions } from '../../instructions';
 import { TransactionMessageWithLifetime } from '../../lifetime';
 import { TransactionMessage } from '../../transaction-message';
-import { setTransactionMessageConfig } from '../../v1-transaction-config';
+import { isV1ConfigEmpty } from '../../v1-transaction-config';
 import { getAccountMetas } from '../legacy/account-metas';
 import { getFeePayer } from '../legacy/fee-payer';
 import { getLifetimeConstraint } from '../legacy/lifetime-constraint';
@@ -40,7 +40,11 @@ export function decompileTransactionMessage(
 
     return pipe(
         createTransactionMessage({ version: 1 }),
-        m => setTransactionMessageConfig(transactionConfig, m),
+        // Attach the decoded config directly instead of going through `setTransactionMessageConfig`,
+        // which validates resource limits. Decoding must not reject a transaction merely because it
+        // carries values the runtime would refuse; callers need to be able to inspect such messages.
+        m =>
+            isV1ConfigEmpty(transactionConfig) ? m : Object.freeze({ ...m, config: Object.freeze(transactionConfig) }),
         m => setTransactionMessageFeePayer(feePayer, m),
         m => appendTransactionMessageInstructions(instructions, m),
         m =>
