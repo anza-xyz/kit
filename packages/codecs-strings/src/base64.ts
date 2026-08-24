@@ -17,6 +17,26 @@ import { getBaseXResliceDecoder, getBaseXResliceEncoder } from './baseX-reslice'
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 /**
+ * The number of bytes converted to characters per call to `String.fromCharCode`.
+ *
+ * Each byte is passed as its own argument, and engines cap how many arguments a single call may
+ * receive (V8 throws a `RangeError` at around 65K), so byte arrays must be converted in chunks.
+ */
+const MAX_BYTES_PER_CHAR_CODE_CALL = 0x8000;
+
+/**
+ * Converts a byte array to a string in which each character's code unit is the value of the byte at
+ * the same index. This is the form that `btoa` expects.
+ */
+function getBinaryString(bytes: Uint8Array): string {
+    let binaryString = '';
+    for (let offset = 0; offset < bytes.length; offset += MAX_BYTES_PER_CHAR_CODE_CALL) {
+        binaryString += String.fromCharCode(...bytes.subarray(offset, offset + MAX_BYTES_PER_CHAR_CODE_CALL));
+    }
+    return binaryString;
+}
+
+/**
  * Returns an encoder for base-64 strings.
  *
  * This encoder serializes strings using a base-64 encoding scheme,
@@ -104,8 +124,7 @@ export const getBase64Decoder = (): VariableSizeDecoder<string> => {
     if (__BROWSER__) {
         return createDecoder({
             read(bytes, offset = 0) {
-                const slice = bytes.slice(offset);
-                const value = (btoa as Window['btoa'])(String.fromCharCode(...slice));
+                const value = (btoa as Window['btoa'])(getBinaryString(bytes.subarray(offset)));
                 return [value, bytes.length];
             },
         });
