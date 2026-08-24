@@ -46,6 +46,14 @@ describe('getBase64Codec', () => {
         expect(base64.decode(base16.encode(base16TokenData))).toStrictEqual(base64TokenData);
     });
 
+    it('can decode byte arrays larger than the maximum function argument count', () => {
+        const bytes = new Uint8Array(200_000);
+        for (let ii = 0; ii < bytes.length; ii++) {
+            bytes[ii] = ii % 256;
+        }
+        expect(base64.encode(base64.decode(bytes))).toStrictEqual(bytes);
+    });
+
     if (__BROWSER__) {
         it('fails if base64 strings do not have the expected padding', () => {
             // This is because atob is not tolerant to missing padding.
