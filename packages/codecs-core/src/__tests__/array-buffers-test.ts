@@ -56,4 +56,32 @@ describe('toArrayBuffer', () => {
         const byteArray = new Uint8Array([1, 2, 3]);
         expect(toArrayBuffer(byteArray, offset, length)).not.toBe(byteArray.buffer);
     });
+    it.each([
+        [-1, 1, [5]],
+        [-2, 2, [4, 5]],
+        [-2, 1, [4]],
+        [-3, 1, [3]],
+        [-3, 3, [3, 4, 5]],
+        [-5, 2, [1, 2]],
+        [-10, 2, [1, 2]],
+    ])(
+        'resolves a negative offset against the end of the buffer (offset: %d, length: %d)',
+        (offset, length, expected) => {
+            const byteArray = new Uint8Array([1, 2, 3, 4, 5]);
+            const arrayBuffer = toArrayBuffer(byteArray, offset, length);
+            expect(new Uint8Array(arrayBuffer)).toStrictEqual(new Uint8Array(expected));
+        },
+    );
+    it.each([
+        [-1, 1],
+        [-2, 2],
+        [-3, 1],
+        [-5, 5],
+        [2, 2],
+        [0, 3],
+    ])('matches native `slice` semantics for a negative offset (offset: %d, length: %d)', (offset, length) => {
+        const byteArray = new Uint8Array([1, 2, 3, 4, 5]);
+        const arrayBuffer = toArrayBuffer(byteArray, offset, length);
+        expect(new Uint8Array(arrayBuffer)).toStrictEqual(byteArray.slice(offset).slice(0, length));
+    });
 });
