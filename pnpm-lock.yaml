@@ -121,14 +121,14 @@ importers:
   examples/deserialize-transaction:
     dependencies:
       '@solana-program/address-lookup-table':
-        specifier: ^0.13.0
-        version: 0.13.0(@solana/kit@packages+kit)
+        specifier: ^0.14.0
+        version: 0.14.0(@solana/kit@packages+kit)
       '@solana-program/memo':
-        specifier: ^0.12.0
-        version: 0.12.0(@solana/kit@packages+kit)
-      '@solana-program/system':
         specifier: ^0.13.0
         version: 0.13.0(@solana/kit@packages+kit)
+      '@solana-program/system':
+        specifier: ^0.14.0
+        version: 0.14.0(@solana/kit@packages+kit)
       '@solana/example-utils':
         specifier: workspace:*
         version: link:../utils
@@ -155,8 +155,8 @@ importers:
         specifier: 3.3.0
         version: 3.3.0(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@solana-program/system':
-        specifier: ^0.13.0
-        version: 0.13.0(@solana/kit@packages+kit)
+        specifier: ^0.14.0
+        version: 0.14.0(@solana/kit@packages+kit)
       '@solana/kit':
         specifier: workspace:*
         version: link:../../packages/kit
@@ -263,8 +263,8 @@ importers:
   examples/signers:
     dependencies:
       '@solana-program/system':
-        specifier: ^0.13.0
-        version: 0.13.0(@solana/kit@packages+kit)
+        specifier: ^0.14.0
+        version: 0.14.0(@solana/kit@packages+kit)
       '@solana/example-utils':
         specifier: workspace:*
         version: link:../utils
@@ -282,11 +282,11 @@ importers:
   examples/token-airdrop:
     dependencies:
       '@solana-program/system':
-        specifier: ^0.13.0
-        version: 0.13.0(@solana/kit@packages+kit)
+        specifier: ^0.14.0
+        version: 0.14.0(@solana/kit@packages+kit)
       '@solana-program/token':
-        specifier: ^0.15.0
-        version: 0.15.0(@solana/kit@packages+kit)
+        specifier: ^0.16.0
+        version: 0.16.0(@solana/kit@packages+kit)
       '@solana/example-utils':
         specifier: workspace:*
         version: link:../utils
@@ -304,8 +304,8 @@ importers:
   examples/transfer-lamports:
     dependencies:
       '@solana-program/system':
-        specifier: ^0.13.0
-        version: 0.13.0(@solana/kit@packages+kit)
+        specifier: ^0.14.0
+        version: 0.14.0(@solana/kit@packages+kit)
       '@solana/example-utils':
         specifier: workspace:*
         version: link:../utils
@@ -4890,27 +4890,27 @@ packages:
     peerDependencies:
       prettier: ^3.0.0
 
-  '@solana-program/address-lookup-table@0.13.0':
-    resolution: {integrity: sha512-UCxrapY8AA3wFzGpfYcXvs41alPTVFWdM7MGoz8IL6F+EL3BJ+4XVcUIj3UT3K9Sp14hPVPAIMFqnE4iOX7VMw==}
+  '@solana-program/address-lookup-table@0.14.0':
+    resolution: {integrity: sha512-/GQtSRRJC/8wj0VpPLqsxkT6dBA6Eg0JbYlMECx8bJZRdTwqHzQEIm6tfYA1sV7aXkGQxGgIUbLiIo+ULtz8MA==}
     engines: {node: '>=24.0.0'}
     peerDependencies:
-      '@solana/kit': ^7.0.0
+      '@solana/kit': ^8.0.0
 
-  '@solana-program/memo@0.12.0':
-    resolution: {integrity: sha512-sOY182HLdngvlfjg1n1e8mXIz5nP4kNZRWBT33mk6SJsMXwUahL5w/XwaeQ8cj8PYPf2FiH0IpZ2tbZW6f0SBQ==}
+  '@solana-program/memo@0.13.0':
+    resolution: {integrity: sha512-JVe6KV4UU/VZkPq6MD8O50pUfUvsAA4BBiP2g6Y2Nr2CgxTXdnyslD+3r8ZmahEb9XB8dWajw+qzl+BDWxJj2g==}
     peerDependencies:
-      '@solana/kit': ^7.0.0
+      '@solana/kit': ^8.0.0
 
-  '@solana-program/system@0.13.0':
-    resolution: {integrity: sha512-Id6QQxCG7ByImXPD5X/c3Ag2kySD+49aJ9waIkfxyUFyokhMQgxYQAx2rKuaygaBlaBQY6VVfBS46pqxZV+99A==}
+  '@solana-program/system@0.14.0':
+    resolution: {integrity: sha512-Pjs2RINZHYmk/pqWNBCuQmfNjZT9woPJ/w7QkzzCSwcqcokbARtxsnIdgj4lJVxvr1DuxG8JGIbKnq6z1QRY6Q==}
     peerDependencies:
-      '@solana/kit': ^7.0.0
+      '@solana/kit': ^8.0.0
 
-  '@solana-program/token@0.15.0':
-    resolution: {integrity: sha512-SeLm08EYIfT453I6lo7wTGgfMbz1s7bJ1jSHFHBFebSJHD3xF46zRgMxq3YKRlr/RM8jN0cG8SjZVu+IDvMxEA==}
+  '@solana-program/token@0.16.0':
+    resolution: {integrity: sha512-VuFIu5vXsw1zwqls4/sGB88234oucmpuig553A33UnrbYnPZ8yXmqLYULBD92/k1pCGnMK+NMLWvsKzlZQ/1Kw==}
     engines: {node: '>=24.0.0'}
     peerDependencies:
-      '@solana/kit': ^7.0.0
+      '@solana/kit': ^8.0.0
 
   '@solana/addresses@7.0.0':
     resolution: {integrity: sha512-E7sJtV5d3bXrmw3I30rcKY+xoqM++6KIVJCi+q8ZaSMyP04UMfEENPHIJ+TkyS1RUgjzPT91ka/oWrtTh6EfkQ==}
@@ -13384,21 +13384,21 @@ snapshots:
     dependencies:
       prettier: 3.8.3
 
-  '@solana-program/address-lookup-table@0.13.0(@solana/kit@packages+kit)':
+  '@solana-program/address-lookup-table@0.14.0(@solana/kit@packages+kit)':
     dependencies:
       '@solana/kit': link:packages/kit
 
-  '@solana-program/memo@0.12.0(@solana/kit@packages+kit)':
+  '@solana-program/memo@0.13.0(@solana/kit@packages+kit)':
     dependencies:
       '@solana/kit': link:packages/kit
 
-  '@solana-program/system@0.13.0(@solana/kit@packages+kit)':
+  '@solana-program/system@0.14.0(@solana/kit@packages+kit)':
     dependencies:
       '@solana/kit': link:packages/kit
 
-  '@solana-program/token@0.15.0(@solana/kit@packages+kit)':
+  '@solana-program/token@0.16.0(@solana/kit@packages+kit)':
     dependencies:
-      '@solana-program/system': 0.13.0(@solana/kit@packages+kit)
+      '@solana-program/system': 0.14.0(@solana/kit@packages+kit)
       '@solana/kit': link:packages/kit
 
   '@solana/addresses@7.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)':
