@@ -96,6 +96,25 @@ describe('RPC request coalescer', () => {
             const transportAbortSignal = mockTransport.mock.lastCall![0].signal!;
             expect(transportAbortSignal.aborted).toBe(false);
         });
+        it('rejects with the signal reason when the abort event target is null', async () => {
+            expect.assertions(2);
+            const abortController = new AbortController();
+            const addEventListenerSpy = jest
+                .spyOn(abortController.signal, 'addEventListener')
+                .mockImplementation(() => {});
+            const responsePromise = coalescedTransport({
+                payload: null,
+                signal: abortController.signal,
+            });
+
+            abortController.abort('o no');
+            const abortEvent = new Event('abort');
+            expect(abortEvent.target).toBeNull();
+            const handleAbort = addEventListenerSpy.mock.calls[0][1] as EventListener;
+            handleAbort(abortEvent);
+
+            await expect(responsePromise).rejects.toBe('o no');
+        });
         describe('multiple coalesced requests each with an abort signal', () => {
             let abortControllerA: AbortController;
             let abortControllerB: AbortController;
