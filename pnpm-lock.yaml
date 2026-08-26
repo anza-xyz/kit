@@ -1297,8 +1297,8 @@ importers:
         specifier: '>=5.4.0'
         version: 5.9.3
       ws:
-        specifier: ^8.21.0
-        version: 8.21.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+        specifier: ^8.21.3
+        version: 8.21.3(bufferutil@4.0.9)(utf-8-validate@5.0.10)
     devDependencies:
       '@solana/event-target-impl':
         specifier: workspace:*
@@ -1758,8 +1758,8 @@ importers:
   packages/ws-impl:
     dependencies:
       ws:
-        specifier: ^8.21.0
-        version: 8.21.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+        specifier: ^8.21.3
+        version: 8.21.3(bufferutil@4.0.9)(utf-8-validate@5.0.10)
     devDependencies:
       '@types/ws':
         specifier: ^8.18.1
@@ -9603,8 +9603,8 @@ packages:
     resolution: {integrity: sha512-+QU2zd6OTD8XWIJCbffaiQeH9U73qIqafo1x6V1snCWYGJf6cVE0cDR4D8xRzcEnfI21IFrUPzPGtcPf8AC+Rw==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
 
-  ws@7.5.11:
-    resolution: {integrity: sha512-zS54Oen9bITtp7kp2XM3AydrCIq1D+HwJOuH+c+e4LfpL/lotP5osijd+UoMnxwAam1GN8R4KtLAyIrIcBNpiA==}
+  ws@7.5.13:
+    resolution: {integrity: sha512-rsKI6xDBFVf4r/x8XyChGK04QR/XHroxs/jUcoWvtEZM8TPU/X/uIY9B1CsSzYws9ZJb/6bbBu7dPhFW00CAoA==}
     engines: {node: '>=8.3.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -9615,8 +9615,8 @@ packages:
       utf-8-validate:
         optional: true
 
-  ws@8.21.0:
-    resolution: {integrity: sha512-Vsp28b7DRcimFQvrqu2Wek3z1iYxDCWqHYB8Qsnk/S4RfaCQzPGPyBNuVjJV3cd6UiKtUtp6sNM77gWvzcCH+g==}
+  ws@8.21.3:
+    resolution: {integrity: sha512-201TZ/kPWxoPr/OKWjquZR1SWKXcvxdH+e1xrx89b3YbmzLMFCLfnaG1HFIgWzJOEWZ7MvpK++odZufgYR50Rw==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -15963,9 +15963,9 @@ snapshots:
 
   isobject@3.0.1: {}
 
-  isomorphic-ws@4.0.1(ws@7.5.11(bufferutil@4.0.9)(utf-8-validate@5.0.10)):
+  isomorphic-ws@4.0.1(ws@7.5.13(bufferutil@4.0.9)(utf-8-validate@5.0.10)):
     dependencies:
-      ws: 7.5.11(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+      ws: 7.5.13(bufferutil@4.0.9)(utf-8-validate@5.0.10)
 
   istanbul-lib-coverage@3.2.0: {}
 
@@ -16048,11 +16048,11 @@ snapshots:
       delay: 5.0.0
       es6-promisify: 5.0.0
       eyes: 0.1.8
-      isomorphic-ws: 4.0.1(ws@7.5.11(bufferutil@4.0.9)(utf-8-validate@5.0.10))
+      isomorphic-ws: 4.0.1(ws@7.5.13(bufferutil@4.0.9)(utf-8-validate@5.0.10))
       json-stringify-safe: 5.0.1
       stream-json: 1.9.1
       uuid: 8.3.2
-      ws: 7.5.11(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+      ws: 7.5.13(bufferutil@4.0.9)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -17454,7 +17454,7 @@ snapshots:
       whatwg-encoding: 2.0.0
       whatwg-mimetype: 3.0.0
       whatwg-url: 12.0.1
-      ws: 8.21.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+      ws: 8.21.3(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       xml-name-validator: 4.0.0
     transitivePeerDependencies:
       - bufferutil
@@ -18468,7 +18468,7 @@ snapshots:
       buffer: 6.0.3
       eventemitter3: 5.0.1
       uuid: 8.3.2
-      ws: 8.21.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+      ws: 8.21.3(bufferutil@4.0.9)(utf-8-validate@5.0.10)
     optionalDependencies:
       bufferutil: 4.0.9
       utf-8-validate: 5.0.10
@@ -19213,12 +19213,12 @@ snapshots:
       imurmurhash: 0.1.4
       signal-exit: 4.1.0
 
-  ws@7.5.11(bufferutil@4.0.9)(utf-8-validate@5.0.10):
+  ws@7.5.13(bufferutil@4.0.9)(utf-8-validate@5.0.10):
     optionalDependencies:
       bufferutil: 4.0.9
       utf-8-validate: 5.0.10
 
-  ws@8.21.0(bufferutil@4.0.9)(utf-8-validate@5.0.10):
+  ws@8.21.3(bufferutil@4.0.9)(utf-8-validate@5.0.10):
     optionalDependencies:
       bufferutil: 4.0.9
       utf-8-validate: 5.0.10
