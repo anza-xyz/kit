@@ -1,9 +1,11 @@
 import '@solana/test-matchers/toBeFrozenObject';
 
 import {
+    isSolanaError,
     SOLANA_ERROR__INSTRUCTION_ERROR__INVALID_ARGUMENT,
     SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN,
     SOLANA_ERROR__INSTRUCTION_PLANS__NON_DIVISIBLE_TRANSACTION_PLANS_NOT_SUPPORTED,
+    SOLANA_ERROR__INVARIANT_VIOLATION__INVALID_TRANSACTION_PLAN_KIND,
     SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE,
     SolanaError,
 } from '@solana/errors';
@@ -14,15 +16,19 @@ import { Transaction } from '@solana/transactions';
 import {
     canceledSingleTransactionPlanResult,
     createTransactionPlanExecutor,
+    createTransactionPlanExecutorWithConcurrentLeaves,
     failedSingleTransactionPlanResult,
     nonDivisibleSequentialTransactionPlan,
+    nonDivisibleSequentialTransactionPlanResult,
     parallelTransactionPlan,
     parallelTransactionPlanResult,
     passthroughFailedTransactionPlanExecution,
     sequentialTransactionPlan,
     sequentialTransactionPlanResult,
+    SingleTransactionPlan,
     singleTransactionPlan,
     successfulSingleTransactionPlanResult,
+    TransactionPlan,
     TransactionPlanResult,
     TransactionPlanResultContext,
     TransactionPlanResultContextWithSignature,
@@ -49,6 +55,14 @@ async function expectFailedToExecute<TContext extends TransactionPlanResultConte
     await expect(promise).rejects.toThrow(
         expect.objectContaining({ context: expect.objectContaining({ transactionPlanResult }) }),
     );
+}
+
+function assertIsFailedToExecuteTransactionPlanError(
+    error: unknown,
+): asserts error is SolanaError<typeof SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN> {
+    if (!isSolanaError(error, SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN)) {
+        throw error;
+    }
 }
 
 function forwardId(
@@ -1051,6 +1065,286 @@ describe('createTransactionPlanExecutor', () => {
                 }),
             );
         });
+    });
+});
+
+describe('createTransactionPlanExecutorWithConcurrentLeaves', () => {
+    it('preserves plan nesting, order, and divisibility', async () => {
+        expect.assertions(1);
+        const messages = [createMessage('A'), createMessage('B'), createMessage('C'), createMessage('D')];
+        const transactionPlan = parallelTransactionPlan([
+            nonDivisibleSequentialTransactionPlan([messages[0], messages[1]]),
+            sequentialTransactionPlan([messages[2], messages[3]]),
+        ]);
+        const executor = createTransactionPlanExecutorWithConcurrentLeaves<{ index: number }>({
+            executeSingleTransactionPlan: plan =>
+                Promise.resolve(
+                    successfulSingleTransactionPlanResult(plan.message, {
+                        index: messages.indexOf(plan.message as (typeof messages)[number]),
+                    }),
+                ),
+        });
+
+        const result = await executor(transactionPlan);
+
+        expect(result).toStrictEqual(
+            parallelTransactionPlanResult([
+                nonDivisibleSequentialTransactionPlanResult([
+                    successfulSingleTransactionPlanResult(messages[0], { index: 0 }),
+                    successfulSingleTransactionPlanResult(messages[1], { index: 1 }),
+                ]),
+                sequentialTransactionPlanResult([
+                    successfulSingleTransactionPlanResult(messages[2], { index: 2 }),
+                    successfulSingleTransactionPlanResult(messages[3], { index: 3 }),
+                ]),
+            ]),
+        );
+    });
+
+    it('starts leaves in sequential plans concurrently', () => {
+        const messageA = createMessage('A');
+        const messageB = createMessage('B');
+        const executeSingleTransactionPlan = jest.fn(
+            (_plan: SingleTransactionPlan) => FOREVER_PROMISE as Promise<ReturnType<typeof successfulForwardIdResult>>,
+        );
+        const executor = createTransactionPlanExecutorWithConcurrentLeaves<TransactionPlanResultContextWithSignature>({
+            executeSingleTransactionPlan,
+        });
+
+        void executor(sequentialTransactionPlan([messageA, messageB]));
+
+        expect(executeSingleTransactionPlan).toHaveBeenCalledTimes(2);
+    });
+
+    it('aggregates thrown leaf errors without canceling other leaves', async () => {
+        expect.assertions(4);
+        const messageA = createMessage('A');
+        const messageB = createMessage('B');
+        const messageC = createMessage('C');
+        const errorA = new Error('A failed');
+        const errorC = new Error('C failed');
+        const messages = [messageA, messageB, messageC];
+        const leafPromises = [
+            Promise.reject(errorA),
+            Promise.resolve(successfulSingleTransactionPlanResult(messageB, { id: 'B' })),
+            Promise.reject(errorC),
+        ];
+        const executeSingleTransactionPlan = jest.fn(
+            (plan: SingleTransactionPlan) => leafPromises[messages.indexOf(plan.message as (typeof messages)[number])],
+        );
+        const executor = createTransactionPlanExecutorWithConcurrentLeaves<{ id: string }>({
+            executeSingleTransactionPlan,
+        });
+
+        const error = await executor(nonDivisibleSequentialTransactionPlan([messageA, messageB, messageC])).catch(
+            (error: unknown) => error,
+        );
+
+        expect(isSolanaError(error, SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN)).toBe(true);
+        assertIsFailedToExecuteTransactionPlanError(error);
+        expect(executeSingleTransactionPlan).toHaveBeenCalledTimes(3);
+        expect(error.context.transactionPlanResult).toStrictEqual(
+            nonDivisibleSequentialTransactionPlanResult([
+                failedSingleTransactionPlanResult<{ id: string }>(messageA, errorA),
+                successfulSingleTransactionPlanResult(messageB, { id: 'B' }),
+                failedSingleTransactionPlanResult<{ id: string }>(messageC, errorC),
+            ]),
+        );
+        expect(error.cause).toBe(errorA);
+    });
+
+    it('preserves nested failures and waits for every sibling to settle', async () => {
+        expect.assertions(5);
+        const messageA = createMessage('A');
+        const messageB = createMessage('B');
+        const messageC = createMessage('C');
+        const messageD = createMessage('D');
+        const messageE = createMessage('E');
+        const errorB = new Error('B failed');
+        const errorD = new Error('D failed');
+        const messages = [messageA, messageB, messageC, messageD, messageE];
+        const resultA = successfulSingleTransactionPlanResult(messageA, { id: 'A' });
+        const resultC = successfulSingleTransactionPlanResult(messageC, { id: 'C' });
+        const resultE = successfulSingleTransactionPlanResult(messageE, { id: 'E' });
+        const delayedResultPromise = new Promise<typeof resultE>(resolve => {
+            setTimeout(() => resolve(resultE), 100);
+        });
+        const leafPromises = [
+            Promise.resolve(resultA),
+            Promise.reject(errorB),
+            Promise.resolve(resultC),
+            Promise.reject(errorD),
+            delayedResultPromise,
+        ];
+        const executeSingleTransactionPlan = jest.fn(
+            (plan: SingleTransactionPlan) => leafPromises[messages.indexOf(plan.message as (typeof messages)[number])],
+        );
+        const executor = createTransactionPlanExecutorWithConcurrentLeaves<{ id: string }>({
+            executeSingleTransactionPlan,
+        });
+        const transactionPlan = parallelTransactionPlan([
+            nonDivisibleSequentialTransactionPlan([messageA, parallelTransactionPlan([messageB, messageC])]),
+            sequentialTransactionPlan([messageD, messageE]),
+        ]);
+
+        const resultPromise = executor(transactionPlan);
+        const onSettled = jest.fn();
+        void resultPromise.then(onSettled, onSettled);
+        await jest.advanceTimersByTimeAsync(99);
+        expect(onSettled).not.toHaveBeenCalled();
+        await jest.advanceTimersByTimeAsync(1);
+        const error = await resultPromise.catch((error: unknown) => error);
+
+        expect(isSolanaError(error, SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN)).toBe(true);
+        assertIsFailedToExecuteTransactionPlanError(error);
+        expect(executeSingleTransactionPlan).toHaveBeenCalledTimes(5);
+        expect(error.context.transactionPlanResult).toStrictEqual(
+            parallelTransactionPlanResult([
+                nonDivisibleSequentialTransactionPlanResult([
+                    resultA,
+                    parallelTransactionPlanResult([
+                        failedSingleTransactionPlanResult<{ id: string }>(messageB, errorB),
+                        resultC,
+                    ]),
+                ]),
+                sequentialTransactionPlanResult([
+                    failedSingleTransactionPlanResult<{ id: string }>(messageD, errorD),
+                    resultE,
+                ]),
+            ]),
+        );
+        expect(error.cause).toBe(errorB);
+    });
+
+    it('throws a failed execution error when a callback returns a failed result', async () => {
+        expect.assertions(2);
+        const message = createMessage('A');
+        const cause = new Error('A failed');
+        const failedResult = failedSingleTransactionPlanResult<{ attempted: boolean }>(message, cause, {
+            attempted: true,
+        });
+        const executor = createTransactionPlanExecutorWithConcurrentLeaves<{ attempted: boolean }>({
+            executeSingleTransactionPlan: () => Promise.resolve(failedResult),
+        });
+
+        const error = await executor(singleTransactionPlan(message)).catch((error: unknown) => error);
+
+        expect(isSolanaError(error, SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN)).toBe(true);
+        assertIsFailedToExecuteTransactionPlanError(error);
+        expect(error.context.transactionPlanResult).toBe(failedResult);
+    });
+
+    it('throws a failed execution error when a callback returns a canceled result', async () => {
+        expect.assertions(2);
+        const message = createMessage('A');
+        const canceledResult = canceledSingleTransactionPlanResult<{ attempted: boolean }>(message, {
+            attempted: false,
+        });
+        const executor = createTransactionPlanExecutorWithConcurrentLeaves<{ attempted: boolean }>({
+            executeSingleTransactionPlan: () => Promise.resolve(canceledResult),
+        });
+
+        const error = await executor(singleTransactionPlan(message)).catch((error: unknown) => error);
+
+        expect(isSolanaError(error, SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN)).toBe(true);
+        assertIsFailedToExecuteTransactionPlanError(error);
+        expect(error.context.transactionPlanResult).toBe(canceledResult);
+    });
+
+    it('can abort before executing leaves', async () => {
+        expect.assertions(4);
+        const messageA = createMessage('A');
+        const messageB = createMessage('B');
+        const abortController = new AbortController();
+        const cause = new Error('Aborted before execution');
+        const executeSingleTransactionPlan = jest.fn(() => Promise.reject(new Error('not implemented')));
+        const executor = createTransactionPlanExecutorWithConcurrentLeaves<TransactionPlanResultContext>({
+            executeSingleTransactionPlan,
+        });
+
+        abortController.abort(cause);
+        const error = await executor(parallelTransactionPlan([messageA, messageB]), {
+            abortSignal: abortController.signal,
+        }).catch((error: unknown) => error);
+
+        expect(isSolanaError(error, SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN)).toBe(true);
+        assertIsFailedToExecuteTransactionPlanError(error);
+        expect(executeSingleTransactionPlan).not.toHaveBeenCalled();
+        expect(error.context.transactionPlanResult).toStrictEqual(
+            parallelTransactionPlanResult([
+                canceledSingleTransactionPlanResult<TransactionPlanResultContext>(messageA),
+                canceledSingleTransactionPlanResult<TransactionPlanResultContext>(messageB),
+            ]),
+        );
+        expect(error.context.abortReason).toBe(cause);
+    });
+
+    it('can abort active leaves while preserving completed leaves', async () => {
+        expect.assertions(4);
+        const messageA = createMessage('A');
+        const messageB = createMessage('B');
+        const messageC = createMessage('C');
+        const abortController = new AbortController();
+        const cause = new Error('Aborted during execution');
+        const messages = [messageA, messageB, messageC];
+        const resultA = successfulForwardIdResult(messageA);
+        const resultC = successfulForwardIdResult(messageC);
+        const leafPromises = [
+            Promise.resolve(resultA),
+            FOREVER_PROMISE as Promise<ReturnType<typeof successfulForwardIdResult>>,
+            Promise.resolve(resultC),
+        ];
+        const executeSingleTransactionPlan = jest.fn(
+            (plan: SingleTransactionPlan) => leafPromises[messages.indexOf(plan.message as (typeof messages)[number])],
+        );
+        const executor = createTransactionPlanExecutorWithConcurrentLeaves<TransactionPlanResultContextWithSignature>({
+            executeSingleTransactionPlan,
+        });
+
+        const resultPromise = executor(parallelTransactionPlan([messageA, messageB, messageC]), {
+            abortSignal: abortController.signal,
+        });
+        expect(executeSingleTransactionPlan).toHaveBeenCalledTimes(3);
+        await jest.runAllTimersAsync();
+        abortController.abort(cause);
+        const error = await resultPromise.catch((error: unknown) => error);
+
+        expect(isSolanaError(error, SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN)).toBe(true);
+        assertIsFailedToExecuteTransactionPlanError(error);
+        expect(error.context.transactionPlanResult).toStrictEqual(
+            parallelTransactionPlanResult([resultA, failedSingleTransactionPlanResult(messageB, cause), resultC]),
+        );
+        expect(error.context.abortReason).toBe(cause);
+    });
+
+    it('forwards the abort signal to every leaf callback', async () => {
+        expect.assertions(1);
+        const message = createMessage('A');
+        const abortController = new AbortController();
+        const executeSingleTransactionPlan = jest.fn((plan: SingleTransactionPlan) =>
+            Promise.resolve(successfulSingleTransactionPlanResult(plan.message, { processed: true })),
+        );
+        const executor = createTransactionPlanExecutorWithConcurrentLeaves<{ processed: boolean }>({
+            executeSingleTransactionPlan,
+        });
+
+        await executor(singleTransactionPlan(message), { abortSignal: abortController.signal });
+
+        expect(executeSingleTransactionPlan).toHaveBeenCalledWith(singleTransactionPlan(message), {
+            abortSignal: abortController.signal,
+        });
+    });
+
+    it('rejects transaction plans with an unknown kind', async () => {
+        expect.assertions(1);
+        const transactionPlan = { kind: 'unknown' } as unknown as TransactionPlan;
+        const executor = createTransactionPlanExecutorWithConcurrentLeaves<TransactionPlanResultContext>({
+            executeSingleTransactionPlan: () => Promise.reject(new Error('not implemented')),
+        });
+
+        const error = await executor(transactionPlan).catch((error: unknown) => error);
+
+        expect(isSolanaError(error, SOLANA_ERROR__INVARIANT_VIOLATION__INVALID_TRANSACTION_PLAN_KIND)).toBe(true);
     });
 });
 
