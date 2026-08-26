@@ -628,6 +628,19 @@ describe('decompileTransactionMessage (v1)', () => {
             expect(transaction).not.toHaveProperty('config');
         });
 
+        it('decompiles an out-of-range heap size permissively without validation', () => {
+            const compiledTransaction: CompiledTransactionMessageWithLifetime & V1CompiledTransactionMessage = {
+                ...getMockV1CompiledTransactionMessage(),
+                configMask: 0b10000,
+                configValues: [{ kind: 'u32', value: 1 }] as CompiledTransactionConfigValue[],
+            };
+
+            const transaction = decompileTransactionMessage(compiledTransaction);
+            expect(transaction.config).toStrictEqual({
+                heapSize: 1,
+            });
+        });
+
         it('converts a transaction with config and instructions', () => {
             const compiledTransaction: CompiledTransactionMessageWithLifetime & V1CompiledTransactionMessage = {
                 ...getMockV1CompiledTransactionMessage(),

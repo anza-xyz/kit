@@ -1,19 +1,27 @@
 import '@solana/test-matchers/toBeFrozenObject';
 
 import { Address } from '@solana/addresses';
+import { SOLANA_ERROR__TRANSACTION__INVALID_HEAP_SIZE, SolanaError } from '@solana/errors';
 
 import {
     COMPUTE_BUDGET_PROGRAM_ADDRESS,
     getHeapSizeFromInstructionData,
     getRequestHeapFrameInstruction,
+    HEAP_FRAME_SIZE_MULTIPLE,
+    MAX_HEAP_FRAME_SIZE,
+    MIN_HEAP_FRAME_SIZE,
 } from '../compute-budget-instruction';
 import { getTransactionMessageHeapSize, setTransactionMessageHeapSize } from '../heap-size';
+import { assertIsValidHeapSize } from '../resource-limit-validation';
 import { TransactionMessage } from '../transaction-message';
+
+const MIN_HEAP_SIZE = MIN_HEAP_FRAME_SIZE;
+const MAX_HEAP_SIZE = MAX_HEAP_FRAME_SIZE;
 
 const COMPUTE_UNIT_LIMIT_A = 200_000;
 
-const HEAP_SIZE_A = 30_000;
-const HEAP_SIZE_B = 50_000;
+const HEAP_SIZE_A = 32_768;
+const HEAP_SIZE_B = 65_536;
 
 const PRIORITY_FEE_LAMPORTS_A = 5_000n;
 
@@ -174,6 +182,112 @@ describe('setTransactionMessageHeapSize', () => {
     );
 });
 
+describe('setTransactionMessageHeapSize validation', () => {
+    describe.each([{ version: 'legacy' as const }, { version: 0 as const }, { version: 1 as const }])(
+        'given a $version transaction',
+        ({ version }) => {
+            const baseTx = { instructions: [], version } as TransactionMessage & { version: 1 };
+
+            it('throws when heap size is below the minimum', () => {
+                expect(() => setTransactionMessageHeapSize(MIN_HEAP_SIZE - 1024, baseTx)).toThrow(
+                    new SolanaError(SOLANA_ERROR__TRANSACTION__INVALID_HEAP_SIZE, {
+                        heapSize: MIN_HEAP_SIZE - 1024,
+                        maxHeapSize: MAX_HEAP_SIZE,
+                        minHeapSize: MIN_HEAP_SIZE,
+                        multipleOf: HEAP_FRAME_SIZE_MULTIPLE,
+                    }),
+                );
+            });
+
+            it('succeeds when heap size equals the minimum', () => {
+                const result = setTransactionMessageHeapSize(MIN_HEAP_SIZE, baseTx);
+                expect(getTransactionMessageHeapSize(result)).toBe(MIN_HEAP_SIZE);
+            });
+
+            it('throws when heap size is one above the minimum but not a multiple', () => {
+                expect(() => setTransactionMessageHeapSize(MIN_HEAP_SIZE + 1, baseTx)).toThrow(
+                    new SolanaError(SOLANA_ERROR__TRANSACTION__INVALID_HEAP_SIZE, {
+                        heapSize: MIN_HEAP_SIZE + 1,
+                        maxHeapSize: MAX_HEAP_SIZE,
+                        minHeapSize: MIN_HEAP_SIZE,
+                        multipleOf: HEAP_FRAME_SIZE_MULTIPLE,
+                    }),
+                );
+            });
+
+            it('succeeds when heap size equals the maximum', () => {
+                const result = setTransactionMessageHeapSize(MAX_HEAP_SIZE, baseTx);
+                expect(getTransactionMessageHeapSize(result)).toBe(MAX_HEAP_SIZE);
+            });
+
+            it('throws when heap size is above the maximum', () => {
+                expect(() => setTransactionMessageHeapSize(MAX_HEAP_SIZE + 1024, baseTx)).toThrow(
+                    new SolanaError(SOLANA_ERROR__TRANSACTION__INVALID_HEAP_SIZE, {
+                        heapSize: MAX_HEAP_SIZE + 1024,
+                        maxHeapSize: MAX_HEAP_SIZE,
+                        minHeapSize: MIN_HEAP_SIZE,
+                        multipleOf: HEAP_FRAME_SIZE_MULTIPLE,
+                    }),
+                );
+            });
+
+            it('throws for a non-integer heap size', () => {
+                expect(() => setTransactionMessageHeapSize(32768.5, baseTx)).toThrow(
+                    new SolanaError(SOLANA_ERROR__TRANSACTION__INVALID_HEAP_SIZE, {
+                        heapSize: 32768.5,
+                        maxHeapSize: MAX_HEAP_SIZE,
+                        minHeapSize: MIN_HEAP_SIZE,
+                        multipleOf: HEAP_FRAME_SIZE_MULTIPLE,
+                    }),
+                );
+            });
+
+            it('throws for NaN', () => {
+                expect(() => setTransactionMessageHeapSize(NaN, baseTx)).toThrow(
+                    new SolanaError(SOLANA_ERROR__TRANSACTION__INVALID_HEAP_SIZE, {
+                        heapSize: NaN,
+                        maxHeapSize: MAX_HEAP_SIZE,
+                        minHeapSize: MIN_HEAP_SIZE,
+                        multipleOf: HEAP_FRAME_SIZE_MULTIPLE,
+                    }),
+                );
+            });
+
+            it('throws for Infinity', () => {
+                expect(() => setTransactionMessageHeapSize(Infinity, baseTx)).toThrow(
+                    new SolanaError(SOLANA_ERROR__TRANSACTION__INVALID_HEAP_SIZE, {
+                        heapSize: Infinity,
+                        maxHeapSize: MAX_HEAP_SIZE,
+                        minHeapSize: MIN_HEAP_SIZE,
+                        multipleOf: HEAP_FRAME_SIZE_MULTIPLE,
+                    }),
+                );
+            });
+
+            it('throws for -Infinity', () => {
+                expect(() => setTransactionMessageHeapSize(-Infinity, baseTx)).toThrow(
+                    new SolanaError(SOLANA_ERROR__TRANSACTION__INVALID_HEAP_SIZE, {
+                        heapSize: -Infinity,
+                        maxHeapSize: MAX_HEAP_SIZE,
+                        minHeapSize: MIN_HEAP_SIZE,
+                        multipleOf: HEAP_FRAME_SIZE_MULTIPLE,
+                    }),
+                );
+            });
+
+            it('succeeds and preserves removal behavior when heap size is undefined', () => {
+                const result = setTransactionMessageHeapSize(undefined, baseTx);
+                expect(getTransactionMessageHeapSize(result)).toBeUndefined();
+            });
+
+            it('does not mutate the message when validation fails', () => {
+                expect(() => setTransactionMessageHeapSize(MIN_HEAP_SIZE - 1024, baseTx)).toThrow();
+                expect(getTransactionMessageHeapSize(baseTx)).toBeUndefined();
+            });
+        },
+    );
+});
+
 describe('getTransactionMessageHeapSize', () => {
     describe('given a v1 transaction', () => {
         it('returns undefined without config', () => {
@@ -208,4 +322,36 @@ describe('getTransactionMessageHeapSize', () => {
             });
         },
     );
+});
+
+describe('assertIsValidHeapSize', () => {
+    it('succeeds for the minimum heap size', () => {
+        expect(() => assertIsValidHeapSize(MIN_HEAP_SIZE)).not.toThrow();
+    });
+
+    it('succeeds for the maximum heap size', () => {
+        expect(() => assertIsValidHeapSize(MAX_HEAP_SIZE)).not.toThrow();
+    });
+
+    it('throws for a heap size below the minimum', () => {
+        expect(() => assertIsValidHeapSize(MIN_HEAP_SIZE - 1024)).toThrow(
+            new SolanaError(SOLANA_ERROR__TRANSACTION__INVALID_HEAP_SIZE, {
+                heapSize: MIN_HEAP_SIZE - 1024,
+                maxHeapSize: MAX_HEAP_SIZE,
+                minHeapSize: MIN_HEAP_SIZE,
+                multipleOf: HEAP_FRAME_SIZE_MULTIPLE,
+            }),
+        );
+    });
+
+    it('throws for a non-multiple heap size', () => {
+        expect(() => assertIsValidHeapSize(MIN_HEAP_SIZE + 1)).toThrow(
+            new SolanaError(SOLANA_ERROR__TRANSACTION__INVALID_HEAP_SIZE, {
+                heapSize: MIN_HEAP_SIZE + 1,
+                maxHeapSize: MAX_HEAP_SIZE,
+                minHeapSize: MIN_HEAP_SIZE,
+                multipleOf: HEAP_FRAME_SIZE_MULTIPLE,
+            }),
+        );
+    });
 });

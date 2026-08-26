@@ -212,6 +212,7 @@ import {
     SOLANA_ERROR__TRANSACTION__INSTRUCTION_HEADERS_PAYLOADS_MISMATCH,
     SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_MASK_PRIORITY_FEE_BITS,
     SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_VALUE_KIND,
+    SOLANA_ERROR__TRANSACTION__INVALID_HEAP_SIZE,
     SOLANA_ERROR__TRANSACTION__INVALID_NONCE_ACCOUNT_INDEX,
     SOLANA_ERROR__TRANSACTION__INVOKED_PROGRAMS_CANNOT_PAY_FEES,
     SOLANA_ERROR__TRANSACTION__INVOKED_PROGRAMS_MUST_NOT_BE_WRITABLE,
@@ -931,6 +932,12 @@ export type SolanaErrorContext = ReadonlyContextValue<
                 actualKind: 'u32' | 'u64';
                 configName: string;
                 expectedKind: 'u32' | 'u64';
+            };
+            [SOLANA_ERROR__TRANSACTION__INVALID_HEAP_SIZE]: {
+                heapSize: number;
+                maxHeapSize: number;
+                minHeapSize: number;
+                multipleOf: number;
             };
             [SOLANA_ERROR__TRANSACTION__INVALID_NONCE_ACCOUNT_INDEX]: {
                 nonce: string;

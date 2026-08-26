@@ -1,6 +1,10 @@
 import '@solana/test-matchers/toBeFrozenObject';
 
-import { SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_MASK_PRIORITY_FEE_BITS, SolanaError } from '@solana/errors';
+import {
+    SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_MASK_PRIORITY_FEE_BITS,
+    SOLANA_ERROR__TRANSACTION__INVALID_HEAP_SIZE,
+    SolanaError,
+} from '@solana/errors';
 
 import { TransactionMessage } from '../transaction-message';
 import {
@@ -15,7 +19,7 @@ import {
 const COMPUTE_UNIT_LIMIT_A = 200_000;
 const COMPUTE_UNIT_LIMIT_B = 400_000;
 
-const HEAP_SIZE_A = 30_000;
+const HEAP_SIZE_A = 32_768;
 const LOADED_ACCOUNTS_DATA_SIZE_LIMIT_A = 60_000;
 const PRIORITY_FEE_LAMPORTS_A = 5_000n;
 
@@ -186,6 +190,24 @@ describe('setTransactionMessageConfig', () => {
             const txWithConfig = setTransactionMessageConfig({ computeUnitLimit: COMPUTE_UNIT_LIMIT_A }, baseTx);
             const txWithoutConfig = setTransactionMessageConfig({ computeUnitLimit: undefined }, txWithConfig);
             expect(txWithoutConfig).not.toHaveProperty('config');
+        });
+    });
+
+    describe('heap size validation', () => {
+        it('throws when the config heap size is not a multiple of the allowed step', () => {
+            expect(() => setTransactionMessageConfig({ heapSize: 40_000 }, baseTx)).toThrow(
+                new SolanaError(SOLANA_ERROR__TRANSACTION__INVALID_HEAP_SIZE, {
+                    heapSize: 40_000,
+                    maxHeapSize: 256 * 1024,
+                    minHeapSize: 32 * 1024,
+                    multipleOf: 1024,
+                }),
+            );
+        });
+
+        it('does not mutate the transaction when validation fails', () => {
+            expect(() => setTransactionMessageConfig({ heapSize: 40_000 }, baseTx)).toThrow();
+            expect(baseTx).not.toHaveProperty('config');
         });
     });
 });

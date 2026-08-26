@@ -8,7 +8,7 @@ import { setTransactionMessageFeePayer, TransactionMessageWithFeePayer } from '.
 import { appendTransactionMessageInstructions } from '../../instructions';
 import { TransactionMessageWithLifetime } from '../../lifetime';
 import { TransactionMessage } from '../../transaction-message';
-import { setTransactionMessageConfig } from '../../v1-transaction-config';
+import { isV1ConfigEmpty } from '../../v1-transaction-config';
 import { getAccountMetas } from '../legacy/account-metas';
 import { getFeePayer } from '../legacy/fee-payer';
 import { getLifetimeConstraint } from '../legacy/lifetime-constraint';
@@ -41,8 +41,18 @@ export function decompileTransactionMessage(
     return pipe(
         // @ts-expect-error We don't expose v1 on `createTransactionMessage` yet
         createTransactionMessage({ version: 1 }),
+        // Decoding must remain permissive, so the decompiled config is assigned directly instead of
+        // passing through the validating `setTransactionMessageConfig` setter.
         // Won't need this cast after we support v1 on `createTransactionMessage`
-        m => setTransactionMessageConfig(transactionConfig, m as unknown as TransactionMessage & { version: 1 }),
+        m => {
+            const mWithVersion = m as unknown as TransactionMessage & { version: 1 };
+            return isV1ConfigEmpty(transactionConfig)
+                ? mWithVersion
+                : (Object.freeze({
+                      ...mWithVersion,
+                      config: Object.freeze(transactionConfig),
+                  }) as unknown as TransactionMessage & { version: 1 });
+        },
         m => setTransactionMessageFeePayer(feePayer, m),
         m => appendTransactionMessageInstructions(instructions, m),
         m =>

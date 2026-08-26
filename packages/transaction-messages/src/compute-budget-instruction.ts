@@ -13,6 +13,15 @@ export const COMPUTE_BUDGET_PROGRAM_ADDRESS =
 /** The maximum compute unit limit that can be set for a transaction (1.4M CU). */
 export const MAX_COMPUTE_UNIT_LIMIT = 1_400_000;
 
+/** The minimum heap frame size that can be requested for a transaction (32 KiB). */
+export const MIN_HEAP_FRAME_SIZE = 32 * 1024;
+
+/** The maximum heap frame size that can be requested for a transaction (256 KiB). */
+export const MAX_HEAP_FRAME_SIZE = 256 * 1024;
+
+/** The requested heap frame size must be a multiple of this value (1 KiB). */
+export const HEAP_FRAME_SIZE_MULTIPLE = 1024;
+
 const REQUEST_HEAP_FRAME_DISCRIMINATOR = 1;
 const SET_COMPUTE_UNIT_LIMIT_DISCRIMINATOR = 2;
 const SET_COMPUTE_UNIT_PRICE_DISCRIMINATOR = 3;

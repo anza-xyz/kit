@@ -268,6 +268,7 @@ import {
     SOLANA_ERROR__TRANSACTION__INSTRUCTION_HEADERS_PAYLOADS_MISMATCH,
     SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_MASK_PRIORITY_FEE_BITS,
     SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_VALUE_KIND,
+    SOLANA_ERROR__TRANSACTION__INVALID_HEAP_SIZE,
     SOLANA_ERROR__TRANSACTION__INVALID_NONCE_ACCOUNT_INDEX,
     SOLANA_ERROR__TRANSACTION__INVALID_NONCE_TRANSACTION_FIRST_INSTRUCTION_MUST_BE_ADVANCE_NONCE,
     SOLANA_ERROR__TRANSACTION__INVALID_NONCE_TRANSACTION_INSTRUCTIONS_MISSING,
@@ -896,6 +897,8 @@ export const SolanaErrorMessages: Readonly<{
         'The instruction at index $instructionIndex has $actualCount account references but the maximum allowed is $maxAllowed',
     [SOLANA_ERROR__TRANSACTION__FAILED_TO_DECOMPILE_INSTRUCTION_ACCOUNT_INDEX_OUT_OF_RANGE]:
         'Could not find an account address at index $index while decompiling an instruction',
+    [SOLANA_ERROR__TRANSACTION__INVALID_HEAP_SIZE]:
+        'The transaction heap size `$heapSize` is invalid. It must be a finite integer that is a multiple of $multipleOf bytes and falls within the inclusive range [$minHeapSize, $maxHeapSize].',
     [SOLANA_ERROR__TRANSACTION_INTROSPECTION__CANNOT_DECODE_JSON_PARSED_TRANSACTION]:
         "`getTransaction` responses fetched with `encoding: 'jsonParsed'` cannot be decoded. Re-fetch the transaction with `encoding: 'base64'`, `'base58'`, or `'json'`",
     [SOLANA_ERROR__TRANSACTION_INTROSPECTION__UNRECOGNIZED_GET_TRANSACTION_RESPONSE]:
