@@ -16,7 +16,7 @@ import {
     VariableSizeEncoder,
 } from '@solana/codecs-core';
 
-import { DrainOuterGeneric, getFixedSize, getMaxSize, sumCodecSizes } from './utils';
+import { DrainOuterGeneric, getFixedSize, getMaxSize, sumCodecSizes, SumFixedCodecSizes } from './utils';
 
 /**
  * Represents a collection of named fields used in struct codecs.
@@ -84,7 +84,7 @@ type GetDecoderTypeFromFields<TFields extends Fields<Decoder<any>>> = DrainOuter
  */
 export function getStructEncoder<const TFields extends Fields<FixedSizeEncoder<any>>>(
     fields: TFields,
-): FixedSizeEncoder<GetEncoderTypeFromFields<TFields>>;
+): FixedSizeEncoder<GetEncoderTypeFromFields<TFields>, SumFixedCodecSizes<TFields>>;
 export function getStructEncoder<const TFields extends Fields<Encoder<any>>>(
     fields: TFields,
 ): VariableSizeEncoder<GetEncoderTypeFromFields<TFields>>;
@@ -146,7 +146,7 @@ export function getStructEncoder<const TFields extends Fields<Encoder<any>>>(
  */
 export function getStructDecoder<const TFields extends Fields<FixedSizeDecoder<any>>>(
     fields: TFields,
-): FixedSizeDecoder<GetDecoderTypeFromFields<TFields>>;
+): FixedSizeDecoder<GetDecoderTypeFromFields<TFields>, SumFixedCodecSizes<TFields>>;
 export function getStructDecoder<const TFields extends Fields<Decoder<any>>>(
     fields: TFields,
 ): VariableSizeDecoder<GetDecoderTypeFromFields<TFields>>;
@@ -221,7 +221,8 @@ export function getStructCodec<const TFields extends Fields<FixedSizeCodec<any>>
     fields: TFields,
 ): FixedSizeCodec<
     GetEncoderTypeFromFields<TFields>,
-    GetDecoderTypeFromFields<TFields> & GetEncoderTypeFromFields<TFields>
+    GetDecoderTypeFromFields<TFields> & GetEncoderTypeFromFields<TFields>,
+    SumFixedCodecSizes<TFields>
 >;
 export function getStructCodec<const TFields extends Fields<Codec<any>>>(
     fields: TFields,

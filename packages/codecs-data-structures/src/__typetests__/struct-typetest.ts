@@ -6,7 +6,15 @@ import {
     VariableSizeDecoder,
     VariableSizeEncoder,
 } from '@solana/codecs-core';
-import { getU32Codec, getU32Decoder, getU32Encoder } from '@solana/codecs-numbers';
+import {
+    getU8Codec,
+    getU8Decoder,
+    getU8Encoder,
+    getU32Codec,
+    getU32Decoder,
+    getU32Encoder,
+    getU64Encoder,
+} from '@solana/codecs-numbers';
 import { getUtf8Codec, getUtf8Decoder, getUtf8Encoder } from '@solana/codecs-strings';
 
 import { getStructCodec, getStructDecoder, getStructEncoder } from '../struct';
@@ -118,4 +126,45 @@ import { getStructCodec, getStructDecoder, getStructEncoder } from '../struct';
             name: string;
         }
     >;
+}
+
+{
+    // [getStructEncoder]: It sums the literal fixed sizes of its fields.
+    getStructEncoder([['age', getU32Encoder()]]) satisfies FixedSizeEncoder<{ age: bigint | number }, 4>;
+    getStructEncoder([
+        ['a', getU32Encoder()],
+        ['b', getU8Encoder()],
+    ]) satisfies FixedSizeEncoder<{ a: bigint | number; b: bigint | number }, 5>;
+    getStructEncoder([
+        ['a', getU32Encoder()],
+        ['b', getU64Encoder()],
+        ['c', getU8Encoder()],
+    ]) satisfies FixedSizeEncoder<{ a: bigint | number; b: bigint | number; c: bigint | number }, 13>;
+}
+
+{
+    // [getStructEncoder]: It widens to `number` when a field size cannot be represented precisely.
+    getStructEncoder([
+        ['a', {} as FixedSizeEncoder<string>],
+        ['b', getU8Encoder()],
+    ]) satisfies FixedSizeEncoder<{ a: string; b: bigint | number }, number>;
+    getStructEncoder([['a', {} as FixedSizeEncoder<string, 1 | 4>]]) satisfies FixedSizeEncoder<{ a: string }, number>;
+}
+
+{
+    // [getStructDecoder]: It sums the literal fixed sizes of its fields.
+    getStructDecoder([['age', getU32Decoder()]]) satisfies FixedSizeDecoder<{ age: number }, 4>;
+    getStructDecoder([
+        ['a', getU32Decoder()],
+        ['b', getU8Decoder()],
+    ]) satisfies FixedSizeDecoder<{ a: number; b: number }, 5>;
+}
+
+{
+    // [getStructCodec]: It sums the literal fixed sizes of its fields.
+    getStructCodec([['age', getU32Codec()]]) satisfies FixedSizeCodec<{ age: bigint | number }, { age: number }, 4>;
+    getStructCodec([
+        ['a', getU32Codec()],
+        ['b', getU8Codec()],
+    ]) satisfies FixedSizeCodec<{ a: bigint | number; b: bigint | number }, { a: number; b: number }, 5>;
 }

@@ -49,6 +49,42 @@ type GetFixedCodecSize<TItem> = TItem extends { readonly fixedSize: infer TSize 
         : never
     : never;
 
+type BuildTuple<TSize extends number, TAcc extends readonly unknown[] = []> = TAcc['length'] extends TSize
+    ? TAcc
+    : BuildTuple<TSize, [...TAcc, unknown]>;
+
+type AddSizes<TA extends number, TB extends number> = [...BuildTuple<TA>, ...BuildTuple<TB>]['length'];
+
+/**
+ * Sums the fixed sizes of a tuple of `readonly [string, codec]` fields.
+ *
+ * It recursively walks the fields, extracting each codec's precise `fixedSize` literal and adding
+ * them together. When every field has a precise numeric literal size, the result is the precise
+ * literal sum. When any field's size cannot be represented precisely (e.g. the broad `number`
+ * type or a union of sizes), the result widens to the broad `number` type. An empty tuple sums to
+ * `0`.
+ *
+ * @typeParam TFields - The tuple of `readonly [string, codec]` fields to sum.
+ */
+export type SumFixedCodecSizes<TFields extends readonly (readonly [string, unknown])[]> = TFields extends readonly [
+    infer THead,
+    ...infer TTail,
+]
+    ? TTail extends readonly (readonly [string, unknown])[]
+        ? THead extends readonly [string, infer TCodec]
+            ? GetFixedCodecSize<TCodec> extends infer THeadSize extends number
+                ? IsPreciseNumberLiteral<THeadSize> extends true
+                    ? SumFixedCodecSizes<TTail> extends infer TTailSize extends number
+                        ? IsPreciseNumberLiteral<TTailSize> extends true
+                            ? AddSizes<THeadSize, TTailSize>
+                            : number
+                        : number
+                    : number
+                : number
+            : number
+        : number
+    : 0;
+
 type GetFixedCodecSizeState<TItems extends readonly unknown[]> = TItems extends readonly []
     ? readonly ['fixed', 0]
     : TItems extends readonly [infer TOnly]
