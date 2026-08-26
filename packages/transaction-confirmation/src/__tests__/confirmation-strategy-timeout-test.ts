@@ -30,6 +30,23 @@ describe('getTimeoutPromise', () => {
         abortController.abort();
         await expect(timeoutPromise).rejects.toThrow(/operation was aborted/);
     });
+    it('throws an abort error with the signal reason when the abort event target is null', async () => {
+        expect.assertions(2);
+        const abortController = new AbortController();
+        const addEventListenerSpy = jest.spyOn(abortController.signal, 'addEventListener').mockImplementation(() => {});
+        const timeoutPromise = getTimeoutPromise({
+            abortSignal: abortController.signal,
+            commitment: 'finalized',
+        });
+
+        abortController.abort('o no');
+        const abortEvent = new Event('abort');
+        expect(abortEvent.target).toBeNull();
+        const handleAbort = addEventListenerSpy.mock.calls[0][1] as EventListener;
+        handleAbort(abortEvent);
+
+        await expect(timeoutPromise).rejects.toMatchObject({ message: 'o no', name: 'AbortError' });
+    });
     it('registers the caller abort listener with an auto-cleanup signal', () => {
         const abortController = new AbortController();
         const addEventListenerSpy = jest.spyOn(abortController.signal, 'addEventListener');

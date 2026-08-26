@@ -75,7 +75,7 @@ export function getRpcTransportWithRequestCoalescing<TTransport extends RpcTrans
         if (signal) {
             const responsePromise = coalescedRequest.responsePromise as Promise<RpcResponse<TResponse>>;
             return await new Promise<RpcResponse<TResponse>>((resolve, reject) => {
-                const handleAbort = (e: AbortSignalEventMap['abort']) => {
+                const handleAbort = () => {
                     signal.removeEventListener('abort', handleAbort);
                     coalescedRequest.numConsumers -= 1;
                     queueMicrotask(() => {
@@ -85,7 +85,7 @@ export function getRpcTransportWithRequestCoalescing<TTransport extends RpcTrans
                         }
                     });
                     // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
-                    reject((e.target as AbortSignal).reason);
+                    reject(signal.reason);
                 };
                 signal.addEventListener('abort', handleAbort);
                 responsePromise

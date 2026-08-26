@@ -37,9 +37,9 @@ export async function getTimeoutPromise({ abortSignal: callerAbortSignal, commit
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     try {
         return await new Promise((_, reject) => {
-            const handleAbort = (e: AbortSignalEventMap['abort']) => {
+            const handleAbort = () => {
                 clearTimeout(timeoutId);
-                const abortError = new DOMException((e.target as AbortSignal).reason, 'AbortError');
+                const abortError = new DOMException(callerAbortSignal.reason, 'AbortError');
                 reject(abortError);
             };
             callerAbortSignal.addEventListener('abort', handleAbort, { signal: abortController.signal });
