@@ -19,6 +19,17 @@ Signer plugins install a `TransactionSigner` on the client as the `payer`, the `
 | [Anza](https://www.anza.xyz/) | [`@solana/kit-plugin-signer`](https://www.npmjs.com/package/@solana/kit-plugin-signer) | `generatedSignerWithSol`, `generatedPayerWithSol`, `generatedIdentityWithSol` | Generate a signer and airdrop SOL to it in one step.             |
 | [Anza](https://www.anza.xyz/) | [`@solana/kit-plugin-signer`](https://www.npmjs.com/package/@solana/kit-plugin-signer) | `airdropSigner`, `airdropPayer`, `airdropIdentity`                            | Airdrop SOL to a signer that is already installed on the client. |
 
+## Wallet plugins
+
+Wallet plugins discover [Wallet Standard](https://github.com/wallet-standard/wallet-standard) wallets in the browser, manage the connection lifecycle, and optionally install the connected wallet as the client's `payer` and/or `identity`. See [Setting up signers](/docs/guides/setting-up-signers#use-a-browser-wallet) for the client API and [React — Wallet hooks](/docs/guides/react/wallet) for the React bindings.
+
+| Maintainer                    | Package                                                                                | Plugins               | Description                                                                    |
+| ----------------------------- | -------------------------------------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------ |
+| [Anza](https://www.anza.xyz/) | [`@solana/kit-plugin-wallet`](https://www.npmjs.com/package/@solana/kit-plugin-wallet) | `walletSigner`        | Discover wallets and sync the connected wallet to both `payer` and `identity`. |
+| [Anza](https://www.anza.xyz/) | [`@solana/kit-plugin-wallet`](https://www.npmjs.com/package/@solana/kit-plugin-wallet) | `walletPayer`         | Discover wallets and sync the connected wallet to `payer` only.                |
+| [Anza](https://www.anza.xyz/) | [`@solana/kit-plugin-wallet`](https://www.npmjs.com/package/@solana/kit-plugin-wallet) | `walletIdentity`      | Discover wallets and sync the connected wallet to `identity` only.             |
+| [Anza](https://www.anza.xyz/) | [`@solana/kit-plugin-wallet`](https://www.npmjs.com/package/@solana/kit-plugin-wallet) | `walletWithoutSigner` | Discover wallets without setting `payer` or `identity`.                        |
+
 ## RPC plugins
 
 RPC plugins install Solana RPC connectivity on the client. LiteSVM is included here because it implements a subset of the same RPC API in-process, with no network involved.

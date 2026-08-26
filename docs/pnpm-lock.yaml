@@ -86,6 +86,9 @@ importers:
       '@solana/kit-plugin-signer':
         specifier: ^0.13.0
         version: 0.13.0(@solana/kit@7.1.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))
+      '@solana/kit-plugin-wallet':
+        specifier: ^0.17.0
+        version: 0.17.0(@solana/kit@7.1.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))(@solana/react@7.1.0(@solana/kit@7.1.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))(@tanstack/react-query@5.101.4(react@19.2.8))(fastestsmallesttextencoderdecoder@1.0.22)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(swr@2.5.1(react@19.2.8))(typescript@5.9.3))(fastestsmallesttextencoderdecoder@1.0.22)(react@19.2.8)(typescript@5.9.3)
       '@solana/react':
         specifier: 7.1.0
         version: 7.1.0(@solana/kit@7.1.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))(@tanstack/react-query@5.101.4(react@19.2.8))(fastestsmallesttextencoderdecoder@1.0.22)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(swr@2.5.1(react@19.2.8))(typescript@5.9.3)
@@ -2861,6 +2864,18 @@ packages:
     peerDependencies:
       '@solana/kit': ^7.0.0
 
+  '@solana/kit-plugin-wallet@0.17.0':
+    resolution: {integrity: sha512-a3escg+u11Cva7Bjwca0Pjkg6FawVMVvdCWOVvrsKW0AAhgYEjo2PtvtlP/61bW7cc7BXcw16wJOcsNbOSBlHg==}
+    peerDependencies:
+      '@solana/kit': ^7.0.0
+      '@solana/react': ^7.1.0
+      react: ^19.2.8
+    peerDependenciesMeta:
+      '@solana/react':
+        optional: true
+      react:
+        optional: true
+
   '@solana/kit@6.10.0':
     resolution: {integrity: sha512-/WnnQp3uARh2JCFSfAakejTAqwmXVuMVTcRn5r2yDwY2yzZ4R6mt/Cl59VPimVLNSoTyN/KsEwhv9omr3ERazQ==}
     engines: {node: '>=20.18.0'}
@@ -3385,6 +3400,10 @@ packages:
     resolution: {integrity: sha512-Us3TgL4eMVoVWhuC4UrePlYnpWN+lwteCBlhZDUhFZBJ5UMGh94mYPXno3Ho7+iHPYRtuCi/ePvPcYBqCGuBOw==}
     engines: {node: '>=16'}
 
+  '@solana/wallet-standard-chains@1.1.2':
+    resolution: {integrity: sha512-EZobEGclDBAFplpJC5F3d/s8Xnlqc5isNKuPrd5o9ZPZ7tWN84O0e68yIZ8MAOj9V7ieRadNiHtql7uIXCTyXg==}
+    engines: {node: '>=22'}
+
   '@solana/wallet-standard-features@1.4.0':
     resolution: {integrity: sha512-f0tAdqwM2aL6CiFbIgt9h5zKFp+mgY/iNGwoxPMTj9VSTeQj7d1GGSmWhZw0XWoZ4N/1tnKTKmYFq+Dyq08jRw==}
     engines: {node: '>=22'}
@@ -3892,6 +3911,10 @@ packages:
     resolution: {integrity: sha512-3CijvrO9utx598kjr45hTbbeeykQrQfKmSnxeWOgU25TOEpvcipD/bYDQWIqUv1Oc6KK4YStokSMu/FBNecGUQ==}
     engines: {node: '>=16'}
 
+  '@wallet-standard/app@1.1.1':
+    resolution: {integrity: sha512-WDGwoByhP5gwHH01r5EaLgQdLVkACPCdOMQhmhn8rsm10h/siSgTorShzBxrn0ExSPof+Lu+C3TfgqBrPa1xoQ==}
+    engines: {node: '>=22'}
+
   '@wallet-standard/base@1.1.0':
     resolution: {integrity: sha512-DJDQhjKmSNVLKWItoKThJS+CsJQjR9AOBOirBVT1F9YpRyC9oYHE+ZnSf8y8bxUphtKqdQMPVQ2mHohYdRvDVQ==}
     engines: {node: '>=16'}
@@ -3917,6 +3940,10 @@ packages:
   '@wallet-standard/features@1.1.0':
     resolution: {integrity: sha512-hiEivWNztx73s+7iLxsuD1sOJ28xtRix58W7Xnz4XzzA/pF0+aicnWgjOdA10doVDEDZdUuZCIIqG96SFNlDUg==}
     engines: {node: '>=16'}
+
+  '@wallet-standard/features@1.1.1':
+    resolution: {integrity: sha512-aCWYmVeSCGViyEU5k7GMoW8zxE4Gs+C1s1Pp2XLesvSNlnZ4PMES9HUnTB3hl0b3RVj7C61yze3IWyrncqg4MA==}
+    engines: {node: '>=22'}
 
   '@wallet-standard/react-core@1.0.1':
     resolution: {integrity: sha512-g+vZaLlAGlYMwZEoKsmjjI5qz1D8P3FF1aqiI3WLooWOVk55Nszbpk01QCbIFdIMF0UDhxia2FU667TCv509iw==}
@@ -9342,6 +9369,25 @@ snapshots:
     dependencies:
       '@solana/kit': 7.1.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)
 
+  '@solana/kit-plugin-wallet@0.17.0(@solana/kit@7.1.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))(@solana/react@7.1.0(@solana/kit@7.1.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))(@tanstack/react-query@5.101.4(react@19.2.8))(fastestsmallesttextencoderdecoder@1.0.22)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(swr@2.5.1(react@19.2.8))(typescript@5.9.3))(fastestsmallesttextencoderdecoder@1.0.22)(react@19.2.8)(typescript@5.9.3)':
+    dependencies:
+      '@solana/kit': 7.1.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)
+      '@solana/wallet-account-signer': 7.1.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)
+      '@solana/wallet-standard-chains': 1.1.2
+      '@solana/wallet-standard-features': 1.4.0
+      '@wallet-standard/app': 1.1.1
+      '@wallet-standard/base': 1.1.1
+      '@wallet-standard/features': 1.1.1
+      '@wallet-standard/ui': 1.0.3
+      '@wallet-standard/ui-features': 1.0.3
+      '@wallet-standard/ui-registry': 1.1.1
+    optionalDependencies:
+      '@solana/react': 7.1.0(@solana/kit@7.1.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10))(@tanstack/react-query@5.101.4(react@19.2.8))(fastestsmallesttextencoderdecoder@1.0.22)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(swr@2.5.1(react@19.2.8))(typescript@5.9.3)
+      react: 19.2.8
+    transitivePeerDependencies:
+      - fastestsmallesttextencoderdecoder
+      - typescript
+
   '@solana/kit@6.10.0(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)':
     dependencies:
       '@solana/accounts': 6.10.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)
@@ -10095,10 +10141,14 @@ snapshots:
     dependencies:
       '@wallet-standard/base': 1.1.1
 
+  '@solana/wallet-standard-chains@1.1.2':
+    dependencies:
+      '@wallet-standard/base': 1.1.1
+
   '@solana/wallet-standard-features@1.4.0':
     dependencies:
       '@wallet-standard/base': 1.1.1
-      '@wallet-standard/features': 1.1.0
+      '@wallet-standard/features': 1.1.1
 
   '@solana/web3.js@1.98.4(bufferutil@4.0.9)(typescript@5.9.3)(utf-8-validate@5.0.10)':
     dependencies:
@@ -10812,6 +10862,10 @@ snapshots:
     dependencies:
       '@wallet-standard/base': 1.1.1
 
+  '@wallet-standard/app@1.1.1':
+    dependencies:
+      '@wallet-standard/base': 1.1.1
+
   '@wallet-standard/base@1.1.0': {}
 
   '@wallet-standard/base@1.1.1': {}
@@ -10831,6 +10885,10 @@ snapshots:
       '@wallet-standard/base': 1.1.1
 
   '@wallet-standard/features@1.1.0':
+    dependencies:
+      '@wallet-standard/base': 1.1.1
+
+  '@wallet-standard/features@1.1.1':
     dependencies:
       '@wallet-standard/base': 1.1.1
 
