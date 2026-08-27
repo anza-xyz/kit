@@ -72,10 +72,9 @@ export type MessagePartialSigner<TAddress extends string = string> = Readonly<{
  *
  * @see {@link assertIsMessagePartialSigner}
  */
-export function isMessagePartialSigner<TAddress extends string>(value: {
-    [key: string]: unknown;
-    address: Address<TAddress>;
-}): value is MessagePartialSigner<TAddress> {
+export function isMessagePartialSigner<TAddress extends string, TValue extends { address: Address<TAddress> }>(
+    value: TValue,
+): value is MessagePartialSigner<TAddress> & TValue {
     return 'signMessages' in value && typeof value.signMessages === 'function';
 }
 
@@ -96,10 +95,9 @@ export function isMessagePartialSigner<TAddress extends string>(value: {
  *
  * @see {@link isMessagePartialSigner}
  */
-export function assertIsMessagePartialSigner<TAddress extends string>(value: {
-    [key: string]: unknown;
-    address: Address<TAddress>;
-}): asserts value is MessagePartialSigner<TAddress> {
+export function assertIsMessagePartialSigner<TAddress extends string, TValue extends { address: Address<TAddress> }>(
+    value: TValue,
+): asserts value is MessagePartialSigner<TAddress> & TValue {
     if (!isMessagePartialSigner(value)) {
         throw new SolanaError(SOLANA_ERROR__SIGNER__EXPECTED_MESSAGE_PARTIAL_SIGNER, {
             address: value.address,

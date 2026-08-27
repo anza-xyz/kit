@@ -18,3 +18,19 @@ const signMessages = () => {};
     assertIsMessagePartialSigner(potentialSigner);
     potentialSigner satisfies MessagePartialSigner<'1'>;
 }
+
+{
+    // [isMessagePartialSigner]: It accepts class instances, which have no implicit index signature.
+    class MyMessagePartialSigner implements MessagePartialSigner<'1'> {
+        readonly address = address('1');
+        signMessages() {
+            return Promise.resolve([]);
+        }
+    }
+    const potentialSigner: MyMessagePartialSigner = new MyMessagePartialSigner();
+    if (isMessagePartialSigner(potentialSigner)) {
+        potentialSigner satisfies MessagePartialSigner<'1'>;
+    }
+    assertIsMessagePartialSigner(potentialSigner);
+    potentialSigner satisfies MessagePartialSigner<'1'>;
+}

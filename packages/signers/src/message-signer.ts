@@ -34,10 +34,9 @@ export type MessageSigner<TAddress extends string = string> =
  *
  * @see {@link assertIsMessageSigner}
  */
-export function isMessageSigner<TAddress extends string>(value: {
-    [key: string]: unknown;
-    address: Address<TAddress>;
-}): value is MessageSigner<TAddress> {
+export function isMessageSigner<TAddress extends string, TValue extends { address: Address<TAddress> }>(
+    value: TValue,
+): value is MessageSigner<TAddress> & TValue {
     return isMessagePartialSigner(value) || isMessageModifyingSigner(value);
 }
 
@@ -59,10 +58,9 @@ export function isMessageSigner<TAddress extends string>(value: {
  *
  * @see {@link isMessageSigner}
  */
-export function assertIsMessageSigner<TAddress extends string>(value: {
-    [key: string]: unknown;
-    address: Address<TAddress>;
-}): asserts value is MessageSigner<TAddress> {
+export function assertIsMessageSigner<TAddress extends string, TValue extends { address: Address<TAddress> }>(
+    value: TValue,
+): asserts value is MessageSigner<TAddress> & TValue {
     if (!isMessageSigner(value)) {
         throw new SolanaError(SOLANA_ERROR__SIGNER__EXPECTED_MESSAGE_SIGNER, {
             address: value.address,
