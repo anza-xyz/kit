@@ -77,12 +77,16 @@ export function assertIsValidHeapSize(heapSize: number): void {
  * Throws if the given loaded accounts data size limit is one the runtime will not honor as written.
  *
  * The limit must be an integer between {@link MIN_LOADED_ACCOUNTS_DATA_SIZE_LIMIT} and
- * {@link MAX_LOADED_ACCOUNTS_DATA_SIZE_LIMIT} inclusive. The two ends of that range fail
- * differently. A limit of zero is rejected outright by the runtime, which fails the transaction
- * with `SOLANA_ERROR__TRANSACTION_ERROR__INVALID_LOADED_ACCOUNTS_DATA_SIZE_LIMIT`. A limit above
- * the maximum does not fail the transaction; the runtime clamps the request down to that maximum,
- * so the transaction runs against a budget other than the one that was asked for. Failing here
- * surfaces both at the point the value is set.
+ * {@link MAX_LOADED_ACCOUNTS_DATA_SIZE_LIMIT} inclusive, and the two ends of that range fail
+ * differently. A limit of zero fails the transaction: the runtime rejects it with
+ * `TransactionError::InvalidLoadedAccountsDataSizeLimit`, surfaced here as
+ * `SOLANA_ERROR__TRANSACTION_ERROR__INVALID_LOADED_ACCOUNTS_DATA_SIZE_LIMIT`. A limit above the
+ * maximum does not fail the transaction; it is clamped down to the maximum, so the transaction
+ * quietly runs against a budget other than the one that was requested. Failing here surfaces both
+ * at the point the value is set.
+ *
+ * Both behaviours come from the same expression in the runtime's compute budget sanitizer:
+ * https://github.com/anza-xyz/agave/blob/1f6e0fbf3d8ae4a37364a1d9eb31c6b5bcac8869/compute-budget-instruction/src/compute_budget_instruction_details.rs#L136-L145
  *
  * @param loadedAccountsDataSizeLimit - The loaded accounts data size limit, in bytes, to check.
  *
