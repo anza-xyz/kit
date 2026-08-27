@@ -1,5 +1,23 @@
 # @solana/transaction-confirmation
 
+## 8.1.0
+
+### Patch Changes
+
+- [#1994](https://github.com/anza-xyz/kit/pull/1994) [`490ac9e`](https://github.com/anza-xyz/kit/commit/490ac9e5effbce91e97bee0d911dc26ff05e3967) Thanks [@matusbalascak](https://github.com/matusbalascak)! - Fix transaction confirmation and coalesced RPC request cancellation in environments where abort events have a null target.
+
+- Updated dependencies [[`490ac9e`](https://github.com/anza-xyz/kit/commit/490ac9e5effbce91e97bee0d911dc26ff05e3967), [`6852054`](https://github.com/anza-xyz/kit/commit/68520546649225b6594fe1137ff54ab6609c6d06), [`7d56e29`](https://github.com/anza-xyz/kit/commit/7d56e29bcd5f38fb53300e03e039d4d329a9e04f)]:
+    - @solana/rpc@8.1.0
+    - @solana/codecs-strings@8.1.0
+    - @solana/transaction-messages@8.1.0
+    - @solana/errors@8.1.0
+    - @solana/addresses@8.1.0
+    - @solana/keys@8.1.0
+    - @solana/rpc-types@8.1.0
+    - @solana/transactions@8.1.0
+    - @solana/rpc-subscriptions@8.1.0
+    - @solana/promises@8.1.0
+
 ## 8.0.0
 
 ### Patch Changes

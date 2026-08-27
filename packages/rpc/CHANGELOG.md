@@ -1,5 +1,22 @@
 # @solana/rpc
 
+## 8.1.0
+
+### Patch Changes
+
+- [#1994](https://github.com/anza-xyz/kit/pull/1994) [`490ac9e`](https://github.com/anza-xyz/kit/commit/490ac9e5effbce91e97bee0d911dc26ff05e3967) Thanks [@matusbalascak](https://github.com/matusbalascak)! - Fix transaction confirmation and coalesced RPC request cancellation in environments where abort events have a null target.
+
+- Updated dependencies [[`7d56e29`](https://github.com/anza-xyz/kit/commit/7d56e29bcd5f38fb53300e03e039d4d329a9e04f)]:
+    - @solana/errors@8.1.0
+    - @solana/rpc-api@8.1.0
+    - @solana/rpc-types@8.1.0
+    - @solana/rpc-spec@8.1.0
+    - @solana/rpc-spec-types@8.1.0
+    - @solana/rpc-transformers@8.1.0
+    - @solana/rpc-transport-http@8.1.0
+    - @solana/fast-stable-stringify@8.1.0
+    - @solana/functional@8.1.0
+
 ## 8.0.0
 
 ### Patch Changes

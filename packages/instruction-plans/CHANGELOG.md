@@ -1,5 +1,21 @@
 # @solana/instruction-plans
 
+## 8.1.0
+
+### Minor Changes
+
+- [#1995](https://github.com/anza-xyz/kit/pull/1995) [`95a2788`](https://github.com/anza-xyz/kit/commit/95a2788032731c62238508a73468b355b7fa13da) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `createTransactionPlanExecutorWithConcurrentLeaves` to concurrently transform every transaction plan leaf while preserving the plan's result shape.
+
+### Patch Changes
+
+- Updated dependencies [[`7d56e29`](https://github.com/anza-xyz/kit/commit/7d56e29bcd5f38fb53300e03e039d4d329a9e04f)]:
+    - @solana/transaction-messages@8.1.0
+    - @solana/errors@8.1.0
+    - @solana/instructions@8.1.0
+    - @solana/keys@8.1.0
+    - @solana/transactions@8.1.0
+    - @solana/promises@8.1.0
+
 ## 8.0.0
 
 ### Major Changes
