@@ -256,6 +256,7 @@ import {
     SOLANA_ERROR__TRANSACTION__CANNOT_DECODE_EMPTY_TRANSACTION_BYTES,
     SOLANA_ERROR__TRANSACTION__CANNOT_ENCODE_WITH_EMPTY_MESSAGE_BYTES,
     SOLANA_ERROR__TRANSACTION__CANNOT_ENCODE_WITH_EMPTY_SIGNATURES,
+    SOLANA_ERROR__TRANSACTION__COMPUTE_UNIT_LIMIT_OUT_OF_RANGE,
     SOLANA_ERROR__TRANSACTION__EXCEEDS_SIZE_LIMIT,
     SOLANA_ERROR__TRANSACTION__EXPECTED_BLOCKHASH_LIFETIME,
     SOLANA_ERROR__TRANSACTION__EXPECTED_NONCE_LIFETIME,
@@ -273,6 +274,7 @@ import {
     SOLANA_ERROR__TRANSACTION__INSTRUCTION_HEADERS_PAYLOADS_MISMATCH,
     SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_MASK_PRIORITY_FEE_BITS,
     SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_VALUE_KIND,
+    SOLANA_ERROR__TRANSACTION__INVALID_HEAP_SIZE,
     SOLANA_ERROR__TRANSACTION__INVALID_NONCE_ACCOUNT_INDEX,
     SOLANA_ERROR__TRANSACTION__INVALID_NONCE_TRANSACTION_FIRST_INSTRUCTION_MUST_BE_ADVANCE_NONCE,
     SOLANA_ERROR__TRANSACTION__INVALID_NONCE_TRANSACTION_INSTRUCTIONS_MISSING,
@@ -833,6 +835,8 @@ export const SolanaErrorMessages: Readonly<{
     [SOLANA_ERROR__TRANSACTION__ADDRESS_MISSING]: 'Transaction is missing an address at index: $index.',
     [SOLANA_ERROR__TRANSACTION__CANNOT_ENCODE_WITH_EMPTY_SIGNATURES]:
         'Transaction has no expected signers therefore it cannot be encoded',
+    [SOLANA_ERROR__TRANSACTION__COMPUTE_UNIT_LIMIT_OUT_OF_RANGE]:
+        'Transaction compute unit limit must be an integer in the range [0, $maxComputeUnitLimit]. `$computeUnitLimit` given',
     [SOLANA_ERROR__TRANSACTION__EXCEEDS_SIZE_LIMIT]:
         'Transaction size $transactionSize exceeds limit of $transactionSizeLimit bytes',
     [SOLANA_ERROR__TRANSACTION__EXPECTED_BLOCKHASH_LIFETIME]: 'Transaction does not have a blockhash lifetime',
@@ -898,6 +902,8 @@ export const SolanaErrorMessages: Readonly<{
         'Transaction version 0 must be encoded with signatures first. This transaction was encoded with first byte $firstByte, which is expected to be a signature count for v0 transactions.',
     [SOLANA_ERROR__TRANSACTION__SIGNATURE_COUNT_TOO_HIGH_FOR_TRANSACTION_BYTES]:
         'The provided transaction bytes expect that there should be $numExpectedSignatures signatures, but the bytes are not long enough to contain a transaction message with this many signatures. The provided bytes are $transactionBytesLength bytes long.',
+    [SOLANA_ERROR__TRANSACTION__INVALID_HEAP_SIZE]:
+        'Transaction heap size must be an integer multiple of $multipleOf bytes in the range [$minHeapSize, $maxHeapSize]. `$heapSize` given',
     [SOLANA_ERROR__TRANSACTION__INVALID_NONCE_ACCOUNT_INDEX]:
         'The transaction has a durable nonce lifetime, but the nonce account index is invalid. Expected a nonce account index less than $numberOfStaticAccounts, got $nonceAccountIndex.',
     [SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_VALUE_KIND]:

@@ -740,4 +740,26 @@ describe('decompileTransactionMessage (v1)', () => {
             });
         });
     });
+
+    describe('for a transaction carrying resource limits the runtime would reject', () => {
+        it('decodes rather than throwing', () => {
+            // Setting these values through `setTransactionMessageConfig` throws, but decoding must
+            // stay permissive so that callers can inspect any transaction that reaches them.
+            const compiledTransaction: CompiledTransactionMessageWithLifetime & V1CompiledTransactionMessage = {
+                ...getMockV1CompiledTransactionMessage(),
+                configMask: 0b10100,
+                configValues: [
+                    { kind: 'u32', value: 1_400_001 },
+                    { kind: 'u32', value: 40_000 },
+                ] as CompiledTransactionConfigValue[],
+            };
+
+            const transaction = decompileTransactionMessage(compiledTransaction);
+
+            expect(transaction.config).toStrictEqual({
+                computeUnitLimit: 1_400_001,
+                heapSize: 40_000,
+            });
+        });
+    });
 });

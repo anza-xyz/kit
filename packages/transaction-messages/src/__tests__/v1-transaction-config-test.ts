@@ -1,6 +1,11 @@
 import '@solana/test-matchers/toBeFrozenObject';
 
-import { SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_MASK_PRIORITY_FEE_BITS, SolanaError } from '@solana/errors';
+import {
+    SOLANA_ERROR__TRANSACTION__COMPUTE_UNIT_LIMIT_OUT_OF_RANGE,
+    SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_MASK_PRIORITY_FEE_BITS,
+    SOLANA_ERROR__TRANSACTION__INVALID_HEAP_SIZE,
+    SolanaError,
+} from '@solana/errors';
 
 import { TransactionMessage } from '../transaction-message';
 import {
@@ -15,7 +20,7 @@ import {
 const COMPUTE_UNIT_LIMIT_A = 200_000;
 const COMPUTE_UNIT_LIMIT_B = 400_000;
 
-const HEAP_SIZE_A = 30_000;
+const HEAP_SIZE_A = 32_768; // 32 KiB
 const LOADED_ACCOUNTS_DATA_SIZE_LIMIT_A = 60_000;
 const PRIORITY_FEE_LAMPORTS_A = 5_000n;
 
@@ -289,5 +294,39 @@ describe('transactionConfigMaskHasHeapSize', () => {
     it('returns false when bit 4 is unset but other bits are set', () => {
         const mask = 0b01111;
         expect(transactionConfigMaskHasHeapSize(mask)).toBe(false);
+    });
+});
+
+describe('setTransactionMessageConfig validation', () => {
+    it('throws when the compute unit limit exceeds the maximum', () => {
+        expect(() => setTransactionMessageConfig({ computeUnitLimit: 1_400_001 }, baseTx)).toThrow(
+            new SolanaError(SOLANA_ERROR__TRANSACTION__COMPUTE_UNIT_LIMIT_OUT_OF_RANGE, {
+                computeUnitLimit: 1_400_001,
+                maxComputeUnitLimit: 1_400_000,
+            }),
+        );
+    });
+
+    it('throws when the heap size is not a multiple of 1 KiB', () => {
+        expect(() => setTransactionMessageConfig({ heapSize: 40_000 }, baseTx)).toThrow(
+            new SolanaError(SOLANA_ERROR__TRANSACTION__INVALID_HEAP_SIZE, {
+                heapSize: 40_000,
+                maxHeapSize: 262_144,
+                minHeapSize: 32_768,
+                multipleOf: 1024,
+            }),
+        );
+    });
+
+    it('leaves the transaction unmodified when validation fails', () => {
+        const tx = setTransactionMessageConfig({ computeUnitLimit: COMPUTE_UNIT_LIMIT_A }, baseTx);
+        expect(() => setTransactionMessageConfig({ heapSize: 40_000 }, tx)).toThrow();
+        expect(tx.config).toStrictEqual({ computeUnitLimit: COMPUTE_UNIT_LIMIT_A });
+    });
+
+    it('accepts valid resource limits', () => {
+        expect(() =>
+            setTransactionMessageConfig({ computeUnitLimit: 1_400_000, heapSize: 262_144 }, baseTx),
+        ).not.toThrow();
     });
 });
