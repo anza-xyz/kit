@@ -341,6 +341,18 @@ describe('estimateAndSetResourceLimitsFactory', () => {
         },
     );
 
+    it('replaces both limits written by fillTransactionMessageProvisoryResourceLimits', async () => {
+        // The documented workflow: reserve space with provisory limits during construction, then
+        // estimate and replace them before sending. Both halves have to agree on the sentinel.
+        expect.assertions(2);
+        const mockEstimator = jest.fn().mockResolvedValue({ computeUnitLimit: 42, loadedAccountsDataSizeLimit: 1234 });
+        const estimateAndSet = estimateAndSetResourceLimitsFactory(mockEstimator);
+        const filled = fillTransactionMessageProvisoryResourceLimits(MOCK_V1_MESSAGE);
+        const result = await estimateAndSet(filled);
+        expect(getTransactionMessageComputeUnitLimit(result)).toBe(42);
+        expect(getTransactionMessageLoadedAccountsDataSizeLimit(result)).toBe(1234);
+    });
+
     it('preserves an explicitly set v1 loaded accounts data size limit', async () => {
         expect.assertions(2);
         const mockEstimator = jest.fn();
