@@ -2,9 +2,6 @@ name: Preview Documentation
 
 on:
   pull_request:
-    paths:
-      - 'docs/**'
-      - '.github/workflows/preview-docs.yml'
 
 permissions:
   contents: read
@@ -23,8 +20,29 @@ env:
   TURBO_TEAM: ${{ vars.TURBO_TEAM }}
 
 jobs:
-  preview-docs:
+  detect-docs-changes:
     permissions:
+      contents: read
+      pull-requests: read
+    runs-on: ubuntu-latest
+    name: Detect Documentation Changes
+    outputs:
+      docs: ${{ steps.filter.outputs.docs }}
+    steps:
+      - name: Detect Documentation Changes
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: filter
+        with:
+          filters: |
+            docs:
+              - 'docs/**'
+              - '.github/workflows/preview-docs.yml'
+
+  preview-docs:
+    needs: detect-docs-changes
+    if: needs.detect-docs-changes.outputs.docs == 'true'
+    permissions:
+      contents: read
       pull-requests: write
     runs-on: ubuntu-latest
     name: Build Documentation Preview
@@ -72,3 +90,35 @@ jobs:
           PREVIEW_URL: '${{ steps.vercel_deploy.outputs.preview_url }}'
         run: |
           gh pr comment $PR_NUMBER --body "Documentation Preview: $PREVIEW_URL" --create-if-none --edit-last
+
+  preview-docs-gate:
+    needs:
+      - detect-docs-changes
+      - preview-docs
+    # We use always() to ensure this step runs even if the previous steps fail
+    # Don't check cancelled() because then cancelling the workflow would make this pass
+    if: always()
+    runs-on: ubuntu-latest
+    name: Documentation Preview Gate
+    steps:
+      - name: Verify Documentation Preview Result
+        shell: bash
+        env:
+          DETECT_RESULT: ${{ needs.detect-docs-changes.result }}
+          DOCS_CHANGED: ${{ needs.detect-docs-changes.outputs.docs }}
+          PREVIEW_RESULT: ${{ needs.preview-docs.result }}
+        run: |
+          if [[ "$DETECT_RESULT" != 'success' ]]; then
+            echo "Documentation change detection did not succeed: $DETECT_RESULT"
+            exit 1
+          fi
+
+          if [[ "$DOCS_CHANGED" == 'true' && "$PREVIEW_RESULT" != 'success' ]]; then
+            echo "Documentation preview did not succeed: $PREVIEW_RESULT"
+            exit 1
+          fi
+
+          if [[ "$DOCS_CHANGED" != 'true' && "$DOCS_CHANGED" != 'false' ]]; then
+            echo "Documentation change detection returned an invalid result: $DOCS_CHANGED"
+            exit 1
+          fi
