@@ -16,11 +16,13 @@ export const MAX_HEAP_SIZE = 256 * 1024;
 export const HEAP_SIZE_MULTIPLE_OF = 1024;
 
 /**
- * Throws if the given compute unit limit is outside the range the runtime accepts.
+ * Throws if the given compute unit limit is one the runtime will not honor as written.
  *
  * A transaction may request at most {@link MAX_COMPUTE_UNIT_LIMIT} compute units. Requesting more
- * is rejected when the transaction is sanitized, so we fail here rather than let it become a failed
- * transaction at simulation or send time.
+ * does not fail the transaction; the runtime clamps the request down to that maximum, so the budget
+ * the transaction runs with is silently not the one that was asked for. Values that are not
+ * integers are a separate hazard, since they cannot be encoded as a `u32` and are not clamped.
+ * Failing here surfaces both at the point the value is set.
  *
  * @param computeUnitLimit - The compute unit limit to check.
  *
