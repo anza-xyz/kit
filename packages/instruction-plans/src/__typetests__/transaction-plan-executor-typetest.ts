@@ -11,12 +11,16 @@ import { compileTransaction, Transaction, TransactionWithBlockhashLifetime } fro
 
 import {
     CanceledSingleTransactionPlanResult,
+    type ConcurrentLeafTransactionPlanExecutorConfig,
     createTransactionPlanExecutor,
+    createTransactionPlanExecutorWithConcurrentLeaves,
     FailedSingleTransactionPlanResult,
     flattenTransactionPlanResult,
     passthroughFailedTransactionPlanExecution,
+    type SingleTransactionPlan,
     SingleTransactionPlanResult,
     SuccessfulSingleTransactionPlanResult,
+    successfulSingleTransactionPlanResult,
     summarizeTransactionPlanResult,
     type TransactionPlan,
     type TransactionPlanExecutor,
@@ -231,6 +235,59 @@ import {
                 const transaction = compileTransaction(messageWithBlockhash);
                 transaction satisfies TransactionWithBlockhashLifetime;
                 return Promise.resolve({ signature: {} as Signature });
+            },
+        });
+    }
+}
+
+// [DESCRIBE] createTransactionPlanExecutorWithConcurrentLeaves
+{
+    // It creates an executor with the caller-defined result context.
+    {
+        const executor = createTransactionPlanExecutorWithConcurrentLeaves<{ transaction: Transaction }>({
+            executeSingleTransactionPlan: plan =>
+                Promise.resolve(
+                    successfulSingleTransactionPlanResult(plan.message, { transaction: {} as Transaction }),
+                ),
+        });
+        executor satisfies TransactionPlanExecutor<{ transaction: Transaction }>;
+    }
+
+    // It infers the result context from the callback when possible.
+    {
+        const executor = createTransactionPlanExecutorWithConcurrentLeaves({
+            executeSingleTransactionPlan: plan =>
+                Promise.resolve(successfulSingleTransactionPlanResult(plan.message, { custom: 'value' })),
+        });
+        executor satisfies TransactionPlanExecutor<{ custom: string }>;
+    }
+
+    // Its config type requires the caller to define the result context.
+    {
+        // @ts-expect-error The concurrent leaf result context has no default.
+        type ConfigWithoutContext = ConcurrentLeafTransactionPlanExecutorConfig;
+        void (null as unknown as ConfigWithoutContext);
+    }
+
+    // Its callback receives a single transaction plan and the optional abort signal.
+    {
+        createTransactionPlanExecutorWithConcurrentLeaves<{ custom: string }>({
+            executeSingleTransactionPlan: (plan, config) => {
+                plan satisfies SingleTransactionPlan;
+                config?.abortSignal satisfies AbortSignal | undefined;
+                return Promise.resolve(successfulSingleTransactionPlanResult(plan.message, { custom: 'value' }));
+            },
+        });
+    }
+
+    // Its callback must return a result carrying the configured context.
+    {
+        createTransactionPlanExecutorWithConcurrentLeaves<{ custom: string }>({
+            // @ts-expect-error The returned result context is missing the `custom` property.
+            executeSingleTransactionPlan: plan => {
+                return Promise.resolve(
+                    successfulSingleTransactionPlanResult(plan.message, { signature: {} as Signature }),
+                );
             },
         });
     }

@@ -18,6 +18,8 @@ import { createFailedToExecuteTransactionPlanError } from './transaction-plan-er
 import {
     canceledSingleTransactionPlanResult,
     failedSingleTransactionPlanResult,
+    isSuccessfulTransactionPlanResult,
+    nonDivisibleSequentialTransactionPlanResult,
     parallelTransactionPlanResult,
     sequentialTransactionPlanResult,
     SingleTransactionPlanResult,
@@ -74,6 +76,26 @@ export type TransactionPlanExecutorConfig<
      * `TContext` promises, which by default includes a `signature`.
      */
     executeTransactionMessage: ExecuteTransactionMessage<TContext>;
+};
+
+/**
+ * Configuration for an executor that processes every transaction plan leaf concurrently.
+ *
+ * @typeParam TContext - The context carried by each single transaction plan result.
+ *
+ * @see {@link createTransactionPlanExecutorWithConcurrentLeaves}
+ */
+export type ConcurrentLeafTransactionPlanExecutorConfig<TContext extends TransactionPlanResultContext> = {
+    /**
+     * Executes a single transaction plan and returns its result.
+     *
+     * The executor calls this function concurrently for every leaf in the plan and forwards
+     * the optional abort signal.
+     */
+    executeSingleTransactionPlan: (
+        transactionPlan: SingleTransactionPlan,
+        config?: { abortSignal?: AbortSignal },
+    ) => Promise<SingleTransactionPlanResult<TContext>>;
 };
 
 /**
@@ -201,6 +223,103 @@ export function createTransactionPlanExecutor<
 
         return transactionPlanResult;
     };
+}
+
+/**
+ * Creates a transaction plan executor that processes every leaf concurrently.
+ *
+ * The executor preserves the input plan's nesting, order, and divisibility in the returned
+ * result, but it does not enforce the execution dependencies expressed by sequential plans.
+ * This makes it suitable for operations such as signing or serializing transactions that can
+ * be performed independently. All leaf callbacks are started without a concurrency limit.
+ *
+ * The optional abort signal is forwarded to every leaf callback and enforced by the executor.
+ * When the signal is already aborted, leaves are canceled without invoking their callbacks. When
+ * it is aborted during execution, the executor stops waiting for active callbacks and records
+ * failed results carrying the abort reason.
+ *
+ * Errors thrown by a callback are converted to failed single transaction plan results without
+ * canceling any other leaves. After all leaves settle, a plan containing failed or canceled results
+ * throws a failed execution error containing the complete result tree.
+ *
+ * @typeParam TContext - The caller-defined context carried by each single transaction plan result.
+ * @param config - Configuration containing the function used to execute each leaf.
+ * @return A {@link TransactionPlanExecutor} that processes all transaction plan leaves concurrently.
+ * @throws {@link SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN}
+ *   if any leaf callback throws or returns a failed or canceled result. The error context contains
+ *   a `transactionPlanResult` property with the complete result tree.
+ * @throws {@link SOLANA_ERROR__INVARIANT_VIOLATION__INVALID_TRANSACTION_PLAN_KIND} if the plan has an unknown kind.
+ *
+ * @example
+ * Signing every transaction in a plan concurrently.
+ * ```ts
+ * const executor = createTransactionPlanExecutorWithConcurrentLeaves<{ transaction: Transaction }>({
+ *     executeSingleTransactionPlan: async (plan, { abortSignal } = {}) => {
+ *         abortSignal?.throwIfAborted();
+ *         const transaction = await signTransactionMessageWithSigners(plan.message);
+ *         return successfulSingleTransactionPlanResult(plan.message, { transaction });
+ *     },
+ * });
+ * const result = await executor(transactionPlan);
+ * ```
+ *
+ * @see {@link ConcurrentLeafTransactionPlanExecutorConfig}
+ * @see {@link createTransactionPlanExecutor}
+ */
+export function createTransactionPlanExecutorWithConcurrentLeaves<TContext extends TransactionPlanResultContext>(
+    config: ConcurrentLeafTransactionPlanExecutorConfig<TContext>,
+): TransactionPlanExecutor<TContext> {
+    return async (transactionPlan, executorConfig) => {
+        const transactionPlanResult = await traverseTransactionPlanLeavesConcurrently(
+            transactionPlan,
+            config.executeSingleTransactionPlan,
+            executorConfig,
+        );
+        if (executorConfig?.abortSignal?.aborted || !isSuccessfulTransactionPlanResult(transactionPlanResult)) {
+            const abortReason = executorConfig?.abortSignal?.aborted ? executorConfig.abortSignal.reason : undefined;
+            throw createFailedToExecuteTransactionPlanError(transactionPlanResult, abortReason);
+        }
+        return transactionPlanResult;
+    };
+}
+
+async function traverseTransactionPlanLeavesConcurrently<TContext extends TransactionPlanResultContext>(
+    transactionPlan: TransactionPlan,
+    executeSingleTransactionPlan: ConcurrentLeafTransactionPlanExecutorConfig<TContext>['executeSingleTransactionPlan'],
+    executorConfig?: { abortSignal?: AbortSignal },
+): Promise<TransactionPlanResult<TContext>> {
+    const kind = transactionPlan.kind;
+    switch (kind) {
+        case 'single':
+            if (executorConfig?.abortSignal?.aborted) {
+                return canceledSingleTransactionPlanResult<TContext>(transactionPlan.message);
+            }
+            try {
+                return await getAbortablePromise(
+                    executeSingleTransactionPlan(transactionPlan, executorConfig),
+                    executorConfig?.abortSignal,
+                );
+            } catch (error) {
+                return failedSingleTransactionPlanResult<TContext>(transactionPlan.message, error as Error);
+            }
+        case 'parallel':
+        case 'sequential': {
+            const plans = await Promise.all(
+                transactionPlan.plans.map(plan =>
+                    traverseTransactionPlanLeavesConcurrently(plan, executeSingleTransactionPlan, executorConfig),
+                ),
+            );
+            if (kind === 'parallel') {
+                return parallelTransactionPlanResult(plans);
+            }
+            return transactionPlan.divisible
+                ? sequentialTransactionPlanResult(plans)
+                : nonDivisibleSequentialTransactionPlanResult(plans);
+        }
+        default:
+            kind satisfies never;
+            throw new SolanaError(SOLANA_ERROR__INVARIANT_VIOLATION__INVALID_TRANSACTION_PLAN_KIND, { kind });
+    }
 }
 
 type TraverseConfig<TContext extends TransactionPlanResultContext> = TransactionPlanExecutorConfig<TContext> & {
