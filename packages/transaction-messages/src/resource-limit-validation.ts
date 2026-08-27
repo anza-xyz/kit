@@ -78,15 +78,17 @@ export function assertIsValidHeapSize(heapSize: number): void {
  *
  * The limit must be an integer between {@link MIN_LOADED_ACCOUNTS_DATA_SIZE_LIMIT} and
  * {@link MAX_LOADED_ACCOUNTS_DATA_SIZE_LIMIT} inclusive, and the two ends of that range fail
- * differently. A limit of zero fails the transaction: the runtime rejects it with
- * `TransactionError::InvalidLoadedAccountsDataSizeLimit`, surfaced here as
- * `SOLANA_ERROR__TRANSACTION_ERROR__INVALID_LOADED_ACCOUNTS_DATA_SIZE_LIMIT`. A limit above the
- * maximum does not fail the transaction; it is clamped down to the maximum, so the transaction
- * quietly runs against a budget other than the one that was requested. Failing here surfaces both
- * at the point the value is set.
+ * differently. Zero is not a limit the runtime can represent at all: it carries the limit as a
+ * `NonZeroU32`, and the compute budget instruction path rejects a zero request outright with
+ * `TransactionError::InvalidLoadedAccountsDataSizeLimit`. A limit above the maximum does not fail
+ * the transaction; it is clamped down to the maximum, so the transaction quietly runs against a
+ * budget other than the one that was requested. Failing here surfaces both at the point the value
+ * is set.
  *
- * Both behaviours come from the same expression in the runtime's compute budget sanitizer:
+ * The reject-then-clamp behaviour is this expression in the compute budget sanitizer:
  * https://github.com/anza-xyz/agave/blob/1f6e0fbf3d8ae4a37364a1d9eb31c6b5bcac8869/compute-budget-instruction/src/compute_budget_instruction_details.rs#L136-L145
+ * and the `NonZeroU32` that makes zero unrepresentable is on the budget itself:
+ * https://github.com/anza-xyz/agave/blob/2a165e7a90af75c76426d1e031ed0284211d5d1e/program-runtime/src/execution_budget.rs#L312-L316
  *
  * @param loadedAccountsDataSizeLimit - The loaded accounts data size limit, in bytes, to check.
  *
