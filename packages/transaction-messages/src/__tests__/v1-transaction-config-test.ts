@@ -335,6 +335,35 @@ describe('setTransactionMessageConfig validation', () => {
         );
     });
 
+    it('does not re-validate a pre-existing config value when a different field is set', () => {
+        // A message decoded by `decompileTransactionMessage` may legitimately carry a value the
+        // runtime would reject. Only the incoming partial config is validated, so such a message
+        // stays editable field by field — including being fixed one field at a time.
+        const txWithInvalidLimit = {
+            ...baseTx,
+            config: { loadedAccountsDataSizeLimit: 0 },
+        } as typeof baseTx;
+        const result = setTransactionMessageConfig({ computeUnitLimit: COMPUTE_UNIT_LIMIT_A }, txWithInvalidLimit);
+        expect(result.config).toStrictEqual({
+            computeUnitLimit: COMPUTE_UNIT_LIMIT_A,
+            loadedAccountsDataSizeLimit: 0,
+        });
+    });
+
+    it('allows an invalid pre-existing loaded accounts data size limit to be corrected', () => {
+        const txWithInvalidLimit = {
+            ...baseTx,
+            config: { loadedAccountsDataSizeLimit: 0 },
+        } as typeof baseTx;
+        const result = setTransactionMessageConfig({ loadedAccountsDataSizeLimit: 60_000 }, txWithInvalidLimit);
+        expect(result.config).toStrictEqual({ loadedAccountsDataSizeLimit: 60_000 });
+    });
+
+    it('does not throw when clearing the loaded accounts data size limit', () => {
+        const tx = setTransactionMessageConfig({ loadedAccountsDataSizeLimit: 60_000 }, baseTx);
+        expect(() => setTransactionMessageConfig({ loadedAccountsDataSizeLimit: undefined }, tx)).not.toThrow();
+    });
+
     it('accepts valid resource limits', () => {
         expect(() =>
             setTransactionMessageConfig(

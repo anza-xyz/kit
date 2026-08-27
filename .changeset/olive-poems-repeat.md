@@ -12,4 +12,6 @@ The most likely break is code that buffers an estimated limit — `setTransactio
 
 Because zero is no longer a legal limit, `fillTransactionMessageProvisoryResourceLimits` now fills the loaded accounts data size limit of a version 1 message with 1 rather than 0, and `estimateAndSetResourceLimitsFactory` treats 1 as the provisory value it will replace with an estimate. The compute unit limit still uses 0. The placeholder occupies a fixed-width `u32` on the wire either way, so the space reserved for the eventual estimate is unchanged.
 
+`estimateAndSetResourceLimitsFactory` also continues to treat a loaded accounts data size limit of 0 as provisory, so a version 1 message built by an earlier version of this package — or decoded from a transaction that was — is still re-estimated rather than preserved into a transaction the runtime is guaranteed to reject.
+
 Decoding is unaffected: `decompileTransactionMessage` still returns messages carrying out-of-range values so that callers can inspect any transaction that reaches them.

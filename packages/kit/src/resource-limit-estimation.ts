@@ -26,6 +26,12 @@ const PROVISORY_COMPUTE_UNIT_LIMIT = 0;
 // stands in as the placeholder. Like the compute unit limit it occupies a fixed-width `u32` on the
 // wire, so the space reserved is the same either way.
 const PROVISORY_LOADED_ACCOUNTS_DATA_SIZE_LIMIT = 1;
+// Earlier versions of this package used zero as the provisory loaded accounts data size limit.
+// Because zero is never a legal limit, a message still carrying one — built by an older version, or
+// decoded from a transaction that was — cannot be expressing a deliberate choice. Treat it as
+// provisory too, so it is replaced by the estimate rather than preserved into a transaction the
+// runtime is guaranteed to reject.
+const LEGACY_PROVISORY_LOADED_ACCOUNTS_DATA_SIZE_LIMIT = 0;
 // From Agave: https://github.com/anza-xyz/agave/blob/2a165e7a90af75c76426d1e031ed0284211d5d1e/program-runtime/src/execution_budget.rs#L39
 const MAX_COMPUTE_UNIT_LIMIT = 1_400_000;
 // From Agave: https://github.com/anza-xyz/agave/blob/2a165e7a90af75c76426d1e031ed0284211d5d1e/program-runtime/src/execution_budget.rs#L53
@@ -178,8 +184,9 @@ export function estimateResourceLimitsFactory({
  * (1,400,000) as non-explicit, so messages that pre-set the max for simulation get re-estimated.
  *
  * For version 1 messages, the loaded accounts data size limit is updated only if it is unset or set
- * to the provisory value of 1. An explicit value — including the runtime maximum — is left
- * untouched, since callers who set it explicitly are signaling a deliberate choice.
+ * to the provisory value of 1 (or to 0, the provisory value used by earlier versions of this
+ * package, which is never a legal limit). An explicit value — including the runtime maximum — is
+ * left untouched, since callers who set it explicitly are signaling a deliberate choice.
  *
  * This is designed to work with {@link fillTransactionMessageProvisoryResourceLimits}: first add
  * provisory limits during transaction construction, then later estimate and replace them before
@@ -220,7 +227,8 @@ export function estimateAndSetResourceLimitsFactory(
                 getTransactionMessageLoadedAccountsDataSizeLimit(transactionMessage);
             loadedAccountsDataSizeLimitIsExplicit =
                 existingLoadedAccountsDataSizeLimit !== undefined &&
-                existingLoadedAccountsDataSizeLimit !== PROVISORY_LOADED_ACCOUNTS_DATA_SIZE_LIMIT;
+                existingLoadedAccountsDataSizeLimit !== PROVISORY_LOADED_ACCOUNTS_DATA_SIZE_LIMIT &&
+                existingLoadedAccountsDataSizeLimit !== LEGACY_PROVISORY_LOADED_ACCOUNTS_DATA_SIZE_LIMIT;
         }
 
         // Nothing to do — every applicable limit is already explicitly set.
