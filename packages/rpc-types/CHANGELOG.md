@@ -1,5 +1,18 @@
 # @solana/rpc-types
 
+## 8.1.0
+
+### Patch Changes
+
+- Updated dependencies [[`be30e32`](https://github.com/anza-xyz/kit/commit/be30e328304ed055817572fb67712d79454ca12e), [`6852054`](https://github.com/anza-xyz/kit/commit/68520546649225b6594fe1137ff54ab6609c6d06), [`7d56e29`](https://github.com/anza-xyz/kit/commit/7d56e29bcd5f38fb53300e03e039d4d329a9e04f)]:
+    - @solana/codecs-core@8.1.0
+    - @solana/codecs-strings@8.1.0
+    - @solana/errors@8.1.0
+    - @solana/addresses@8.1.0
+    - @solana/codecs-numbers@8.1.0
+    - @solana/fixed-points@8.1.0
+    - @solana/nominal-types@8.1.0
+
 ## 8.0.0
 
 ### Minor Changes

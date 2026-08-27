@@ -1,5 +1,16 @@
 # @solana/codecs-strings
 
+## 8.1.0
+
+### Patch Changes
+
+- [#1979](https://github.com/anza-xyz/kit/pull/1979) [`6852054`](https://github.com/anza-xyz/kit/commit/68520546649225b6594fe1137ff54ab6609c6d06) Thanks [@amilz](https://github.com/amilz)! - Fixed `getBase64Decoder()` throwing `RangeError: Maximum call stack size exceeded` in browser builds when decoding byte arrays larger than roughly 65KB. The bytes are now converted to a binary string in chunks rather than spread into a single `String.fromCharCode` call.
+
+- Updated dependencies [[`be30e32`](https://github.com/anza-xyz/kit/commit/be30e328304ed055817572fb67712d79454ca12e), [`7d56e29`](https://github.com/anza-xyz/kit/commit/7d56e29bcd5f38fb53300e03e039d4d329a9e04f)]:
+    - @solana/codecs-core@8.1.0
+    - @solana/errors@8.1.0
+    - @solana/codecs-numbers@8.1.0
+
 ## 8.0.0
 
 ### Patch Changes

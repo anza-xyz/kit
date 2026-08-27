@@ -1,5 +1,16 @@
 # @solana/codecs-data-structures
 
+## 8.1.0
+
+### Patch Changes
+
+- [#1971](https://github.com/anza-xyz/kit/pull/1971) [`c51b9f6`](https://github.com/anza-xyz/kit/commit/c51b9f645f7d007568d38e79f5ab6ff2f5f77f7f) Thanks [@shin4141](https://github.com/shin4141)! - Preserve the literal `fixedSize` type for single-field fixed-size struct codecs.
+
+- Updated dependencies [[`be30e32`](https://github.com/anza-xyz/kit/commit/be30e328304ed055817572fb67712d79454ca12e), [`7d56e29`](https://github.com/anza-xyz/kit/commit/7d56e29bcd5f38fb53300e03e039d4d329a9e04f)]:
+    - @solana/codecs-core@8.1.0
+    - @solana/errors@8.1.0
+    - @solana/codecs-numbers@8.1.0
+
 ## 8.0.0
 
 ### Patch Changes

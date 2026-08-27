@@ -1,5 +1,14 @@
 # @solana/codecs-core
 
+## 8.1.0
+
+### Patch Changes
+
+- [#1970](https://github.com/anza-xyz/kit/pull/1970) [`be30e32`](https://github.com/anza-xyz/kit/commit/be30e328304ed055817572fb67712d79454ca12e) Thanks [@koriyoshi2041](https://github.com/koriyoshi2041)! - Fix `toArrayBuffer` slicing SharedArrayBuffer-backed views from a non-zero byte offset.
+
+- Updated dependencies [[`7d56e29`](https://github.com/anza-xyz/kit/commit/7d56e29bcd5f38fb53300e03e039d4d329a9e04f)]:
+    - @solana/errors@8.1.0
+
 ## 8.0.0
 
 ### Patch Changes

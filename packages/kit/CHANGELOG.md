@@ -1,5 +1,38 @@
 # @solana/kit
 
+## 8.1.0
+
+### Patch Changes
+
+- Updated dependencies [[`490ac9e`](https://github.com/anza-xyz/kit/commit/490ac9e5effbce91e97bee0d911dc26ff05e3967), [`95a2788`](https://github.com/anza-xyz/kit/commit/95a2788032731c62238508a73468b355b7fa13da), [`7d56e29`](https://github.com/anza-xyz/kit/commit/7d56e29bcd5f38fb53300e03e039d4d329a9e04f)]:
+    - @solana/rpc@8.1.0
+    - @solana/transaction-confirmation@8.1.0
+    - @solana/instruction-plans@8.1.0
+    - @solana/transaction-messages@8.1.0
+    - @solana/errors@8.1.0
+    - @solana/accounts@8.1.0
+    - @solana/addresses@8.1.0
+    - @solana/codecs@8.1.0
+    - @solana/instructions@8.1.0
+    - @solana/keys@8.1.0
+    - @solana/offchain-messages@8.1.0
+    - @solana/program-client-core@8.1.0
+    - @solana/rpc-api@8.1.0
+    - @solana/rpc-types@8.1.0
+    - @solana/signers@8.1.0
+    - @solana/sysvars@8.1.0
+    - @solana/transaction-introspection@8.1.0
+    - @solana/transactions@8.1.0
+    - @solana/plugin-interfaces@8.1.0
+    - @solana/programs@8.1.0
+    - @solana/rpc-spec-types@8.1.0
+    - @solana/rpc-subscriptions@8.1.0
+    - @solana/subscribable@8.1.0
+    - @solana/rpc-parsed-types@8.1.0
+    - @solana/functional@8.1.0
+    - @solana/plugin-core@8.1.0
+    - @solana/promises@8.1.0
+
 ## 8.0.0
 
 ### Major Changes
