@@ -1,6 +1,7 @@
 import '@solana/test-matchers/toBeFrozenObject';
 
 import { Address } from '@solana/addresses';
+import { SOLANA_ERROR__TRANSACTION__LOADED_ACCOUNTS_DATA_SIZE_LIMIT_OUT_OF_RANGE, SolanaError } from '@solana/errors';
 
 import {
     COMPUTE_BUDGET_PROGRAM_ADDRESS,
@@ -270,6 +271,68 @@ describe('getTransactionMessageLoadedAccountsDataSizeLimit', () => {
                     version,
                 };
                 expect(getTransactionMessageLoadedAccountsDataSizeLimit(tx)).toBe(LOADED_ACCOUNTS_DATA_SIZE_LIMIT_A);
+            });
+        },
+    );
+});
+
+describe('setTransactionMessageLoadedAccountsDataSizeLimit validation', () => {
+    const MIN_LOADED_ACCOUNTS_DATA_SIZE_LIMIT = 1;
+    const MAX_LOADED_ACCOUNTS_DATA_SIZE_LIMIT = 64 * 1024 * 1024;
+
+    function expectOutOfRange(loadedAccountsDataSizeLimit: number) {
+        return new SolanaError(SOLANA_ERROR__TRANSACTION__LOADED_ACCOUNTS_DATA_SIZE_LIMIT_OUT_OF_RANGE, {
+            loadedAccountsDataSizeLimit,
+            maxLoadedAccountsDataSizeLimit: MAX_LOADED_ACCOUNTS_DATA_SIZE_LIMIT,
+            minLoadedAccountsDataSizeLimit: MIN_LOADED_ACCOUNTS_DATA_SIZE_LIMIT,
+        });
+    }
+
+    describe.each([{ version: 'legacy' as const }, { version: 0 as const }, { version: 1 as const }])(
+        'given a $version transaction',
+        ({ version }) => {
+            const baseTx = { instructions: [], version } as TransactionMessage;
+
+            it('throws when the limit is zero', () => {
+                expect(() => setTransactionMessageLoadedAccountsDataSizeLimit(0, baseTx)).toThrow(expectOutOfRange(0));
+            });
+
+            it('throws when the limit is negative', () => {
+                expect(() => setTransactionMessageLoadedAccountsDataSizeLimit(-1, baseTx)).toThrow(
+                    expectOutOfRange(-1),
+                );
+            });
+
+            it('throws when the limit is above the maximum', () => {
+                const limit = MAX_LOADED_ACCOUNTS_DATA_SIZE_LIMIT + 1;
+                expect(() => setTransactionMessageLoadedAccountsDataSizeLimit(limit, baseTx)).toThrow(
+                    expectOutOfRange(limit),
+                );
+            });
+
+            it.each([NaN, Infinity, -Infinity, 60_000.5])(
+                'throws when the limit is %p',
+                (loadedAccountsDataSizeLimit: number) => {
+                    expect(() =>
+                        setTransactionMessageLoadedAccountsDataSizeLimit(loadedAccountsDataSizeLimit, baseTx),
+                    ).toThrow(expectOutOfRange(loadedAccountsDataSizeLimit));
+                },
+            );
+
+            it('accepts the minimum limit', () => {
+                expect(() =>
+                    setTransactionMessageLoadedAccountsDataSizeLimit(MIN_LOADED_ACCOUNTS_DATA_SIZE_LIMIT, baseTx),
+                ).not.toThrow();
+            });
+
+            it('accepts the maximum limit', () => {
+                expect(() =>
+                    setTransactionMessageLoadedAccountsDataSizeLimit(MAX_LOADED_ACCOUNTS_DATA_SIZE_LIMIT, baseTx),
+                ).not.toThrow();
+            });
+
+            it('does not throw when clearing the limit', () => {
+                expect(() => setTransactionMessageLoadedAccountsDataSizeLimit(undefined, baseTx)).not.toThrow();
             });
         },
     );

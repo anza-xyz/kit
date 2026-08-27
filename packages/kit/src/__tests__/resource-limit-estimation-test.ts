@@ -296,7 +296,7 @@ describe('estimateAndSetResourceLimitsFactory', () => {
         expect.assertions(1);
         const mockEstimator = jest.fn().mockResolvedValue({ computeUnitLimit: 42, loadedAccountsDataSizeLimit: 1234 });
         const estimateAndSet = estimateAndSetResourceLimitsFactory(mockEstimator);
-        const message = setTransactionMessageLoadedAccountsDataSizeLimit(0, MOCK_V1_MESSAGE);
+        const message = setTransactionMessageLoadedAccountsDataSizeLimit(1, MOCK_V1_MESSAGE);
         const result = await estimateAndSet(message);
         expect(getTransactionMessageLoadedAccountsDataSizeLimit(result)).toBe(1234);
     });
@@ -361,10 +361,10 @@ describe('fillTransactionMessageProvisoryResourceLimits', () => {
         expect(getTransactionMessageLoadedAccountsDataSizeLimit(result)).toBeUndefined();
     });
 
-    it('sets both limits to 0 on a v1 message when none exist', () => {
+    it('sets provisory limits on a v1 message when none exist', () => {
         const result = fillTransactionMessageProvisoryResourceLimits(MOCK_V1_MESSAGE);
         expect(getTransactionMessageComputeUnitLimit(result)).toBe(0);
-        expect(getTransactionMessageLoadedAccountsDataSizeLimit(result)).toBe(0);
+        expect(getTransactionMessageLoadedAccountsDataSizeLimit(result)).toBe(1);
     });
 
     it('preserves an existing compute unit limit', () => {
@@ -405,7 +405,7 @@ describe('fillTransactionMessageProvisoryResourceLimits', () => {
         const message = pipe(
             MOCK_V1_MESSAGE,
             m => setTransactionMessageComputeUnitLimit(0, m),
-            m => setTransactionMessageLoadedAccountsDataSizeLimit(0, m),
+            m => setTransactionMessageLoadedAccountsDataSizeLimit(1, m),
         );
         const result = fillTransactionMessageProvisoryResourceLimits(message);
         expect(result).toBe(message);
