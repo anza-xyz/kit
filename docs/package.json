@@ -46,7 +46,7 @@
         "@types/mdx": "^2.0.14",
         "@types/node": "25.4.0",
         "@types/react": "^19.2.18",
-        "@types/react-dom": "^19.2.4",
+        "@types/react-dom": "^19.2.5",
         "@wallet-standard/ui": "^1.0.3",
         "eslint": "^10",
         "eslint-config-next": "^16.1.6",
