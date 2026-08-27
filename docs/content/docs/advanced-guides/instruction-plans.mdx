@@ -493,10 +493,13 @@ When accessing the context from a result, you can retrieve both the base propert
 ```ts twoslash
 import {
     SingleTransactionPlanResult,
+    TransactionPlanResultContextWithSignature,
     isSuccessfulSingleTransactionPlanResult,
     isFailedSingleTransactionPlanResult,
 } from '@solana/kit';
-const result = {} as unknown as SingleTransactionPlanResult<{ startedAt: number }>;
+const result = {} as unknown as SingleTransactionPlanResult<
+    TransactionPlanResultContextWithSignature & { startedAt: number }
+>;
 // ---cut-before---
 if (isSuccessfulSingleTransactionPlanResult(result)) {
     console.log(result.context.signature); // Always available for successful results.
