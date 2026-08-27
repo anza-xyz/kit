@@ -7,6 +7,24 @@ describe('toArrayBuffer', () => {
         const arrayBuffer = toArrayBuffer(byteArray);
         expect(arrayBuffer).not.toBeInstanceOf(SharedArrayBuffer);
     });
+    it('copies a non-zero-offset shared array buffer view without applying its offset twice', () => {
+        const sharedArrayBuffer = new SharedArrayBuffer(5);
+        const byteArray = new Uint8Array(sharedArrayBuffer);
+        byteArray.set([1, 2, 3, 4, 5]);
+
+        const arrayBuffer = toArrayBuffer(byteArray.subarray(2, 5));
+
+        expect(new Uint8Array(arrayBuffer)).toStrictEqual(new Uint8Array([3, 4, 5]));
+    });
+    it('applies an explicit slice relative to a non-zero-offset shared array buffer view', () => {
+        const sharedArrayBuffer = new SharedArrayBuffer(5);
+        const byteArray = new Uint8Array(sharedArrayBuffer);
+        byteArray.set([1, 2, 3, 4, 5]);
+
+        const arrayBuffer = toArrayBuffer(byteArray.subarray(1, 5), 1, 2);
+
+        expect(new Uint8Array(arrayBuffer)).toStrictEqual(new Uint8Array([3, 4]));
+    });
     it('returns the buffer without modification when no slice is specified', () => {
         const byteArray = new Uint8Array([1, 2, 3]);
         expect(toArrayBuffer(byteArray)).toBe(byteArray.buffer);

@@ -8,7 +8,7 @@ import { ReadonlyUint8Array } from './readonly-uint8array';
  * Source: https://stackoverflow.com/questions/37228285/uint8array-to-arraybuffer
  */
 export function toArrayBuffer(bytes: ReadonlyUint8Array | Uint8Array, offset?: number, length?: number): ArrayBuffer {
-    const bytesOffset = bytes.byteOffset + (offset ?? 0);
+    let bytesOffset = bytes.byteOffset + (offset ?? 0);
     const bytesLength = length ?? bytes.byteLength;
     let buffer: ArrayBuffer;
     if (typeof SharedArrayBuffer === 'undefined') {
@@ -16,6 +16,7 @@ export function toArrayBuffer(bytes: ReadonlyUint8Array | Uint8Array, offset?: n
     } else if (bytes.buffer instanceof SharedArrayBuffer) {
         buffer = new ArrayBuffer(bytes.length);
         new Uint8Array(buffer).set(new Uint8Array(bytes));
+        bytesOffset = offset ?? 0;
     } else {
         buffer = bytes.buffer;
     }
