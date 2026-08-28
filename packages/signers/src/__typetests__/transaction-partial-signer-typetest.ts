@@ -22,3 +22,30 @@ const signTransactions = () => {};
     assertIsTransactionPartialSigner(potentialSigner);
     potentialSigner satisfies TransactionPartialSigner<'1'>;
 }
+
+{
+    // [isTransactionPartialSigner]: It accepts a class instance, which has no implicit index signature.
+    class MyClassBasedSigner implements TransactionPartialSigner<'1'> {
+        readonly address = address('1');
+        signTransactions() {
+            return Promise.resolve([]);
+        }
+    }
+    const potentialSigner = null as unknown as MyClassBasedSigner;
+    if (isTransactionPartialSigner(potentialSigner)) {
+        potentialSigner satisfies TransactionPartialSigner<'1'>;
+    }
+}
+
+{
+    // [assertIsTransactionPartialSigner]: It accepts a class instance, which has no implicit index signature.
+    class MyClassBasedSigner implements TransactionPartialSigner<'1'> {
+        readonly address = address('1');
+        signTransactions() {
+            return Promise.resolve([]);
+        }
+    }
+    const potentialSigner = null as unknown as MyClassBasedSigner;
+    assertIsTransactionPartialSigner(potentialSigner);
+    potentialSigner satisfies TransactionPartialSigner<'1'>;
+}

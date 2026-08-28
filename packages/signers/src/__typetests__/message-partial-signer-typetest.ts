@@ -20,17 +20,28 @@ const signMessages = () => {};
 }
 
 {
-    // [isMessagePartialSigner]: It accepts class instances, which have no implicit index signature.
-    class MyMessagePartialSigner implements MessagePartialSigner<'1'> {
+    // [isMessagePartialSigner]: It accepts a class instance, which has no implicit index signature.
+    class MyClassBasedSigner implements MessagePartialSigner<'1'> {
         readonly address = address('1');
         signMessages() {
             return Promise.resolve([]);
         }
     }
-    const potentialSigner: MyMessagePartialSigner = new MyMessagePartialSigner();
+    const potentialSigner = null as unknown as MyClassBasedSigner;
     if (isMessagePartialSigner(potentialSigner)) {
         potentialSigner satisfies MessagePartialSigner<'1'>;
     }
+}
+
+{
+    // [assertIsMessagePartialSigner]: It accepts a class instance, which has no implicit index signature.
+    class MyClassBasedSigner implements MessagePartialSigner<'1'> {
+        readonly address = address('1');
+        signMessages() {
+            return Promise.resolve([]);
+        }
+    }
+    const potentialSigner = null as unknown as MyClassBasedSigner;
     assertIsMessagePartialSigner(potentialSigner);
     potentialSigner satisfies MessagePartialSigner<'1'>;
 }

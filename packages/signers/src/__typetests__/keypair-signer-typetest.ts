@@ -20,3 +20,38 @@ const signTransactions = () => {};
     assertIsKeyPairSigner(potentialSigner);
     potentialSigner satisfies KeyPairSigner<'1'>;
 }
+
+{
+    // [isKeyPairSigner]: It accepts a class instance, which has no implicit index signature.
+    class MyClassBasedSigner implements KeyPairSigner<'1'> {
+        readonly address = address('1');
+        readonly keyPair = {} as CryptoKeyPair;
+        signMessages() {
+            return Promise.resolve([]);
+        }
+        signTransactions() {
+            return Promise.resolve([]);
+        }
+    }
+    const potentialSigner = null as unknown as MyClassBasedSigner;
+    if (isKeyPairSigner(potentialSigner)) {
+        potentialSigner satisfies KeyPairSigner<'1'>;
+    }
+}
+
+{
+    // [assertIsKeyPairSigner]: It accepts a class instance, which has no implicit index signature.
+    class MyClassBasedSigner implements KeyPairSigner<'1'> {
+        readonly address = address('1');
+        readonly keyPair = {} as CryptoKeyPair;
+        signMessages() {
+            return Promise.resolve([]);
+        }
+        signTransactions() {
+            return Promise.resolve([]);
+        }
+    }
+    const potentialSigner = null as unknown as MyClassBasedSigner;
+    assertIsKeyPairSigner(potentialSigner);
+    potentialSigner satisfies KeyPairSigner<'1'>;
+}
