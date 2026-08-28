@@ -2,6 +2,7 @@ name: Preview Documentation
 
 on:
   pull_request:
+  merge_group:
 
 permissions:
   contents: read
@@ -29,6 +30,10 @@ jobs:
     outputs:
       docs: ${{ steps.filter.outputs.docs }}
     steps:
+      - name: Checkout Merge Group
+        if: github.event_name == 'merge_group'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
       - name: Detect Documentation Changes
         uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         id: filter
@@ -58,11 +63,18 @@ jobs:
         shell: bash
         run: pnpm install --ignore-workspace
 
+      - name: Build Documentation for Merge Queue
+        if: github.event_name == 'merge_group'
+        working-directory: ./docs/
+        shell: bash
+        run: pnpm build
+
       - name: Install Vercel CLI
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'
         run: pnpm install -g vercel
 
       - name: Deploy to Vercel
-        if: github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'
         shell: bash
         id: vercel_deploy
         env:
