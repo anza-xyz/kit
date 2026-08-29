@@ -34,6 +34,20 @@ interface WaitForRecentTransactionWithTimeBasedLifetimeConfirmationConfig extend
     signature: Signature;
 }
 
+interface WaitForSignatureConfirmationWithTimeoutConfig extends BaseTransactionConfirmationStrategyConfig {
+    /**
+     * Overrides the default time-based lifetime strategy. Most callers should omit this and rely on
+     * the built-in timeout, which rejects after 30 seconds when the commitment is `processed` and 60
+     * seconds otherwise.
+     */
+    getTimeoutPromise?: typeof getTimeoutPromise;
+    /**
+     * A 64 byte Ed25519 signature, encoded as a base-58 string, that uniquely identifies a
+     * transaction by virtue of being the first or only signature in its list of signatures.
+     */
+    signature: Signature;
+}
+
 /**
  * Supply your own confirmation implementations to this function to create a custom nonce
  * transaction confirmation strategy.
@@ -120,20 +134,60 @@ export async function waitForRecentTransactionConfirmation(
     );
 }
 
-/** @deprecated */
+/**
+ * Waits for a transaction, identified by its signature, to be confirmed using a time-based
+ * lifetime. The confirmation races the standard recent-signature confirmation promise against a
+ * timeout that rejects after 30 seconds when the commitment is `processed`, and 60 seconds
+ * otherwise.
+ *
+ * @example
+ * ```ts
+ * import { waitForSignatureConfirmationWithTimeout } from '@solana/transaction-confirmation';
+ *
+ * try {
+ *     await waitForSignatureConfirmationWithTimeout({
+ *         getRecentSignatureConfirmationPromise({ abortSignal, commitment, signature }) {
+ *             // Return a promise that resolves when a transaction achieves confirmation
+ *         },
+ *         signature,
+ *     });
+ * } catch (e) {
+ *     // Handle errors.
+ * }
+ * ```
+ */
+export async function waitForSignatureConfirmationWithTimeout(
+    config: WaitForSignatureConfirmationWithTimeoutConfig,
+): Promise<void> {
+    const { getTimeoutPromise: getTimeoutPromiseImpl = getTimeoutPromise } = config;
+    await raceStrategies(config.signature, config, function getSpecificStrategiesForRace({ abortSignal, commitment }) {
+        return [
+            getTimeoutPromiseImpl({
+                abortSignal,
+                commitment,
+            }),
+        ];
+    });
+}
+
+/**
+ * @deprecated Use {@link waitForSignatureConfirmationWithTimeout} instead.
+ */
 export async function waitForRecentTransactionConfirmationUntilTimeout(
     config: WaitForRecentTransactionWithTimeBasedLifetimeConfirmationConfig,
 ): Promise<void> {
-    await raceStrategies(
-        config.signature,
-        config,
-        function getSpecificStrategiesForRace({ abortSignal, commitment, getTimeoutPromise }) {
-            return [
-                getTimeoutPromise({
-                    abortSignal,
-                    commitment,
-                }),
-            ];
-        },
-    );
+    const {
+        abortSignal,
+        commitment,
+        getRecentSignatureConfirmationPromise,
+        getTimeoutPromise: getTimeoutPromiseImpl,
+        signature,
+    } = config;
+    await waitForSignatureConfirmationWithTimeout({
+        abortSignal,
+        commitment,
+        getRecentSignatureConfirmationPromise,
+        getTimeoutPromise: getTimeoutPromiseImpl,
+        signature,
+    });
 }
