@@ -11,19 +11,17 @@ import { compileTransaction, Transaction, TransactionWithBlockhashLifetime } fro
 
 import {
     CanceledSingleTransactionPlanResult,
-    type ConcurrentLeafTransactionPlanExecutorConfig,
     createTransactionPlanExecutor,
     createTransactionPlanExecutorWithConcurrentLeaves,
     FailedSingleTransactionPlanResult,
     flattenTransactionPlanResult,
     passthroughFailedTransactionPlanExecution,
-    type SingleTransactionPlan,
     SingleTransactionPlanResult,
     SuccessfulSingleTransactionPlanResult,
-    successfulSingleTransactionPlanResult,
     summarizeTransactionPlanResult,
     type TransactionPlan,
     type TransactionPlanExecutor,
+    type TransactionPlanExecutorConfig,
     type TransactionPlanResult,
     type TransactionPlanResultContextWithSignature,
 } from '../index';
@@ -242,53 +240,80 @@ import {
 
 // [DESCRIBE] createTransactionPlanExecutorWithConcurrentLeaves
 {
+    // It shares its configuration type with `createTransactionPlanExecutor`.
+    {
+        const config = null as unknown as TransactionPlanExecutorConfig<{ custom: string }>;
+        createTransactionPlanExecutor(config) satisfies TransactionPlanExecutor<{ custom: string }>;
+        createTransactionPlanExecutorWithConcurrentLeaves(config) satisfies TransactionPlanExecutor<{
+            custom: string;
+        }>;
+    }
+
     // It creates an executor with the caller-defined result context.
     {
         const executor = createTransactionPlanExecutorWithConcurrentLeaves<{ transaction: Transaction }>({
-            executeSingleTransactionPlan: plan =>
-                Promise.resolve(
-                    successfulSingleTransactionPlanResult(plan.message, { transaction: {} as Transaction }),
-                ),
+            executeTransactionMessage: () => Promise.resolve({ transaction: {} as Transaction }),
         });
         executor satisfies TransactionPlanExecutor<{ transaction: Transaction }>;
     }
 
-    // It infers the result context from the callback when possible.
+    // When the callback declares no parameters, `TContext` is inferred from the context it
+    // returns rather than falling back to the default. Declaring a parameter — which any callback
+    // that needs the message must do — makes the callback context-sensitive, at which point the
+    // default applies and the returned context must satisfy it. This matches
+    // `createTransactionPlanExecutor`.
     {
         const executor = createTransactionPlanExecutorWithConcurrentLeaves({
-            executeSingleTransactionPlan: plan =>
-                Promise.resolve(successfulSingleTransactionPlanResult(plan.message, { custom: 'value' })),
+            executeTransactionMessage: () => Promise.resolve({ custom: 'value' }),
         });
         executor satisfies TransactionPlanExecutor<{ custom: string }>;
+
+        createTransactionPlanExecutorWithConcurrentLeaves({
+            // @ts-expect-error The default context applies here, and it requires a signature.
+            executeTransactionMessage: (_, _message) => Promise.resolve({ transaction: {} as Transaction }),
+        });
     }
 
-    // Its config type requires the caller to define the result context.
-    {
-        // @ts-expect-error The concurrent leaf result context has no default.
-        type ConfigWithoutContext = ConcurrentLeafTransactionPlanExecutorConfig;
-        void (null as unknown as ConfigWithoutContext);
-    }
-
-    // Its callback receives a single transaction plan and the optional abort signal.
+    // Its callback receives a mutable context, the transaction message and the optional abort
+    // signal, exactly as in `createTransactionPlanExecutor`.
     {
         createTransactionPlanExecutorWithConcurrentLeaves<{ custom: string }>({
-            executeSingleTransactionPlan: (plan, config) => {
-                plan satisfies SingleTransactionPlan;
+            executeTransactionMessage: (context, message, config) => {
+                context satisfies Partial<{ custom: string }>;
+                message satisfies TransactionMessage & TransactionMessageWithFeePayer;
                 config?.abortSignal satisfies AbortSignal | undefined;
-                return Promise.resolve(successfulSingleTransactionPlanResult(plan.message, { custom: 'value' }));
+                return Promise.resolve({ custom: 'value' });
             },
         });
     }
 
-    // Its callback must return a result carrying the configured context.
+    // Every property of the context it hands the callback is optional and mutable.
     {
         createTransactionPlanExecutorWithConcurrentLeaves<{ custom: string }>({
-            // @ts-expect-error The returned result context is missing the `custom` property.
-            executeSingleTransactionPlan: plan => {
-                return Promise.resolve(
-                    successfulSingleTransactionPlanResult(plan.message, { signature: {} as Signature }),
-                );
+            executeTransactionMessage: context => {
+                context.custom satisfies string | undefined;
+                context.custom = 'value';
+                return Promise.resolve({ custom: 'value' });
             },
+        });
+    }
+
+    // It does not accept a context property that the configured context does not declare.
+    {
+        createTransactionPlanExecutorWithConcurrentLeaves<{ custom: string }>({
+            executeTransactionMessage: context => {
+                // @ts-expect-error The configured context has no `unknownProperty` property.
+                context.unknownProperty = 'value';
+                return Promise.resolve({ custom: 'value' });
+            },
+        });
+    }
+
+    // Its callback must return the complete configured context.
+    {
+        createTransactionPlanExecutorWithConcurrentLeaves<{ custom: string }>({
+            // @ts-expect-error The returned context is missing the `custom` property.
+            executeTransactionMessage: () => Promise.resolve({ signature: {} as Signature }),
         });
     }
 }

@@ -65,37 +65,18 @@ type ExecuteTransactionMessage<TContext extends TransactionPlanResultContext> = 
  * Configuration object for creating a new transaction plan executor.
  *
  * @see {@link createTransactionPlanExecutor}
+ * @see {@link createTransactionPlanExecutorWithConcurrentLeaves}
  */
 export type TransactionPlanExecutorConfig<
     TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
 > = {
     /**
-     * Called whenever a transaction message must be sent to the blockchain.
+     * Called whenever a transaction message must be executed.
      *
      * It should return the context that the successful result must carry — every property
      * `TContext` promises, which by default includes a `signature`.
      */
     executeTransactionMessage: ExecuteTransactionMessage<TContext>;
-};
-
-/**
- * Configuration for an executor that processes every transaction plan leaf concurrently.
- *
- * @typeParam TContext - The context carried by each single transaction plan result.
- *
- * @see {@link createTransactionPlanExecutorWithConcurrentLeaves}
- */
-export type ConcurrentLeafTransactionPlanExecutorConfig<TContext extends TransactionPlanResultContext> = {
-    /**
-     * Executes a single transaction plan and returns its result.
-     *
-     * The executor calls this function concurrently for every leaf in the plan and forwards
-     * the optional abort signal.
-     */
-    executeSingleTransactionPlan: (
-        transactionPlan: SingleTransactionPlan,
-        config?: { abortSignal?: AbortSignal },
-    ) => Promise<SingleTransactionPlanResult<TContext>>;
 };
 
 /**
@@ -228,51 +209,58 @@ export function createTransactionPlanExecutor<
 /**
  * Creates a transaction plan executor that processes every leaf concurrently.
  *
- * The executor preserves the input plan's nesting, order, and divisibility in the returned
- * result, but it does not enforce the execution dependencies expressed by sequential plans.
- * This makes it suitable for operations such as signing or serializing transactions that can
- * be performed independently. All leaf callbacks are started without a concurrency limit.
+ * It takes the same configuration as {@link createTransactionPlanExecutor} and its
+ * `executeTransactionMessage` callback follows the same contract: it receives a fresh mutable
+ * context object for every leaf and returns the complete `TContext` a successful result must
+ * carry. On success the two are merged with the returned value taking precedence; on a throw
+ * the context accumulated so far is preserved in the failed result.
+ *
+ * The difference is the traversal. This executor preserves the input plan's nesting, order, and
+ * divisibility in the returned result, but it does not enforce the execution dependencies
+ * expressed by sequential plans: every leaf callback is started immediately, without a concurrency
+ * limit. This makes it suitable for operations such as signing or serializing transactions that
+ * can be performed independently. For the same reason, a callback that throws does not cancel the
+ * other leaves — each one runs to completion — and non-divisible sequential plans are supported.
  *
  * The optional abort signal is forwarded to every leaf callback and enforced by the executor.
  * When the signal is already aborted, leaves are canceled without invoking their callbacks. When
  * it is aborted during execution, the executor stops waiting for active callbacks and records
- * failed results carrying the abort reason.
+ * failed results carrying the abort reason and the context accumulated so far — a value the
+ * callback resolves with afterwards is discarded.
  *
- * Errors thrown by a callback are converted to failed single transaction plan results without
- * canceling any other leaves. After all leaves settle, a plan containing failed or canceled results
- * throws a failed execution error containing the complete result tree.
+ * After all leaves settle, a plan containing failed or canceled results throws a failed execution
+ * error containing the complete result tree.
  *
- * @typeParam TContext - The caller-defined context carried by each single transaction plan result.
- * @param config - Configuration containing the function used to execute each leaf.
+ * @typeParam TContext - The context carried by each single transaction plan result.
+ * @param config - Configuration object containing the transaction message executor function.
  * @return A {@link TransactionPlanExecutor} that processes all transaction plan leaves concurrently.
  * @throws {@link SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN}
- *   if any leaf callback throws or returns a failed or canceled result. The error context contains
- *   a `transactionPlanResult` property with the complete result tree.
+ *   if any leaf callback throws, any leaf is canceled, or the abort signal fires. The error
+ *   context contains a `transactionPlanResult` property with the complete result tree.
  * @throws {@link SOLANA_ERROR__INVARIANT_VIOLATION__INVALID_TRANSACTION_PLAN_KIND} if the plan has an unknown kind.
  *
  * @example
  * Signing every transaction in a plan concurrently.
  * ```ts
  * const executor = createTransactionPlanExecutorWithConcurrentLeaves<{ transaction: Transaction }>({
- *     executeSingleTransactionPlan: async (plan, { abortSignal } = {}) => {
- *         abortSignal?.throwIfAborted();
- *         const transaction = await signTransactionMessageWithSigners(plan.message);
- *         return successfulSingleTransactionPlanResult(plan.message, { transaction });
+ *     executeTransactionMessage: async (_context, message) => {
+ *         const transaction = await signTransactionMessageWithSigners(message);
+ *         return { transaction };
  *     },
  * });
  * const result = await executor(transactionPlan);
  * ```
  *
- * @see {@link ConcurrentLeafTransactionPlanExecutorConfig}
+ * @see {@link TransactionPlanExecutorConfig}
  * @see {@link createTransactionPlanExecutor}
  */
-export function createTransactionPlanExecutorWithConcurrentLeaves<TContext extends TransactionPlanResultContext>(
-    config: ConcurrentLeafTransactionPlanExecutorConfig<TContext>,
-): TransactionPlanExecutor<TContext> {
+export function createTransactionPlanExecutorWithConcurrentLeaves<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
+>(config: TransactionPlanExecutorConfig<TContext>): TransactionPlanExecutor<TContext> {
     return async (transactionPlan, executorConfig) => {
         const transactionPlanResult = await traverseTransactionPlanLeavesConcurrently(
             transactionPlan,
-            config.executeSingleTransactionPlan,
+            config.executeTransactionMessage,
             executorConfig,
         );
         if (executorConfig?.abortSignal?.aborted || !isSuccessfulTransactionPlanResult(transactionPlanResult)) {
@@ -285,28 +273,41 @@ export function createTransactionPlanExecutorWithConcurrentLeaves<TContext exten
 
 async function traverseTransactionPlanLeavesConcurrently<TContext extends TransactionPlanResultContext>(
     transactionPlan: TransactionPlan,
-    executeSingleTransactionPlan: ConcurrentLeafTransactionPlanExecutorConfig<TContext>['executeSingleTransactionPlan'],
+    executeTransactionMessage: ExecuteTransactionMessage<TContext>,
     executorConfig?: { abortSignal?: AbortSignal },
 ): Promise<TransactionPlanResult<TContext>> {
     const kind = transactionPlan.kind;
     switch (kind) {
-        case 'single':
+        case 'single': {
+            // A fresh context is created for every leaf, so nothing is populated yet. Filling it in
+            // is the `executeTransactionMessage` callback's job, which is why every property of
+            // `TContext` is optional here.
+            const context: Partial<TContext> = {};
             if (executorConfig?.abortSignal?.aborted) {
-                return canceledSingleTransactionPlanResult<TContext>(transactionPlan.message);
+                return canceledSingleTransactionPlanResult<TContext>(transactionPlan.message, context);
             }
             try {
-                return await getAbortablePromise(
-                    executeSingleTransactionPlan(transactionPlan, executorConfig),
+                const returnedContext = await getAbortablePromise(
+                    executeTransactionMessage(context, transactionPlan.message, {
+                        abortSignal: executorConfig?.abortSignal,
+                    }),
                     executorConfig?.abortSignal,
                 );
+                // Anything the callback stored on the mutable context but left out of its return
+                // value is kept, since dropping it would lose data it deliberately recorded.
+                return successfulSingleTransactionPlanResult<TContext>(transactionPlan.message, {
+                    ...context,
+                    ...returnedContext,
+                });
             } catch (error) {
-                return failedSingleTransactionPlanResult<TContext>(transactionPlan.message, error as Error);
+                return failedSingleTransactionPlanResult<TContext>(transactionPlan.message, error as Error, context);
             }
+        }
         case 'parallel':
         case 'sequential': {
             const plans = await Promise.all(
                 transactionPlan.plans.map(plan =>
-                    traverseTransactionPlanLeavesConcurrently(plan, executeSingleTransactionPlan, executorConfig),
+                    traverseTransactionPlanLeavesConcurrently(plan, executeTransactionMessage, executorConfig),
                 ),
             );
             if (kind === 'parallel') {
