@@ -38,6 +38,7 @@ import {
 } from '@solana/rpc-transformers';
 
 import { GetAccountInfoApi } from './getAccountInfo';
+import { GetAgGenesisCertApi } from './getAgGenesisCert';
 import { GetBalanceApi } from './getBalance';
 import { GetBlockApi } from './getBlock';
 import { GetBlockCommitmentApi } from './getBlockCommitment';
@@ -98,6 +99,7 @@ import { SendTransactionApi } from './sendTransaction';
 import { SimulateTransactionApi } from './simulateTransaction';
 
 type SolanaRpcApiForAllClusters = GetAccountInfoApi &
+    GetAgGenesisCertApi &
     GetBalanceApi &
     GetBlockApi &
     GetBlockCommitmentApi &
@@ -178,6 +180,7 @@ export type SolanaRpcApiMainnet = SolanaRpcApiForAllClusters;
 
 export type {
     GetAccountInfoApi,
+    GetAgGenesisCertApi,
     GetBalanceApi,
     GetBlockApi,
     GetBlockCommitmentApi,
@@ -270,6 +273,11 @@ function getAllowedNumericKeypaths(): AllowedNumericKeypaths<RpcApi<SolanaRpcApi
     if (!memoizedKeypaths) {
         memoizedKeypaths = {
             getAccountInfo: jsonParsedAccountsConfigs.map(c => ['value', ...c]),
+            getAgGenesisCert: [
+                ['block', 'blockId', KEYPATH_WILDCARD],
+                ['signature', 'bitmap', KEYPATH_WILDCARD],
+                ['signature', 'signature', KEYPATH_WILDCARD],
+            ],
             getBlock: [
                 ...tokenBalancesConfigs.flatMap(c => [
                     ['transactions', KEYPATH_WILDCARD, 'meta', 'preTokenBalances', KEYPATH_WILDCARD, ...c],
