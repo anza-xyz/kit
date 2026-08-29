@@ -1,5 +1,17 @@
 # @solana/compat
 
+## 8.2.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/addresses@8.2.0
+    - @solana/codecs-core@8.2.0
+    - @solana/errors@8.2.0
+    - @solana/instructions@8.2.0
+    - @solana/keys@8.2.0
+    - @solana/transactions@8.2.0
+
 ## 8.1.0
 
 ### Patch Changes

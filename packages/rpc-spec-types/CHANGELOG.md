@@ -1,5 +1,12 @@
 # @solana/rpc-spec-types
 
+## 8.2.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/errors@8.2.0
+
 ## 8.1.0
 
 ### Patch Changes
