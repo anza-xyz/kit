@@ -77,10 +77,9 @@ export type MessageModifyingSigner<TAddress extends string = string> = Readonly<
  *
  * @see {@link assertIsMessageModifyingSigner}
  */
-export function isMessageModifyingSigner<TAddress extends string>(value: {
-    [key: string]: unknown;
-    address: Address<TAddress>;
-}): value is MessageModifyingSigner<TAddress> {
+export function isMessageModifyingSigner<TAddress extends string, TValue extends { address: Address<TAddress> }>(
+    value: TValue,
+): value is MessageModifyingSigner<TAddress> & TValue {
     return (
         isAddress(value.address) &&
         'modifyAndSignMessages' in value &&
@@ -105,10 +104,9 @@ export function isMessageModifyingSigner<TAddress extends string>(value: {
  *
  * @see {@link isMessageModifyingSigner}
  */
-export function assertIsMessageModifyingSigner<TAddress extends string>(value: {
-    [key: string]: unknown;
-    address: Address<TAddress>;
-}): asserts value is MessageModifyingSigner<TAddress> {
+export function assertIsMessageModifyingSigner<TAddress extends string, TValue extends { address: Address<TAddress> }>(
+    value: TValue,
+): asserts value is MessageModifyingSigner<TAddress> & TValue {
     if (!isMessageModifyingSigner(value)) {
         throw new SolanaError(SOLANA_ERROR__SIGNER__EXPECTED_MESSAGE_MODIFYING_SIGNER, {
             address: value.address,

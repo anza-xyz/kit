@@ -38,10 +38,9 @@ export type TransactionSigner<TAddress extends string = string> =
  *
  * @see {@link assertIsTransactionSigner}
  */
-export function isTransactionSigner<TAddress extends string>(value: {
-    [key: string]: unknown;
-    address: Address<TAddress>;
-}): value is TransactionSigner<TAddress> {
+export function isTransactionSigner<TAddress extends string, TValue extends { address: Address<TAddress> }>(
+    value: TValue,
+): value is TransactionSigner<TAddress> & TValue {
     return (
         isTransactionPartialSigner(value) || isTransactionModifyingSigner(value) || isTransactionSendingSigner(value)
     );
@@ -66,10 +65,9 @@ export function isTransactionSigner<TAddress extends string>(value: {
  *
  * @see {@link isTransactionSigner}
  */
-export function assertIsTransactionSigner<TAddress extends string>(value: {
-    [key: string]: unknown;
-    address: Address<TAddress>;
-}): asserts value is TransactionSigner<TAddress> {
+export function assertIsTransactionSigner<TAddress extends string, TValue extends { address: Address<TAddress> }>(
+    value: TValue,
+): asserts value is TransactionSigner<TAddress> & TValue {
     if (!isTransactionSigner(value)) {
         throw new SolanaError(SOLANA_ERROR__SIGNER__EXPECTED_TRANSACTION_SIGNER, {
             address: value.address,

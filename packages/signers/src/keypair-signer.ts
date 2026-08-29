@@ -51,10 +51,9 @@ export type KeyPairSigner<TAddress extends string = string> = MessagePartialSign
  * isKeyPairSigner({ address: address('1234..5678') }); // false
  * ```
  */
-export function isKeyPairSigner<TAddress extends string>(value: {
-    [key: string]: unknown;
-    address: Address<TAddress>;
-}): value is KeyPairSigner<TAddress> {
+export function isKeyPairSigner<TAddress extends string, TValue extends { address: Address<TAddress> }>(
+    value: TValue,
+): value is KeyPairSigner<TAddress> & TValue {
     return (
         'keyPair' in value &&
         typeof value.keyPair === 'object' &&
@@ -77,10 +76,9 @@ export function isKeyPairSigner<TAddress extends string>(value: {
  * assertIsKeyPairSigner({ address: address('1234..5678') }); // Throws an error.
  * ```
  */
-export function assertIsKeyPairSigner<TAddress extends string>(value: {
-    [key: string]: unknown;
-    address: Address<TAddress>;
-}): asserts value is KeyPairSigner<TAddress> {
+export function assertIsKeyPairSigner<TAddress extends string, TValue extends { address: Address<TAddress> }>(
+    value: TValue,
+): asserts value is KeyPairSigner<TAddress> & TValue {
     if (!isKeyPairSigner(value)) {
         throw new SolanaError(SOLANA_ERROR__SIGNER__EXPECTED_KEY_PAIR_SIGNER, {
             address: value.address,

@@ -79,10 +79,9 @@ export type TransactionModifyingSigner<TAddress extends string = string> = Reado
  *
  * @see {@link assertIsTransactionModifyingSigner}
  */
-export function isTransactionModifyingSigner<TAddress extends string>(value: {
-    [key: string]: unknown;
-    address: Address<TAddress>;
-}): value is TransactionModifyingSigner<TAddress> {
+export function isTransactionModifyingSigner<TAddress extends string, TValue extends { address: Address<TAddress> }>(
+    value: TValue,
+): value is TransactionModifyingSigner<TAddress> & TValue {
     return 'modifyAndSignTransactions' in value && typeof value.modifyAndSignTransactions === 'function';
 }
 
@@ -103,10 +102,10 @@ export function isTransactionModifyingSigner<TAddress extends string>(value: {
  *
  * @see {@link isTransactionModifyingSigner}
  */
-export function assertIsTransactionModifyingSigner<TAddress extends string>(value: {
-    [key: string]: unknown;
-    address: Address<TAddress>;
-}): asserts value is TransactionModifyingSigner<TAddress> {
+export function assertIsTransactionModifyingSigner<
+    TAddress extends string,
+    TValue extends { address: Address<TAddress> },
+>(value: TValue): asserts value is TransactionModifyingSigner<TAddress> & TValue {
     if (!isTransactionModifyingSigner(value)) {
         throw new SolanaError(SOLANA_ERROR__SIGNER__EXPECTED_TRANSACTION_MODIFYING_SIGNER, {
             address: value.address,

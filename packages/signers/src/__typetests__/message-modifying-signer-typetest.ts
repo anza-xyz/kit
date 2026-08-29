@@ -22,3 +22,30 @@ const modifyAndSignMessages = () => {};
     assertIsMessageModifyingSigner(potentialSigner);
     potentialSigner satisfies MessageModifyingSigner<'1'>;
 }
+
+{
+    // [isMessageModifyingSigner]: It accepts a class instance, which has no implicit index signature.
+    class MyClassBasedSigner implements MessageModifyingSigner<'1'> {
+        readonly address = address('1');
+        modifyAndSignMessages() {
+            return Promise.resolve([]);
+        }
+    }
+    const potentialSigner = null as unknown as MyClassBasedSigner;
+    if (isMessageModifyingSigner(potentialSigner)) {
+        potentialSigner satisfies MessageModifyingSigner<'1'>;
+    }
+}
+
+{
+    // [assertIsMessageModifyingSigner]: It accepts a class instance, which has no implicit index signature.
+    class MyClassBasedSigner implements MessageModifyingSigner<'1'> {
+        readonly address = address('1');
+        modifyAndSignMessages() {
+            return Promise.resolve([]);
+        }
+    }
+    const potentialSigner = null as unknown as MyClassBasedSigner;
+    assertIsMessageModifyingSigner(potentialSigner);
+    potentialSigner satisfies MessageModifyingSigner<'1'>;
+}

@@ -83,10 +83,9 @@ export type TransactionSendingSigner<TAddress extends string = string> = Readonl
  *
  * @see {@link assertIsTransactionSendingSigner}
  */
-export function isTransactionSendingSigner<TAddress extends string>(value: {
-    [key: string]: unknown;
-    address: Address<TAddress>;
-}): value is TransactionSendingSigner<TAddress> {
+export function isTransactionSendingSigner<TAddress extends string, TValue extends { address: Address<TAddress> }>(
+    value: TValue,
+): value is TransactionSendingSigner<TAddress> & TValue {
     return 'signAndSendTransactions' in value && typeof value.signAndSendTransactions === 'function';
 }
 
@@ -107,10 +106,10 @@ export function isTransactionSendingSigner<TAddress extends string>(value: {
  *
  * @see {@link isTransactionSendingSigner}
  */
-export function assertIsTransactionSendingSigner<TAddress extends string>(value: {
-    [key: string]: unknown;
-    address: Address<TAddress>;
-}): asserts value is TransactionSendingSigner<TAddress> {
+export function assertIsTransactionSendingSigner<
+    TAddress extends string,
+    TValue extends { address: Address<TAddress> },
+>(value: TValue): asserts value is TransactionSendingSigner<TAddress> & TValue {
     if (!isTransactionSendingSigner(value)) {
         throw new SolanaError(SOLANA_ERROR__SIGNER__EXPECTED_TRANSACTION_SENDING_SIGNER, {
             address: value.address,

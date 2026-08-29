@@ -71,10 +71,9 @@ export type TransactionPartialSigner<TAddress extends string = string> = Readonl
  *
  * @see {@link assertIsTransactionPartialSigner}
  */
-export function isTransactionPartialSigner<TAddress extends string>(value: {
-    [key: string]: unknown;
-    address: Address<TAddress>;
-}): value is TransactionPartialSigner<TAddress> {
+export function isTransactionPartialSigner<TAddress extends string, TValue extends { address: Address<TAddress> }>(
+    value: TValue,
+): value is TransactionPartialSigner<TAddress> & TValue {
     return 'signTransactions' in value && typeof value.signTransactions === 'function';
 }
 
@@ -95,10 +94,10 @@ export function isTransactionPartialSigner<TAddress extends string>(value: {
  *
  * @see {@link isTransactionPartialSigner}
  */
-export function assertIsTransactionPartialSigner<TAddress extends string>(value: {
-    [key: string]: unknown;
-    address: Address<TAddress>;
-}): asserts value is TransactionPartialSigner<TAddress> {
+export function assertIsTransactionPartialSigner<
+    TAddress extends string,
+    TValue extends { address: Address<TAddress> },
+>(value: TValue): asserts value is TransactionPartialSigner<TAddress> & TValue {
     if (!isTransactionPartialSigner(value)) {
         throw new SolanaError(SOLANA_ERROR__SIGNER__EXPECTED_TRANSACTION_PARTIAL_SIGNER, {
             address: value.address,
