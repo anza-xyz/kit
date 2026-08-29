@@ -1,5 +1,22 @@
 # @solana/rpc-api
 
+## 8.2.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/addresses@8.2.0
+    - @solana/codecs-core@8.2.0
+    - @solana/codecs-strings@8.2.0
+    - @solana/errors@8.2.0
+    - @solana/keys@8.2.0
+    - @solana/rpc-parsed-types@8.2.0
+    - @solana/rpc-spec@8.2.0
+    - @solana/rpc-transformers@8.2.0
+    - @solana/rpc-types@8.2.0
+    - @solana/transaction-messages@8.2.0
+    - @solana/transactions@8.2.0
+
 ## 8.1.0
 
 ### Patch Changes

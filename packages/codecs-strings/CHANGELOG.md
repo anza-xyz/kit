@@ -1,5 +1,14 @@
 # @solana/codecs-strings
 
+## 8.2.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/codecs-core@8.2.0
+    - @solana/codecs-numbers@8.2.0
+    - @solana/errors@8.2.0
+
 ## 8.1.0
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @solana/programs
 
+## 8.2.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/addresses@8.2.0
+    - @solana/errors@8.2.0
+
 ## 8.1.0
 
 ### Patch Changes

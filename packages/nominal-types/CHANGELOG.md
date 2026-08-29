@@ -1,5 +1,7 @@
 # @solana/nominal-types
 
+## 8.2.0
+
 ## 8.1.0
 
 ## 8.0.0

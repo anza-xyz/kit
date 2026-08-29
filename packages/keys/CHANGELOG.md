@@ -1,5 +1,17 @@
 # @solana/keys
 
+## 8.2.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/assertions@8.2.0
+    - @solana/codecs-core@8.2.0
+    - @solana/codecs-strings@8.2.0
+    - @solana/errors@8.2.0
+    - @solana/nominal-types@8.2.0
+    - @solana/promises@8.2.0
+
 ## 8.1.0
 
 ### Patch Changes

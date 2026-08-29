@@ -1,5 +1,22 @@
 # @solana/signers
 
+## 8.2.0
+
+### Patch Changes
+
+- [#2006](https://github.com/anza-xyz/kit/pull/2006) [`d385ce3`](https://github.com/anza-xyz/kit/commit/d385ce3921fbdd32bc59365bb7897b0ce10e7925) Thanks [@amilz](https://github.com/amilz)! - Relaxed the parameter type of the signer type guards (`isMessagePartialSigner`, `isTransactionSigner`, `isKeyPairSigner`, their siblings, and the `assertIs*` variants) so that class instances implementing a signer interface can be passed without casts. The guards now accept any `TValue extends { address: Address }` and narrow to `TValue & Signer`, whereas the previous parameter type required an implicit index signature, which TypeScript never grants to class instances.
+
+- Updated dependencies []:
+    - @solana/addresses@8.2.0
+    - @solana/codecs-core@8.2.0
+    - @solana/errors@8.2.0
+    - @solana/instructions@8.2.0
+    - @solana/keys@8.2.0
+    - @solana/nominal-types@8.2.0
+    - @solana/offchain-messages@8.2.0
+    - @solana/transaction-messages@8.2.0
+    - @solana/transactions@8.2.0
+
 ## 8.1.0
 
 ### Patch Changes
