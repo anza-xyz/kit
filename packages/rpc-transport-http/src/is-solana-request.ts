@@ -2,6 +2,7 @@ import { isJsonRpcPayload } from '@solana/rpc-spec';
 
 const SOLANA_RPC_METHODS = [
     'getAccountInfo',
+    'getAgGenesisCert',
     'getBalance',
     'getBlock',
     'getBlockCommitment',
@@ -46,6 +47,7 @@ const SOLANA_RPC_METHODS = [
     'getTokenSupply',
     'getTransaction',
     'getTransactionCount',
+    'getTransactionsForAddress',
     'getVersion',
     'getVoteAccounts',
     'index',

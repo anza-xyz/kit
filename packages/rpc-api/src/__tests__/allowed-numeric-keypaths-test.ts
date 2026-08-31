@@ -4,6 +4,7 @@ import { createRpc, type Rpc } from '@solana/rpc-spec';
 
 import {
     createSolanaRpcApi,
+    GetAgGenesisCertApi,
     GetBlockApi,
     GetTransactionApi,
     GetTransactionsForAddressApi,
@@ -39,6 +40,20 @@ function createMockRpc<TApi>(result: unknown): Rpc<TApi> {
 }
 
 describe('the default response transformer for the Solana RPC', () => {
+    describe('getAgGenesisCert', () => {
+        it('upcasts the slot to a `bigint` but leaves the byte arrays as numbers', async () => {
+            expect.assertions(4);
+            const rpc = createMockRpc<GetAgGenesisCertApi>({
+                block: { blockId: [1, 2, 3], slot: 42 },
+                signature: { bitmap: [7, 8, 9], signature: [4, 5, 6] },
+            });
+            const result = await rpc.getAgGenesisCert().send();
+            expect(result?.block.slot).toBe(42n);
+            expect(result?.block.blockId).toStrictEqual([1, 2, 3]);
+            expect(result?.signature.signature).toStrictEqual([4, 5, 6]);
+            expect(result?.signature.bitmap).toStrictEqual([7, 8, 9]);
+        });
+    });
     describe('getTransaction', () => {
         it('leaves `version` as a number', async () => {
             expect.assertions(1);
