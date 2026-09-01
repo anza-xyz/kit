@@ -161,8 +161,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/kit
       '@solana/kit-plugin-rpc':
-        specifier: 0.16.0
-        version: 0.16.0(@solana/kit@packages+kit)
+        specifier: 0.18.0
+        version: 0.18.0(@solana/kit@packages+kit)
       '@solana/kit-plugin-wallet':
         specifier: 0.14.0
         version: 0.14.0(@solana/kit@packages+kit)(@solana/react@packages+react)(fastestsmallesttextencoderdecoder@1.0.22)(react@19.2.8)(typescript@5.9.3)
@@ -5034,15 +5034,15 @@ packages:
       typescript:
         optional: true
 
-  '@solana/kit-plugin-instruction-plan@0.13.0':
-    resolution: {integrity: sha512-9RA94e0LLtVLN+bvGclpu8l0lAXGOGS72DxPIQ1VyGZs7vK/WTwPOqKnWhjJs2Cv/SDJ2xsCAhYkXr0UltVrOg==}
+  '@solana/kit-plugin-instruction-plan@0.18.0':
+    resolution: {integrity: sha512-GVhSf/QFtowshm4zhwqOrFI5oMpeOgRDCv5WMmYER0xZqE8+aSDxHsbEyI3dS/s4YilA296EHpQpzTAdlpj/bw==}
     peerDependencies:
-      '@solana/kit': ^7.0.0
+      '@solana/kit': ^8.0.0
 
-  '@solana/kit-plugin-rpc@0.16.0':
-    resolution: {integrity: sha512-iMzlXEq7zU5YPN0G24aN+nl7XP7Kp+4cegsL5o8n4pBr6iazsSu0TU+5krK9LNR01vIKrXUw7MvnO+45XWVGUA==}
+  '@solana/kit-plugin-rpc@0.18.0':
+    resolution: {integrity: sha512-R6q1MfdxTvcqouPV4PtDB8cXV/Ye9Mal7WZVEMFPZ/sdXbe35K92/7P3YjpQ6I1eqEv8lnBbu7/KCWExvofKVA==}
     peerDependencies:
-      '@solana/kit': ^7.0.0
+      '@solana/kit': ^8.0.0
 
   '@solana/kit-plugin-wallet@0.14.0':
     resolution: {integrity: sha512-gxVJk4TEBebXhxksptt8i4OTPSN8FAhHayu3/P2eYTpY2gik5mTnakisTa7cevF2E53+xApHd4qoavYXltwJ6w==}
@@ -13510,14 +13510,14 @@ snapshots:
     transitivePeerDependencies:
       - fastestsmallesttextencoderdecoder
 
-  '@solana/kit-plugin-instruction-plan@0.13.0(@solana/kit@packages+kit)':
+  '@solana/kit-plugin-instruction-plan@0.18.0(@solana/kit@packages+kit)':
     dependencies:
       '@solana/kit': link:packages/kit
 
-  '@solana/kit-plugin-rpc@0.16.0(@solana/kit@packages+kit)':
+  '@solana/kit-plugin-rpc@0.18.0(@solana/kit@packages+kit)':
     dependencies:
       '@solana/kit': link:packages/kit
-      '@solana/kit-plugin-instruction-plan': 0.13.0(@solana/kit@packages+kit)
+      '@solana/kit-plugin-instruction-plan': 0.18.0(@solana/kit@packages+kit)
 
   '@solana/kit-plugin-wallet@0.14.0(@solana/kit@packages+kit)(@solana/react@packages+react)(fastestsmallesttextencoderdecoder@1.0.22)(react@19.2.8)(typescript@5.9.3)':
     dependencies:
