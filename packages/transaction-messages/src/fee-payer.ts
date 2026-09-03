@@ -1,4 +1,4 @@
-import { Address } from '@solana/addresses';
+import { Address, HasAddress } from '@solana/addresses';
 
 import { TransactionMessage } from './transaction-message';
 
@@ -7,7 +7,7 @@ import { TransactionMessage } from './transaction-message';
  * conform to this type to be compiled and landed on the network.
  */
 export interface TransactionMessageWithFeePayer<TAddress extends string = string> {
-    readonly feePayer: Readonly<{ address: Address<TAddress> }>;
+    readonly feePayer: HasAddress<TAddress>;
 }
 
 /**
