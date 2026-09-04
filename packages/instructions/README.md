@@ -45,6 +45,10 @@ For example, you could type the rent sysvar account like this:
 type RentSysvar = ReadonlyAccount<'SysvarRent111111111111111111111111111111111'>;
 ```
 
+### `AccountNonSignerMeta<TAddress>`
+
+This type represents an `AccountMeta` whose role is guaranteed not to be a signer role — i.e. `ReadonlyAccount<TAddress> | WritableAccount<TAddress>`. It is the counterpart of the `AccountSignerMeta` type from `@solana/signers`, which narrows the role to the two signer roles. Use this type when an account meta must only describe the mutability of an account — e.g. when overriding the writable flag of a non-signer account in a generated program client.
+
 ### `AccountLookupMeta<TAddress, TLookupTableAddress>`
 
 This type represents a lookup of the account's address in an address lookup table. It specifies which lookup table account in which to perform the lookup, the index of the desired account address in that table, and metadata about its mutability. Notably, account addresses obtained via lookups may not act as signers.

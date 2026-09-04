@@ -212,6 +212,7 @@ import {
     SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION,
     SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
     SOLANA_ERROR__PROGRAM_CLIENTS__RESOLVED_INSTRUCTION_INPUT_MUST_BE_NON_NULL,
+    SOLANA_ERROR__PROGRAM_CLIENTS__RESOLVED_INSTRUCTION_INPUT_MUST_BE_SIGNER,
     SOLANA_ERROR__PROGRAM_CLIENTS__UNEXPECTED_RESOLVED_INSTRUCTION_INPUT_TYPE,
     SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_ACCOUNT_TYPE,
     SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE,
@@ -694,6 +695,10 @@ export const SolanaErrorMessages: Readonly<{
         'The provided instruction is missing some accounts. Expected at least $expectedAccountMetas account(s), got $actualAccountMetas.',
     [SOLANA_ERROR__PROGRAM_CLIENTS__RESOLVED_INSTRUCTION_INPUT_MUST_BE_NON_NULL]:
         "Expected resolved instruction input '$inputName' to be non-null.",
+    [SOLANA_ERROR__PROGRAM_CLIENTS__RESOLVED_INSTRUCTION_INPUT_MUST_BE_SIGNER]:
+        "Expected resolved instruction input '$inputName' to be a `TransactionSigner` because the " +
+        'instruction requires this account to sign the transaction. If its signature is provided by ' +
+        'other means, use `createNoopSigner()` from `@solana/signers` to satisfy this requirement.',
     [SOLANA_ERROR__PROGRAM_CLIENTS__UNEXPECTED_RESOLVED_INSTRUCTION_INPUT_TYPE]:
         "Expected resolved instruction input '$inputName' to be of type `$expectedType`.",
     [SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_ACCOUNT_TYPE]:
