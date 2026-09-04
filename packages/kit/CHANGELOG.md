@@ -1,5 +1,38 @@
 # @solana/kit
 
+## 8.3.0
+
+### Patch Changes
+
+- Updated dependencies [[`1dd83c6`](https://github.com/anza-xyz/kit/commit/1dd83c6f8fba45177054412863a7770c933fae73)]:
+    - @solana/rpc-api@8.3.0
+    - @solana/rpc@8.3.0
+    - @solana/sysvars@8.3.0
+    - @solana/program-client-core@8.3.0
+    - @solana/transaction-introspection@8.3.0
+    - @solana/transaction-confirmation@8.3.0
+    - @solana/accounts@8.3.0
+    - @solana/addresses@8.3.0
+    - @solana/codecs@8.3.0
+    - @solana/errors@8.3.0
+    - @solana/functional@8.3.0
+    - @solana/instruction-plans@8.3.0
+    - @solana/instructions@8.3.0
+    - @solana/keys@8.3.0
+    - @solana/offchain-messages@8.3.0
+    - @solana/plugin-core@8.3.0
+    - @solana/plugin-interfaces@8.3.0
+    - @solana/programs@8.3.0
+    - @solana/promises@8.3.0
+    - @solana/rpc-parsed-types@8.3.0
+    - @solana/rpc-spec-types@8.3.0
+    - @solana/rpc-subscriptions@8.3.0
+    - @solana/rpc-types@8.3.0
+    - @solana/signers@8.3.0
+    - @solana/subscribable@8.3.0
+    - @solana/transaction-messages@8.3.0
+    - @solana/transactions@8.3.0
+
 ## 8.2.0
 
 ### Patch Changes

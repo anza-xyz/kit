@@ -1,5 +1,20 @@
 # @solana/rpc-transport-http
 
+## 8.3.0
+
+### Minor Changes
+
+- [#2016](https://github.com/anza-xyz/kit/pull/2016) [`1dd83c6`](https://github.com/anza-xyz/kit/commit/1dd83c6f8fba45177054412863a7770c933fae73) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Added support for the `getAgGenesisCert` RPC method, which returns the Alpenglow genesis certificate from nodes that have one
+
+### Patch Changes
+
+- [#2016](https://github.com/anza-xyz/kit/pull/2016) [`1dd83c6`](https://github.com/anza-xyz/kit/commit/1dd83c6f8fba45177054412863a7770c933fae73) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Fixed a bug where responses to `getTransactionsForAddress` requests were parsed without `bigint` support, risking precision loss on large integer values
+
+- Updated dependencies []:
+    - @solana/errors@8.3.0
+    - @solana/rpc-spec@8.3.0
+    - @solana/rpc-spec-types@8.3.0
+
 ## 8.2.0
 
 ### Patch Changes

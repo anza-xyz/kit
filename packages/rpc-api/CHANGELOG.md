@@ -1,5 +1,26 @@
 # @solana/rpc-api
 
+## 8.3.0
+
+### Minor Changes
+
+- [#2016](https://github.com/anza-xyz/kit/pull/2016) [`1dd83c6`](https://github.com/anza-xyz/kit/commit/1dd83c6f8fba45177054412863a7770c933fae73) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Added support for the `getAgGenesisCert` RPC method, which returns the Alpenglow genesis certificate from nodes that have one
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/addresses@8.3.0
+    - @solana/codecs-core@8.3.0
+    - @solana/codecs-strings@8.3.0
+    - @solana/errors@8.3.0
+    - @solana/keys@8.3.0
+    - @solana/rpc-parsed-types@8.3.0
+    - @solana/rpc-spec@8.3.0
+    - @solana/rpc-transformers@8.3.0
+    - @solana/rpc-types@8.3.0
+    - @solana/transaction-messages@8.3.0
+    - @solana/transactions@8.3.0
+
 ## 8.2.0
 
 ### Patch Changes

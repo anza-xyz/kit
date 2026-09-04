@@ -1,5 +1,17 @@
 # @solana/codecs
 
+## 8.3.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/codecs-core@8.3.0
+    - @solana/codecs-data-structures@8.3.0
+    - @solana/codecs-numbers@8.3.0
+    - @solana/codecs-strings@8.3.0
+    - @solana/fixed-points@8.3.0
+    - @solana/options@8.3.0
+
 ## 8.2.0
 
 ### Patch Changes
