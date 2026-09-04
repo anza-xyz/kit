@@ -17,5 +17,6 @@ export * from './rpc-subscriptions-clusters';
 export * from './rpc-subscriptions-coalescer';
 export * from './rpc-subscriptions-json-bigint';
 export * from './rpc-subscriptions-json';
+export * from './rpc-subscriptions-reconnector';
 export * from './rpc-subscriptions-transport';
 export * from './rpc-subscriptions';
