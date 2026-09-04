@@ -8,6 +8,7 @@ import {
     replaceTransactionMessageInstruction,
 } from './compute-budget-instruction';
 import { appendTransactionMessageInstruction } from './instructions';
+import { assertIsValidLoadedAccountsDataSizeLimit } from './resource-limit-validation';
 import { TransactionMessage } from './transaction-message';
 import { areV1ConfigsEqual, isV1ConfigEmpty } from './v1-transaction-config';
 
@@ -78,6 +79,9 @@ export function setTransactionMessageLoadedAccountsDataSizeLimit<TTransactionMes
     loadedAccountsDataSizeLimit: number | undefined,
     transactionMessage: TTransactionMessage,
 ): TTransactionMessage {
+    if (loadedAccountsDataSizeLimit !== undefined) {
+        assertIsValidLoadedAccountsDataSizeLimit(loadedAccountsDataSizeLimit);
+    }
     switch (transactionMessage.version) {
         case 1:
             return setTransactionMessageLoadedAccountsDataSizeLimitUsingConfig(
