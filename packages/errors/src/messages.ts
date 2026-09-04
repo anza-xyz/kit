@@ -208,6 +208,7 @@ import {
     SOLANA_ERROR__OFFCHAIN_MESSAGE__SIGNATURES_MISSING,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__UNEXPECTED_VERSION,
     SOLANA_ERROR__OFFCHAIN_MESSAGE__VERSION_NUMBER_NOT_SUPPORTED,
+    SOLANA_ERROR__PLUGIN_INTERFACES__MISSING_CLIENT_CAPABILITIES,
     SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_ACCOUNT,
     SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION,
     SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
@@ -686,6 +687,8 @@ export const SolanaErrorMessages: Readonly<{
     [SOLANA_ERROR__OFFCHAIN_MESSAGE__VERSION_NUMBER_NOT_SUPPORTED]:
         'This version of Kit does not support decoding offchain messages with version ' +
         '$unsupportedVersion. The current max supported version is 0.',
+    [SOLANA_ERROR__PLUGIN_INTERFACES__MISSING_CLIENT_CAPABILITIES]:
+        'The client is missing the following capabilities: [$capabilities]',
     [SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_ACCOUNT]:
         'The provided account could not be identified as an account from the $programName program.',
     [SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION]:
