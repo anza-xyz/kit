@@ -1,5 +1,23 @@
 # @solana/transactions
 
+## 8.3.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/addresses@8.3.0
+    - @solana/codecs-core@8.3.0
+    - @solana/codecs-data-structures@8.3.0
+    - @solana/codecs-numbers@8.3.0
+    - @solana/codecs-strings@8.3.0
+    - @solana/errors@8.3.0
+    - @solana/functional@8.3.0
+    - @solana/instructions@8.3.0
+    - @solana/keys@8.3.0
+    - @solana/nominal-types@8.3.0
+    - @solana/rpc-types@8.3.0
+    - @solana/transaction-messages@8.3.0
+
 ## 8.2.0
 
 ### Patch Changes

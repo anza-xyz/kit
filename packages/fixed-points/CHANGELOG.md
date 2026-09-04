@@ -1,5 +1,13 @@
 # @solana/fixed-points
 
+## 8.3.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/codecs-core@8.3.0
+    - @solana/errors@8.3.0
+
 ## 8.2.0
 
 ### Patch Changes

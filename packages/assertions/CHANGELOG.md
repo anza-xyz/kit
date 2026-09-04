@@ -1,5 +1,12 @@
 # @solana/assertions
 
+## 8.3.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/errors@8.3.0
+
 ## 8.2.0
 
 ### Patch Changes

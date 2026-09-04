@@ -1,5 +1,17 @@
 # @solana/instruction-plans
 
+## 8.3.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/errors@8.3.0
+    - @solana/instructions@8.3.0
+    - @solana/keys@8.3.0
+    - @solana/promises@8.3.0
+    - @solana/transaction-messages@8.3.0
+    - @solana/transactions@8.3.0
+
 ## 8.2.0
 
 ### Minor Changes

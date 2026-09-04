@@ -1,5 +1,15 @@
 # @solana/rpc-subscriptions-spec
 
+## 8.3.0
+
+### Patch Changes
+
+- Updated dependencies []:
+    - @solana/errors@8.3.0
+    - @solana/promises@8.3.0
+    - @solana/rpc-spec-types@8.3.0
+    - @solana/subscribable@8.3.0
+
 ## 8.2.0
 
 ### Patch Changes
