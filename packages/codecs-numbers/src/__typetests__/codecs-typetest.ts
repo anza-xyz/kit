@@ -13,12 +13,14 @@ import { getI16Codec, getI16Decoder, getI16Encoder } from '../i16';
 import { getI32Codec, getI32Decoder, getI32Encoder } from '../i32';
 import { getI64Codec, getI64Decoder, getI64Encoder } from '../i64';
 import { getI128Codec, getI128Decoder, getI128Encoder } from '../i128';
+import { getI256Codec, getI256Decoder, getI256Encoder } from '../i256';
 import { getShortU16Codec, getShortU16Decoder, getShortU16Encoder } from '../short-u16';
 import { getU8Codec, getU8Decoder, getU8Encoder } from '../u8';
 import { getU16Codec, getU16Decoder, getU16Encoder } from '../u16';
 import { getU32Codec, getU32Decoder, getU32Encoder } from '../u32';
 import { getU64Codec, getU64Decoder, getU64Encoder } from '../u64';
 import { getU128Codec, getU128Decoder, getU128Encoder } from '../u128';
+import { getU256Codec, getU256Decoder, getU256Encoder } from '../u256';
 
 getF32Encoder() satisfies NumberEncoder;
 getF32Encoder() satisfies FixedSizeNumberEncoder;
@@ -97,6 +99,17 @@ getI128Codec() satisfies FixedSizeNumberEncoder;
 getI128Codec() satisfies NumberDecoder;
 getI128Codec() satisfies FixedSizeNumberDecoder;
 
+getI256Encoder() satisfies NumberEncoder;
+getI256Encoder() satisfies FixedSizeNumberEncoder;
+getI256Decoder() satisfies NumberDecoder;
+getI256Decoder() satisfies FixedSizeNumberDecoder;
+getI256Codec() satisfies NumberCodec;
+getI256Codec() satisfies FixedSizeNumberCodec;
+getI256Codec() satisfies NumberEncoder;
+getI256Codec() satisfies FixedSizeNumberEncoder;
+getI256Codec() satisfies NumberDecoder;
+getI256Codec() satisfies FixedSizeNumberDecoder;
+
 getShortU16Encoder() satisfies NumberEncoder;
 // @ts-expect-error variable size encoder
 getShortU16Encoder() satisfies FixedSizeNumberEncoder;
@@ -167,3 +180,14 @@ getU128Codec() satisfies NumberEncoder;
 getU128Codec() satisfies FixedSizeNumberEncoder;
 getU128Codec() satisfies NumberDecoder;
 getU128Codec() satisfies FixedSizeNumberDecoder;
+
+getU256Encoder() satisfies NumberEncoder;
+getU256Encoder() satisfies FixedSizeNumberEncoder;
+getU256Decoder() satisfies NumberDecoder;
+getU256Decoder() satisfies FixedSizeNumberDecoder;
+getU256Codec() satisfies NumberCodec;
+getU256Codec() satisfies FixedSizeNumberCodec;
+getU256Codec() satisfies NumberEncoder;
+getU256Codec() satisfies FixedSizeNumberEncoder;
+getU256Codec() satisfies NumberDecoder;
+getU256Codec() satisfies FixedSizeNumberDecoder;
