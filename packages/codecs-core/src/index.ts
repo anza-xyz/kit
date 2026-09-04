@@ -665,4 +665,6 @@ export * from './pad-codec';
 export * from './readonly-uint8array';
 export * from './resize-codec';
 export * from './reverse-codec';
+export * from './tap-codec';
+export * from './tap-codec-bytes';
 export * from './transform-codec';
