@@ -329,6 +329,23 @@ const keypairBytes = new Uint8Array(JSON.parse(keypairFile.toString()));
 const signer = await createKeyPairSignerFromBytes(keypairBytes);
 ```
 
+#### `createLazyKeyPairSignerFromBytes()`
+
+A **synchronous** counterpart to `createKeyPairSignerFromBytes()`. Instead of awaiting the `CryptoKey` import up front, it derives the signer's address directly from the public key half of the 64-bytes secret key and defers the import until the first message or transaction is signed (memoising the result so it only happens once). This is useful when a signer must be created in a synchronous context — such as registering signers up front — whilst signing itself can remain asynchronous.
+
+```ts
+import { createLazyKeyPairSignerFromBytes } from '@solana/signers';
+
+// Returns synchronously — no `await` required.
+const signer = createLazyKeyPairSignerFromBytes(keypairBytes);
+signer.address; // Available immediately.
+
+// The CryptoKey import happens here, on first use, and is reused thereafter.
+const [transactionSignatures] = await signer.signTransactions([transaction]);
+```
+
+Because the import is deferred, the returned signer implements both `MessagePartialSigner` and `TransactionPartialSigner` but does **not** expose a `keyPair` property, so it is not a full `KeyPairSigner`. Only the 64-bytes length is validated synchronously; the cryptographic public/private-key match (which `createKeyPairSignerFromBytes()` checks eagerly) is verified on the first signing attempt instead. The internal copy of the secret key is zeroed once the import succeeds.
+
 #### `createKeyPairSignerFromPrivateKeyBytes()`
 
 A convenience function that creates a new KeyPair from a 32-bytes `Uint8Array` private key and immediately creates a `KeyPairSigner` from it.
