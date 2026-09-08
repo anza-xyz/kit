@@ -1,6 +1,6 @@
 import type { Address } from '@solana/addresses';
 import { address } from '@solana/addresses';
-import { bytesEqual } from '@solana/codecs-core';
+import { bytesEqual, type ReadonlyUint8Array } from '@solana/codecs-core';
 import { SOLANA_ERROR__TRANSACTION__NONCE_ACCOUNT_CANNOT_BE_IN_LOOKUP_TABLE, SolanaError } from '@solana/errors';
 import { TransactionModifyingSigner } from '@solana/signers';
 import { getCompiledTransactionMessageDecoder } from '@solana/transaction-messages';
@@ -8,9 +8,12 @@ import {
     assertIsTransactionWithinSizeLimit,
     getTransactionCodec,
     getTransactionLifetimeConstraintFromCompiledTransactionMessage,
+    reconstructEncodedTransactionFromOriginalTransaction,
+    Transaction,
     TransactionBlockhashLifetime,
     TransactionDurableNonceLifetime,
     TransactionMessageBytes,
+    TransactionWithLifetime,
 } from '@solana/transactions';
 import { SolanaSignTransaction, SolanaSignTransactionFeature } from '@solana/wallet-standard-features';
 import { WalletStandardError } from '@wallet-standard/errors';
@@ -29,6 +32,40 @@ jest.mock('@solana/codecs-core');
 
 type InputTransaction = Parameters<TransactionModifyingSigner['modifyAndSignTransactions']>[0][number];
 
+async function mockReconstructEncodedTransactionFromOriginalTransaction(
+    originalTransaction: Transaction | (Transaction & TransactionWithLifetime),
+    encodedTransaction: ReadonlyUint8Array | Uint8Array,
+) {
+    const decodedSignedTransaction = getTransactionCodec().decode(encodedTransaction);
+    assertIsTransactionWithinSizeLimit(decodedSignedTransaction);
+    const existingLifetime =
+        'lifetimeConstraint' in originalTransaction ? originalTransaction.lifetimeConstraint : undefined;
+    if (existingLifetime && bytesEqual(decodedSignedTransaction.messageBytes, originalTransaction.messageBytes)) {
+        return Object.freeze({
+            ...decodedSignedTransaction,
+            lifetimeConstraint: existingLifetime,
+        });
+    }
+    const compiledTransactionMessage = getCompiledTransactionMessageDecoder().decode(
+        decodedSignedTransaction.messageBytes,
+    );
+    if (existingLifetime) {
+        const currentToken = 'blockhash' in existingLifetime ? existingLifetime.blockhash : existingLifetime.nonce;
+        if (compiledTransactionMessage.lifetimeToken === currentToken) {
+            return Object.freeze({
+                ...decodedSignedTransaction,
+                lifetimeConstraint: existingLifetime,
+            });
+        }
+    }
+    const lifetimeConstraint =
+        await getTransactionLifetimeConstraintFromCompiledTransactionMessage(compiledTransactionMessage);
+    return Object.freeze({
+        ...decodedSignedTransaction,
+        lifetimeConstraint,
+    });
+}
+
 describe('createSignerFromWalletAccount', () => {
     const mockAddress = 'Gp7YgHcJciP4px5FdFnywUiMG4UcfMZV9UagSAZzDxdy' as Address;
 
@@ -44,6 +81,9 @@ describe('createSignerFromWalletAccount', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         jest.mocked(address).mockImplementation(addr => addr as Address);
+        jest.mocked(reconstructEncodedTransactionFromOriginalTransaction).mockImplementation(
+            mockReconstructEncodedTransactionFromOriginalTransaction,
+        );
     });
 
     it('throws if chain is unsupported', () => {

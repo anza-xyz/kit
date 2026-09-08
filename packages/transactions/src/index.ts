@@ -10,6 +10,7 @@
  */
 export * from './codecs';
 export * from './lifetime';
+export * from './reconstruct-encoded-transaction-from-original-transaction';
 export * from './compile-transaction';
 export * from './signatures';
 export * from './wire-transaction';
