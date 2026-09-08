@@ -108,34 +108,61 @@ export function assertAccountDecoded<TData extends object, TAddress extends stri
     }
 }
 
+type DecodedAccountData<TData> =
+    Exclude<TData, ReadonlyUint8Array | Uint8Array> extends infer TDecoded
+        ? TDecoded extends object
+            ? TDecoded
+            : never
+        : never;
+
+type AssertedDecodedAccount<TAccount> = [TAccount] extends [MaybeAccount<infer TData, infer TAddress>]
+    ? [TAccount] extends [Account<ReadonlyUint8Array | object, string>]
+        ? Account<DecodedAccountData<TData>, TAddress>
+        : MaybeAccount<DecodedAccountData<TData>, TAddress>
+    : [TAccount] extends [Account<infer TData, infer TAddress>]
+      ? Account<DecodedAccountData<TData>, TAddress>
+      : TAccount;
+
+type AssertedDecodedAccounts<TAccounts extends readonly unknown[]> = {
+    -readonly [P in keyof TAccounts]: AssertedDecodedAccount<TAccounts[P]>;
+};
+
 /**
  * Asserts that all input accounts store decoded data, ie. not a `Uint8Array`.
  *
  * As with {@link assertAccountDecoded} it does not check the shape of the data matches the decoded
  * type, only that it is not a `Uint8Array`.
  *
+ * When called with a tuple of accounts, each element's address and decoded data type is preserved
+ * instead of collapsing to a single shared type parameter.
+ *
+ * @typeParam TAccounts - The tuple or array of accounts to narrow. Each element's address and
+ * decoded data type is preserved.
+ *
  * @example
  * ```ts
- * type MyAccountData = { name: string; age: number };
+ * type TokenData = { mint: Address };
+ * type MintData = { supply: bigint };
  *
- * const myAccounts: Account<MyAccountData | Uint8Array, Address>[];
+ * const myAccounts: [
+ *     Account<TokenData | Uint8Array, '1111..'>,
+ *     Account<MintData | Uint8Array, '2222..'>,
+ * ] = [
+ *     {} as Account<TokenData | Uint8Array, '1111..'>,
+ *     {} as Account<MintData | Uint8Array, '2222..'>,
+ * ];
  * assertAccountsDecoded(myAccounts);
  *
- * // now the account data can be used as MyAccountData
- * for (const a of account) {
- *     account.data satisfies MyAccountData;
- * }
+ * myAccounts[0] satisfies Account<TokenData, '1111..'>;
+ * myAccounts[1] satisfies Account<MintData, '2222..'>;
  * ```
  */
-export function assertAccountsDecoded<TData extends object, TAddress extends string = string>(
-    accounts: Account<ReadonlyUint8Array | TData, TAddress>[],
-): asserts accounts is Account<TData, TAddress>[];
-export function assertAccountsDecoded<TData extends object, TAddress extends string = string>(
-    accounts: MaybeAccount<ReadonlyUint8Array | TData, TAddress>[],
-): asserts accounts is MaybeAccount<TData, TAddress>[];
-export function assertAccountsDecoded<TData extends object, TAddress extends string = string>(
-    accounts: (Account<ReadonlyUint8Array | TData, TAddress> | MaybeAccount<ReadonlyUint8Array | TData, TAddress>)[],
-): asserts accounts is (Account<TData, TAddress> | MaybeAccount<TData, TAddress>)[] {
+export function assertAccountsDecoded<
+    TAccounts extends readonly (
+        | Account<ReadonlyUint8Array | object, string>
+        | MaybeAccount<ReadonlyUint8Array | object, string>
+    )[],
+>(accounts: AssertedDecodedAccounts<TAccounts> | TAccounts): asserts accounts is AssertedDecodedAccounts<TAccounts> {
     const encoded = accounts.filter(a => accountExists(a) && a.data instanceof Uint8Array);
     if (encoded.length > 0) {
         const encodedAddresses = encoded.map(a => a.address);
