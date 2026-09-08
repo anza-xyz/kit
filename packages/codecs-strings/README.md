@@ -92,6 +92,16 @@ const bytes = getUtf8Encoder().encode('hello'); // 0x68656c6c6f
 const value = getUtf8Decoder().decode(bytes); // "hello"
 ```
 
+By default, invalid UTF-8 is replaced with the replacement character (`U+FFFD`), a leading byte order mark (`U+FEFF`) is stripped and null characters (`\u0000`) are stripped from decoded strings, since they are commonly used as padding in fixed-size strings. These behaviours can be changed via the `fatal`, `ignoreBOM` and `removeNullCharacters` options.
+
+```ts
+const codec = getUtf8Codec({ fatal: true, ignoreBOM: true, removeNullCharacters: false });
+codec.encode('\ud800'); // Throws: lone surrogate.
+codec.decode(new Uint8Array([0xff])); // Throws: invalid byte sequence.
+codec.decode(new Uint8Array([0x61, 0x00, 0x62])); // "a\u0000b"
+codec.decode(new Uint8Array([0xef, 0xbb, 0xbf, 0x61])); // "\ufeffa"
+```
+
 ## Base 64 codec
 
 The `getBase64Codec` function encodes and decodes a base-64 string to and from a byte array.
