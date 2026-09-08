@@ -45,6 +45,19 @@ export type ArrayCodecConfig<TPrefix extends NumberCodec | NumberDecoder | Numbe
      */
     description?: string;
     /**
+     * Whether a size prefix must be present when decoding.
+     *
+     * By default, when the size is stored as a prefix and there are no bytes left to read,
+     * the decoder returns an empty array instead of failing. This allows new collections to be
+     * appended to existing data layouts without breaking the decoding of older data.
+     * Set this option to `true` to throw when the size prefix is missing.
+     *
+     * Only applies when the `size` option is a number codec.
+     *
+     * @defaultValue `false`
+     */
+    requireSizePrefix?: boolean;
+    /**
      * Specifies how the size of the array is determined.
      *
      * - A {@link NumberCodec}, {@link NumberDecoder}, or {@link NumberEncoder} stores a size prefix before encoding the array.
@@ -178,7 +191,7 @@ export function getArrayDecoder<TTo>(item: Decoder<TTo>, config: ArrayCodecConfi
         ...(fixedSize !== null ? { fixedSize } : { maxSize }),
         read: (bytes: ReadonlyUint8Array | Uint8Array, offset) => {
             const array: TTo[] = [];
-            if (typeof size === 'object' && offset >= bytes.length) {
+            if (typeof size === 'object' && !config.requireSizePrefix && offset >= bytes.length) {
                 return [array, offset];
             }
 
@@ -258,11 +271,25 @@ export function getArrayDecoder<TTo>(item: Decoder<TTo>, config: ArrayCodecConfi
  * //   └-- 3 items of 1 byte each. The size is inferred from the remainder of the bytes.
  * ```
  *
+ * @example
+ * Requiring the size prefix to be present when decoding.
+ * ```ts
+ * getArrayCodec(getU8Codec()).decode(new Uint8Array([]));
+ * // [] (an exhausted byte array decodes as an empty array by default).
+ *
+ * getArrayCodec(getU8Codec(), { requireSizePrefix: true }).decode(new Uint8Array([]));
+ * // Throws: the size prefix is missing.
+ * ```
+ *
  * @remarks
  * The size of the array can be controlled using the `size` option:
  * - A `Codec<number>` (e.g. `getU16Codec()`) stores a size prefix before the array.
  * - A `number` enforces a fixed number of elements.
  * - `"remainder"` uses all remaining bytes to infer the array length.
+ *
+ * When the size is stored as a prefix, decoding an exhausted byte array yields an empty array,
+ * which allows arrays to be appended to existing data layouts without breaking older data.
+ * Use the `requireSizePrefix` option to throw instead.
  *
  * Separate {@link getArrayEncoder} and {@link getArrayDecoder} functions are available.
  *

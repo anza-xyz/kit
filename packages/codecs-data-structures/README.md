@@ -54,6 +54,13 @@ getArrayCodec(getU8Codec(), { size: 'remainder' }).encode([1, 2, 3]);
 //   └-- 3 items of 1 byte each. The size is inferred from the remainder of the bytes.
 ```
 
+When the size is stored as a prefix, decoding an exhausted byte array yields an empty array instead of failing. This allows arrays to be appended to existing data layouts without breaking the decoding of older data. Use the `requireSizePrefix` option to throw instead.
+
+```ts
+getArrayCodec(getU8Codec()).decode(new Uint8Array([])); // []
+getArrayCodec(getU8Codec(), { requireSizePrefix: true }).decode(new Uint8Array([])); // Throws: missing size prefix.
+```
+
 Separate `getArrayEncoder` and `getArrayDecoder` functions are also available.
 
 ```ts
@@ -70,7 +77,7 @@ const bytes = getSetCodec(getU8Codec()).encode(new Set([1, 2, 3]));
 const set = getSetCodec(getU8Codec()).decode(bytes);
 ```
 
-Just like the array codec, it uses a `u32` size prefix by default but can be configured using the `size` option. [See the array codec](#array-codec) for more details.
+Just like the array codec, it uses a `u32` size prefix by default but can be configured using the `size` and `requireSizePrefix` options. [See the array codec](#array-codec) for more details.
 
 ```ts
 getSetCodec(getU8Codec(), { size: getU16Codec() }).encode(new Set([1, 2, 3]));
@@ -114,7 +121,7 @@ getMapCodec(keyCodec, valueCodec).encode(myMap);
 //   └-- 4-byte prefix telling us to read 2 map entries.
 ```
 
-However, it can be configured using the `size` option. [See the `size` option of the array codec](#array-codec) for more details.
+However, it can be configured using the `size` and `requireSizePrefix` options. [See the array codec](#array-codec) for more details.
 
 ```ts
 getMapCodec(keyCodec, valueCodec, { size: getU16Codec() }).encode(myMap);

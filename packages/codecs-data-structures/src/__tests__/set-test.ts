@@ -1,7 +1,11 @@
 import { addCodecSizePrefix, fixCodecSize } from '@solana/codecs-core';
 import { getU8Codec, getU16Codec, getU32Codec, getU64Codec } from '@solana/codecs-numbers';
 import { getUtf8Codec } from '@solana/codecs-strings';
-import { SOLANA_ERROR__CODECS__INVALID_NUMBER_OF_ITEMS, SolanaError } from '@solana/errors';
+import {
+    SOLANA_ERROR__CODECS__CANNOT_DECODE_EMPTY_BYTE_ARRAY,
+    SOLANA_ERROR__CODECS__INVALID_NUMBER_OF_ITEMS,
+    SolanaError,
+} from '@solana/errors';
 
 import { getSetCodec } from '../set';
 import { b } from './__setup__';
@@ -102,6 +106,21 @@ describe('getSetCodec', () => {
         expect(setU64.encode(new Set([2]))).toStrictEqual(b('0200000000000000'));
         expect(setU64.encode(new Set([2n]))).toStrictEqual(b('0200000000000000'));
         expect(setU64.read(b('0200000000000000'), 0)).toStrictEqual([new Set([2n]), 8]);
+    });
+
+    it('decodes an exhausted byte array as an empty set by default', () => {
+        expect(set(u8()).read(b(''), 0)).toStrictEqual([new Set(), 0]);
+        expect(set(u8()).read(b('ff'), 1)).toStrictEqual([new Set(), 1]);
+    });
+
+    it('can require the size prefix to be present', () => {
+        const strict = { requireSizePrefix: true } as const;
+        expect(() => set(u8(), strict).read(b(''), 0)).toThrow(
+            new SolanaError(SOLANA_ERROR__CODECS__CANNOT_DECODE_EMPTY_BYTE_ARRAY, { codecDescription: 'u32' }),
+        );
+        expect(set(u8(), strict).read(b('00000000'), 0)).toStrictEqual([new Set(), 4]);
+        expect(set(u8(), strict).read(b('020000002a01'), 0)).toStrictEqual([new Set([42, 1]), 6]);
+        expect(set(u8(), { ...strict, size: 'remainder' }).read(b(''), 0)).toStrictEqual([new Set(), 0]);
     });
 
     it('has the right sizes', () => {
