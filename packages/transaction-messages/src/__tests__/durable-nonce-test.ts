@@ -208,8 +208,15 @@ describe('setTransactionMessageLifetimeUsingDurableNonce', () => {
     });
     describe('given a transaction with an advance nonce account instruction but no nonce lifetime constraint', () => {
         it('does not modify an `AdvanceNonceAccount` instruction if the existing one matches the constraint added', () => {
-            const instruction = createMockAdvanceNonceAccountInstruction(NONCE_CONSTRAINT_A);
-            instruction.accounts[2].role = AccountRole.WRITABLE_SIGNER;
+            const baseInstruction = createMockAdvanceNonceAccountInstruction(NONCE_CONSTRAINT_A);
+            const instruction = {
+                ...baseInstruction,
+                accounts: [
+                    baseInstruction.accounts[0],
+                    baseInstruction.accounts[1],
+                    { ...baseInstruction.accounts[2], role: AccountRole.WRITABLE_SIGNER },
+                ],
+            };
             const transaction: TransactionMessage = {
                 ...baseTx,
                 instructions: [instruction, baseTx.instructions[0]],

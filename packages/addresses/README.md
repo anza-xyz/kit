@@ -21,6 +21,16 @@ This type represents a string that validates as a Solana address. Functions that
 
 Whenever you need to validate an arbitrary string as a base58-encoded address, use the `address()`, `assertIsAddress()`, or `isAddress()` functions in this package.
 
+### `HasAddress`
+
+This type represents any object that exposes a Solana address through an `address` property. Many Kit types already satisfy it — such as `TransactionSigner`, `AccountMeta`, or the fee payer of a transaction message. Frameworks that provide their own wrapper classes around addresses can implement this interface so that their values are accepted wherever an address-bearing object is expected — e.g. by the instruction builders of generated program clients.
+
+```ts
+class MyAddressWrapper implements HasAddress {
+    constructor(readonly address: Address) {}
+}
+```
+
 ### `ProgramDerivedAddress`
 
 This type represents the tuple of a program derived address and the bump seed used to ensure that the address, as derived, is not found on the Ed25519 curve.

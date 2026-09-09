@@ -26,6 +26,32 @@ import { Brand, EncodedString } from '@solana/nominal-types';
  */
 export type Address<TAddress extends string = string> = Brand<EncodedString<TAddress, 'base58'>, 'Address'>;
 
+/**
+ * Represents any object that exposes a Solana address through an `address` property.
+ *
+ * This is a structural interface that many Kit types already satisfy — for instance,
+ * `TransactionSigner`, `AccountMeta` and the fee payer of a transaction message. Frameworks
+ * that provide their own wrapper classes around addresses can implement this interface so
+ * that their values are accepted wherever an address-bearing object is expected — e.g. by
+ * the instruction builders of generated program clients.
+ *
+ * @typeParam TAddress - Supply a string literal to define an object having a particular address.
+ *
+ * @example
+ * ```ts
+ * import { Address, HasAddress } from '@solana/addresses';
+ *
+ * class MyAddressWrapper implements HasAddress {
+ *     constructor(readonly address: Address) {}
+ * }
+ * ```
+ *
+ * @see {@link Address}
+ */
+export type HasAddress<TAddress extends string = string> = Readonly<{
+    address: Address<TAddress>;
+}>;
+
 let memoizedBase58Encoder: Encoder<string> | undefined;
 let memoizedBase58Decoder: Decoder<string> | undefined;
 

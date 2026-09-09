@@ -34,19 +34,48 @@ export type ReadonlyAccount<TAddress extends string = string> = AccountMeta<TAdd
 /**
  * @see {@link AccountMeta}
  */
-export type WritableAccount<TAddress extends string = string> = AccountMeta<TAddress> & { role: AccountRole.WRITABLE };
+export type WritableAccount<TAddress extends string = string> = AccountMeta<TAddress> & {
+    readonly role: AccountRole.WRITABLE;
+};
 /**
  * @see {@link AccountMeta}
  */
 export type ReadonlySignerAccount<TAddress extends string = string> = AccountMeta<TAddress> & {
-    role: AccountRole.READONLY_SIGNER;
+    readonly role: AccountRole.READONLY_SIGNER;
 };
 /**
  * @see {@link AccountMeta}
  */
 export type WritableSignerAccount<TAddress extends string = string> = AccountMeta<TAddress> & {
-    role: AccountRole.WRITABLE_SIGNER;
+    readonly role: AccountRole.WRITABLE_SIGNER;
 };
+
+/**
+ * Represents an {@link AccountMeta} whose role is guaranteed not to be a signer role.
+ *
+ * This is the counterpart of the `AccountSignerMeta` type from `@solana/signers`, which
+ * narrows the role to the two signer roles. Use this type when an account meta must only
+ * describe the mutability of an account — e.g. when overriding the writable flag of a
+ * non-signer account in a generated program client.
+ *
+ * @typeParam TAddress - Supply a string literal to define an account having a particular address.
+ *
+ * @example
+ * ```ts
+ * import { address } from '@solana/addresses';
+ * import { AccountNonSignerMeta, AccountRole } from '@solana/instructions';
+ *
+ * const meta: AccountNonSignerMeta = {
+ *     address: address('mpngsFd4tmbUfzDYJayjKZwZcaR7aWb2793J6grLsGu'),
+ *     role: AccountRole.READONLY,
+ * };
+ * ```
+ *
+ * @see {@link AccountMeta}
+ */
+export type AccountNonSignerMeta<TAddress extends string = string> =
+    | ReadonlyAccount<TAddress>
+    | WritableAccount<TAddress>;
 
 /**
  * Represents a lookup of the account's address in an address lookup table. It specifies which
