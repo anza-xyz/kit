@@ -1,5 +1,20 @@
 # @solana/addresses
 
+## 8.3.0
+
+### Minor Changes
+
+- [#2025](https://github.com/anza-xyz/kit/pull/2025) [`7a14614`](https://github.com/anza-xyz/kit/commit/7a1461472722620c8da8e6c6abc1dc748b4bf1f2) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add a new `HasAddress` type representing any object exposing a Solana address through an `address` property — e.g. a `TransactionSigner`, an `AccountMeta` or a framework's address wrapper class. The fee payer of a transaction message is now typed using `HasAddress` (a structurally identical change).
+
+### Patch Changes
+
+- Updated dependencies [[`a5267b3`](https://github.com/anza-xyz/kit/commit/a5267b3df1ddf7a04cb603f68365b097c0bc8b8a), [`7a14614`](https://github.com/anza-xyz/kit/commit/7a1461472722620c8da8e6c6abc1dc748b4bf1f2), [`cae725c`](https://github.com/anza-xyz/kit/commit/cae725c3c606e39f521e1f4511607cb2fb3a4888)]:
+    - @solana/codecs-core@8.3.0
+    - @solana/errors@8.3.0
+    - @solana/codecs-strings@8.3.0
+    - @solana/assertions@8.3.0
+    - @solana/nominal-types@8.3.0
+
 ## 8.2.0
 
 ### Patch Changes

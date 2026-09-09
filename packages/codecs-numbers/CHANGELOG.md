@@ -1,5 +1,17 @@
 # @solana/codecs-numbers
 
+## 8.3.0
+
+### Minor Changes
+
+- [#2029](https://github.com/anza-xyz/kit/pull/2029) [`3206678`](https://github.com/anza-xyz/kit/commit/32066780c4e08ce2808c310bf2adb1f2193b267b) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add `u256` and `i256` number codecs (`getU256Codec`/`getU256Encoder`/`getU256Decoder` and `getI256Codec`/`getI256Encoder`/`getI256Decoder`), extending the number codecs beyond 128-bit integers. Both support little- and big-endian serialization via the `endian` option and, as with the other large-integer codecs, always decode to a `bigint`.
+
+### Patch Changes
+
+- Updated dependencies [[`a5267b3`](https://github.com/anza-xyz/kit/commit/a5267b3df1ddf7a04cb603f68365b097c0bc8b8a), [`7a14614`](https://github.com/anza-xyz/kit/commit/7a1461472722620c8da8e6c6abc1dc748b4bf1f2), [`cae725c`](https://github.com/anza-xyz/kit/commit/cae725c3c606e39f521e1f4511607cb2fb3a4888)]:
+    - @solana/codecs-core@8.3.0
+    - @solana/errors@8.3.0
+
 ## 8.2.0
 
 ### Patch Changes

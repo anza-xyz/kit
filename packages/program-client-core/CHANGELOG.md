@@ -1,5 +1,24 @@
 # @solana/program-client-core
 
+## 8.3.0
+
+### Minor Changes
+
+- [#2025](https://github.com/anza-xyz/kit/pull/2025) [`7a14614`](https://github.com/anza-xyz/kit/commit/7a1461472722620c8da8e6c6abc1dc748b4bf1f2) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Widen the accepted inputs of instruction accounts in generated program clients. The new `InstructionAccountInput` type accepts an `Address`, any address-bearing object (`HasAddress`) — including framework wrapper classes — a `ProgramDerivedAddress` or an `AccountNonSignerMeta` used to override the role declared by the program's IDL. Similarly, the new `InstructionSignerInput` type accepts a `TransactionSigner` or an `AccountSignerMeta` role override. In addition, `ResolvedInstructionAccount` now carries an optional `isSigner` flag describing the IDL's signer requirement: when set to `false`, `TransactionSigner` values act as plain address carriers instead of being upgraded to signers, and when set to `true`, a missing signer throws a helpful error pointing at `createNoopSigner`. Finally, new `ResolvedInstructionAccountMeta` and `InstructionAccountInputAddress` type helpers mirror this runtime logic at the type level so that generated instruction builders can accurately type the account metas they return.
+
+### Patch Changes
+
+- Updated dependencies [[`a5267b3`](https://github.com/anza-xyz/kit/commit/a5267b3df1ddf7a04cb603f68365b097c0bc8b8a), [`7a14614`](https://github.com/anza-xyz/kit/commit/7a1461472722620c8da8e6c6abc1dc748b4bf1f2), [`7a14614`](https://github.com/anza-xyz/kit/commit/7a1461472722620c8da8e6c6abc1dc748b4bf1f2), [`cae725c`](https://github.com/anza-xyz/kit/commit/cae725c3c606e39f521e1f4511607cb2fb3a4888), [`7a14614`](https://github.com/anza-xyz/kit/commit/7a1461472722620c8da8e6c6abc1dc748b4bf1f2), [`1dd83c6`](https://github.com/anza-xyz/kit/commit/1dd83c6f8fba45177054412863a7770c933fae73), [`8af3229`](https://github.com/anza-xyz/kit/commit/8af32293419645fcf27aea4cb9c7119fa9b349f2)]:
+    - @solana/codecs-core@8.3.0
+    - @solana/errors@8.3.0
+    - @solana/addresses@8.3.0
+    - @solana/instructions@8.3.0
+    - @solana/rpc-api@8.3.0
+    - @solana/signers@8.3.0
+    - @solana/accounts@8.3.0
+    - @solana/instruction-plans@8.3.0
+    - @solana/plugin-interfaces@8.3.0
+
 ## 8.2.0
 
 ### Patch Changes
