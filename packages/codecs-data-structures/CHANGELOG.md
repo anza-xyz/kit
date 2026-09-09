@@ -1,5 +1,18 @@
 # @solana/codecs-data-structures
 
+## 8.3.0
+
+### Minor Changes
+
+- [#2042](https://github.com/anza-xyz/kit/pull/2042) [`cd2776e`](https://github.com/anza-xyz/kit/commit/cd2776e0d56494b48a111a38ca2ef20b4e1e8648) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add a `requireSizePrefix` option to the array, map and set codecs. By default, decoding an exhausted byte array yields an empty collection so that collections can be appended to existing data layouts; with `requireSizePrefix: true`, a missing size prefix throws instead.
+
+### Patch Changes
+
+- Updated dependencies [[`a5267b3`](https://github.com/anza-xyz/kit/commit/a5267b3df1ddf7a04cb603f68365b097c0bc8b8a), [`7a14614`](https://github.com/anza-xyz/kit/commit/7a1461472722620c8da8e6c6abc1dc748b4bf1f2), [`3206678`](https://github.com/anza-xyz/kit/commit/32066780c4e08ce2808c310bf2adb1f2193b267b), [`cae725c`](https://github.com/anza-xyz/kit/commit/cae725c3c606e39f521e1f4511607cb2fb3a4888)]:
+    - @solana/codecs-core@8.3.0
+    - @solana/errors@8.3.0
+    - @solana/codecs-numbers@8.3.0
+
 ## 8.2.0
 
 ### Patch Changes

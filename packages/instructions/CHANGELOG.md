@@ -1,5 +1,17 @@
 # @solana/instructions
 
+## 8.3.0
+
+### Minor Changes
+
+- [#2025](https://github.com/anza-xyz/kit/pull/2025) [`7a14614`](https://github.com/anza-xyz/kit/commit/7a1461472722620c8da8e6c6abc1dc748b4bf1f2) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add a new `AccountNonSignerMeta` type representing an `AccountMeta` whose role is guaranteed not to be a signer role — i.e. `ReadonlyAccount | WritableAccount`. It is the counterpart of the `AccountSignerMeta` type from `@solana/signers`. Additionally, the `role` member of `WritableAccount`, `ReadonlySignerAccount` and `WritableSignerAccount` is now marked `readonly`, consistently with `ReadonlyAccount` and `AccountMeta`. Note that code mutating the `role` of these types will now fail to compile — which was already contrary to `AccountMeta`'s contract and would throw at runtime on frozen account metas.
+
+### Patch Changes
+
+- Updated dependencies [[`a5267b3`](https://github.com/anza-xyz/kit/commit/a5267b3df1ddf7a04cb603f68365b097c0bc8b8a), [`7a14614`](https://github.com/anza-xyz/kit/commit/7a1461472722620c8da8e6c6abc1dc748b4bf1f2), [`cae725c`](https://github.com/anza-xyz/kit/commit/cae725c3c606e39f521e1f4511607cb2fb3a4888)]:
+    - @solana/codecs-core@8.3.0
+    - @solana/errors@8.3.0
+
 ## 8.2.0
 
 ### Patch Changes

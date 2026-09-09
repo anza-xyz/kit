@@ -1,5 +1,16 @@
 # @solana/codecs-core
 
+## 8.3.0
+
+### Minor Changes
+
+- [#2030](https://github.com/anza-xyz/kit/pull/2030) [`a5267b3`](https://github.com/anza-xyz/kit/commit/a5267b3df1ddf7a04cb603f68365b097c0bc8b8a) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add `tap` codec helpers for observing values and bytes without modifying them. The value family (`tapEncoder`/`tapDecoder`/`tapCodec`) observes the input value before encoding and the decoded value after decoding, whilst the bytes family (`tapEncoderBytes`/`tapDecoderBytes`/`tapCodecBytes`) observes the raw bytes after encoding and before decoding. Any tap may throw to abort the operation, making these helpers ideal for adding validation guards to existing codecs without an identity `transformEncoder`. For example, `tapDecoderBytes(getBooleanDecoder(), (bytes, offset) => { if (bytes[offset] > 1) throw new Error('Expected a 0 or a 1 for booleans'); })`.
+
+### Patch Changes
+
+- Updated dependencies [[`7a14614`](https://github.com/anza-xyz/kit/commit/7a1461472722620c8da8e6c6abc1dc748b4bf1f2), [`cae725c`](https://github.com/anza-xyz/kit/commit/cae725c3c606e39f521e1f4511607cb2fb3a4888)]:
+    - @solana/errors@8.3.0
+
 ## 8.2.0
 
 ### Patch Changes

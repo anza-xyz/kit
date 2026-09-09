@@ -1,5 +1,7 @@
 # @solana/rpc-parsed-types
 
+## 8.3.0
+
 ## 8.2.0
 
 ## 8.1.0

@@ -1,5 +1,24 @@
 # @solana/signers
 
+## 8.3.0
+
+### Minor Changes
+
+- [#2031](https://github.com/anza-xyz/kit/pull/2031) [`8af3229`](https://github.com/anza-xyz/kit/commit/8af32293419645fcf27aea4cb9c7119fa9b349f2) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add `createLazyKeyPairSignerFromBytes`, a synchronous counterpart to `createKeyPairSignerFromBytes`. It derives the signer's address directly from the public key half of the 64-byte secret key and defers the asynchronous `CryptoKey` import until the first message or transaction is signed (memoising the result). This is useful when a signer must be created in a synchronous context whilst signing can remain asynchronous. Because the key import is deferred, the returned signer implements both `MessagePartialSigner` and `TransactionPartialSigner` but does not expose a `keyPair` property, and the cryptographic validation of the secret key happens on the first signing attempt rather than at creation time. The internal copy of the secret key is zeroed once the import succeeds, and a failed import is not cached so signing can be retried.
+
+### Patch Changes
+
+- Updated dependencies [[`a5267b3`](https://github.com/anza-xyz/kit/commit/a5267b3df1ddf7a04cb603f68365b097c0bc8b8a), [`7a14614`](https://github.com/anza-xyz/kit/commit/7a1461472722620c8da8e6c6abc1dc748b4bf1f2), [`7a14614`](https://github.com/anza-xyz/kit/commit/7a1461472722620c8da8e6c6abc1dc748b4bf1f2), [`cae725c`](https://github.com/anza-xyz/kit/commit/cae725c3c606e39f521e1f4511607cb2fb3a4888), [`7a14614`](https://github.com/anza-xyz/kit/commit/7a1461472722620c8da8e6c6abc1dc748b4bf1f2)]:
+    - @solana/codecs-core@8.3.0
+    - @solana/errors@8.3.0
+    - @solana/transaction-messages@8.3.0
+    - @solana/addresses@8.3.0
+    - @solana/instructions@8.3.0
+    - @solana/keys@8.3.0
+    - @solana/offchain-messages@8.3.0
+    - @solana/transactions@8.3.0
+    - @solana/nominal-types@8.3.0
+
 ## 8.2.0
 
 ### Patch Changes

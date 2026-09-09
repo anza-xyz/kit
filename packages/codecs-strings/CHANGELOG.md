@@ -1,5 +1,18 @@
 # @solana/codecs-strings
 
+## 8.3.0
+
+### Minor Changes
+
+- [#2041](https://github.com/anza-xyz/kit/pull/2041) [`cae725c`](https://github.com/anza-xyz/kit/commit/cae725c3c606e39f521e1f4511607cb2fb3a4888) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add `fatal`, `ignoreBOM` and `removeNullCharacters` options to the UTF-8 codec. With `fatal`, lone surrogates when encoding and malformed byte sequences when decoding throw a `SolanaError` instead of being replaced with `U+FFFD`. With `ignoreBOM: true`, a leading byte order mark is preserved instead of being stripped. With `removeNullCharacters: false`, null characters are preserved in decoded strings instead of being stripped as padding. On React Native, a leading byte order mark is now stripped by default, consistent with other platforms.
+
+### Patch Changes
+
+- Updated dependencies [[`a5267b3`](https://github.com/anza-xyz/kit/commit/a5267b3df1ddf7a04cb603f68365b097c0bc8b8a), [`7a14614`](https://github.com/anza-xyz/kit/commit/7a1461472722620c8da8e6c6abc1dc748b4bf1f2), [`3206678`](https://github.com/anza-xyz/kit/commit/32066780c4e08ce2808c310bf2adb1f2193b267b), [`cae725c`](https://github.com/anza-xyz/kit/commit/cae725c3c606e39f521e1f4511607cb2fb3a4888)]:
+    - @solana/codecs-core@8.3.0
+    - @solana/errors@8.3.0
+    - @solana/codecs-numbers@8.3.0
+
 ## 8.2.0
 
 ### Patch Changes

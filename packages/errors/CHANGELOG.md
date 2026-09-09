@@ -1,5 +1,13 @@
 # @solana/errors
 
+## 8.3.0
+
+### Minor Changes
+
+- [#2025](https://github.com/anza-xyz/kit/pull/2025) [`7a14614`](https://github.com/anza-xyz/kit/commit/7a1461472722620c8da8e6c6abc1dc748b4bf1f2) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Widen the accepted inputs of instruction accounts in generated program clients. The new `InstructionAccountInput` type accepts an `Address`, any address-bearing object (`HasAddress`) — including framework wrapper classes — a `ProgramDerivedAddress` or an `AccountNonSignerMeta` used to override the role declared by the program's IDL. Similarly, the new `InstructionSignerInput` type accepts a `TransactionSigner` or an `AccountSignerMeta` role override. In addition, `ResolvedInstructionAccount` now carries an optional `isSigner` flag describing the IDL's signer requirement: when set to `false`, `TransactionSigner` values act as plain address carriers instead of being upgraded to signers, and when set to `true`, a missing signer throws a helpful error pointing at `createNoopSigner`. Finally, new `ResolvedInstructionAccountMeta` and `InstructionAccountInputAddress` type helpers mirror this runtime logic at the type level so that generated instruction builders can accurately type the account metas they return.
+
+- [#2041](https://github.com/anza-xyz/kit/pull/2041) [`cae725c`](https://github.com/anza-xyz/kit/commit/cae725c3c606e39f521e1f4511607cb2fb3a4888) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add `fatal`, `ignoreBOM` and `removeNullCharacters` options to the UTF-8 codec. With `fatal`, lone surrogates when encoding and malformed byte sequences when decoding throw a `SolanaError` instead of being replaced with `U+FFFD`. With `ignoreBOM: true`, a leading byte order mark is preserved instead of being stripped. With `removeNullCharacters: false`, null characters are preserved in decoded strings instead of being stripped as padding. On React Native, a leading byte order mark is now stripped by default, consistent with other platforms.
+
 ## 8.2.0
 
 ## 8.1.0
