@@ -218,7 +218,7 @@ import { getU64Codec } from '@solana/kit';
 const u64Codec = getU64Codec();
 // ---cut-before---
 const bytes = u64Codec.encode(42);
-const value = u64Codec.decode(bytes); // BigInt(42)
+const value = u64Codec.decode(bytes); // 42n
 ```
 
 This relationship between the type we encode “From” and decode “To” can be generalized in TypeScript as `To extends From`.
@@ -458,6 +458,8 @@ const getCipherCodec = () => combineCodec(getCipherEncoder(), getCipherDecoder()
 [padRightCodec](#pad-right-codec) \
 [resizeCodec](#resize-codec) \
 [reverseCodec](#reverse-codec) \
+[tapCodec](#tap-codec) \
+[tapCodecBytes](#tap-codec-bytes) \
 [transformCodec](#transform-codec)
 
 </div>
@@ -471,6 +473,7 @@ const getCipherCodec = () => combineCodec(getCipherEncoder(), getCipherDecoder()
 [getI32Codec](#get-i32-codec) \
 [getI64Codec](#get-i64-codec) \
 [getI128Codec](#get-i128-codec) \
+[getI256Codec](#get-i256-codec) \
 [getF32Codec](#get-f32-codec) \
 [getF64Codec](#get-f64-codec) \
 [getShortU16Codec](#get-short-u16-codec) \
@@ -478,7 +481,8 @@ const getCipherCodec = () => combineCodec(getCipherEncoder(), getCipherDecoder()
 [getU16Codec](#get-u16-codec) \
 [getU32Codec](#get-u32-codec) \
 [getU64Codec](#get-u64-codec) \
-[getU128Codec](#get-u128-codec)
+[getU128Codec](#get-u128-codec) \
+[getU256Codec](#get-u256-codec)
 
 </div>
 
@@ -1005,6 +1009,94 @@ const getBigEndianU64Decoder = () => reverseDecoder(getU64Decoder());
 const getBigEndianU64Codec = () => combineCodec(getBigEndianU64Encoder(), getBigEndianU64Decoder());
 ```
 
+### tapCodec [!toc] [#tap-codec]
+
+Whilst [`transformCodec`](#transform-codec) lets you _change_ the values that flow through a codec, `tapCodec` lets you _observe_ them without changing anything. This is mostly useful for adding validation guards to existing codecs: a tap that throws aborts the operation, whilst a tap that returns normally lets the value pass through untouched.
+
+The encode-side tap observes the input value before it is encoded and the optional decode-side tap observes the decoded value after it is decoded, mirroring the `transformCodec` signature.
+
+```ts twoslash
+import { tapCodec, getU8Codec } from '@solana/kit';
+// ---cut-before---
+const getPercentageCodec = () =>
+    tapCodec(
+        getU8Codec(),
+        (value) => {
+            if (value > 100) throw new Error('Percentages must not exceed 100');
+        },
+        (value) => {
+            if (value > 100) throw new Error('Invalid percentage stored on chain');
+        },
+    );
+
+getPercentageCodec().encode(42); // 0x2a
+getPercentageCodec().encode(150); // Throws.
+```
+
+Since the helper preserves the exact type of the codec it wraps, tapping a `FixedSizeCodec` returns a `FixedSizeCodec` of the same size.
+
+The `tapEncoder` and `tapDecoder` functions are also available to tap only one side.
+
+```ts twoslash
+import { tapEncoder, tapDecoder, getU8Encoder, getU8Decoder } from '@solana/kit';
+// ---cut-before---
+// Reject out-of-range input before it is encoded.
+const boundedU8 = tapEncoder(getU8Encoder(), (value) => {
+    if (value > 100) throw new Error('Value must not exceed 100');
+});
+
+// Validate the decoded result.
+const nonZeroU8 = tapDecoder(getU8Decoder(), (value) => {
+    if (value === 0) throw new Error('Value must not be zero');
+});
+```
+
+### tapCodecBytes [!toc] [#tap-codec-bytes]
+
+The `tapCodecBytes` helper is the byte-level counterpart of [`tapCodec`](#tap-codec): instead of observing values, it observes the raw **bytes** as a `ReadonlyUint8Array`. The encode-side tap receives the bytes after the value was written, alongside the offsets before and after the write, and the optional decode-side tap receives the bytes and the offset before the value is read.
+
+This is useful to reject malformed bytes before a lenient decoder gets to interpret them. For instance, the boolean codec decodes any non-zero byte as `true`, but we may want to reject bytes other than `0` and `1`.
+
+```ts twoslash
+import { tapCodecBytes, getBooleanCodec } from '@solana/kit';
+// ---cut-before---
+const getStrictBooleanCodec = () =>
+    tapCodecBytes(
+        getBooleanCodec(),
+        () => {}, // Nothing to check after encoding a boolean.
+        (bytes, offset) => {
+            if (bytes[offset] > 1) throw new Error('Expected a 0 or a 1 for booleans');
+        },
+    );
+
+getStrictBooleanCodec().decode(new Uint8Array([1])); // true
+getStrictBooleanCodec().decode(new Uint8Array([2])); // Throws.
+```
+
+The `tapEncoderBytes` and `tapDecoderBytes` functions are also available to tap only one side. Since every tap helper preserves the exact type of what it wraps, value and byte taps can be freely combined using `combineCodec`.
+
+```ts twoslash
+import {
+    tapEncoder,
+    tapDecoderBytes,
+    getBooleanEncoder,
+    getBooleanDecoder,
+    combineCodec,
+} from '@solana/kit';
+// ---cut-before---
+const getStrictBooleanCodec = () =>
+    combineCodec(
+        // Guard the value on the encode side.
+        tapEncoder(getBooleanEncoder(), (value) => {
+            if (typeof value !== 'boolean') throw new Error('Expected a boolean');
+        }),
+        // Guard the raw bytes on the decode side.
+        tapDecoderBytes(getBooleanDecoder(), (bytes, offset) => {
+            if (bytes[offset] > 1) throw new Error('Expected a 0 or a 1 for booleans');
+        }),
+    );
+```
+
 ### transformCodec [!toc] [#transform-codec]
 
 It is possible to transform a `Codec<T>` to a `Codec<U>` by providing two mapping functions: one that goes from `T` to `U` and one that does the opposite.
@@ -1084,7 +1176,7 @@ const getStringU32Codec = () => combineCodec(getStringU32Encoder(), getStringU32
 
 ### getI8Codec [!toc] [#get-i8-codec]
 
-Encodes and decodes **signed 8-bit integers**. It supports values from -127 (`-2^7`) to 128 (`2^7 - 1`).
+Encodes and decodes **signed 8-bit integers**. It supports values from -128 (`-2^7`) to 127 (`2^7 - 1`).
 
 Values can be provided as either `number` or `bigint`, but the decoded value is always a `number`.
 
@@ -1115,7 +1207,7 @@ const value = codec.decode(bytes); // -42
 // Big-endian.
 const beCodec = getI16Codec({ endian: Endian.Big });
 const beBytes = beCodec.encode(-42); // 0xffd6
-const beValue = beCodec.decode(bytes); // -42
+const beValue = beCodec.decode(beBytes); // -42
 ```
 
 `getI16Encoder` and `getI16Decoder` functions are also available.
@@ -1137,7 +1229,7 @@ const value = codec.decode(bytes); // -42
 // Big-endian.
 const beCodec = getI32Codec({ endian: Endian.Big });
 const beBytes = beCodec.encode(-42); // 0xffffffd6
-const beValue = beCodec.decode(bytes); // -42
+const beValue = beCodec.decode(beBytes); // -42
 ```
 
 `getI32Encoder` and `getI32Decoder` functions are also available.
@@ -1154,12 +1246,12 @@ import { getI64Codec, Endian } from '@solana/kit';
 // Little-endian.
 const codec = getI64Codec();
 const bytes = codec.encode(-42); // 0xd6ffffffffffffff
-const value = codec.decode(bytes); // BigInt(-42)
+const value = codec.decode(bytes); // -42n
 
 // Big-endian.
 const beCodec = getI64Codec({ endian: Endian.Big });
 const beBytes = beCodec.encode(-42); // 0xffffffffffffffd6
-const beValue = beCodec.decode(bytes); // BigInt(-42)
+const beValue = beCodec.decode(beBytes); // -42n
 ```
 
 `getI64Encoder` and `getI64Decoder` functions are also available.
@@ -1176,15 +1268,37 @@ import { getI128Codec, Endian } from '@solana/kit';
 // Little-endian.
 const codec = getI128Codec();
 const bytes = codec.encode(-42); // 0xd6ffffffffffffffffffffffffffffff
-const value = codec.decode(bytes); // BigInt(-42)
+const value = codec.decode(bytes); // -42n
 
 // Big-endian.
 const beCodec = getI128Codec({ endian: Endian.Big });
 const beBytes = beCodec.encode(-42); // 0xffffffffffffffffffffffffffffffd6
-const beValue = beCodec.decode(bytes); // BigInt(-42)
+const beValue = beCodec.decode(beBytes); // -42n
 ```
 
 `getI128Encoder` and `getI128Decoder` functions are also available.
+
+### getI256Codec [!toc] [#get-i256-codec]
+
+Encodes and decodes **signed 256-bit integers**. It supports values from `-2^255` to `2^255 - 1`.
+
+Values can be provided as either `number` or `bigint`, but the decoded value is always a `bigint`. Endianness can be specified using the `endian` option. The default is `Endian.Little`.
+
+```ts twoslash
+import { getI256Codec, Endian } from '@solana/kit';
+// ---cut-before---
+// Little-endian.
+const codec = getI256Codec();
+const bytes = codec.encode(-42); // 0xd6ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+const value = codec.decode(bytes); // -42n
+
+// Big-endian.
+const beCodec = getI256Codec({ endian: Endian.Big });
+const beBytes = beCodec.encode(-42); // 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffd6
+const beValue = beCodec.decode(beBytes); // -42n
+```
+
+`getI256Encoder` and `getI256Decoder` functions are also available.
 
 ### getF32Codec [!toc] [#get-f32-codec]
 
@@ -1203,7 +1317,7 @@ const value = codec.decode(bytes); // -1.5
 // Big-endian.
 const beCodec = getF32Codec({ endian: Endian.Big });
 const beBytes = beCodec.encode(-1.5); // 0xbfc00000
-const beValue = beCodec.decode(bytes); // -1.5
+const beValue = beCodec.decode(beBytes); // -1.5
 ```
 
 `getF32Encoder` and `getF32Decoder` functions are also available.
@@ -1225,7 +1339,7 @@ const value = codec.decode(bytes); // -1.5
 // Big-endian.
 const beCodec = getF64Codec({ endian: Endian.Big });
 const beBytes = beCodec.encode(-1.5); // 0xbff8000000000000
-const beValue = beCodec.decode(bytes); // -1.5
+const beValue = beCodec.decode(beBytes); // -1.5
 ```
 
 `getF64Encoder` and `getF64Decoder` functions are also available.
@@ -1298,7 +1412,7 @@ const value = codec.decode(bytes); // 42
 // Big-endian.
 const beCodec = getU16Codec({ endian: Endian.Big });
 const beBytes = beCodec.encode(42); // 0x002a
-const beValue = beCodec.decode(bytes); // 42
+const beValue = beCodec.decode(beBytes); // 42
 ```
 
 `getU16Encoder` and `getU16Decoder` functions are also available.
@@ -1320,7 +1434,7 @@ const value = codec.decode(bytes); // 42
 // Big-endian.
 const beCodec = getU32Codec({ endian: Endian.Big });
 const beBytes = beCodec.encode(42); // 0x0000002a
-const beValue = beCodec.decode(bytes); // 42
+const beValue = beCodec.decode(beBytes); // 42
 ```
 
 `getU32Encoder` and `getU32Decoder` functions are also available.
@@ -1337,12 +1451,12 @@ import { getU64Codec, Endian } from '@solana/kit';
 // Little-endian.
 const codec = getU64Codec();
 const bytes = codec.encode(42); // 0x2a00000000000000
-const value = codec.decode(bytes); // 42
+const value = codec.decode(bytes); // 42n
 
 // Big-endian.
 const beCodec = getU64Codec({ endian: Endian.Big });
 const beBytes = beCodec.encode(42); // 0x000000000000002a
-const beValue = beCodec.decode(bytes); // 42
+const beValue = beCodec.decode(beBytes); // 42n
 ```
 
 `getU64Encoder` and `getU64Decoder` functions are also available.
@@ -1359,15 +1473,37 @@ import { getU128Codec, Endian } from '@solana/kit';
 // Little-endian.
 const codec = getU128Codec();
 const bytes = codec.encode(42); // 0x2a000000000000000000000000000000
-const value = codec.decode(bytes); // 42
+const value = codec.decode(bytes); // 42n
 
 // Big-endian.
 const beCodec = getU128Codec({ endian: Endian.Big });
 const beBytes = beCodec.encode(42); // 0x0000000000000000000000000000002a
-const beValue = beCodec.decode(bytes); // 42
+const beValue = beCodec.decode(beBytes); // 42n
 ```
 
 `getU128Encoder` and `getU128Decoder` functions are also available.
+
+### getU256Codec [!toc] [#get-u256-codec]
+
+Encodes and decodes **unsigned 256-bit integers**. It supports values from 0 to `2^256 - 1`.
+
+Values can be provided as either `number` or `bigint`, but the decoded value is always a `bigint`. Endianness can be specified using the `endian` option. The default is `Endian.Little`.
+
+```ts twoslash
+import { getU256Codec, Endian } from '@solana/kit';
+// ---cut-before---
+// Little-endian.
+const codec = getU256Codec();
+const bytes = codec.encode(42); // 0x2a00000000000000000000000000000000000000000000000000000000000000
+const value = codec.decode(bytes); // 42n
+
+// Big-endian.
+const beCodec = getU256Codec({ endian: Endian.Big });
+const beBytes = beCodec.encode(42); // 0x000000000000000000000000000000000000000000000000000000000000002a
+const beValue = beCodec.decode(beBytes); // 42n
+```
+
+`getU256Encoder` and `getU256Decoder` functions are also available.
 
 ## Strings listing [!toc]
 
@@ -1650,6 +1786,18 @@ addCodecSentinel(getUtf8Codec(), new Uint8Array([0xff, 0xff])).encode('hello');
 //   └-- The 5 bytes of content.
 ```
 
+By default, invalid UTF-8 is replaced with the replacement character (`U+FFFD`), a leading byte order mark (`U+FEFF`) is stripped and null characters (`\u0000`) are stripped from decoded strings, since they are commonly used as padding in fixed-size strings. These behaviours can be changed via the `fatal`, `ignoreBOM` and `removeNullCharacters` options, e.g. to decode strings losslessly and reject invalid ones.
+
+```ts twoslash
+import { getUtf8Codec } from '@solana/kit';
+// ---cut-before---
+const codec = getUtf8Codec({ fatal: true, ignoreBOM: true, removeNullCharacters: false });
+codec.decode(new Uint8Array([0x61, 0x00, 0x62])); // "a\u0000b"
+codec.decode(new Uint8Array([0xef, 0xbb, 0xbf, 0x61])); // "\ufeffa"
+codec.decode(new Uint8Array([0xff])); // Throws: invalid byte sequence.
+codec.encode('\ud800'); // Throws: lone surrogate.
+```
+
 `getUtf8Encoder` and `getUtf8Decoder` functions are also available.
 
 ## Data structures listing [!toc]
@@ -1698,6 +1846,15 @@ getArrayCodec(getU8Codec(), { size: 3 }).encode([1, 2, 3]);
 getArrayCodec(getU8Codec(), { size: 'remainder' }).encode([1, 2, 3]);
 // 0x010203
 //   └-- 3 items of 1 byte each. The size is inferred from the remainder of the bytes.
+```
+
+When the size is stored as a prefix, decoding an exhausted byte array yields an empty array instead of failing. This allows arrays to be appended to existing data layouts without breaking the decoding of older data. Use the `requireSizePrefix` option to throw instead, e.g. when strictly following a format such as Borsh.
+
+```ts twoslash
+import { getArrayCodec, getU8Codec } from '@solana/kit';
+// ---cut-before---
+getArrayCodec(getU8Codec()).decode(new Uint8Array([])); // []
+getArrayCodec(getU8Codec(), { requireSizePrefix: true }).decode(new Uint8Array([])); // Throws: missing size prefix.
 ```
 
 `getArrayEncoder` and `getArrayDecoder` functions are also available.
@@ -2292,6 +2449,8 @@ getMapCodec(keyCodec, valueCodec, { size: 'remainder' }).encode(myMap);
 // The size is inferred from the remainder of the bytes.
 ```
 
+Just like the array codec, decoding an exhausted byte array yields an empty map by default and the `requireSizePrefix` option can be used to throw instead. [See the `requireSizePrefix` option of the array codec](#get-array-codec) for more details.
+
 `getMapEncoder` and `getMapDecoder` functions are also available.
 
 ### getNullableCodec [!toc] [#get-nullable-codec]
@@ -2680,6 +2839,8 @@ getSetCodec(getU8Codec(), { size: 'remainder' }).encode(new Set([1, 2, 3]));
 // 0x010203
 //   └-- 3 items of 1 byte each. The size is inferred from the remainder of the bytes.
 ```
+
+Just like the array codec, decoding an exhausted byte array yields an empty set by default and the `requireSizePrefix` option can be used to throw instead. [See the `requireSizePrefix` option of the array codec](#get-array-codec) for more details.
 
 `getSetEncoder` and `getSetDecoder` functions are also available.
 
