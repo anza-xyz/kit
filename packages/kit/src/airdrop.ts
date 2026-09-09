@@ -3,8 +3,7 @@ import type { GetSignatureStatusesApi, RequestAirdropApi, Rpc } from '@solana/rp
 import type { RpcSubscriptions, SignatureNotificationsApi } from '@solana/rpc-subscriptions';
 import {
     createRecentSignatureConfirmationPromiseFactory,
-    getTimeoutPromise,
-    waitForRecentTransactionConfirmationUntilTimeout,
+    waitForSignatureConfirmationWithTimeout,
 } from '@solana/transaction-confirmation';
 
 import { requestAndConfirmAirdrop_INTERNAL_ONLY_DO_NOT_EXPORT } from './airdrop-internal';
@@ -60,14 +59,13 @@ export function airdropFactory<TCluster extends 'devnet' | 'mainnet' | 'testnet'
     } as Parameters<typeof createRecentSignatureConfirmationPromiseFactory>[0]);
     async function confirmSignatureOnlyTransaction(
         config: Omit<
-            Parameters<typeof waitForRecentTransactionConfirmationUntilTimeout>[0],
-            'getRecentSignatureConfirmationPromise' | 'getTimeoutPromise'
+            Parameters<typeof waitForSignatureConfirmationWithTimeout>[0],
+            'getRecentSignatureConfirmationPromise'
         >,
     ) {
-        await waitForRecentTransactionConfirmationUntilTimeout({
+        await waitForSignatureConfirmationWithTimeout({
             ...config,
             getRecentSignatureConfirmationPromise,
-            getTimeoutPromise,
         });
     }
     return async function airdrop(config) {
