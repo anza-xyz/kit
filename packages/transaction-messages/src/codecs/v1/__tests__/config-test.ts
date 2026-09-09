@@ -195,3 +195,37 @@ describe('getTransactionConfigValuesDecoder', () => {
         );
     });
 });
+
+describe('loaded accounts data size limit wire representation', () => {
+    const encoder = getCompiledTransactionConfigValuesEncoder();
+
+    // The validator in `resource-limit-validation.ts` accepts [1, 64 MiB]. Every value in that
+    // range has to survive the wire format unchanged, and has to occupy the same fixed-width `u32`
+    // regardless of magnitude — the latter is what lets a provisory placeholder reserve exactly the
+    // space the eventual estimate will need.
+    const MIN_LOADED_ACCOUNTS_DATA_SIZE_LIMIT = 1;
+    const MAX_LOADED_ACCOUNTS_DATA_SIZE_LIMIT = 64 * 1024 * 1024;
+
+    it.each([
+        ['the legacy provisory value', 0],
+        ['the minimum accepted limit', MIN_LOADED_ACCOUNTS_DATA_SIZE_LIMIT],
+        ['the maximum accepted limit', MAX_LOADED_ACCOUNTS_DATA_SIZE_LIMIT],
+    ])('round trips %s through the config codec unchanged', (_label: string, value: number) => {
+        const encoded = encoder.encode([{ kind: 'u32', value }]);
+        // Mask bit 3 marks the loaded accounts data size limit as present.
+        const decoded = getCompiledTransactionConfigValuesDecoder(0b1000).decode(encoded);
+        expect(decoded).toStrictEqual([{ kind: 'u32', value }]);
+    });
+
+    it('encodes every accepted limit to the same number of bytes', () => {
+        const sizes = [MIN_LOADED_ACCOUNTS_DATA_SIZE_LIMIT, 60_000, MAX_LOADED_ACCOUNTS_DATA_SIZE_LIMIT].map(
+            value => encoder.encode([{ kind: 'u32', value }]).length,
+        );
+        expect(new Set(sizes).size).toBe(1);
+        expect(sizes[0]).toBe(4);
+    });
+
+    it('fits the maximum accepted limit inside a u32', () => {
+        expect(MAX_LOADED_ACCOUNTS_DATA_SIZE_LIMIT).toBeLessThanOrEqual(4_294_967_295);
+    });
+});

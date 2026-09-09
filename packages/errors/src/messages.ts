@@ -280,6 +280,7 @@ import {
     SOLANA_ERROR__TRANSACTION__INVALID_NONCE_TRANSACTION_INSTRUCTIONS_MISSING,
     SOLANA_ERROR__TRANSACTION__INVOKED_PROGRAMS_CANNOT_PAY_FEES,
     SOLANA_ERROR__TRANSACTION__INVOKED_PROGRAMS_MUST_NOT_BE_WRITABLE,
+    SOLANA_ERROR__TRANSACTION__LOADED_ACCOUNTS_DATA_SIZE_LIMIT_OUT_OF_RANGE,
     SOLANA_ERROR__TRANSACTION__MALFORMED_MESSAGE_BYTES,
     SOLANA_ERROR__TRANSACTION__MESSAGE_SIGNATURES_MISMATCH,
     SOLANA_ERROR__TRANSACTION__NONCE_ACCOUNT_CANNOT_BE_IN_LOOKUP_TABLE,
@@ -893,6 +894,8 @@ export const SolanaErrorMessages: Readonly<{
         'The transaction has a durable nonce lifetime (with nonce `$nonce`), but the nonce account address is in a lookup table. The lifetime constraint cannot be constructed without fetching the lookup tables for the transaction.',
     [SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_MASK_PRIORITY_FEE_BITS]:
         'Invalid transaction config mask: $mask. Bits 0 and 1 must match (both set or both unset)',
+    [SOLANA_ERROR__TRANSACTION__LOADED_ACCOUNTS_DATA_SIZE_LIMIT_OUT_OF_RANGE]:
+        'Transaction loaded accounts data size limit must be an integer in the range [$minLoadedAccountsDataSizeLimit, $maxLoadedAccountsDataSizeLimit]. `$loadedAccountsDataSizeLimit` given',
     [SOLANA_ERROR__TRANSACTION__MALFORMED_MESSAGE_BYTES]: 'Transaction message bytes are malformed: $messageBytes',
     [SOLANA_ERROR__TRANSACTION__CANNOT_ENCODE_WITH_EMPTY_MESSAGE_BYTES]:
         'Transaction message bytes are empty, so the transaction cannot be encoded',

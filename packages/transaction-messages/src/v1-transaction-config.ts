@@ -1,6 +1,10 @@
 import { SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_MASK_PRIORITY_FEE_BITS, SolanaError } from '@solana/errors';
 
-import { assertIsValidComputeUnitLimit, assertIsValidHeapSize } from './resource-limit-validation';
+import {
+    assertIsValidComputeUnitLimit,
+    assertIsValidHeapSize,
+    assertIsValidLoadedAccountsDataSizeLimit,
+} from './resource-limit-validation';
 import { TransactionMessage, TransactionVersion } from './transaction-message';
 
 /**
@@ -29,7 +33,8 @@ export type V1TransactionConfig = {
      *
      * As with {@link V1TransactionConfig.computeUnitLimit}, leaving this field unset budgets
      * **zero** bytes rather than applying a default, so any transaction that loads account data
-     * must set it explicitly.
+     * must set it explicitly. When set, the value must be between 1 and 67,108,864 (64 MiB)
+     * inclusive; zero is not a legal limit.
      */
     loadedAccountsDataSizeLimit?: number;
     /**
@@ -125,6 +130,9 @@ export function setTransactionMessageConfig<
     }
     if (config.heapSize !== undefined) {
         assertIsValidHeapSize(config.heapSize);
+    }
+    if (config.loadedAccountsDataSizeLimit !== undefined) {
+        assertIsValidLoadedAccountsDataSizeLimit(config.loadedAccountsDataSizeLimit);
     }
     const mergedConfig = {
         ...transactionMessage.config,

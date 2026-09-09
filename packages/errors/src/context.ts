@@ -221,6 +221,7 @@ import {
     SOLANA_ERROR__TRANSACTION__INVALID_NONCE_ACCOUNT_INDEX,
     SOLANA_ERROR__TRANSACTION__INVOKED_PROGRAMS_CANNOT_PAY_FEES,
     SOLANA_ERROR__TRANSACTION__INVOKED_PROGRAMS_MUST_NOT_BE_WRITABLE,
+    SOLANA_ERROR__TRANSACTION__LOADED_ACCOUNTS_DATA_SIZE_LIMIT_OUT_OF_RANGE,
     SOLANA_ERROR__TRANSACTION__MALFORMED_MESSAGE_BYTES,
     SOLANA_ERROR__TRANSACTION__MESSAGE_SIGNATURES_MISMATCH,
     SOLANA_ERROR__TRANSACTION__NONCE_ACCOUNT_CANNOT_BE_IN_LOOKUP_TABLE,
@@ -982,6 +983,11 @@ export type SolanaErrorContext = ReadonlyContextValue<
             };
             [SOLANA_ERROR__TRANSACTION__INVOKED_PROGRAMS_MUST_NOT_BE_WRITABLE]: {
                 programAddress: string;
+            };
+            [SOLANA_ERROR__TRANSACTION__LOADED_ACCOUNTS_DATA_SIZE_LIMIT_OUT_OF_RANGE]: {
+                loadedAccountsDataSizeLimit: number;
+                maxLoadedAccountsDataSizeLimit: number;
+                minLoadedAccountsDataSizeLimit: number;
             };
             [SOLANA_ERROR__TRANSACTION__MALFORMED_MESSAGE_BYTES]: {
                 messageBytes: ReadonlyUint8Array;
