@@ -17,7 +17,7 @@ This package is also part of the [`@solana/codecs` package](https://github.com/a
 
 ## Integer codecs
 
-This package provides ten codecs of five different byte sizes for integers. Five of them store unsigned integers and the other five store signed integers.
+This package provides twelve codecs of six different byte sizes for integers. Six of them store unsigned integers and the other six store signed integers.
 
 ```ts
 // Unsigned integers.
@@ -26,6 +26,7 @@ getU16Codec().encode(42); // 0x2a00
 getU32Codec().encode(42); // 0x2a000000
 getU64Codec().encode(42); // 0x2a00000000000000
 getU128Codec().encode(42); // 0x2a000000000000000000000000000000
+getU256Codec().encode(42); // 0x2a00000000000000000000000000000000000000000000000000000000000000
 
 // Signed integers.
 getI8Codec().encode(-42); // 0xd6
@@ -33,6 +34,7 @@ getI16Codec().encode(-42); // 0xd6ff
 getI32Codec().encode(-42); // 0xd6ffffff
 getI64Codec().encode(-42); // 0xd6ffffffffffffff
 getI128Codec().encode(-42); // 0xd6ffffffffffffffffffffffffffffff
+getI256Codec().encode(-42); // 0xd6ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 ```
 
 By default, integers are stored using little endianness but you may change this behaviour via the `endian` option. This option is available for every codec that uses more than a single byte.
@@ -43,15 +45,17 @@ getU16Codec({ endian: Endian.Big }).encode(42); // 0x002a
 getU32Codec({ endian: Endian.Big }).encode(42); // 0x0000002a
 getU64Codec({ endian: Endian.Big }).encode(42); // 0x000000000000002a
 getU128Codec({ endian: Endian.Big }).encode(42); // 0x0000000000000000000000000000002a
+getU256Codec({ endian: Endian.Big }).encode(42); // 0x000000000000000000000000000000000000000000000000000000000000002a
 
 // Big-endian signed integers.
 getI16Codec({ endian: Endian.Big }).encode(-42); // 0xffd6
 getI32Codec({ endian: Endian.Big }).encode(-42); // 0xffffffd6
 getI64Codec({ endian: Endian.Big }).encode(-42); // 0xffffffffffffffd6
 getI128Codec({ endian: Endian.Big }).encode(-42); // 0xffffffffffffffffffffffffffffffd6
+getI256Codec({ endian: Endian.Big }).encode(-42); // 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffd6
 ```
 
-All integer codecs are of type `Codec<number>` except for the `u64`, `u128`, `i64` and `i128` codecs which are of type `Codec<number | bigint, bigint>`. This means we can provide either a `number` of a `bigint` value to encode but the decoded value will always be a `bigint`. This is because JavaScript's native `number` type does not support numbers larger than `2^53 - 1` and these large integer codecs have the potential to go over that value.
+All integer codecs are of type `Codec<number>` except for the `u64`, `u128`, `u256`, `i64`, `i128` and `i256` codecs which are of type `Codec<number | bigint, bigint>`. This means we can provide either a `number` of a `bigint` value to encode but the decoded value will always be a `bigint`. This is because JavaScript's native `number` type does not support numbers larger than `2^53 - 1` and these large integer codecs have the potential to go over that value.
 
 ```ts
 const bytesFromNumber = getU64Codec().encode(42);

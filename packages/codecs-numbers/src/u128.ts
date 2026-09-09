@@ -1,7 +1,7 @@
 import { combineCodec, FixedSizeCodec, FixedSizeDecoder, FixedSizeEncoder } from '@solana/codecs-core';
 
 import { NumberCodecConfig } from './common';
-import { numberDecoderFactory, numberEncoderFactory } from './utils';
+import { getBigIntWords, numberDecoderFactory, numberEncoderFactory, setBigIntWords } from './utils';
 
 /**
  * Returns an encoder for 128-bit unsigned integers (`u128`).
@@ -28,13 +28,7 @@ export const getU128Encoder = (config: NumberCodecConfig = {}): FixedSizeEncoder
         config,
         name: 'u128',
         range: [0n, BigInt('0xffffffffffffffffffffffffffffffff')],
-        set: (view, value, le) => {
-            const leftOffset = le ? 8 : 0;
-            const rightOffset = le ? 0 : 8;
-            const rightMask = 0xffffffffffffffffn;
-            view.setBigUint64(leftOffset, BigInt(value) >> 64n, le);
-            view.setBigUint64(rightOffset, BigInt(value) & rightMask, le);
-        },
+        set: (view, value, le) => setBigIntWords(view, value, le, 2, false),
         size: 16,
     });
 
@@ -61,13 +55,7 @@ export const getU128Encoder = (config: NumberCodecConfig = {}): FixedSizeEncoder
 export const getU128Decoder = (config: NumberCodecConfig = {}): FixedSizeDecoder<bigint, 16> =>
     numberDecoderFactory({
         config,
-        get: (view, le) => {
-            const leftOffset = le ? 8 : 0;
-            const rightOffset = le ? 0 : 8;
-            const left = view.getBigUint64(leftOffset, le);
-            const right = view.getBigUint64(rightOffset, le);
-            return (left << 64n) + right;
-        },
+        get: (view, le) => getBigIntWords(view, le, 2, false),
         name: 'u128',
         size: 16,
     });
@@ -101,6 +89,7 @@ export const getU128Decoder = (config: NumberCodecConfig = {}): FixedSizeDecoder
  * Since JavaScript `number` cannot safely represent values beyond `2^53 - 1`, the decoded value is always a `bigint`.
  *
  * - If you need a smaller unsigned integer, consider using {@link getU64Codec} or {@link getU32Codec}.
+ * - If you need a larger unsigned integer, consider using {@link getU256Codec}.
  * - If you need signed integers, consider using {@link getI128Codec}.
  *
  * Separate {@link getU128Encoder} and {@link getU128Decoder} functions are available.

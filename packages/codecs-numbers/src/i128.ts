@@ -1,7 +1,7 @@
 import { combineCodec, FixedSizeCodec, FixedSizeDecoder, FixedSizeEncoder } from '@solana/codecs-core';
 
 import { NumberCodecConfig } from './common';
-import { numberDecoderFactory, numberEncoderFactory } from './utils';
+import { getBigIntWords, numberDecoderFactory, numberEncoderFactory, setBigIntWords } from './utils';
 
 /**
  * Returns an encoder for 128-bit signed integers (`i128`).
@@ -28,13 +28,7 @@ export const getI128Encoder = (config: NumberCodecConfig = {}): FixedSizeEncoder
         config,
         name: 'i128',
         range: [-BigInt('0x7fffffffffffffffffffffffffffffff') - 1n, BigInt('0x7fffffffffffffffffffffffffffffff')],
-        set: (view, value, le) => {
-            const leftOffset = le ? 8 : 0;
-            const rightOffset = le ? 0 : 8;
-            const rightMask = 0xffffffffffffffffn;
-            view.setBigInt64(leftOffset, BigInt(value) >> 64n, le);
-            view.setBigUint64(rightOffset, BigInt(value) & rightMask, le);
-        },
+        set: (view, value, le) => setBigIntWords(view, value, le, 2, true),
         size: 16,
     });
 
@@ -64,13 +58,7 @@ export const getI128Encoder = (config: NumberCodecConfig = {}): FixedSizeEncoder
 export const getI128Decoder = (config: NumberCodecConfig = {}): FixedSizeDecoder<bigint, 16> =>
     numberDecoderFactory({
         config,
-        get: (view, le) => {
-            const leftOffset = le ? 8 : 0;
-            const rightOffset = le ? 0 : 8;
-            const left = view.getBigInt64(leftOffset, le);
-            const right = view.getBigUint64(rightOffset, le);
-            return (left << 64n) + right;
-        },
+        get: (view, le) => getBigIntWords(view, le, 2, true),
         name: 'i128',
         size: 16,
     });
@@ -104,7 +92,7 @@ export const getI128Decoder = (config: NumberCodecConfig = {}): FixedSizeDecoder
  * Since JavaScript `number` cannot safely represent values beyond `2^53 - 1`, the decoded value is always a `bigint`.
  *
  * - If you need a smaller signed integer, consider using {@link getI64Codec} or {@link getI32Codec}.
- * - If you need a larger signed integer, consider using a custom codec.
+ * - If you need a larger signed integer, consider using {@link getI256Codec}.
  * - If you need unsigned integers, consider using {@link getU128Codec}.
  *
  * Separate {@link getI128Encoder} and {@link getI128Decoder} functions are available.
