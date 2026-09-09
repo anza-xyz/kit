@@ -79,6 +79,7 @@ export * from './add-signers';
 export * from './fee-payer-signer';
 export * from './grind-keypair-signer';
 export * from './keypair-signer';
+export * from './lazy-keypair-signer';
 export * from './message-modifying-signer';
 export * from './message-partial-signer';
 export * from './message-signer';
