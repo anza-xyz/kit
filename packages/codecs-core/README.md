@@ -43,7 +43,7 @@ There is a significant library of composable codecs at your disposal, enabling y
 - [`@solana/codecs-data-structures`](https://github.com/anza-xyz/kit/tree/main/packages/codecs-data-structures) for many data structure codecs such as objects, arrays, tuples, sets, maps, enums, discriminated unions, booleans, etc.
 - [`@solana/options`](https://github.com/anza-xyz/kit/tree/main/packages/options) for a Rust-like `Option` type and associated codec.
 
-You may also be interested in some of the helpers of this `@solana/codecs-core` library such as `transformCodec`, `fixCodecSize` or `reverseCodec` that create new codecs from existing ones.
+You may also be interested in some of the helpers of this `@solana/codecs-core` library such as `transformCodec`, `tapCodec`, `fixCodecSize` or `reverseCodec` that create new codecs from existing ones.
 
 Note that all of these libraries are included in the [`@solana/codecs` package](https://github.com/anza-xyz/kit/tree/main/packages/codecs) as well as the main `@solana/kit` package for your convenience.
 
@@ -337,6 +337,48 @@ const getStringU32Encoder = () =>
     transformEncoder(getU32Encoder(), (integerAsString: string): number => parseInt(integerAsString));
 const getStringU32Decoder = () => transformDecoder(getU32Decoder(), (integer: number): string => integer.toString());
 const getStringU32Codec = () => combineCodec(getStringU32Encoder(), getStringU32Decoder());
+```
+
+## Tapping codecs
+
+Whilst transforming codecs lets you _change_ the values or bytes that flow through them, tapping codecs lets you _observe_ them without changing anything. This is mostly useful for adding validation guards to existing codecs: a tap that throws aborts the operation, whilst a tap that returns normally lets the value or bytes pass through untouched.
+
+The `tapEncoder`, `tapDecoder` and `tapCodec` helpers observe the **value**. The encoder taps the input value before encoding it and the decoder taps the decoded value after decoding it.
+
+```ts
+// Reject out-of-range input before it is encoded.
+const boundedU8 = tapEncoder(getU8Encoder(), value => {
+    if (value > 100) throw new Error('Value must not exceed 100');
+});
+
+// Validate the decoded result.
+const nonZeroU8 = tapDecoder(getU8Decoder(), value => {
+    if (value === 0) throw new Error('Value must not be zero');
+});
+```
+
+The `tapEncoderBytes`, `tapDecoderBytes` and `tapCodecBytes` helpers observe the raw **bytes** instead. The encoder taps the encoded bytes after writing them — alongside the offsets before and after the value was written — and the decoder taps the bytes before reading them. In both cases the bytes are provided as a `ReadonlyUint8Array` so they cannot be modified.
+
+```ts
+// Guard malformed boolean bytes before decoding.
+const safeBoolean = tapDecoderBytes(getBooleanDecoder(), (bytes, offset) => {
+    if (bytes[offset] > 1) throw new Error('Expected a 0 or a 1 for booleans');
+});
+```
+
+The `tapCodec` and `tapCodecBytes` helpers accept a tap for each side — the encode-side tap is required whilst the decode-side tap is optional — mirroring the `transformCodec` signature. Since each helper preserves the exact type of the codec it wraps, you can also compose separate encoder and decoder taps using `combineCodec`.
+
+```ts
+const safeBooleanCodec = combineCodec(
+    // Guard the value on the encode side.
+    tapEncoder(getBooleanEncoder(), value => {
+        if (typeof value !== 'boolean') throw new Error('Expected a boolean');
+    }),
+    // Guard the raw bytes on the decode side.
+    tapDecoderBytes(getBooleanDecoder(), (bytes, offset) => {
+        if (bytes[offset] > 1) throw new Error('Expected a 0 or a 1 for booleans');
+    }),
+);
 ```
 
 ## Fixing the size of codecs
