@@ -4,6 +4,8 @@
  * @packageDocumentation
  */
 export * from './ClientProvider';
+export * from './createProgramHooks';
+export * from './programPlugin';
 export * from './useAction';
 export * from './useAirdrop';
 export * from './useClient';
