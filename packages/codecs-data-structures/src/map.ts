@@ -31,6 +31,19 @@ import { getTupleDecoder, getTupleEncoder } from './tuple';
  */
 export type MapCodecConfig<TPrefix extends NumberCodec | NumberDecoder | NumberEncoder> = {
     /**
+     * Whether a size prefix must be present when decoding.
+     *
+     * By default, when the size is stored as a prefix and there are no bytes left to read,
+     * the decoder returns an empty map instead of failing. This allows new collections to be
+     * appended to existing data layouts without breaking the decoding of older data.
+     * Set this option to `true` to throw when the size prefix is missing.
+     *
+     * Only applies when the `size` option is a number codec.
+     *
+     * @defaultValue `false`
+     */
+    requireSizePrefix?: boolean;
+    /**
      * The size of the map.
      * @defaultValue u32 prefix.
      */

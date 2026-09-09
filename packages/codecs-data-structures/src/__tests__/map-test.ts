@@ -1,7 +1,11 @@
 import { addCodecSizePrefix, fixCodecSize } from '@solana/codecs-core';
 import { getU8Codec, getU16Codec, getU32Codec, getU64Codec } from '@solana/codecs-numbers';
 import { getUtf8Codec } from '@solana/codecs-strings';
-import { SOLANA_ERROR__CODECS__INVALID_NUMBER_OF_ITEMS, SolanaError } from '@solana/errors';
+import {
+    SOLANA_ERROR__CODECS__CANNOT_DECODE_EMPTY_BYTE_ARRAY,
+    SOLANA_ERROR__CODECS__INVALID_NUMBER_OF_ITEMS,
+    SolanaError,
+} from '@solana/errors';
 
 import { getMapCodec } from '../map';
 import { b } from './__setup__';
@@ -122,6 +126,21 @@ describe('getMapCodec', () => {
         expect(mapU64.encode(new Map([[1, 2]]))).toStrictEqual(b('010200000000000000'));
         expect(mapU64.encode(new Map([[1, 2n]]))).toStrictEqual(b('010200000000000000'));
         expect(mapU64.read(b('010200000000000000'), 0)).toStrictEqual([new Map([[1, 2n]]), 9]);
+    });
+
+    it('decodes an exhausted byte array as an empty map by default', () => {
+        expect(map(u8(), u8()).read(b(''), 0)).toStrictEqual([new Map(), 0]);
+        expect(map(u8(), u8()).read(b('ff'), 1)).toStrictEqual([new Map(), 1]);
+    });
+
+    it('can require the size prefix to be present', () => {
+        const strict = { requireSizePrefix: true } as const;
+        expect(() => map(u8(), u8(), strict).read(b(''), 0)).toThrow(
+            new SolanaError(SOLANA_ERROR__CODECS__CANNOT_DECODE_EMPTY_BYTE_ARRAY, { codecDescription: 'u32' }),
+        );
+        expect(map(u8(), u8(), strict).read(b('00000000'), 0)).toStrictEqual([new Map(), 4]);
+        expect(map(u8(), u8(), strict).read(b('010000000102'), 0)).toStrictEqual([new Map([[1, 2]]), 6]);
+        expect(map(u8(), u8(), { ...strict, size: 'remainder' }).read(b(''), 0)).toStrictEqual([new Map(), 0]);
     });
 
     it('has the right sizes', () => {

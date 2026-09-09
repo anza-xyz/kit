@@ -1,7 +1,12 @@
 import { addCodecSizePrefix, fixCodecSize, offsetCodec, resizeCodec } from '@solana/codecs-core';
 import { getU8Codec, getU16Codec, getU32Codec, getU64Codec } from '@solana/codecs-numbers';
 import { getUtf8Codec } from '@solana/codecs-strings';
-import { SOLANA_ERROR__CODECS__INVALID_NUMBER_OF_ITEMS, SolanaError } from '@solana/errors';
+import {
+    SOLANA_ERROR__CODECS__CANNOT_DECODE_EMPTY_BYTE_ARRAY,
+    SOLANA_ERROR__CODECS__INVALID_BYTE_LENGTH,
+    SOLANA_ERROR__CODECS__INVALID_NUMBER_OF_ITEMS,
+    SolanaError,
+} from '@solana/errors';
 
 import { getArrayCodec } from '../array';
 import { b } from './__setup__';
@@ -133,6 +138,49 @@ describe('getArrayCodec', () => {
         expect(codec.encode([65, 66, 67])).toStrictEqual(b('03000000000041000042000043'));
         expect(codec.read(b('03000000000041000042000043'), 0)).toStrictEqual([[65, 66, 67], 13]);
         expect(codec.read(b('ffff03000000000041000042000043'), 2)).toStrictEqual([[65, 66, 67], 15]);
+    });
+
+    it('decodes an exhausted byte array as an empty array by default', () => {
+        // With a size prefix, missing bytes are treated as an empty array so that
+        // arrays can be appended to existing data layouts.
+        expect(array(u8()).read(b(''), 0)).toStrictEqual([[], 0]);
+        expect(array(u8()).read(b('ff'), 1)).toStrictEqual([[], 1]);
+        expect(array(u8(), { size: u8() }).read(b(''), 0)).toStrictEqual([[], 0]);
+
+        // Fixed and remainder sizes are not affected.
+        expect(() => array(u8(), { size: 1 }).read(b(''), 0)).toThrow(SolanaError);
+        expect(array(u8(), { size: 'remainder' }).read(b(''), 0)).toStrictEqual([[], 0]);
+    });
+
+    it('can require the size prefix to be present', () => {
+        const strict = { requireSizePrefix: true } as const;
+
+        // Missing prefix.
+        expect(() => array(u8(), strict).read(b(''), 0)).toThrow(
+            new SolanaError(SOLANA_ERROR__CODECS__CANNOT_DECODE_EMPTY_BYTE_ARRAY, { codecDescription: 'u32' }),
+        );
+        expect(() => array(u8(), strict).read(b('ff'), 1)).toThrow(
+            new SolanaError(SOLANA_ERROR__CODECS__CANNOT_DECODE_EMPTY_BYTE_ARRAY, { codecDescription: 'u32' }),
+        );
+        expect(() => array(u8(), strict).read(b('0300'), 0)).toThrow(
+            new SolanaError(SOLANA_ERROR__CODECS__INVALID_BYTE_LENGTH, {
+                bytesLength: 2,
+                codecDescription: 'u32',
+                expected: 4,
+            }),
+        );
+        expect(() => array(u8(), { ...strict, size: u8() }).read(b(''), 0)).toThrow(
+            new SolanaError(SOLANA_ERROR__CODECS__CANNOT_DECODE_EMPTY_BYTE_ARRAY, { codecDescription: 'u8' }),
+        );
+
+        // Present prefix.
+        expect(array(u8(), strict).read(b('00000000'), 0)).toStrictEqual([[], 4]);
+        expect(array(u8(), strict).read(b('030000002a0102'), 0)).toStrictEqual([[42, 1, 2], 7]);
+        expect(array(u8(), strict).encode([42, 1, 2])).toStrictEqual(b('030000002a0102'));
+
+        // Fixed and remainder sizes are not affected.
+        expect(array(u8(), { ...strict, size: 0 }).read(b(''), 0)).toStrictEqual([[], 0]);
+        expect(array(u8(), { ...strict, size: 'remainder' }).read(b(''), 0)).toStrictEqual([[], 0]);
     });
 
     it('has the right sizes', () => {
