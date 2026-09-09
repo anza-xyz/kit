@@ -261,6 +261,7 @@ A key pair signer uses a `CryptoKeyPair` to sign messages and transactions. It i
 [generateKeyPairSigner](#generate-key-pair-signer)
 [createKeyPairSignerFromBytes](#create-key-pair-signer-from-bytes)
 [createKeyPairSignerFromPrivateKeyBytes](#create-key-pair-signer-from-private-key-bytes)
+[createLazyKeyPairSignerFromBytes](#create-lazy-key-pair-signer-from-bytes)
 
 </div>
 
@@ -313,6 +314,24 @@ const seed = new Uint8Array(await crypto.subtle.digest('SHA-256', message));
 
 const derivedSigner = await createKeyPairSignerFromPrivateKeyBytes(seed);
 ```
+
+#### createLazyKeyPairSignerFromBytes [!toc] [#create-lazy-key-pair-signer-from-bytes]
+
+A synchronous counterpart to `createKeyPairSignerFromBytes`. It derives the signer's address directly from the public key half of the 64-bytes secret key and defers the asynchronous `CryptoKeyPair` import until the first message or transaction is signed, memoising the result. This is useful when a signer must be created in a synchronous context whilst signing itself can remain asynchronous.
+
+```ts twoslash
+import fs from 'fs';
+import { createLazyKeyPairSignerFromBytes } from '@solana/kit';
+
+const keypairFile = fs.readFileSync('~/.config/solana/id.json');
+const keypairBytes = new Uint8Array(JSON.parse(keypairFile.toString()));
+
+// Returns synchronously, no `await`.
+const signer = createLazyKeyPairSignerFromBytes(keypairBytes);
+signer.address; // Available immediately.
+```
+
+Because the key pair is imported lazily, the returned signer implements both `MessagePartialSigner` and `TransactionPartialSigner` but does not expose a `keyPair` property. Only the length of the secret key is validated synchronously; the cryptographic validation of the key happens on the first signing attempt instead of at creation time.
 
 ### Wallet account signers
 
