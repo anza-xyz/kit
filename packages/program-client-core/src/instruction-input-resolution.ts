@@ -226,8 +226,9 @@ export type ResolvedInstructionAccount<
  * {@link ProgramDerivedAddress} or an account meta — this type helper resolves to the
  * branded address string it carries. This allows generated program clients to recover the
  * address type parameter of an account from the caller's input type alone — e.g. via
- * `InstructionAccountInputAddress<TInput['authority']>` — instead of declaring a dedicated
- * address type parameter on the instruction builder.
+ * `InstructionAccountInputAddress<TAccountAuthority>` where `TAccountAuthority` captures the
+ * input provided for the `authority` account — instead of declaring a dedicated address
+ * type parameter on the instruction builder.
  *
  * When given a union of inputs, the helper distributes over it, so a union whose members
  * all share the same address brand resolves to that brand. Inputs carrying no brand
@@ -284,9 +285,37 @@ export type InstructionAccountInputAddress<TInput> =
  * provided. Defaults to `TAddress`, which treats signers as plain address carriers.
  *
  * @example
- * The instruction builder below captures the caller's input in a single `TInput` type
- * parameter and recovers each account's address type parameter from it using
- * {@link InstructionAccountInputAddress}.
+ * The instruction builder below — the shape emitted by the Codama JS renderer — declares
+ * one type parameter per account holding the input value provided for that account, and
+ * recovers the account's address type parameter from it using
+ * {@link InstructionAccountInputAddress}. Since its `input` parameter remains a concrete
+ * object type once inferred, TypeScript keeps performing excess property checks on it, so
+ * a misspelled optional account is a compile error rather than silently falling back to
+ * its default value.
+ * ```ts
+ * type TransferInput<
+ *     TAccountAuthority extends InstructionAccountInput | InstructionSignerInput =
+ *         | InstructionAccountInput
+ *         | InstructionSignerInput,
+ * > = { authority: TAccountAuthority; amount: bigint };
+ *
+ * declare function getTransferInstruction<
+ *     TAccountAuthority extends InstructionAccountInput | InstructionSignerInput,
+ * >(
+ *     input: TransferInput<TAccountAuthority>,
+ * ): TransferInstruction<
+ *     ResolvedInstructionAccountMeta<
+ *         TAccountAuthority,
+ *         InstructionAccountInputAddress<TAccountAuthority>,
+ *         ReadonlySignerAccount<InstructionAccountInputAddress<TAccountAuthority>> &
+ *             AccountSignerMeta<InstructionAccountInputAddress<TAccountAuthority>>
+ *     >
+ * >;
+ * ```
+ *
+ * Alternatively, instruction builders may capture the caller's whole input in a single
+ * `TInput` type parameter and index into it — at the cost of excess property checks, since
+ * the input is then inferred as `TInput` itself.
  * ```ts
  * declare function getTransferInstruction<TInput extends TransferInput>(
  *     input: TInput,
@@ -296,27 +325,6 @@ export type InstructionAccountInputAddress<TInput> =
  *         InstructionAccountInputAddress<TInput['authority']>,
  *         ReadonlySignerAccount<InstructionAccountInputAddress<TInput['authority']>> &
  *             AccountSignerMeta<InstructionAccountInputAddress<TInput['authority']>>
- *     >
- * >;
- * ```
- *
- * Alternatively, instruction builders may keep a dedicated address type parameter per
- * account. In that case, the parameter below must intersect the concrete input type with
- * the inferred `TInput` type parameter (`TransferInput<TAccountAuthority> & TInput`) —
- * referencing the address type parameters only in `TInput`'s constraint makes their
- * inference fall back to `string`. Defaulting `TInput` to the concrete input type keeps
- * call sites with explicit type arguments working.
- * ```ts
- * declare function getTransferInstruction<
- *     TAccountAuthority extends string,
- *     TInput extends TransferInput<TAccountAuthority> = TransferInput<TAccountAuthority>,
- * >(
- *     input: TransferInput<TAccountAuthority> & TInput,
- * ): TransferInstruction<
- *     ResolvedInstructionAccountMeta<
- *         TInput['authority'],
- *         TAccountAuthority,
- *         ReadonlySignerAccount<TAccountAuthority> & AccountSignerMeta<TAccountAuthority>
  *     >
  * >;
  * ```

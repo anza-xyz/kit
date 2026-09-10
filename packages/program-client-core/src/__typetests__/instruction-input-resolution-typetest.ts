@@ -370,8 +370,11 @@ type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ?
     // The following replicates the full type machinery of a generated program client — the
     // instruction type mapping address strings to IDL-declared metas, the input type, and
     // the instruction builder — in order to assert the final `accounts` tuple end-to-end at
-    // realistic call sites. It is the executable specification of the signature shape the
-    // Codama JS renderer must emit in order to use `ResolvedInstructionAccountMeta`.
+    // realistic call sites. Three builder signature shapes are able to use
+    // `ResolvedInstructionAccountMeta` and are asserted below against the same matrix:
+    // an intersection anchor (`Input<...> & TInput`), a single `TInput` type parameter, and
+    // one type parameter per account. The last one is the shape emitted by the Codama JS
+    // renderer and is the executable specification of its output.
     type MockInstruction<
         TAccountPayer extends AccountMeta<string> | string = string,
         TAccountOwner extends AccountMeta<string> | string = string,
@@ -399,12 +402,12 @@ type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ?
         payer: InstructionSignerInput<TAccountPayer>;
         rent?: InstructionAccountInput<TAccountRent> | null;
     };
-    // IMPORTANT: the parameter must intersect the concrete input type with `TInput`
-    // (`MockInput<...> & TInput`). Referencing the address type parameters only in
-    // `TInput`'s constraint makes their inference fall back to `string` — see the
-    // canary test at the end of this describe block. Additionally, `TInput` must default
-    // to the concrete input type so that call sites providing explicit type arguments
-    // keep working — see the dedicated test below.
+    // INTERSECTION ANCHOR PATTERN: the parameter intersects the concrete input type with
+    // `TInput` (`MockInput<...> & TInput`). Referencing the address type parameters only in
+    // `TInput`'s constraint makes their inference fall back to `string` — see the canary
+    // test further down this describe block. Additionally, `TInput` must default to the
+    // concrete input type so that call sites providing explicit type arguments keep
+    // working — see the dedicated test below.
     const getMockInstructionBuilder = null as unknown as <
         TAccountPayer extends string,
         TAccountOwner extends string,
@@ -544,10 +547,11 @@ type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ?
         void result;
     }
 
-    // ALTERNATIVE PATTERN: instruction builders may instead capture the caller's input in
-    // a single `TInput` type parameter and recover each account's address type parameter
+    // SINGLE `TInput` PATTERN: instruction builders may instead capture the caller's input
+    // in a single `TInput` type parameter and recover each account's address type parameter
     // using `InstructionAccountInputAddress`. This block asserts the same matrix for that
-    // signature shape.
+    // signature shape. Note that it forgoes excess property checks on the input — see the
+    // contrast test at the end of this describe block.
     const getSingleGenericBuilder = null as unknown as <TInput extends MockInput>(
         input: TInput,
     ) => MockInstruction<
@@ -641,8 +645,8 @@ type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ?
     // CANARY: referencing the address type parameters only in `TInput`'s constraint does
     // NOT infer them — they fall back to `string`. This asserts the *broken* behaviour on
     // purpose: if a future TypeScript version starts inferring through constraints, this
-    // test will fail, signalling that the renderer's intersection parameter pattern above
-    // could be simplified.
+    // test will fail, signalling that the intersection anchor pattern above could be
+    // simplified.
     {
         const getConstraintOnlyBuilder = null as unknown as <
             TAccountMint extends string,
@@ -653,6 +657,178 @@ type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ?
         const result = getConstraintOnlyBuilder({ mint: address7 });
         true satisfies Equal<typeof result, string>;
         void result;
+    }
+
+    // PER-ACCOUNT INPUT PATTERN: instruction builders may also declare one type parameter
+    // per account holding that account's *input value* (rather than its address brand or
+    // the whole input object). Since the parameter type is then a concrete object type once
+    // inferred, TypeScript keeps performing excess property checks on fresh object literals
+    // — e.g. a misspelled optional account is a compile error — whilst still capturing each
+    // input precisely. This is the shape emitted by the Codama JS renderer. Note that,
+    // matching the renderer's output, optional accounts are omitted or `undefined` rather
+    // than `null`; the `| null` accepted by the two mock inputs above only exists to
+    // exercise the helper's handling of `null` values.
+    type PerAccountInput<
+        TAccountPayer extends InstructionSignerInput = InstructionSignerInput,
+        TAccountOwner extends InstructionAccountInput | InstructionSignerInput =
+            | InstructionAccountInput
+            | InstructionSignerInput,
+        TAccountMint extends InstructionAccountInput = InstructionAccountInput,
+        TAccountRent extends InstructionAccountInput = InstructionAccountInput,
+    > = {
+        mint: TAccountMint;
+        owner: TAccountOwner;
+        payer: TAccountPayer;
+        rent?: TAccountRent;
+    };
+    const getPerAccountBuilder = null as unknown as <
+        TAccountPayer extends InstructionSignerInput,
+        TAccountOwner extends InstructionAccountInput | InstructionSignerInput,
+        TAccountMint extends InstructionAccountInput,
+        TAccountRent extends InstructionAccountInput,
+    >(
+        input: PerAccountInput<TAccountPayer, TAccountOwner, TAccountMint, TAccountRent>,
+    ) => MockInstruction<
+        ResolvedInstructionAccountMeta<
+            TAccountPayer,
+            InstructionAccountInputAddress<TAccountPayer>,
+            AccountSignerMeta<InstructionAccountInputAddress<TAccountPayer>> &
+                WritableSignerAccount<InstructionAccountInputAddress<TAccountPayer>>
+        >,
+        ResolvedInstructionAccountMeta<
+            TAccountOwner,
+            InstructionAccountInputAddress<TAccountOwner>,
+            AccountSignerMeta<InstructionAccountInputAddress<TAccountOwner>> &
+                ReadonlySignerAccount<InstructionAccountInputAddress<TAccountOwner>>
+        >,
+        ResolvedInstructionAccountMeta<TAccountMint, InstructionAccountInputAddress<TAccountMint>>,
+        ResolvedInstructionAccountMeta<TAccountRent, InstructionAccountInputAddress<TAccountRent>>
+    >;
+
+    // It resolves plain values to the IDL-declared metas, with extracted address brands.
+    {
+        const result = getPerAccountBuilder({ mint: address7, owner: address9, payer: signer8 });
+        true satisfies Equal<(typeof result)['accounts'][0], AccountSignerMeta<'8888'> & WritableSignerAccount<'8888'>>;
+        true satisfies Equal<(typeof result)['accounts'][1], ReadonlyAccount<'9999'>>;
+        true satisfies Equal<(typeof result)['accounts'][2], WritableAccount<'7777'>>;
+        void result;
+    }
+
+    // It handles wrappers, PDAs, signer upgrades, address carriers and role overrides.
+    {
+        const result = getPerAccountBuilder({ mint: signer7, owner: signer9, payer: signer8 });
+        true satisfies Equal<(typeof result)['accounts'][1], AccountSignerMeta<'9999'> & ReadonlySignerAccount<'9999'>>;
+        true satisfies Equal<(typeof result)['accounts'][2], WritableAccount<'7777'>>;
+        const wrapperResult = getPerAccountBuilder({ mint: address7, owner: wrapper9, payer: signer8 });
+        true satisfies Equal<(typeof wrapperResult)['accounts'][1], ReadonlyAccount<'9999'>>;
+        const pdaResult = getPerAccountBuilder({ mint: address7, owner: pda9, payer: signer8 });
+        true satisfies Equal<(typeof pdaResult)['accounts'][1], ReadonlyAccount<'9999'>>;
+        const overrideResult = getPerAccountBuilder({ mint: nonSignerMeta7, owner: signerMeta9, payer: signerMeta8 });
+        true satisfies Equal<
+            (typeof overrideResult)['accounts'][0],
+            AccountSignerMeta<'8888'> & { readonly role: AccountRole.READONLY_SIGNER | AccountRole.WRITABLE_SIGNER }
+        >;
+        true satisfies Equal<
+            (typeof overrideResult)['accounts'][1],
+            AccountSignerMeta<'9999'> & { readonly role: AccountRole.READONLY_SIGNER | AccountRole.WRITABLE_SIGNER }
+        >;
+        true satisfies Equal<
+            (typeof overrideResult)['accounts'][2],
+            AccountMeta<'7777'> & { readonly role: AccountRole.READONLY | AccountRole.WRITABLE }
+        >;
+        void result;
+        void wrapperResult;
+        void pdaResult;
+        void overrideResult;
+    }
+
+    // It resolves inline role overrides with literal roles to the precise role-narrowed metas.
+    {
+        const result = getPerAccountBuilder({
+            mint: { address: address7, role: AccountRole.READONLY },
+            owner: { address: address9, role: AccountRole.WRITABLE },
+            payer: { address: signer8.address, role: AccountRole.READONLY_SIGNER, signer: signer8 },
+        });
+        true satisfies Equal<
+            (typeof result)['accounts'][0],
+            AccountSignerMeta<'8888'> & { readonly role: AccountRole.READONLY_SIGNER }
+        >;
+        true satisfies Equal<(typeof result)['accounts'][1], WritableAccount<'9999'>>;
+        true satisfies Equal<(typeof result)['accounts'][2], ReadonlyAccount<'7777'>>;
+        void result;
+    }
+
+    // It resolves optional accounts to the IDL-declared meta with an unbranded address,
+    // whether they are omitted, explicitly set to undefined or provided.
+    {
+        const omittedResult = getPerAccountBuilder({ mint: address7, owner: address9, payer: signer8 });
+        true satisfies Equal<(typeof omittedResult)['accounts'][3], ReadonlyAccount<string>>;
+        const undefinedResult = getPerAccountBuilder({
+            mint: address7,
+            owner: address9,
+            payer: signer8,
+            rent: undefined,
+        });
+        true satisfies Equal<(typeof undefinedResult)['accounts'][3], ReadonlyAccount<string>>;
+        const providedResult = getPerAccountBuilder({
+            mint: address7,
+            owner: address9,
+            payer: signer8,
+            rent: address5,
+        });
+        true satisfies Equal<(typeof providedResult)['accounts'][3], ReadonlyAccount<'5555'>>;
+        void omittedResult;
+        void undefinedResult;
+        void providedResult;
+    }
+
+    // It still rejects invalid inputs.
+    {
+        // @ts-expect-error Numbers are not valid account inputs.
+        void getPerAccountBuilder({ mint: 123, owner: address9, payer: signer8 });
+        // @ts-expect-error Plain addresses are not valid signer inputs.
+        void getPerAccountBuilder({ mint: address7, owner: address9, payer: address7 });
+    }
+
+    // It keeps performing excess property checks on fresh object literals, so a misspelled
+    // optional account is a compile error rather than silently falling back to its default.
+    {
+        // @ts-expect-error `rnet` is not a known input.
+        void getPerAccountBuilder({ mint: address7, owner: address9, payer: signer8, rnet: address5 });
+    }
+
+    // It still accepts wider objects and spreads carrying extra properties, as structural
+    // typing allows outside of fresh object literals.
+    {
+        const wider = { extra: 42, mint: address7, owner: address9, payer: signer8 };
+        const widerResult = getPerAccountBuilder(wider);
+        true satisfies Equal<(typeof widerResult)['accounts'][2], WritableAccount<'7777'>>;
+        const spreadResult = getPerAccountBuilder({ ...wider, owner: signer9 });
+        true satisfies Equal<
+            (typeof spreadResult)['accounts'][1],
+            AccountSignerMeta<'9999'> & ReadonlySignerAccount<'9999'>
+        >;
+        void widerResult;
+        void spreadResult;
+    }
+
+    // It resolves to the IDL-declared metas when the builder's type is used without
+    // inference — e.g. via `ReturnType` — since the type parameters fall back to their
+    // constraints, from which no specific input can be derived.
+    {
+        type Result = ReturnType<typeof getPerAccountBuilder>;
+        true satisfies Equal<Result['accounts'][0], AccountSignerMeta<string> & WritableSignerAccount<string>>;
+        true satisfies Equal<Result['accounts'][1], ReadonlyAccount<string>>;
+        true satisfies Equal<Result['accounts'][2], WritableAccount<string>>;
+    }
+
+    // CONTRAST: the `TInput`-based patterns above do NOT perform excess property checks,
+    // since the fresh object literal is inferred as `TInput` itself (or as a constituent of
+    // the intersection). This asserts that limitation on purpose so that the difference
+    // with the per-account pattern is documented.
+    {
+        void getMockInstructionBuilder({ mint: address7, owner: address9, payer: signer8, rnet: address5 });
+        void getSingleGenericBuilder({ mint: address7, owner: address9, payer: signer8, rnet: address5 });
     }
 }
 
