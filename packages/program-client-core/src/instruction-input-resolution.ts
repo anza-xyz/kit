@@ -96,7 +96,7 @@ export function getNonNullResolvedInstructionInput<T>(inputName: string, value: 
  *
  * @example
  * ```ts
- * const address = getAddressFromResolvedInstructionAccount('mint', resolvedMint);
+ * const address = getAddressFromResolvedInstructionAccount('mint', resolvedMint.value);
  * ```
  */
 export function getAddressFromResolvedInstructionAccount<T extends string = string>(
@@ -129,7 +129,7 @@ export function getAddressFromResolvedInstructionAccount<T extends string = stri
  *
  * @example
  * ```ts
- * const pda = getResolvedInstructionAccountAsProgramDerivedAddress('metadata', resolvedMetadata);
+ * const pda = getResolvedInstructionAccountAsProgramDerivedAddress('metadata', resolvedMetadata.value);
  * const [address, bump] = pda;
  * ```
  */
@@ -163,7 +163,7 @@ export function getResolvedInstructionAccountAsProgramDerivedAddress<T extends s
  *
  * @example
  * ```ts
- * const signer = getResolvedInstructionAccountAsTransactionSigner('authority', resolvedAuthority);
+ * const signer = getResolvedInstructionAccountAsTransactionSigner('authority', resolvedAuthority.value);
  * ```
  */
 export function getResolvedInstructionAccountAsTransactionSigner<T extends string = string>(
