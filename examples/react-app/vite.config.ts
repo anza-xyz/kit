@@ -26,6 +26,9 @@ export default defineConfig(({ mode }) => ({
         // that both the app and the plugin reference.
         // This is only an issue in our example because of the linked workspace.
         include: ['@solana/react'],
+        rolldownOptions: {
+            tsconfig: false,
+        },
     },
     plugins: [react(), replaceProcessEnv(mode)],
 }));
