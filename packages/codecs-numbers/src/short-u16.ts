@@ -1,4 +1,5 @@
 import {
+    assertByteArrayHasEnoughBytesForCodec,
     combineCodec,
     createDecoder,
     createEncoder,
@@ -8,6 +9,8 @@ import {
     VariableSizeDecoder,
     VariableSizeEncoder,
 } from '@solana/codecs-core';
+
+import { SOLANA_ERROR__CODECS__NUMBER_OUT_OF_RANGE, SolanaError } from '@solana/errors';
 
 import { assertNumberIsBetweenForCodec } from './assertions';
 
@@ -90,7 +93,8 @@ export const getShortU16Decoder = (): VariableSizeDecoder<number> =>
         read: (bytes: ReadonlyUint8Array | Uint8Array, offset): [number, Offset] => {
             let value = 0;
             let byteCount = 0;
-            while (++byteCount) {
+            while (++byteCount <= 3) {
+                assertByteArrayHasEnoughBytesForCodec('shortU16', byteCount, bytes, offset);
                 const byteIndex = byteCount - 1;
                 const currentByte = bytes[offset + byteIndex];
                 const nextSevenBits = 0b1111111 & currentByte;
@@ -98,10 +102,17 @@ export const getShortU16Decoder = (): VariableSizeDecoder<number> =>
                 value |= nextSevenBits << (byteIndex * 7);
                 if ((currentByte & 0b10000000) === 0) {
                     // This byte does not have its continuation bit set. We're done.
-                    break;
+                    return [value, offset + byteCount];
                 }
             }
-            return [value, offset + byteCount];
+            // Every encoded shortU16 fits in at most three bytes. A continuation bit on
+            // what would be the fourth byte implies a value outside the u16 domain.
+            throw new SolanaError(SOLANA_ERROR__CODECS__NUMBER_OUT_OF_RANGE, {
+                codecDescription: 'shortU16',
+                max: 65535,
+                min: 0,
+                value,
+            });
         },
     });
 

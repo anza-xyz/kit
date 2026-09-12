@@ -1,3 +1,9 @@
+import {
+    SOLANA_ERROR__CODECS__INVALID_BYTE_LENGTH,
+    SOLANA_ERROR__CODECS__NUMBER_OUT_OF_RANGE,
+    SolanaError,
+} from '@solana/errors';
+
 import { getShortU16Codec } from '../short-u16';
 import { assertRangeError, assertValid, assertValidEncode } from './__setup__';
 
@@ -52,6 +58,37 @@ describe('getShortU16Codec', () => {
             const bytes = codec.encode(i);
             expect(codec.decode(bytes)).toBe(i);
         }
+    });
+
+    it('throws when the buffer ends before the continuation chain terminates', () => {
+        expect.hasAssertions();
+        // Continuation bit set, but no further bytes.
+        expect(() => shortU16().decode(new Uint8Array([0x80]))).toThrow(
+            new SolanaError(SOLANA_ERROR__CODECS__INVALID_BYTE_LENGTH, {
+                bytesLength: 1,
+                codecDescription: 'shortU16',
+                expected: 2,
+            }),
+        );
+        expect(() => shortU16().decode(new Uint8Array([0x80, 0x80]))).toThrow(
+            new SolanaError(SOLANA_ERROR__CODECS__INVALID_BYTE_LENGTH, {
+                bytesLength: 2,
+                codecDescription: 'shortU16',
+                expected: 3,
+            }),
+        );
+    });
+
+    it('rejects continuation chains that exceed the three-byte encoding', () => {
+        expect.hasAssertions();
+        expect(() => shortU16().decode(new Uint8Array([0xff, 0xff, 0xff, 0x00]))).toThrow(
+            new SolanaError(SOLANA_ERROR__CODECS__NUMBER_OUT_OF_RANGE, {
+                codecDescription: 'shortU16',
+                max: MAX,
+                min: MIN,
+                value: 0x7f | (0x7f << 7) | (0x7f << 14),
+            }),
+        );
     });
 
     it('has the right sizes', () => {
