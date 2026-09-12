@@ -1,12 +1,9 @@
 import { address } from '@solana/addresses';
-import { bytesEqual } from '@solana/codecs-core';
 import { getAbortablePromise } from '@solana/promises';
 import { TransactionModifyingSigner } from '@solana/signers';
-import { getCompiledTransactionMessageDecoder } from '@solana/transaction-messages';
 import {
-    assertIsTransactionWithinSizeLimit,
     getTransactionCodec,
-    getTransactionLifetimeConstraintFromCompiledTransactionMessage,
+    reconstructEncodedTransactionFromOriginalTransaction,
     Transaction,
     TransactionWithinSizeLimit,
     TransactionWithLifetime,
@@ -92,57 +89,9 @@ export function createTransactionSignerFromWalletAccount<TWalletAccount extends 
 
             const results = await getAbortablePromise(
                 Promise.all(
-                    outputs.map(async ({ signedTransaction }, index) => {
-                        const decodedSignedTransaction = transactionCodec.decode(
-                            signedTransaction,
-                        ) as (typeof transactions)[number];
-
-                        assertIsTransactionWithinSizeLimit(decodedSignedTransaction);
-
-                        const inputTransaction = transactions[index];
-                        const existingLifetime =
-                            inputTransaction && 'lifetimeConstraint' in inputTransaction
-                                ? (inputTransaction as TransactionWithLifetime).lifetimeConstraint
-                                : undefined;
-
-                        // Fast path: identical bytes means the lifetime hasn't changed
-                        if (
-                            existingLifetime &&
-                            bytesEqual(decodedSignedTransaction.messageBytes, inputTransaction.messageBytes)
-                        ) {
-                            return Object.freeze({
-                                ...decodedSignedTransaction,
-                                lifetimeConstraint: existingLifetime,
-                            });
-                        }
-
-                        // Decode once to inspect the lifetime token
-                        const compiledTransactionMessage = getCompiledTransactionMessageDecoder().decode(
-                            decodedSignedTransaction.messageBytes,
-                        );
-
-                        // If the token matches the existing lifetime, reuse it
-                        if (existingLifetime) {
-                            const currentToken =
-                                'blockhash' in existingLifetime ? existingLifetime.blockhash : existingLifetime.nonce;
-                            if (compiledTransactionMessage.lifetimeToken === currentToken) {
-                                return Object.freeze({
-                                    ...decodedSignedTransaction,
-                                    lifetimeConstraint: existingLifetime,
-                                });
-                            }
-                        }
-
-                        // No existing lifetime or it has changed — fetch a new one
-                        const lifetimeConstraint =
-                            await getTransactionLifetimeConstraintFromCompiledTransactionMessage(
-                                compiledTransactionMessage,
-                            );
-                        return Object.freeze({
-                            ...decodedSignedTransaction,
-                            lifetimeConstraint,
-                        });
-                    }),
+                    outputs.map(({ signedTransaction }, index) =>
+                        reconstructEncodedTransactionFromOriginalTransaction(transactions[index], signedTransaction),
+                    ),
                 ),
                 abortSignal,
             );
