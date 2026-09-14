@@ -26,6 +26,12 @@ export default defineConfig(({ mode }) => ({
         // that both the app and the plugin reference.
         // This is only an issue in our example because of the linked workspace.
         include: ['@solana/react'],
+        // Rolldown auto-discovers `tsconfig.json` by default. For the linked `@solana/react`
+        // workspace package that lands on the monorepo's tsconfigs and breaks pre-bundling.
+        // Optimized deps are already-compiled JS, so no tsconfig is needed here.
+        rolldownOptions: {
+            tsconfig: false,
+        },
     },
     plugins: [react(), replaceProcessEnv(mode)],
 }));
