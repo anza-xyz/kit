@@ -1,9 +1,12 @@
 import { Address } from '@solana/addresses';
 import { Decoder, ReadonlyUint8Array } from '@solana/codecs-core';
+import type { Rpc } from '@solana/rpc-spec';
 
 import { Account, EncodedAccount } from '../account';
 import { assertAccountDecoded, assertAccountsDecoded, decodeAccount } from '../decode-account';
+import { fetchJsonParsedAccounts } from '../fetch-account';
 import { MaybeAccount, MaybeEncodedAccount } from '../maybe-account';
+import type { GetMultipleAccountsApi } from '../rpc-api';
 
 /**
  * Strict type-equality helper used by typetests below. Resolves to `true` only
@@ -129,5 +132,68 @@ type MockDataDecoder = Decoder<MockData>;
         ];
         assertAccountsDecoded(accounts);
         true satisfies Equal<typeof accounts, [MaybeAccount<MockData, '1111'>, MaybeAccount<OtherMockData, '2222'>]>;
+    }
+
+    // It preserves readonly-ness of the input tuple.
+    {
+        const accounts = {} as readonly [
+            Account<MockData | ReadonlyUint8Array, '1111'>,
+            Account<OtherMockData | ReadonlyUint8Array, '2222'>,
+        ];
+        assertAccountsDecoded(accounts);
+        true satisfies Equal<typeof accounts, readonly [Account<MockData, '1111'>, Account<OtherMockData, '2222'>]>;
+    }
+
+    // It preserves `exists: true` after `assertAccountsExist`.
+    {
+        const accounts = {} as [
+            Account<MockData | ReadonlyUint8Array, '1111'> & { readonly exists: true },
+            Account<OtherMockData | ReadonlyUint8Array, '2222'> & { readonly exists: true },
+        ];
+        assertAccountsDecoded(accounts);
+        true satisfies Equal<
+            typeof accounts,
+            [
+                Account<MockData, '1111'> & { readonly exists: true },
+                Account<OtherMockData, '2222'> & { readonly exists: true },
+            ]
+        >;
+    }
+
+    // It narrows the return type of `fetchJsonParsedAccounts` per element.
+    {
+        function fetchedAccounts() {
+            const rpc = {} as Rpc<GetMultipleAccountsApi>;
+            return fetchJsonParsedAccounts<[MockData, OtherMockData], ['1111', '2222']>(rpc, [
+                '1111' as Address<'1111'>,
+                '2222' as Address<'2222'>,
+            ]);
+        }
+        const accounts = {} as Awaited<ReturnType<typeof fetchedAccounts>>;
+        assertAccountsDecoded(accounts);
+        void fetchedAccounts;
+        true satisfies Equal<
+            (typeof accounts)[0],
+            MaybeAccount<MockData & { parsedAccountMeta?: { program: string; type?: string } }, '1111'>
+        >;
+        true satisfies Equal<
+            (typeof accounts)[1],
+            MaybeAccount<OtherMockData & { parsedAccountMeta?: { program: string; type?: string } }, '2222'>
+        >;
+        if (accounts[0].exists) {
+            accounts[0].data satisfies MockData;
+        }
+        if (accounts[1].exists) {
+            accounts[1].data satisfies OtherMockData;
+        }
+    }
+
+    // It is still usable as `Account<TData>[]` from a generic caller.
+    {
+        function assertGenericDecoded<TData extends object>(xs: Account<TData | Uint8Array>[]) {
+            assertAccountsDecoded(xs);
+            xs satisfies Account<TData>[];
+        }
+        assertGenericDecoded([] as Account<MockData | Uint8Array>[]);
     }
 }

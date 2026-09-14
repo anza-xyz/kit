@@ -303,12 +303,10 @@ When the input is a tuple, each element's address and decoded data type is prese
 type TokenData = { mint: Address };
 type MintData = { supply: bigint };
 
-const myAccounts: [Account<TokenData | Uint8Array, '1111..'>, Account<MintData | Uint8Array, '2222..'>] = [
-    {} as Account<TokenData | Uint8Array, '1111..'>,
-    {} as Account<MintData | Uint8Array, '2222..'>,
-];
-assertAccountsDecoded(myAccounts);
+const accounts = await fetchJsonParsedAccounts<[TokenData, MintData]>(rpc, [tokenAddress, mintAddress]);
+assertAccountsDecoded(accounts);
 
-myAccounts[0] satisfies Account<TokenData, '1111..'>;
-myAccounts[1] satisfies Account<MintData, '2222..'>;
+// Each element keeps its own address and data type.
+accounts[0] satisfies MaybeAccount<TokenData>;
+accounts[1] satisfies MaybeAccount<MintData>;
 ```
