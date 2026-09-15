@@ -20,7 +20,14 @@ export function toArrayBuffer(bytes: ReadonlyUint8Array | Uint8Array, offset?: n
     } else {
         buffer = bytes.buffer;
     }
-    return (bytesOffset === 0 || bytesOffset === -buffer.byteLength) && bytesLength === buffer.byteLength
+    // Resolve the offset against the end of the buffer before deriving the end index, the same way
+    // `Array.prototype.slice` does. Passing a negative `bytesOffset` straight to `buffer.slice()`
+    // would compute an end index of `bytesOffset + bytesLength` that can cross zero — e.g. an offset
+    // of -1 and a length of 1 becomes `slice(-1, 0)`, which yields an empty buffer instead of the
+    // final byte.
+    const startIndex =
+        bytesOffset < 0 ? Math.max(buffer.byteLength + bytesOffset, 0) : Math.min(bytesOffset, buffer.byteLength);
+    return startIndex === 0 && bytesLength === buffer.byteLength
         ? buffer
-        : buffer.slice(bytesOffset, bytesOffset + bytesLength);
+        : buffer.slice(startIndex, startIndex + bytesLength);
 }
