@@ -52,7 +52,9 @@ import {
     SOLANA_ERROR__CODECS__LITERAL_UNION_DISCRIMINATOR_OUT_OF_RANGE,
     SOLANA_ERROR__CODECS__NUMBER_OUT_OF_RANGE,
     SOLANA_ERROR__CODECS__OFFSET_OUT_OF_RANGE,
+    SOLANA_ERROR__CODECS__SENTINEL_MISSING_AT_END_OF_BYTES,
     SOLANA_ERROR__CODECS__SENTINEL_MISSING_IN_DECODED_BYTES,
+    SOLANA_ERROR__CODECS__SENTINEL_MUST_NOT_BE_EMPTY,
     SOLANA_ERROR__CODECS__UNION_VARIANT_OUT_OF_RANGE,
     SOLANA_ERROR__CRYPTO__RANDOM_VALUES_FUNCTION_UNIMPLEMENTED,
     SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION,
@@ -421,8 +423,11 @@ export const SolanaErrorMessages: Readonly<{
         'Codec [$codecDescription] expected number to be in the range [$min, $max], got $value.',
     [SOLANA_ERROR__CODECS__OFFSET_OUT_OF_RANGE]:
         'Codec [$codecDescription] expected offset to be in the range [0, $bytesLength], got $offset.',
+    [SOLANA_ERROR__CODECS__SENTINEL_MISSING_AT_END_OF_BYTES]:
+        'Codec [$codecDescription] expected sentinel [$hexSentinel] to terminate the collection, but reached the end of the byte array without it.',
     [SOLANA_ERROR__CODECS__SENTINEL_MISSING_IN_DECODED_BYTES]:
         'Expected sentinel [$hexSentinel] to be present in decoded bytes [$hexDecodedBytes].',
+    [SOLANA_ERROR__CODECS__SENTINEL_MUST_NOT_BE_EMPTY]: 'The sentinel must not be empty.',
     [SOLANA_ERROR__CODECS__UNION_VARIANT_OUT_OF_RANGE]:
         'Union variant out of range. Expected an index between $minRange and $maxRange, got $variant.',
     [SOLANA_ERROR__CODECS__EXPECTED_DECODER_TO_CONSUME_ENTIRE_BYTE_ARRAY]:

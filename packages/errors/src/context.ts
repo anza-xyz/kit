@@ -42,6 +42,7 @@ import {
     SOLANA_ERROR__CODECS__LITERAL_UNION_DISCRIMINATOR_OUT_OF_RANGE,
     SOLANA_ERROR__CODECS__NUMBER_OUT_OF_RANGE,
     SOLANA_ERROR__CODECS__OFFSET_OUT_OF_RANGE,
+    SOLANA_ERROR__CODECS__SENTINEL_MISSING_AT_END_OF_BYTES,
     SOLANA_ERROR__CODECS__SENTINEL_MISSING_IN_DECODED_BYTES,
     SOLANA_ERROR__CODECS__UNION_VARIANT_OUT_OF_RANGE,
     SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION,
@@ -471,6 +472,11 @@ export type SolanaErrorContext = ReadonlyContextValue<
                 bytesLength: number;
                 codecDescription: string;
                 offset: number;
+            };
+            [SOLANA_ERROR__CODECS__SENTINEL_MISSING_AT_END_OF_BYTES]: {
+                codecDescription: string;
+                hexSentinel: string;
+                sentinel: ReadonlyUint8Array;
             };
             [SOLANA_ERROR__CODECS__SENTINEL_MISSING_IN_DECODED_BYTES]: {
                 decodedBytes: ReadonlyUint8Array;

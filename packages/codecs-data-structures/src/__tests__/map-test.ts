@@ -128,6 +128,18 @@ describe('getMapCodec', () => {
         expect(mapU64.read(b('010200000000000000'), 0)).toStrictEqual([new Map([[1, 2n]]), 9]);
     });
 
+    it('encodes sentinel-terminated maps', () => {
+        // Required (default): the sentinel is written on encode and demanded on decode.
+        const required = { size: { __kind: 'sentinel', sentinel: b('00') } } as const;
+        expect(map(u8(), u8(), required).encode(new Map([[1, 2]]))).toStrictEqual(b('010200'));
+        expect(map(u8(), u8(), required).read(b('010200'), 0)).toStrictEqual([new Map([[1, 2]]), 3]);
+
+        // Omitted: the sentinel is never written; the map ends at the end of the byte array.
+        const omitted = { size: { __kind: 'sentinel', sentinel: b('00'), strategy: 'omitted' } } as const;
+        expect(map(u8(), u8(), omitted).encode(new Map([[1, 2]]))).toStrictEqual(b('0102'));
+        expect(map(u8(), u8(), omitted).read(b('0102'), 0)).toStrictEqual([new Map([[1, 2]]), 2]);
+    });
+
     it('decodes an exhausted byte array as an empty map by default', () => {
         expect(map(u8(), u8()).read(b(''), 0)).toStrictEqual([new Map(), 0]);
         expect(map(u8(), u8()).read(b('ff'), 1)).toStrictEqual([new Map(), 1]);

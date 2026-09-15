@@ -25,6 +25,7 @@ import { ArrayLikeCodecSize, getArrayDecoder, getArrayEncoder } from './array';
  * - A {@link NumberCodec}, {@link NumberEncoder}, or {@link NumberDecoder} to store the size as a prefix.
  * - A fixed number of items, enforcing a strict length.
  * - The string `'remainder'` to infer the set size from the remaining bytes (only for fixed-size items).
+ * - An {@link ArrayLikeCodecSentinelSize} object to end the set when the bytes at the next item position match a constant sentinel.
  *
  * @typeParam TPrefix - The type used for encoding the size of the set.
  */
