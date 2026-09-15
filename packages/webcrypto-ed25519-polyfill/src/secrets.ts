@@ -59,7 +59,12 @@ const ED25519_PKCS8_HEADER =
     ];
 
 function bufferSourceToUint8Array(data: BufferSource): Uint8Array {
-    return data instanceof Uint8Array ? data : new Uint8Array(ArrayBuffer.isView(data) ? data.buffer : data);
+    if (data instanceof Uint8Array) return data;
+    // Wrap views with their own offset and length; constructing from the raw
+    // backing buffer would read bytes before and after the view.
+    return ArrayBuffer.isView(data)
+        ? new Uint8Array(data.buffer, data.byteOffset, data.byteLength)
+        : new Uint8Array(data);
 }
 
 let storageKeyBySecretKey_INTERNAL_ONLY_DO_NOT_EXPORT: WeakMap<CryptoKey, Uint8Array> | undefined;

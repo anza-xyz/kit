@@ -852,6 +852,13 @@ describe('signPolyfill', () => {
         expect.assertions(1);
         await expect(signPolyfill(privateKey, MOCK_DATA)).resolves.toHaveProperty('byteLength', 64);
     });
+    it('produces the expected signature when the payload is a DataView over an offset buffer', async () => {
+        expect.assertions(1);
+        const padded = new Uint8Array(5 + MOCK_DATA.length);
+        padded.set(MOCK_DATA, 5);
+        const view = new DataView(padded.buffer, 5, MOCK_DATA.length);
+        await expect(signPolyfill(privateKey, view)).resolves.toEqualArrayBuffer(MOCK_DATA_SIGNATURE.buffer);
+    });
 });
 
 describe('verifyPolyfill', () => {
@@ -894,5 +901,12 @@ describe('verifyPolyfill', () => {
         expect.assertions(1);
         const badSignature = MOCK_DATA_SIGNATURE.slice(0, 63);
         await expect(verifyPolyfill(publicKey, badSignature, MOCK_DATA)).resolves.toBe(false);
+    });
+    it('returns `true` when the payload is a DataView over an offset buffer', async () => {
+        expect.assertions(1);
+        const padded = new Uint8Array(5 + MOCK_DATA.length);
+        padded.set(MOCK_DATA, 5);
+        const view = new DataView(padded.buffer, 5, MOCK_DATA.length);
+        await expect(verifyPolyfill(publicKey, MOCK_DATA_SIGNATURE, view)).resolves.toBe(true);
     });
 });
