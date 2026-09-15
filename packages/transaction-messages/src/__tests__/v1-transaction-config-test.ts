@@ -4,6 +4,7 @@ import {
     SOLANA_ERROR__TRANSACTION__COMPUTE_UNIT_LIMIT_OUT_OF_RANGE,
     SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_MASK_PRIORITY_FEE_BITS,
     SOLANA_ERROR__TRANSACTION__INVALID_HEAP_SIZE,
+    SOLANA_ERROR__TRANSACTION__LOADED_ACCOUNTS_DATA_SIZE_LIMIT_OUT_OF_RANGE,
     SolanaError,
 } from '@solana/errors';
 
@@ -324,9 +325,51 @@ describe('setTransactionMessageConfig validation', () => {
         expect(tx.config).toStrictEqual({ computeUnitLimit: COMPUTE_UNIT_LIMIT_A });
     });
 
+    it.each([0, 67_108_865])('throws when the loaded accounts data size limit is %p', (limit: number) => {
+        expect(() => setTransactionMessageConfig({ loadedAccountsDataSizeLimit: limit }, baseTx)).toThrow(
+            new SolanaError(SOLANA_ERROR__TRANSACTION__LOADED_ACCOUNTS_DATA_SIZE_LIMIT_OUT_OF_RANGE, {
+                loadedAccountsDataSizeLimit: limit,
+                maxLoadedAccountsDataSizeLimit: 67_108_864,
+                minLoadedAccountsDataSizeLimit: 1,
+            }),
+        );
+    });
+
+    it('does not re-validate a pre-existing config value when a different field is set', () => {
+        // A message decoded by `decompileTransactionMessage` may legitimately carry a value the
+        // runtime would reject. Only the incoming partial config is validated, so such a message
+        // stays editable field by field — including being fixed one field at a time.
+        const txWithInvalidLimit = {
+            ...baseTx,
+            config: { loadedAccountsDataSizeLimit: 0 },
+        } as typeof baseTx;
+        const result = setTransactionMessageConfig({ computeUnitLimit: COMPUTE_UNIT_LIMIT_A }, txWithInvalidLimit);
+        expect(result.config).toStrictEqual({
+            computeUnitLimit: COMPUTE_UNIT_LIMIT_A,
+            loadedAccountsDataSizeLimit: 0,
+        });
+    });
+
+    it('allows an invalid pre-existing loaded accounts data size limit to be corrected', () => {
+        const txWithInvalidLimit = {
+            ...baseTx,
+            config: { loadedAccountsDataSizeLimit: 0 },
+        } as typeof baseTx;
+        const result = setTransactionMessageConfig({ loadedAccountsDataSizeLimit: 60_000 }, txWithInvalidLimit);
+        expect(result.config).toStrictEqual({ loadedAccountsDataSizeLimit: 60_000 });
+    });
+
+    it('does not throw when clearing the loaded accounts data size limit', () => {
+        const tx = setTransactionMessageConfig({ loadedAccountsDataSizeLimit: 60_000 }, baseTx);
+        expect(() => setTransactionMessageConfig({ loadedAccountsDataSizeLimit: undefined }, tx)).not.toThrow();
+    });
+
     it('accepts valid resource limits', () => {
         expect(() =>
-            setTransactionMessageConfig({ computeUnitLimit: 1_400_000, heapSize: 262_144 }, baseTx),
+            setTransactionMessageConfig(
+                { computeUnitLimit: 1_400_000, heapSize: 262_144, loadedAccountsDataSizeLimit: 67_108_864 },
+                baseTx,
+            ),
         ).not.toThrow();
     });
 });

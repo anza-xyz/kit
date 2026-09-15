@@ -4,6 +4,7 @@ import {
     SOLANA_ERROR__TRANSACTION__FAILED_TO_ESTIMATE_COMPUTE_LIMIT,
     SOLANA_ERROR__TRANSACTION__FAILED_TO_ESTIMATE_LOADED_ACCOUNTS_DATA_SIZE_LIMIT,
     SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_RESOURCE_LIMITS,
+    SOLANA_ERROR__TRANSACTION__LOADED_ACCOUNTS_DATA_SIZE_LIMIT_OUT_OF_RANGE,
     SolanaError,
 } from '@solana/errors';
 import { pipe } from '@solana/functional';
@@ -296,8 +297,59 @@ describe('estimateAndSetResourceLimitsFactory', () => {
         expect.assertions(1);
         const mockEstimator = jest.fn().mockResolvedValue({ computeUnitLimit: 42, loadedAccountsDataSizeLimit: 1234 });
         const estimateAndSet = estimateAndSetResourceLimitsFactory(mockEstimator);
-        const message = setTransactionMessageLoadedAccountsDataSizeLimit(0, MOCK_V1_MESSAGE);
+        const message = setTransactionMessageLoadedAccountsDataSizeLimit(1, MOCK_V1_MESSAGE);
         const result = await estimateAndSet(message);
+        expect(getTransactionMessageLoadedAccountsDataSizeLimit(result)).toBe(1234);
+    });
+
+    it('replaces a legacy provisory v1 loaded accounts data size limit of zero', async () => {
+        // Zero was the provisory value written by earlier versions of this package, and is never a
+        // legal limit, so a message carrying it must still be re-estimated rather than preserved.
+        expect.assertions(2);
+        const mockEstimator = jest.fn().mockResolvedValue({ computeUnitLimit: 42, loadedAccountsDataSizeLimit: 1234 });
+        const estimateAndSet = estimateAndSetResourceLimitsFactory(mockEstimator);
+        // Built directly, because the setter now rejects a zero limit.
+        const message = {
+            ...MOCK_V1_MESSAGE,
+            config: { computeUnitLimit: 0, loadedAccountsDataSizeLimit: 0 },
+        } as typeof MOCK_V1_MESSAGE;
+        const result = await estimateAndSet(message);
+        expect(mockEstimator).toHaveBeenCalled();
+        expect(getTransactionMessageLoadedAccountsDataSizeLimit(result)).toBe(1234);
+    });
+
+    it.each([
+        ['zero', 0],
+        ['a non-integer', 1234.5],
+        ['a value above the runtime maximum', 64 * 1024 * 1024 + 1],
+    ])(
+        'surfaces %s returned by a custom estimator as a validation error rather than encoding it',
+        async (_label: string, loadedAccountsDataSizeLimit: number) => {
+            // The factory docs invite custom estimator wrappers that buffer the returned values.
+            // A wrapper that pushes the limit out of range now fails here, at the point the value is
+            // set, instead of silently producing a transaction the runtime rejects.
+            expect.assertions(1);
+            const mockEstimator = jest.fn().mockResolvedValue({ computeUnitLimit: 42, loadedAccountsDataSizeLimit });
+            const estimateAndSet = estimateAndSetResourceLimitsFactory(mockEstimator);
+            await expect(estimateAndSet(MOCK_V1_MESSAGE)).rejects.toThrow(
+                new SolanaError(SOLANA_ERROR__TRANSACTION__LOADED_ACCOUNTS_DATA_SIZE_LIMIT_OUT_OF_RANGE, {
+                    loadedAccountsDataSizeLimit,
+                    maxLoadedAccountsDataSizeLimit: 64 * 1024 * 1024,
+                    minLoadedAccountsDataSizeLimit: 1,
+                }),
+            );
+        },
+    );
+
+    it('replaces both limits written by fillTransactionMessageProvisoryResourceLimits', async () => {
+        // The documented workflow: reserve space with provisory limits during construction, then
+        // estimate and replace them before sending. Both halves have to agree on the sentinel.
+        expect.assertions(2);
+        const mockEstimator = jest.fn().mockResolvedValue({ computeUnitLimit: 42, loadedAccountsDataSizeLimit: 1234 });
+        const estimateAndSet = estimateAndSetResourceLimitsFactory(mockEstimator);
+        const filled = fillTransactionMessageProvisoryResourceLimits(MOCK_V1_MESSAGE);
+        const result = await estimateAndSet(filled);
+        expect(getTransactionMessageComputeUnitLimit(result)).toBe(42);
         expect(getTransactionMessageLoadedAccountsDataSizeLimit(result)).toBe(1234);
     });
 
@@ -361,10 +413,10 @@ describe('fillTransactionMessageProvisoryResourceLimits', () => {
         expect(getTransactionMessageLoadedAccountsDataSizeLimit(result)).toBeUndefined();
     });
 
-    it('sets both limits to 0 on a v1 message when none exist', () => {
+    it('sets provisory limits on a v1 message when none exist', () => {
         const result = fillTransactionMessageProvisoryResourceLimits(MOCK_V1_MESSAGE);
         expect(getTransactionMessageComputeUnitLimit(result)).toBe(0);
-        expect(getTransactionMessageLoadedAccountsDataSizeLimit(result)).toBe(0);
+        expect(getTransactionMessageLoadedAccountsDataSizeLimit(result)).toBe(1);
     });
 
     it('preserves an existing compute unit limit', () => {
@@ -405,7 +457,7 @@ describe('fillTransactionMessageProvisoryResourceLimits', () => {
         const message = pipe(
             MOCK_V1_MESSAGE,
             m => setTransactionMessageComputeUnitLimit(0, m),
-            m => setTransactionMessageLoadedAccountsDataSizeLimit(0, m),
+            m => setTransactionMessageLoadedAccountsDataSizeLimit(1, m),
         );
         const result = fillTransactionMessageProvisoryResourceLimits(message);
         expect(result).toBe(message);

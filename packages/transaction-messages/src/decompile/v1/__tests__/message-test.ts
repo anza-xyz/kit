@@ -747,9 +747,10 @@ describe('decompileTransactionMessage (v1)', () => {
             // stay permissive so that callers can inspect any transaction that reaches them.
             const compiledTransaction: CompiledTransactionMessageWithLifetime & V1CompiledTransactionMessage = {
                 ...getMockV1CompiledTransactionMessage(),
-                configMask: 0b10100,
+                configMask: 0b11100,
                 configValues: [
                     { kind: 'u32', value: 1_400_001 },
+                    { kind: 'u32', value: 0 },
                     { kind: 'u32', value: 40_000 },
                 ] as CompiledTransactionConfigValue[],
             };
@@ -759,6 +760,7 @@ describe('decompileTransactionMessage (v1)', () => {
             expect(transaction.config).toStrictEqual({
                 computeUnitLimit: 1_400_001,
                 heapSize: 40_000,
+                loadedAccountsDataSizeLimit: 0,
             });
         });
     });
