@@ -12,6 +12,8 @@ import {
 
 import { getMapCodec, getMapDecoder, getMapEncoder } from '../map';
 
+const sentinel = { __kind: 'sentinel', sentinel: new Uint8Array([0]) } as const;
+
 {
     // [getMapEncoder]: It knows if the encoder is fixed size or variable size.
     const fixedKeyValue = [{} as FixedSizeEncoder<string>, {} as FixedSizeEncoder<number>] as const;
@@ -22,6 +24,9 @@ import { getMapCodec, getMapDecoder, getMapEncoder } from '../map';
     getMapEncoder(...anyKeyValue, { size: 0 }) satisfies FixedSizeEncoder<Map<string, number>, 0>;
     getMapEncoder(...fixedKeyValue, { size: 'remainder' }) satisfies VariableSizeEncoder<Map<string, number>>;
     getMapEncoder(...anyKeyValue, { size: 'remainder' }) satisfies VariableSizeEncoder<Map<string, number>>;
+    // A sentinel size is always variable, regardless of the item size.
+    getMapEncoder(...fixedKeyValue, { size: sentinel }) satisfies VariableSizeEncoder<Map<string, number>>;
+    getMapEncoder(...anyKeyValue, { size: sentinel }) satisfies VariableSizeEncoder<Map<string, number>>;
 }
 
 {
@@ -34,6 +39,9 @@ import { getMapCodec, getMapDecoder, getMapEncoder } from '../map';
     getMapDecoder(...anyKeyValue, { size: 0 }) satisfies FixedSizeDecoder<Map<string, number>, 0>;
     getMapDecoder(...fixedKeyValue, { size: 'remainder' }) satisfies VariableSizeDecoder<Map<string, number>>;
     getMapDecoder(...anyKeyValue, { size: 'remainder' }) satisfies VariableSizeDecoder<Map<string, number>>;
+    // A sentinel size is always variable, regardless of the item size.
+    getMapDecoder(...fixedKeyValue, { size: sentinel }) satisfies VariableSizeDecoder<Map<string, number>>;
+    getMapDecoder(...anyKeyValue, { size: sentinel }) satisfies VariableSizeDecoder<Map<string, number>>;
 }
 
 {
@@ -46,4 +54,7 @@ import { getMapCodec, getMapDecoder, getMapEncoder } from '../map';
     getMapCodec(...anyKeyValue, { size: 0 }) satisfies FixedSizeCodec<Map<string, number>, Map<string, number>, 0>;
     getMapCodec(...fixedKeyValue, { size: 'remainder' }) satisfies VariableSizeCodec<Map<string, number>>;
     getMapCodec(...anyKeyValue, { size: 'remainder' }) satisfies VariableSizeCodec<Map<string, number>>;
+    // A sentinel size is always variable, regardless of the item size.
+    getMapCodec(...fixedKeyValue, { size: sentinel }) satisfies VariableSizeCodec<Map<string, number>>;
+    getMapCodec(...anyKeyValue, { size: sentinel }) satisfies VariableSizeCodec<Map<string, number>>;
 }

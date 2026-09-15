@@ -1,6 +1,7 @@
 import {
     Codec,
     combineCodec,
+    containsBytes,
     createDecoder,
     createEncoder,
     Decoder,
@@ -15,9 +16,80 @@ import {
     VariableSizeEncoder,
 } from '@solana/codecs-core';
 import { getU32Decoder, getU32Encoder, NumberCodec, NumberDecoder, NumberEncoder } from '@solana/codecs-numbers';
+import { SOLANA_ERROR__CODECS__SENTINEL_MISSING_AT_END_OF_BYTES, SolanaError } from '@solana/errors';
 
 import { assertValidNumberOfItemsForCodec } from './assertions';
 import { getFixedSize, getMaxSize } from './utils';
+
+/**
+ * Defines whether the sentinel of a {@link ArrayLikeCodecSentinelSize} strategy is written when
+ * encoding and required when decoding.
+ *
+ * This mirrors the `sentinelCountStrategy` enumeration of Codama's `sentinelCountNode`.
+ *
+ * - `"required"` — The sentinel is written after the last item and must be present when decoding.
+ *   Reaching the end of the byte array without it is an error. This is the default.
+ * - `"optional"` — The sentinel is written after the last item; when decoding, it is consumed if
+ *   present but the collection may also end at the end of the byte array. Use this to tolerate
+ *   tightly sized or legacy data that lacks the sentinel.
+ * - `"omitted"` — The sentinel is never written; when decoding, it is consumed if present and the
+ *   collection also ends at the end of the byte array. Only meaningful when the collection is
+ *   followed by unused space or the end of the byte array.
+ *
+ * Under `"optional"` and `"omitted"`, the sentinel must be no wider than the smallest possible item
+ * (see the constraints on {@link ArrayLikeCodecSentinelSize}).
+ *
+ * @see {@link ArrayLikeCodecSentinelSize}
+ */
+export type SentinelCountStrategy = 'omitted' | 'optional' | 'required';
+
+/**
+ * A size strategy for array-like codecs where the collection ends when the bytes at the next item
+ * position match a constant `sentinel`, compared at item boundaries only.
+ *
+ * Unlike {@link addCodecSentinel}, the sentinel is never searched for within an item's bytes, so its
+ * bytes may occur _inside_ an item without terminating the collection. This mirrors Codama's
+ * `sentinelCountNode`.
+ *
+ * @remarks
+ * Because the sentinel is only compared at the start of the next item slot, two invariants must hold
+ * for the collection to round-trip correctly. The codec does **not** enforce them — like Codama's
+ * `sentinelCountNode`, it is the caller's (or IDL author's) responsibility to guarantee them:
+ *
+ * 1. **No item may _begin_ with the sentinel's bytes.** A valid item that starts with the sentinel
+ *    is indistinguishable from the terminator, so decoding would stop early at that item. The
+ *    sentinel may still appear _inside_ an item, just never at its start.
+ * 2. **Under `"optional"` and `"omitted"`, the sentinel must be no wider than the smallest possible
+ *    item.** Otherwise a trailing region shorter than the sentinel but large enough to hold a valid
+ *    item would be skipped: decoding stops as soon as fewer bytes than the sentinel remain, so that
+ *    final item would never be read. This cannot arise under `"required"` because a terminator is
+ *    always written.
+ *
+ * @example
+ * A single `0xff` byte is a poor sentinel for a list of public keys: roughly one key in 256 starts
+ * with `0xff`, so such a key would prematurely terminate the list. A sentinel as wide as an item —
+ * for instance the all-zero (default) public key — avoids this, since only that exact key can ever
+ * match the terminator.
+ *
+ * @see {@link SentinelCountStrategy}
+ */
+export type ArrayLikeCodecSentinelSize = {
+    /** Internal discriminator identifying this object as a sentinel size strategy. */
+    readonly __kind: 'sentinel';
+    /**
+     * The fixed-size constant compared against the bytes at each item position.
+     *
+     * No valid item may begin with these bytes, and under the `"optional"` / `"omitted"` strategies
+     * this must be no wider than the smallest possible item. See the remarks above.
+     */
+    readonly sentinel: ReadonlyUint8Array;
+    /**
+     * Whether the sentinel is written when encoding and required when decoding.
+     *
+     * @defaultValue `"required"`
+     */
+    readonly strategy?: SentinelCountStrategy;
+};
 
 /**
  * Defines the possible size strategies for array-like codecs (`array`, `map`, and `set`).
@@ -26,10 +98,13 @@ import { getFixedSize, getMaxSize } from './utils';
  * - A {@link NumberCodec}, {@link NumberDecoder}, or {@link NumberEncoder} to store a size prefix.
  * - A fixed `number` of items, enforcing an exact length.
  * - The string `"remainder"`, which infers the number of items by consuming the rest of the available bytes.
+ * - An {@link ArrayLikeCodecSentinelSize} object, which ends the collection when the bytes at the next
+ *   item position match a constant sentinel.
  *
  * @typeParam TPrefix - A number codec, decoder, or encoder used for size prefixing.
  */
 export type ArrayLikeCodecSize<TPrefix extends NumberCodec | NumberDecoder | NumberEncoder> =
+    | ArrayLikeCodecSentinelSize
     | TPrefix
     | number
     | 'remainder';
@@ -63,6 +138,8 @@ export type ArrayCodecConfig<TPrefix extends NumberCodec | NumberDecoder | Numbe
      * - A {@link NumberCodec}, {@link NumberDecoder}, or {@link NumberEncoder} stores a size prefix before encoding the array.
      * - A `number` enforces a fixed number of elements.
      * - `"remainder"` uses all remaining bytes to infer the array length (only for fixed-size items).
+     * - An {@link ArrayLikeCodecSentinelSize} object ends the array when the bytes at the next item
+     *   position match a constant sentinel.
      *
      * @defaultValue A `u32` size prefix.
      */
@@ -121,8 +198,13 @@ export function getArrayEncoder<TFrom>(
             ? { fixedSize }
             : {
                   getSizeFromValue: (array: TFrom[]) => {
-                      const prefixSize = typeof size === 'object' ? getEncodedSize(array.length, size) : 0;
-                      return prefixSize + [...array].reduce((all, value) => all + getEncodedSize(value, item), 0);
+                      const prefixSize = isPrefixSize(size) ? getEncodedSize(array.length, size) : 0;
+                      const suffixSize = isSentinelSize(size) && size.strategy !== 'omitted' ? size.sentinel.length : 0;
+                      return (
+                          prefixSize +
+                          suffixSize +
+                          [...array].reduce((all, value) => all + getEncodedSize(value, item), 0)
+                      );
                   },
                   maxSize,
               }),
@@ -130,12 +212,16 @@ export function getArrayEncoder<TFrom>(
             if (typeof size === 'number') {
                 assertValidNumberOfItemsForCodec(config.description ?? 'array', size, array.length);
             }
-            if (typeof size === 'object') {
+            if (isPrefixSize(size)) {
                 offset = size.write(array.length, bytes, offset);
             }
             array.forEach(value => {
                 offset = item.write(value, bytes, offset);
             });
+            if (isSentinelSize(size) && size.strategy !== 'omitted') {
+                bytes.set(size.sentinel, offset);
+                offset += size.sentinel.length;
+            }
             return offset;
         },
     });
@@ -191,12 +277,37 @@ export function getArrayDecoder<TTo>(item: Decoder<TTo>, config: ArrayCodecConfi
         ...(fixedSize !== null ? { fixedSize } : { maxSize }),
         read: (bytes: ReadonlyUint8Array | Uint8Array, offset) => {
             const array: TTo[] = [];
-            if (typeof size === 'object' && !config.requireSizePrefix && offset >= bytes.length) {
+            if (isPrefixSize(size) && !config.requireSizePrefix && offset >= bytes.length) {
                 return [array, offset];
             }
 
             if (size === 'remainder') {
                 while (offset < bytes.length) {
+                    const [value, newOffset] = item.read(bytes, offset);
+                    offset = newOffset;
+                    array.push(value);
+                }
+                return [array, offset];
+            }
+
+            if (isSentinelSize(size)) {
+                const { sentinel, strategy = 'required' } = size;
+                while (true) {
+                    if (offset + sentinel.length > bytes.length) {
+                        // Not enough bytes remain to hold the sentinel.
+                        if (strategy === 'required') {
+                            throw new SolanaError(SOLANA_ERROR__CODECS__SENTINEL_MISSING_AT_END_OF_BYTES, {
+                                hexSentinel: hexBytes(sentinel),
+                                sentinel,
+                            });
+                        }
+                        break;
+                    }
+                    if (containsBytes(bytes, sentinel, offset)) {
+                        // The sentinel is present; consume it and stop.
+                        offset += sentinel.length;
+                        break;
+                    }
                     const [value, newOffset] = item.read(bytes, offset);
                     offset = newOffset;
                     array.push(value);
@@ -272,6 +383,18 @@ export function getArrayDecoder<TTo>(item: Decoder<TTo>, config: ArrayCodecConfi
  * ```
  *
  * @example
+ * Using a sentinel to mark the end of the array. Note that no valid item may begin with the
+ * sentinel's bytes, or decoding would stop early — see {@link ArrayLikeCodecSentinelSize} for the
+ * full constraints.
+ * ```ts
+ * const codec = getArrayCodec(getU8Codec(), { size: { __kind: 'sentinel', sentinel: new Uint8Array([0]) } });
+ * codec.encode([1, 2, 3]);
+ * // 0x01020300
+ * //   |      └-- The sentinel that marks the end of the array.
+ * //   └-- 3 items of 1 byte each.
+ * ```
+ *
+ * @example
  * Requiring the size prefix to be present when decoding.
  * ```ts
  * getArrayCodec(getU8Codec()).decode(new Uint8Array([]));
@@ -324,4 +447,18 @@ function computeArrayLikeCodecSize(size: number | object | 'remainder', itemSize
     if (typeof size !== 'number') return null;
     if (size === 0) return 0;
     return itemSize === null ? null : itemSize * size;
+}
+
+/** Narrows an array-like size to a numeric prefix codec, decoder, or encoder. */
+function isPrefixSize(size: unknown): size is NumberCodec | NumberDecoder | NumberEncoder {
+    return typeof size === 'object' && size !== null && !isSentinelSize(size);
+}
+
+/** Narrows an array-like size to an {@link ArrayLikeCodecSentinelSize} object. */
+function isSentinelSize(size: unknown): size is ArrayLikeCodecSentinelSize {
+    return typeof size === 'object' && size !== null && '__kind' in size && size.__kind === 'sentinel';
+}
+
+function hexBytes(bytes: ReadonlyUint8Array): string {
+    return bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');
 }

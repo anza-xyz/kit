@@ -5,6 +5,7 @@ import {
     SOLANA_ERROR__CODECS__CANNOT_DECODE_EMPTY_BYTE_ARRAY,
     SOLANA_ERROR__CODECS__INVALID_BYTE_LENGTH,
     SOLANA_ERROR__CODECS__INVALID_NUMBER_OF_ITEMS,
+    SOLANA_ERROR__CODECS__SENTINEL_MISSING_AT_END_OF_BYTES,
     SolanaError,
 } from '@solana/errors';
 
@@ -118,6 +119,98 @@ describe('getArrayCodec', () => {
         expect(arrayU64.read(b('0200000000000000'), 0)).toStrictEqual([[2n], 8]);
     });
 
+    it('encodes sentinel-terminated arrays with the required strategy by default', () => {
+        const sentinel = { __kind: 'sentinel', sentinel: b('00') } as const;
+
+        // Empty (writes only the sentinel).
+        expect(array(u8(), { size: sentinel }).encode([])).toStrictEqual(b('00'));
+        expect(array(u8(), { size: sentinel }).read(b('00'), 0)).toStrictEqual([[], 1]);
+
+        // Numbers (the sentinel is appended after the items).
+        expect(array(u8(), { size: sentinel }).encode([42, 1, 2])).toStrictEqual(b('2a010200'));
+        expect(array(u8(), { size: sentinel }).read(b('2a010200'), 0)).toStrictEqual([[42, 1, 2], 4]);
+        expect(array(u8(), { size: sentinel }).read(b('ffff2a010200'), 2)).toStrictEqual([[42, 1, 2], 6]);
+
+        // Multi-byte sentinels.
+        const wide = { __kind: 'sentinel', sentinel: b('ffff') } as const;
+        expect(array(u8(), { size: wide }).encode([42, 1, 2])).toStrictEqual(b('2a0102ffff'));
+        expect(array(u8(), { size: wide }).read(b('2a0102ffff'), 0)).toStrictEqual([[42, 1, 2], 5]);
+
+        // The sentinel is only compared at item boundaries, so it may legitimately appear inside an item.
+        // Here the u16 `256` encodes (little-endian) to `0001`, whose second byte is `00` — part of the
+        // `0000` sentinel — yet decoding does not stop mid-item.
+        const wideItem = { __kind: 'sentinel', sentinel: b('0000') } as const;
+        expect(array(u16(), { size: wideItem }).encode([256, 512])).toStrictEqual(b('000100020000'));
+        expect(array(u16(), { size: wideItem }).read(b('000100020000'), 0)).toStrictEqual([[256, 512], 6]);
+
+        // Fails when the sentinel is missing and the strategy is required.
+        expect(() => array(u8(), { size: sentinel }).read(b('2a0102'), 0)).toThrow(
+            new SolanaError(SOLANA_ERROR__CODECS__SENTINEL_MISSING_AT_END_OF_BYTES, {
+                hexSentinel: '00',
+                sentinel: b('00'),
+            }),
+        );
+    });
+
+    it('encodes sentinel-terminated arrays with the optional strategy', () => {
+        const optional = { __kind: 'sentinel', sentinel: b('00'), strategy: 'optional' } as const;
+
+        // The sentinel is written when encoding.
+        expect(array(u8(), { size: optional }).encode([42, 1, 2])).toStrictEqual(b('2a010200'));
+
+        // The sentinel is consumed when present.
+        expect(array(u8(), { size: optional }).read(b('2a010200'), 0)).toStrictEqual([[42, 1, 2], 4]);
+
+        // A missing sentinel is tolerated: the array ends at the end of the byte array.
+        expect(array(u8(), { size: optional }).read(b('2a0102'), 0)).toStrictEqual([[42, 1, 2], 3]);
+        expect(array(u8(), { size: optional }).read(b(''), 0)).toStrictEqual([[], 0]);
+    });
+
+    it('encodes sentinel-terminated arrays with the omitted strategy', () => {
+        const omitted = { __kind: 'sentinel', sentinel: b('00'), strategy: 'omitted' } as const;
+
+        // The sentinel is never written when encoding.
+        expect(array(u8(), { size: omitted }).encode([42, 1, 2])).toStrictEqual(b('2a0102'));
+        expect(array(u8(), { size: omitted }).encode([])).toStrictEqual(b(''));
+
+        // The array ends at the end of the byte array.
+        expect(array(u8(), { size: omitted }).read(b('2a0102'), 0)).toStrictEqual([[42, 1, 2], 3]);
+
+        // A sentinel that is present is still consumed.
+        expect(array(u8(), { size: omitted }).read(b('2a010200'), 0)).toStrictEqual([[42, 1, 2], 4]);
+    });
+
+    it('stops decoding early when an item begins with the sentinel bytes', () => {
+        // INVARIANT: no valid item may begin with the sentinel's bytes. This is the caller's
+        // responsibility; the codec cannot tell a leading sentinel apart from a terminator.
+        const sentinel = { __kind: 'sentinel', sentinel: b('00') } as const;
+
+        // The sentinel bytes may appear *inside* an item without terminating the array. Here each
+        // u16 item's high byte is `00`, but decoding reads all three items because the comparison
+        // only happens at the start of each item slot.
+        expect(array(u16(), { size: sentinel }).read(b('010002000300' + '00'), 0)).toStrictEqual([[1, 2, 3], 7]);
+
+        // But an item that *begins* with the sentinel bytes is indistinguishable from the
+        // terminator, so decoding stops at that boundary. Here `[1, 0]` would encode as `0100 0000`,
+        // and decoding it back stops at the second item because it begins with `00`.
+        expect(array(u16(), { size: sentinel }).read(b('01000000'), 0)).toStrictEqual([[1], 3]);
+    });
+
+    it('skips a valid short tail when an optional/omitted sentinel is wider than the smallest item', () => {
+        // INVARIANT: under `optional`/`omitted`, the sentinel must be no wider than the smallest
+        // possible item. Otherwise a trailing item shorter than the sentinel is never read, because
+        // decoding stops as soon as fewer bytes than the sentinel remain.
+        const optional = { __kind: 'sentinel', sentinel: b('ffff'), strategy: 'optional' } as const;
+
+        // A trailing single-byte `2a` item is silently dropped because only one byte (< the 2-byte
+        // sentinel) remains at its boundary, so decoding stops there without consuming it.
+        expect(array(u8(), { size: optional }).read(b('01022a'), 0)).toStrictEqual([[1, 2], 2]);
+
+        // With a sentinel no wider than the item, the same tail decodes correctly.
+        const safe = { __kind: 'sentinel', sentinel: b('ff'), strategy: 'optional' } as const;
+        expect(array(u8(), { size: safe }).read(b('01022a'), 0)).toStrictEqual([[1, 2, 42], 3]);
+    });
+
     it('offsets the size of the array', () => {
         const codec = array(u8(), {
             size: offsetCodec(u8(), {
@@ -150,6 +243,17 @@ describe('getArrayCodec', () => {
         // Fixed and remainder sizes are not affected.
         expect(() => array(u8(), { size: 1 }).read(b(''), 0)).toThrow(SolanaError);
         expect(array(u8(), { size: 'remainder' }).read(b(''), 0)).toStrictEqual([[], 0]);
+
+        // A required sentinel still throws on an exhausted byte array; optional and omitted do not.
+        expect(() => array(u8(), { size: { __kind: 'sentinel', sentinel: b('00') } }).read(b(''), 0)).toThrow(
+            SolanaError,
+        );
+        expect(
+            array(u8(), { size: { __kind: 'sentinel', sentinel: b('00'), strategy: 'optional' } }).read(b(''), 0),
+        ).toStrictEqual([[], 0]);
+        expect(
+            array(u8(), { size: { __kind: 'sentinel', sentinel: b('00'), strategy: 'omitted' } }).read(b(''), 0),
+        ).toStrictEqual([[], 0]);
     });
 
     it('can require the size prefix to be present', () => {
@@ -190,6 +294,15 @@ describe('getArrayCodec', () => {
         expect(array(u8(), { size: u8() }).maxSize).toBeUndefined();
         expect(array(u8(), { size: 'remainder' }).getSizeFromValue([1, 2])).toBe(2);
         expect(array(u8(), { size: 'remainder' }).maxSize).toBeUndefined();
+        // A required or optional sentinel adds its length to the size; an omitted one does not.
+        expect(array(u8(), { size: { __kind: 'sentinel', sentinel: b('00') } }).getSizeFromValue([1, 2])).toBe(2 + 1);
+        expect(array(u8(), { size: { __kind: 'sentinel', sentinel: b('ffff') } }).getSizeFromValue([1, 2])).toBe(2 + 2);
+        expect(
+            array(u8(), { size: { __kind: 'sentinel', sentinel: b('00'), strategy: 'omitted' } }).getSizeFromValue([
+                1, 2,
+            ]),
+        ).toBe(2);
+        expect(array(u8(), { size: { __kind: 'sentinel', sentinel: b('00') } }).maxSize).toBeUndefined();
         expect(array(u8(), { size: 42 }).fixedSize).toBe(42);
         expect(array(u16(), { size: 42 }).fixedSize).toBe(2 * 42);
         const u32String = addCodecSizePrefix(getUtf8Codec(), getU32Codec());

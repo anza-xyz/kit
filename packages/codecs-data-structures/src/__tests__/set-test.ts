@@ -108,6 +108,18 @@ describe('getSetCodec', () => {
         expect(setU64.read(b('0200000000000000'), 0)).toStrictEqual([new Set([2n]), 8]);
     });
 
+    it('encodes sentinel-terminated sets', () => {
+        // Required (default): the sentinel is written on encode and demanded on decode.
+        const required = { size: { __kind: 'sentinel', sentinel: b('00') } } as const;
+        expect(set(u8(), required).encode(new Set([42, 1, 2]))).toStrictEqual(b('2a010200'));
+        expect(set(u8(), required).read(b('2a010200'), 0)).toStrictEqual([new Set([42, 1, 2]), 4]);
+
+        // Omitted: the sentinel is never written; the set ends at the end of the byte array.
+        const omitted = { size: { __kind: 'sentinel', sentinel: b('00'), strategy: 'omitted' } } as const;
+        expect(set(u8(), omitted).encode(new Set([42, 1, 2]))).toStrictEqual(b('2a0102'));
+        expect(set(u8(), omitted).read(b('2a0102'), 0)).toStrictEqual([new Set([42, 1, 2]), 3]);
+    });
+
     it('decodes an exhausted byte array as an empty set by default', () => {
         expect(set(u8()).read(b(''), 0)).toStrictEqual([new Set(), 0]);
         expect(set(u8()).read(b('ff'), 1)).toStrictEqual([new Set(), 1]);
