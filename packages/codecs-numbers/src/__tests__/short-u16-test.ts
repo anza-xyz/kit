@@ -91,6 +91,19 @@ describe('getShortU16Codec', () => {
         );
     });
 
+    it('rejects terminated three-byte encodings above the u16 domain', () => {
+        expect.hasAssertions();
+        // No continuation bit on the third byte, but 0x04 << 14 is 65536.
+        expect(() => shortU16().decode(new Uint8Array([0x80, 0x80, 0x04]))).toThrow(
+            new SolanaError(SOLANA_ERROR__CODECS__NUMBER_OUT_OF_RANGE, {
+                codecDescription: 'shortU16',
+                max: MAX,
+                min: MIN,
+                value: 65536,
+            }),
+        );
+    });
+
     it('has the right sizes', () => {
         expect(shortU16().maxSize).toBe(3);
         expect(shortU16().getSizeFromValue(1)).toBe(1);
