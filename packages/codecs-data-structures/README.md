@@ -33,11 +33,12 @@ getArrayCodec(getU8Codec()).encode([1, 2, 3]);
 //   └-- 4-byte prefix telling us to read 3 items.
 ```
 
-However, you may use the `size` option to configure this behaviour. It can be one of the following three strategies:
+However, you may use the `size` option to configure this behaviour. It can be one of the following four strategies:
 
 - `Codec<number>`: When a number codec is provided, that codec will be used to encode and decode the size prefix.
 - `number`: When a number is provided, the codec will expect a fixed number of items in the array. An error will be thrown when trying to encode an array of a different length.
-- `"remainder"`: When the string `"remainder"` is passed as a size, the codec will use the remainder of the bytes to encode/decode its items. This means the size is not stored or known in advance but simply inferred from the rest of the buffer. For instance, if we have an array of `u16` numbers and 10 bytes remaining, we know there are 5 items in this array.
+- `"remainder"`: When the string `"remainder"` is passed as a size, the codec will use the remainder of the bytes to encode/decode its items. This means the size is not stored or known in advance but simply inferred from the rest of the buffer. For instance, if we have an array of `u16` numbers and 10 bytes remaining, we know there are 5 items in this array.
+- A sentinel object: When an object of the form `{ __kind: 'sentinel', sentinel, strategy? }` is provided, the array ends as soon as the bytes at the next item position match the given `sentinel`. The sentinel is only compared at item boundaries and is never searched for within an item, so — unlike `addCodecSentinel` — its bytes may occur _inside_ an item without terminating the array. The optional `strategy` (`"required"` by default, or `"optional"` / `"omitted"`) controls whether the sentinel is written when encoding and required when decoding.
 
 ```ts
 getArrayCodec(getU8Codec(), { size: getU16Codec() }).encode([1, 2, 3]);
@@ -52,7 +53,23 @@ getArrayCodec(getU8Codec(), { size: 3 }).encode([1, 2, 3]);
 getArrayCodec(getU8Codec(), { size: 'remainder' }).encode([1, 2, 3]);
 // 0x010203
 //   └-- 3 items of 1 byte each. The size is inferred from the remainder of the bytes.
+
+getArrayCodec(getU8Codec(), { size: { __kind: 'sentinel', sentinel: new Uint8Array([0]) } }).encode([1, 2, 3]);
+// 0x01020300
+//   |      └-- The sentinel that marks the end of the array.
+//   └-- 3 items of 1 byte each.
 ```
+
+The sentinel strategy accepts three variants:
+
+- `"required"` (default): the sentinel is written after the last item and must be present when decoding. Reaching the end of the byte array without it throws.
+- `"optional"`: the sentinel is written after the last item, but decoding also stops at the end of the byte array. Use this to tolerate tightly sized or legacy data that lacks the sentinel.
+- `"omitted"`: the sentinel is never written; decoding stops at the end of the byte array (and consumes the sentinel if one happens to be present). Only meaningful when the collection is followed by unused space or the end of the byte array.
+
+Because the sentinel is only compared at the start of the next item slot, two invariants must hold for the array to round-trip correctly. The codec does **not** enforce them; it is your responsibility to guarantee them:
+
+1. **No item may _begin_ with the sentinel's bytes.** A valid item that starts with the sentinel is indistinguishable from the terminator, so decoding would stop early at that item. The sentinel may still appear _inside_ an item, just never at its start. For example, a single `0xff` byte is a poor sentinel for a list of public keys, since roughly one key in 256 starts with `0xff`; a sentinel as wide as an item (such as the all-zero public key) avoids this because only that exact key can match the terminator.
+2. **Under `"optional"` and `"omitted"`, the sentinel must be no wider than the smallest possible item.** Otherwise a trailing region shorter than the sentinel but large enough to hold a valid item would be skipped, since decoding stops as soon as fewer bytes than the sentinel remain. This cannot arise under `"required"` because a terminator is always written.
 
 When the size is stored as a prefix, decoding an exhausted byte array yields an empty array instead of failing. This allows arrays to be appended to existing data layouts without breaking the decoding of older data. Use the `requireSizePrefix` option to throw instead.
 
@@ -83,6 +100,7 @@ Just like the array codec, it uses a `u32` size prefix by default but can be con
 getSetCodec(getU8Codec(), { size: getU16Codec() }).encode(new Set([1, 2, 3]));
 getSetCodec(getU8Codec(), { size: 3 }).encode(new Set([1, 2, 3]));
 getSetCodec(getU8Codec(), { size: 'remainder' }).encode(new Set([1, 2, 3]));
+getSetCodec(getU8Codec(), { size: { __kind: 'sentinel', sentinel: new Uint8Array([0]) } }).encode(new Set([1, 2, 3]));
 ```
 
 Separate `getSetEncoder` and `getSetDecoder` functions are also available.
@@ -127,6 +145,7 @@ However, it can be configured using the `size` and `requireSizePrefix` options. 
 getMapCodec(keyCodec, valueCodec, { size: getU16Codec() }).encode(myMap);
 getMapCodec(keyCodec, valueCodec, { size: 3 }).encode(myMap);
 getMapCodec(keyCodec, valueCodec, { size: 'remainder' }).encode(myMap);
+getMapCodec(keyCodec, valueCodec, { size: { __kind: 'sentinel', sentinel: new Uint8Array([0]) } }).encode(myMap);
 ```
 
 Separate `getMapEncoder` and `getMapDecoder` functions are also available.

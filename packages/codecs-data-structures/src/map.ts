@@ -26,6 +26,7 @@ import { getTupleDecoder, getTupleEncoder } from './tuple';
  * - A fixed number of entries.
  * - `'remainder'`, which infers the number of entries based on the remaining bytes.
  *   This option is only available for fixed-size keys and values.
+ * - An {@link ArrayLikeCodecSentinelSize} object, which ends the map when the bytes at the next entry position match a constant sentinel.
  *
  * @typeParam TPrefix - A number codec, encoder, or decoder used for the size prefix.
  */
