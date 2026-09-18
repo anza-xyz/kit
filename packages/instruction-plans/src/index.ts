@@ -53,6 +53,7 @@
 export * from './append-instruction-plan';
 export * from './instruction-plan';
 export * from './instruction-plan-input';
+export * from './message-packer-errors';
 export * from './transaction-plan';
 export * from './transaction-plan-errors';
 export * from './transaction-plan-executor';
