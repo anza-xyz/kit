@@ -1,5 +1,20 @@
 # @solana/transaction-messages
 
+## 8.4.0
+
+### Patch Changes
+
+- Updated dependencies [[`0e76741`](https://github.com/anza-xyz/kit/commit/0e7674140a424560fef7422f085756a570ab93ac)]:
+  - @solana/codecs-data-structures@8.4.0
+  - @solana/errors@8.4.0
+  - @solana/addresses@8.4.0
+  - @solana/codecs-core@8.4.0
+  - @solana/codecs-numbers@8.4.0
+  - @solana/instructions@8.4.0
+  - @solana/rpc-types@8.4.0
+  - @solana/functional@8.4.0
+  - @solana/nominal-types@8.4.0
+
 ## 8.3.0
 
 ### Minor Changes

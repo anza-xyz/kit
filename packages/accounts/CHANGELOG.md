@@ -1,5 +1,17 @@
 # @solana/accounts
 
+## 8.4.0
+
+### Patch Changes
+
+- Updated dependencies [[`0e76741`](https://github.com/anza-xyz/kit/commit/0e7674140a424560fef7422f085756a570ab93ac)]:
+  - @solana/errors@8.4.0
+  - @solana/addresses@8.4.0
+  - @solana/codecs-core@8.4.0
+  - @solana/codecs-strings@8.4.0
+  - @solana/rpc-spec@8.4.0
+  - @solana/rpc-types@8.4.0
+
 ## 8.3.0
 
 ### Patch Changes
