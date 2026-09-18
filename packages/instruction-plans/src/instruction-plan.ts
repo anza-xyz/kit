@@ -1086,8 +1086,8 @@ const REALLOC_LIMIT = 10_240;
 /**
  * Creates a {@link MessagePackerInstructionPlan} that packs a list of realloc instructions.
  *
- * That is, it splits instruction by chunks of `REALLOC_LIMIT` (10'240) bytes until
- * the given total size is reached.
+ * That is, it splits the total size into chunks of at most `REALLOC_LIMIT` (10'240) bytes
+ * and creates one instruction per chunk until the given total size is reached.
  *
  * @example
  * ```ts
@@ -1106,11 +1106,10 @@ export function getReallocMessagePackerInstructionPlan({
     getInstruction: (size: number) => Instruction;
     totalSize: number;
 }): MessagePackerInstructionPlan {
-    const numberOfInstructions = Math.ceil(totalSize / REALLOC_LIMIT);
-    const lastInstructionSize = totalSize % REALLOC_LIMIT;
-    const instructions = new Array(numberOfInstructions)
-        .fill(0)
-        .map((_, i) => getInstruction(i === numberOfInstructions - 1 ? lastInstructionSize : REALLOC_LIMIT));
+    const instructions: Instruction[] = [];
+    for (let remaining = totalSize; remaining > 0; remaining -= REALLOC_LIMIT) {
+        instructions.push(getInstruction(Math.min(REALLOC_LIMIT, remaining)));
+    }
 
     return getMessagePackerInstructionPlanFromInstructions(instructions);
 }
