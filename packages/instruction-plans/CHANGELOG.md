@@ -1,5 +1,18 @@
 # @solana/instruction-plans
 
+## 8.4.0
+
+### Patch Changes
+
+- [#2071](https://github.com/anza-xyz/kit/pull/2071) [`75653e9`](https://github.com/anza-xyz/kit/commit/75653e9be514dbc454f35ff75529e10e57b3eaab) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Fix `getReallocMessagePackerInstructionPlan` producing a 0-byte instruction when `totalSize` is an exact multiple of the realloc limit (10,240 bytes), which left the account one chunk short of the requested size.
+- Updated dependencies [[`0e76741`](https://github.com/anza-xyz/kit/commit/0e7674140a424560fef7422f085756a570ab93ac)]:
+  - @solana/errors@8.4.0
+  - @solana/transaction-messages@8.4.0
+  - @solana/transactions@8.4.0
+  - @solana/instructions@8.4.0
+  - @solana/keys@8.4.0
+  - @solana/promises@8.4.0
+
 ## 8.3.0
 
 ### Patch Changes
