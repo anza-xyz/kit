@@ -11,7 +11,7 @@
 
 # @solana/plugin-interfaces
 
-This package defines common TypeScript interfaces for features that Kit plugins can provide or require. It can be used standalone, but it is also exported as part of Kit [`@solana/kit`](https://github.com/anza-xyz/kit/tree/main/packages/kit).
+This package defines common TypeScript interfaces for features that Kit plugins can provide or require, along with runtime guards for checking which of those features a client actually has installed. It can be used standalone, but it is also exported as part of Kit [`@solana/kit`](https://github.com/anza-xyz/kit/tree/main/packages/kit).
 
 ## Overview
 
@@ -291,3 +291,51 @@ function tokenTransferPlugin() {
         });
 }
 ```
+
+## Checking Capabilities at Runtime
+
+The interfaces above only exist at compile time. When a plugin receives a client whose type does not guarantee a capability — for instance, a plugin typed as `<T extends object>(client: T)` — it can check for that capability at runtime instead.
+
+Every interface comes with an `isClientWithX` function that returns a boolean and narrows the client's type, and an `assertIsClientWithX` function that throws a `SolanaError` with code `SOLANA_ERROR__PLUGIN_INTERFACES__MISSING_CLIENT_CAPABILITIES` when the capability is missing. Interfaces that group several functions, such as `ClientWithTransactionPlanning`, are checked as a whole.
+
+```ts
+import { extendClient } from '@solana/plugin-core';
+import { assertIsClientWithTransactionPlanning } from '@solana/plugin-interfaces';
+
+function planningLoggerPlugin() {
+    return <T extends object>(client: T) => {
+        assertIsClientWithTransactionPlanning(client);
+        return extendClient(client, {
+            logPlan: async (instructions: Instruction[]) => {
+                console.log(await client.planTransactions(instructions));
+            },
+        });
+    };
+}
+```
+
+These helpers only check that the client has the relevant properties. They never read them, so reactive getters are not triggered, and they cannot verify type parameters such as the RPC methods of a `ClientWithRpc`. Supply those yourself when narrowing:
+
+```ts
+import { isClientWithRpc } from '@solana/plugin-interfaces';
+import { GetBalanceApi } from '@solana/rpc-api';
+
+if (isClientWithRpc<GetBalanceApi>(client)) {
+    const { value: balance } = await client.rpc.getBalance(address).send();
+}
+```
+
+| Interface                       | Helpers                                                                     |
+| ------------------------------- | --------------------------------------------------------------------------- |
+| `ClientWithPayer`               | `isClientWithPayer` / `assertIsClientWithPayer`                             |
+| `ClientWithIdentity`            | `isClientWithIdentity` / `assertIsClientWithIdentity`                       |
+| `ClientWithSubscribeToPayer`    | `isClientWithSubscribeToPayer` / `assertIsClientWithSubscribeToPayer`       |
+| `ClientWithSubscribeToIdentity` | `isClientWithSubscribeToIdentity` / `assertIsClientWithSubscribeToIdentity` |
+| `ClientWithAirdrop`             | `isClientWithAirdrop` / `assertIsClientWithAirdrop`                         |
+| `ClientWithGetMinimumBalance`   | `isClientWithGetMinimumBalance` / `assertIsClientWithGetMinimumBalance`     |
+| `ClientWithFetchAccounts`       | `isClientWithFetchAccounts` / `assertIsClientWithFetchAccounts`             |
+| `ClientWithRpc`                 | `isClientWithRpc` / `assertIsClientWithRpc`                                 |
+| `ClientWithRpcSubscriptions`    | `isClientWithRpcSubscriptions` / `assertIsClientWithRpcSubscriptions`       |
+| `ClientWithTransactionPlanning` | `isClientWithTransactionPlanning` / `assertIsClientWithTransactionPlanning` |
+| `ClientWithTransactionSending`  | `isClientWithTransactionSending` / `assertIsClientWithTransactionSending`   |
+| `ClientWithTransactionSigning`  | `isClientWithTransactionSigning` / `assertIsClientWithTransactionSigning`   |
