@@ -10,6 +10,7 @@ import {
     VariableSizeEncoder,
 } from '@solana/codecs-core';
 import { SOLANA_ERROR__CODECS__NUMBER_OUT_OF_RANGE, SolanaError } from '@solana/errors';
+
 import { assertNumberIsBetweenForCodec } from './assertions';
 
 /**

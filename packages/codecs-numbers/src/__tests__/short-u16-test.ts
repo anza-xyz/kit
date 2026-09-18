@@ -117,14 +117,15 @@ describe('getShortU16Codec', () => {
         expect.hasAssertions();
         const codec = shortU16();
         const buf = new Uint8Array(3);
-        // 1-byte space: 0x00..0x7f decode as-is, 0x80..0xff are truncated.
-        for (let b = 0; b < 0x100; b += 1) {
+        // 1-byte space: 0x00..0x7f decode as-is.
+        for (let b = 0; b < 0x80; b += 1) {
             buf[0] = b;
-            if (b < 0x80) {
-                expect(codec.read(buf.subarray(0, 1), 0)).toEqual([b, 1]);
-            } else {
-                expect(() => codec.read(buf.subarray(0, 1), 0)).toThrow(SolanaError);
-            }
+            expect(codec.read(buf.subarray(0, 1), 0)).toEqual([b, 1]);
+        }
+        // 1-byte space: 0x80..0xff carry a continuation bit, so they are truncated.
+        for (let b = 0x80; b < 0x100; b += 1) {
+            buf[0] = b;
+            expect(() => codec.read(buf.subarray(0, 1), 0)).toThrow(SolanaError);
         }
         // 2-byte terminated space, fully enumerated.
         for (let a = 0x80; a < 0x100; a += 1) {
@@ -184,20 +185,27 @@ describe('getShortU16Codec', () => {
             z ^= z + Math.imul(z ^ (z >>> 7), z | 61);
             return (z ^ (z >>> 14)) & 0xff;
         };
+        const successes: Array<{ bytes: Uint8Array; nextOffset: number; value: number }> = [];
+        const failures: unknown[] = [];
         for (let i = 0; i < 5000; i += 1) {
             const len = nextByte() % 7;
             const bytes = new Uint8Array(len);
             for (let j = 0; j < len; j += 1) {
                 bytes[j] = nextByte();
             }
-            let value: number;
-            let nextOffset: number;
             try {
-                [value, nextOffset] = codec.read(bytes, 0);
+                const [value, nextOffset] = codec.read(bytes, 0);
+                successes.push({ bytes, nextOffset, value });
             } catch (e) {
-                expect(e).toBeInstanceOf(SolanaError);
-                continue;
+                failures.push(e);
             }
+        }
+        // Every failed read must fail with a SolanaError.
+        failures.forEach(failure => {
+            expect(failure).toBeInstanceOf(SolanaError);
+        });
+        // Every successful read must be in-range, in-bounds, and round-trip.
+        successes.forEach(({ bytes, nextOffset, value }) => {
             expect(value).toBeGreaterThanOrEqual(MIN);
             expect(value).toBeLessThanOrEqual(MAX);
             expect(nextOffset).toBeGreaterThanOrEqual(1);
@@ -205,6 +213,6 @@ describe('getShortU16Codec', () => {
             expect(nextOffset).toBeLessThanOrEqual(bytes.length);
             // Successful decodes round-trip through the encoder.
             expect(codec.decode(codec.encode(value))).toBe(value);
-        }
+        });
     });
 });
