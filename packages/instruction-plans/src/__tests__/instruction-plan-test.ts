@@ -432,6 +432,43 @@ describe('getReallocMessagePackerInstructionPlan', () => {
             new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_PACKER_ALREADY_COMPLETE),
         );
     });
+    it('creates a single full-sized instruction when the total size equals the `REALLOC_LIMIT`', () => {
+        const plan = getReallocMessagePackerInstructionPlan({
+            getInstruction: (size: number) => createInstruction(`Size: ${size}`),
+            totalSize: 10_240,
+        });
+
+        const messagePacker = plan.getMessagePacker();
+        expect(messagePacker.packMessageToCapacity(message).instructions).toStrictEqual([
+            createInstruction('Size: 10240'), // REALLOC_LIMIT
+        ]);
+        expect(messagePacker.done()).toBe(true);
+    });
+    it('creates only full-sized instructions when the total size is a multiple of the `REALLOC_LIMIT`', () => {
+        const plan = getReallocMessagePackerInstructionPlan({
+            getInstruction: (size: number) => createInstruction(`Size: ${size}`),
+            totalSize: 20_480,
+        });
+
+        const messagePacker = plan.getMessagePacker();
+        expect(messagePacker.packMessageToCapacity(message).instructions).toStrictEqual([
+            createInstruction('Size: 10240'), // REALLOC_LIMIT
+            createInstruction('Size: 10240'), // REALLOC_LIMIT
+        ]);
+        expect(messagePacker.done()).toBe(true);
+    });
+    it('creates no instructions when the total size is zero', () => {
+        const plan = getReallocMessagePackerInstructionPlan({
+            getInstruction: (size: number) => createInstruction(`Size: ${size}`),
+            totalSize: 0,
+        });
+
+        const messagePacker = plan.getMessagePacker();
+        expect(messagePacker.done()).toBe(true);
+        expect(() => messagePacker.packMessageToCapacity(message)).toThrow(
+            new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_PACKER_ALREADY_COMPLETE),
+        );
+    });
     it("throws if there isn't enough space on the provided message", () => {
         jest.mocked(getTransactionMessageSize).mockReturnValueOnce(legacyTransactionSizeLimit - 100);
         jest.mocked(getTransactionMessageSize).mockReturnValueOnce(legacyTransactionSizeLimit + 50);
