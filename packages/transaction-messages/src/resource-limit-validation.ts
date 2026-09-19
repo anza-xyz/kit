@@ -1,6 +1,7 @@
 import {
     SOLANA_ERROR__TRANSACTION__COMPUTE_UNIT_LIMIT_OUT_OF_RANGE,
     SOLANA_ERROR__TRANSACTION__INVALID_HEAP_SIZE,
+    SOLANA_ERROR__TRANSACTION__LOADED_ACCOUNTS_DATA_SIZE_LIMIT_OUT_OF_RANGE,
     SolanaError,
 } from '@solana/errors';
 
@@ -14,6 +15,12 @@ export const MAX_HEAP_SIZE = 256 * 1024;
 
 /** A requested heap frame size must be a whole number of KiB. */
 export const HEAP_SIZE_MULTIPLE_OF = 1024;
+
+/** The smallest loaded accounts data size limit that a transaction may request (1 byte). */
+export const MIN_LOADED_ACCOUNTS_DATA_SIZE_LIMIT = 1;
+
+/** The largest loaded accounts data size limit that a transaction may request (64 MiB). */
+export const MAX_LOADED_ACCOUNTS_DATA_SIZE_LIMIT = 64 * 1024 * 1024;
 
 /**
  * Throws if the given compute unit limit is one the runtime will not honor as written.
@@ -62,6 +69,43 @@ export function assertIsValidHeapSize(heapSize: number): void {
             maxHeapSize: MAX_HEAP_SIZE,
             minHeapSize: MIN_HEAP_SIZE,
             multipleOf: HEAP_SIZE_MULTIPLE_OF,
+        });
+    }
+}
+
+/**
+ * Throws if the given loaded accounts data size limit is one the runtime will not honor as written.
+ *
+ * The limit must be an integer between {@link MIN_LOADED_ACCOUNTS_DATA_SIZE_LIMIT} and
+ * {@link MAX_LOADED_ACCOUNTS_DATA_SIZE_LIMIT} inclusive, and the two ends of that range fail
+ * differently. Zero is not a limit the runtime can represent at all: it carries the limit as a
+ * `NonZeroU32`, and the compute budget instruction path rejects a zero request outright with
+ * `TransactionError::InvalidLoadedAccountsDataSizeLimit`. A limit above the maximum does not fail
+ * the transaction; it is clamped down to the maximum, so the transaction quietly runs against a
+ * budget other than the one that was requested. Failing here surfaces both at the point the value
+ * is set.
+ *
+ * The reject-then-clamp behaviour is this expression in the compute budget sanitizer:
+ * https://github.com/anza-xyz/agave/blob/1f6e0fbf3d8ae4a37364a1d9eb31c6b5bcac8869/compute-budget-instruction/src/compute_budget_instruction_details.rs#L136-L145
+ * and the `NonZeroU32` that makes zero unrepresentable is on the budget itself:
+ * https://github.com/anza-xyz/agave/blob/2a165e7a90af75c76426d1e031ed0284211d5d1e/program-runtime/src/execution_budget.rs#L312-L316
+ *
+ * @param loadedAccountsDataSizeLimit - The loaded accounts data size limit, in bytes, to check.
+ *
+ * @throws {SolanaError} Throws
+ * `SOLANA_ERROR__TRANSACTION__LOADED_ACCOUNTS_DATA_SIZE_LIMIT_OUT_OF_RANGE` if the limit is not an
+ * integer, is zero or negative, or is greater than {@link MAX_LOADED_ACCOUNTS_DATA_SIZE_LIMIT}.
+ */
+export function assertIsValidLoadedAccountsDataSizeLimit(loadedAccountsDataSizeLimit: number): void {
+    if (
+        !Number.isInteger(loadedAccountsDataSizeLimit) ||
+        loadedAccountsDataSizeLimit < MIN_LOADED_ACCOUNTS_DATA_SIZE_LIMIT ||
+        loadedAccountsDataSizeLimit > MAX_LOADED_ACCOUNTS_DATA_SIZE_LIMIT
+    ) {
+        throw new SolanaError(SOLANA_ERROR__TRANSACTION__LOADED_ACCOUNTS_DATA_SIZE_LIMIT_OUT_OF_RANGE, {
+            loadedAccountsDataSizeLimit,
+            maxLoadedAccountsDataSizeLimit: MAX_LOADED_ACCOUNTS_DATA_SIZE_LIMIT,
+            minLoadedAccountsDataSizeLimit: MIN_LOADED_ACCOUNTS_DATA_SIZE_LIMIT,
         });
     }
 }
