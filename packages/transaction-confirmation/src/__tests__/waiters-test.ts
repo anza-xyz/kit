@@ -15,6 +15,7 @@ import {
     waitForDurableNonceTransactionConfirmation,
     waitForRecentTransactionConfirmation,
     waitForRecentTransactionConfirmationUntilTimeout,
+    waitForSignatureConfirmationWithTimeout,
 } from '../waiters';
 
 const FOREVER_PROMISE = new Promise(() => {
@@ -432,6 +433,95 @@ describe('waitForRecentTransactionConfirmationUntilTimeout', () => {
             commitment: 'finalized',
             getRecentSignatureConfirmationPromise,
             getTimeoutPromise,
+            signature: MOCK_SIGNATURE,
+        }).catch(() => {});
+        abortController.abort();
+        expect(handleAbortOnSignatureConfirmationPromise).toHaveBeenCalled();
+    });
+});
+
+describe('waitForSignatureConfirmationWithTimeout', () => {
+    const MOCK_SIGNATURE = '4'.repeat(44) as Signature;
+    let getRecentSignatureConfirmationPromise: jest.Mock<Promise<void>>;
+    beforeEach(() => {
+        getRecentSignatureConfirmationPromise = jest.fn().mockReturnValue(FOREVER_PROMISE);
+    });
+    it('throws when the signal is already aborted', async () => {
+        expect.assertions(1);
+        const abortController = new AbortController();
+        abortController.abort();
+        const commitmentPromise = waitForSignatureConfirmationWithTimeout({
+            abortSignal: abortController.signal,
+            commitment: 'finalized',
+            getRecentSignatureConfirmationPromise,
+            signature: MOCK_SIGNATURE,
+        });
+        await expect(commitmentPromise).rejects.toThrow('aborted');
+    });
+    it('resolves when the signature confirmation promise resolves', async () => {
+        expect.assertions(1);
+        getRecentSignatureConfirmationPromise.mockResolvedValue(undefined);
+        const commitmentPromise = waitForSignatureConfirmationWithTimeout({
+            abortSignal: new AbortController().signal,
+            commitment: 'finalized',
+            getRecentSignatureConfirmationPromise,
+            signature: MOCK_SIGNATURE,
+        });
+        await expect(commitmentPromise).resolves.toBeUndefined();
+    });
+    it('rejects with a TimeoutError when the timeout wins', async () => {
+        expect.assertions(1);
+        jest.useFakeTimers();
+        const abortController = new AbortController();
+        const commitmentPromise = waitForSignatureConfirmationWithTimeout({
+            abortSignal: abortController.signal,
+            commitment: 'finalized',
+            getRecentSignatureConfirmationPromise,
+            signature: MOCK_SIGNATURE,
+        });
+        const caught = commitmentPromise.catch(e => e);
+        await jest.runAllTimersAsync();
+        const error = await caught;
+        jest.useRealTimers();
+        expect((error as DOMException).name).toBe('TimeoutError');
+    });
+    it('rejects with an AbortError when the caller aborts', async () => {
+        expect.assertions(1);
+        const abortController = new AbortController();
+        const commitmentPromise = waitForSignatureConfirmationWithTimeout({
+            abortSignal: abortController.signal,
+            commitment: 'finalized',
+            getRecentSignatureConfirmationPromise,
+            signature: MOCK_SIGNATURE,
+        }).catch(e => e);
+        abortController.abort();
+        const error = await commitmentPromise;
+        expect((error as DOMException).name).toBe('AbortError');
+    });
+    it('calls `getRecentSignatureConfirmationPromise` with the necessary input', () => {
+        waitForSignatureConfirmationWithTimeout({
+            abortSignal: new AbortController().signal,
+            commitment: 'finalized',
+            getRecentSignatureConfirmationPromise,
+            signature: MOCK_SIGNATURE,
+        }).catch(() => {});
+        expect(getRecentSignatureConfirmationPromise).toHaveBeenCalledWith({
+            abortSignal: expect.any(AbortSignal),
+            commitment: 'finalized',
+            signature: '4'.repeat(44),
+        });
+    });
+    it('calls the abort signal passed to `getRecentSignatureConfirmationPromise` when aborted', () => {
+        const handleAbortOnSignatureConfirmationPromise = jest.fn();
+        getRecentSignatureConfirmationPromise.mockImplementation(async ({ abortSignal }) => {
+            abortSignal.addEventListener('abort', handleAbortOnSignatureConfirmationPromise);
+            await FOREVER_PROMISE;
+        });
+        const abortController = new AbortController();
+        waitForSignatureConfirmationWithTimeout({
+            abortSignal: abortController.signal,
+            commitment: 'finalized',
+            getRecentSignatureConfirmationPromise,
             signature: MOCK_SIGNATURE,
         }).catch(() => {});
         abortController.abort();
