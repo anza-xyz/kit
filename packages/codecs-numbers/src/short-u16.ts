@@ -1,4 +1,5 @@
 import {
+    assertByteArrayHasEnoughBytesForCodec,
     combineCodec,
     createDecoder,
     createEncoder,
@@ -8,8 +9,11 @@ import {
     VariableSizeDecoder,
     VariableSizeEncoder,
 } from '@solana/codecs-core';
+import { SOLANA_ERROR__CODECS__INVALID_BYTE_LENGTH, SolanaError } from '@solana/errors';
 
 import { assertNumberIsBetweenForCodec } from './assertions';
+
+const MAX_SHORT_U16_VALUE = 65535;
 
 /**
  * Returns an encoder for `shortU16` values.
@@ -90,7 +94,8 @@ export const getShortU16Decoder = (): VariableSizeDecoder<number> =>
         read: (bytes: ReadonlyUint8Array | Uint8Array, offset): [number, Offset] => {
             let value = 0;
             let byteCount = 0;
-            while (++byteCount) {
+            while (++byteCount <= 3) {
+                assertByteArrayHasEnoughBytesForCodec('shortU16', byteCount, bytes, offset);
                 const byteIndex = byteCount - 1;
                 const currentByte = bytes[offset + byteIndex];
                 const nextSevenBits = 0b1111111 & currentByte;
@@ -98,10 +103,15 @@ export const getShortU16Decoder = (): VariableSizeDecoder<number> =>
                 value |= nextSevenBits << (byteIndex * 7);
                 if ((currentByte & 0b10000000) === 0) {
                     // This byte does not have its continuation bit set. We're done.
-                    break;
+                    assertNumberIsBetweenForCodec('shortU16', 0, MAX_SHORT_U16_VALUE, value);
+                    return [value, offset + byteCount];
                 }
             }
-            return [value, offset + byteCount];
+            throw new SolanaError(SOLANA_ERROR__CODECS__INVALID_BYTE_LENGTH, {
+                bytesLength: 4,
+                codecDescription: 'shortU16',
+                expected: 3,
+            });
         },
     });
 
@@ -114,14 +124,14 @@ export const getShortU16Decoder = (): VariableSizeDecoder<number> =>
  * - If the value is `<= 0x7f` (127), it is stored in a **single byte**
  *   and the first bit is set to `0` to indicate the end of the value.
  * - Otherwise, the first bit is set to `1` to indicate that the value continues in the next byte, which follows the same pattern.
- * - This process repeats until the value is fully encoded in up to 3 bytes. The third and last byte, if needed, uses all 8 bits to store the remaining value.
+ * - This process repeats until the value is fully encoded in up to 3 bytes. The third and last byte, if needed, stores the remaining value in its low 7 bits.
  *
  * In other words, the encoding scheme follows this structure:
  *
  * ```txt
  * 0XXXXXXX                   <- Values 0 to 127 (1 byte)
  * 1XXXXXXX 0XXXXXXX          <- Values 128 to 16,383 (2 bytes)
- * 1XXXXXXX 1XXXXXXX XXXXXXXX <- Values 16,384 to 4,194,303 (3 bytes)
+ * 1XXXXXXX 1XXXXXXX 0XXXXXXX <- Values 16,384 to 65,535 (3 bytes)
  * ```
  *
  * @returns A `VariableSizeCodec<number | bigint, number>` for encoding and decoding `shortU16` values.
