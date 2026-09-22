@@ -81,12 +81,20 @@ describe('getShortU16Codec', () => {
 
     it('rejects continuation chains that exceed the three-byte encoding', () => {
         expect.hasAssertions();
+        // A 4-byte chain needs a fourth byte, which violates the 3-byte encoding cap.
         expect(() => shortU16().decode(new Uint8Array([0xff, 0xff, 0xff, 0x00]))).toThrow(
-            new SolanaError(SOLANA_ERROR__CODECS__NUMBER_OUT_OF_RANGE, {
+            new SolanaError(SOLANA_ERROR__CODECS__INVALID_BYTE_LENGTH, {
+                bytesLength: 4,
                 codecDescription: 'shortU16',
-                max: MAX,
-                min: MIN,
-                value: 0x7f | (0x7f << 7) | (0x7f << 14),
+                expected: 3,
+            }),
+        );
+        // Same rejection when the buffer ends exactly at three continuation bytes.
+        expect(() => shortU16().decode(new Uint8Array([0xff, 0xff, 0xff]))).toThrow(
+            new SolanaError(SOLANA_ERROR__CODECS__INVALID_BYTE_LENGTH, {
+                bytesLength: 4,
+                codecDescription: 'shortU16',
+                expected: 3,
             }),
         );
     });

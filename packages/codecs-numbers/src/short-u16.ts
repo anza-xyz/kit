@@ -9,9 +9,11 @@ import {
     VariableSizeDecoder,
     VariableSizeEncoder,
 } from '@solana/codecs-core';
-import { SOLANA_ERROR__CODECS__NUMBER_OUT_OF_RANGE, SolanaError } from '@solana/errors';
+import { SOLANA_ERROR__CODECS__INVALID_BYTE_LENGTH, SolanaError } from '@solana/errors';
 
 import { assertNumberIsBetweenForCodec } from './assertions';
+
+const MAX_SHORT_U16_VALUE = 65535;
 
 /**
  * Returns an encoder for `shortU16` values.
@@ -101,21 +103,14 @@ export const getShortU16Decoder = (): VariableSizeDecoder<number> =>
                 value |= nextSevenBits << (byteIndex * 7);
                 if ((currentByte & 0b10000000) === 0) {
                     // This byte does not have its continuation bit set. We're done.
-                    // Every byte only contributes 7 bits, so a terminated
-                    // 3-byte encoding can still exceed the u16 domain
-                    // (e.g. [0x80, 0x80, 0x04] is 65536). Reject it here so
-                    // the decoder never returns a value the encoder refuses.
-                    assertNumberIsBetweenForCodec('shortU16', 0, 65535, value);
+                    assertNumberIsBetweenForCodec('shortU16', 0, MAX_SHORT_U16_VALUE, value);
                     return [value, offset + byteCount];
                 }
             }
-            // Every encoded shortU16 fits in at most three bytes. A continuation bit on
-            // what would be the fourth byte implies a value outside the u16 domain.
-            throw new SolanaError(SOLANA_ERROR__CODECS__NUMBER_OUT_OF_RANGE, {
+            throw new SolanaError(SOLANA_ERROR__CODECS__INVALID_BYTE_LENGTH, {
+                bytesLength: 4,
                 codecDescription: 'shortU16',
-                max: 65535,
-                min: 0,
-                value,
+                expected: 3,
             });
         },
     });
