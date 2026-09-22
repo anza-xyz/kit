@@ -5,6 +5,7 @@ import {
     SOLANA_ERROR__INSTRUCTION_PLANS__INVALID_MAX_INSTRUCTIONS_PER_TRANSACTION,
     SOLANA_ERROR__INSTRUCTION_PLANS__MAX_INSTRUCTIONS_PER_TRANSACTION_EXCEEDED,
     SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN,
+    SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_REJECTED_BY_PACKER,
     SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNT_ADDRESSES,
     SOLANA_ERROR__TRANSACTION__TOO_MANY_ACCOUNTS_IN_INSTRUCTION,
     SOLANA_ERROR__TRANSACTION__TOO_MANY_INSTRUCTIONS,
@@ -40,9 +41,11 @@ import {
 import {
     createMessage,
     createMessagePackerInstructionPlan,
+    createRejectingMessagePackerInstructionPlan,
     createSingleInstructionAtATimeMessagePackerInstructionPlan,
     FOREVER_PROMISE,
     instructionFactory,
+    rejectNonEmptyMessages,
     transactionPercentFactory,
 } from './__setup__';
 
@@ -1964,6 +1967,102 @@ describe('createTransactionPlanner', () => {
                     ]),
                 ),
             ).resolves.toEqual(singleTransactionPlan([instructionA, instructionB, instructionC]));
+        });
+
+        /**
+         *  [Seq] ───────────────────▶ [Seq]
+         *   │                           │
+         *   ├── [A: 25%]                ├── [Tx: A]
+         *   └── [B(x), C(x)]            ├── [Tx: B]
+         *       (rejects non-empty)     └── [Tx: C]
+         *
+         * This tests a message packer that refuses any message already holding instructions by
+         * throwing `MESSAGE_REJECTED_BY_PACKER`. The planner must treat the rejection like any
+         * other capacity error and open a new transaction message for each instruction.
+         */
+        it('opens a new transaction message when a message packer rejects the candidate message', async () => {
+            expect.assertions(1);
+            const createTransactionMessage = createMockTransactionMessage;
+            const { instruction, singleTransactionPlan, txPercent } = getHelpers(createTransactionMessage);
+            const planner = createTransactionPlanner({ createTransactionMessage });
+
+            const instructionA = instruction('A', txPercent(25));
+            const instructionB = instruction('B', txPercent(25));
+            const instructionC = instruction('C', txPercent(25));
+            const rejectingPacker = createRejectingMessagePackerInstructionPlan(
+                [instructionB, instructionC],
+                rejectNonEmptyMessages,
+            );
+
+            await expect(
+                planner(sequentialInstructionPlan([singleInstructionPlan(instructionA), rejectingPacker])),
+            ).resolves.toEqual(
+                sequentialTransactionPlan([
+                    singleTransactionPlan([instructionA]),
+                    singleTransactionPlan([instructionB]),
+                    singleTransactionPlan([instructionC]),
+                ]),
+            );
+        });
+
+        /**
+         *  [Seq] ───────────────────▶ [Seq]
+         *   │                           │
+         *   ├── [A: 25%]                ├── [Tx: A]
+         *   └── [NonDivSeq]             └── [Tx: B]
+         *        └── [B(x)]
+         *            (rejects non-empty)
+         *
+         * This tests the path where a non-divisible plan first attempts to fit entirely into the
+         * parent candidate. The message packer rejects that candidate, so the planner must swallow
+         * the rejection and fall back to planning the non-divisible plan in a new transaction message.
+         */
+        it('falls back to a new transaction message when a message packer rejects the parent candidate of a non-divisible plan', async () => {
+            expect.assertions(1);
+            const createTransactionMessage = createMockTransactionMessage;
+            const { instruction, singleTransactionPlan, txPercent } = getHelpers(createTransactionMessage);
+            const planner = createTransactionPlanner({ createTransactionMessage });
+
+            const instructionA = instruction('A', txPercent(25));
+            const instructionB = instruction('B', txPercent(25));
+            const rejectingPacker = createRejectingMessagePackerInstructionPlan([instructionB], rejectNonEmptyMessages);
+
+            await expect(
+                planner(
+                    sequentialInstructionPlan([
+                        singleInstructionPlan(instructionA),
+                        nonDivisibleSequentialInstructionPlan([rejectingPacker]),
+                    ]),
+                ),
+            ).resolves.toEqual(
+                sequentialTransactionPlan([
+                    singleTransactionPlan([instructionA]),
+                    singleTransactionPlan([instructionB]),
+                ]),
+            );
+        });
+
+        /**
+         * A message packer that rejects even a fresh transaction message can never make progress,
+         * so the rejection must propagate to the caller rather than loop forever.
+         */
+        it('propagates the rejection when a message packer rejects a fresh transaction message', async () => {
+            expect.assertions(1);
+            const createTransactionMessage = createMockTransactionMessage;
+            const { instruction, txPercent } = getHelpers(createTransactionMessage);
+            const planner = createTransactionPlanner({ createTransactionMessage });
+
+            const instructionA = instruction('A', txPercent(25));
+            const alwaysRejectingPacker = createRejectingMessagePackerInstructionPlan(
+                [instructionA],
+                () => 'this packer rejects every message',
+            );
+
+            await expect(planner(alwaysRejectingPacker)).rejects.toThrow(
+                new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_REJECTED_BY_PACKER, {
+                    reason: 'this packer rejects every message',
+                }),
+            );
         });
     });
 

@@ -1,6 +1,11 @@
 import { Address, getAddressDecoder } from '@solana/addresses';
 import { fixEncoderSize, getBase58Encoder, getUtf8Encoder } from '@solana/codecs';
-import { SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN, SolanaError } from '@solana/errors';
+import {
+    SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN,
+    SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_PACKER_ALREADY_COMPLETE,
+    SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_REJECTED_BY_PACKER,
+    SolanaError,
+} from '@solana/errors';
 import { pipe } from '@solana/functional';
 import type { Instruction } from '@solana/instructions';
 import { SignatureBytes } from '@solana/keys';
@@ -44,6 +49,45 @@ export function createSingleInstructionAtATimeMessagePackerInstructionPlan(
         kind: 'messagePacker',
         planType: 'instructionPlan',
     });
+}
+
+/**
+ * Creates a message packer that packs one instruction at a time but first consults `getRejectionReason`
+ * with the candidate message. When it returns a reason, the packer refuses the message by throwing
+ * `SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_REJECTED_BY_PACKER` with that reason. This is useful for
+ * testing how the transaction planner reacts to custom packer rejections.
+ */
+export function createRejectingMessagePackerInstructionPlan(
+    instructions: Instruction[],
+    getRejectionReason: (message: TransactionMessage & TransactionMessageWithFeePayer) => string | null,
+): MessagePackerInstructionPlan {
+    return Object.freeze({
+        getMessagePacker: () => {
+            let index = 0;
+            return {
+                done: () => index >= instructions.length,
+                packMessageToCapacity: message => {
+                    if (index >= instructions.length) {
+                        throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_PACKER_ALREADY_COMPLETE);
+                    }
+                    const reason = getRejectionReason(message);
+                    if (reason !== null) {
+                        throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_REJECTED_BY_PACKER, { reason });
+                    }
+                    const instruction = instructions[index];
+                    index++;
+                    return appendTransactionMessageInstruction(instruction, message);
+                },
+            };
+        },
+        kind: 'messagePacker',
+        planType: 'instructionPlan',
+    });
+}
+
+/** A rejection strategy for {@link createRejectingMessagePackerInstructionPlan} that refuses any non-empty message. */
+export function rejectNonEmptyMessages(message: TransactionMessage): string | null {
+    return message.instructions.length > 0 ? 'the message already holds instructions' : null;
 }
 
 export const FOREVER_PROMISE = new Promise(() => {

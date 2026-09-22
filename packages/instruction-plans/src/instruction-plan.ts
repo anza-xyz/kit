@@ -14,9 +14,9 @@ import { getTransactionMessageSize, getTransactionMessageSizeLimit } from '@sola
 
 import {
     assertMaxInstructionsPerTransaction,
-    assertValidMaxInstructionsPerTransaction,
-    resolveMaxInstructions,
-} from './max-instructions';
+    assertMessageCanAccommodateSize,
+    resolveMaxInstructionsPerTransaction,
+} from './message-packer-errors';
 
 /**
  * A set of instructions with constraints on how they can be executed.
@@ -202,6 +202,7 @@ export type SingleInstructionPlan<TInstruction extends Instruction = Instruction
  *   try {
  *     transactionMessage = messagePacker.packMessageToCapacity(transactionMessage);
  *   } catch (error) {
+ *     if (!isMessagePackerErrorThatRequiresNewCandidate(error)) throw error;
  *     // The current transaction message cannot be used to pack this plan.
  *     // We should create a new one and try again.
  *   }
@@ -230,6 +231,13 @@ export type MessagePackerInstructionPlan = Readonly<{
  * The `done()` method checks whether there are more instructions to pack into
  * transaction messages.
  *
+ * Custom message packers can rely on {@link resolveMaxInstructionsPerTransaction},
+ * {@link assertMaxInstructionsPerTransaction} and {@link assertMessageCanAccommodateSize}
+ * to enforce the instruction-count and size limits, and may throw
+ * {@link SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_REJECTED_BY_PACKER} to refuse a message
+ * for any other reason. Consumers can use {@link isMessagePackerErrorThatRequiresNewCandidate}
+ * to identify errors that call for a new transaction message.
+ *
  * @example
  * ```ts
  * let plan: MessagePackerInstructionPlan;
@@ -239,6 +247,7 @@ export type MessagePackerInstructionPlan = Readonly<{
  *   try {
  *     transactionMessage = messagePacker.packMessageToCapacity(transactionMessage);
  *   } catch (error) {
+ *     if (!isMessagePackerErrorThatRequiresNewCandidate(error)) throw error;
  *     // The current transaction message cannot be used to pack this plan.
  *     // We should create a new one and try again.
  *   }
@@ -263,6 +272,10 @@ export type MessagePacker = Readonly<{
      * @throws {@link SOLANA_ERROR__INSTRUCTION_PLANS__INVALID_MAX_INSTRUCTIONS_PER_TRANSACTION}
      *   if `maxInstructions` exceeds the number of top-level instructions the transaction format
      *   can encode.
+     * @throws {@link SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_REJECTED_BY_PACKER}
+     *   if the message packer refuses the provided transaction message for a reason other than
+     *   its size or instruction count — e.g. a constraint specific to the instructions being
+     *   packed. The error's `reason` explains why.
      */
     packMessageToCapacity: (
         transactionMessage: TransactionMessage & TransactionMessageWithFeePayer,
@@ -956,8 +969,7 @@ export function getLinearMessagePackerInstructionPlan({
                     if (offset >= totalBytes) {
                         throw new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_PACKER_ALREADY_COMPLETE);
                     }
-                    assertValidMaxInstructionsPerTransaction(config?.maxInstructions);
-                    const maxInstructions = resolveMaxInstructions(config?.maxInstructions);
+                    const maxInstructions = resolveMaxInstructionsPerTransaction(config?.maxInstructions);
                     assertMaxInstructionsPerTransaction(message.instructions.length + 1, maxInstructions);
 
                     const messageSizeWithBaseInstruction = getTransactionMessageSize(
@@ -1034,8 +1046,7 @@ export function getMessagePackerInstructionPlanFromInstructions<TInstruction ext
                     }
 
                     const originalMessageSize = getTransactionMessageSize(message);
-                    assertValidMaxInstructionsPerTransaction(config?.maxInstructions);
-                    const maxInstructions = resolveMaxInstructions(config?.maxInstructions);
+                    const maxInstructions = resolveMaxInstructionsPerTransaction(config?.maxInstructions);
 
                     // We must be able to fit at least the next instruction; throw otherwise. Once at
                     // least one has been packed, hitting the limit simply stops packing into this message.
@@ -1051,20 +1062,14 @@ export function getMessagePackerInstructionPlanFromInstructions<TInstruction ext
                         }
 
                         const nextMessage = appendTransactionMessageInstruction(instructions[index], message);
-                        const messageSize = getTransactionMessageSize(nextMessage);
+                        const nextSize = getTransactionMessageSize(nextMessage);
+                        const sizeLimit = getTransactionMessageSizeLimit(nextMessage);
 
-                        if (messageSize > getTransactionMessageSizeLimit(nextMessage)) {
-                            if (index === instructionIndex) {
-                                // The count was already asserted above, so reaching here on the first
-                                // instruction can only be due to the transaction size limit.
-                                throw new SolanaError(
-                                    SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_CANNOT_ACCOMMODATE_PLAN,
-                                    {
-                                        numBytesRequired: messageSize - originalMessageSize,
-                                        numFreeBytes: getTransactionMessageSizeLimit(nextMessage) - originalMessageSize,
-                                    },
-                                );
-                            }
+                        if (index === instructionIndex) {
+                            // The count was already asserted above, so the first instruction can
+                            // only fail to fit because of the transaction size limit.
+                            assertMessageCanAccommodateSize({ currentSize: originalMessageSize, nextSize, sizeLimit });
+                        } else if (nextSize > sizeLimit) {
                             instructionIndex = index;
                             return message;
                         }
