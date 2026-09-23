@@ -198,8 +198,8 @@ importers:
         specifier: ^1.1.2
         version: 1.1.2
       '@solana/wallet-standard-features':
-        specifier: ^1.4.0
-        version: 1.4.0
+        specifier: ^1.5.0
+        version: 1.5.0
       '@swc/jest':
         specifier: ^0.2.39
         version: 0.2.39(@swc/core@1.16.2(@swc/helpers@0.5.17))
@@ -990,8 +990,8 @@ importers:
         specifier: workspace:*
         version: link:../transactions
       '@solana/wallet-standard-features':
-        specifier: ^1.4.0
-        version: 1.4.0
+        specifier: ^1.5.0
+        version: 1.5.0
       '@wallet-standard/base':
         specifier: ^1.1.1
         version: 1.1.1
@@ -1720,8 +1720,8 @@ importers:
         specifier: ^1.1.2
         version: 1.1.2
       '@solana/wallet-standard-features':
-        specifier: ^1.4.0
-        version: 1.4.0
+        specifier: ^1.5.0
+        version: 1.5.0
       '@wallet-standard/base':
         specifier: ^1.1.1
         version: 1.1.1
@@ -5163,10 +5163,6 @@ packages:
 
   '@solana/wallet-standard-chains@1.1.2':
     resolution: {integrity: sha512-EZobEGclDBAFplpJC5F3d/s8Xnlqc5isNKuPrd5o9ZPZ7tWN84O0e68yIZ8MAOj9V7ieRadNiHtql7uIXCTyXg==}
-    engines: {node: '>=22'}
-
-  '@solana/wallet-standard-features@1.4.0':
-    resolution: {integrity: sha512-f0tAdqwM2aL6CiFbIgt9h5zKFp+mgY/iNGwoxPMTj9VSTeQj7d1GGSmWhZw0XWoZ4N/1tnKTKmYFq+Dyq08jRw==}
     engines: {node: '>=22'}
 
   '@solana/wallet-standard-features@1.5.0':
@@ -13661,11 +13657,6 @@ snapshots:
   '@solana/wallet-standard-chains@1.1.2':
     dependencies:
       '@wallet-standard/base': 1.1.1
-
-  '@solana/wallet-standard-features@1.4.0':
-    dependencies:
-      '@wallet-standard/base': 1.1.1
-      '@wallet-standard/features': 1.1.1
 
   '@solana/wallet-standard-features@1.5.0':
     dependencies:
