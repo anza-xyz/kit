@@ -65,6 +65,24 @@ describe('createHttpTransportForSolanaRpc', () => {
                 unsafeNumber: MAX_SAFE_INTEGER_PLUS_ONE,
             });
         });
+        it('gets all integers as bigints when optional request parameters are omitted', async () => {
+            expect.assertions(1);
+            fetchSpy.mockResolvedValue({
+                ok: true,
+                text: () => `{"jsonrpc":"2.0","id":"1",` + `"result":${MAX_SAFE_INTEGER_PLUS_ONE}}`,
+            });
+            const requestPromise = makeHttpRequest({
+                payload: {
+                    jsonrpc: '2.0',
+                    method: 'getBlockHeight',
+                },
+            });
+            await expect(requestPromise).resolves.toStrictEqual({
+                id: '1',
+                jsonrpc: '2.0',
+                result: MAX_SAFE_INTEGER_PLUS_ONE,
+            });
+        });
     });
     describe('when the request is not from the Solana RPC API', () => {
         it('fails to stringify bigints in requests', async () => {

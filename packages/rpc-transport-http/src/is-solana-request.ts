@@ -1,5 +1,3 @@
-import { isJsonRpcPayload } from '@solana/rpc-spec';
-
 const SOLANA_RPC_METHODS = [
     'getAccountInfo',
     'getAgGenesisCert',
@@ -64,7 +62,16 @@ const SOLANA_RPC_METHODS = [
 export function isSolanaRequest(payload: unknown): payload is Readonly<{
     jsonrpc: '2.0';
     method: (typeof SOLANA_RPC_METHODS)[number];
-    params: unknown;
+    params?: unknown;
 }> {
-    return isJsonRpcPayload(payload) && (SOLANA_RPC_METHODS as readonly string[]).includes(payload.method);
+    if (payload == null || typeof payload !== 'object' || Array.isArray(payload)) {
+        return false;
+    }
+    return (
+        'jsonrpc' in payload &&
+        payload.jsonrpc === '2.0' &&
+        'method' in payload &&
+        typeof payload.method === 'string' &&
+        (SOLANA_RPC_METHODS as readonly string[]).includes(payload.method)
+    );
 }
