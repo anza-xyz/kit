@@ -12,8 +12,8 @@
         "test:typecheck": "tsc"
     },
     "dependencies": {
-        "@solana-program/system": "^0.14.1",
-        "@solana-program/token": "^0.16.1",
+        "@solana-program/system": "^0.15.0",
+        "@solana-program/token": "^0.17.0",
         "@solana/example-utils": "workspace:*",
         "@solana/kit": "workspace:*"
     },
