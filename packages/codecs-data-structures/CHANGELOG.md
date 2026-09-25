@@ -1,5 +1,20 @@
 # @solana/codecs-data-structures
 
+## 8.4.0
+
+### Minor Changes
+
+- [#2061](https://github.com/anza-xyz/kit/pull/2061) [`0e76741`](https://github.com/anza-xyz/kit/commit/0e7674140a424560fef7422f085756a570ab93ac) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add a sentinel size strategy to the `array`, `set`, and `map` codecs. Passing a `{ __kind: 'sentinel', sentinel, strategy? }` object as the `size` option ends the collection when the bytes at the next item position match the given `sentinel`, compared at item boundaries only. The optional `strategy` (`'required'` by default, or `'optional'` / `'omitted'`) controls whether the sentinel is written when encoding and required when decoding. This provides codec support for Codama's `sentinelCountNode`.
+  
+  Two new errors accompany this: `SOLANA_ERROR__CODECS__SENTINEL_MISSING_AT_END_OF_BYTES` (thrown under the `'required'` strategy when the byte array ends without the sentinel) and `SOLANA_ERROR__CODECS__SENTINEL_MUST_NOT_BE_EMPTY` (thrown when constructing a codec with an empty sentinel).
+
+### Patch Changes
+
+- Updated dependencies [[`0e76741`](https://github.com/anza-xyz/kit/commit/0e7674140a424560fef7422f085756a570ab93ac), [`5be269c`](https://github.com/anza-xyz/kit/commit/5be269c6ca9de0ab065665d1696bbb097b76c104), [`56b4960`](https://github.com/anza-xyz/kit/commit/56b496095ad6e7405332175eb235f428750c7c62)]:
+  - @solana/errors@8.4.0
+  - @solana/codecs-numbers@8.4.0
+  - @solana/codecs-core@8.4.0
+
 ## 8.3.0
 
 ### Minor Changes
