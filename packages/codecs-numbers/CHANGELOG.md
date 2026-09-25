@@ -1,5 +1,14 @@
 # @solana/codecs-numbers
 
+## 8.4.0
+
+### Patch Changes
+
+- [#2067](https://github.com/anza-xyz/kit/pull/2067) [`56b4960`](https://github.com/anza-xyz/kit/commit/56b496095ad6e7405332175eb235f428750c7c62) Thanks [@latent-9](https://github.com/latent-9)! - Fixed `getShortU16Decoder()` silently accepting malformed input: a truncated buffer decoded to garbage with an offset past the end of the byte array, and continuation chains longer than the documented three-byte encoding decoded to values outside the u16 domain. Malformed input now throws `SOLANA_ERROR__CODECS__INVALID_BYTE_LENGTH`, and decoded values above 65,535 now throw `SOLANA_ERROR__CODECS__NUMBER_OUT_OF_RANGE`, matching the guards every other number decoder already uses.
+- Updated dependencies [[`0e76741`](https://github.com/anza-xyz/kit/commit/0e7674140a424560fef7422f085756a570ab93ac), [`5be269c`](https://github.com/anza-xyz/kit/commit/5be269c6ca9de0ab065665d1696bbb097b76c104)]:
+  - @solana/errors@8.4.0
+  - @solana/codecs-core@8.4.0
+
 ## 8.3.0
 
 ### Minor Changes

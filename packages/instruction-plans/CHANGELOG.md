@@ -1,5 +1,22 @@
 # @solana/instruction-plans
 
+## 8.4.0
+
+### Minor Changes
+
+- [#2073](https://github.com/anza-xyz/kit/pull/2073) [`5be269c`](https://github.com/anza-xyz/kit/commit/5be269c6ca9de0ab065665d1696bbb097b76c104) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add helpers for writing custom message packers. `resolveMaxInstructionsPerTransaction`, `assertMaxInstructionsPerTransaction` and `assertMessageCanAccommodateSize` enforce the instruction-count and size limits the built-in packers rely on, and a new `SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_REJECTED_BY_PACKER` error lets a packer refuse a transaction message for any other reason by providing a `reason`. The transaction planner treats this error like the existing capacity errors and opens a new transaction message. Use `isMessagePackerErrorThatRequiresNewCandidate` to identify every error that calls for a new transaction message.
+
+### Patch Changes
+
+- [#2071](https://github.com/anza-xyz/kit/pull/2071) [`75653e9`](https://github.com/anza-xyz/kit/commit/75653e9be514dbc454f35ff75529e10e57b3eaab) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Fix `getReallocMessagePackerInstructionPlan` producing a 0-byte instruction when `totalSize` is an exact multiple of the realloc limit (10,240 bytes), which left the account one chunk short of the requested size.
+- Updated dependencies [[`0e76741`](https://github.com/anza-xyz/kit/commit/0e7674140a424560fef7422f085756a570ab93ac), [`5be269c`](https://github.com/anza-xyz/kit/commit/5be269c6ca9de0ab065665d1696bbb097b76c104)]:
+  - @solana/errors@8.4.0
+  - @solana/transaction-messages@8.4.0
+  - @solana/transactions@8.4.0
+  - @solana/instructions@8.4.0
+  - @solana/keys@8.4.0
+  - @solana/promises@8.4.0
+
 ## 8.3.0
 
 ### Patch Changes
