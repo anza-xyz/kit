@@ -11,6 +11,11 @@ type GetLeaderScheduleApiConfigBase = Readonly<{
      * default commitment applied by the server is `"finalized"`.
      */
     commitment?: Commitment;
+    /**
+     * When `true`, key the returned leader schedule by vote account address instead of validator
+     * identity address.
+     */
+    keyByVoteAccount?: boolean;
 }>;
 
 // A dictionary of validator identities as base-58 encoded strings, and their corresponding leader
