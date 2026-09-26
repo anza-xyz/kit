@@ -80,6 +80,25 @@ const signedTransaction = await signTransaction([myPrivateKey], tx);
 
 This function is the same as `signTransaction()` but does not require the transaction to be signed by all signers. A partially signed transaction cannot be landed on the network, but can be serialized and deserialized.
 
+## Restoring a lifetime after a modifying signer
+
+A `TransactionModifyingSigner` can change a transaction before signing it. The signed bytes that come back do not include `lifetimeConstraint`, so callers need to restore or recompute it.
+
+### Functions
+
+#### `reconstructEncodedTransactionFromOriginalTransaction()`
+
+Decodes the signed bytes, asserts the transaction is within the size limit, and attaches a lifetime constraint. If the original transaction already has a lifetime and the compiled lifetime token did not change, that lifetime is reused. Otherwise a new constraint is derived from the compiled message.
+
+```ts
+import { reconstructEncodedTransactionFromOriginalTransaction } from '@solana/transactions';
+
+const transactionWithLifetime = await reconstructEncodedTransactionFromOriginalTransaction(
+    originalTransaction,
+    signedTransactionBytes,
+);
+```
+
 ## Serializing transactions
 
 Before sending a transaction to be landed on the network, you must serialize it in a particular way. You can use these types and functions to serialize a signed transaction into a binary format suitable for transit over the wire.
