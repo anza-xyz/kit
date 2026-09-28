@@ -1,5 +1,15 @@
 # @solana/errors
 
+## 8.4.0
+
+### Minor Changes
+
+- [#2061](https://github.com/anza-xyz/kit/pull/2061) [`0e76741`](https://github.com/anza-xyz/kit/commit/0e7674140a424560fef7422f085756a570ab93ac) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add a sentinel size strategy to the `array`, `set`, and `map` codecs. Passing a `{ __kind: 'sentinel', sentinel, strategy? }` object as the `size` option ends the collection when the bytes at the next item position match the given `sentinel`, compared at item boundaries only. The optional `strategy` (`'required'` by default, or `'optional'` / `'omitted'`) controls whether the sentinel is written when encoding and required when decoding. This provides codec support for Codama's `sentinelCountNode`.
+  
+  Two new errors accompany this: `SOLANA_ERROR__CODECS__SENTINEL_MISSING_AT_END_OF_BYTES` (thrown under the `'required'` strategy when the byte array ends without the sentinel) and `SOLANA_ERROR__CODECS__SENTINEL_MUST_NOT_BE_EMPTY` (thrown when constructing a codec with an empty sentinel).
+
+- [#2073](https://github.com/anza-xyz/kit/pull/2073) [`5be269c`](https://github.com/anza-xyz/kit/commit/5be269c6ca9de0ab065665d1696bbb097b76c104) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add helpers for writing custom message packers. `resolveMaxInstructionsPerTransaction`, `assertMaxInstructionsPerTransaction` and `assertMessageCanAccommodateSize` enforce the instruction-count and size limits the built-in packers rely on, and a new `SOLANA_ERROR__INSTRUCTION_PLANS__MESSAGE_REJECTED_BY_PACKER` error lets a packer refuse a transaction message for any other reason by providing a `reason`. The transaction planner treats this error like the existing capacity errors and opens a new transaction message. Use `isMessagePackerErrorThatRequiresNewCandidate` to identify every error that calls for a new transaction message.
+
 ## 8.3.0
 
 ### Minor Changes

@@ -1,5 +1,18 @@
 # @solana/wallet-account-signer
 
+## 8.4.0
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @solana/transaction-messages@8.4.0
+  - @solana/transactions@8.4.0
+  - @solana/addresses@8.4.0
+  - @solana/codecs-core@8.4.0
+  - @solana/keys@8.4.0
+  - @solana/signers@8.4.0
+  - @solana/promises@8.4.0
+
 ## 8.3.0
 
 ### Patch Changes

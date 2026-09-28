@@ -1,5 +1,12 @@
 # @solana/assertions
 
+## 8.4.0
+
+### Patch Changes
+
+- Updated dependencies [[`0e76741`](https://github.com/anza-xyz/kit/commit/0e7674140a424560fef7422f085756a570ab93ac), [`5be269c`](https://github.com/anza-xyz/kit/commit/5be269c6ca9de0ab065665d1696bbb097b76c104)]:
+  - @solana/errors@8.4.0
+
 ## 8.3.0
 
 ### Patch Changes
