@@ -39,6 +39,7 @@ import {
     SOLANA_ERROR__CODECS__INVALID_STRING_FOR_BASE,
     SOLANA_ERROR__CODECS__INVALID_UTF8_BYTES,
     SOLANA_ERROR__CODECS__INVALID_UTF8_STRING,
+    SOLANA_ERROR__CODECS__ITEM_CONSUMED_NO_BYTES,
     SOLANA_ERROR__CODECS__LITERAL_UNION_DISCRIMINATOR_OUT_OF_RANGE,
     SOLANA_ERROR__CODECS__NUMBER_OUT_OF_RANGE,
     SOLANA_ERROR__CODECS__OFFSET_OUT_OF_RANGE,
@@ -457,6 +458,10 @@ export type SolanaErrorContext = ReadonlyContextValue<
             [SOLANA_ERROR__CODECS__INVALID_UTF8_STRING]: {
                 index: number;
                 value: string;
+            };
+            [SOLANA_ERROR__CODECS__ITEM_CONSUMED_NO_BYTES]: {
+                codecDescription: string;
+                offset: number;
             };
             [SOLANA_ERROR__CODECS__LITERAL_UNION_DISCRIMINATOR_OUT_OF_RANGE]: {
                 discriminator: bigint | number;

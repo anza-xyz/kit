@@ -5,12 +5,14 @@ import {
     SOLANA_ERROR__CODECS__CANNOT_DECODE_EMPTY_BYTE_ARRAY,
     SOLANA_ERROR__CODECS__INVALID_BYTE_LENGTH,
     SOLANA_ERROR__CODECS__INVALID_NUMBER_OF_ITEMS,
+    SOLANA_ERROR__CODECS__ITEM_CONSUMED_NO_BYTES,
     SOLANA_ERROR__CODECS__SENTINEL_MISSING_AT_END_OF_BYTES,
     SOLANA_ERROR__CODECS__SENTINEL_MUST_NOT_BE_EMPTY,
     SolanaError,
 } from '@solana/errors';
 
 import { getArrayCodec, getArrayDecoder, getArrayEncoder } from '../array';
+import { getStructCodec } from '../struct';
 import { b } from './__setup__';
 
 describe('getArrayCodec', () => {
@@ -232,6 +234,31 @@ describe('getArrayCodec', () => {
         // With a sentinel no wider than the item, the same tail decodes correctly.
         const safe = { __kind: 'sentinel', sentinel: b('ff'), strategy: 'optional' } as const;
         expect(array(u8(), { size: safe }).read(b('01022a'), 0)).toStrictEqual([[1, 2, 42], 3]);
+    });
+
+    it('throws when a sentinel item codec consumes no bytes', () => {
+        // A zero-byte item codec can never advance past a sentinel boundary, so decoding would
+        // otherwise loop forever growing the array.
+        const sentinel = { __kind: 'sentinel', sentinel: b('00') } as const;
+        const decoder = getArrayDecoder(getStructCodec([]), { size: sentinel });
+        expect(() => decoder.read(b('ff00'), 0)).toThrow(
+            new SolanaError(SOLANA_ERROR__CODECS__ITEM_CONSUMED_NO_BYTES, {
+                codecDescription: 'array',
+                offset: 0,
+            }),
+        );
+    });
+
+    it('throws when a remainder item codec consumes no bytes', () => {
+        // The remainder loop only stops when the end of the byte array is reached, which never
+        // happens when the item codec consumes 0 bytes.
+        const decoder = getArrayDecoder(getStructCodec([]), { size: 'remainder' });
+        expect(() => decoder.read(b('ff'), 0)).toThrow(
+            new SolanaError(SOLANA_ERROR__CODECS__ITEM_CONSUMED_NO_BYTES, {
+                codecDescription: 'array',
+                offset: 0,
+            }),
+        );
     });
 
     it('offsets the size of the array', () => {

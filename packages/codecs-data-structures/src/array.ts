@@ -17,6 +17,7 @@ import {
 } from '@solana/codecs-core';
 import { getU32Decoder, getU32Encoder, NumberCodec, NumberDecoder, NumberEncoder } from '@solana/codecs-numbers';
 import {
+    SOLANA_ERROR__CODECS__ITEM_CONSUMED_NO_BYTES,
     SOLANA_ERROR__CODECS__SENTINEL_MISSING_AT_END_OF_BYTES,
     SOLANA_ERROR__CODECS__SENTINEL_MUST_NOT_BE_EMPTY,
     SolanaError,
@@ -288,6 +289,14 @@ export function getArrayDecoder<TTo>(item: Decoder<TTo>, config: ArrayCodecConfi
             if (size === 'remainder') {
                 while (offset < bytes.length) {
                     const [value, newOffset] = item.read(bytes, offset);
+                    if (newOffset === offset) {
+                        // The item codec consumed no bytes, so the loop can never reach the end
+                        // of the byte array and would spin forever growing the array.
+                        throw new SolanaError(SOLANA_ERROR__CODECS__ITEM_CONSUMED_NO_BYTES, {
+                            codecDescription: config.description ?? 'array',
+                            offset,
+                        });
+                    }
                     offset = newOffset;
                     array.push(value);
                 }
@@ -314,6 +323,14 @@ export function getArrayDecoder<TTo>(item: Decoder<TTo>, config: ArrayCodecConfi
                         break;
                     }
                     const [value, newOffset] = item.read(bytes, offset);
+                    if (newOffset === offset) {
+                        // The item codec consumed no bytes, so the sentinel boundary never
+                        // advances and the loop would spin forever growing the array.
+                        throw new SolanaError(SOLANA_ERROR__CODECS__ITEM_CONSUMED_NO_BYTES, {
+                            codecDescription: config.description ?? 'array',
+                            offset,
+                        });
+                    }
                     offset = newOffset;
                     array.push(value);
                 }

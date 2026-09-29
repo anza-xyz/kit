@@ -71,6 +71,8 @@ Because the sentinel is only compared at the start of the next item slot, two in
 1. **No item may _begin_ with the sentinel's bytes.** A valid item that starts with the sentinel is indistinguishable from the terminator, so decoding would stop early at that item. The sentinel may still appear _inside_ an item, just never at its start. For example, a single `0xff` byte is a poor sentinel for a list of public keys, since roughly one key in 256 starts with `0xff`; a sentinel as wide as an item (such as the all-zero public key) avoids this because only that exact key can match the terminator.
 2. **Under `"optional"` and `"omitted"`, the sentinel must be no wider than the smallest possible item.** Otherwise a trailing region shorter than the sentinel but large enough to hold a valid item would be skipped, since decoding stops as soon as fewer bytes than the sentinel remain. This cannot arise under `"required"` because a terminator is always written.
 
+Unlike the invariants above, one condition is enforced by the codec: every item must consume at least one byte. A zero-byte item codec (e.g. `getStructCodec([])`) can never advance past a sentinel boundary, so decoding throws `SOLANA_ERROR__CODECS__ITEM_CONSUMED_NO_BYTES` instead of looping forever. The same guard applies to the `"remainder"` strategy.
+
 When the size is stored as a prefix, decoding an exhausted byte array yields an empty array instead of failing. This allows arrays to be appended to existing data layouts without breaking the decoding of older data. Use the `requireSizePrefix` option to throw instead.
 
 ```ts
