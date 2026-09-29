@@ -49,13 +49,13 @@ import {
     SOLANA_ERROR__CODECS__INVALID_STRING_FOR_BASE,
     SOLANA_ERROR__CODECS__INVALID_UTF8_BYTES,
     SOLANA_ERROR__CODECS__INVALID_UTF8_STRING,
-    SOLANA_ERROR__CODECS__ITEM_CONSUMED_NO_BYTES,
     SOLANA_ERROR__CODECS__LITERAL_UNION_DISCRIMINATOR_OUT_OF_RANGE,
     SOLANA_ERROR__CODECS__NUMBER_OUT_OF_RANGE,
     SOLANA_ERROR__CODECS__OFFSET_OUT_OF_RANGE,
     SOLANA_ERROR__CODECS__SENTINEL_MISSING_AT_END_OF_BYTES,
     SOLANA_ERROR__CODECS__SENTINEL_MISSING_IN_DECODED_BYTES,
     SOLANA_ERROR__CODECS__SENTINEL_MUST_NOT_BE_EMPTY,
+    SOLANA_ERROR__CODECS__UNEXPECTED_ZERO_FIXED_SIZE_ITEM_FOR_ARRAY_LIKE_SIZE_STRATEGY,
     SOLANA_ERROR__CODECS__UNION_VARIANT_OUT_OF_RANGE,
     SOLANA_ERROR__CRYPTO__RANDOM_VALUES_FUNCTION_UNIMPLEMENTED,
     SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION,
@@ -419,8 +419,8 @@ export const SolanaErrorMessages: Readonly<{
     [SOLANA_ERROR__CODECS__INVALID_STRING_FOR_BASE]: 'Invalid value $value for base $base with alphabet $alphabet.',
     [SOLANA_ERROR__CODECS__INVALID_UTF8_BYTES]: 'Invalid UTF-8 byte sequence at offset $offset.',
     [SOLANA_ERROR__CODECS__INVALID_UTF8_STRING]: 'Invalid UTF-8 string. Found a lone surrogate at index $index.',
-    [SOLANA_ERROR__CODECS__ITEM_CONSUMED_NO_BYTES]:
-        'Codec [$codecDescription] collection cannot make progress: the item codec consumed no bytes at offset $offset.',
+    [SOLANA_ERROR__CODECS__UNEXPECTED_ZERO_FIXED_SIZE_ITEM_FOR_ARRAY_LIKE_SIZE_STRATEGY]:
+        'Codec [$codecDescription] cannot use the [$sizeStrategy] size strategy: the item codec has a fixed size of zero and consumes no bytes.',
     [SOLANA_ERROR__CODECS__LITERAL_UNION_DISCRIMINATOR_OUT_OF_RANGE]:
         'Literal union discriminator out of range. Expected a number between $minRange and $maxRange, got $discriminator.',
     [SOLANA_ERROR__CODECS__NUMBER_OUT_OF_RANGE]:
