@@ -4,10 +4,12 @@ import { getUtf8Codec } from '@solana/codecs-strings';
 import {
     SOLANA_ERROR__CODECS__CANNOT_DECODE_EMPTY_BYTE_ARRAY,
     SOLANA_ERROR__CODECS__INVALID_NUMBER_OF_ITEMS,
+    SOLANA_ERROR__CODECS__UNEXPECTED_ZERO_FIXED_SIZE_ITEM_FOR_ARRAY_LIKE_SIZE_STRATEGY,
     SolanaError,
 } from '@solana/errors';
 
 import { getMapCodec } from '../map';
+import { getStructCodec } from '../struct';
 import { b } from './__setup__';
 
 describe('getMapCodec', () => {
@@ -170,5 +172,15 @@ describe('getMapCodec', () => {
         expect(map(u8(), u16(), { size: 42 }).fixedSize).toBe(3 * 42);
         expect(map(u8(), u32String, { size: 42 }).maxSize).toBeUndefined();
         expect(map(u8(), u32String, { size: 0 }).fixedSize).toBe(0);
+    });
+
+    it('rejects a zero-byte item codec with the default array description', () => {
+        // Maps do not forward a description, so the error reports the default 'array' one.
+        expect(() => getMapCodec(getStructCodec([]), getStructCodec([]), { size: 'remainder' })).toThrow(
+            new SolanaError(SOLANA_ERROR__CODECS__UNEXPECTED_ZERO_FIXED_SIZE_ITEM_FOR_ARRAY_LIKE_SIZE_STRATEGY, {
+                codecDescription: 'array',
+                sizeStrategy: 'remainder',
+            }),
+        );
     });
 });

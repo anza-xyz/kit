@@ -194,8 +194,9 @@ export function getArrayEncoder<TFrom>(
 ): Encoder<TFrom[]> {
     const size = config.size ?? getU32Encoder();
     assertValidSize(size);
-    assertItemCodecSupportsSizeStrategy(config.description ?? 'array', size, getFixedSize(item));
-    const fixedSize = computeArrayLikeCodecSize(size, getFixedSize(item));
+    const itemSize = getFixedSize(item);
+    assertItemCodecSupportsSizeStrategy(config.description ?? 'array', size, itemSize);
+    const fixedSize = computeArrayLikeCodecSize(size, itemSize);
     const maxSize = computeArrayLikeCodecSize(size, getMaxSize(item)) ?? undefined;
 
     return createEncoder({

@@ -488,7 +488,7 @@ export type SolanaErrorContext = ReadonlyContextValue<
             };
             [SOLANA_ERROR__CODECS__UNEXPECTED_ZERO_FIXED_SIZE_ITEM_FOR_ARRAY_LIKE_SIZE_STRATEGY]: {
                 codecDescription: string;
-                sizeStrategy: string;
+                sizeStrategy: 'remainder' | 'sentinel';
             };
             [SOLANA_ERROR__CODECS__UNION_VARIANT_OUT_OF_RANGE]: {
                 maxRange: number;
