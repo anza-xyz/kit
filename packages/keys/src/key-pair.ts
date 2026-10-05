@@ -138,7 +138,7 @@ export async function createKeyPairFromPrivateKeyBytes(
         // creating the public key in parallel with the
         // second private key creation, if it is needed.
         (extractable ? privateKeyPromise : createPrivateKeyFromBytes(bytes, true /* extractable */)).then(
-            async privateKey => await getPublicKeyFromPrivateKey(privateKey, true /* extractable */),
+            async privateKey => await getPublicKeyFromPrivateKey(privateKey),
         ),
         privateKeyPromise,
     ]);

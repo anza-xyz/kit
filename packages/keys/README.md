@@ -149,7 +149,7 @@ const extractablePrivateKey = await createPrivateKeyFromBytes(new Uint8Array([..
 
 ### `getPublicKeyFromPrivateKey()`
 
-Given an extractable `CryptoKey` private key, gets the corresponding public key as a `CryptoKey`.
+Given an extractable `CryptoKey` private key, gets the corresponding public key as a `CryptoKey`. The public key is always extractable, since public keys are not secret.
 
 ```ts
 import { createPrivateKeyFromBytes, getPublicKeyFromPrivateKey } from '@solana/keys';
@@ -157,7 +157,6 @@ import { createPrivateKeyFromBytes, getPublicKeyFromPrivateKey } from '@solana/k
 const privateKey = await createPrivateKeyFromBytes(new Uint8Array([...]), true);
 
 const publicKey = await getPublicKeyFromPrivateKey(privateKey);
-const extractablePublicKey = await getPublicKeyFromPrivateKey(privateKey, true);
 ```
 
 ### `isSignature()`
@@ -206,6 +205,8 @@ const {
 ### `verifySignature()`
 
 Given a public `CryptoKey`, some `SignatureBytes`, and a `Uint8Array` of data, this method will return `true` if the signature was produced by signing the data using the private key associated with the public key, and `false` otherwise.
+
+Verification is strict: signatures are rejected when either the public key or the `R` component of the signature is a point of small order, matching the behavior of the Solana runtime. Because checking the public key requires reading its bytes, the public key must be extractable. Every public key produced by Kit is. If you import one yourself with `crypto.subtle.importKey()`, set `extractable` to `true`.
 
 ```ts
 import { verifySignature } from '@solana/keys';

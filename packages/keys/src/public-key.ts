@@ -6,9 +6,9 @@ import { SOLANA_ERROR__SUBTLE_CRYPTO__CANNOT_EXPORT_NON_EXTRACTABLE_KEY, SolanaE
  * private key, gets the corresponding public key as a
  * [`CryptoKey`](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey).
  *
- * @param extractable Setting this to `true` makes it possible to extract the bytes of the public
- * key using the [`crypto.subtle.exportKey()`](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/exportKey)
- * API. Defaults to `false`.
+ * The public key is always extractable, since public keys are not secret. This mirrors the
+ * behavior of [`crypto.subtle.generateKey()`](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/generateKey),
+ * and is required by {@link verifySignature}, which reads the bytes of the public key.
  *
  * @example
  * ```ts
@@ -17,13 +17,15 @@ import { SOLANA_ERROR__SUBTLE_CRYPTO__CANNOT_EXPORT_NON_EXTRACTABLE_KEY, SolanaE
  * const privateKey = await createPrivateKeyFromBytes(new Uint8Array([...]), true);
  *
  * const publicKey = await getPublicKeyFromPrivateKey(privateKey);
- * const extractablePublicKey = await getPublicKeyFromPrivateKey(privateKey, true);
  * ```
  */
-export async function getPublicKeyFromPrivateKey(
-    privateKey: CryptoKey,
-    extractable: boolean = false,
-): Promise<CryptoKey> {
+export async function getPublicKeyFromPrivateKey(privateKey: CryptoKey): Promise<CryptoKey>;
+/**
+ * @param extractable Ignored; the public key is always extractable.
+ * @deprecated The `extractable` argument is ignored; the public key is always extractable. Omit it.
+ */
+export async function getPublicKeyFromPrivateKey(privateKey: CryptoKey, extractable: boolean): Promise<CryptoKey>;
+export async function getPublicKeyFromPrivateKey(privateKey: CryptoKey, _extractable?: boolean): Promise<CryptoKey> {
     assertKeyExporterIsAvailable();
 
     if (privateKey.extractable === false) {
@@ -38,13 +40,13 @@ export async function getPublicKeyFromPrivateKey(
         'jwk',
         {
             crv /* curve */: 'Ed25519',
-            ext /* extractable */: extractable,
+            ext /* extractable */: true,
             key_ops /* key operations */: ['verify'],
             kty /* key type */: 'OKP' /* octet key pair */,
             x /* public key x-coordinate */: jwk.x,
         },
         'Ed25519',
-        extractable,
+        true /* extractable */,
         ['verify'],
     );
 }

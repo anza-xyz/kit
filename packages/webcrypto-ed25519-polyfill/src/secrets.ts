@@ -13,7 +13,7 @@
  * private keys as they are written to the cache, without alerting you to its presence or affecting
  * the regular operation of the cache.
  */
-import { getPublicKeyAsync, signAsync, utils, verifyAsync } from '@noble/ed25519';
+import { getPublicKeyAsync, Point, signAsync, utils, verifyAsync } from '@noble/ed25519';
 
 const PROHIBITED_KEY_USAGES = new Set<KeyUsage>([
     'decrypt',
@@ -227,8 +227,18 @@ export async function verifyPolyfill(key: CryptoKey, signature: BufferSource, da
         throw new DOMException('Unable to use this key to verify', 'InvalidAccessError');
     }
     const publicKeyBytes = await getPublicKeyBytes(key);
+    const signatureBytes = bufferSourceToUint8Array(signature);
     try {
-        return await verifyAsync(bufferSourceToUint8Array(signature), bufferSourceToUint8Array(data), publicKeyBytes);
+        // As the WebCrypto spec requires, reject signatures whose `R` component is of small order.
+        if (Point.fromBytes(signatureBytes.subarray(0, 32)).isSmallOrder()) {
+            return false;
+        }
+        // Opt out of ZIP-215 semantics (`@noble/ed25519`'s default) so that non-canonical encodings
+        // of `R` and the public key are rejected, as are public keys of small order (for which
+        // trivially forged signatures would otherwise verify). Note that `@noble/ed25519` still
+        // evaluates the cofactored verification equation, whereas the WebCrypto spec and the Solana
+        // runtime use the cofactorless one. The two agree for honestly generated keys and signatures.
+        return await verifyAsync(signatureBytes, bufferSourceToUint8Array(data), publicKeyBytes, { zip215: false });
     } catch {
         return false;
     }

@@ -1,6 +1,8 @@
 import '@solana/test-matchers/toBeFrozenObject';
 import '@solana/test-matchers/toEqualArrayBuffer';
 
+import { hashes, Point, utils, verifyAsync } from '@noble/ed25519';
+
 import {
     exportKeyPolyfill,
     generateKeyPolyfill,
@@ -894,5 +896,50 @@ describe('verifyPolyfill', () => {
         expect.assertions(1);
         const badSignature = MOCK_DATA_SIGNATURE.slice(0, 63);
         await expect(verifyPolyfill(publicKey, badSignature, MOCK_DATA)).resolves.toBe(false);
+    });
+    describe('given a public key of small order', () => {
+        let smallOrderPublicKey: CryptoKey;
+        beforeEach(() => {
+            // The identity point.
+            const smallOrderPublicKeyBytes = new Uint8Array(32);
+            smallOrderPublicKeyBytes[0] = 1;
+            smallOrderPublicKey = importKeyPolyfill('raw', smallOrderPublicKeyBytes, /* extractable */ false, [
+                'verify',
+            ]);
+        });
+        it('returns `false` for a forged signature', async () => {
+            expect.assertions(1);
+            // `R = B` (the base point), `S = 1`
+            const forgedSignature = new Uint8Array(64);
+            forgedSignature.set([0x58, ...Array(31).fill(0x66)]);
+            forgedSignature[32] = 1;
+            await expect(verifyPolyfill(smallOrderPublicKey, forgedSignature, MOCK_DATA)).resolves.toBe(false);
+        });
+        it('returns `false` for a forged signature whose `R` component is of small order', async () => {
+            expect.assertions(1);
+            // `R` = the identity point, `S = 0`
+            const forgedSignature = new Uint8Array(64);
+            forgedSignature[0] = 1;
+            await expect(verifyPolyfill(smallOrderPublicKey, forgedSignature, MOCK_DATA)).resolves.toBe(false);
+        });
+    });
+    it('returns `false` for a signature whose `R` component is of small order', async () => {
+        expect.assertions(2);
+        // With `R` = the identity point, `[S]B = R + [k]A` holds when `S = k * a mod L`, where `a` is
+        // the clamped secret scalar and `k = SHA-512(R || A || M) mod L`.
+        const L = Point.CURVE().n;
+        const r = new Uint8Array(32);
+        r[0] = 1;
+        const { scalar } = await utils.getExtendedPublicKeyAsync(MOCK_SECRET_KEY_BYTES);
+        const digest = await hashes.sha512Async(new Uint8Array([...r, ...MOCK_PUBLIC_KEY_BYTES, ...MOCK_DATA]));
+        const k = digest.reduceRight((acc, byte) => (acc << 8n) | BigInt(byte), 0n) % L;
+        const signature = new Uint8Array(64);
+        signature.set(r);
+        for (let i = 0, sValue = (k * scalar) % L; i < 32; i++, sValue >>= 8n) {
+            signature[32 + i] = Number(sValue & 0xffn);
+        }
+        // Without the explicit check on `R`, `@noble/ed25519` would accept this signature.
+        await expect(verifyAsync(signature, MOCK_DATA, MOCK_PUBLIC_KEY_BYTES, { zip215: false })).resolves.toBe(true);
+        await expect(verifyPolyfill(publicKey, signature, MOCK_DATA)).resolves.toBe(false);
     });
 });

@@ -1,5 +1,6 @@
 import { createEncoder, VariableSizeEncoder } from '@solana/codecs-core';
 import { getBase58Encoder } from '@solana/codecs-strings';
+import { SOLANA_ERROR__KEYS__VERIFICATION_REQUIRES_EXTRACTABLE_PUBLIC_KEY, SolanaError } from '@solana/errors';
 
 import { createPrivateKeyFromBytes } from '../private-key';
 import { assertIsSignatureBytes, SignatureBytes, signBytes, verifySignature } from '../signatures';
@@ -188,12 +189,32 @@ describe('sign', () => {
 describe('verify', () => {
     let mockPublicKey: CryptoKey;
     beforeEach(async () => {
-        mockPublicKey = await crypto.subtle.importKey(
+        mockPublicKey = await crypto.subtle.importKey('raw', MOCK_PUBLIC_KEY_BYTES, 'Ed25519', /* extractable */ true, [
+            'verify',
+        ]);
+    });
+    it('throws when supplied a non-extractable public key', async () => {
+        expect.assertions(1);
+        const nonExtractablePublicKey = await crypto.subtle.importKey(
             'raw',
             MOCK_PUBLIC_KEY_BYTES,
             'Ed25519',
             /* extractable */ false,
             ['verify'],
+        );
+        await expect(
+            verifySignature(nonExtractablePublicKey, MOCK_DATA_SIGNATURE as SignatureBytes, MOCK_DATA),
+        ).rejects.toThrow(new SolanaError(SOLANA_ERROR__KEYS__VERIFICATION_REQUIRES_EXTRACTABLE_PUBLIC_KEY));
+    });
+    it.each([
+        ['a valid signature', MOCK_DATA_SIGNATURE],
+        // `R` = the identity point, `S = 0`
+        ['a signature whose `R` component is of small order', new Uint8Array([1, ...Array(63).fill(0)])],
+    ])('throws when supplied a private key and %s', async (_, signature) => {
+        expect.assertions(1);
+        const privateKey = await createPrivateKeyFromBytes(MOCK_PRIVATE_KEY_BYTES, /* extractable */ true);
+        await expect(verifySignature(privateKey, signature as SignatureBytes, MOCK_DATA)).rejects.toThrow(
+            new SolanaError(SOLANA_ERROR__KEYS__VERIFICATION_REQUIRES_EXTRACTABLE_PUBLIC_KEY),
         );
     });
     it('returns `true` when the correct signature is supplied for a given payload', async () => {
@@ -217,6 +238,39 @@ describe('verify', () => {
         expect.assertions(1);
         const badSignature = MOCK_DATA_SIGNATURE.slice(0, 63) as SignatureBytes;
         const result = await verifySignature(mockPublicKey, badSignature, MOCK_DATA);
+        expect(result).toBe(false);
+    });
+    it('returns `false` without consulting WebCrypto when the `R` component of the signature is of small order', async () => {
+        expect.assertions(2);
+        const verifySpy = jest.spyOn(crypto.subtle, 'verify');
+        try {
+            // `R` = the identity point, `S = 0`
+            const signature = new Uint8Array(64);
+            signature[0] = 1;
+            const result = await verifySignature(mockPublicKey, signature as SignatureBytes, MOCK_DATA);
+            expect(result).toBe(false);
+            expect(verifySpy).not.toHaveBeenCalled();
+        } finally {
+            verifySpy.mockRestore();
+        }
+    });
+    it('returns `false` for a forged signature for a public key of small order', async () => {
+        expect.assertions(1);
+        // The identity point. For this key, `[S]B = R + [k]A` holds for any message when `R = [S]B`.
+        const smallOrderPublicKeyBytes = new Uint8Array(32);
+        smallOrderPublicKeyBytes[0] = 1;
+        const smallOrderPublicKey = await crypto.subtle.importKey(
+            'raw',
+            smallOrderPublicKeyBytes,
+            'Ed25519',
+            /* extractable */ true,
+            ['verify'],
+        );
+        // `R = B` (the base point), `S = 1`
+        const forgedSignature = new Uint8Array(64);
+        forgedSignature.set([0x58, ...Array(31).fill(0x66)]);
+        forgedSignature[32] = 1;
+        const result = await verifySignature(smallOrderPublicKey, forgedSignature as SignatureBytes, MOCK_DATA);
         expect(result).toBe(false);
     });
 });

@@ -22,7 +22,7 @@ describe('writeKeyPair', () => {
         tmpDir = await mkdtemp(join(tmpdir(), 'kit-write-keypair-'));
         // Build an extractable key pair from the known private key bytes so we can assert exact file contents.
         const privateKey = await createPrivateKeyFromBytes(MOCK_PRIVATE_KEY_BYTES, /* extractable */ true);
-        const publicKey = await getPublicKeyFromPrivateKey(privateKey, /* extractable */ true);
+        const publicKey = await getPublicKeyFromPrivateKey(privateKey);
         mockKeyPair = { privateKey, publicKey };
         mockPublicKeyBytes = new Uint8Array(await crypto.subtle.exportKey('raw', publicKey));
     });
@@ -86,7 +86,13 @@ describe('writeKeyPair', () => {
     it('throws when the public key is not extractable', async () => {
         expect.assertions(1);
         const privateKey = await createPrivateKeyFromBytes(MOCK_PRIVATE_KEY_BYTES, /* extractable */ true);
-        const publicKey = await getPublicKeyFromPrivateKey(privateKey, /* extractable */ false);
+        const publicKey = await crypto.subtle.importKey(
+            'raw',
+            await crypto.subtle.exportKey('raw', await getPublicKeyFromPrivateKey(privateKey)),
+            'Ed25519',
+            /* extractable */ false,
+            ['verify'],
+        );
         const keyPair: CryptoKeyPair = { privateKey, publicKey };
         await expect(writeKeyPair(keyPair, join(tmpDir, 'keypair.json'))).rejects.toThrow(
             new SolanaError(SOLANA_ERROR__SUBTLE_CRYPTO__CANNOT_EXPORT_NON_EXTRACTABLE_KEY, {

@@ -1,14 +1,20 @@
-import { assertSigningCapabilityIsAvailable, assertVerificationCapabilityIsAvailable } from '@solana/assertions';
+import {
+    assertKeyExporterIsAvailable,
+    assertSigningCapabilityIsAvailable,
+    assertVerificationCapabilityIsAvailable,
+} from '@solana/assertions';
 import { Encoder, ReadonlyUint8Array, toArrayBuffer } from '@solana/codecs-core';
 import { getBase58Encoder } from '@solana/codecs-strings';
 import {
     SOLANA_ERROR__KEYS__INVALID_SIGNATURE_BYTE_LENGTH,
     SOLANA_ERROR__KEYS__SIGNATURE_STRING_LENGTH_OUT_OF_RANGE,
+    SOLANA_ERROR__KEYS__VERIFICATION_REQUIRES_EXTRACTABLE_PUBLIC_KEY,
     SolanaError,
 } from '@solana/errors';
 import { Brand, EncodedString } from '@solana/nominal-types';
 
 import { ED25519_ALGORITHM_IDENTIFIER } from './algorithm';
+import { isSmallOrderPointEncoding } from './small-order';
 
 /**
  * A 64-byte Ed25519 signature as a base58-encoded string.
@@ -233,6 +239,19 @@ export function signatureBytes(putativeSignatureBytes: ReadonlyUint8Array): Sign
  * signature was produced by signing the data using the private key associated with the public key,
  * and `false` otherwise.
  *
+ * Verification is strict: signatures whose `R` component is a point of small order are rejected, as
+ * are public keys of small order (for which trivially forged signatures would otherwise verify
+ * against any data). This matches the behavior of the Solana runtime, and holds regardless of
+ * whether the underlying WebCrypto implementation performs these checks itself.
+ *
+ * Checking the public key requires reading its bytes, so the key must be an extractable public key.
+ * The public keys produced by this library (eg. by {@link generateKeyPair},
+ * {@link getPublicKeyFromPrivateKey}, and `getPublicKeyFromAddress()`) always are. If you import a
+ * public key yourself using `crypto.subtle.importKey()`, set `extractable` to `true`.
+ *
+ * @throws {@link SOLANA_ERROR__KEYS__VERIFICATION_REQUIRES_EXTRACTABLE_PUBLIC_KEY} when supplied a
+ * key that is not a public key, or a public key that is not extractable.
+ *
  * @example
  * ```ts
  * import { verifySignature } from '@solana/keys';
@@ -249,5 +268,16 @@ export async function verifySignature(
     data: ReadonlyUint8Array,
 ): Promise<boolean> {
     assertVerificationCapabilityIsAvailable();
+    assertKeyExporterIsAvailable();
+    if (key.type !== 'public' || !key.extractable) {
+        throw new SolanaError(SOLANA_ERROR__KEYS__VERIFICATION_REQUIRES_EXTRACTABLE_PUBLIC_KEY);
+    }
+    const publicKeyBytes = new Uint8Array(await crypto.subtle.exportKey('raw', key));
+    if (isSmallOrderPointEncoding(publicKeyBytes)) {
+        return false;
+    }
+    if (isSmallOrderPointEncoding(signature.subarray(0, 32))) {
+        return false;
+    }
     return await crypto.subtle.verify(ED25519_ALGORITHM_IDENTIFIER, key, toArrayBuffer(signature), toArrayBuffer(data));
 }

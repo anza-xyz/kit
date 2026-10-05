@@ -184,6 +184,7 @@ import {
     SOLANA_ERROR__KEYS__INVALID_SIGNATURE_BYTE_LENGTH,
     SOLANA_ERROR__KEYS__PUBLIC_KEY_MUST_MATCH_PRIVATE_KEY,
     SOLANA_ERROR__KEYS__SIGNATURE_STRING_LENGTH_OUT_OF_RANGE,
+    SOLANA_ERROR__KEYS__VERIFICATION_REQUIRES_EXTRACTABLE_PUBLIC_KEY,
     SOLANA_ERROR__KEYS__WRITE_KEY_PAIR_UNSUPPORTED_ENVIRONMENT,
     SOLANA_ERROR__LAMPORTS_OUT_OF_RANGE,
     SOLANA_ERROR__MALFORMED_BIGINT_STRING,
@@ -631,6 +632,8 @@ export const SolanaErrorMessages: Readonly<{
         'The provided private key does not match the provided public key.',
     [SOLANA_ERROR__KEYS__SIGNATURE_STRING_LENGTH_OUT_OF_RANGE]:
         'Expected base58-encoded signature string of length in the range [64, 88]. Actual length: $actualLength.',
+    [SOLANA_ERROR__KEYS__VERIFICATION_REQUIRES_EXTRACTABLE_PUBLIC_KEY]:
+        'Signatures can only be verified using an extractable public key. The bytes of the public key must be readable. If you imported the public key yourself, set `extractable` to `true`.',
     [SOLANA_ERROR__KEYS__WRITE_KEY_PAIR_UNSUPPORTED_ENVIRONMENT]:
         'Writing a key pair to disk is not supported in this environment.',
     [SOLANA_ERROR__LAMPORTS_OUT_OF_RANGE]: 'Lamports value must be in the range [0, 2e64-1]',

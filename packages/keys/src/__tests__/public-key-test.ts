@@ -21,25 +21,24 @@ describe('getPublicKeyFromPrivateKey', () => {
         });
         it('gets the associated public key', async () => {
             expect.assertions(1);
-            const publicKey = await getPublicKeyFromPrivateKey(privateKey, true);
+            const publicKey = await getPublicKeyFromPrivateKey(privateKey);
             const publicKeyBytes = new Uint8Array(await crypto.subtle.exportKey('raw', publicKey));
             expect(publicKeyBytes).toEqual(EXPECTED_MOCK_PUBLIC_KEY_BYTES);
         });
-        it('can get an extractable public key', async () => {
-            expect.assertions(1);
-            const publicKey = await getPublicKeyFromPrivateKey(privateKey, true);
-            expect(publicKey.extractable).toBe(true);
-        });
-        it('can get a non-extractable public key', async () => {
-            expect.assertions(1);
-            const publicKey = await getPublicKeyFromPrivateKey(privateKey, false);
-            expect(publicKey.extractable).toBe(false);
-        });
-        it('returns a non-extractable public key by default', async () => {
+        it('returns an extractable public key', async () => {
             expect.assertions(1);
             const publicKey = await getPublicKeyFromPrivateKey(privateKey);
-            expect(publicKey.extractable).toBe(false);
+            expect(publicKey.extractable).toBe(true);
         });
+        it.each([true, false])(
+            'returns an extractable public key when the deprecated `extractable` argument is `%s`',
+            async extractable => {
+                expect.assertions(1);
+                // eslint-disable-next-line @typescript-eslint/no-deprecated
+                const publicKey = await getPublicKeyFromPrivateKey(privateKey, extractable);
+                expect(publicKey.extractable).toBe(true);
+            },
+        );
     });
     describe('given a non-extractable private key', () => {
         let privateKey: CryptoKey;
@@ -48,7 +47,7 @@ describe('getPublicKeyFromPrivateKey', () => {
         });
         it('cannot get the associated public key', async () => {
             expect.assertions(1);
-            await expect(() => getPublicKeyFromPrivateKey(privateKey, true)).rejects.toThrow(
+            await expect(() => getPublicKeyFromPrivateKey(privateKey)).rejects.toThrow(
                 new SolanaError(SOLANA_ERROR__SUBTLE_CRYPTO__CANNOT_EXPORT_NON_EXTRACTABLE_KEY, { key: privateKey }),
             );
         });
