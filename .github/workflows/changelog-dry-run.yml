@@ -1,17 +1,25 @@
 name: Changelog dry run
 
-# Exercises the changelog generation path on PRs that touch changesets, so degraded
-# entries (missing PR/author attribution) surface here rather than after merge on main.
-# It runs the real release-time path — `changeset version` through the resilient adapter
-# in `.changeset/changelog.cjs`, hitting the GitHub GraphQL API with the CI token — but
-# only locally: nothing is committed, pushed, or published. It is intentionally
-# non-blocking; the release job on main degrades gracefully, so a transient GitHub blip
-# on a PR should warn, not fail.
+# Exercises the changelog generation path on PRs that touch changesets or the Changesets
+# tooling, so problems surface here rather than after merge on main. It runs the real
+# release-time path — `changeset version` through the resilient adapter in
+# `.changeset/changelog.mjs`, hitting the GitHub GraphQL API with the CI token — but the
+# resulting version bumps and CHANGELOG edits are discarded with the runner: nothing is
+# committed, pushed, or published.
+#
+# Degraded entries (missing PR/author attribution) are intentionally non-blocking; the
+# release job on main degrades gracefully, so a transient GitHub blip on a PR should warn,
+# not fail. A crash of `changeset version` itself (e.g. a dependency bump that breaks the
+# adapter) does fail the check, since it would break every release and canary publish.
 
 on:
   pull_request:
     paths:
       - '.changeset/**'
+      - '.github/workflows/changelog-dry-run.yml'
+      # Dependency bumps can break the adapter (e.g. `@changesets/*`).
+      - 'package.json'
+      - 'pnpm-lock.yaml'
 
 permissions:
   contents: read
@@ -38,10 +46,34 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
+          # `changeset version` only loads the changelog adapter when there are pending
+          # changesets. If there are none (e.g. a tooling bump), add a throwaway one that
+          # references this PR so the adapter and a real GitHub lookup still get exercised.
+          if [ -z "$(find .changeset -name '*.md' ! -name 'README.md')" ]; then
+            printf -- "---\n'@solana/kit': patch\n---\n\npr: #%s\n\nChangelog dry run\n" "$PR_NUMBER" > .changeset/changelog-dry-run.md
+          fi
+
           # Regenerate version bumps + CHANGELOGs locally. The runner is ephemeral and
           # there is no commit/push/publish step, so this only inspects the output.
-          pnpm exec changeset version 2>&1 | tee changeset-dry-run.log || true
+          set +e
+          pnpm exec changeset version 2>&1 | tee changeset-dry-run.log
+          exit_code=${PIPESTATUS[0]}
+          set -e
+          if [ "$exit_code" -ne 0 ]; then
+            echo "::error::\`changeset version\` failed (exit code ${exit_code}); releases and canary publishes on main would fail too. See the log above."
+            {
+              echo "## Changelog dry run"
+              echo
+              echo "❌ \`changeset version\` failed with exit code ${exit_code}."
+              echo
+              echo '```'
+              tail -n 30 changeset-dry-run.log
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit "$exit_code"
+          fi
 
           degraded=$(grep -c '\[changelog\] GitHub lookup failed' changeset-dry-run.log || true)
           if [ "${degraded:-0}" -gt 0 ]; then

@@ -4,7 +4,7 @@
   "baseBranch": "main",
   "bumpVersionsWithWorkspaceProtocolOnly": true,
   "changelog": [
-    "./changelog.cjs",
+    "./changelog.mjs",
     {
       "repo": "anza-xyz/kit"
     }
