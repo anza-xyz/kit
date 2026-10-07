@@ -35,8 +35,11 @@ describe('isBinaryFixedPoint', () => {
         expect(isBinaryFixedPoint({ ...base, signedness: 'weird' })).toBe(false);
         expect(isBinaryFixedPoint({ ...base, totalBits: 0 })).toBe(false);
         expect(isBinaryFixedPoint({ ...base, fractionalBits: -1 })).toBe(false);
-        expect(isBinaryFixedPoint({ ...base, fractionalBits: 32 })).toBe(false); // exceeds totalBits
         expect(isBinaryFixedPoint({ ...base, raw: 1 })).toBe(false);
+    });
+
+    it('returns true when fractionalBits exceed totalBits', () => {
+        expect(isBinaryFixedPoint(rawBinaryFixedPoint('unsigned', 8, 12)(255n))).toBe(true);
     });
 
     it('returns false when the raw value does not fit the claimed range', () => {

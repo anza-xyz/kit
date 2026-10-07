@@ -1,10 +1,4 @@
-import {
-    assertFractionalBitsFitInTotalBits,
-    assertRawFitsInRange,
-    assertRawIsBigint,
-    assertShapeMatches,
-    describeShape,
-} from '../assertions';
+import { assertRawFitsInRange, assertRawIsBigint, assertShapeMatches, describeShape } from '../assertions';
 import type { Signedness } from '../signedness';
 import type { BinaryFixedPoint } from './core';
 
@@ -49,10 +43,6 @@ export function assertIsBinaryFixedPoint<
         totalBits,
     };
     assertShapeMatches('assertIsBinaryFixedPoint', actual, expected);
-    // Binary fixed-points carry an extra structural invariant beyond the
-    // generic shape check: `fractionalBits` (stored in `actual.scale`)
-    // must not exceed `totalBits`.
-    assertFractionalBitsFitInTotalBits(actual.scale, actual.totalBits);
     assertRawIsBigint('binaryFixedPoint', value);
     assertRawFitsInRange('binaryFixedPoint', actual.signedness as Signedness, actual.totalBits, value.raw);
 }

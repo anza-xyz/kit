@@ -10,7 +10,6 @@ import {
 } from '@solana/codecs-core';
 
 import {
-    assertFractionalBitsFitInTotalBits,
     assertShapeMatches,
     assertTotalBitsIsByteAligned,
     assertValidFractionalBits,
@@ -53,7 +52,6 @@ export function getBinaryFixedPointEncoder<
 ): FixedSizeEncoder<BinaryFixedPoint<TSignedness, TTotalBits, TFractionalBits>, BytesForTotalBits<TTotalBits>> {
     assertValidTotalBits('binaryFixedPoint', totalBits);
     assertValidFractionalBits(fractionalBits);
-    assertFractionalBitsFitInTotalBits(fractionalBits, totalBits);
     assertTotalBitsIsByteAligned('binaryFixedPoint', totalBits);
     const byteSize = (totalBits / 8) as BytesForTotalBits<TTotalBits>;
     const littleEndian = config.endian !== 'be';
@@ -103,7 +101,6 @@ export function getBinaryFixedPointDecoder<
 ): FixedSizeDecoder<BinaryFixedPoint<TSignedness, TTotalBits, TFractionalBits>, BytesForTotalBits<TTotalBits>> {
     assertValidTotalBits('binaryFixedPoint', totalBits);
     assertValidFractionalBits(fractionalBits);
-    assertFractionalBitsFitInTotalBits(fractionalBits, totalBits);
     assertTotalBitsIsByteAligned('binaryFixedPoint', totalBits);
     const byteSize = (totalBits / 8) as BytesForTotalBits<TTotalBits>;
     const littleEndian = config.endian !== 'be';

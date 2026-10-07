@@ -3,7 +3,6 @@ import '@solana/test-matchers/toBeFrozenObject';
 import {
     SOLANA_ERROR__CODECS__CANNOT_DECODE_EMPTY_BYTE_ARRAY,
     SOLANA_ERROR__CODECS__INVALID_BYTE_LENGTH,
-    SOLANA_ERROR__FIXED_POINTS__FRACTIONAL_BITS_EXCEED_TOTAL_BITS,
     SOLANA_ERROR__FIXED_POINTS__INVALID_FRACTIONAL_BITS,
     SOLANA_ERROR__FIXED_POINTS__INVALID_TOTAL_BITS,
     SOLANA_ERROR__FIXED_POINTS__SHAPE_MISMATCH,
@@ -156,13 +155,9 @@ describe('getBinaryFixedPointEncoder', () => {
         );
     });
 
-    it('throws FRACTIONAL_BITS_EXCEED_TOTAL_BITS when fractional bits exceed total bits', () => {
-        expect(() => getBinaryFixedPointEncoder('signed', 8, 16)).toThrow(
-            new SolanaError(SOLANA_ERROR__FIXED_POINTS__FRACTIONAL_BITS_EXCEED_TOTAL_BITS, {
-                fractionalBits: 16,
-                totalBits: 8,
-            }),
-        );
+    it('encodes values whose fractional bits exceed their total bits', () => {
+        const encoder = getBinaryFixedPointEncoder('unsigned', 8, 12);
+        expect(encoder.encode(rawBinaryFixedPoint('unsigned', 8, 12)(255n))).toEqual(new Uint8Array([0xff]));
     });
 
     it('throws SHAPE_MISMATCH when encoding a value whose shape does not match the codec', () => {
@@ -270,6 +265,17 @@ describe('getBinaryFixedPointDecoder', () => {
         expect(decoder.decode(new Uint8Array([0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77])).raw).toBe(0x11223344556677n);
     });
 
+    it('decodes values whose fractional bits exceed their total bits', () => {
+        const decoder = getBinaryFixedPointDecoder('unsigned', 8, 12);
+        expect(decoder.decode(new Uint8Array([0xff]))).toEqual({
+            fractionalBits: 12,
+            kind: 'binaryFixedPoint',
+            raw: 255n,
+            signedness: 'unsigned',
+            totalBits: 8,
+        });
+    });
+
     it('returns a frozen value', () => {
         const decoder = getBinaryFixedPointDecoder('unsigned', 8, 0);
         expect(decoder.decode(new Uint8Array([0x2a]))).toBeFrozenObject();
@@ -312,6 +318,9 @@ describe('getBinaryFixedPointCodec', () => {
             { fractionalBits: 0, raw: -42n, signedness: 'signed' as const, totalBits: 8 },
             { fractionalBits: 15, raw: 16384n, signedness: 'signed' as const, totalBits: 16 },
             { fractionalBits: 15, raw: -16384n, signedness: 'signed' as const, totalBits: 16 },
+            // More fractional bits than total bits.
+            { fractionalBits: 12, raw: 255n, signedness: 'unsigned' as const, totalBits: 8 },
+            { fractionalBits: 20, raw: -128n, signedness: 'signed' as const, totalBits: 8 },
             // 24 bits exercises the all-residual path (no full 8-byte chunks).
             { fractionalBits: 0, raw: 0xabcdefn, signedness: 'unsigned' as const, totalBits: 24 },
             { fractionalBits: 0, raw: -0xabcden, signedness: 'signed' as const, totalBits: 24 },

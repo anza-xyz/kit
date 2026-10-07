@@ -1,5 +1,4 @@
 import {
-    assertFractionalBitsFitInTotalBits,
     assertNoArithmeticOverflow,
     assertRawFitsInRange,
     assertValidFractionalBits,
@@ -137,7 +136,6 @@ export function rescaleBinaryFixedPoint<
 ): BinaryFixedPoint<TSignedness, TNewTotalBits, TNewFractionalBits> {
     assertValidTotalBits('binaryFixedPoint', newTotalBits);
     assertValidFractionalBits(newFractionalBits);
-    assertFractionalBitsFitInTotalBits(newFractionalBits, newTotalBits);
     if (value.totalBits === newTotalBits && value.fractionalBits === newFractionalBits) {
         return value as BinaryFixedPoint<TSignedness, TNewTotalBits, TNewFractionalBits>;
     }

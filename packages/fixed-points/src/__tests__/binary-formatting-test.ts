@@ -34,6 +34,11 @@ describe('binaryFixedPointToString', () => {
         expect(binaryFixedPointToString(rawBinaryFixedPoint('signed', 8, 0)(-42n))).toBe('-42');
     });
 
+    it('renders values whose fractionalBits exceed totalBits', () => {
+        // 255 / 2 ** 12 = 0.062255859375 exactly.
+        expect(binaryFixedPointToString(rawBinaryFixedPoint('unsigned', 8, 12)(255n))).toBe('0.062255859375');
+    });
+
     it('emits the full exact decimal expansion by default', () => {
         // 1 / 2 ** 15 = 0.000030517578125 exactly.
         expect(binaryFixedPointToString(rawBinaryFixedPoint('unsigned', 16, 15)(1n))).toBe('0.000030517578125');

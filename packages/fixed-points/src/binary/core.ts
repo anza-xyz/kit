@@ -1,11 +1,6 @@
 import { SOLANA_ERROR__FIXED_POINTS__INVALID_ZERO_DENOMINATOR_RATIO, SolanaError } from '@solana/errors';
 
-import {
-    assertFractionalBitsFitInTotalBits,
-    assertRawFitsInRange,
-    assertValidFractionalBits,
-    assertValidTotalBits,
-} from '../assertions';
+import { assertRawFitsInRange, assertValidFractionalBits, assertValidTotalBits } from '../assertions';
 import { parseDecimalString } from '../parsing';
 import { roundDivision, type RoundingMode } from '../rounding';
 import type { Signedness } from '../signedness';
@@ -95,7 +90,6 @@ export function binaryFixedPoint<
 ): (input: string, rounding?: RoundingMode) => BinaryFixedPoint<TSignedness, TTotalBits, TFractionalBits> {
     assertValidTotalBits('binaryFixedPoint', totalBits);
     assertValidFractionalBits(fractionalBits);
-    assertFractionalBitsFitInTotalBits(fractionalBits, totalBits);
     return (input, rounding = 'strict') => {
         const parsed = parseDecimalString('binaryFixedPoint', input);
         // The parsed value is `parsed.raw / 10^parsed.decimals`. We need
@@ -142,7 +136,6 @@ export function rawBinaryFixedPoint<
 ): (raw: bigint) => BinaryFixedPoint<TSignedness, TTotalBits, TFractionalBits> {
     assertValidTotalBits('binaryFixedPoint', totalBits);
     assertValidFractionalBits(fractionalBits);
-    assertFractionalBitsFitInTotalBits(fractionalBits, totalBits);
     return raw => createBinaryFixedPoint(signedness, totalBits, fractionalBits, raw);
 }
 
@@ -187,7 +180,6 @@ export function ratioBinaryFixedPoint<
 ) => BinaryFixedPoint<TSignedness, TTotalBits, TFractionalBits> {
     assertValidTotalBits('binaryFixedPoint', totalBits);
     assertValidFractionalBits(fractionalBits);
-    assertFractionalBitsFitInTotalBits(fractionalBits, totalBits);
     return (numerator, denominator, rounding = 'strict') => {
         if (denominator === 0n) {
             throw new SolanaError(SOLANA_ERROR__FIXED_POINTS__INVALID_ZERO_DENOMINATOR_RATIO, {

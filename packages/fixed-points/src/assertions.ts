@@ -1,7 +1,6 @@
 import {
     SOLANA_ERROR__FIXED_POINTS__ARITHMETIC_OVERFLOW,
     SOLANA_ERROR__FIXED_POINTS__DIVISION_BY_ZERO,
-    SOLANA_ERROR__FIXED_POINTS__FRACTIONAL_BITS_EXCEED_TOTAL_BITS,
     SOLANA_ERROR__FIXED_POINTS__INVALID_DECIMALS,
     SOLANA_ERROR__FIXED_POINTS__INVALID_FRACTIONAL_BITS,
     SOLANA_ERROR__FIXED_POINTS__INVALID_TOTAL_BITS,
@@ -75,22 +74,6 @@ export function assertValidDecimals(decimals: unknown): asserts decimals is numb
     if (typeof decimals !== 'number' || !Number.isInteger(decimals) || decimals < 0) {
         throw new SolanaError(SOLANA_ERROR__FIXED_POINTS__INVALID_DECIMALS, {
             decimals,
-        });
-    }
-}
-
-/**
- * Asserts that `fractionalBits` does not exceed `totalBits` for a binary
- * fixed-point shape. Throws
- * `SOLANA_ERROR__FIXED_POINTS__FRACTIONAL_BITS_EXCEED_TOTAL_BITS` otherwise.
- *
- * @internal
- */
-export function assertFractionalBitsFitInTotalBits(fractionalBits: number, totalBits: number): void {
-    if (fractionalBits > totalBits) {
-        throw new SolanaError(SOLANA_ERROR__FIXED_POINTS__FRACTIONAL_BITS_EXCEED_TOTAL_BITS, {
-            fractionalBits,
-            totalBits,
         });
     }
 }

@@ -2,7 +2,6 @@ import '@solana/test-matchers/toBeFrozenObject';
 
 import {
     SOLANA_ERROR__FIXED_POINTS__ARITHMETIC_OVERFLOW,
-    SOLANA_ERROR__FIXED_POINTS__FRACTIONAL_BITS_EXCEED_TOTAL_BITS,
     SOLANA_ERROR__FIXED_POINTS__INVALID_FRACTIONAL_BITS,
     SOLANA_ERROR__FIXED_POINTS__INVALID_TOTAL_BITS,
     SOLANA_ERROR__FIXED_POINTS__STRICT_MODE_PRECISION_LOSS,
@@ -253,13 +252,9 @@ describe('rescaleBinaryFixedPoint', () => {
         );
     });
 
-    it('throws FRACTIONAL_BITS_EXCEED_TOTAL_BITS when the target fractionalBits exceeds totalBits', () => {
-        const source = rawBinaryFixedPoint('unsigned', 16, 4)(1n);
-        expect(() => rescaleBinaryFixedPoint(source, 8, 16)).toThrow(
-            new SolanaError(SOLANA_ERROR__FIXED_POINTS__FRACTIONAL_BITS_EXCEED_TOTAL_BITS, {
-                fractionalBits: 16,
-                totalBits: 8,
-            }),
-        );
+    it('rescales to a target whose fractionalBits exceed totalBits when the value fits', () => {
+        // 1 / 2 ** 12 at 16 fractional bits is 16 / 2 ** 16, which fits 8 bits.
+        const source = rawBinaryFixedPoint('unsigned', 16, 12)(1n);
+        expect(rescaleBinaryFixedPoint(source, 8, 16)).toStrictEqual(rawBinaryFixedPoint('unsigned', 8, 16)(16n));
     });
 });

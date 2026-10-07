@@ -1,7 +1,6 @@
 import '@solana/test-matchers/toBeFrozenObject';
 
 import {
-    SOLANA_ERROR__FIXED_POINTS__FRACTIONAL_BITS_EXCEED_TOTAL_BITS,
     SOLANA_ERROR__FIXED_POINTS__INVALID_FRACTIONAL_BITS,
     SOLANA_ERROR__FIXED_POINTS__INVALID_STRING,
     SOLANA_ERROR__FIXED_POINTS__INVALID_TOTAL_BITS,
@@ -103,20 +102,31 @@ describe('binaryFixedPoint', () => {
         );
     });
 
-    it('throws FRACTIONAL_BITS_EXCEED_TOTAL_BITS when fractionalBits exceeds totalBits', () => {
-        expect(() => binaryFixedPoint('signed', 16, 32)).toThrow(
-            new SolanaError(SOLANA_ERROR__FIXED_POINTS__FRACTIONAL_BITS_EXCEED_TOTAL_BITS, {
-                fractionalBits: 32,
-                totalBits: 16,
-            }),
-        );
+    it('allows fractionalBits equal to totalBits', () => {
+        // Q0.16 can represent values in [0, 1).
+        const factory = binaryFixedPoint('unsigned', 16, 16);
+        expect(factory('0.5').raw).toBe(2n ** 15n);
     });
 
-    it('allows fractionalBits equal to totalBits', () => {
-        // Q0.16 can represent values in [0, 1), so `0` fits and proves the
-        // factory was accepted even at the fractionalBits=totalBits boundary.
-        const factory = binaryFixedPoint('unsigned', 16, 16);
-        expect(factory('0').raw).toBe(0n);
+    it('allows fractionalBits to exceed totalBits', () => {
+        // An unsigned 8-bit value with 12 fractional bits represents values
+        // in [0, 1/16), e.g. 255 / 2 ** 12 = 0.062255859375.
+        const factory = binaryFixedPoint('unsigned', 8, 12);
+        expect(factory('0.062255859375').raw).toBe(255n);
+    });
+
+    it('throws VALUE_OUT_OF_RANGE when fractionalBits exceed totalBits and the value does not fit', () => {
+        // 1/16 needs a raw value of 256, one more than an unsigned 8-bit value can hold.
+        expect(() => binaryFixedPoint('unsigned', 8, 12)('0.0625')).toThrow(
+            new SolanaError(SOLANA_ERROR__FIXED_POINTS__VALUE_OUT_OF_RANGE, {
+                kind: 'binaryFixedPoint',
+                max: 255n,
+                min: 0n,
+                raw: 256n,
+                signedness: 'unsigned',
+                totalBits: 8,
+            }),
+        );
     });
 });
 
@@ -216,14 +226,9 @@ describe('binary factory shape validation', () => {
         }
     });
 
-    it('rejects fractionalBits that exceed totalBits up front from every binary factory', () => {
+    it('accepts fractionalBits that exceed totalBits from every binary factory', () => {
         for (const factory of [binaryFixedPoint, rawBinaryFixedPoint, ratioBinaryFixedPoint]) {
-            expect(() => factory('signed', 16, 32)).toThrow(
-                new SolanaError(SOLANA_ERROR__FIXED_POINTS__FRACTIONAL_BITS_EXCEED_TOTAL_BITS, {
-                    fractionalBits: 32,
-                    totalBits: 16,
-                }),
-            );
+            expect(() => factory('signed', 16, 32)).not.toThrow();
         }
     });
 });
