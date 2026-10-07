@@ -54,8 +54,8 @@
         "test:lint": "TERM_OVERRIDE=\"${TURBO_HASH:+dumb}\" TERM=${TERM_OVERRIDE:-$TERM} jest -c ../../node_modules/@solana/test-config/jest-lint.config.js --rootDir . --silent",
         "test:prettier": "TERM_OVERRIDE=\"${TURBO_HASH:+dumb}\" TERM=${TERM_OVERRIDE:-$TERM} jest -c ../../node_modules/@solana/test-config/jest-prettier.config.js --rootDir . --silent",
         "test:treeshakability:browser": "agadoo dist/index.browser.mjs",
-        "test:treeshakability:native": "agadoo dist/index.node.mjs",
-        "test:treeshakability:node": "agadoo dist/index.native.mjs",
+        "test:treeshakability:native": "agadoo dist/index.native.mjs",
+        "test:treeshakability:node": "agadoo dist/index.node.mjs",
         "test:typecheck": "tsc --noEmit",
         "test:unit:browser": "NODE_OPTIONS=\"--no-experimental-webstorage\" TERM_OVERRIDE=\"${TURBO_HASH:+dumb}\" TERM=${TERM_OVERRIDE:-$TERM} jest -c ../../node_modules/@solana/test-config/jest-unit.config.browser.js --rootDir . --silent",
         "test:unit:node": "NODE_OPTIONS=\"--no-experimental-webstorage\" TERM_OVERRIDE=\"${TURBO_HASH:+dumb}\" TERM=${TERM_OVERRIDE:-$TERM} jest -c ../../node_modules/@solana/test-config/jest-unit.config.node.js --rootDir . --silent"
