@@ -440,8 +440,13 @@ export const accountTypeDefs = /* GraphQL */ `
         lamports: Lamports
         ownerProgram: Account
         space: BigInt
+        active: Boolean
         distributedRewards: Lamports
         distributionCompleteBlockHeight: BigInt
+        distributionStartingBlockHeight: BigInt
+        numPartitions: BigInt
+        parentBlockhash: Hash
+        totalPoints: BigInt
         totalRewards: Lamports
     }
 
