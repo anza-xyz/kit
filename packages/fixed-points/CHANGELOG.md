@@ -1,5 +1,14 @@
 # @solana/fixed-points
 
+## 8.5.0
+
+### Patch Changes
+
+- [#2102](https://github.com/anza-xyz/kit/pull/2102) [`d7a1d10`](https://github.com/anza-xyz/kit/commit/d7a1d100ffe701b52f60cc4ef38621bd4c235c0d) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Allow binary fixed-points whose `fractionalBits` exceed their `totalBits`, e.g. an unsigned 8-bit value with 12 fractional bits representing values in `[0, 1/16)`, consistently with decimal fixed-points whose `decimals` may already exceed their `totalBits`. The `SOLANA_ERROR__FIXED_POINTS__FRACTIONAL_BITS_EXCEED_TOTAL_BITS` error is no longer thrown.
+- Updated dependencies [[`cfe1d62`](https://github.com/anza-xyz/kit/commit/cfe1d62742842b0838408b8ee3c8d5f8748d6ba9), [`de1c63f`](https://github.com/anza-xyz/kit/commit/de1c63fb02528ed75428713c8f608a8133883afd)]:
+  - @solana/errors@8.5.0
+  - @solana/codecs-core@8.5.0
+
 ## 8.4.0
 
 ### Patch Changes

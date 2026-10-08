@@ -1,5 +1,32 @@
 # @solana/errors
 
+## 8.5.0
+
+### Minor Changes
+
+- [#2095](https://github.com/anza-xyz/kit/pull/2095) [`cfe1d62`](https://github.com/anza-xyz/kit/commit/cfe1d62742842b0838408b8ee3c8d5f8748d6ba9) Thanks [@mcintyre94](https://github.com/mcintyre94)! - `verifySignature()` now verifies strictly, regardless of whether the underlying WebCrypto implementation does so itself (Node.js, for instance, does not). It returns `false` when either the public key or the `R` component of the signature is a point of small order. Previously, trivially forged signatures could verify against small-order public keys such as `11111111111111111111111111111111`.
+  
+  **BREAKING CHANGES**
+  
+  **`verifySignature()` throws unless given an extractable public key.** Checking the public key requires reading its bytes, so a non-extractable public key now causes it to throw a `SolanaError` with code `SOLANA_ERROR__KEYS__VERIFICATION_REQUIRES_EXTRACTABLE_PUBLIC_KEY`. The same error is thrown for a key that is not a public key, which WebCrypto never accepted for verification anyway (it threw an `InvalidAccessError`). Every public key produced by Kit is extractable; if you import one yourself, set `extractable` to `true`.
+  
+  ```diff
+  - const publicKey = await crypto.subtle.importKey('raw', bytes, 'Ed25519', false, ['verify']);
+  + const publicKey = await crypto.subtle.importKey('raw', bytes, 'Ed25519', true, ['verify']);
+    await verifySignature(publicKey, signature, data);
+  ```
+  
+  **`getPublicKeyFromPrivateKey()` always returns an extractable public key.** Public keys are not secret, so this mirrors the behavior of `crypto.subtle.generateKey()`. The `extractable` argument is deprecated and ignored.
+  
+  ```diff
+  - const publicKey = await getPublicKeyFromPrivateKey(privateKey, true);
+  + const publicKey = await getPublicKeyFromPrivateKey(privateKey);
+  ```
+  
+  The Ed25519 polyfill now also rejects public keys and signature `R` components of small order, and opts out of `@noble/ed25519`'s default ZIP-215 semantics.
+
+- [#2089](https://github.com/anza-xyz/kit/pull/2089) [`de1c63f`](https://github.com/anza-xyz/kit/commit/de1c63fb02528ed75428713c8f608a8133883afd) Thanks [@latent-9](https://github.com/latent-9)! - Fix an infinite loop in the `array`, `set`, and `map` codecs' sentinel and remainder decoding strategies: a zero-byte item codec (e.g. `getStructCodec([])`) can never advance past a sentinel boundary or the end of the byte array, so decoding used to push elements until the process ran out of memory. Zero-byte fixed-size item codecs are now rejected on both the encoding and decoding sides when used with the sentinel or remainder strategies, throwing a new error instead: `SOLANA_ERROR__CODECS__UNEXPECTED_ZERO_FIXED_SIZE_ITEM_FOR_ARRAY_LIKE_SIZE_STRATEGY`. They remain allowed when the collection size is explicit.
+
 ## 8.4.0
 
 ### Minor Changes

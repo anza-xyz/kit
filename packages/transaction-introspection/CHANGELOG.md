@@ -1,5 +1,19 @@
 # @solana/transaction-introspection
 
+## 8.5.0
+
+### Patch Changes
+
+- Updated dependencies [[`cfe1d62`](https://github.com/anza-xyz/kit/commit/cfe1d62742842b0838408b8ee3c8d5f8748d6ba9), [`de1c63f`](https://github.com/anza-xyz/kit/commit/de1c63fb02528ed75428713c8f608a8133883afd)]:
+  - @solana/errors@8.5.0
+  - @solana/rpc-types@8.5.0
+  - @solana/addresses@8.5.0
+  - @solana/codecs-core@8.5.0
+  - @solana/codecs-strings@8.5.0
+  - @solana/instructions@8.5.0
+  - @solana/transaction-messages@8.5.0
+  - @solana/transactions@8.5.0
+
 ## 8.4.0
 
 ### Patch Changes
