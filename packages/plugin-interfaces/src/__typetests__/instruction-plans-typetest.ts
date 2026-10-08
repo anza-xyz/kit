@@ -4,6 +4,7 @@ import type {
     SuccessfulSingleTransactionPlanResult,
     TransactionPlan,
     TransactionPlanInput,
+    TransactionPlanner,
     TransactionPlanResult,
     TransactionPlanResultContext,
     TransactionPlanResultContextWithSignature,
@@ -44,6 +45,41 @@ import type {
         void (client.planTransactions(input, {
             abortSignal: abortController.signal,
         }) satisfies Promise<TransactionPlan>);
+    }
+
+    // Both methods accept a maxInstructionsPerTransaction override.
+    {
+        const client = null as unknown as ClientWithTransactionPlanning;
+        const input = null as unknown as InstructionPlanInput;
+        void (client.planTransaction(input, {
+            maxInstructionsPerTransaction: 8,
+        }) satisfies Promise<SingleTransactionPlan['message']>);
+        void (client.planTransactions(input, { maxInstructionsPerTransaction: 8 }) satisfies Promise<TransactionPlan>);
+    }
+
+    // Their config can always be forwarded to a TransactionPlanner.
+    {
+        const config = null as unknown as Parameters<ClientWithTransactionPlanning['planTransactions']>[1];
+        config satisfies Parameters<TransactionPlanner>[1];
+    }
+
+    // Both methods reject unknown config options.
+    {
+        const client = null as unknown as ClientWithTransactionPlanning;
+        const input = null as unknown as InstructionPlanInput;
+        // @ts-expect-error Unknown config option.
+        void client.planTransaction(input, { unknownOption: true });
+        // @ts-expect-error Unknown config option.
+        void client.planTransactions(input, { unknownOption: true });
+    }
+
+    // Existing implementations that only read the abort signal still satisfy the interface.
+    {
+        const planTransactions = null as unknown as (
+            input: InstructionPlanInput,
+            config?: { abortSignal?: AbortSignal },
+        ) => Promise<TransactionPlan>;
+        planTransactions satisfies ClientWithTransactionPlanning['planTransactions'];
     }
 }
 
@@ -94,6 +130,18 @@ import type {
         }) satisfies Promise<SuccessfulSingleTransactionPlanResult>);
         void (client.sendTransactions(input, {
             abortSignal: abortController.signal,
+        }) satisfies Promise<TransactionPlanResult>);
+    }
+
+    // Both methods accept a maxInstructionsPerTransaction override.
+    {
+        const client = null as unknown as ClientWithTransactionSending;
+        const input = null as unknown as InstructionPlanInput;
+        void (client.sendTransaction(input, {
+            maxInstructionsPerTransaction: 8,
+        }) satisfies Promise<SuccessfulSingleTransactionPlanResult>);
+        void (client.sendTransactions(input, {
+            maxInstructionsPerTransaction: 8,
         }) satisfies Promise<TransactionPlanResult>);
     }
 
@@ -185,6 +233,18 @@ import type {
         }) satisfies Promise<SuccessfulSingleTransactionPlanResult<TransactionPlanResultContext>>);
         void (client.signTransactions(input, {
             abortSignal: abortController.signal,
+        }) satisfies Promise<TransactionPlanResult<TransactionPlanResultContext>>);
+    }
+
+    // Both methods accept a maxInstructionsPerTransaction override.
+    {
+        const client = null as unknown as ClientWithTransactionSigning;
+        const input = null as unknown as InstructionPlanInput;
+        void (client.signTransaction(input, {
+            maxInstructionsPerTransaction: 8,
+        }) satisfies Promise<SuccessfulSingleTransactionPlanResult<TransactionPlanResultContext>>);
+        void (client.signTransactions(input, {
+            maxInstructionsPerTransaction: 8,
         }) satisfies Promise<TransactionPlanResult<TransactionPlanResultContext>>);
     }
 

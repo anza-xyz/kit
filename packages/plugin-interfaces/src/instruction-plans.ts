@@ -9,7 +9,20 @@ import type {
     TransactionPlanResultContextWithSignature,
 } from '@solana/instruction-plans';
 
-type Config = { abortSignal?: AbortSignal };
+/**
+ * The per-call configuration accepted by the planning, sending and signing functions below.
+ */
+type Config = {
+    /** Signal to abort the planning, sending or signing request. */
+    abortSignal?: AbortSignal;
+    /**
+     * Overrides the maximum number of instructions per transaction message when the input needs
+     * to be planned. Must be a positive integer no greater than 64, otherwise planning throws
+     * `SOLANA_ERROR__INSTRUCTION_PLANS__INVALID_MAX_INSTRUCTIONS_PER_TRANSACTION`. Defaults to the
+     * planner's own configuration.
+     */
+    maxInstructionsPerTransaction?: number;
+};
 
 /**
  * Represents a client that can plan transactions from instruction inputs.
@@ -38,7 +51,8 @@ export type ClientWithTransactionPlanning = {
      * Use this when you expect all instructions to fit in a single transaction.
      *
      * @param input - The instruction plan input (instructions or instruction plans).
-     * @param config - Optional configuration including an abort signal.
+     * @param config - Optional configuration including an abort signal and a
+     *   `maxInstructionsPerTransaction` override for this planning request.
      * @returns A promise resolving to the planned transaction message.
      *
      * @see {@link InstructionPlanInput}
@@ -52,7 +66,8 @@ export type ClientWithTransactionPlanning = {
      * transactions due to size limits.
      *
      * @param input - The instruction plan input (instructions or instruction plans).
-     * @param config - Optional configuration including an abort signal.
+     * @param config - Optional configuration including an abort signal and a
+     *   `maxInstructionsPerTransaction` override for this planning request.
      * @returns A promise resolving to the full transaction plan.
      *
      * @see {@link InstructionPlanInput}
@@ -96,7 +111,9 @@ export type ClientWithTransactionSending<
      * transaction message or a single transaction plan.
      *
      * @param input - Instructions, a transaction plan, or a transaction message.
-     * @param config - Optional configuration including an abort signal.
+     * @param config - Optional configuration including an abort signal and a
+     *   `maxInstructionsPerTransaction` override used when the input needs to be planned
+     *   first. It has no effect on inputs that are already transaction plans or messages.
      * @returns A promise resolving to the successful transaction result.
      *
      * @see {@link InstructionPlanInput}
@@ -114,7 +131,9 @@ export type ClientWithTransactionSending<
      * or transaction plans.
      *
      * @param input - Any instruction or a transaction plan input.
-     * @param config - Optional configuration including an abort signal.
+     * @param config - Optional configuration including an abort signal and a
+     *   `maxInstructionsPerTransaction` override used when the input needs to be planned
+     *   first. It has no effect on inputs that are already transaction plans or messages.
      * @returns A promise resolving to the results for all transactions.
      *
      * @see {@link InstructionPlanInput}
@@ -166,7 +185,9 @@ export type ClientWithTransactionSigning<TContext extends TransactionPlanResultC
          * transaction message or a single transaction plan.
          *
          * @param input - Instructions, a transaction plan, or a transaction message.
-         * @param config - Optional configuration including an abort signal.
+         * @param config - Optional configuration including an abort signal and a
+         *   `maxInstructionsPerTransaction` override used when the input needs to be planned
+         *   first. It has no effect on inputs that are already transaction plans or messages.
          * @returns A promise resolving to the successful transaction result, carrying the
          * `TContext` the client was parameterised with.
          *
@@ -185,7 +206,9 @@ export type ClientWithTransactionSigning<TContext extends TransactionPlanResultC
          * or transaction plans.
          *
          * @param input - Any instruction or a transaction plan input.
-         * @param config - Optional configuration including an abort signal.
+         * @param config - Optional configuration including an abort signal and a
+         *   `maxInstructionsPerTransaction` override used when the input needs to be planned
+         *   first. It has no effect on inputs that are already transaction plans or messages.
          * @returns A promise resolving to the results for all transactions. Successful leaves carry
          * the `TContext` the client was parameterised with.
          *

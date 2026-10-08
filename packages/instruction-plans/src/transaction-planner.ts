@@ -99,6 +99,10 @@ export type TransactionPlannerConfig = {
     /**
      * Called whenever a transaction message is updated — e.g. new instructions were added.
      * This function must return the updated transaction message back — even if no changes were made.
+     *
+     * Note that it may be called several times on the same message, including on candidate messages
+     * that the planner later discards because they do not fit. It should therefore be idempotent,
+     * e.g. only adding an instruction if the message does not already contain it.
      */
     onTransactionMessageUpdated?: OnTransactionMessageUpdated;
 };
