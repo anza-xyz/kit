@@ -92,6 +92,7 @@ import { GetTransactionCountApi } from './getTransactionCount';
 import { GetTransactionsForAddressApi } from './getTransactionsForAddress';
 import { GetVersionApi } from './getVersion';
 import { GetVoteAccountsApi } from './getVoteAccounts';
+import { IdentityTransitionStatusApi } from './identityTransitionStatus';
 import { IsBlockhashValidApi } from './isBlockhashValid';
 import { MinimumLedgerSlotApi } from './minimumLedgerSlot';
 import { RequestAirdropApi } from './requestAirdrop';
@@ -147,6 +148,7 @@ type SolanaRpcApiForAllClusters = GetAccountInfoApi &
     GetTransactionsForAddressApi &
     GetVersionApi &
     GetVoteAccountsApi &
+    IdentityTransitionStatusApi &
     IsBlockhashValidApi &
     MinimumLedgerSlotApi &
     SendTransactionApi &
@@ -232,12 +234,15 @@ export type {
     GetTransactionsForAddressApi,
     GetVersionApi,
     GetVoteAccountsApi,
+    IdentityTransitionStatusApi,
     IsBlockhashValidApi,
     MinimumLedgerSlotApi,
     RequestAirdropApi,
     SendTransactionApi,
     SimulateTransactionApi,
 };
+
+export type { IdentityTransitionStatusApiResponse } from './identityTransitionStatus';
 
 type Config = RequestTransformerConfig;
 
