@@ -1,5 +1,18 @@
 # @solana/codecs-data-structures
 
+## 8.5.0
+
+### Minor Changes
+
+- [#2089](https://github.com/anza-xyz/kit/pull/2089) [`de1c63f`](https://github.com/anza-xyz/kit/commit/de1c63fb02528ed75428713c8f608a8133883afd) Thanks [@latent-9](https://github.com/latent-9)! - Fix an infinite loop in the `array`, `set`, and `map` codecs' sentinel and remainder decoding strategies: a zero-byte item codec (e.g. `getStructCodec([])`) can never advance past a sentinel boundary or the end of the byte array, so decoding used to push elements until the process ran out of memory. Zero-byte fixed-size item codecs are now rejected on both the encoding and decoding sides when used with the sentinel or remainder strategies, throwing a new error instead: `SOLANA_ERROR__CODECS__UNEXPECTED_ZERO_FIXED_SIZE_ITEM_FOR_ARRAY_LIKE_SIZE_STRATEGY`. They remain allowed when the collection size is explicit.
+
+### Patch Changes
+
+- Updated dependencies [[`cfe1d62`](https://github.com/anza-xyz/kit/commit/cfe1d62742842b0838408b8ee3c8d5f8748d6ba9), [`de1c63f`](https://github.com/anza-xyz/kit/commit/de1c63fb02528ed75428713c8f608a8133883afd)]:
+  - @solana/errors@8.5.0
+  - @solana/codecs-core@8.5.0
+  - @solana/codecs-numbers@8.5.0
+
 ## 8.4.0
 
 ### Minor Changes

@@ -1,5 +1,9 @@
 # @solana/rpc-parsed-types
 
+## 8.5.0
+
+No changes in this release.
+
 ## 8.4.0
 
 No changes in this release.
