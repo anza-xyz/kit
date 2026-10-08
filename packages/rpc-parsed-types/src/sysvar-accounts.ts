@@ -73,9 +73,13 @@ type JsonParsedLastRestartSlotAccount = Readonly<{
 }>;
 
 type JsonParsedEpochRewardsAccount = Readonly<{
-    distributedRewards: bigint;
-    distributionCompleteBlockHeight: bigint;
-    totalRewards: bigint;
+    active: boolean;
+    distributedRewards: StringifiedBigInt;
+    distributionStartingBlockHeight: bigint;
+    numPartitions: bigint;
+    parentBlockhash: Blockhash;
+    totalPoints: StringifiedBigInt;
+    totalRewards: StringifiedBigInt;
 }>;
 
 export type JsonParsedSysvarAccount =

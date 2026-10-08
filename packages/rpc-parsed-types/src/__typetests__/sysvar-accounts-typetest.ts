@@ -232,9 +232,13 @@ import { JsonParsedSysvarAccount } from '../sysvar-accounts';
 {
     const account = {
         info: {
-            distributedRewards: 100n,
-            distributionCompleteBlockHeight: 1000n,
-            totalRewards: 200n,
+            active: false,
+            distributedRewards: '78571687782645' as StringifiedBigInt,
+            distributionStartingBlockHeight: 432069615n,
+            numPartitions: 442n,
+            parentBlockhash: '3dKaHfKnxuYN484d7pJHxE982aB7CwB2TXgPqJ6kyWtV' as Blockhash,
+            totalPoints: '3045995875115003510241645' as StringifiedBigInt,
+            totalRewards: '78571689246890' as StringifiedBigInt,
         },
         type: 'epochRewards' as const,
     };
@@ -244,6 +248,12 @@ import { JsonParsedSysvarAccount } from '../sysvar-accounts';
 {
     const account = {} as unknown as JsonParsedSysvarAccount;
     if (account.type === 'epochRewards') {
-        account.info.totalRewards satisfies bigint;
+        account.info.active satisfies boolean;
+        account.info.distributedRewards satisfies StringifiedBigInt;
+        account.info.distributionStartingBlockHeight satisfies bigint;
+        account.info.numPartitions satisfies bigint;
+        account.info.parentBlockhash satisfies Blockhash;
+        account.info.totalPoints satisfies StringifiedBigInt;
+        account.info.totalRewards satisfies StringifiedBigInt;
     }
 }
