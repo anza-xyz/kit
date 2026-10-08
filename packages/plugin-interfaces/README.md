@@ -219,6 +219,12 @@ function transactionCounterPlugin() {
 }
 ```
 
+Both `planTransaction` and `planTransactions` accept an optional config with an `abortSignal` and a `maxInstructionsPerTransaction` override. The sending and signing functions of `ClientWithTransactionSending` and `ClientWithTransactionSigning` accept it too, and use it when their input needs to be planned first.
+
+```ts
+await client.planTransactions(instructions, { maxInstructionsPerTransaction: 8 });
+```
+
 ### `ClientWithTransactionSending`
 
 Represents a client that can send transactions to the Solana network. It supports flexible input formats including instructions, instruction plans, transaction messages, or transaction plans.
