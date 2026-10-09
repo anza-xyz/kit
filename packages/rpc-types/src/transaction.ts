@@ -193,17 +193,17 @@ type TransactionForAccountsMetaBase = Readonly<{
     /** Account balances after the transaction was processed */
     postBalances: readonly Lamports[];
     /**
-     * List of token balances from after the transaction was processed or omitted if token balance
-     * recording was not yet enabled during this transaction
+     * List of token balances from after the transaction was processed, or `null` or omitted if
+     * token balance recording was not yet enabled during this transaction.
      */
-    postTokenBalances?: readonly TokenBalance[];
+    postTokenBalances?: readonly TokenBalance[] | null;
     /** Account balances from before the transaction was processed */
     preBalances: readonly Lamports[];
     /**
-     * List of token balances from before the transaction was processed or omitted if token balance
-     * recording was not yet enabled during this transaction
+     * List of token balances from before the transaction was processed, or `null` or omitted if
+     * token balance recording was not yet enabled during this transaction.
      */
-    preTokenBalances?: readonly TokenBalance[];
+    preTokenBalances?: readonly TokenBalance[] | null;
     /** @deprecated */
     status: TransactionStatus;
 }>;
@@ -260,23 +260,33 @@ type TransactionForFullMetaBase = Readonly<{
     TransactionForAccountsMetaBase;
 
 export type TransactionForFullMetaInnerInstructionsUnparsed = Readonly<{
-    /** A list of instructions called by programs via cross-program invocation (CPI) */
-    innerInstructions: readonly Readonly<{
-        /** The index of the instruction in the transaction */
-        index: number;
-        /** The instructions */
-        instructions: readonly TransactionInstruction[];
-    }>[];
+    /**
+     * A list of instructions called by programs via cross-program invocation (CPI), or `null` or
+     * omitted if inner instruction recording was not enabled during this transaction.
+     */
+    innerInstructions?:
+        | readonly Readonly<{
+              /** The index of the instruction in the transaction */
+              index: number;
+              /** The instructions */
+              instructions: readonly TransactionInstruction[];
+          }>[]
+        | null;
 }>;
 
 export type TransactionForFullMetaInnerInstructionsParsed = Readonly<{
-    /** A list of instructions called by programs via cross-program invocation (CPI) */
-    innerInstructions: readonly Readonly<{
-        /** The index of the instruction in the transaction */
-        index: number;
-        /** The instructions */
-        instructions: readonly (ParsedTransactionInstruction | PartiallyDecodedTransactionInstruction)[];
-    }>[];
+    /**
+     * A list of instructions called by programs via cross-program invocation (CPI), or `null` or
+     * omitted if inner instruction recording was not enabled during this transaction.
+     */
+    innerInstructions?:
+        | readonly Readonly<{
+              /** The index of the instruction in the transaction */
+              index: number;
+              /** The instructions */
+              instructions: readonly (ParsedTransactionInstruction | PartiallyDecodedTransactionInstruction)[];
+          }>[]
+        | null;
 }>;
 
 // According to the RPC docs: "Transaction addresses loaded from address lookup tables.

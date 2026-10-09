@@ -417,9 +417,9 @@ type ExpectedMetaForAccountsBase = {
     err: TransactionError | null;
     fee: Lamports;
     postBalances: readonly Lamports[];
-    postTokenBalances?: readonly TokenBalance[];
+    postTokenBalances?: readonly TokenBalance[] | null;
     preBalances: readonly Lamports[];
-    preTokenBalances?: readonly TokenBalance[];
+    preTokenBalances?: readonly TokenBalance[] | null;
     status: TransactionStatus;
 };
 
@@ -718,20 +718,22 @@ type ExpectedMetaForFullBase58 = {
     computeUnitsConsumed?: bigint;
     err: TransactionError | null;
     fee: Lamports;
-    innerInstructions: readonly Readonly<{
-        index: number;
-        instructions: readonly Readonly<{
-            accounts: readonly number[];
-            data: Base58EncodedBytes;
-            programIdIndex: number;
-            stackHeight?: number;
-        }>[];
-    }>[];
+    innerInstructions?:
+        | readonly Readonly<{
+              index: number;
+              instructions: readonly Readonly<{
+                  accounts: readonly number[];
+                  data: Base58EncodedBytes;
+                  programIdIndex: number;
+                  stackHeight?: number;
+              }>[];
+          }>[]
+        | null;
     logMessages: readonly string[] | null;
     postBalances: readonly Lamports[];
-    postTokenBalances?: readonly TokenBalance[];
+    postTokenBalances?: readonly TokenBalance[] | null;
     preBalances: readonly Lamports[];
-    preTokenBalances?: readonly TokenBalance[];
+    preTokenBalances?: readonly TokenBalance[] | null;
     returnData?: Readonly<{
         data: Base64EncodedDataResponse;
         programId: Address;
@@ -985,20 +987,22 @@ type ExpectedMetaForFullBase64 = {
     computeUnitsConsumed?: bigint;
     err: TransactionError | null;
     fee: Lamports;
-    innerInstructions: readonly Readonly<{
-        index: number;
-        instructions: readonly Readonly<{
-            accounts: readonly number[];
-            data: Base58EncodedBytes;
-            programIdIndex: number;
-            stackHeight?: number;
-        }>[];
-    }>[];
+    innerInstructions?:
+        | readonly Readonly<{
+              index: number;
+              instructions: readonly Readonly<{
+                  accounts: readonly number[];
+                  data: Base58EncodedBytes;
+                  programIdIndex: number;
+                  stackHeight?: number;
+              }>[];
+          }>[]
+        | null;
     logMessages: readonly string[] | null;
     postBalances: readonly Lamports[];
-    postTokenBalances?: readonly TokenBalance[];
+    postTokenBalances?: readonly TokenBalance[] | null;
     preBalances: readonly Lamports[];
-    preTokenBalances?: readonly TokenBalance[];
+    preTokenBalances?: readonly TokenBalance[] | null;
     returnData?: Readonly<{
         data: Base64EncodedDataResponse;
         programId: Address;
@@ -1215,15 +1219,17 @@ type ExpectedMetaForFullJsonParsedBase = {
     computeUnitsConsumed?: bigint;
     err: TransactionError | null;
     fee: Lamports;
-    innerInstructions: readonly Readonly<{
-        index: number;
-        instructions: readonly ExpectedTransactionInstructionForFullJsonParsed[];
-    }>[];
+    innerInstructions?:
+        | readonly Readonly<{
+              index: number;
+              instructions: readonly ExpectedTransactionInstructionForFullJsonParsed[];
+          }>[]
+        | null;
     logMessages: readonly string[] | null;
     postBalances: readonly Lamports[];
-    postTokenBalances?: readonly TokenBalance[];
+    postTokenBalances?: readonly TokenBalance[] | null;
     preBalances: readonly Lamports[];
-    preTokenBalances?: readonly TokenBalance[];
+    preTokenBalances?: readonly TokenBalance[] | null;
     returnData?: Readonly<{
         data: Base64EncodedDataResponse;
         programId: Address;
@@ -1399,15 +1405,17 @@ type ExpectedMetaForFullJsonBase = {
     computeUnitsConsumed?: bigint;
     err: TransactionError | null;
     fee: Lamports;
-    innerInstructions: readonly Readonly<{
-        index: number;
-        instructions: readonly ExpectedTransactionInstructionForFullJson[];
-    }>[];
+    innerInstructions?:
+        | readonly Readonly<{
+              index: number;
+              instructions: readonly ExpectedTransactionInstructionForFullJson[];
+          }>[]
+        | null;
     logMessages: readonly string[] | null;
     postBalances: readonly Lamports[];
-    postTokenBalances?: readonly TokenBalance[];
+    postTokenBalances?: readonly TokenBalance[] | null;
     preBalances: readonly Lamports[];
-    preTokenBalances?: readonly TokenBalance[];
+    preTokenBalances?: readonly TokenBalance[] | null;
     returnData?: Readonly<{
         data: Base64EncodedDataResponse;
         programId: Address;
