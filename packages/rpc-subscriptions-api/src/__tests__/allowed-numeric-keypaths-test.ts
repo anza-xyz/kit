@@ -72,6 +72,41 @@ async function subscribeAndNotify(
 }
 
 describe('the default response transformer for Solana RPC subscriptions', () => {
+    describe.each([
+        { config: {}, name: 'legacy' },
+        { config: { maxSupportedTransactionVersion: 0 as const }, name: 'versioned' },
+    ])('$name block metadata arrays', ({ config }) => {
+        describe.each(['base58', 'base64', 'json', 'jsonParsed'] as const)('%s encoding', encoding => {
+            it.each([
+                { meta: { innerInstructions: null, postTokenBalances: null, preTokenBalances: null }, name: 'null' },
+                { meta: {}, name: 'omitted' },
+                { meta: { innerInstructions: [], postTokenBalances: [], preTokenBalances: [] }, name: 'empty' },
+            ])('preserves $name arrays in full mode', async ({ meta }) => {
+                expect.assertions(1);
+                const api = createSolanaRpcSubscriptionsApi_UNSTABLE();
+                const notification = await subscribeAndNotify(
+                    api.blockNotifications('all', { ...config, encoding, transactionDetails: 'full' }).execute,
+                    'blockNotification',
+                    { value: { block: { transactions: [{ meta }] } } },
+                );
+                expect(notification.value.block.transactions[0].meta).toStrictEqual(meta);
+            });
+        });
+        it.each([
+            { meta: { postTokenBalances: null, preTokenBalances: null }, name: 'null' },
+            { meta: {}, name: 'omitted' },
+            { meta: { postTokenBalances: [], preTokenBalances: [] }, name: 'empty' },
+        ])('preserves $name token balance arrays in accounts mode', async ({ meta }) => {
+            expect.assertions(1);
+            const api = createSolanaRpcSubscriptionsApi_UNSTABLE();
+            const notification = await subscribeAndNotify(
+                api.blockNotifications('all', { ...config, transactionDetails: 'accounts' }).execute,
+                'blockNotification',
+                { value: { block: { transactions: [{ meta }] } } },
+            );
+            expect(notification.value.block.transactions[0].meta).toStrictEqual(meta);
+        });
+    });
     it('leaves block notification transaction `version` as a number', async () => {
         expect.assertions(1);
         const api = createSolanaRpcSubscriptionsApi_UNSTABLE();
