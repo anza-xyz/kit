@@ -31,6 +31,12 @@ export function getRpcSubscriptionsTransportWithSubscriptionCoalescing<TTranspor
                 ...config,
                 signal: abortController.signal,
             });
+            const cacheEntry = (cachedDataPublisherPromise = {
+                abortController,
+                dataPublisherPromise,
+                numSubscribers: 0,
+            });
+            cache.set(subscriptionConfigurationHash, cacheEntry);
             dataPublisherPromise
                 .then(dataPublisher => {
                     dataPublisher.on(
@@ -42,15 +48,12 @@ export function getRpcSubscriptionsTransportWithSubscriptionCoalescing<TTranspor
                         { signal: abortController.signal },
                     );
                 })
-                .catch(() => {});
-            cache.set(
-                subscriptionConfigurationHash,
-                (cachedDataPublisherPromise = {
-                    abortController,
-                    dataPublisherPromise,
-                    numSubscribers: 0,
-                }),
-            );
+                .catch(() => {
+                    if (cache.get(subscriptionConfigurationHash) === cacheEntry) {
+                        cache.delete(subscriptionConfigurationHash);
+                        abortController.abort();
+                    }
+                });
         }
         cachedDataPublisherPromise.numSubscribers++;
         signal.addEventListener(
