@@ -32,8 +32,8 @@ export enum OffchainMessageContentFormat {
 }
 
 /**
- * Describes message text that is no more than 1232 bytes long and made up of characters with ASCII
- * character codes in the range [0x20, 0x7e].
+ * Describes message text that is no more than 1232 bytes long and made up of line feeds and
+ * characters with ASCII character codes in the range [0x20, 0x7e].
  *
  * @remarks This type aims to restrict text to that which can be clear-signed by hardware wallets
  * that can only display ASCII characters onscreen.
@@ -374,5 +374,9 @@ export function offchainMessageContentUtf8Of65535BytesMax<TText extends string>(
 }
 
 function isTextRestrictedAscii(putativeRestrictedAsciiString: string): boolean {
-    return /^[\x20-\x7e]+$/.test(putativeRestrictedAsciiString);
+    // Line feeds (0x0a) are permitted alongside printable ASCII, matching this package's error
+    // message ("the message may only contain line feeds and characters in the range [\x20-\x7e]")
+    // and the clear-signing rules of the Ledger Solana app (`is_data_ascii`), which accepts a line
+    // feed but no other control character. Carriage returns (0x0d) and tabs (0x09) stay rejected.
+    return /^[\x20-\x7e\n]+$/.test(putativeRestrictedAsciiString);
 }

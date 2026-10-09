@@ -74,13 +74,24 @@ describe('assertIsOffchainMessageContentRestrictedAsciiOf1232BytesMax()', () => 
             }),
         ).toThrow(new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__MESSAGE_MUST_BE_NON_EMPTY));
     });
-    it.each(['\x19', '\x7f'])('throws when the content contains out of range character %j', char => {
+    it.each(['\x01', '\x09', '\x0d', '\x19', '\x7f'])(
+        'throws when the content contains out of range character %j',
+        char => {
+            expect(() =>
+                assertIsOffchainMessageContentRestrictedAsciiOf1232BytesMax({
+                    format: OffchainMessageContentFormat.RESTRICTED_ASCII_1232_BYTES_MAX,
+                    text: char,
+                }),
+            ).toThrow(new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__RESTRICTED_ASCII_BODY_CHARACTER_OUT_OF_RANGE));
+        },
+    );
+    it.each(['\n', 'line one\nline two'])('does not throw when the content contains line feed %j', text => {
         expect(() =>
             assertIsOffchainMessageContentRestrictedAsciiOf1232BytesMax({
                 format: OffchainMessageContentFormat.RESTRICTED_ASCII_1232_BYTES_MAX,
-                text: char,
+                text,
             }),
-        ).toThrow(new SolanaError(SOLANA_ERROR__OFFCHAIN_MESSAGE__RESTRICTED_ASCII_BODY_CHARACTER_OUT_OF_RANGE));
+        ).not.toThrow();
     });
     it.each(Array.from({ length: 0x7e - 0x20 + 1 }, (_, ii) => String.fromCharCode(0x20 + ii)))(
         'does not throw when the content contains allowed character %j',
@@ -131,13 +142,24 @@ describe('isOffchainMessageContentRestrictedAsciiOf1232BytesMax()', () => {
             }),
         ).toBe(false);
     });
-    it.each(['\x19', '\x7f'])('returns `false` when the content contains out of range character %j', char => {
+    it.each(['\x01', '\x09', '\x0d', '\x19', '\x7f'])(
+        'returns `false` when the content contains out of range character %j',
+        char => {
+            expect(
+                isOffchainMessageContentRestrictedAsciiOf1232BytesMax({
+                    format: OffchainMessageContentFormat.RESTRICTED_ASCII_1232_BYTES_MAX,
+                    text: char,
+                }),
+            ).toBe(false);
+        },
+    );
+    it.each(['\n', 'line one\nline two'])('returns `true` when the content contains line feed %j', text => {
         expect(
             isOffchainMessageContentRestrictedAsciiOf1232BytesMax({
                 format: OffchainMessageContentFormat.RESTRICTED_ASCII_1232_BYTES_MAX,
-                text: char,
+                text,
             }),
-        ).toBe(false);
+        ).toBe(true);
     });
     it.each(Array.from({ length: 0x7e - 0x20 + 1 }, (_, ii) => String.fromCharCode(0x20 + ii)))(
         'does not throw when the content contains allowed character %j',

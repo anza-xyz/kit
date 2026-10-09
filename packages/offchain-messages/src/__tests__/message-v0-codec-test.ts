@@ -101,6 +101,70 @@ describe('getOffchainMessageV0Decoder()', () => {
             version: 0,
         });
     });
+    it('decodes a well-formed ASCII encoded message whose content contains a line feed', () => {
+        const encodedMessage =
+            // prettier-ignore
+            new Uint8Array([
+                // Signing domain
+                ...OFFCHAIN_MESSAGE_SIGNING_DOMAIN_BYTES,
+                // Version
+                0x00,
+                // Application domain
+                ...APPLICATION_DOMAIN_BYTES,
+                // Message format (Restricted ASCII, 1232-byte-max)
+                0x00,
+                // Signer count
+                0x02,
+                    // Signer addresses
+                    ...SIGNER_A_BYTES,
+                    ...SIGNER_B_BYTES,
+                // Message length (17 characters)
+                0x11, 0x00,
+                    // Message (line one\nline two)
+                    0x6c, 0x69, 0x6e, 0x65, 0x20, 0x6f, 0x6e, 0x65, 0x0a, 0x6c, 0x69, 0x6e, 0x65, 0x20, 0x74, 0x77, 0x6f,
+            ]);
+        expect(decoder.decode(encodedMessage)).toStrictEqual({
+            applicationDomain: APPLICATION_DOMAIN,
+            content: {
+                format: OffchainMessageContentFormat.RESTRICTED_ASCII_1232_BYTES_MAX,
+                text: 'line one\nline two',
+            },
+            requiredSignatories: [{ address: SIGNER_A }, { address: SIGNER_B }],
+            version: 0,
+        });
+    });
+    it('decodes a well-formed 1232-byte-max UTF-8 message whose content contains a line feed', () => {
+        const encodedMessage =
+            // prettier-ignore
+            new Uint8Array([
+                // Signing domain
+                ...OFFCHAIN_MESSAGE_SIGNING_DOMAIN_BYTES,
+                // Version
+                0x00,
+                // Application domain
+                ...APPLICATION_DOMAIN_BYTES,
+                // Message format (UTF-8, 1232-byte-max)
+                0x01,
+                // Signer count
+                0x02,
+                    // Signer addresses
+                    ...SIGNER_A_BYTES,
+                    ...SIGNER_B_BYTES,
+                // Message length (12 bytes)
+                0x0c, 0x00,
+                    // Message (✌🏿cool\n)
+                    0xe2, 0x9c, 0x8c, 0xf0, 0x9f, 0x8f, 0xbf, 0x63, 0x6f, 0x6f, 0x6c, 0x0a,
+            ]);
+        expect(decoder.decode(encodedMessage)).toStrictEqual({
+            applicationDomain: APPLICATION_DOMAIN,
+            content: {
+                format: OffchainMessageContentFormat.UTF8_1232_BYTES_MAX,
+                text: '✌🏿cool\n',
+            },
+            requiredSignatories: [{ address: SIGNER_A }, { address: SIGNER_B }],
+            version: 0,
+        });
+    });
     it('freezes the decoded message', () => {
         expect.assertions(5);
         const encodedMessage =
@@ -619,6 +683,39 @@ describe('getOffchainMessageEncoder()', () => {
                 0x0b, 0x00,
                     // Message (Hello world)
                     0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x77, 0x6f, 0x72, 0x6c, 0x64,
+            ]),
+        );
+    });
+    it('encodes a well-formed ASCII encoded message whose content contains a line feed', () => {
+        const offchainMessage: OffchainMessageV0 = {
+            applicationDomain: APPLICATION_DOMAIN,
+            content: {
+                format: OffchainMessageContentFormat.RESTRICTED_ASCII_1232_BYTES_MAX,
+                text: 'line one\nline two',
+            } as OffchainMessageContentRestrictedAsciiOf1232BytesMax,
+            requiredSignatories: [{ address: SIGNER_A }, { address: SIGNER_B }],
+            version: 0,
+        };
+        expect(encoder.encode(offchainMessage)).toStrictEqual(
+            // prettier-ignore
+            new Uint8Array([
+                // Signing domain
+                ...OFFCHAIN_MESSAGE_SIGNING_DOMAIN_BYTES,
+                // Version
+                0x00,
+                // Application domain
+                ...APPLICATION_DOMAIN_BYTES,
+                // Message format (Restricted ASCII, 1232-byte-max)
+                0x00,
+                // Signer count
+                0x02,
+                    // Signer addresses
+                    ...SIGNER_A_BYTES,
+                    ...SIGNER_B_BYTES,
+                // Message length (17 characters)
+                0x11, 0x00,
+                    // Message (line one\nline two)
+                    0x6c, 0x69, 0x6e, 0x65, 0x20, 0x6f, 0x6e, 0x65, 0x0a, 0x6c, 0x69, 0x6e, 0x65, 0x20, 0x74, 0x77, 0x6f,
             ]),
         );
     });
