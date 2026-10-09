@@ -11,10 +11,16 @@ import type {
 import type { Signature } from '@solana/keys';
 import type { Transaction } from '@solana/transactions';
 
-import type {
-    ClientWithTransactionPlanning,
-    ClientWithTransactionSending,
-    ClientWithTransactionSigning,
+import {
+    assertIsClientWithTransactionPlanning,
+    assertIsClientWithTransactionSending,
+    assertIsClientWithTransactionSigning,
+    type ClientWithTransactionPlanning,
+    type ClientWithTransactionSending,
+    type ClientWithTransactionSigning,
+    isClientWithTransactionPlanning,
+    isClientWithTransactionSending,
+    isClientWithTransactionSigning,
 } from '../instruction-plans';
 
 // [DESCRIBE] ClientWithTransactionPlanning.
@@ -253,5 +259,144 @@ import type {
         client.sendTransactions satisfies ClientWithTransactionSending['sendTransactions'];
         client.signTransaction satisfies ClientWithTransactionSigning['signTransaction'];
         client.signTransactions satisfies ClientWithTransactionSigning['signTransactions'];
+    }
+}
+
+// [DESCRIBE] isClientWithTransactionPlanning.
+{
+    // It narrows the client to a ClientWithTransactionPlanning whilst keeping its other properties.
+    {
+        const client = null as unknown as { customMethod(): void };
+        if (isClientWithTransactionPlanning(client)) {
+            client.planTransaction satisfies ClientWithTransactionPlanning['planTransaction'];
+            client.planTransactions satisfies ClientWithTransactionPlanning['planTransactions'];
+            client.customMethod satisfies () => void;
+        }
+    }
+
+    // It does not narrow the client when the check fails.
+    {
+        const client = null as unknown as { customMethod(): void };
+        if (!isClientWithTransactionPlanning(client)) {
+            // @ts-expect-error The client is not known to have planning functions.
+            client.planTransaction satisfies ClientWithTransactionPlanning['planTransaction'];
+        }
+    }
+}
+
+// [DESCRIBE] assertIsClientWithTransactionPlanning.
+{
+    // It narrows the client to a ClientWithTransactionPlanning whilst keeping its other properties.
+    {
+        const client = null as unknown as { customMethod(): void };
+        assertIsClientWithTransactionPlanning(client);
+        client.planTransaction satisfies ClientWithTransactionPlanning['planTransaction'];
+        client.planTransactions satisfies ClientWithTransactionPlanning['planTransactions'];
+        client.customMethod satisfies () => void;
+    }
+}
+
+// [DESCRIBE] isClientWithTransactionSending.
+{
+    // It narrows the client to a ClientWithTransactionSending with the default context.
+    {
+        const client = null as unknown as { customMethod(): void };
+        if (isClientWithTransactionSending(client)) {
+            client satisfies ClientWithTransactionSending;
+            client.customMethod satisfies () => void;
+            const result = null as unknown as Awaited<ReturnType<(typeof client)['sendTransaction']>>;
+            result.context.signature satisfies Signature;
+        }
+    }
+
+    // It narrows the client to a ClientWithTransactionSending with the provided context.
+    {
+        type CustomContext = TransactionPlanResultContextWithSignature & { slot: bigint };
+        const client = null as unknown as { customMethod(): void };
+        if (isClientWithTransactionSending<CustomContext>(client)) {
+            const result = null as unknown as Awaited<ReturnType<(typeof client)['sendTransaction']>>;
+            result.context.slot satisfies bigint;
+        }
+    }
+
+    // It does not narrow the client when the check fails.
+    {
+        const client = null as unknown as { customMethod(): void };
+        if (!isClientWithTransactionSending(client)) {
+            // @ts-expect-error The client is not known to have sending functions.
+            client.sendTransaction satisfies ClientWithTransactionSending['sendTransaction'];
+        }
+    }
+}
+
+// [DESCRIBE] assertIsClientWithTransactionSending.
+{
+    // It narrows the client to a ClientWithTransactionSending with the default context.
+    {
+        const client = null as unknown as { customMethod(): void };
+        assertIsClientWithTransactionSending(client);
+        client satisfies ClientWithTransactionSending;
+        client.customMethod satisfies () => void;
+    }
+
+    // It narrows the client to a ClientWithTransactionSending with the provided context.
+    {
+        type CustomContext = TransactionPlanResultContextWithSignature & { slot: bigint };
+        const client = null as unknown as { customMethod(): void };
+        assertIsClientWithTransactionSending<CustomContext>(client);
+        const result = null as unknown as Awaited<ReturnType<(typeof client)['sendTransaction']>>;
+        result.context.slot satisfies bigint;
+    }
+}
+
+// [DESCRIBE] isClientWithTransactionSigning.
+{
+    // It narrows the client to a ClientWithTransactionSigning whose default context makes no guarantees.
+    {
+        const client = null as unknown as { customMethod(): void };
+        if (isClientWithTransactionSigning(client)) {
+            client satisfies ClientWithTransactionSigning;
+            client.customMethod satisfies () => void;
+            const result = null as unknown as Awaited<ReturnType<(typeof client)['signTransaction']>>;
+            // @ts-expect-error The default context does not guarantee a transaction.
+            result.context.transaction satisfies Transaction;
+        }
+    }
+
+    // It narrows the client to a ClientWithTransactionSigning with the provided context.
+    {
+        const client = null as unknown as { customMethod(): void };
+        if (isClientWithTransactionSigning<{ transaction: Transaction }>(client)) {
+            const result = null as unknown as Awaited<ReturnType<(typeof client)['signTransaction']>>;
+            result.context.transaction satisfies Transaction;
+        }
+    }
+
+    // It does not narrow the client when the check fails.
+    {
+        const client = null as unknown as { customMethod(): void };
+        if (!isClientWithTransactionSigning(client)) {
+            // @ts-expect-error The client is not known to have signing functions.
+            client.signTransaction satisfies ClientWithTransactionSigning['signTransaction'];
+        }
+    }
+}
+
+// [DESCRIBE] assertIsClientWithTransactionSigning.
+{
+    // It narrows the client to a ClientWithTransactionSigning with the default context.
+    {
+        const client = null as unknown as { customMethod(): void };
+        assertIsClientWithTransactionSigning(client);
+        client satisfies ClientWithTransactionSigning;
+        client.customMethod satisfies () => void;
+    }
+
+    // It narrows the client to a ClientWithTransactionSigning with the provided context.
+    {
+        const client = null as unknown as { customMethod(): void };
+        assertIsClientWithTransactionSigning<{ transaction: Transaction }>(client);
+        const result = null as unknown as Awaited<ReturnType<(typeof client)['signTransaction']>>;
+        result.context.transaction satisfies Transaction;
     }
 }

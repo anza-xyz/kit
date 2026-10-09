@@ -1,3 +1,4 @@
+import { SOLANA_ERROR__PLUGIN_INTERFACES__MISSING_CLIENT_CAPABILITIES, SolanaError } from '@solana/errors';
 import type {
     InstructionPlanInput,
     SingleTransactionPlan,
@@ -197,3 +198,182 @@ export type ClientWithTransactionSigning<TContext extends TransactionPlanResultC
             config?: Config,
         ) => Promise<TransactionPlanResult<TContext>>;
     };
+
+/**
+ * Checks whether the provided client has both the `planTransaction` and `planTransactions`
+ * functions installed.
+ *
+ * @param client - The client to check.
+ * @return `true` if the client has both planning functions, narrowing it to a
+ * {@link ClientWithTransactionPlanning}.
+ *
+ * @example
+ * ```ts
+ * if (isClientWithTransactionPlanning(client)) {
+ *     const message = await client.planTransaction(instructions);
+ * }
+ * ```
+ *
+ * @see {@link assertIsClientWithTransactionPlanning}
+ */
+export function isClientWithTransactionPlanning(client: object): client is ClientWithTransactionPlanning {
+    return Object.hasOwn(client, 'planTransaction') && Object.hasOwn(client, 'planTransactions');
+}
+
+/**
+ * Asserts that the provided client has both the `planTransaction` and `planTransactions`
+ * functions installed.
+ *
+ * @param client - The client to check.
+ * @throws A {@link SolanaError} with code {@link SOLANA_ERROR__PLUGIN_INTERFACES__MISSING_CLIENT_CAPABILITIES}
+ * if the client is missing either planning function.
+ *
+ * @example
+ * ```ts
+ * function planningLoggerPlugin() {
+ *     return <T extends object>(client: T) => {
+ *         assertIsClientWithTransactionPlanning(client);
+ *         return extendClient(client, {
+ *             logPlan: async (instructions: Instruction[]) => {
+ *                 console.log(await client.planTransactions(instructions));
+ *             },
+ *         });
+ *     };
+ * }
+ * ```
+ *
+ * @see {@link isClientWithTransactionPlanning}
+ */
+export function assertIsClientWithTransactionPlanning(client: object): asserts client is ClientWithTransactionPlanning {
+    if (!isClientWithTransactionPlanning(client)) {
+        throw new SolanaError(SOLANA_ERROR__PLUGIN_INTERFACES__MISSING_CLIENT_CAPABILITIES, {
+            capabilities: ['planTransaction', 'planTransactions'],
+        });
+    }
+}
+
+/**
+ * Checks whether the provided client has both the `sendTransaction` and `sendTransactions`
+ * functions installed.
+ *
+ * Only the presence of the functions is checked. The context attached to their results cannot be
+ * verified at runtime, so the caller vouches for it through the `TContext` type parameter.
+ *
+ * @typeParam TContext - The context the client is expected to attach to its results. It defaults
+ * to {@link TransactionPlanResultContextWithSignature}, as in {@link ClientWithTransactionSending}.
+ * @param client - The client to check.
+ * @return `true` if the client has both sending functions, narrowing it to a
+ * {@link ClientWithTransactionSending}.
+ *
+ * @example
+ * ```ts
+ * if (isClientWithTransactionSending(client)) {
+ *     const result = await client.sendTransaction(instructions);
+ *     console.log(`Transaction confirmed: ${result.context.signature}`);
+ * }
+ * ```
+ *
+ * @see {@link assertIsClientWithTransactionSending}
+ */
+export function isClientWithTransactionSending<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
+>(client: object): client is ClientWithTransactionSending<TContext> {
+    return Object.hasOwn(client, 'sendTransaction') && Object.hasOwn(client, 'sendTransactions');
+}
+
+/**
+ * Asserts that the provided client has both the `sendTransaction` and `sendTransactions`
+ * functions installed.
+ *
+ * Only the presence of the functions is checked. The context attached to their results cannot be
+ * verified at runtime, so the caller vouches for it through the `TContext` type parameter.
+ *
+ * @typeParam TContext - The context the client is expected to attach to its results. It defaults
+ * to {@link TransactionPlanResultContextWithSignature}, as in {@link ClientWithTransactionSending}.
+ * @param client - The client to check.
+ * @throws A {@link SolanaError} with code {@link SOLANA_ERROR__PLUGIN_INTERFACES__MISSING_CLIENT_CAPABILITIES}
+ * if the client is missing either sending function.
+ *
+ * @example
+ * ```ts
+ * async function executeTransfer(client: object, instructions: Instruction[]) {
+ *     assertIsClientWithTransactionSending(client);
+ *     const result = await client.sendTransaction(instructions);
+ *     console.log(`Transaction confirmed: ${result.context.signature}`);
+ * }
+ * ```
+ *
+ * @see {@link isClientWithTransactionSending}
+ */
+export function assertIsClientWithTransactionSending<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContextWithSignature,
+>(client: object): asserts client is ClientWithTransactionSending<TContext> {
+    if (!isClientWithTransactionSending(client)) {
+        throw new SolanaError(SOLANA_ERROR__PLUGIN_INTERFACES__MISSING_CLIENT_CAPABILITIES, {
+            capabilities: ['sendTransaction', 'sendTransactions'],
+        });
+    }
+}
+
+/**
+ * Checks whether the provided client has both the `signTransaction` and `signTransactions`
+ * functions installed.
+ *
+ * Only the presence of the functions is checked. The context attached to their results cannot be
+ * verified at runtime, so the caller vouches for it through the `TContext` type parameter.
+ *
+ * @typeParam TContext - The context the client is expected to attach to its results. As in
+ * {@link ClientWithTransactionSigning}, it makes no claim about its contents by default.
+ * @param client - The client to check.
+ * @return `true` if the client has both signing functions, narrowing it to a
+ * {@link ClientWithTransactionSigning}.
+ *
+ * @example
+ * ```ts
+ * if (isClientWithTransactionSigning<{ transaction: Transaction }>(client)) {
+ *     const result = await client.signTransaction(instructions);
+ *     const transaction = result.context.transaction;
+ * }
+ * ```
+ *
+ * @see {@link assertIsClientWithTransactionSigning}
+ */
+export function isClientWithTransactionSigning<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+>(client: object): client is ClientWithTransactionSigning<TContext> {
+    return Object.hasOwn(client, 'signTransaction') && Object.hasOwn(client, 'signTransactions');
+}
+
+/**
+ * Asserts that the provided client has both the `signTransaction` and `signTransactions`
+ * functions installed.
+ *
+ * Only the presence of the functions is checked. The context attached to their results cannot be
+ * verified at runtime, so the caller vouches for it through the `TContext` type parameter.
+ *
+ * @typeParam TContext - The context the client is expected to attach to its results. As in
+ * {@link ClientWithTransactionSigning}, it makes no claim about its contents by default.
+ * @param client - The client to check.
+ * @throws A {@link SolanaError} with code {@link SOLANA_ERROR__PLUGIN_INTERFACES__MISSING_CLIENT_CAPABILITIES}
+ * if the client is missing either signing function.
+ *
+ * @example
+ * ```ts
+ * async function signTransfer(client: object, instructions: Instruction[]) {
+ *     assertIsClientWithTransactionSigning<{ transaction: Transaction }>(client);
+ *     const result = await client.signTransaction(instructions);
+ *     return result.context.transaction;
+ * }
+ * ```
+ *
+ * @see {@link isClientWithTransactionSigning}
+ */
+export function assertIsClientWithTransactionSigning<
+    TContext extends TransactionPlanResultContext = TransactionPlanResultContext,
+>(client: object): asserts client is ClientWithTransactionSigning<TContext> {
+    if (!isClientWithTransactionSigning(client)) {
+        throw new SolanaError(SOLANA_ERROR__PLUGIN_INTERFACES__MISSING_CLIENT_CAPABILITIES, {
+            capabilities: ['signTransaction', 'signTransactions'],
+        });
+    }
+}
