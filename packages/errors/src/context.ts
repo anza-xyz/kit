@@ -244,6 +244,9 @@ import {
     SOLANA_ERROR__TRANSACTION_ERROR__PROGRAM_EXECUTION_TEMPORARILY_RESTRICTED,
     SOLANA_ERROR__TRANSACTION_ERROR__UNKNOWN,
     SOLANA_ERROR__WALLET__ACCOUNT_NOT_AVAILABLE,
+    SOLANA_ERROR__WALLET__INVALID_MESSAGE_SIGNATURE,
+    SOLANA_ERROR__WALLET__INVALID_NUMBER_OF_OUTPUTS,
+    SOLANA_ERROR__WALLET__INVALID_SIGN_IN_OUTPUT,
     SOLANA_ERROR__WALLET__NO_SIGNER_CONNECTED,
     SOLANA_ERROR__WALLET__NOT_CONNECTED,
     SolanaErrorCode,
@@ -1059,6 +1062,20 @@ export type SolanaErrorContext = ReadonlyContextValue<
                 transactionBytes: ReadonlyUint8Array;
             };
             [SOLANA_ERROR__WALLET__ACCOUNT_NOT_AVAILABLE]: {
+                address: string;
+                walletName: string;
+            };
+            [SOLANA_ERROR__WALLET__INVALID_MESSAGE_SIGNATURE]: {
+                address: string;
+                walletName: string;
+            };
+            [SOLANA_ERROR__WALLET__INVALID_NUMBER_OF_OUTPUTS]: {
+                actual: number;
+                expected: number;
+                featureName: string;
+                walletName: string;
+            };
+            [SOLANA_ERROR__WALLET__INVALID_SIGN_IN_OUTPUT]: {
                 address: string;
                 walletName: string;
             };
