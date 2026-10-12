@@ -12,7 +12,7 @@ describe('recent blockhashes', () => {
     it('decode', () => {
         // prettier-ignore
         const recentBlockhashesState = new Uint8Array([
-            2, 0, 0, 0,                 // array length 
+            2, 0, 0, 0, 0, 0, 0, 0,     // array length 
             1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
             134, 74, 2, 0, 0, 0, 0, 0,  // lamportsPerSignature
             2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,

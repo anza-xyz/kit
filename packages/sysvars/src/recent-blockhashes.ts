@@ -6,6 +6,7 @@ import {
     type VariableSizeEncoder,
 } from '@solana/codecs-core';
 import { getArrayDecoder, getArrayEncoder, getStructDecoder, getStructEncoder } from '@solana/codecs-data-structures';
+import { getU64Decoder, getU64Encoder } from '@solana/codecs-numbers';
 import type { GetAccountInfoApi } from '@solana/rpc-api';
 import type { Rpc } from '@solana/rpc-spec';
 import {
@@ -55,6 +56,7 @@ export function getSysvarRecentBlockhashesEncoder(): VariableSizeEncoder<SysvarR
             ['blockhash', getBlockhashEncoder()],
             ['feeCalculator', getStructEncoder([['lamportsPerSignature', getDefaultLamportsEncoder()]])],
         ]),
+        { size: getU64Encoder() },
     );
 }
 
@@ -72,6 +74,7 @@ export function getSysvarRecentBlockhashesDecoder(): VariableSizeDecoder<SysvarR
             ['blockhash', getBlockhashDecoder()],
             ['feeCalculator', getStructDecoder([['lamportsPerSignature', getDefaultLamportsDecoder()]])],
         ]),
+        { size: getU64Decoder() },
     );
 }
 

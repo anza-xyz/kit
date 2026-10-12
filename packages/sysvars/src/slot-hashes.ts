@@ -31,6 +31,7 @@ export function getSysvarSlotHashesEncoder(): VariableSizeEncoder<SysvarSlotHash
             ['slot', getU64Encoder()],
             ['hash', getBlockhashEncoder()],
         ]),
+        { size: getU64Encoder() },
     );
 }
 
@@ -44,6 +45,7 @@ export function getSysvarSlotHashesDecoder(): VariableSizeDecoder<SysvarSlotHash
             ['slot', getU64Decoder()],
             ['hash', getBlockhashDecoder()],
         ]),
+        { size: getU64Decoder() },
     );
 }
 

@@ -12,7 +12,7 @@ describe('slot hashes', () => {
     it('decode', () => {
         // prettier-ignore
         const slotHashesState = new Uint8Array([
-            2, 0, 0, 0,                 // array length 
+            2, 0, 0, 0, 0, 0, 0, 0,     // array length 
             134, 74, 2, 0, 0, 0, 0, 0,  // slot
             1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
             134, 74, 2, 0, 0, 0, 0, 0,  // slot
