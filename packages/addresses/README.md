@@ -31,6 +31,8 @@ class MyAddressWrapper implements HasAddress {
 }
 ```
 
+Address-bearing objects can also be encoded directly using the [`getAddressEncoder()`](#getaddressencoder) function.
+
 ### `ProgramDerivedAddress`
 
 This type represents the tuple of a program derived address and the bump seed used to ensure that the address, as derived, is not found on the Ed25519 curve.
@@ -140,6 +142,12 @@ const addressBytes = addressEncoder.encode(address);
 //   149, 243, 115, 254,  20, 200, 36,  30,
 //   248, 179, 178, 232, 220,  89, 53, 127
 // ]
+```
+
+The encoder also accepts any address-bearing object (see `HasAddress`), in which case it encodes the address exposed by its `address` property. This means signers and framework wrapper classes can be encoded directly, without having to unwrap them first.
+
+```ts
+const addressBytes = addressEncoder.encode(signer); // Same bytes as `encode(signer.address)`.
 ```
 
 ### `getAddressFromPublicKey()`

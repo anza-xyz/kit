@@ -181,6 +181,10 @@ export function address<TAddress extends string = string>(putativeAddress: TAddr
 /**
  * Returns an encoder that you can use to encode a base58-encoded address to a byte array.
  *
+ * In addition to plain {@link Address} values, the encoder accepts any address-bearing object
+ * (see {@link HasAddress}) — e.g. a `TransactionSigner` or a framework's address wrapper class —
+ * in which case the address exposed by its `address` property is encoded.
+ *
  * @example
  * ```ts
  * import { getAddressEncoder } from '@solana/addresses';
@@ -195,10 +199,21 @@ export function address<TAddress extends string = string>(putativeAddress: TAddr
  * //   248, 179, 178, 232, 220,  89, 53, 127
  * // ]
  * ```
+ *
+ * @example
+ * Encoding an address-bearing object.
+ * ```ts
+ * import { getAddressEncoder } from '@solana/addresses';
+ *
+ * const addressEncoder = getAddressEncoder();
+ * const addressBytes = addressEncoder.encode(signer); // Same bytes as `encode(signer.address)`.
+ * ```
+ *
+ * @see {@link HasAddress}
  */
-export function getAddressEncoder(): FixedSizeEncoder<Address, 32> {
-    return transformEncoder(fixEncoderSize(getMemoizedBase58Encoder(), 32), putativeAddress =>
-        address(putativeAddress),
+export function getAddressEncoder(): FixedSizeEncoder<Address | HasAddress, 32> {
+    return transformEncoder(fixEncoderSize(getMemoizedBase58Encoder(), 32), (value: Address | HasAddress) =>
+        address(typeof value === 'string' ? value : value.address),
     );
 }
 
@@ -227,10 +242,13 @@ export function getAddressDecoder(): FixedSizeDecoder<Address, 32> {
 /**
  * Returns a codec that you can use to encode from or decode to a base-58 encoded address.
  *
+ * Like {@link getAddressEncoder}, the codec also accepts address-bearing objects (see
+ * {@link HasAddress}) when encoding, whereas decoding always yields a plain {@link Address}.
+ *
  * @see {@link getAddressDecoder}
  * @see {@link getAddressEncoder}
  */
-export function getAddressCodec(): FixedSizeCodec<Address, Address, 32> {
+export function getAddressCodec(): FixedSizeCodec<Address | HasAddress, Address, 32> {
     return combineCodec(getAddressEncoder(), getAddressDecoder());
 }
 

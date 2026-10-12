@@ -7,7 +7,7 @@ import {
     SolanaError,
 } from '@solana/errors';
 
-import { Address, getAddressCodec, getAddressComparator } from '../address';
+import { Address, getAddressCodec, getAddressComparator, getAddressEncoder } from '../address';
 
 jest.mock('@solana/codecs-strings', () => ({
     ...jest.requireActual('@solana/codecs-strings'),
@@ -216,6 +216,47 @@ describe('Address', () => {
         });
     });
 
+    describe('getAddressEncoder', () => {
+        const ADDRESS = '4wBqpZM9xaSheZzJSMawUKKwhdpChKbZ5eu5ky4Vigw' as Address;
+        const ADDRESS_BYTES = new Uint8Array([
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+            30, 31, 32,
+        ]);
+        let encoder: ReturnType<typeof getAddressEncoder>;
+        beforeEach(() => {
+            // use real implementation
+            jest.mocked(getBase58Encoder).mockReturnValue(originalGetBase58Encoder);
+
+            encoder = getAddressEncoder();
+        });
+        it('encodes a base58 encoded address into a 32-byte buffer', () => {
+            expect(encoder.encode(ADDRESS)).toEqual(ADDRESS_BYTES);
+        });
+        it('encodes an address-bearing object into the bytes of its address', () => {
+            expect(encoder.encode({ address: ADDRESS })).toEqual(ADDRESS_BYTES);
+        });
+        it('encodes an address-bearing object that exposes other properties', () => {
+            const signer = { address: ADDRESS, signTransactions: () => Promise.resolve([]) };
+            expect(encoder.encode(signer)).toEqual(ADDRESS_BYTES);
+        });
+        it('encodes an address-bearing class instance', () => {
+            class AddressWrapper {
+                constructor(readonly address: Address) {}
+            }
+            expect(encoder.encode(new AddressWrapper(ADDRESS))).toEqual(ADDRESS_BYTES);
+        });
+        it('throws when supplied an invalid address', () => {
+            expect(() => encoder.encode('not-a-base-58-encoded-string' as Address)).toThrow(
+                new SolanaError(SOLANA_ERROR__ADDRESSES__STRING_LENGTH_OUT_OF_RANGE, { actualLength: 28 }),
+            );
+        });
+        it('throws when supplied an address-bearing object wrapping an invalid address', () => {
+            expect(() => encoder.encode({ address: 'not-a-base-58-encoded-string' as Address })).toThrow(
+                new SolanaError(SOLANA_ERROR__ADDRESSES__STRING_LENGTH_OUT_OF_RANGE, { actualLength: 28 }),
+            );
+        });
+    });
+
     describe('getAddressCodec', () => {
         let address: ReturnType<typeof getAddressCodec>;
         beforeEach(() => {
@@ -236,6 +277,10 @@ describe('Address', () => {
                     0,
                 ]),
             );
+        });
+        it('round-trips an address-bearing object into a plain base58 encoded address', () => {
+            const wrapper = { address: '4wBqpZM9xaSheZzJSMawUKKwhdpChKbZ5eu5ky4Vigw' as Address };
+            expect(address.decode(address.encode(wrapper))).toBe(wrapper.address);
         });
         it('deserializes a byte buffer representing an address into a base58 encoded address', () => {
             expect(
