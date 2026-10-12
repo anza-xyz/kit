@@ -1,12 +1,17 @@
 import type { Address } from '@solana/addresses';
-import { address } from '@solana/addresses';
+import { address, getPublicKeyFromAddress } from '@solana/addresses';
 import { bytesEqual } from '@solana/codecs-core';
-import type { SignatureBytes } from '@solana/keys';
+import {
+    SOLANA_ERROR__WALLET__INVALID_MESSAGE_SIGNATURE,
+    SOLANA_ERROR__WALLET__INVALID_NUMBER_OF_OUTPUTS,
+    SolanaError,
+} from '@solana/errors';
+import { isSignatureBytes, type SignatureBytes, verifySignature } from '@solana/keys';
 import { getAbortablePromise } from '@solana/promises';
 import type { MessageModifyingSigner, SignableMessage } from '@solana/signers';
 import { SolanaSignMessage, SolanaSignMessageFeature } from '@solana/wallet-standard-features';
 import { getWalletAccountFeature, UiWalletAccount } from '@wallet-standard/ui';
-import { getWalletAccountForUiWalletAccount_DO_NOT_USE_OR_YOU_WILL_BE_FIRED } from '@wallet-standard/ui-registry';
+import { getWalletAccountForUiWalletAccount, getWalletForHandle } from '@wallet-standard/ui-registry';
 
 /**
  * Creates a {@link MessageModifyingSigner} from a {@link UiWalletAccount}.
@@ -15,8 +20,16 @@ import { getWalletAccountForUiWalletAccount_DO_NOT_USE_OR_YOU_WILL_BE_FIRED } fr
  * {@link MessageModifyingSigner} interface, allowing any wallet that implements the
  * `solana:signMessage` feature to be used as a message signer.
  *
+ * Each signature returned by the wallet is verified against the account's address and the signed
+ * message, so a wallet cannot return a signature that was not made by the account.
+ *
  * @param uiWalletAccount - The wallet account to create a signer from.
  * @returns A {@link MessageModifyingSigner} that signs messages using the wallet.
+ *
+ * @throws {@link SOLANA_ERROR__WALLET__INVALID_NUMBER_OF_OUTPUTS} from `modifyAndSignMessages` when the
+ * wallet returns a different number of signed messages than it was asked to sign.
+ * @throws {@link SOLANA_ERROR__WALLET__INVALID_MESSAGE_SIGNATURE} from `modifyAndSignMessages` when the
+ * wallet returns a signature that is not a valid signature of the signed message by the account.
  *
  * @example
  * ```ts
@@ -40,10 +53,26 @@ export function createMessageSignerFromWalletAccount<TWalletAccount extends UiWa
         SolanaSignMessage,
     ) as SolanaSignMessageFeature[typeof SolanaSignMessage];
 
-    const account = getWalletAccountForUiWalletAccount_DO_NOT_USE_OR_YOU_WILL_BE_FIRED(uiWalletAccount);
+    const account = getWalletAccountForUiWalletAccount(uiWalletAccount);
+    const walletName = getWalletForHandle(uiWalletAccount).name;
+    const signerAddress = address(uiWalletAccount.address);
+
+    async function assertSignaturesAreValid(outputs: readonly { signature: Uint8Array; signedMessage: Uint8Array }[]) {
+        const publicKey = await getPublicKeyFromAddress(signerAddress);
+        await Promise.all(
+            outputs.map(async ({ signature, signedMessage }) => {
+                if (!isSignatureBytes(signature) || !(await verifySignature(publicKey, signature, signedMessage))) {
+                    throw new SolanaError(SOLANA_ERROR__WALLET__INVALID_MESSAGE_SIGNATURE, {
+                        address: signerAddress,
+                        walletName,
+                    });
+                }
+            }),
+        );
+    }
 
     return {
-        address: address(uiWalletAccount.address),
+        address: signerAddress,
         async modifyAndSignMessages(messages, config = {}) {
             const { abortSignal } = config;
             abortSignal?.throwIfAborted();
@@ -57,7 +86,22 @@ export function createMessageSignerFromWalletAccount<TWalletAccount extends UiWa
                 message: message.content,
             }));
 
-            const outputs = await getAbortablePromise(signMessageFeature.signMessage(...inputs), abortSignal);
+            const walletOutputs = await getAbortablePromise(signMessageFeature.signMessage(...inputs), abortSignal);
+            if (walletOutputs.length !== messages.length) {
+                throw new SolanaError(SOLANA_ERROR__WALLET__INVALID_NUMBER_OF_OUTPUTS, {
+                    actual: walletOutputs.length,
+                    expected: messages.length,
+                    featureName: SolanaSignMessage,
+                    walletName,
+                });
+            }
+
+            // Copy the wallet's outputs, so that they can't be changed after they are verified.
+            const outputs = walletOutputs.map(({ signedMessage, signature }) => ({
+                signature: new Uint8Array(signature),
+                signedMessage: new Uint8Array(signedMessage),
+            }));
+            await getAbortablePromise(assertSignaturesAreValid(outputs), abortSignal);
 
             const results = outputs.map((output, index) => {
                 const originalMessage = messages[index];

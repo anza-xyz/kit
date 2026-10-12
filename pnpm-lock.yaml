@@ -1701,6 +1701,9 @@ importers:
       '@solana/codecs-core':
         specifier: workspace:*
         version: link:../codecs-core
+      '@solana/errors':
+        specifier: workspace:*
+        version: link:../errors
       '@solana/keys':
         specifier: workspace:*
         version: link:../keys
@@ -1737,10 +1740,6 @@ importers:
       typescript:
         specifier: '>=5.4.0'
         version: 5.9.3
-    devDependencies:
-      '@solana/errors':
-        specifier: workspace:*
-        version: link:../errors
 
   packages/webcrypto-ed25519-polyfill:
     dependencies:

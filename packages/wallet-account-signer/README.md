@@ -74,6 +74,8 @@ const [signature] = await signer.signAndSendTransactions([transaction]);
 
 Creates a `MessageModifyingSigner` from a wallet account that supports the `solana:signMessage` feature. Unlike the transaction signers, this function does not require a `chain` parameter.
 
+Each signature returned by the wallet is verified against the account's address and the message the wallet signed. If any signature is invalid, `modifyAndSignMessages` rejects with a `SOLANA_ERROR__WALLET__INVALID_MESSAGE_SIGNATURE` error, and if the wallet returns a different number of signed messages than it was asked to sign, it rejects with a `SOLANA_ERROR__WALLET__INVALID_NUMBER_OF_OUTPUTS` error. Verifying signatures requires Ed25519 support in the WebCrypto API; in environments without it, install `@solana/webcrypto-ed25519-polyfill`.
+
 ```ts
 import { createMessageSignerFromWalletAccount } from '@solana/wallet-account-signer';
 import { createSignableMessage } from '@solana/signers';
