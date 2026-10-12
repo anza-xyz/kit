@@ -94,6 +94,12 @@ type SolanaErrorCodedContext = {
         (SolanaErrorContext[P] extends undefined ? object : SolanaErrorContext[P]);
 };
 
+// The same shape as the standard `ErrorOptions`, declared here rather than referencing the global
+// so that the published types don't depend on the consumer's `lib` including `ES2022.Error`. In a
+// consumer without it, `ErrorOptions` would be unresolved, and with `skipLibCheck` enabled that
+// silently turns the constructor's context parameter into `any`.
+type SolanaErrorOptions = { cause?: unknown };
+
 /**
  * Encapsulates an error's stacktrace, a Solana-specific numeric code that indicates what went
  * wrong, and optional context if the type of error indicated by the code supports it.
@@ -112,14 +118,17 @@ export class SolanaError<TErrorCode extends SolanaErrorCode = SolanaErrorCode> e
     readonly context: SolanaErrorCodedContext[TErrorCode];
     constructor(
         ...[code, contextAndErrorOptions]: SolanaErrorContext[TErrorCode] extends undefined
-            ? [code: TErrorCode, errorOptions?: ErrorOptions | undefined]
-            : [code: TErrorCode, contextAndErrorOptions: SolanaErrorContext[TErrorCode] & (ErrorOptions | undefined)]
+            ? [code: TErrorCode, errorOptions?: SolanaErrorOptions | undefined]
+            : [
+                  code: TErrorCode,
+                  contextAndErrorOptions: SolanaErrorContext[TErrorCode] & (SolanaErrorOptions | undefined),
+              ]
     ) {
         let context: SolanaErrorContext[TErrorCode] | undefined;
-        let errorOptions: ErrorOptions | undefined;
+        let errorOptions: SolanaErrorOptions | undefined;
         if (contextAndErrorOptions) {
             Object.entries(Object.getOwnPropertyDescriptors(contextAndErrorOptions)).forEach(([name, descriptor]) => {
-                // If the `ErrorOptions` type ever changes, update this code.
+                // If the `ErrorOptions` type ever changes, update `SolanaErrorOptions` and this code.
                 if (name === 'cause') {
                     errorOptions = { cause: descriptor.value };
                 } else {

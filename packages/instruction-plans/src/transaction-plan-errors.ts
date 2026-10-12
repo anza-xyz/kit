@@ -20,6 +20,7 @@ import {
     type TransactionPlanResultContext,
     type TransactionPlanResultContextWithSignature,
 } from './transaction-plan-result';
+import { withTransactionPlanResult } from './transaction-plan-result-error-context';
 
 type PreflightData = Omit<RpcSimulateTransactionResult, 'err'>;
 
@@ -230,7 +231,7 @@ function getSingleFailureContext<TContext extends TransactionPlanResultContext>(
     result: CanceledSingleTransactionPlanResult<TContext> | FailedSingleTransactionPlanResult<TContext>,
     abortReason: unknown,
     includeSubmissionIndicator: boolean,
-): Record<string, unknown> {
+) {
     let causeMessage: string;
     let cause: unknown;
     let logs: readonly string[] | undefined;
@@ -250,19 +251,7 @@ function getSingleFailureContext<TContext extends TransactionPlanResultContext>(
         causeMessage = abortReason != null ? `. Canceled with abort reason: ${String(abortReason)}` : ': Canceled';
     }
 
-    const context: Record<string, unknown> = {
-        cause,
-        causeMessage,
-        logs,
-        preflightData,
-    };
-    Object.defineProperty(context, 'transactionPlanResult', {
-        configurable: false,
-        enumerable: false,
-        value: result,
-        writable: false,
-    });
-    return context;
+    return withTransactionPlanResult({ cause, causeMessage, logs, preflightData }, result);
 }
 
 /**
@@ -276,7 +265,7 @@ function getMultipleFailuresContext<TContext extends TransactionPlanResultContex
     result: TransactionPlanResult<TContext>,
     abortReason: unknown,
     includeSubmissionIndicator: boolean,
-): Record<string, unknown> {
+) {
     const flattenedResults = flattenTransactionPlanResult(result);
 
     const failedTransactions = flattenedResults.flatMap((singleResult, index) => {
@@ -310,18 +299,7 @@ function getMultipleFailuresContext<TContext extends TransactionPlanResultContex
         causeMessages = abortReason != null ? `. Canceled with abort reason: ${String(abortReason)}` : ': Canceled';
     }
 
-    const context: Record<string, unknown> = {
-        cause,
-        causeMessages,
-        failedTransactions,
-    };
-    Object.defineProperty(context, 'transactionPlanResult', {
-        configurable: false,
-        enumerable: false,
-        value: result,
-        writable: false,
-    });
-    return context;
+    return withTransactionPlanResult({ cause, causeMessages, failedTransactions }, result);
 }
 
 /**
@@ -357,17 +335,14 @@ export function createFailedToExecuteTransactionPlanError<
     result: TransactionPlanResult<TContext>,
     abortReason?: unknown,
 ): SolanaError<typeof SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN> {
-    const context: Record<string, unknown> = {
-        abortReason,
-        // Deprecated: will be removed in a future version.
-        cause: findErrorFromTransactionPlanResult(result) ?? abortReason,
-    };
-    Object.defineProperty(context, 'transactionPlanResult', {
-        configurable: false,
-        enumerable: false,
-        value: result,
-        writable: false,
-    });
+    const context = withTransactionPlanResult(
+        {
+            abortReason,
+            // Deprecated: will be removed in a future version.
+            cause: findErrorFromTransactionPlanResult(result) ?? abortReason,
+        },
+        result,
+    );
     return new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN, context);
 }
 

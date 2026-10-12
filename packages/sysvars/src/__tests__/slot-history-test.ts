@@ -1,3 +1,8 @@
+import {
+    SOLANA_ERROR__CODECS__ENUM_DISCRIMINATOR_OUT_OF_RANGE,
+    SOLANA_ERROR__CODECS__INVALID_BYTE_LENGTH,
+    SolanaError,
+} from '@solana/errors';
 import type { GetAccountInfoApi } from '@solana/rpc-api';
 import type { Rpc } from '@solana/rpc-spec';
 
@@ -31,6 +36,29 @@ describe('slot history', () => {
             bits: expect.arrayContaining([72_340_172_838_076_673n]), // [1, 1, 1, 1, 1, 1, 1, 1]
             nextSlot: 150_150n,
         });
+    });
+    it('throws when decoding bytes of the wrong length', () => {
+        const codec = getSysvarSlotHistoryCodec();
+        const bytes = new Uint8Array(codec.fixedSize - 1);
+        expect(() => codec.decode(bytes)).toThrow(
+            new SolanaError(SOLANA_ERROR__CODECS__INVALID_BYTE_LENGTH, {
+                bytesLength: codec.fixedSize - 1,
+                codecDescription: 'SysvarSlotHistoryCodec',
+                expected: codec.fixedSize,
+            }),
+        );
+    });
+    it('throws when decoding an unexpected bitvector discriminator', () => {
+        const codec = getSysvarSlotHistoryCodec();
+        const bytes = new Uint8Array(codec.fixedSize);
+        bytes[0] = 7;
+        expect(() => codec.decode(bytes)).toThrow(
+            new SolanaError(SOLANA_ERROR__CODECS__ENUM_DISCRIMINATOR_OUT_OF_RANGE, {
+                discriminator: 7,
+                formattedValidDiscriminators: '1',
+                validDiscriminators: [1],
+            }),
+        );
     });
     it('fetch', async () => {
         expect.assertions(1);

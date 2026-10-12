@@ -80,7 +80,7 @@ describe('compileTransactionMessage', () => {
 
         expect(() => compileTransactionMessage(tx)).toThrow(
             new SolanaError(SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED, {
-                version: 2,
+                unsupportedVersion: 2,
             }),
         );
     });

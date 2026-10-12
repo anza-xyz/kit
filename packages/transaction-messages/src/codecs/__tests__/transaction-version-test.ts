@@ -32,7 +32,8 @@ describe.each([getTransactionVersionCodec, getTransactionVersionEncoder])(
         it.each(UNSUPPORTED_VERSION_TEST_CASES)('fatals for unsupported version `%s`', (_byte, version) => {
             expect(() => transactionVersion.encode(version)).toThrow(
                 new SolanaError(SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED, {
-                    unsupportedVersion: version,
+                    // Unsupported versions are always numeric.
+                    unsupportedVersion: version as number,
                 }),
             );
         });
@@ -77,7 +78,8 @@ describe.each([getTransactionVersionCodec, getTransactionVersionDecoder])(
         it.each(UNSUPPORTED_VERSION_TEST_CASES)('fatals for unsupported version `%s`', (byte, version) => {
             expect(() => transactionVersion.decode(new Uint8Array([byte]))).toThrow(
                 new SolanaError(SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED, {
-                    unsupportedVersion: version,
+                    // Unsupported versions are always numeric.
+                    unsupportedVersion: version as number,
                 }),
             );
         });

@@ -83,7 +83,7 @@ export function compileTransactionMessage<
         return compileV1TransactionMessage(transactionMessage) as ReturnType;
     } else {
         throw new SolanaError(SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED, {
-            version,
+            unsupportedVersion: version,
         });
     }
 }

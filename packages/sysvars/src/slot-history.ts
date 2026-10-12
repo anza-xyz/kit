@@ -119,7 +119,8 @@ export function getSysvarSlotHistoryDecoder(): FixedSizeDecoder<SysvarSlotHistor
             // Byte length should be exact.
             if (bytes.length != SLOT_HISTORY_ACCOUNT_DATA_STATIC_SIZE) {
                 throw new SolanaError(SOLANA_ERROR__CODECS__INVALID_BYTE_LENGTH, {
-                    actual: bytes.length,
+                    bytesLength: bytes.length,
+                    codecDescription: 'SysvarSlotHistoryCodec',
                     expected: SLOT_HISTORY_ACCOUNT_DATA_STATIC_SIZE,
                 });
             }
@@ -128,8 +129,9 @@ export function getSysvarSlotHistoryDecoder(): FixedSizeDecoder<SysvarSlotHistor
             offset += 1;
             if (discriminator !== BITVEC_DISCRIMINATOR) {
                 throw new SolanaError(SOLANA_ERROR__CODECS__ENUM_DISCRIMINATOR_OUT_OF_RANGE, {
-                    actual: discriminator,
-                    expected: BITVEC_DISCRIMINATOR,
+                    discriminator,
+                    formattedValidDiscriminators: `${BITVEC_DISCRIMINATOR}`,
+                    validDiscriminators: [BITVEC_DISCRIMINATOR],
                 });
             }
             // Next 8 bytes are the bitvector length.

@@ -68,7 +68,7 @@ export function decompileTransactionMessage(
         return decompileV1TransactionMessage(compiledTransactionMessage, config);
     } else {
         throw new SolanaError(SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED, {
-            version,
+            unsupportedVersion: version,
         });
     }
 }

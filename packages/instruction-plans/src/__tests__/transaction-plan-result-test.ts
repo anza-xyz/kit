@@ -1464,7 +1464,7 @@ describe('getFirstFailedSingleTransactionPlanResult', () => {
 
         expect(() => getFirstFailedSingleTransactionPlanResult(successfulResult)).toThrow(
             new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_SINGLE_TRANSACTION_PLAN_RESULT_NOT_FOUND, {
-                context: expect.any(Object),
+                transactionPlanResult: successfulResult,
             }),
         );
     });
@@ -1479,9 +1479,7 @@ describe('getFirstFailedSingleTransactionPlanResult', () => {
 
         expect(() => getFirstFailedSingleTransactionPlanResult(canceledResult)).toThrow(
             new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_SINGLE_TRANSACTION_PLAN_RESULT_NOT_FOUND, {
-                context: {
-                    transactionPlanResult: canceledResult,
-                },
+                transactionPlanResult: canceledResult,
             }),
         );
     });
@@ -1496,9 +1494,7 @@ describe('getFirstFailedSingleTransactionPlanResult', () => {
 
         expect(() => getFirstFailedSingleTransactionPlanResult(mixedResult)).toThrow(
             new SolanaError(SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_SINGLE_TRANSACTION_PLAN_RESULT_NOT_FOUND, {
-                context: {
-                    transactionPlanResult: mixedResult,
-                },
+                transactionPlanResult: mixedResult,
             }),
         );
     });

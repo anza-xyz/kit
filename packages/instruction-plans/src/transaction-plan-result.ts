@@ -8,6 +8,8 @@ import { Signature } from '@solana/keys';
 import { TransactionMessage, TransactionMessageWithFeePayer } from '@solana/transaction-messages';
 import { Transaction } from '@solana/transactions';
 
+import { withTransactionPlanResult } from './transaction-plan-result-error-context';
+
 /**
  * The result of executing a transaction plan.
  *
@@ -1293,16 +1295,9 @@ export function getFirstFailedSingleTransactionPlanResult<
         // Here we want the `transactionPlanResult` to be available in the error context
         // so applications can recover but we don't want this object to be
         // serialized with the error. This is why we set it as a non-enumerable property.
-        const context = {};
-        Object.defineProperty(context, 'transactionPlanResult', {
-            configurable: false,
-            enumerable: false,
-            value: transactionPlanResult,
-            writable: false,
-        });
         throw new SolanaError(
             SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_SINGLE_TRANSACTION_PLAN_RESULT_NOT_FOUND,
-            context,
+            withTransactionPlanResult({}, transactionPlanResult),
         );
     }
 
