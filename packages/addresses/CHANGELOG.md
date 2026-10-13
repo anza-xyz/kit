@@ -1,5 +1,25 @@
 # @solana/addresses
 
+## 8.5.0
+
+### Minor Changes
+
+- [#2115](https://github.com/anza-xyz/kit/pull/2115) [`e59ed8b`](https://github.com/anza-xyz/kit/commit/e59ed8b9f4a397ee3b353978b2ff71f1e6cea7ea) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Allow `getAddressEncoder()` and `getAddressCodec()` to encode any address-bearing object (`HasAddress`) in addition to plain `Address` values, so that signers and framework wrapper classes can be encoded directly without unwrapping them first. Decoders still return a plain `Address`. As a result, the encoder input type of codecs composing an address codec (e.g. a struct with an address field) is now inferred as `Address | HasAddress` instead of `Address`.
+  
+  ```ts
+  const addressEncoder = getAddressEncoder();
+  addressEncoder.encode(signer); // Same bytes as `addressEncoder.encode(signer.address)`.
+  ```
+
+### Patch Changes
+
+- Updated dependencies [[`0be380e`](https://github.com/anza-xyz/kit/commit/0be380e33ff5af9c072810124c79a052f7ad30ed), [`7ea5132`](https://github.com/anza-xyz/kit/commit/7ea51329ccc1854ad8d691f6a511f994690f9fa7), [`cfe1d62`](https://github.com/anza-xyz/kit/commit/cfe1d62742842b0838408b8ee3c8d5f8748d6ba9), [`de1c63f`](https://github.com/anza-xyz/kit/commit/de1c63fb02528ed75428713c8f608a8133883afd), [`f47f025`](https://github.com/anza-xyz/kit/commit/f47f02596549058e2c23b077a2e981157dba4297)]:
+  - @solana/errors@8.5.0
+  - @solana/codecs-strings@8.5.0
+  - @solana/assertions@8.5.0
+  - @solana/codecs-core@8.5.0
+  - @solana/nominal-types@8.5.0
+
 ## 8.4.0
 
 ### Patch Changes

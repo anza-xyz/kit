@@ -1,5 +1,18 @@
 # @solana/rpc-subscriptions-api
 
+## 8.5.0
+
+### Patch Changes
+
+- Updated dependencies [[`e59ed8b`](https://github.com/anza-xyz/kit/commit/e59ed8b9f4a397ee3b353978b2ff71f1e6cea7ea), [`cfe1d62`](https://github.com/anza-xyz/kit/commit/cfe1d62742842b0838408b8ee3c8d5f8748d6ba9), [`f47f025`](https://github.com/anza-xyz/kit/commit/f47f02596549058e2c23b077a2e981157dba4297)]:
+  - @solana/addresses@8.5.0
+  - @solana/keys@8.5.0
+  - @solana/transaction-messages@8.5.0
+  - @solana/rpc-types@8.5.0
+  - @solana/rpc-subscriptions-spec@8.5.0
+  - @solana/rpc-transformers@8.5.0
+  - @solana/transactions@8.5.0
+
 ## 8.4.0
 
 ### Patch Changes

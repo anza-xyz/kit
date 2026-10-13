@@ -1,5 +1,23 @@
 # @solana/wallet-account-signer
 
+## 8.5.0
+
+### Minor Changes
+
+- [#2112](https://github.com/anza-xyz/kit/pull/2112) [`9021e99`](https://github.com/anza-xyz/kit/commit/9021e9925f15eb9b42f168388e2351ca870836b1) Thanks [@mcintyre94](https://github.com/mcintyre94)! - `createMessageSignerFromWalletAccount` now verifies each signature returned by the wallet against the account's address and the message the wallet signed, and `modifyAndSignMessages` rejects with `SOLANA_ERROR__WALLET__INVALID_MESSAGE_SIGNATURE` if any of them is invalid. It also rejects with `SOLANA_ERROR__WALLET__INVALID_NUMBER_OF_OUTPUTS` if the wallet returns a different number of signed messages than it was asked to sign. The returned message content and signatures are copies of the wallet's output, so the wallet cannot change them after they are verified. Verifying signatures requires Ed25519 support in the WebCrypto API; in environments without it, install `@solana/webcrypto-ed25519-polyfill`.
+
+### Patch Changes
+
+- Updated dependencies [[`0be380e`](https://github.com/anza-xyz/kit/commit/0be380e33ff5af9c072810124c79a052f7ad30ed), [`e59ed8b`](https://github.com/anza-xyz/kit/commit/e59ed8b9f4a397ee3b353978b2ff71f1e6cea7ea), [`cfe1d62`](https://github.com/anza-xyz/kit/commit/cfe1d62742842b0838408b8ee3c8d5f8748d6ba9), [`de1c63f`](https://github.com/anza-xyz/kit/commit/de1c63fb02528ed75428713c8f608a8133883afd), [`f47f025`](https://github.com/anza-xyz/kit/commit/f47f02596549058e2c23b077a2e981157dba4297)]:
+  - @solana/errors@8.5.0
+  - @solana/addresses@8.5.0
+  - @solana/keys@8.5.0
+  - @solana/transaction-messages@8.5.0
+  - @solana/codecs-core@8.5.0
+  - @solana/signers@8.5.0
+  - @solana/transactions@8.5.0
+  - @solana/promises@8.5.0
+
 ## 8.4.0
 
 ### Patch Changes

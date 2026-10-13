@@ -1,5 +1,27 @@
 # @solana/plugin-interfaces
 
+## 8.5.0
+
+### Patch Changes
+
+- [#2104](https://github.com/anza-xyz/kit/pull/2104) [`41896b7`](https://github.com/anza-xyz/kit/commit/41896b72f2aac6e2f8a212dd4ee994706bdd0653) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Fix `ClientWithTransactionPlanning`, `ClientWithTransactionSending` and `ClientWithTransactionSigning` rejecting the `maxInstructionsPerTransaction` option that transaction planners support per call. Their planning, sending and signing functions now accept it, making it possible to override the maximum number of instructions per transaction for a single request. Sending and signing functions only use it when their input needs to be planned first.
+  
+  ```ts
+  await client.planTransactions(instructions, { maxInstructionsPerTransaction: 8 });
+  await client.sendTransactions(instructions, { maxInstructionsPerTransaction: 8 });
+  await client.signTransactions(instructions, { maxInstructionsPerTransaction: 8 });
+  ```
+- Updated dependencies [[`e59ed8b`](https://github.com/anza-xyz/kit/commit/e59ed8b9f4a397ee3b353978b2ff71f1e6cea7ea), [`cfe1d62`](https://github.com/anza-xyz/kit/commit/cfe1d62742842b0838408b8ee3c8d5f8748d6ba9)]:
+  - @solana/addresses@8.5.0
+  - @solana/keys@8.5.0
+  - @solana/rpc-types@8.5.0
+  - @solana/accounts@8.5.0
+  - @solana/instruction-plans@8.5.0
+  - @solana/rpc-spec@8.5.0
+  - @solana/rpc-subscriptions-spec@8.5.0
+  - @solana/signers@8.5.0
+  - @solana/transactions@8.5.0
+
 ## 8.4.0
 
 ### Patch Changes

@@ -1,5 +1,20 @@
 # @solana/sysvars
 
+## 8.5.0
+
+### Patch Changes
+
+- [#2116](https://github.com/anza-xyz/kit/pull/2116) [`534ea5e`](https://github.com/anza-xyz/kit/commit/534ea5e44fbfd664ababe41ea7311984c7c33599) Thanks [@Iamsohungrynow](https://github.com/Iamsohungrynow)! - The `SysvarSlotHashes` and `SysvarRecentBlockhashes` encoders/decoders now use the `u64` length prefix that these sysvar accounts actually have, instead of a `u32` one. Previously every decoded entry was shifted by four bytes, so the slots, hashes and fees came back wrong.
+
+- [#2110](https://github.com/anza-xyz/kit/pull/2110) [`f47f025`](https://github.com/anza-xyz/kit/commit/f47f02596549058e2c23b077a2e981157dba4297) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Type-check `SolanaError` contexts in projects whose TypeScript `lib` does not include `ES2022.Error`. The `SolanaError` constructor referenced the global `ErrorOptions` type, which is unresolved without that lib, so with `skipLibCheck` enabled its context parameter silently became `any` and any context was accepted. Fixes the error contexts this was hiding: `compileTransactionMessage` and `decompileTransactionMessage` now report the `unsupportedVersion` in `SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED`, and the `SlotHistory` sysvar decoder now provides the expected context for `SOLANA_ERROR__CODECS__INVALID_BYTE_LENGTH` and `SOLANA_ERROR__CODECS__ENUM_DISCRIMINATOR_OUT_OF_RANGE`, so their messages no longer contain unfilled placeholders.
+- Updated dependencies [[`0be380e`](https://github.com/anza-xyz/kit/commit/0be380e33ff5af9c072810124c79a052f7ad30ed), [`cfe1d62`](https://github.com/anza-xyz/kit/commit/cfe1d62742842b0838408b8ee3c8d5f8748d6ba9), [`de1c63f`](https://github.com/anza-xyz/kit/commit/de1c63fb02528ed75428713c8f608a8133883afd), [`f47f025`](https://github.com/anza-xyz/kit/commit/f47f02596549058e2c23b077a2e981157dba4297)]:
+  - @solana/errors@8.5.0
+  - @solana/codecs-data-structures@8.5.0
+  - @solana/rpc-types@8.5.0
+  - @solana/accounts@8.5.0
+  - @solana/codecs-core@8.5.0
+  - @solana/codecs-numbers@8.5.0
+
 ## 8.4.0
 
 ### Patch Changes

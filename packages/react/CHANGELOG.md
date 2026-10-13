@@ -1,5 +1,16 @@
 # @solana/react
 
+## 8.5.0
+
+### Patch Changes
+
+- Updated dependencies [[`f47f025`](https://github.com/anza-xyz/kit/commit/f47f02596549058e2c23b077a2e981157dba4297)]:
+  - @solana/transaction-messages@8.5.0
+  - @solana/signers@8.5.0
+  - @solana/subscribable@8.5.0
+  - @solana/transactions@8.5.0
+  - @solana/promises@8.5.0
+
 ## 8.4.0
 
 ### Patch Changes

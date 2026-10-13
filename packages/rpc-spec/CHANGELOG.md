@@ -1,5 +1,14 @@
 # @solana/rpc-spec
 
+## 8.5.0
+
+### Patch Changes
+
+- Updated dependencies [[`0be380e`](https://github.com/anza-xyz/kit/commit/0be380e33ff5af9c072810124c79a052f7ad30ed), [`cfe1d62`](https://github.com/anza-xyz/kit/commit/cfe1d62742842b0838408b8ee3c8d5f8748d6ba9), [`de1c63f`](https://github.com/anza-xyz/kit/commit/de1c63fb02528ed75428713c8f608a8133883afd), [`f47f025`](https://github.com/anza-xyz/kit/commit/f47f02596549058e2c23b077a2e981157dba4297)]:
+  - @solana/errors@8.5.0
+  - @solana/rpc-spec-types@8.5.0
+  - @solana/subscribable@8.5.0
+
 ## 8.4.0
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @solana/rpc-parsed-types
 
+## 8.5.0
+
+### Patch Changes
+
+- [#2101](https://github.com/anza-xyz/kit/pull/2101) [`abfded6`](https://github.com/anza-xyz/kit/commit/abfded6bb882389ac75a795a0bee404a749acf3c) Thanks [@ara-stock](https://github.com/ara-stock)! - Fix the parsed `epochRewards` sysvar type to match what Agave returns. The `jsonParsed` info has `active`, `distributedRewards`, `distributionStartingBlockHeight`, `numPartitions`, `parentBlockhash`, `totalPoints` and `totalRewards`, and the reward amounts and points are strings. The old type described a `distributionCompleteBlockHeight` field that Agave does not return, and typed the amounts as `bigint`.
+
 ## 8.4.0
 
 No changes in this release.

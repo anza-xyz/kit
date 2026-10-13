@@ -1,5 +1,40 @@
 # @solana/errors
 
+## 8.5.0
+
+### Minor Changes
+
+- [#2111](https://github.com/anza-xyz/kit/pull/2111) [`0be380e`](https://github.com/anza-xyz/kit/commit/0be380e33ff5af9c072810124c79a052f7ad30ed) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add the `SOLANA_ERROR__WALLET__INVALID_MESSAGE_SIGNATURE` and `SOLANA_ERROR__WALLET__INVALID_SIGN_IN_OUTPUT` error codes, thrown when a wallet returns a message signature or a sign-in output that fails verification. Their context carries the signing account's `address` and the `walletName`.
+  
+  Also add the `SOLANA_ERROR__WALLET__INVALID_NUMBER_OF_OUTPUTS` error code, thrown when a wallet feature returns a different number of outputs than the number of inputs it was given. Its context carries the `expected` and `actual` number of outputs, the `featureName` and the `walletName`.
+
+- [#2095](https://github.com/anza-xyz/kit/pull/2095) [`cfe1d62`](https://github.com/anza-xyz/kit/commit/cfe1d62742842b0838408b8ee3c8d5f8748d6ba9) Thanks [@mcintyre94](https://github.com/mcintyre94)! - `verifySignature()` now verifies strictly, regardless of whether the underlying WebCrypto implementation does so itself (Node.js, for instance, does not). It returns `false` when either the public key or the `R` component of the signature is a point of small order. Previously, trivially forged signatures could verify against small-order public keys such as `11111111111111111111111111111111`.
+  
+  **BREAKING CHANGES**
+  
+  **`verifySignature()` throws unless given an extractable public key.** Checking the public key requires reading its bytes, so a non-extractable public key now causes it to throw a `SolanaError` with code `SOLANA_ERROR__KEYS__VERIFICATION_REQUIRES_EXTRACTABLE_PUBLIC_KEY`. The same error is thrown for a key that is not a public key, which WebCrypto never accepted for verification anyway (it threw an `InvalidAccessError`). Every public key produced by Kit is extractable; if you import one yourself, set `extractable` to `true`.
+  
+  ```diff
+  - const publicKey = await crypto.subtle.importKey('raw', bytes, 'Ed25519', false, ['verify']);
+  + const publicKey = await crypto.subtle.importKey('raw', bytes, 'Ed25519', true, ['verify']);
+    await verifySignature(publicKey, signature, data);
+  ```
+  
+  **`getPublicKeyFromPrivateKey()` always returns an extractable public key.** Public keys are not secret, so this mirrors the behavior of `crypto.subtle.generateKey()`. The `extractable` argument is deprecated and ignored.
+  
+  ```diff
+  - const publicKey = await getPublicKeyFromPrivateKey(privateKey, true);
+  + const publicKey = await getPublicKeyFromPrivateKey(privateKey);
+  ```
+  
+  The Ed25519 polyfill now also rejects public keys and signature `R` components of small order, and opts out of `@noble/ed25519`'s default ZIP-215 semantics.
+
+- [#2089](https://github.com/anza-xyz/kit/pull/2089) [`de1c63f`](https://github.com/anza-xyz/kit/commit/de1c63fb02528ed75428713c8f608a8133883afd) Thanks [@latent-9](https://github.com/latent-9)! - Fix an infinite loop in the `array`, `set`, and `map` codecs' sentinel and remainder decoding strategies: a zero-byte item codec (e.g. `getStructCodec([])`) can never advance past a sentinel boundary or the end of the byte array, so decoding used to push elements until the process ran out of memory. Zero-byte fixed-size item codecs are now rejected on both the encoding and decoding sides when used with the sentinel or remainder strategies, throwing a new error instead: `SOLANA_ERROR__CODECS__UNEXPECTED_ZERO_FIXED_SIZE_ITEM_FOR_ARRAY_LIKE_SIZE_STRATEGY`. They remain allowed when the collection size is explicit.
+
+### Patch Changes
+
+- [#2110](https://github.com/anza-xyz/kit/pull/2110) [`f47f025`](https://github.com/anza-xyz/kit/commit/f47f02596549058e2c23b077a2e981157dba4297) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Type-check `SolanaError` contexts in projects whose TypeScript `lib` does not include `ES2022.Error`. The `SolanaError` constructor referenced the global `ErrorOptions` type, which is unresolved without that lib, so with `skipLibCheck` enabled its context parameter silently became `any` and any context was accepted. Fixes the error contexts this was hiding: `compileTransactionMessage` and `decompileTransactionMessage` now report the `unsupportedVersion` in `SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED`, and the `SlotHistory` sysvar decoder now provides the expected context for `SOLANA_ERROR__CODECS__INVALID_BYTE_LENGTH` and `SOLANA_ERROR__CODECS__ENUM_DISCRIMINATOR_OUT_OF_RANGE`, so their messages no longer contain unfilled placeholders.
+
 ## 8.4.0
 
 ### Minor Changes
