@@ -52,7 +52,7 @@ export const getBase16Encoder = (): VariableSizeEncoder<string> =>
         getSizeFromValue: (value: string) => Math.ceil(value.length / 2),
         write(value: string, bytes, offset) {
             const len = value.length;
-            const al = len / 2;
+            const al = Math.ceil(len / 2);
             if (len === 1) {
                 const c = value.charCodeAt(0);
                 const n = charCodeToBase16(c);

@@ -34,4 +34,12 @@ describe('getBase16Codec', () => {
             }),
         );
     });
+
+    it('keeps the last digit of odd-length strings', () => {
+        const base16 = getBase16Codec();
+
+        expect(base16.encode('abc')).toStrictEqual(new Uint8Array([0xab, 0x0c]));
+        expect(base16.encode('abcde')).toStrictEqual(new Uint8Array([0xab, 0xcd, 0x0e]));
+        expect(base16.write('abc', new Uint8Array(2), 0)).toBe(base16.getSizeFromValue('abc'));
+    });
 });
