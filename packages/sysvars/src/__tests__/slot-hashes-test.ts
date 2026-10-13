@@ -1,7 +1,9 @@
+import { assertAccountDecoded, assertAccountExists, fetchJsonParsedAccount } from '@solana/accounts';
 import type { GetAccountInfoApi } from '@solana/rpc-api';
 import type { Rpc } from '@solana/rpc-spec';
 
 import { fetchSysvarSlotHashes, getSysvarSlotHashesCodec } from '../slot-hashes';
+import { SYSVAR_SLOT_HASHES_ADDRESS } from '../sysvar';
 import { createLocalhostSolanaRpc } from './__setup__';
 
 describe('slot hashes', () => {
@@ -42,5 +44,19 @@ describe('slot hashes', () => {
                 },
             ]),
         );
+    });
+    it("decodes the same entries as the RPC node's `jsonParsed` encoding", async () => {
+        expect.assertions(1);
+        // Fetch the node's own parse first. New slots are pushed onto the front of the sysvar, so its most
+        // recent entry will still be present by the time we fetch and decode the raw bytes ourselves.
+        const jsonParsedAccount = await fetchJsonParsedAccount<{ hash: string; slot: bigint }[]>(
+            rpc,
+            SYSVAR_SLOT_HASHES_ADDRESS,
+        );
+        assertAccountDecoded(jsonParsedAccount);
+        assertAccountExists(jsonParsedAccount);
+        const [mostRecentJsonParsedEntry] = jsonParsedAccount.data;
+        const slotHashes = await fetchSysvarSlotHashes(rpc);
+        expect(slotHashes).toContainEqual(mostRecentJsonParsedEntry);
     });
 });
