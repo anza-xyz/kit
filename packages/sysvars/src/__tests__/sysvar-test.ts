@@ -1,10 +1,12 @@
 import type { GetAccountInfoApi } from '@solana/rpc-api';
+import type { JsonParsedSysvarAccount } from '@solana/rpc-parsed-types';
 import type { Rpc } from '@solana/rpc-spec';
 
 import {
     fetchEncodedSysvarAccount,
     fetchJsonParsedSysvarAccount,
     SYSVAR_CLOCK_ADDRESS,
+    SYSVAR_EPOCH_REWARDS_ADDRESS,
     SYSVAR_EPOCH_SCHEDULE_ADDRESS,
     SYSVAR_LAST_RESTART_SLOT_ADDRESS,
     SYSVAR_RECENT_BLOCKHASHES_ADDRESS,
@@ -56,8 +58,37 @@ describe('sysvar account', () => {
             });
         });
     });
-    // `EpochRewards` will only appear at the start of an epoch, after epoch 0 concludes.
-    // See https://github.com/anza-xyz/agave/blob/e0203f22dc83cb792fa97f91dbe6e924cbd08af1/docs/src/runtime/sysvars.md?plain=1#L155-L168
+    describe('epoch rewards', () => {
+        it('fetch encoded', async () => {
+            expect.assertions(3);
+            await assertValidEncodedSysvarAccount(SYSVAR_EPOCH_REWARDS_ADDRESS);
+        });
+        it('fetch JSON-parsed', async () => {
+            expect.assertions(3);
+            // Keying the expectation off the parsed type means that a key missing from (or extra to) the type
+            // fails to compile, while `toEqual` fails if the RPC node returns a different set of keys.
+            const expectedData: Record<
+                keyof Extract<JsonParsedSysvarAccount, { type: 'epochRewards' }>['info'],
+                unknown
+            > = {
+                active: expect.any(Boolean),
+                distributedRewards: expect.any(String), // JsonParsed converts to string
+                distributionStartingBlockHeight: expect.any(BigInt),
+                numPartitions: expect.any(BigInt),
+                parentBlockhash: expect.any(String),
+                totalPoints: expect.any(String), // JsonParsed converts to string
+                totalRewards: expect.any(String), // JsonParsed converts to string
+            };
+            const account = await fetchJsonParsedSysvarAccount(rpc, SYSVAR_EPOCH_REWARDS_ADDRESS);
+            expect(account.address).toEqual(SYSVAR_EPOCH_REWARDS_ADDRESS);
+            expect(account.exists).toBe(true);
+            expect(account).toEqual(
+                expect.objectContaining({
+                    data: { ...expectedData, parsedAccountMeta: { program: 'sysvar', type: 'epochRewards' } },
+                }),
+            );
+        });
+    });
     describe('epoch schedule', () => {
         it('fetch encoded', async () => {
             expect.assertions(3);

@@ -927,8 +927,53 @@ describe('account', () => {
                     },
                 });
             });
-            // TODO: Does not exist on-chain yet.
-            it.todo('can get the epoch rewards sysvar');
+            it('can get the epoch rewards sysvar', async () => {
+                expect.assertions(1);
+                const variableValues = {
+                    address: 'SysvarEpochRewards1111111111111111111111111',
+                };
+                const source = /* GraphQL */ `
+                    query testQuery($address: Address!) {
+                        account(address: $address) {
+                            address
+                            lamports
+                            ownerProgram {
+                                address
+                            }
+                            space
+                            ... on SysvarEpochRewardsAccount {
+                                active
+                                distributedRewards
+                                distributionStartingBlockHeight
+                                numPartitions
+                                parentBlockhash
+                                totalPoints
+                                totalRewards
+                            }
+                        }
+                    }
+                `;
+                const result = await rpcGraphQL.query(source, variableValues);
+                expect(result).toMatchObject({
+                    data: {
+                        account: {
+                            active: expect.any(Boolean),
+                            address: 'SysvarEpochRewards1111111111111111111111111',
+                            distributedRewards: expect.any(BigInt),
+                            distributionStartingBlockHeight: expect.any(BigInt),
+                            lamports: expect.any(BigInt),
+                            numPartitions: expect.any(BigInt),
+                            ownerProgram: {
+                                address: 'Sysvar1111111111111111111111111111111111111',
+                            },
+                            parentBlockhash: expect.any(String),
+                            space: expect.any(BigInt),
+                            totalPoints: expect.any(BigInt),
+                            totalRewards: expect.any(BigInt),
+                        },
+                    },
+                });
+            });
             it('can get the epoch schedule sysvar', async () => {
                 expect.assertions(1);
                 const variableValues = {

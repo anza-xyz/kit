@@ -1,6 +1,14 @@
-import { getSysvarEpochRewardsCodec } from '../epoch-rewards';
+import type { GetAccountInfoApi } from '@solana/rpc-api';
+import type { Rpc } from '@solana/rpc-spec';
+
+import { fetchSysvarEpochRewards, getSysvarEpochRewardsCodec } from '../epoch-rewards';
+import { createLocalhostSolanaRpc } from './__setup__';
 
 describe('epoch rewards', () => {
+    let rpc: Rpc<GetAccountInfoApi>;
+    beforeEach(() => {
+        rpc = createLocalhostSolanaRpc();
+    });
     it('decode', () => {
         // prettier-ignore
         const epochRewardsState = new Uint8Array([
@@ -29,6 +37,17 @@ describe('epoch rewards', () => {
             totalRewards: 38598150843577088n,
         });
     });
-    // TODO: This account does not seem to exist on-chain yet.
-    it.todo('fetch');
+    it('fetch', async () => {
+        expect.assertions(1);
+        const epochRewards = await fetchSysvarEpochRewards(rpc);
+        expect(epochRewards).toStrictEqual({
+            active: expect.any(Boolean),
+            distributedRewards: expect.any(BigInt),
+            distributionStartingBlockHeight: expect.any(BigInt),
+            numPartitions: expect.any(BigInt),
+            parentBlockhash: expect.any(String),
+            totalPoints: expect.any(BigInt),
+            totalRewards: expect.any(BigInt),
+        });
+    });
 });
