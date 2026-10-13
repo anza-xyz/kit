@@ -882,6 +882,9 @@ importers:
       '@solana/addresses':
         specifier: workspace:*
         version: link:../addresses
+      '@solana/errors':
+        specifier: workspace:*
+        version: link:../errors
       '@solana/instruction-plans':
         specifier: workspace:*
         version: link:../instruction-plans

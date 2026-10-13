@@ -1,4 +1,5 @@
 import { Address } from '@solana/addresses';
+import { SOLANA_ERROR__PLUGIN_INTERFACES__MISSING_CLIENT_CAPABILITIES, SolanaError } from '@solana/errors';
 import { Signature } from '@solana/keys';
 import { Lamports } from '@solana/rpc-types';
 
@@ -32,3 +33,47 @@ export type ClientWithAirdrop = {
      */
     airdrop: (address: Address, amount: Lamports, abortSignal?: AbortSignal) => Promise<Signature | undefined>;
 };
+
+/**
+ * Checks whether the provided client has an `airdrop` function installed.
+ *
+ * @param client - The client to check.
+ * @return `true` if the client has an `airdrop` function, narrowing it to a {@link ClientWithAirdrop}.
+ *
+ * @example
+ * ```ts
+ * if (isClientWithAirdrop(client)) {
+ *     await client.airdrop(address, lamports(1_000_000_000n));
+ * }
+ * ```
+ *
+ * @see {@link assertIsClientWithAirdrop}
+ */
+export function isClientWithAirdrop(client: object): client is ClientWithAirdrop {
+    return Object.hasOwn(client, 'airdrop');
+}
+
+/**
+ * Asserts that the provided client has an `airdrop` function installed.
+ *
+ * @param client - The client to check.
+ * @throws A {@link SolanaError} with code {@link SOLANA_ERROR__PLUGIN_INTERFACES__MISSING_CLIENT_CAPABILITIES}
+ * if the client has no `airdrop` function.
+ *
+ * @example
+ * ```ts
+ * async function fundAccount(client: object, address: Address) {
+ *     assertIsClientWithAirdrop(client);
+ *     await client.airdrop(address, lamports(1_000_000_000n));
+ * }
+ * ```
+ *
+ * @see {@link isClientWithAirdrop}
+ */
+export function assertIsClientWithAirdrop(client: object): asserts client is ClientWithAirdrop {
+    if (!isClientWithAirdrop(client)) {
+        throw new SolanaError(SOLANA_ERROR__PLUGIN_INTERFACES__MISSING_CLIENT_CAPABILITIES, {
+            capabilities: ['airdrop'],
+        });
+    }
+}

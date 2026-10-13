@@ -1,3 +1,4 @@
+import { SOLANA_ERROR__PLUGIN_INTERFACES__MISSING_CLIENT_CAPABILITIES, SolanaError } from '@solana/errors';
 import { TransactionSigner } from '@solana/signers';
 
 /**
@@ -21,3 +22,50 @@ import { TransactionSigner } from '@solana/signers';
  * @see {@link ClientWithPayer}
  */
 export type ClientWithIdentity = { identity: TransactionSigner };
+
+/**
+ * Checks whether the provided client has an `identity` installed.
+ *
+ * The check looks for an own `identity` property on the client without reading it, so a reactive
+ * getter installed by a plugin is never invoked.
+ *
+ * @param client - The client to check.
+ * @return `true` if the client has an `identity`, narrowing it to a {@link ClientWithIdentity}.
+ *
+ * @example
+ * ```ts
+ * if (isClientWithIdentity(client)) {
+ *     console.log(`Acting on behalf of ${client.identity.address}`);
+ * }
+ * ```
+ *
+ * @see {@link assertIsClientWithIdentity}
+ */
+export function isClientWithIdentity(client: object): client is ClientWithIdentity {
+    return Object.hasOwn(client, 'identity');
+}
+
+/**
+ * Asserts that the provided client has an `identity` installed.
+ *
+ * @param client - The client to check.
+ * @throws A {@link SolanaError} with code {@link SOLANA_ERROR__PLUGIN_INTERFACES__MISSING_CLIENT_CAPABILITIES}
+ * if the client has no `identity`.
+ *
+ * @example
+ * ```ts
+ * function getOwnerAddress(client: object): Address {
+ *     assertIsClientWithIdentity(client);
+ *     return client.identity.address;
+ * }
+ * ```
+ *
+ * @see {@link isClientWithIdentity}
+ */
+export function assertIsClientWithIdentity(client: object): asserts client is ClientWithIdentity {
+    if (!isClientWithIdentity(client)) {
+        throw new SolanaError(SOLANA_ERROR__PLUGIN_INTERFACES__MISSING_CLIENT_CAPABILITIES, {
+            capabilities: ['identity'],
+        });
+    }
+}

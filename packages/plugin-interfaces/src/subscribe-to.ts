@@ -1,3 +1,5 @@
+import { SOLANA_ERROR__PLUGIN_INTERFACES__MISSING_CLIENT_CAPABILITIES, SolanaError } from '@solana/errors';
+
 /**
  * Convention for advertising that a client capability is reactive.
  *
@@ -98,3 +100,101 @@ export type ClientWithSubscribeToIdentity = {
      */
     readonly subscribeToIdentity: SubscribeToFn;
 };
+
+/**
+ * Checks whether the provided client advertises `client.payer` as reactive by having a
+ * `subscribeToPayer` function installed.
+ *
+ * @param client - The client to check.
+ * @return `true` if the client has a `subscribeToPayer` function, narrowing it to a
+ * {@link ClientWithSubscribeToPayer}.
+ *
+ * @example
+ * ```ts
+ * const unsubscribe = isClientWithSubscribeToPayer(client)
+ *     ? client.subscribeToPayer(onPayerChange)
+ *     : () => {};
+ * ```
+ *
+ * @see {@link assertIsClientWithSubscribeToPayer}
+ */
+export function isClientWithSubscribeToPayer(client: object): client is ClientWithSubscribeToPayer {
+    return Object.hasOwn(client, 'subscribeToPayer');
+}
+
+/**
+ * Asserts that the provided client advertises `client.payer` as reactive by having a
+ * `subscribeToPayer` function installed.
+ *
+ * @param client - The client to check.
+ * @throws A {@link SolanaError} with code {@link SOLANA_ERROR__PLUGIN_INTERFACES__MISSING_CLIENT_CAPABILITIES}
+ * if the client has no `subscribeToPayer` function.
+ *
+ * @example
+ * ```ts
+ * function observePayer(client: ClientWithPayer) {
+ *     assertIsClientWithSubscribeToPayer(client);
+ *     return client.subscribeToPayer(() => {
+ *         console.log('payer is now', client.payer);
+ *     });
+ * }
+ * ```
+ *
+ * @see {@link isClientWithSubscribeToPayer}
+ */
+export function assertIsClientWithSubscribeToPayer(client: object): asserts client is ClientWithSubscribeToPayer {
+    if (!isClientWithSubscribeToPayer(client)) {
+        throw new SolanaError(SOLANA_ERROR__PLUGIN_INTERFACES__MISSING_CLIENT_CAPABILITIES, {
+            capabilities: ['subscribeToPayer'],
+        });
+    }
+}
+
+/**
+ * Checks whether the provided client advertises `client.identity` as reactive by having a
+ * `subscribeToIdentity` function installed.
+ *
+ * @param client - The client to check.
+ * @return `true` if the client has a `subscribeToIdentity` function, narrowing it to a
+ * {@link ClientWithSubscribeToIdentity}.
+ *
+ * @example
+ * ```ts
+ * const unsubscribe = isClientWithSubscribeToIdentity(client)
+ *     ? client.subscribeToIdentity(onIdentityChange)
+ *     : () => {};
+ * ```
+ *
+ * @see {@link assertIsClientWithSubscribeToIdentity}
+ */
+export function isClientWithSubscribeToIdentity(client: object): client is ClientWithSubscribeToIdentity {
+    return Object.hasOwn(client, 'subscribeToIdentity');
+}
+
+/**
+ * Asserts that the provided client advertises `client.identity` as reactive by having a
+ * `subscribeToIdentity` function installed.
+ *
+ * @param client - The client to check.
+ * @throws A {@link SolanaError} with code {@link SOLANA_ERROR__PLUGIN_INTERFACES__MISSING_CLIENT_CAPABILITIES}
+ * if the client has no `subscribeToIdentity` function.
+ *
+ * @example
+ * ```ts
+ * function observeIdentity(client: ClientWithIdentity) {
+ *     assertIsClientWithSubscribeToIdentity(client);
+ *     return client.subscribeToIdentity(() => {
+ *         console.log('identity is now', client.identity);
+ *     });
+ * }
+ * ```
+ *
+ * @see {@link isClientWithSubscribeToIdentity}
+ */
+export function assertIsClientWithSubscribeToIdentity(client: object): asserts client is ClientWithSubscribeToIdentity {
+    if (!isClientWithSubscribeToIdentity(client)) {
+        throw new SolanaError(SOLANA_ERROR__PLUGIN_INTERFACES__MISSING_CLIENT_CAPABILITIES, {
+            capabilities: ['subscribeToIdentity'],
+        });
+    }
+}

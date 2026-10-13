@@ -1,3 +1,4 @@
+import { SOLANA_ERROR__PLUGIN_INTERFACES__MISSING_CLIENT_CAPABILITIES, SolanaError } from '@solana/errors';
 import { Lamports } from '@solana/rpc-types';
 
 /**
@@ -46,3 +47,49 @@ export type ClientWithGetMinimumBalance = {
      */
     getMinimumBalance: (space: number, config?: GetMinimumBalanceConfig) => Promise<Lamports>;
 };
+
+/**
+ * Checks whether the provided client has a `getMinimumBalance` function installed.
+ *
+ * @param client - The client to check.
+ * @return `true` if the client has a `getMinimumBalance` function, narrowing it to a
+ * {@link ClientWithGetMinimumBalance}.
+ *
+ * @example
+ * ```ts
+ * if (isClientWithGetMinimumBalance(client)) {
+ *     const minimumBalance = await client.getMinimumBalance(dataSize);
+ * }
+ * ```
+ *
+ * @see {@link assertIsClientWithGetMinimumBalance}
+ */
+export function isClientWithGetMinimumBalance(client: object): client is ClientWithGetMinimumBalance {
+    return Object.hasOwn(client, 'getMinimumBalance');
+}
+
+/**
+ * Asserts that the provided client has a `getMinimumBalance` function installed.
+ *
+ * @param client - The client to check.
+ * @throws A {@link SolanaError} with code {@link SOLANA_ERROR__PLUGIN_INTERFACES__MISSING_CLIENT_CAPABILITIES}
+ * if the client has no `getMinimumBalance` function.
+ *
+ * @example
+ * ```ts
+ * async function logAccountCost(client: object, dataSize: number) {
+ *     assertIsClientWithGetMinimumBalance(client);
+ *     const minimumBalance = await client.getMinimumBalance(dataSize);
+ *     console.log(`Minimum balance for ${dataSize} bytes: ${minimumBalance} lamports`);
+ * }
+ * ```
+ *
+ * @see {@link isClientWithGetMinimumBalance}
+ */
+export function assertIsClientWithGetMinimumBalance(client: object): asserts client is ClientWithGetMinimumBalance {
+    if (!isClientWithGetMinimumBalance(client)) {
+        throw new SolanaError(SOLANA_ERROR__PLUGIN_INTERFACES__MISSING_CLIENT_CAPABILITIES, {
+            capabilities: ['getMinimumBalance'],
+        });
+    }
+}
