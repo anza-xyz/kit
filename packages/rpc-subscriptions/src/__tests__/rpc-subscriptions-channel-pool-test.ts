@@ -260,4 +260,80 @@ describe('getChannelPoolingChannelCreator', () => {
         });
         expect(channelPool).toMatchObject({ entries: [], freeChannelIndex: -1 });
     });
+    describe('when a pool entry has already been destroyed', () => {
+        let errorListeners: CallableFunction[];
+        beforeEach(() => {
+            errorListeners = [];
+            createChannel.mockResolvedValue({
+                on(type, listener) {
+                    // eslint-disable-next-line jest/no-conditional-in-test
+                    if (type === 'error') {
+                        errorListeners.push(listener);
+                    }
+                    return () => {};
+                },
+                send: jest.fn().mockRejectedValue(new Error('not implemented')),
+            });
+        });
+        it("does not destroy another channel's pool entry when the errored channel's last subscriber aborts", async () => {
+            expect.assertions(2);
+            const poolingChannelCreator = getChannelPoolingChannelCreator(createChannel, {
+                maxSubscriptionsPerChannel: 1,
+                minChannels: 1,
+            });
+            const abortControllerA = new AbortController();
+            const channelA = poolingChannelCreator({ abortSignal: abortControllerA.signal });
+            const channelB = poolingChannelCreator({ abortSignal: new AbortController().signal });
+            await Promise.all([channelA, channelB]);
+            errorListeners[0]('o no');
+            abortControllerA.abort();
+            expect(channelPool).toMatchObject({
+                entries: [{ subscriptionCount: 1 }],
+                freeChannelIndex: -1,
+            });
+            expect(channelPool.entries[0].channel).toBe(channelB);
+        });
+        it('continues to vend the remaining channel after every subscriber of an errored channel aborts', async () => {
+            expect.assertions(3);
+            const poolingChannelCreator = getChannelPoolingChannelCreator(createChannel, {
+                maxSubscriptionsPerChannel: 2,
+                minChannels: 1,
+            });
+            const abortControllerA1 = new AbortController();
+            const abortControllerA2 = new AbortController();
+            const channelA = poolingChannelCreator({ abortSignal: abortControllerA1.signal });
+            poolingChannelCreator({ abortSignal: abortControllerA2.signal }).catch(() => {});
+            const channelC = poolingChannelCreator({ abortSignal: new AbortController().signal });
+            await Promise.all([channelA, channelC]);
+            errorListeners[0]('o no');
+            abortControllerA1.abort();
+            abortControllerA2.abort();
+            expect(channelPool).toMatchObject({
+                entries: [{ subscriptionCount: 1 }],
+                freeChannelIndex: 0,
+            });
+            await expect(poolingChannelCreator({ abortSignal: new AbortController().signal })).resolves.toBe(
+                await channelC,
+            );
+            expect(createChannel).toHaveBeenCalledTimes(2);
+        });
+        it("does not destroy another channel's pool entry when the last subscriber of a channel that failed to construct aborts", async () => {
+            expect.assertions(3);
+            const poolingChannelCreator = getChannelPoolingChannelCreator(createChannel, {
+                maxSubscriptionsPerChannel: 1,
+                minChannels: 1,
+            });
+            createChannel.mockRejectedValueOnce('o no');
+            const abortControllerA = new AbortController();
+            const channelA = poolingChannelCreator({ abortSignal: abortControllerA.signal });
+            const channelB = poolingChannelCreator({ abortSignal: new AbortController().signal });
+            await expect(channelA).rejects.toBe('o no');
+            abortControllerA.abort();
+            expect(channelPool).toMatchObject({
+                entries: [{ subscriptionCount: 1 }],
+                freeChannelIndex: -1,
+            });
+            expect(channelPool.entries[0].channel).toBe(channelB);
+        });
+    });
 });
