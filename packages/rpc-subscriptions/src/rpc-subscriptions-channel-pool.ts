@@ -63,6 +63,9 @@ export function getChannelPoolingChannelCreator<
         let poolEntry: ChannelPoolEntry;
         function destroyPoolEntry() {
             const index = pool.entries.findIndex(entry => entry === poolEntry);
+            if (index === -1) {
+                return;
+            }
             pool.entries.splice(index, 1);
             poolEntry.dispose();
             recomputeFreeChannelIndex();
