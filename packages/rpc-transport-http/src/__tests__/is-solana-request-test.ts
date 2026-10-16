@@ -13,6 +13,10 @@ describe('isSolanaRequest', () => {
         const payload = { jsonrpc: '2.0', method: 'getTransactionsForAddress', params: ['1234..5678'] };
         expect(isSolanaRequest(payload)).toBe(true);
     });
+    it('returns true when optional parameters are omitted', () => {
+        const payload = { jsonrpc: '2.0', method: 'getBlockHeight' };
+        expect(isSolanaRequest(payload)).toBe(true);
+    });
     it('returns false if the method name is not from the Solana RPC API', () => {
         const payload = { jsonrpc: '2.0', method: 'getAssetsByAuthority', params: ['1234..5678'] };
         expect(isSolanaRequest(payload)).toBe(false);
