@@ -46,7 +46,12 @@ export function addEncoderSentinel<TFrom>(encoder: Encoder<TFrom>, sentinel: Rea
         // function to contain the content of the encoder within its own bounds
         // and to avoid writing the sentinel as part of the encoded value.
         const encoderBytes = encoder.encode(value);
-        if (findSentinelIndex(encoderBytes, sentinel) >= 0) {
+        const encoderBytesWithSentinel = new Uint8Array(encoderBytes.length + sentinel.length);
+        encoderBytesWithSentinel.set(encoderBytes);
+        encoderBytesWithSentinel.set(sentinel, encoderBytes.length);
+        // The decoder stops at the first sentinel it finds, so it must not appear before the one we
+        // append, including across the boundary (e.g. `6c` followed by the sentinel `6c6c`).
+        if (findSentinelIndex(encoderBytesWithSentinel, sentinel) < encoderBytes.length) {
             throw new SolanaError(SOLANA_ERROR__CODECS__ENCODED_BYTES_MUST_NOT_INCLUDE_SENTINEL, {
                 encodedBytes: encoderBytes,
                 hexEncodedBytes: hexBytes(encoderBytes),
@@ -54,11 +59,8 @@ export function addEncoderSentinel<TFrom>(encoder: Encoder<TFrom>, sentinel: Rea
                 sentinel,
             });
         }
-        bytes.set(encoderBytes, offset);
-        offset += encoderBytes.length;
-        bytes.set(sentinel, offset);
-        offset += sentinel.length;
-        return offset;
+        bytes.set(encoderBytesWithSentinel, offset);
+        return offset + encoderBytesWithSentinel.length;
     }) as Encoder<TFrom>['write'];
 
     if (isFixedSize(encoder)) {
