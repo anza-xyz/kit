@@ -297,14 +297,16 @@ account satisfies MaybeAccount<MockData>;
 
 This function asserts that all input accounts store decoded data, ie not a Uint8Array. As with `assertAccountDecoded` it does not check the shape of the data matches the decoded type, only that it is not a Uint8Array.
 
+When the input is a tuple, each element's address and decoded data type is preserved.
+
 ```ts
-type MyAccountData = { name: string; age: number };
+type TokenData = { mint: Address };
+type MintData = { supply: bigint };
 
-const myAccounts: Account<MyAccountData | Uint8Array, Address>[];
-assertAccountsDecoded(myAccounts);
+const accounts = await fetchJsonParsedAccounts<[TokenData, MintData]>(rpc, [tokenAddress, mintAddress]);
+assertAccountsDecoded(accounts);
 
-// now the account data can be used as MyAccountData
-for (const a of account) {
-    account.data satisfies MyAccountData;
-}
+// Each element keeps its own address and data type.
+accounts[0] satisfies MaybeAccount<TokenData>;
+accounts[1] satisfies MaybeAccount<MintData>;
 ```
