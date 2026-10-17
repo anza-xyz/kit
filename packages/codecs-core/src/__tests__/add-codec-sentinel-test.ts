@@ -50,6 +50,25 @@ describe('addCodecSentinel', () => {
         );
     });
 
+    it('fails if the encoded bytes and the sentinel together contain an earlier sentinel', () => {
+        const mockCodec = getMockCodec();
+        mockCodec.getSizeFromValue.mockReturnValue(3);
+        mockCodec.write.mockImplementation((_, bytes: Uint8Array, offset: Offset) => {
+            bytes.set(b('68656c'), offset);
+            return offset + 3;
+        });
+
+        expect(() => addCodecSentinel(mockCodec, b('6c6c')).encode('hel')).toThrow(
+            new SolanaError(SOLANA_ERROR__CODECS__ENCODED_BYTES_MUST_NOT_INCLUDE_SENTINEL, {
+                encodedBytes: b('68656c'),
+                hexEncodedBytes: '68656c',
+                hexSentinel: '6c6c',
+                sentinel: b('6c6c'),
+            }),
+        );
+        expect(addCodecSentinel(mockCodec, b('6c00')).encode('hel')).toStrictEqual(b('68656c6c00'));
+    });
+
     it('fails if the decoded bytes do not contain the sentinel', () => {
         const mockCodec = getMockCodec();
         const codec = addCodecSentinel(mockCodec, b('ff'));
