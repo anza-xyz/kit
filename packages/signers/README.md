@@ -525,6 +525,16 @@ const instructionSigners = getSignersFromInstruction(myInstructionWithSigners);
 // ^ [mySignerA, mySignerB]
 ```
 
+#### `getSignersFromInstructionPlan()`
+
+Extracts and deduplicates all signers stored inside the account metas of all the instructions inside an instruction plan. This is useful for collecting signers that a helper created internally, such as freshly generated keypairs, when you compile and sign transactions yourself. Message packer plans are skipped since their instructions only exist once packed into a transaction message.
+
+```ts
+const plan = sequentialInstructionPlan([myInstructionA, parallelInstructionPlan([myInstructionB, myInstructionC])]);
+
+const instructionPlanSigners = getSignersFromInstructionPlan(plan);
+```
+
 #### `getSignersFromTransactionMessage()`
 
 Similarly to `getSignersFromInstruction`, this function extracts and deduplicates all signers stored inside the account metas of all the instructions inside a transaction message.
