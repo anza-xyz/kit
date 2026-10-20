@@ -1,3 +1,4 @@
+import { flattenInstructionPlan, InstructionPlan } from '@solana/instruction-plans';
 import { AccountLookupMeta, AccountMeta, AccountRole, Instruction } from '@solana/instructions';
 import { TransactionMessageWithFeePayer } from '@solana/transaction-messages';
 
@@ -167,6 +168,42 @@ export function getSignersFromInstruction<TSigner extends TransactionSigner = Tr
 ): readonly TSigner[] {
     return deduplicateSigners<TSigner>(
         (instruction.accounts ?? []).flatMap(account => (account.signer ? [account.signer] : [])),
+    );
+}
+
+/**
+ * Extracts and deduplicates all {@link TransactionSigner | TransactionSigners} stored
+ * inside the account metas of the instructions of an {@link InstructionPlan}.
+ *
+ * Any extracted signers that share the same {@link Address} will be de-duplicated.
+ *
+ * Note that message packer plans are skipped, since their instructions are only created
+ * when packed into a transaction message. To access their signers, use
+ * {@link getSignersFromTransactionMessage} on the planned transaction messages instead.
+ *
+ * @typeParam TSigner - Optionally provide a narrower type for {@link TransactionSigner | TransactionSigners}.
+ *
+ * @example
+ * ```ts
+ * import { parallelInstructionPlan, sequentialInstructionPlan } from '@solana/instruction-plans';
+ * import { getSignersFromInstructionPlan } from '@solana/signers';
+ *
+ * const plan = sequentialInstructionPlan([
+ *     instructionSignedByA,
+ *     parallelInstructionPlan([instructionSignedByB, instructionSignedByAAndB]),
+ * ]);
+ *
+ * const instructionPlanSigners = getSignersFromInstructionPlan(plan);
+ * // ^ [signerA, signerB]
+ * ```
+ */
+export function getSignersFromInstructionPlan<TSigner extends TransactionSigner = TransactionSigner>(
+    instructionPlan: InstructionPlan,
+): readonly TSigner[] {
+    return deduplicateSigners<TSigner>(
+        flattenInstructionPlan(instructionPlan).flatMap(plan =>
+            plan.kind === 'single' ? getSignersFromInstruction<TSigner>(plan.instruction) : [],
+        ),
     );
 }
 
