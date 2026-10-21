@@ -11,6 +11,7 @@ import type {
     Base58EncodedDataResponse,
     Base64EncodedDataResponse,
     Blockhash,
+    TransactionConfig,
 } from '@solana/rpc-types';
 import type {
     CompiledTransactionMessage,
@@ -19,8 +20,13 @@ import type {
     TransactionVersion,
     V0CompiledTransactionMessage,
     V1CompiledTransactionMessage,
+    V1TransactionConfig,
 } from '@solana/transaction-messages';
-import { getCompiledTransactionMessageDecoder } from '@solana/transaction-messages';
+import {
+    getCompiledTransactionMessageDecoder,
+    getTransactionConfigMask,
+    getTransactionConfigValues,
+} from '@solana/transaction-messages';
 import type { Transaction } from '@solana/transactions';
 import { getTransactionDecoder } from '@solana/transactions';
 
@@ -74,6 +80,7 @@ type DecodableJsonTransactionResponse = Readonly<{
                 programIdIndex: number;
             }>[];
             recentBlockhash: Blockhash;
+            transactionConfig?: TransactionConfig;
         }>;
     }>;
     version?: TransactionVersion;
@@ -146,6 +153,17 @@ function decodeFromBase58(rpcTx: DecodableWireTransactionResponse): DecodedRpcTr
     return { compiledMessage, loadedAddresses: getLoadedAddresses(rpcTx.meta), transaction };
 }
 
+function getV1TransactionConfig(transactionConfig: TransactionConfig | undefined): V1TransactionConfig {
+    if (!transactionConfig) return {};
+    const { computeUnitLimit, heapSize, loadedAccountsDataSizeLimit, priorityFee } = transactionConfig;
+    return {
+        computeUnitLimit: computeUnitLimit ?? undefined,
+        heapSize: heapSize ?? undefined,
+        loadedAccountsDataSizeLimit: loadedAccountsDataSizeLimit ?? undefined,
+        priorityFeeLamports: priorityFee ?? undefined,
+    };
+}
+
 function decodeFromJson(rpcTx: DecodableJsonTransactionResponse): DecodedRpcTransaction {
     const base58 = getBase58Encoder();
     const { message } = rpcTx.transaction;
@@ -212,12 +230,10 @@ function decodeFromJson(rpcTx: DecodableJsonTransactionResponse): DecodedRpcTran
         }
         case 1: {
             const instructionData = message.instructions.map(ix => base58.encode(ix.data));
+            const config = getV1TransactionConfig(message.transactionConfig);
             compiledMessage = {
-                // The `'json'` encoding does not carry the v1 transaction
-                // config, so the synthesized message always reports an
-                // empty one.
-                configMask: 0,
-                configValues: [],
+                configMask: getTransactionConfigMask(config),
+                configValues: getTransactionConfigValues(config),
                 header,
                 instructionHeaders: message.instructions.map((ix, i) => ({
                     numInstructionAccounts: ix.accounts.length,
