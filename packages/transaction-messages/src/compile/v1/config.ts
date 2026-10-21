@@ -36,8 +36,13 @@ export function getTransactionConfigMask(config: V1TransactionConfig): number {
 }
 
 /**
- * A single value in the `configValues` of a compiled version 1 transaction message, tagged with
- * the width it is encoded with.
+ * A single encoded transaction config value, as stored in the `configValues` array of a
+ * {@link V1CompiledTransactionMessage}.
+ *
+ * Values appear in the order of their corresponding bits in the `configMask`. The priority fee is
+ * encoded as a `u64`; all other config values are encoded as `u32`.
+ *
+ * @see {@link decompileTransactionConfig}
  */
 export type CompiledTransactionConfigValue =
     | {

@@ -1,6 +1,6 @@
 import { SOLANA_ERROR__TRANSACTION__INVALID_CONFIG_VALUE_KIND, SolanaError } from '@solana/errors';
 
-import { CompiledTransactionConfigValue } from '../../../compile/v1/config';
+import { CompiledTransactionConfigValue } from '../../../compile';
 import { decompileTransactionConfig } from '../config';
 
 describe('decompileTransactionConfig', () => {
