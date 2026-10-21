@@ -16,4 +16,5 @@ export * from './wire-transaction';
 export * from './sendable-transaction';
 export * from './transaction-message-size';
 export * from './transaction-size';
+export * from './transaction-size-limits';
 export * from './transaction';
