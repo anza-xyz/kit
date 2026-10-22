@@ -11,7 +11,15 @@ import type {
 } from '@solana/rpc-types';
 import type { TransactionVersion } from '@solana/transaction-messages';
 
-import type { GetTransactionsForAddressApi } from '../getTransactionsForAddress';
+import type {
+    GetTransactionsForAddressApi,
+    GetTransactionsForAddressApiResponse,
+    GetTransactionsForAddressFullBase58,
+    GetTransactionsForAddressFullBase64,
+    GetTransactionsForAddressFullJson,
+    GetTransactionsForAddressFullJsonParsed,
+    GetTransactionsForAddressSignature,
+} from '../getTransactionsForAddress';
 
 const rpc = null as unknown as Rpc<GetTransactionsForAddressApi>;
 const address = null as unknown as Address;
@@ -243,5 +251,80 @@ void (async () => {
                 element.meta.loadedAddresses.writable satisfies readonly Address[];
             }
         }
+    }
+
+    // [DESCRIBE] getTransactionsForAddress exported result types
+
+    // The signatures overload returns the exported signature item
+    {
+        const response = await rpc.getTransactionsForAddress(address).send();
+        response satisfies GetTransactionsForAddressApiResponse<GetTransactionsForAddressSignature>;
+    }
+
+    // The jsonParsed overloads return the exported jsonParsed item
+    {
+        const legacy = await rpc
+            .getTransactionsForAddress(address, { encoding: 'jsonParsed', transactionDetails: 'full' })
+            .send();
+        legacy satisfies GetTransactionsForAddressApiResponse<GetTransactionsForAddressFullJsonParsed>;
+        const versioned = await rpc
+            .getTransactionsForAddress(address, {
+                encoding: 'jsonParsed',
+                maxSupportedTransactionVersion: 0,
+                transactionDetails: 'full',
+            })
+            .send();
+        versioned satisfies GetTransactionsForAddressApiResponse<GetTransactionsForAddressFullJsonParsed<0>>;
+    }
+
+    // The base64 overloads return the exported base64 item
+    {
+        const legacy = await rpc
+            .getTransactionsForAddress(address, { encoding: 'base64', transactionDetails: 'full' })
+            .send();
+        legacy satisfies GetTransactionsForAddressApiResponse<GetTransactionsForAddressFullBase64>;
+        const versioned = await rpc
+            .getTransactionsForAddress(address, {
+                encoding: 'base64',
+                maxSupportedTransactionVersion: 0,
+                transactionDetails: 'full',
+            })
+            .send();
+        versioned satisfies GetTransactionsForAddressApiResponse<GetTransactionsForAddressFullBase64<0>>;
+    }
+
+    // The base58 overloads return the exported base58 item
+    {
+        const legacy = await rpc
+            .getTransactionsForAddress(address, { encoding: 'base58', transactionDetails: 'full' })
+            .send();
+        legacy satisfies GetTransactionsForAddressApiResponse<GetTransactionsForAddressFullBase58>;
+        const versioned = await rpc
+            .getTransactionsForAddress(address, {
+                encoding: 'base58',
+                maxSupportedTransactionVersion: 0,
+                transactionDetails: 'full',
+            })
+            .send();
+        versioned satisfies GetTransactionsForAddressApiResponse<GetTransactionsForAddressFullBase58<0>>;
+    }
+
+    // The json overloads return the exported json item
+    {
+        const legacy = await rpc.getTransactionsForAddress(address, { transactionDetails: 'full' }).send();
+        legacy satisfies GetTransactionsForAddressApiResponse<GetTransactionsForAddressFullJson>;
+        const versioned = await rpc
+            .getTransactionsForAddress(address, { maxSupportedTransactionVersion: 0, transactionDetails: 'full' })
+            .send();
+        versioned satisfies GetTransactionsForAddressApiResponse<GetTransactionsForAddressFullJson<0>>;
+    }
+
+    // The legacy and versioned item types are not interchangeable
+    {
+        const legacy = await rpc
+            .getTransactionsForAddress(address, { encoding: 'base64', transactionDetails: 'full' })
+            .send();
+        // @ts-expect-error Legacy results lack `version`.
+        legacy satisfies GetTransactionsForAddressApiResponse<GetTransactionsForAddressFullBase64<0>>;
     }
 })();

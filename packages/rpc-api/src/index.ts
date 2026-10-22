@@ -89,7 +89,24 @@ import {
     GetTransactionApiResponseJsonParsed,
 } from './getTransaction';
 import { GetTransactionCountApi } from './getTransactionCount';
-import { GetTransactionsForAddressApi } from './getTransactionsForAddress';
+import {
+    AllowedCommitmentForGetTransactionsForAddress,
+    BlockTimeComparison,
+    GetTransactionsForAddressApi,
+    GetTransactionsForAddressApiResponse,
+    GetTransactionsForAddressCommonConfig,
+    GetTransactionsForAddressFilters,
+    GetTransactionsForAddressFullBase,
+    GetTransactionsForAddressFullBase58,
+    GetTransactionsForAddressFullBase64,
+    GetTransactionsForAddressFullJson,
+    GetTransactionsForAddressFullJsonParsed,
+    GetTransactionsForAddressFullOnlyConfig,
+    GetTransactionsForAddressMaxSupportedTransactionVersion,
+    GetTransactionsForAddressSignature,
+    SignatureComparison,
+    SlotComparison,
+} from './getTransactionsForAddress';
 import { GetVersionApi } from './getVersion';
 import { GetVoteAccountsApi } from './getVoteAccounts';
 import { IsBlockhashValidApi } from './isBlockhashValid';
@@ -179,6 +196,8 @@ export type SolanaRpcApiTestnet = SolanaRpcApiForTestClusters;
 export type SolanaRpcApiMainnet = SolanaRpcApiForAllClusters;
 
 export type {
+    AllowedCommitmentForGetTransactionsForAddress,
+    BlockTimeComparison,
     GetAccountInfoApi,
     GetAgGenesisCertApi,
     GetBalanceApi,
@@ -230,13 +249,26 @@ export type {
     GetTransactionApiResponseJsonParsed,
     GetTransactionCountApi,
     GetTransactionsForAddressApi,
+    GetTransactionsForAddressApiResponse,
+    GetTransactionsForAddressCommonConfig,
+    GetTransactionsForAddressFilters,
+    GetTransactionsForAddressFullBase,
+    GetTransactionsForAddressFullBase58,
+    GetTransactionsForAddressFullBase64,
+    GetTransactionsForAddressFullJson,
+    GetTransactionsForAddressFullJsonParsed,
+    GetTransactionsForAddressFullOnlyConfig,
+    GetTransactionsForAddressMaxSupportedTransactionVersion,
+    GetTransactionsForAddressSignature,
     GetVersionApi,
     GetVoteAccountsApi,
     IsBlockhashValidApi,
     MinimumLedgerSlotApi,
     RequestAirdropApi,
     SendTransactionApi,
+    SignatureComparison,
     SimulateTransactionApi,
+    SlotComparison,
 };
 
 type Config = RequestTransformerConfig;
