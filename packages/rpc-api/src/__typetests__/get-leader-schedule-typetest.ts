@@ -22,6 +22,12 @@ void (async () => {
     }
 
     {
+        const result = await rpc.getLeaderSchedule(null, { keyByVoteAccount: true }).send();
+        // Won't be null
+        result satisfies Record<Address, Slot[]>;
+    }
+
+    {
         const result = await rpc.getLeaderSchedule(slot).send();
         // Can be null if the slot corresponds to an epoch that does not exist
         result satisfies Record<Address, Slot[]> | null;
