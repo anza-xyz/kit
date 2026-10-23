@@ -196,6 +196,28 @@ describe('getRpcSubscriptionsTransportWithSubscriptionCoalescing', () => {
         coalescedTransport({ ...config, signal: new AbortController().signal }).catch(() => {});
         expect(mockInnerTransport).toHaveBeenCalledTimes(2);
     });
+    it('does not re-coalesce new requests behind a transport that rejects before creating a publisher', async () => {
+        expect.assertions(4);
+        const transportError = new Error('o no');
+        mockInnerTransport.mockRejectedValueOnce(transportError);
+        const config = {
+            execute: jest.fn(),
+            request: { methodName: 'foo', params: [] },
+        };
+        const firstTransportPromise = coalescedTransport({
+            ...config,
+            signal: new AbortController().signal,
+        });
+        await expect(firstTransportPromise).rejects.toBe(transportError);
+        expect(mockInnerTransport.mock.calls[0][0].signal).toHaveProperty('aborted', true);
+
+        const publisher = await coalescedTransport({
+            ...config,
+            signal: new AbortController().signal,
+        });
+        expect(publisher).toEqual({ on: mockOn });
+        expect(mockInnerTransport).toHaveBeenCalledTimes(2);
+    });
     it('does not cancel a newly-coalesced transport when an old errored one is aborted', async () => {
         expect.assertions(2);
         jest.useFakeTimers();
