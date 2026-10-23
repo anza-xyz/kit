@@ -1,5 +1,16 @@
 # @solana/react
 
+## 8.5.1
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @solana/signers@8.5.1
+  - @solana/transaction-messages@8.5.1
+  - @solana/transactions@8.5.1
+  - @solana/promises@8.5.1
+  - @solana/subscribable@8.5.1
+
 ## 8.5.0
 
 ### Patch Changes

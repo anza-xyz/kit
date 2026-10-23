@@ -1,5 +1,9 @@
 # @solana/errors
 
+## 8.5.1
+
+No changes in this release.
+
 ## 8.5.0
 
 ### Minor Changes

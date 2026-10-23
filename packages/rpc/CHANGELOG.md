@@ -1,5 +1,20 @@
 # @solana/rpc
 
+## 8.5.1
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @solana/rpc-api@8.5.1
+  - @solana/rpc-types@8.5.1
+  - @solana/rpc-transformers@8.5.1
+  - @solana/errors@8.5.1
+  - @solana/fast-stable-stringify@8.5.1
+  - @solana/functional@8.5.1
+  - @solana/rpc-spec@8.5.1
+  - @solana/rpc-spec-types@8.5.1
+  - @solana/rpc-transport-http@8.5.1
+
 ## 8.5.0
 
 ### Patch Changes

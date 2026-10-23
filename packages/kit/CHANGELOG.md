@@ -1,5 +1,38 @@
 # @solana/kit
 
+## 8.5.1
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @solana/accounts@8.5.1
+  - @solana/addresses@8.5.1
+  - @solana/codecs@8.5.1
+  - @solana/instructions@8.5.1
+  - @solana/keys@8.5.1
+  - @solana/offchain-messages@8.5.1
+  - @solana/program-client-core@8.5.1
+  - @solana/rpc-api@8.5.1
+  - @solana/rpc-types@8.5.1
+  - @solana/signers@8.5.1
+  - @solana/sysvars@8.5.1
+  - @solana/transaction-confirmation@8.5.1
+  - @solana/transaction-introspection@8.5.1
+  - @solana/transaction-messages@8.5.1
+  - @solana/transactions@8.5.1
+  - @solana/plugin-interfaces@8.5.1
+  - @solana/instruction-plans@8.5.1
+  - @solana/programs@8.5.1
+  - @solana/rpc-parsed-types@8.5.1
+  - @solana/rpc-subscriptions@8.5.1
+  - @solana/rpc@8.5.1
+  - @solana/errors@8.5.1
+  - @solana/functional@8.5.1
+  - @solana/plugin-core@8.5.1
+  - @solana/promises@8.5.1
+  - @solana/rpc-spec-types@8.5.1
+  - @solana/subscribable@8.5.1
+
 ## 8.5.0
 
 ### Patch Changes
