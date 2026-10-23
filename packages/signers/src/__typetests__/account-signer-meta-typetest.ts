@@ -1,7 +1,9 @@
 import { address } from '@solana/addresses';
-import { AccountRole } from '@solana/instructions';
+import { InstructionPlan } from '@solana/instruction-plans';
+import { AccountRole, Instruction } from '@solana/instructions';
 
-import { AccountSignerMeta } from '../account-signer-meta';
+import { AccountSignerMeta, getSignersFromInstructionPlan } from '../account-signer-meta';
+import { KeyPairSigner } from '../keypair-signer';
 import { TransactionSigner } from '../transaction-signer';
 
 {
@@ -31,4 +33,32 @@ import { TransactionSigner } from '../transaction-signer';
         role: AccountRole.READONLY,
         signer: {} as TransactionSigner,
     }) satisfies AccountSignerMeta;
+}
+
+// [DESCRIBE] getSignersFromInstructionPlan
+{
+    // It returns readonly TransactionSigners by default.
+    {
+        const plan = null as unknown as InstructionPlan;
+        const signers = getSignersFromInstructionPlan(plan);
+        signers satisfies readonly TransactionSigner[];
+        // @ts-expect-error The returned array is readonly.
+        signers satisfies TransactionSigner[];
+        // @ts-expect-error The signers are not narrowed by default.
+        signers satisfies readonly KeyPairSigner[];
+    }
+
+    // It narrows the returned signers to the provided TSigner type.
+    {
+        const plan = null as unknown as InstructionPlan;
+        const signers = getSignersFromInstructionPlan<KeyPairSigner>(plan);
+        signers satisfies readonly KeyPairSigner[];
+    }
+
+    // It only accepts instruction plans.
+    {
+        const instruction = null as unknown as Instruction;
+        // @ts-expect-error Instructions must be wrapped in an instruction plan.
+        getSignersFromInstructionPlan(instruction);
+    }
 }
