@@ -1,4 +1,4 @@
-import { getShortU16Codec, getU32Codec } from '@solana/codecs-numbers';
+import { getI8Codec, getShortU16Codec, getU32Codec } from '@solana/codecs-numbers';
 import {
     SOLANA_ERROR__CODECS__CANNOT_USE_LEXICAL_VALUES_AS_ENUM_DISCRIMINATORS,
     SOLANA_ERROR__CODECS__ENUM_DISCRIMINATOR_OUT_OF_RANGE,
@@ -562,6 +562,53 @@ describe('getEnumCodec', () => {
                     stringValues: ['seven'],
                 }),
             );
+        });
+    });
+
+    describe('numerical enums with negative values', () => {
+        enum Status {
+            Unknown = -1,
+            Active,
+            Inactive,
+        }
+        const codec = getEnumCodec(Status);
+
+        it('encodes enums by value', () => {
+            expect(codec.encode(Status.Unknown)).toStrictEqual(b('00'));
+            expect(codec.encode(Status.Active)).toStrictEqual(b('01'));
+            expect(codec.encode(Status.Inactive)).toStrictEqual(b('02'));
+        });
+
+        it('decodes enum values', () => {
+            expect(codec.decode(b('00'))).toBe(Status.Unknown);
+            expect(codec.decode(b('01'))).toBe(Status.Active);
+            expect(codec.decode(b('02'))).toBe(Status.Inactive);
+        });
+
+        it('encodes and decodes enums using values as discriminators', () => {
+            const i8Codec = getEnumCodec(Status, { size: getI8Codec(), useValuesAsDiscriminators: true });
+            expect(i8Codec.encode(Status.Unknown)).toStrictEqual(b('ff'));
+            expect(i8Codec.decode(b('ff'))).toBe(Status.Unknown);
+        });
+    });
+
+    describe('numerical objects without reverse mappings', () => {
+        const Feedback = { Bad: 0, Good: 1 } as const;
+        const codec = getEnumCodec(Feedback);
+
+        it('encodes enums by value', () => {
+            expect(codec.encode(Feedback.Bad)).toStrictEqual(b('00'));
+            expect(codec.encode(Feedback.Good)).toStrictEqual(b('01'));
+        });
+
+        it('encodes enums by key', () => {
+            expect(codec.encode('Bad')).toStrictEqual(b('00'));
+            expect(codec.encode('Good')).toStrictEqual(b('01'));
+        });
+
+        it('decodes enum values', () => {
+            expect(codec.decode(b('00'))).toBe(Feedback.Bad);
+            expect(codec.decode(b('01'))).toBe(Feedback.Good);
         });
     });
 });

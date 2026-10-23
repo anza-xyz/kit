@@ -32,10 +32,12 @@ export type GetEnumTo<TEnum extends EnumLookupObject> = TEnum[keyof TEnum];
 
 export function getEnumStats(constructor: EnumLookupObject) {
     const numericalValues = [...new Set(Object.values(constructor).filter(v => typeof v === 'number'))].sort();
-    const enumRecord = Object.fromEntries(Object.entries(constructor).slice(numericalValues.length)) as Record<
-        string,
-        number | string
-    >;
+    // Skip the reverse mappings that TypeScript adds for numerical values, e.g. `{ '0': 'Left' }`.
+    const enumRecord = Object.fromEntries(
+        Object.entries(constructor).filter(
+            ([key, value]) => typeof value !== 'string' || constructor[value] !== Number(key),
+        ),
+    ) as Record<string, number | string>;
     const enumKeys = Object.keys(enumRecord);
     const enumValues = Object.values(enumRecord);
     const stringValues: string[] = [

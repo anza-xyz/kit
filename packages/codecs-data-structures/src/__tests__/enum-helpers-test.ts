@@ -85,6 +85,32 @@ describe('getEnumStats', () => {
             stringValues: ['Zero', 'One', 'Five', 'Six', 'Seven', 'Nine', 'NineAgain', 'nana'],
         });
     });
+
+    it('handles numerical enums with negative values', () => {
+        enum Status {
+            Unknown = -1,
+            Active,
+            Inactive,
+        }
+        expect(getEnumStats(Status)).toStrictEqual({
+            enumKeys: ['Unknown', 'Active', 'Inactive'],
+            enumRecord: { Active: 0, Inactive: 1, Unknown: -1 },
+            enumValues: [-1, 0, 1],
+            numericalValues: [-1, 0, 1],
+            stringValues: ['Unknown', 'Active', 'Inactive'],
+        });
+    });
+
+    it('handles numerical objects without reverse mappings', () => {
+        const Feedback = { Bad: 0, Good: 1 } as const;
+        expect(getEnumStats(Feedback)).toStrictEqual({
+            enumKeys: ['Bad', 'Good'],
+            enumRecord: { Bad: 0, Good: 1 },
+            enumValues: [0, 1],
+            numericalValues: [0, 1],
+            stringValues: ['Bad', 'Good'],
+        });
+    });
 });
 
 describe('getEnumIndexFromVariant', () => {
