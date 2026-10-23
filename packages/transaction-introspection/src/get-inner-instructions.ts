@@ -16,7 +16,9 @@ import type { TracedInstruction } from './types';
  * shared leaf type in `@solana/rpc-types` via indexed access so the two stay in
  * sync, without coupling to a specific method's response envelope.
  */
-type RpcInnerInstructionsGroup = TransactionForFullMetaInnerInstructionsUnparsed['innerInstructions'][number];
+type RpcInnerInstructionsGroup = NonNullable<
+    TransactionForFullMetaInnerInstructionsUnparsed['innerInstructions']
+>[number];
 
 /**
  * The minimum shape of `getTransaction`'s `meta` field that this helper
