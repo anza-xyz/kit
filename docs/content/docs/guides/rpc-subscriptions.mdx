@@ -134,7 +134,7 @@ If you do not need a Kit client, you can build an `RpcSubscriptions` object dire
 ```ts twoslash
 import { createSolanaRpcSubscriptions, mainnet } from '@solana/kit';
 
-const rpcSubscriptions = createSolanaRpcSubscriptions(mainnet('wss://api.mainnet-beta.solana.com'));
+const rpcSubscriptions = createSolanaRpcSubscriptions(mainnet('wss://api.mainnet.solana.com'));
 const slotNotifications = await rpcSubscriptions
     .slotNotifications()
     .subscribe({ abortSignal: AbortSignal.timeout(10_000) });
@@ -146,7 +146,7 @@ This is useful when you want maximum tree-shaking, when you are writing a librar
 
 For light development or personal use, the public WebSocket endpoints maintained by the Solana Foundation work the same way as their HTTP counterparts.
 
-- `wss://api.mainnet-beta.solana.com`
+- `wss://api.mainnet.solana.com`
 - `wss://api.testnet.solana.com`
 - `wss://api.devnet.solana.com`
 

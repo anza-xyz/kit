@@ -8,7 +8,7 @@
  * ```ts
  * const rpc =
  *     // Step 1 - Create a `Rpc` instance. This may be stateful.
- *     createSolanaRpc(mainnet('https://api.mainnet-beta.solana.com'));
+ *     createSolanaRpc(mainnet('https://api.mainnet.solana.com'));
  * const response = await rpc
  *     // Step 2 - Call supported methods on it to produce `PendingRpcRequest` objects.
  *     .getLatestBlockhash({ commitment: 'confirmed' })

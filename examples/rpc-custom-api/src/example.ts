@@ -105,7 +105,7 @@ const customizedRpcApi = new Proxy(solanaRpcApi, {
  */
 const customizedRpc = createRpc({
     api: customizedRpcApi,
-    transport: createDefaultRpcTransport({ url: mainnet('https://api.mainnet-beta.solana.com') }),
+    transport: createDefaultRpcTransport({ url: mainnet('https://api.mainnet.solana.com') }),
 });
 
 /**

@@ -30,7 +30,7 @@ import { createRpcSubscriptionsTransportFromChannelCreator } from '../rpc-subscr
 const genericUrl = 'http://localhost:8899';
 const devnetUrl = devnet('https://api.devnet.solana.com');
 const testnetUrl = testnet('https://api.testnet.solana.com');
-const mainnetUrl = mainnet('https://api.mainnet-beta.solana.com');
+const mainnetUrl = mainnet('https://api.mainnet.solana.com');
 
 // [DESCRIBE] createDefaultRpcSubscriptionsChannelCreator.
 {

@@ -26,7 +26,7 @@
  * }
  *
  * // Use the plugin.
- * const client = createClient().use(rpcPlugin('https://api.mainnet-beta.solana.com'));
+ * const client = createClient().use(rpcPlugin('https://api.mainnet.solana.com'));
  * await client.rpc.getLatestBlockhash().send();
  * ```
  *
@@ -92,8 +92,8 @@
  *
  * // Chain plugins together.
  * const client = await createClient()
- *     .use(rpcPlugin('https://api.mainnet-beta.solana.com'))
- *     .use(rpcSubscriptionsPlugin('wss://api.mainnet-beta.solana.com'))
+ *     .use(rpcPlugin('https://api.mainnet.solana.com'))
+ *     .use(rpcSubscriptionsPlugin('wss://api.mainnet.solana.com'))
  *     .use(generatedPayerPlugin())
  *     .use(generatedAuthorityPlugin());
  * ```
@@ -166,7 +166,7 @@ export type AsyncClient<TSelf extends object> = Promise<Client<TSelf>> & {
  *
  * const client = await createClient()
  *     .use(generatedPayer())
- *     .use(rpc('https://api.mainnet-beta.solana.com'));
+ *     .use(rpc('https://api.mainnet.solana.com'));
  * ```
  */
 export function createClient<TSelf extends object = object>(value?: TSelf): Client<TSelf> {

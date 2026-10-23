@@ -7,7 +7,7 @@
  * ```ts
  * const rpcSubscriptions =
  *     // Step 1 - Create a `RpcSubscriptions` instance. This may be stateful.
- *     createSolanaRpcSubscriptions(mainnet('wss://api.mainnet-beta.solana.com'));
+ *     createSolanaRpcSubscriptions(mainnet('wss://api.mainnet.solana.com'));
  * const response = await rpcSubscriptions
  *     // Step 2 - Call supported methods on it to produce `PendingRpcSubscriptionsRequest` objects.
  *     .slotNotifications({ commitment: 'confirmed' })

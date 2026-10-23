@@ -57,7 +57,7 @@ import { tokenProgram } from '@solana-program/token';
 
 const client = await createClient()
     .use(signerFromFile('~/.config/solana/id.json'))
-    .use(solanaMainnetRpc({ rpcUrl: 'https://api.mainnet-beta.solana.com' }))
+    .use(solanaMainnetRpc({ rpcUrl: 'https://api.mainnet.solana.com' }))
     .use(systemProgram())
     .use(tokenProgram());
 

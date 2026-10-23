@@ -200,9 +200,9 @@ import { createDefaultRpcTransport, createSolanaRpcFromTransport, type RpcTransp
 
 // Create an HTTP transport for each RPC server.
 const transports = [
-    createDefaultRpcTransport({ url: 'https://mainnet-beta.my-server-1.com' }),
-    createDefaultRpcTransport({ url: 'https://mainnet-beta.my-server-2.com' }),
-    createDefaultRpcTransport({ url: 'https://mainnet-beta.my-server-3.com' }),
+    createDefaultRpcTransport({ url: 'https://mainnet.my-server-1.com' }),
+    createDefaultRpcTransport({ url: 'https://mainnet.my-server-2.com' }),
+    createDefaultRpcTransport({ url: 'https://mainnet.my-server-3.com' }),
 ];
 
 // Set up the round-robin transport.
@@ -225,10 +225,10 @@ A sharding transport is a kind of distributing transport that sends requests to 
 import { createDefaultRpcTransport, createSolanaRpcFromTransport, type RpcTransport } from '@solana/kit';
 
 // Create multiple transports.
-const transportA = createDefaultRpcTransport({ url: 'https://mainnet-beta.my-server-1.com' });
-const transportB = createDefaultRpcTransport({ url: 'https://mainnet-beta.my-server-2.com' });
-const transportC = createDefaultRpcTransport({ url: 'https://mainnet-beta.my-server-3.com' });
-const transportD = createDefaultRpcTransport({ url: 'https://mainnet-beta.my-server-4.com' });
+const transportA = createDefaultRpcTransport({ url: 'https://mainnet.my-server-1.com' });
+const transportB = createDefaultRpcTransport({ url: 'https://mainnet.my-server-2.com' });
+const transportC = createDefaultRpcTransport({ url: 'https://mainnet.my-server-3.com' });
+const transportD = createDefaultRpcTransport({ url: 'https://mainnet.my-server-4.com' });
 
 // Function to determine which shard to use based on the request method.
 function selectShard(method: string): RpcTransport {
@@ -268,7 +268,7 @@ import { createDefaultRpcTransport, createSolanaRpcFromTransport, type RpcTransp
 const MAX_ATTEMPTS = 4;
 
 // Create the default transport.
-const defaultTransport = createDefaultRpcTransport({ url: 'https://mainnet-beta.my-server-1.com' });
+const defaultTransport = createDefaultRpcTransport({ url: 'https://mainnet.my-server-1.com' });
 
 // Sleep function to wait for a given number of milliseconds.
 function sleep(ms: number): Promise<void> {
@@ -312,10 +312,10 @@ import { createDefaultRpcTransport, createSolanaRpcFromTransport, type RpcTransp
 
 // List of RPC endpoints for failover.
 const rpcEndpoints = [
-    'https://mainnet-beta.my-server-1.com',
-    'https://mainnet-beta.my-server-2.com',
-    'https://mainnet-beta.my-server-3.com',
-    'https://mainnet-beta.my-server-3.com',
+    'https://mainnet.my-server-1.com',
+    'https://mainnet.my-server-2.com',
+    'https://mainnet.my-server-3.com',
+    'https://mainnet.my-server-3.com',
 ];
 
 // Create an array of transports from the endpoints.
@@ -353,7 +353,7 @@ If you're using a specific cluster, you may wrap your RPC URL inside a helper fu
 ```ts
 import { createSolanaRpc, mainnet, devnet } from '@solana/kit';
 
-const mainnetRpc = createSolanaRpc(mainnet('https://api.mainnet-beta.solana.com'));
+const mainnetRpc = createSolanaRpc(mainnet('https://api.mainnet.solana.com'));
 //    ^? RpcMainnet<SolanaRpcApiMainnet>
 
 const devnetRpc = createSolanaRpc(devnet('https://api.devnet.solana.com'));
@@ -689,7 +689,7 @@ If you're using a specific cluster, you may wrap your RPC URL inside a helper fu
 ```ts
 import { createSolanaRpcSubscriptions, mainnet, devnet } from '@solana/kit';
 
-const mainnetRpc = createSolanaRpcSubscriptions(mainnet('https://api.mainnet-beta.solana.com'));
+const mainnetRpc = createSolanaRpcSubscriptions(mainnet('https://api.mainnet.solana.com'));
 //    ^? RpcSubscriptionsMainnet<SolanaRpcSubscriptionsApi>
 
 const devnetRpc = createSolanaRpcSubscriptions(devnet('https://api.devnet.solana.com'));

@@ -19,7 +19,7 @@ import { createDefaultRpcTransport } from '../rpc-transport';
 const genericUrl = 'http://localhost:8899';
 const devnetUrl = devnet('https://api.devnet.solana.com');
 const testnetUrl = testnet('https://api.testnet.solana.com');
-const mainnetUrl = mainnet('https://api.mainnet-beta.solana.com');
+const mainnetUrl = mainnet('https://api.mainnet.solana.com');
 
 const genericTransport = createDefaultRpcTransport({ url: genericUrl });
 const devnetTransport = createDefaultRpcTransport({ url: devnetUrl });
