@@ -25,7 +25,7 @@ import { isInstructionForProgram, isInstructionWithData } from '@solana/instruct
 import { decodeTransactionFromRpcResponse, walkInstructions } from '@solana/transaction-introspection';
 import { identifyTokenInstruction, TOKEN_PROGRAM_ADDRESS, TokenInstruction } from '@solana-program/token';
 
-const rpc = createSolanaRpc('https://api.mainnet-beta.solana.com');
+const rpc = createSolanaRpc('https://api.mainnet.solana.com');
 const rpcTx = await rpc
     .getTransaction(signature(txid), {
         commitment: 'confirmed',
@@ -58,7 +58,7 @@ Prefer `encoding: 'base64'` when bandwidth allows — it is the most compact, th
 import { createSolanaRpc, signature } from '@solana/kit';
 import { decodeTransactionFromRpcResponse } from '@solana/transaction-introspection';
 
-const rpc = createSolanaRpc('https://api.mainnet-beta.solana.com');
+const rpc = createSolanaRpc('https://api.mainnet.solana.com');
 const rpcTx = await rpc
     .getTransaction(signature(txid), {
         commitment: 'confirmed',

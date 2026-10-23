@@ -22,7 +22,7 @@ Call this to create a function that conforms to the `RpcTransport` interface (se
 ```ts
 import { createHttpTransport } from '@solana/rpc-transport-http';
 
-const transport = createHttpTransport({ url: 'https://api.mainnet-beta.solana.com' });
+const transport = createHttpTransport({ url: 'https://api.mainnet.solana.com' });
 const response = await transport({
     payload: { id: 1, jsonrpc: '2.0', method: 'getSlot' },
 });
@@ -44,7 +44,7 @@ const dispatcher = new Agent({
     factory(origin, opts) {
         if (origin === 'https://mypool') {
             const upstreams = [
-                'https://api.mainnet-beta.solana.com',
+                'https://api.mainnet.solana.com',
                 'https://mainnet.helius-rpc.com',
                 'https://several-neat-iguana.quiknode.pro',
             ];
@@ -130,9 +130,9 @@ import { createHttpTransport } from '@solana/rpc-transport-http';
 
 // Create a transport for each RPC server
 const transports = [
-    createHttpTransport({ url: 'https://mainnet-beta.my-server-1.com' }),
-    createHttpTransport({ url: 'https://mainnet-beta.my-server-2.com' }),
-    createHttpTransport({ url: 'https://mainnet-beta.my-server-3.com' }),
+    createHttpTransport({ url: 'https://mainnet.my-server-1.com' }),
+    createHttpTransport({ url: 'https://mainnet.my-server-2.com' }),
+    createHttpTransport({ url: 'https://mainnet.my-server-3.com' }),
 ];
 
 // Create a wrapper transport that distributes requests to them
@@ -156,10 +156,10 @@ import { RpcResponse } from '@solana/rpc-spec-types';
 import { createHttpTransport } from '@solana/rpc-transport-http';
 
 // Create multiple transports
-const transportA = createHttpTransport({ url: 'https://mainnet-beta.my-server-1.com' });
-const transportB = createHttpTransport({ url: 'https://mainnet-beta.my-server-2.com' });
-const transportC = createHttpTransport({ url: 'https://mainnet-beta.my-server-3.com' });
-const transportD = createHttpTransport({ url: 'https://mainnet-beta.my-server-4.com' });
+const transportA = createHttpTransport({ url: 'https://mainnet.my-server-1.com' });
+const transportB = createHttpTransport({ url: 'https://mainnet.my-server-2.com' });
+const transportC = createHttpTransport({ url: 'https://mainnet.my-server-3.com' });
+const transportD = createHttpTransport({ url: 'https://mainnet.my-server-4.com' });
 
 // Function to determine which shard to use based on the request method
 function selectShard(method: string): RpcTransport {
@@ -197,7 +197,7 @@ import { createHttpTransport } from '@solana/rpc-transport-http';
 const MAX_ATTEMPTS = 4;
 
 // Create the default transport
-const defaultTransport = createHttpTransport({ url: 'https://mainnet-beta.my-server-1.com' });
+const defaultTransport = createHttpTransport({ url: 'https://mainnet.my-server-1.com' });
 
 // Sleep function to wait for a given number of milliseconds
 function sleep(ms: number): Promise<void> {
@@ -240,9 +240,9 @@ import { createHttpTransport } from '@solana/rpc-transport-http';
 
 // Create a transport for each RPC server
 const transports = [
-    createHttpTransport({ url: 'https://mainnet-beta.my-server-1.com' }),
-    createHttpTransport({ url: 'https://mainnet-beta.my-server-2.com' }),
-    createHttpTransport({ url: 'https://mainnet-beta.my-server-2.com' }),
+    createHttpTransport({ url: 'https://mainnet.my-server-1.com' }),
+    createHttpTransport({ url: 'https://mainnet.my-server-2.com' }),
+    createHttpTransport({ url: 'https://mainnet.my-server-2.com' }),
 ];
 
 // A failover transport that will try each transport in order until one succeeds before failing

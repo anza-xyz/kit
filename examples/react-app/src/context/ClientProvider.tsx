@@ -31,7 +31,7 @@ function buildClient(chain: SolanaChain) {
             return base
                 .use(
                     solanaMainnetRpc({
-                        rpcUrl: process.env.REACT_EXAMPLE_APP_MAINNET_URL ?? 'https://api.mainnet-beta.solana.com',
+                        rpcUrl: process.env.REACT_EXAMPLE_APP_MAINNET_URL ?? 'https://api.mainnet.solana.com',
                     }),
                 )
                 .use(client => extendClient(client, { chain }))

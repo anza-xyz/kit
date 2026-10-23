@@ -25,7 +25,7 @@ These utilities are **included within the `@solana/kit` library** but you may al
 
 ```ts twoslash
 import { createSolanaRpc, signature } from '@solana/kit';
-const rpc = createSolanaRpc('https://api.mainnet-beta.solana.com');
+const rpc = createSolanaRpc('https://api.mainnet.solana.com');
 const txid = '5pX...';
 // ---cut-before---
 import { decodeTransactionFromRpcResponse } from '@solana/kit';
@@ -65,7 +65,7 @@ Here we tally every USDC transfer in a transaction — outer instructions and in
 
 ```ts twoslash
 import { createSolanaRpc, signature } from '@solana/kit';
-const rpc = createSolanaRpc('https://api.mainnet-beta.solana.com');
+const rpc = createSolanaRpc('https://api.mainnet.solana.com');
 const txid = '5pX...';
 // ---cut-before---
 import {

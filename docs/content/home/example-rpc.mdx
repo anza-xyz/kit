@@ -5,7 +5,7 @@ title: RPC Example
 {/* Please keep visible code between 4 to 8 lines of code. */}
 
 ```ts
-const rpc = createSolanaRpc('https://api.mainnet-beta.solana.com');
+const rpc = createSolanaRpc('https://api.mainnet.solana.com');
 
 const { value: balance } = await rpc.getBalance(myWallet).send();
 const { value: accountInfo } = await rpc.getAccountInfo(myAccount).send();

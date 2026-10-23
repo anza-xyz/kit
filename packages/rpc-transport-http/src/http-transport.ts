@@ -28,7 +28,7 @@ function warnDispatcherWasSuppliedInNonNodeEnvironment() {
  * ```ts
  * import { createHttpTransport } from '@solana/rpc-transport-http';
  *
- * const transport = createHttpTransport({ url: 'https://api.mainnet-beta.solana.com' });
+ * const transport = createHttpTransport({ url: 'https://api.mainnet.solana.com' });
  * const response = await transport({
  *     payload: { id: 1, jsonrpc: '2.0', method: 'getSlot' },
  * });

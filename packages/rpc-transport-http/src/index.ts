@@ -20,9 +20,9 @@
  *
  * // Create a transport for each RPC server
  * const transports = [
- *     createHttpTransport({ url: 'https://mainnet-beta.my-server-1.com' }),
- *     createHttpTransport({ url: 'https://mainnet-beta.my-server-2.com' }),
- *     createHttpTransport({ url: 'https://mainnet-beta.my-server-3.com' }),
+ *     createHttpTransport({ url: 'https://mainnet.my-server-1.com' }),
+ *     createHttpTransport({ url: 'https://mainnet.my-server-2.com' }),
+ *     createHttpTransport({ url: 'https://mainnet.my-server-3.com' }),
  * ];
  *
  * // Create a wrapper transport that distributes requests to them
@@ -49,10 +49,10 @@
  * import { createHttpTransport } from '@solana/rpc-transport-http';
  *
  * // Create multiple transports
- * const transportA = createHttpTransport({ url: 'https://mainnet-beta.my-server-1.com' });
- * const transportB = createHttpTransport({ url: 'https://mainnet-beta.my-server-2.com' });
- * const transportC = createHttpTransport({ url: 'https://mainnet-beta.my-server-3.com' });
- * const transportD = createHttpTransport({ url: 'https://mainnet-beta.my-server-4.com' });
+ * const transportA = createHttpTransport({ url: 'https://mainnet.my-server-1.com' });
+ * const transportB = createHttpTransport({ url: 'https://mainnet.my-server-2.com' });
+ * const transportC = createHttpTransport({ url: 'https://mainnet.my-server-3.com' });
+ * const transportD = createHttpTransport({ url: 'https://mainnet.my-server-4.com' });
  *
  * // Function to determine which shard to use based on the request method
  * function selectShard(method: string): RpcTransport {
@@ -90,7 +90,7 @@
  * const MAX_ATTEMPTS = 4;
  *
  * // Create the default transport
- * const defaultTransport = createHttpTransport({ url: 'https://mainnet-beta.my-server-1.com' });
+ * const defaultTransport = createHttpTransport({ url: 'https://mainnet.my-server-1.com' });
  *
  * // Sleep function to wait for a given number of milliseconds
  * function sleep(ms: number): Promise<void> {
@@ -133,9 +133,9 @@
  *
  * // Create a transport for each RPC server
  * const transports = [
- *     createHttpTransport({ url: 'https://mainnet-beta.my-server-1.com' }),
- *     createHttpTransport({ url: 'https://mainnet-beta.my-server-2.com' }),
- *     createHttpTransport({ url: 'https://mainnet-beta.my-server-2.com' }),
+ *     createHttpTransport({ url: 'https://mainnet.my-server-1.com' }),
+ *     createHttpTransport({ url: 'https://mainnet.my-server-2.com' }),
+ *     createHttpTransport({ url: 'https://mainnet.my-server-2.com' }),
  * ];
  *
  * // A failover transport that will try each transport in order until one succeeds before failing

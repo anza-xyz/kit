@@ -81,7 +81,7 @@ export function App() {
                 .use(generatedSigner())
                 .use(
                     cluster === 'mainnet'
-                        ? solanaMainnetRpc({ rpcUrl: 'https://api.mainnet-beta.solana.com' })
+                        ? solanaMainnetRpc({ rpcUrl: 'https://api.mainnet.solana.com' })
                         : solanaDevnetRpc(),
                 ),
         [cluster],

@@ -32,9 +32,9 @@ pnpm turbo build
 
 The contents of the `dist/` directory can now be uploaded to a webserver.
 
-## Enabling Mainnet-Beta
+## Enabling Mainnet
 
-The public Mainnet-Beta RPC endpoint is rate limited to the point of being unusable and is typically blocked by [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) rules from the browser, so Mainnet is hidden in the example app by default. To enable it, start the server or compile the application with the `REACT_EXAMPLE_APP_MAINNET_URL` environment variable set to your own Mainnet RPC endpoint. That URL becomes the app's Mainnet RPC endpoint, and the WebSocket subscriptions URL is derived from it (the `https` protocol is swapped for `wss`).
+The public Mainnet RPC endpoint is rate limited to the point of being unusable and is typically blocked by [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) rules from the browser, so Mainnet is hidden in the example app by default. To enable it, start the server or compile the application with the `REACT_EXAMPLE_APP_MAINNET_URL` environment variable set to your own Mainnet RPC endpoint. That URL becomes the app's Mainnet RPC endpoint, and the WebSocket subscriptions URL is derived from it (the `https` protocol is swapped for `wss`).
 
 ```shell
 REACT_EXAMPLE_APP_MAINNET_URL=https://your-rpc-provider.example.com pnpm dev

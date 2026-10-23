@@ -19,7 +19,7 @@ export type HttpTransportConfig = Readonly<{
      *     factory(origin, opts) {
      *         if (origin === 'https://mypool') {
      *             const upstreams = [
-     *                 'https://api.mainnet-beta.solana.com',
+     *                 'https://api.mainnet.solana.com',
      *                 'https://mainnet.helius-rpc.com',
      *                 'https://several-neat-iguana.quiknode.pro',
      *             ];

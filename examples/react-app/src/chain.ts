@@ -17,7 +17,7 @@ export const DEFAULT_CHAIN: SolanaChain = 'solana:devnet';
 export function getChainDisplayName(chain: SolanaChain): string {
     switch (chain) {
         case 'solana:mainnet':
-            return 'Mainnet Beta';
+            return 'Mainnet';
         case 'solana:testnet':
             return 'Testnet';
         case 'solana:devnet':
@@ -27,10 +27,10 @@ export function getChainDisplayName(chain: SolanaChain): string {
 }
 
 /** The `?cluster=` value Solana Explorer expects for a chain. */
-export function getExplorerClusterName(chain: SolanaChain): 'devnet' | 'mainnet-beta' | 'testnet' {
+export function getExplorerClusterName(chain: SolanaChain): 'devnet' | 'mainnet' | 'testnet' {
     switch (chain) {
         case 'solana:mainnet':
-            return 'mainnet-beta';
+            return 'mainnet';
         case 'solana:testnet':
             return 'testnet';
         case 'solana:devnet':

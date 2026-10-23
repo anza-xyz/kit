@@ -5,7 +5,7 @@ title: RPC Subscriptions Example
 {/* Please keep visible code between 4 to 8 lines of code. */}
 
 ```ts
-const rpcSubscriptions = createSolanaRpcSubscriptions('ws://api.mainnet-beta.solana.com');
+const rpcSubscriptions = createSolanaRpcSubscriptions('wss://api.mainnet.solana.com');
 const accountNotifications = await rpcSubscriptions
     .accountNotifications(myAccount, { commitment: 'confirmed' })
     .subscribe({ abortSignal: abortController.signal });

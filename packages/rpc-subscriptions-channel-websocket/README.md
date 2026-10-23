@@ -28,7 +28,7 @@ const abortController = new AbortController();
 const webSocketChannel = await createWebSocketChannel({
     sendBufferHighWatermark: Number.POSITIVE_INFINITY,
     signal: abortController.signal,
-    url: 'wss://api.mainnet-beta.solana.com',
+    url: 'wss://api.mainnet.solana.com',
 });
 const channel = {
     ...webSocketChannel,

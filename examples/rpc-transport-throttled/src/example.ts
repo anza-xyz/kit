@@ -109,7 +109,7 @@ function getThrottledTransport<TClusterUrl extends ClusterUrl>(
  * instance from the resulting transport.
  */
 const defaultTransport = createDefaultRpcTransport({
-    url: mainnet('https://api.mainnet-beta.solana.com'),
+    url: mainnet('https://api.mainnet.solana.com'),
 });
 const throttledTransport = getThrottledTransport(defaultTransport);
 const throttledRpc = createSolanaRpcFromTransport(throttledTransport);
