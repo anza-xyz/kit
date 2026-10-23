@@ -1,5 +1,22 @@
 # @solana/rpc-subscriptions
 
+## 8.5.1
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @solana/rpc-types@8.5.1
+  - @solana/rpc-subscriptions-api@8.5.1
+  - @solana/rpc-transformers@8.5.1
+  - @solana/errors@8.5.1
+  - @solana/fast-stable-stringify@8.5.1
+  - @solana/functional@8.5.1
+  - @solana/promises@8.5.1
+  - @solana/rpc-spec-types@8.5.1
+  - @solana/rpc-subscriptions-channel-websocket@8.5.1
+  - @solana/rpc-subscriptions-spec@8.5.1
+  - @solana/subscribable@8.5.1
+
 ## 8.5.0
 
 ### Patch Changes

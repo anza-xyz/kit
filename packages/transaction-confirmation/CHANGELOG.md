@@ -1,5 +1,21 @@
 # @solana/transaction-confirmation
 
+## 8.5.1
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @solana/addresses@8.5.1
+  - @solana/codecs-strings@8.5.1
+  - @solana/keys@8.5.1
+  - @solana/rpc-types@8.5.1
+  - @solana/transaction-messages@8.5.1
+  - @solana/transactions@8.5.1
+  - @solana/rpc-subscriptions@8.5.1
+  - @solana/rpc@8.5.1
+  - @solana/errors@8.5.1
+  - @solana/promises@8.5.1
+
 ## 8.5.0
 
 ### Patch Changes
