@@ -21,7 +21,7 @@ import type {
 } from './transaction-meta';
 
 /** A range comparison applied to a slot. All bounds are optional and combined with AND. */
-type SlotComparison = Readonly<{
+export type SlotComparison = Readonly<{
     /** Match values strictly greater than this slot. */
     gt?: Slot;
     /** Match values greater than or equal to this slot. */
@@ -37,7 +37,7 @@ type SlotComparison = Readonly<{
  * AND. Unlike the slot and signature comparisons, block time additionally supports an exact `eq`
  * match.
  */
-type BlockTimeComparison = Readonly<{
+export type BlockTimeComparison = Readonly<{
     /** Match transactions whose block time is exactly this timestamp. */
     eq?: UnixTimestamp;
     /** Match transactions whose block time is strictly after this timestamp. */
@@ -54,7 +54,7 @@ type BlockTimeComparison = Readonly<{
  * A comparison applied to a transaction's signature ordering. All bounds are optional and combined
  * with AND.
  */
-type SignatureComparison = Readonly<{
+export type SignatureComparison = Readonly<{
     /** Match transactions ordered strictly after this signature. */
     gt?: Signature;
     /** Match transactions ordered at or after this signature. */
@@ -69,7 +69,7 @@ type SignatureComparison = Readonly<{
  * Server-side filters that narrow the set of returned transactions. Every filter is optional, and
  * supplying more than one combines them with AND semantics.
  */
-type GetTransactionsForAddressFilters = Readonly<{
+export type GetTransactionsForAddressFilters = Readonly<{
     /** Restrict results to a range of block times. */
     blockTime?: BlockTimeComparison;
     /** Restrict results to a range of signature orderings. */
@@ -100,7 +100,7 @@ type GetTransactionsForAddressFilters = Readonly<{
     tokenAccounts?: 'all' | 'balanceChanged' | 'none';
 }>;
 
-type AllowedCommitmentForGetTransactionsForAddress = Exclude<Commitment, 'processed'>;
+export type AllowedCommitmentForGetTransactionsForAddress = Exclude<Commitment, 'processed'>;
 
 /**
  * The set of transaction versions that may be requested via `maxSupportedTransactionVersion`.
@@ -108,9 +108,9 @@ type AllowedCommitmentForGetTransactionsForAddress = Exclude<Commitment, 'proces
  * `'legacy'` is excluded because requesting legacy transactions is expressed by omitting
  * `maxSupportedTransactionVersion` entirely.
  */
-type GetTransactionsForAddressMaxSupportedTransactionVersion = Exclude<TransactionVersion, 'legacy'>;
+export type GetTransactionsForAddressMaxSupportedTransactionVersion = Exclude<TransactionVersion, 'legacy'>;
 
-type GetTransactionsForAddressCommonConfig = Readonly<{
+export type GetTransactionsForAddressCommonConfig = Readonly<{
     /**
      * Fetch transactions as of the highest slot that has reached this level of commitment.
      *
@@ -157,7 +157,7 @@ type GetTransactionsForAddressCommonConfig = Readonly<{
     sortOrder?: 'asc' | 'desc';
 }>;
 
-type GetTransactionsForAddressFullOnlyConfig = Readonly<{
+export type GetTransactionsForAddressFullOnlyConfig = Readonly<{
     /**
      * Determines how each transaction is encoded in the response.
      *
@@ -184,7 +184,7 @@ type GetTransactionsForAddressFullOnlyConfig = Readonly<{
 }>;
 
 /** The result envelope shared by every mode of {@link GetTransactionsForAddressApi}. */
-type GetTransactionsForAddressApiResponse<TData> = Readonly<{
+export type GetTransactionsForAddressApiResponse<TData> = Readonly<{
     /** The matching transactions, ordered according to the requested `sortOrder`. */
     data: readonly TData[];
     /**
@@ -195,7 +195,7 @@ type GetTransactionsForAddressApiResponse<TData> = Readonly<{
 }>;
 
 /** A single result when `transactionDetails` is `'signatures'`. */
-type GetTransactionsForAddressSignature = Readonly<{
+export type GetTransactionsForAddressSignature = Readonly<{
     /** The estimated production time of when the transaction was processed. `null` if not available. */
     blockTime: UnixTimestamp | null;
     /** The transaction's cluster confirmation status. */
@@ -215,7 +215,7 @@ type GetTransactionsForAddressSignature = Readonly<{
 /**
  * The fields shared by every result when `transactionDetails` is `'full'`, regardless of encoding.
  */
-type GetTransactionsForAddressFullBase = Readonly<{
+export type GetTransactionsForAddressFullBase = Readonly<{
     /** The estimated production time of when the transaction was processed. `null` if not available. */
     blockTime: UnixTimestamp | null;
     /** The slot that contains the block with the transaction. */
@@ -271,19 +271,20 @@ type GetTransactionsForAddressFullMetaParsedVersioned =
  * When `maxSupportedTransactionVersion` is set, the result additionally carries a `version`, the
  * `meta` carries `loadedAddresses`, and the message carries `addressTableLookups`.
  */
-type GetTransactionsForAddressFullJsonParsed<TMaxSupportedTransactionVersion extends TransactionVersion | void> =
-    TMaxSupportedTransactionVersion extends void
-        ? GetTransactionsForAddressFullBase &
-              Readonly<{
-                  meta: GetTransactionsForAddressFullMetaParsedLegacy;
-                  transaction: TransactionJsonParsed;
-              }>
-        : GetTransactionsForAddressFullBase &
-              GetTransactionsForAddressVersion &
-              Readonly<{
-                  meta: GetTransactionsForAddressFullMetaParsedVersioned;
-                  transaction: TransactionAddressTableLookups & TransactionJsonParsed;
-              }>;
+export type GetTransactionsForAddressFullJsonParsed<
+    TMaxSupportedTransactionVersion extends TransactionVersion | void = void,
+> = TMaxSupportedTransactionVersion extends void
+    ? GetTransactionsForAddressFullBase &
+          Readonly<{
+              meta: GetTransactionsForAddressFullMetaParsedLegacy;
+              transaction: TransactionJsonParsed;
+          }>
+    : GetTransactionsForAddressFullBase &
+          GetTransactionsForAddressVersion &
+          Readonly<{
+              meta: GetTransactionsForAddressFullMetaParsedVersioned;
+              transaction: TransactionAddressTableLookups & TransactionJsonParsed;
+          }>;
 
 /**
  * A `'full'`, `json`-encoded result.
@@ -291,19 +292,20 @@ type GetTransactionsForAddressFullJsonParsed<TMaxSupportedTransactionVersion ext
  * When `maxSupportedTransactionVersion` is set, the result additionally carries a `version`, the
  * `meta` carries `loadedAddresses`, and the message carries `addressTableLookups`.
  */
-type GetTransactionsForAddressFullJson<TMaxSupportedTransactionVersion extends TransactionVersion | void> =
-    TMaxSupportedTransactionVersion extends void
-        ? GetTransactionsForAddressFullBase &
-              Readonly<{
-                  meta: GetTransactionsForAddressFullMetaNotParsedLegacy;
-                  transaction: TransactionJson;
-              }>
-        : GetTransactionsForAddressFullBase &
-              GetTransactionsForAddressVersion &
-              Readonly<{
-                  meta: GetTransactionsForAddressFullMetaNotParsedVersioned;
-                  transaction: TransactionAddressTableLookups & TransactionJson;
-              }>;
+export type GetTransactionsForAddressFullJson<
+    TMaxSupportedTransactionVersion extends TransactionVersion | void = void,
+> = TMaxSupportedTransactionVersion extends void
+    ? GetTransactionsForAddressFullBase &
+          Readonly<{
+              meta: GetTransactionsForAddressFullMetaNotParsedLegacy;
+              transaction: TransactionJson;
+          }>
+    : GetTransactionsForAddressFullBase &
+          GetTransactionsForAddressVersion &
+          Readonly<{
+              meta: GetTransactionsForAddressFullMetaNotParsedVersioned;
+              transaction: TransactionAddressTableLookups & TransactionJson;
+          }>;
 
 /**
  * A `'full'` result encoded as a base58 or base64 wire-transaction tuple.
@@ -326,6 +328,16 @@ type GetTransactionsForAddressFullEncoded<
               meta: GetTransactionsForAddressFullMetaNotParsedVersioned;
               transaction: TTransaction;
           }>;
+
+/** A `'full'` result when called with `encoding: 'base64'`. */
+export type GetTransactionsForAddressFullBase64<
+    TMaxSupportedTransactionVersion extends TransactionVersion | void = void,
+> = GetTransactionsForAddressFullEncoded<TMaxSupportedTransactionVersion, Base64EncodedDataResponse>;
+
+/** A `'full'` result when called with `encoding: 'base58'`. */
+export type GetTransactionsForAddressFullBase58<
+    TMaxSupportedTransactionVersion extends TransactionVersion | void = void,
+> = GetTransactionsForAddressFullEncoded<TMaxSupportedTransactionVersion, Base58EncodedDataResponse>;
 
 export type GetTransactionsForAddressApi = {
     /**
