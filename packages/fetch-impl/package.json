@@ -6,7 +6,7 @@
         "benchmark": "./src/__benchmarks__/run.ts"
     },
     "devDependencies": {
-        "tinybench": "^6.2.0",
+        "tinybench": "^6.2.2",
         "undici": "^8.11.2"
     },
     "engines": {

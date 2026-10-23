@@ -92,7 +92,7 @@
     },
     "devDependencies": {
         "@solana/fs-impl": "workspace:*",
-        "tinybench": "^6.2.0"
+        "tinybench": "^6.2.2"
     },
     "engines": {
         "node": ">=20.18.0"
