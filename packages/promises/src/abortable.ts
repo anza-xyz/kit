@@ -45,22 +45,30 @@ export function getAbortablePromise<T>(promise: Promise<T>, abortSignal?: AbortS
     if (!abortSignal) {
         return promise;
     } else {
+        let abortHandler: (() => void) | undefined;
+        const abortPromise = new Promise<never>((_, reject) => {
+            if (abortSignal.aborted) {
+                // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+                reject(abortSignal.reason);
+            } else {
+                abortHandler = () => {
+                    // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+                    reject(abortSignal.reason);
+                };
+                abortSignal.addEventListener('abort', abortHandler);
+            }
+        });
+
         return safeRace([
             // This promise only ever rejects if the signal is aborted. Otherwise it idles forever.
             // It's important that this come before the input promise; in the event of an abort, we
             // want to throw even if the input promise's result is ready
-            new Promise<never>((_, reject) => {
-                if (abortSignal.aborted) {
-                    // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
-                    reject(abortSignal.reason);
-                } else {
-                    abortSignal.addEventListener('abort', function () {
-                        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
-                        reject(this.reason);
-                    });
-                }
-            }),
+            abortPromise,
             promise,
-        ]);
+        ]).finally(() => {
+            if (abortHandler) {
+                abortSignal.removeEventListener('abort', abortHandler);
+            }
+        });
     }
 }
