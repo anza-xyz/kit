@@ -25,8 +25,8 @@
         "@solana/react": "workspace:*",
         "@wallet-standard/core": "^1.1.2",
         "@wallet-standard/ui": "^1.0.3",
-        "react": "^19.3.0",
-        "react-dom": "^19.3.0",
+        "react": "^19.3.1",
+        "react-dom": "^19.3.1",
         "react-error-boundary": "^5.0.0",
         "swr": "^2.5.1"
     },
