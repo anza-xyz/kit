@@ -7,7 +7,7 @@
     },
     "devDependencies": {
         "tinybench": "^6.2.2",
-        "undici": "^8.11.2"
+        "undici": "^8.12.3"
     },
     "engines": {
         "node": ">=20.18.0"
