@@ -34,9 +34,15 @@ jobs:
   changelog-dry-run:
     name: Changelog dry run
     runs-on: ubuntu-latest
+    # Backstop: a healthy run takes well under a minute
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Full history. Without this, fork PRs can't find their merge commit after a few days,
+          # and @changesets/git gets stuck in a loop
+          fetch-depth: 0
 
       - name: Install Dependencies
         uses: ./.github/workflows/actions/install-dependencies
