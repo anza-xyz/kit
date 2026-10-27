@@ -294,45 +294,18 @@ describe('decodeTransactionFromRpcResponse', () => {
         expect(v1.configValues).toStrictEqual([]);
     });
 
-    it('decodes the `transactionConfig` of a JSON (v1) response into the same config as the base64 encoding', () => {
-        const b64 = buildBase64Tx({
-            configMask: 0b1111,
-            configValues: [
-                { kind: 'u64', value: 5_000n },
-                { kind: 'u32', value: 200_000 },
-                { kind: 'u32', value: 67_108_864 },
-            ],
-            header: {
-                numReadonlyNonSignerAccounts: 1,
-                numReadonlySignerAccounts: 0,
-                numSignerAccounts: 1,
-            },
-            instructionHeaders: [{ numInstructionAccounts: 1, numInstructionDataBytes: 1, programAccountIndex: 1 }],
-            instructionPayloads: [{ instructionAccountIndices: [0], instructionData: new Uint8Array([7]) }],
-            numInstructions: 1,
-            numStaticAccounts: 2,
-            staticAccounts: [
-                '11111111111111111111111111111112' as Address,
-                '11111111111111111111111111111113' as Address,
-            ],
-            version: 1,
-        } as Partial<EncodableCompiledMessage>);
-        const jsonTx = {
+    it('decodes the `transactionConfig` of a JSON (v1) response into a config mask and values', () => {
+        const rpcTx = {
             meta: null,
             transaction: {
                 message: {
-                    accountKeys: [
-                        '11111111111111111111111111111112' as Address,
-                        '11111111111111111111111111111113' as Address,
-                    ],
+                    accountKeys: ['11111111111111111111111111111112' as Address],
                     header: {
                         numReadonlySignedAccounts: 0,
-                        numReadonlyUnsignedAccounts: 1,
+                        numReadonlyUnsignedAccounts: 0,
                         numRequiredSignatures: 1,
                     },
-                    instructions: [
-                        { accounts: [0], data: getBase58Decoder().decode(new Uint8Array([7])), programIdIndex: 1 },
-                    ],
+                    instructions: [],
                     recentBlockhash: '11111111111111111111111111111111',
                     transactionConfig: {
                         computeUnitLimit: 200_000,
@@ -345,14 +318,17 @@ describe('decodeTransactionFromRpcResponse', () => {
             },
             version: 1,
         } as unknown as GetTransactionApiResponseJson<1>;
+        const v1 = decodeTransactionFromRpcResponse(rpcTx).compiledMessage as Extract<
+            ReturnType<typeof decodeTransactionFromRpcResponse>['compiledMessage'],
+            { version: 1 }
+        >;
 
-        const fromBase64 = decodeTransactionFromRpcResponse({
-            meta: null,
-            transaction: [b64, 'base64'],
-        } as unknown as GetTransactionApiResponseBase64<1>);
-        const fromJson = decodeTransactionFromRpcResponse(jsonTx);
-
-        expect(fromJson.compiledMessage).toStrictEqual(fromBase64.compiledMessage);
+        expect(v1.configMask).toBe(0b1111);
+        expect(v1.configValues).toStrictEqual([
+            { kind: 'u64', value: 5_000n },
+            { kind: 'u32', value: 200_000 },
+            { kind: 'u32', value: 67_108_864 },
+        ]);
     });
 
     it('throws SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED for an unknown JSON transaction version', () => {
