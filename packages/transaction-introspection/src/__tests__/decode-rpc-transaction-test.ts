@@ -331,6 +331,42 @@ describe('decodeTransactionFromRpcResponse', () => {
         ]);
     });
 
+    it('sets the config mask bits for zero-valued `transactionConfig` fields of a JSON (v1) response', () => {
+        const rpcTx = {
+            meta: null,
+            transaction: {
+                message: {
+                    accountKeys: ['11111111111111111111111111111112' as Address],
+                    header: {
+                        numReadonlySignedAccounts: 0,
+                        numReadonlyUnsignedAccounts: 0,
+                        numRequiredSignatures: 1,
+                    },
+                    instructions: [],
+                    recentBlockhash: '11111111111111111111111111111111',
+                    transactionConfig: {
+                        computeUnitLimit: 0,
+                        heapSize: null,
+                        loadedAccountsDataSizeLimit: null,
+                        priorityFee: 0n,
+                    },
+                },
+                signatures: [],
+            },
+            version: 1,
+        } as unknown as GetTransactionApiResponseJson<1>;
+        const v1 = decodeTransactionFromRpcResponse(rpcTx).compiledMessage as Extract<
+            ReturnType<typeof decodeTransactionFromRpcResponse>['compiledMessage'],
+            { version: 1 }
+        >;
+
+        expect(v1.configMask).toBe(0b0111);
+        expect(v1.configValues).toStrictEqual([
+            { kind: 'u64', value: 0n },
+            { kind: 'u32', value: 0 },
+        ]);
+    });
+
     it('throws SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED for an unknown JSON transaction version', () => {
         const rpcTx = {
             meta: null,
