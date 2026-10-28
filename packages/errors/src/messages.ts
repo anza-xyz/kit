@@ -340,6 +340,7 @@ import {
     SOLANA_ERROR__TRANSACTION_INTROSPECTION__CANNOT_DECODE_JSON_PARSED_TRANSACTION,
     SOLANA_ERROR__TRANSACTION_INTROSPECTION__UNRECOGNIZED_GET_TRANSACTION_RESPONSE,
     SOLANA_ERROR__WALLET__ACCOUNT_NOT_AVAILABLE,
+    SOLANA_ERROR__WALLET__FEATURE_VERSION_UNSUPPORTED,
     SOLANA_ERROR__WALLET__INVALID_MESSAGE_SIGNATURE,
     SOLANA_ERROR__WALLET__INVALID_NUMBER_OF_OUTPUTS,
     SOLANA_ERROR__WALLET__INVALID_SIGN_IN_OUTPUT,
@@ -960,6 +961,8 @@ export const SolanaErrorMessages: Readonly<{
     [SOLANA_ERROR__WALLET__NO_SIGNER_CONNECTED]: 'No signing wallet connected (status: $status)',
     [SOLANA_ERROR__WALLET__SIGNER_NOT_AVAILABLE]: 'Connected wallet does not support signing',
     [SOLANA_ERROR__WALLET__ACCOUNT_NOT_AVAILABLE]: 'Account $address is not available in wallet "$walletName"',
+    [SOLANA_ERROR__WALLET__FEATURE_VERSION_UNSUPPORTED]:
+        'Wallet "$walletName" supports version $actualVersion of `$featureName`, but version $requiredVersion or newer is required',
     [SOLANA_ERROR__WALLET__INVALID_MESSAGE_SIGNATURE]:
         'Wallet "$walletName" did not return a valid signature of the requested message for account $address',
     [SOLANA_ERROR__WALLET__INVALID_NUMBER_OF_OUTPUTS]:

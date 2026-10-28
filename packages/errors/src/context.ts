@@ -244,6 +244,7 @@ import {
     SOLANA_ERROR__TRANSACTION_ERROR__PROGRAM_EXECUTION_TEMPORARILY_RESTRICTED,
     SOLANA_ERROR__TRANSACTION_ERROR__UNKNOWN,
     SOLANA_ERROR__WALLET__ACCOUNT_NOT_AVAILABLE,
+    SOLANA_ERROR__WALLET__FEATURE_VERSION_UNSUPPORTED,
     SOLANA_ERROR__WALLET__INVALID_MESSAGE_SIGNATURE,
     SOLANA_ERROR__WALLET__INVALID_NUMBER_OF_OUTPUTS,
     SOLANA_ERROR__WALLET__INVALID_SIGN_IN_OUTPUT,
@@ -1063,6 +1064,12 @@ export type SolanaErrorContext = ReadonlyContextValue<
             };
             [SOLANA_ERROR__WALLET__ACCOUNT_NOT_AVAILABLE]: {
                 address: string;
+                walletName: string;
+            };
+            [SOLANA_ERROR__WALLET__FEATURE_VERSION_UNSUPPORTED]: {
+                actualVersion: string;
+                featureName: string;
+                requiredVersion: string;
                 walletName: string;
             };
             [SOLANA_ERROR__WALLET__INVALID_MESSAGE_SIGNATURE]: {
