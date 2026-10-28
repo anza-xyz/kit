@@ -1,5 +1,25 @@
 # @solana/signers
 
+## 8.6.0
+
+### Minor Changes
+
+- [#2128](https://github.com/anza-xyz/kit/pull/2128) [`94d20bc`](https://github.com/anza-xyz/kit/commit/94d20bc815a54e7578fc2f0a7ba95acf104f37cd) Thanks [@amilz](https://github.com/amilz)! - Add `getSignersFromInstructionPlan`, which extracts and deduplicates the `TransactionSigners` attached to the instructions of an `InstructionPlan`, alongside the existing `getSignersFromInstruction` and `getSignersFromTransactionMessage` helpers. This lets callers that compile and sign transactions themselves, instead of using a transaction plan executor, collect signers created internally by helpers that return instruction plans. Message packer plans are skipped since their instructions only exist once packed into a transaction message.
+
+### Patch Changes
+
+- Updated dependencies [[`905b19a`](https://github.com/anza-xyz/kit/commit/905b19aaf26796ed8fc646e1a58fb17bd957ebf9), [`c1d1fc8`](https://github.com/anza-xyz/kit/commit/c1d1fc82b427fbc70a103f1e1d09251a4b15fcee), [`22ef182`](https://github.com/anza-xyz/kit/commit/22ef1823c6f2d6569504204835e45b619aa636d5), [`f7e4ad2`](https://github.com/anza-xyz/kit/commit/f7e4ad2ecab6f385f5da06b4c1c89aabc9887947), [`84ab269`](https://github.com/anza-xyz/kit/commit/84ab269da6a5d14038d914d2af23709e4bc6d3b2)]:
+  - @solana/transaction-messages@8.6.0
+  - @solana/codecs-core@8.6.0
+  - @solana/errors@8.6.0
+  - @solana/transactions@8.6.0
+  - @solana/instruction-plans@8.6.0
+  - @solana/addresses@8.6.0
+  - @solana/instructions@8.6.0
+  - @solana/keys@8.6.0
+  - @solana/offchain-messages@8.6.0
+  - @solana/nominal-types@8.6.0
+
 ## 8.5.0
 
 ### Patch Changes

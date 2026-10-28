@@ -1,5 +1,13 @@
 # @solana/codecs-core
 
+## 8.6.0
+
+### Patch Changes
+
+- [#2125](https://github.com/anza-xyz/kit/pull/2125) [`22ef182`](https://github.com/anza-xyz/kit/commit/22ef1823c6f2d6569504204835e45b619aa636d5) Thanks [@Iamsohungrynow](https://github.com/Iamsohungrynow)! - `addEncoderSentinel` now throws `SOLANA_ERROR__CODECS__ENCODED_BYTES_MUST_NOT_INCLUDE_SENTINEL` when the encoded bytes end with the start of the sentinel, instead of writing bytes the decoder cuts short.
+- Updated dependencies [[`f7e4ad2`](https://github.com/anza-xyz/kit/commit/f7e4ad2ecab6f385f5da06b4c1c89aabc9887947)]:
+  - @solana/errors@8.6.0
+
 ## 8.5.0
 
 ### Patch Changes

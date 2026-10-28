@@ -1,5 +1,26 @@
 # @solana/transaction-messages
 
+## 8.6.0
+
+### Minor Changes
+
+- [#2132](https://github.com/anza-xyz/kit/pull/2132) [`905b19a`](https://github.com/anza-xyz/kit/commit/905b19aaf26796ed8fc646e1a58fb17bd957ebf9) Thanks [@amilz](https://github.com/amilz)! - `decodeTransactionFromRpcResponse` now decodes the `transactionConfig` of a version 1 `json` RPC response into the compiled message's `configMask` and `configValues`, so it matches the `base64` and `base58` decodes. `getTransactionConfigMask` and `getTransactionConfigValues` are now exported from `@solana/transaction-messages`.
+
+- [#2134](https://github.com/anza-xyz/kit/pull/2134) [`c1d1fc8`](https://github.com/anza-xyz/kit/commit/c1d1fc82b427fbc70a103f1e1d09251a4b15fcee) Thanks [@amilz](https://github.com/amilz)! - Export `decompileTransactionConfig` so a v1 compiled message's config can be read without decompiling the whole message.
+
+### Patch Changes
+
+- Updated dependencies [[`22ef182`](https://github.com/anza-xyz/kit/commit/22ef1823c6f2d6569504204835e45b619aa636d5), [`f7e4ad2`](https://github.com/anza-xyz/kit/commit/f7e4ad2ecab6f385f5da06b4c1c89aabc9887947)]:
+  - @solana/codecs-core@8.6.0
+  - @solana/errors@8.6.0
+  - @solana/addresses@8.6.0
+  - @solana/codecs-data-structures@8.6.0
+  - @solana/codecs-numbers@8.6.0
+  - @solana/instructions@8.6.0
+  - @solana/rpc-types@8.6.0
+  - @solana/functional@8.6.0
+  - @solana/nominal-types@8.6.0
+
 ## 8.5.0
 
 ### Patch Changes

@@ -1,5 +1,38 @@
 # @solana/kit
 
+## 8.6.0
+
+### Patch Changes
+
+- Updated dependencies [[`905b19a`](https://github.com/anza-xyz/kit/commit/905b19aaf26796ed8fc646e1a58fb17bd957ebf9), [`94d20bc`](https://github.com/anza-xyz/kit/commit/94d20bc815a54e7578fc2f0a7ba95acf104f37cd), [`5c8effc`](https://github.com/anza-xyz/kit/commit/5c8effc468d4f118eaa289408efead9e222eb846), [`c1d1fc8`](https://github.com/anza-xyz/kit/commit/c1d1fc82b427fbc70a103f1e1d09251a4b15fcee), [`f7e4ad2`](https://github.com/anza-xyz/kit/commit/f7e4ad2ecab6f385f5da06b4c1c89aabc9887947), [`84ab269`](https://github.com/anza-xyz/kit/commit/84ab269da6a5d14038d914d2af23709e4bc6d3b2)]:
+  - @solana/transaction-introspection@8.6.0
+  - @solana/transaction-messages@8.6.0
+  - @solana/signers@8.6.0
+  - @solana/rpc-subscriptions@8.6.0
+  - @solana/errors@8.6.0
+  - @solana/transactions@8.6.0
+  - @solana/instruction-plans@8.6.0
+  - @solana/programs@8.6.0
+  - @solana/rpc-api@8.6.0
+  - @solana/transaction-confirmation@8.6.0
+  - @solana/plugin-interfaces@8.6.0
+  - @solana/program-client-core@8.6.0
+  - @solana/accounts@8.6.0
+  - @solana/addresses@8.6.0
+  - @solana/codecs@8.6.0
+  - @solana/instructions@8.6.0
+  - @solana/keys@8.6.0
+  - @solana/offchain-messages@8.6.0
+  - @solana/rpc-types@8.6.0
+  - @solana/sysvars@8.6.0
+  - @solana/rpc@8.6.0
+  - @solana/rpc-spec-types@8.6.0
+  - @solana/subscribable@8.6.0
+  - @solana/rpc-parsed-types@8.6.0
+  - @solana/functional@8.6.0
+  - @solana/plugin-core@8.6.0
+  - @solana/promises@8.6.0
+
 ## 8.5.0
 
 ### Patch Changes

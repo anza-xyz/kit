@@ -1,5 +1,16 @@
 # @solana/rpc-transformers
 
+## 8.6.0
+
+### Patch Changes
+
+- Updated dependencies [[`f7e4ad2`](https://github.com/anza-xyz/kit/commit/f7e4ad2ecab6f385f5da06b4c1c89aabc9887947)]:
+  - @solana/errors@8.6.0
+  - @solana/rpc-types@8.6.0
+  - @solana/rpc-spec-types@8.6.0
+  - @solana/functional@8.6.0
+  - @solana/nominal-types@8.6.0
+
 ## 8.5.0
 
 ### Patch Changes

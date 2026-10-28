@@ -1,5 +1,11 @@
 # @solana/errors
 
+## 8.6.0
+
+### Minor Changes
+
+- [#2155](https://github.com/anza-xyz/kit/pull/2155) [`f7e4ad2`](https://github.com/anza-xyz/kit/commit/f7e4ad2ecab6f385f5da06b4c1c89aabc9887947) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add the `SOLANA_ERROR__WALLET__FEATURE_VERSION_UNSUPPORTED` error code, thrown when an app requires a newer version of a wallet feature than the connected wallet supports (for example, a `solana:signIn` option that was introduced in v1.1.0 of the feature). Its context carries the `featureName`, the `requiredVersion`, the wallet's `actualVersion` and the `walletName`.
+
 ## 8.5.0
 
 ### Minor Changes

@@ -1,5 +1,23 @@
 # @solana/rpc-subscriptions
 
+## 8.6.0
+
+### Patch Changes
+
+- [#2121](https://github.com/anza-xyz/kit/pull/2121) [`5c8effc`](https://github.com/anza-xyz/kit/commit/5c8effc468d4f118eaa289408efead9e222eb846) Thanks [@amilz](https://github.com/amilz)! - Fix the channel pool removing an unrelated, healthy channel when the last subscriber of a channel that already errored or failed to construct aborts. The removed channel stayed open for its existing subscribers but was never vended to new subscriptions, and its own eventual teardown removed yet another healthy channel from the pool.
+- Updated dependencies [[`f7e4ad2`](https://github.com/anza-xyz/kit/commit/f7e4ad2ecab6f385f5da06b4c1c89aabc9887947)]:
+  - @solana/errors@8.6.0
+  - @solana/rpc-subscriptions-api@8.6.0
+  - @solana/rpc-types@8.6.0
+  - @solana/rpc-spec-types@8.6.0
+  - @solana/rpc-subscriptions-channel-websocket@8.6.0
+  - @solana/rpc-subscriptions-spec@8.6.0
+  - @solana/rpc-transformers@8.6.0
+  - @solana/subscribable@8.6.0
+  - @solana/fast-stable-stringify@8.6.0
+  - @solana/functional@8.6.0
+  - @solana/promises@8.6.0
+
 ## 8.5.0
 
 ### Patch Changes
