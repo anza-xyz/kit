@@ -261,9 +261,9 @@ void (async () => {
         err: TransactionError | null;
         fee: Lamports;
         postBalances: readonly Lamports[];
-        postTokenBalances?: readonly TokenBalance[];
+        postTokenBalances?: readonly TokenBalance[] | null;
         preBalances: readonly Lamports[];
-        preTokenBalances?: readonly TokenBalance[];
+        preTokenBalances?: readonly TokenBalance[] | null;
         status: TransactionStatus;
     };
 
@@ -505,20 +505,22 @@ void (async () => {
         computeUnitsConsumed?: bigint;
         err: TransactionError | null;
         fee: Lamports;
-        innerInstructions: readonly Readonly<{
-            index: number;
-            instructions: readonly Readonly<{
-                accounts: readonly number[];
-                data: Base58EncodedBytes;
-                programIdIndex: number;
-                stackHeight?: number;
-            }>[];
-        }>[];
+        innerInstructions?:
+            | readonly Readonly<{
+                  index: number;
+                  instructions: readonly Readonly<{
+                      accounts: readonly number[];
+                      data: Base58EncodedBytes;
+                      programIdIndex: number;
+                      stackHeight?: number;
+                  }>[];
+              }>[]
+            | null;
         logMessages: readonly string[] | null;
         postBalances: readonly Lamports[];
-        postTokenBalances?: readonly TokenBalance[];
+        postTokenBalances?: readonly TokenBalance[] | null;
         preBalances: readonly Lamports[];
-        preTokenBalances?: readonly TokenBalance[];
+        preTokenBalances?: readonly TokenBalance[] | null;
         returnData?: Readonly<{
             data: Base64EncodedDataResponse;
             programId: Address;
@@ -730,20 +732,22 @@ void (async () => {
         computeUnitsConsumed?: bigint;
         err: TransactionError | null;
         fee: Lamports;
-        innerInstructions: readonly Readonly<{
-            index: number;
-            instructions: readonly Readonly<{
-                accounts: readonly number[];
-                data: Base58EncodedBytes;
-                programIdIndex: number;
-                stackHeight?: number;
-            }>[];
-        }>[];
+        innerInstructions?:
+            | readonly Readonly<{
+                  index: number;
+                  instructions: readonly Readonly<{
+                      accounts: readonly number[];
+                      data: Base58EncodedBytes;
+                      programIdIndex: number;
+                      stackHeight?: number;
+                  }>[];
+              }>[]
+            | null;
         logMessages: readonly string[] | null;
         postBalances: readonly Lamports[];
-        postTokenBalances?: readonly TokenBalance[];
+        postTokenBalances?: readonly TokenBalance[] | null;
         preBalances: readonly Lamports[];
-        preTokenBalances?: readonly TokenBalance[];
+        preTokenBalances?: readonly TokenBalance[] | null;
         returnData?: Readonly<{
             data: Base64EncodedDataResponse;
             programId: Address;
@@ -929,15 +933,17 @@ void (async () => {
         computeUnitsConsumed?: bigint;
         err: TransactionError | null;
         fee: Lamports;
-        innerInstructions: readonly Readonly<{
-            index: number;
-            instructions: readonly ExpectedTransactionInstructionForFullJsonParsed[];
-        }>[];
+        innerInstructions?:
+            | readonly Readonly<{
+                  index: number;
+                  instructions: readonly ExpectedTransactionInstructionForFullJsonParsed[];
+              }>[]
+            | null;
         logMessages: readonly string[] | null;
         postBalances: readonly Lamports[];
-        postTokenBalances?: readonly TokenBalance[];
+        postTokenBalances?: readonly TokenBalance[] | null;
         preBalances: readonly Lamports[];
-        preTokenBalances?: readonly TokenBalance[];
+        preTokenBalances?: readonly TokenBalance[] | null;
         returnData?: Readonly<{
             data: Base64EncodedDataResponse;
             programId: Address;
@@ -1094,15 +1100,17 @@ void (async () => {
         computeUnitsConsumed?: bigint;
         err: TransactionError | null;
         fee: Lamports;
-        innerInstructions: readonly Readonly<{
-            index: number;
-            instructions: readonly ExpectedTransactionInstructionForFullJson[];
-        }>[];
+        innerInstructions?:
+            | readonly Readonly<{
+                  index: number;
+                  instructions: readonly ExpectedTransactionInstructionForFullJson[];
+              }>[]
+            | null;
         logMessages: readonly string[] | null;
         postBalances: readonly Lamports[];
-        postTokenBalances?: readonly TokenBalance[];
+        postTokenBalances?: readonly TokenBalance[] | null;
         preBalances: readonly Lamports[];
-        preTokenBalances?: readonly TokenBalance[];
+        preTokenBalances?: readonly TokenBalance[] | null;
         returnData?: Readonly<{
             data: Base64EncodedDataResponse;
             programId: Address;
