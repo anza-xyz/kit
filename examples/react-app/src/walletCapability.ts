@@ -1,7 +1,7 @@
 import type { TransactionSigner } from '@solana/kit';
 import { isTransactionModifyingSigner, isTransactionPartialSigner } from '@solana/kit';
 import type { WalletSigner } from '@solana/kit-plugin-wallet';
-import { SolanaSignMessage } from '@solana/wallet-standard-features';
+import { SolanaSignMessage, SolanaSignOffchainMessage } from '@solana/wallet-standard-features';
 import type { UiWalletAccount } from '@wallet-standard/ui';
 import { getWalletAccountFeature } from '@wallet-standard/ui';
 
@@ -45,4 +45,13 @@ export function assertCanSignTransactions(signer: WalletSigner | null): asserts 
  */
 export function assertCanSignMessages(account: UiWalletAccount): void {
     getWalletAccountFeature(account, SolanaSignMessage);
+}
+
+/**
+ * Asserts that the connected account can sign Solana offchain messages. Used by the "Sign Offchain
+ * Message" panel. This probes the account's
+ * `solana:signOffchainMessage` feature, which is where the plugin's `signOffchainMessage` looks it up.
+ */
+export function assertCanSignOffchainMessages(account: UiWalletAccount): void {
+    getWalletAccountFeature(account, SolanaSignOffchainMessage);
 }
