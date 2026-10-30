@@ -702,8 +702,8 @@ export const SolanaErrorMessages: Readonly<{
         '[$signatoriesWithMissingSignatures]',
     [SOLANA_ERROR__OFFCHAIN_MESSAGE__RESTRICTED_ASCII_BODY_CHARACTER_OUT_OF_RANGE]:
         'The message body provided contains characters whose codes fall outside the allowed ' +
-        'range. In order to ensure clear-signing compatiblity with hardware wallets, the message ' +
-        'may only contain line feeds and characters in the range [\\x20-\\x7e].',
+        'range. To ensure clear-signing compatibility with hardware wallets, the message may only ' +
+        'contain characters in the range [\\x20-\\x7e].',
     [SOLANA_ERROR__OFFCHAIN_MESSAGE__UNEXPECTED_VERSION]:
         'Expected offchain message version $expectedVersion. Got $actualVersion.',
     [SOLANA_ERROR__OFFCHAIN_MESSAGE__VERSION_NUMBER_NOT_SUPPORTED]:
