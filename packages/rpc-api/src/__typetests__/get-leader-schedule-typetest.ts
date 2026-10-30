@@ -50,13 +50,17 @@ void (async () => {
         }
 
         // The identity filter remains a validator identity when keys are vote accounts.
-        const current = await rpc.getLeaderSchedule(null, { identity, keyByVoteAccount: true }).send();
-        current satisfies Readonly<{ [key: Address]: Slot[] | undefined }>;
-        const selected = await rpc.getLeaderSchedule(slot, { identity, keyByVoteAccount: true }).send();
-        selected satisfies Readonly<{ [key: Address]: Slot[] | undefined }> | null;
+        {
+            const current = await rpc.getLeaderSchedule(null, { identity, keyByVoteAccount: true }).send();
+            current satisfies Readonly<{ [key: Address]: Slot[] | undefined }>;
+            const selected = await rpc.getLeaderSchedule(slot, { identity, keyByVoteAccount: true }).send();
+            selected satisfies Readonly<{ [key: Address]: Slot[] | undefined }> | null;
+        }
 
         // Rejects non-boolean values.
-        // @ts-expect-error keyByVoteAccount must be a boolean
-        rpc.getLeaderSchedule(null, { keyByVoteAccount: 'true' });
+        {
+            // @ts-expect-error keyByVoteAccount must be a boolean
+            rpc.getLeaderSchedule(null, { keyByVoteAccount: 'true' });
+        }
     }
 });
