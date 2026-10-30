@@ -91,6 +91,19 @@ describe('getErrorMessage', () => {
             );
             expect(message).toBe('Unknown Solana error code: -32999');
         });
+        it('renders a fallback message including the server message for an error code with no message', () => {
+            const messagesSpy = jest.spyOn(MessagesModule, 'SolanaErrorMessages', 'get');
+            // @ts-expect-error Mock error config doesn't conform to exported config.
+            messagesSpy.mockReturnValue({});
+            const message = getErrorMessage(
+                // @ts-expect-error Mock error codes don't conform to `SolanaErrorCode`
+                -32999,
+                { __serverMessage: 'Node X was not in the leader schedule for specified epoch' },
+            );
+            expect(message).toBe(
+                'Unknown Solana error code: -32999 (Node X was not in the leader schedule for specified epoch)',
+            );
+        });
         it.each([
             {
                 expected: "Something awful happened: 'bar'. How awful!",

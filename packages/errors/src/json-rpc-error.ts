@@ -143,8 +143,13 @@ export function getSolanaErrorFromJsonRpcError(putativeErrorResponse: unknown): 
                     errorContext = { __serverMessage: message };
                     break;
                 default:
-                    if (typeof data === 'object' && !Array.isArray(data)) {
+                    if (typeof data === 'object' && data !== null && !Array.isArray(data)) {
                         errorContext = data;
+                    } else {
+                        // No structured data. Keep the server message so it's not lost; this
+                        // matters most for codes that this version of the library doesn't know
+                        // about (eg. one introduced by a newer RPC server).
+                        errorContext = { __serverMessage: message };
                     }
             }
             out = new SolanaError(code as SolanaErrorCode, errorContext as SolanaErrorContext[SolanaErrorCode]);

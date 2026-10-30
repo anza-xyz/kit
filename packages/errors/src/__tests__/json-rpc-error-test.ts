@@ -110,25 +110,24 @@ describe('getSolanaErrorFromJsonRpcError', () => {
         },
     );
     describe.each([
+        SOLANA_ERROR__JSON_RPC__SERVER_ERROR_EPOCH_REWARDS_PERIOD_ACTIVE,
         SOLANA_ERROR__JSON_RPC__SERVER_ERROR_LONG_TERM_STORAGE_UNREACHABLE,
         SOLANA_ERROR__JSON_RPC__SERVER_ERROR_MIN_CONTEXT_SLOT_NOT_REACHED,
         SOLANA_ERROR__JSON_RPC__SERVER_ERROR_NO_SLOT_HISTORY,
         SOLANA_ERROR__JSON_RPC__SERVER_ERROR_NO_SNAPSHOT,
         SOLANA_ERROR__JSON_RPC__SERVER_ERROR_NODE_UNHEALTHY,
+        SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SLOT_NOT_EPOCH_BOUNDARY,
         SOLANA_ERROR__JSON_RPC__SERVER_ERROR_TRANSACTION_HISTORY_NOT_AVAILABLE,
         SOLANA_ERROR__JSON_RPC__SERVER_ERROR_TRANSACTION_SIGNATURE_LEN_MISMATCH,
         SOLANA_ERROR__JSON_RPC__SERVER_ERROR_TRANSACTION_SIGNATURE_VERIFICATION_FAILURE,
-    ])(
-        'given a %s JSON-RPC error known to have neither data nor important context in the server message',
-        jsonRpcErrorCode => {
-            it('produces a `SolanaError` without the server message on the context', () => {
-                const error = getSolanaErrorFromJsonRpcError({ code: jsonRpcErrorCode, message: 'o no' });
-                expect(error).not.toHaveProperty('context.__serverMessage', 'o no');
-            });
-        },
-    );
+    ])('given a %s JSON-RPC error with no data', jsonRpcErrorCode => {
+        it('produces a `SolanaError` with the server message on the context', () => {
+            const error = getSolanaErrorFromJsonRpcError({ code: jsonRpcErrorCode, message: 'o no' });
+            expect(error).toHaveProperty('context.__serverMessage', 'o no');
+        });
+    });
     describe.each([[1, 2, 3], Symbol('a symbol'), 1, 1n, true, false])('when given non-object data like `%s`', data => {
-        it('does not add the data to `context`', () => {
+        it('does not add the data to `context`, but preserves the server message', () => {
             const error = getSolanaErrorFromJsonRpcError({
                 code: 123,
                 data,
@@ -136,9 +135,21 @@ describe('getSolanaErrorFromJsonRpcError', () => {
             });
             expect(error).toHaveProperty(
                 'context',
-                // Implies exact match; `context` contains nothing but the `__code`
-                { __code: 123 },
+                // Implies exact match; `context` contains nothing but the `__code` and server message
+                { __code: 123, __serverMessage: 'o no' },
             );
+        });
+    });
+    describe('given a JSON-RPC error with a code unknown to this library and no data', () => {
+        it('produces a `SolanaError` with the server message on the context', () => {
+            const error = getSolanaErrorFromJsonRpcError({
+                code: -32999,
+                message: 'Node X was not in the leader schedule for specified epoch',
+            });
+            expect(error).toHaveProperty('context', {
+                __code: -32999,
+                __serverMessage: 'Node X was not in the leader schedule for specified epoch',
+            });
         });
     });
     describe('when passed a preflight failure', () => {
