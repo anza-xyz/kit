@@ -20,6 +20,15 @@ export function getHumanReadableErrorMessage<TErrorCode extends SolanaErrorCode>
     code: TErrorCode,
     context: object = {},
 ): string {
+    if (!(code in SolanaErrorMessages)) {
+        // A code that this version of the library has no message for, such as a JSON-RPC error
+        // code introduced by a newer RPC server. Report the code rather than throwing, along with
+        // the server's own message if one was captured.
+        return '__serverMessage' in context
+            ? // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+              `Unknown Solana error code: ${code} (${context.__serverMessage})`
+            : `Unknown Solana error code: ${code}`;
+    }
     const messageFormatString = SolanaErrorMessages[code];
     if (messageFormatString.length === 0) {
         return '';

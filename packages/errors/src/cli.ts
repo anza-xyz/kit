@@ -19,9 +19,6 @@ program
         if (isNaN(code) || `${code}` !== rawCode) {
             throw new InvalidArgumentError('It must be an integer');
         }
-        if (!(code in SolanaErrorMessages)) {
-            throw new InvalidArgumentError('There exists no error with that code');
-        }
         return code;
     })
     .argument('[encodedContext]', 'encoded context to interpolate into the error message', encodedContext => {
@@ -32,6 +29,14 @@ program
         }
     })
     .action((code: number, context: object) => {
+        if (!(code in SolanaErrorMessages)) {
+            console.warn(
+                chalk.yellow(
+                    `This version of @solana/errors has no message for code ${code}. It may come from a ` +
+                        'newer RPC server, or the code may be mistyped.',
+                ),
+            );
+        }
         const message = getHumanReadableErrorMessage(code as SolanaErrorCode, context);
         console.log(`
 ${

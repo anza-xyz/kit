@@ -43,6 +43,10 @@ export type GetLeaderScheduleApi = {
      * @returns A dictionary having a single key representing the specified validator identity, and
      * its corresponding leader slot indices as values relative to the first slot in the requested
      * epoch, or `null` if there is no epoch that corresponds to the given slot.
+     * @throws A `SolanaError` with code
+     * `SOLANA_ERROR__JSON_RPC__SERVER_ERROR_LEADER_SCHEDULE_IDENTITY_NOT_FOUND` when the
+     * identity is not in the leader schedule, on servers running Agave v4.4.0 or later. Older
+     * servers respond with an empty object instead.
      * @see https://solana.com/docs/rpc/http/getleaderschedule
      */
     getLeaderSchedule<TIdentity extends Address>(
@@ -76,6 +80,10 @@ export type GetLeaderScheduleApi = {
      * @returns A dictionary having a single key representing the specified validator identity, and
      * its corresponding leader slot indices as values relative to the first slot in the current
      * epoch.
+     * @throws A `SolanaError` with code
+     * `SOLANA_ERROR__JSON_RPC__SERVER_ERROR_LEADER_SCHEDULE_IDENTITY_NOT_FOUND` when the
+     * identity is not in the leader schedule, on servers running Agave v4.4.0 or later. Older
+     * servers respond with an empty object instead.
      * @see https://solana.com/docs/rpc/http/getleaderschedule
      */
     getLeaderSchedule<TIdentity extends Address>(

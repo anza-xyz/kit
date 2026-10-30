@@ -10,6 +10,7 @@ import {
     SOLANA_ERROR__JSON_RPC__SERVER_ERROR_BLOCK_STATUS_NOT_AVAILABLE_YET,
     SOLANA_ERROR__JSON_RPC__SERVER_ERROR_FILTER_TRANSACTION_NOT_FOUND,
     SOLANA_ERROR__JSON_RPC__SERVER_ERROR_KEY_EXCLUDED_FROM_SECONDARY_INDEX,
+    SOLANA_ERROR__JSON_RPC__SERVER_ERROR_LEADER_SCHEDULE_IDENTITY_NOT_FOUND,
     SOLANA_ERROR__JSON_RPC__SERVER_ERROR_LONG_TERM_STORAGE_SLOT_SKIPPED,
     SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE,
     SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SLOT_SKIPPED,
@@ -130,6 +131,7 @@ export function getSolanaErrorFromJsonRpcError(putativeErrorResponse: unknown): 
                 case SOLANA_ERROR__JSON_RPC__SERVER_ERROR_BLOCK_STATUS_NOT_AVAILABLE_YET:
                 case SOLANA_ERROR__JSON_RPC__SERVER_ERROR_FILTER_TRANSACTION_NOT_FOUND:
                 case SOLANA_ERROR__JSON_RPC__SERVER_ERROR_KEY_EXCLUDED_FROM_SECONDARY_INDEX:
+                case SOLANA_ERROR__JSON_RPC__SERVER_ERROR_LEADER_SCHEDULE_IDENTITY_NOT_FOUND:
                 case SOLANA_ERROR__JSON_RPC__SERVER_ERROR_LONG_TERM_STORAGE_SLOT_SKIPPED:
                 case SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SLOT_SKIPPED:
                 case SOLANA_ERROR__JSON_RPC__SERVER_ERROR_TRANSACTION_PRECOMPILE_VERIFICATION_FAILURE:
@@ -141,8 +143,13 @@ export function getSolanaErrorFromJsonRpcError(putativeErrorResponse: unknown): 
                     errorContext = { __serverMessage: message };
                     break;
                 default:
-                    if (typeof data === 'object' && !Array.isArray(data)) {
+                    if (typeof data === 'object' && data !== null && !Array.isArray(data)) {
                         errorContext = data;
+                    } else {
+                        // No structured data. Keep the server message so it's not lost; this
+                        // matters most for codes that this version of the library doesn't know
+                        // about (eg. one introduced by a newer RPC server).
+                        errorContext = { __serverMessage: message };
                     }
             }
             out = new SolanaError(code as SolanaErrorCode, errorContext as SolanaErrorContext[SolanaErrorCode]);
