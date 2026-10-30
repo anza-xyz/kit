@@ -28,11 +28,32 @@ type SimulateTransactionConfigBase = Readonly<{
      */
     commitment?: Commitment;
     /**
-     * If `true` the response will include inner instructions. These inner instructions will be
-     * `jsonParsed` where possible, otherwise `json`.
+     * If `true` the response will include inner instructions, encoded according to
+     * `innerInstructionsEncoding`.
      * @defaultValue false
      */
     innerInstructions?: boolean;
+    /**
+     * Determines how inner instructions should be encoded in the response. This argument has no
+     * effect unless `innerInstructions` is `true`.
+     *
+     * - `'json'` produces every instruction in compiled form, as an object containing the indices
+     *   of the instruction's accounts, the instruction data, the index of the program address, and
+     *   the stack height. See {@link TransactionForFullMetaInnerInstructionsUnparsed}.
+     * - `'jsonParsed'` causes the server to attempt to process each instruction using a parser
+     *   specific to its program. If successful, the parsed instruction will be returned in the
+     *   response as JSON. Otherwise, the instruction will be returned partially decoded, with
+     *   account and program addresses in place of indices. See
+     *   {@link TransactionForFullMetaInnerInstructionsParsed}.
+     *
+     * This argument was added in Agave 4.5 (see https://github.com/anza-xyz/agave/pull/16165) and
+     * is ignored by older versions of the RPC server, which always produce `'jsonParsed'` inner
+     * instructions. For that reason, the response is typed as either shape regardless of this
+     * argument, and callers should narrow it.
+     *
+     * @defaultValue "jsonParsed"
+     */
+    innerInstructionsEncoding?: 'json' | 'jsonParsed';
     /**
      * Prevents accessing stale data by enforcing that the RPC node has processed transactions up to
      * this slot

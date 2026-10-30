@@ -77,6 +77,49 @@ const base64Transaction = 'SomeTx11111111111111111111111111111' as Base64Encoded
     }
 }
 
+// [DESCRIBE] `innerInstructionsEncoding`.
+{
+    // It accepts `json` and `jsonParsed`
+    {
+        rpc.simulateTransaction(base64Transaction, {
+            encoding: 'base64',
+            innerInstructions: true,
+            innerInstructionsEncoding: 'json',
+        });
+        rpc.simulateTransaction(base64Transaction, {
+            encoding: 'base64',
+            innerInstructions: true,
+            innerInstructionsEncoding: 'jsonParsed',
+        });
+    }
+    // It raises a type error for an unsupported encoding
+    {
+        rpc.simulateTransaction(base64Transaction, {
+            encoding: 'base64',
+            innerInstructions: true,
+            // @ts-expect-error Unsupported inner instructions encoding
+            innerInstructionsEncoding: 'base64',
+        });
+    }
+    // It accepts an encoding when `innerInstructions` is `false`, omitted, or not known statically
+    {
+        rpc.simulateTransaction(base64Transaction, {
+            encoding: 'base64',
+            innerInstructions: false,
+            innerInstructionsEncoding: 'json',
+        });
+        rpc.simulateTransaction(base64Transaction, {
+            encoding: 'base64',
+            innerInstructionsEncoding: 'json',
+        });
+        rpc.simulateTransaction(base64Transaction, {
+            encoding: 'base64',
+            innerInstructions: null as unknown as boolean,
+            innerInstructionsEncoding: 'json',
+        });
+    }
+}
+
 // [DESCRIBE] `replaceRecentBlockhash`.
 {
     // It materializes a replacement blockhash in the response when `true`
