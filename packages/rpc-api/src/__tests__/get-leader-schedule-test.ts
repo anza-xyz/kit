@@ -6,7 +6,7 @@ import assert from 'assert';
 import { open } from 'fs/promises';
 import path from 'path';
 
-import { GetLeaderScheduleApi } from '../index';
+import { GetLeaderScheduleApi, GetVoteAccountsApi } from '../index';
 import { createLocalhostSolanaRpc } from './__setup__';
 
 const validatorKeypairPath = path.resolve(__dirname, '../../../../test-ledger/validator-keypair.json');
@@ -31,13 +31,35 @@ async function getValidatorAddress() {
 }
 
 describe('getLeaderSchedule', () => {
-    let rpc: Rpc<GetLeaderScheduleApi>;
+    let rpc: Rpc<GetLeaderScheduleApi & GetVoteAccountsApi>;
     beforeEach(() => {
         rpc = createLocalhostSolanaRpc();
     });
 
     (['confirmed', 'finalized', 'processed'] as Commitment[]).forEach(commitment => {
         describe(`when called with \`${commitment}\` commitment`, () => {
+            it.each([
+                { keyByVoteAccount: false, keyField: 'nodePubkey' as const },
+                { keyByVoteAccount: true, keyField: 'votePubkey' as const },
+            ])(
+                'returns $keyField keys with keyByVoteAccount=$keyByVoteAccount while filtering by validator identity',
+                async ({ keyByVoteAccount, keyField }) => {
+                    expect.assertions(2);
+                    const identity = await getValidatorAddress();
+                    const { current } = await rpc.getVoteAccounts({ commitment }).send();
+                    const voteAccount = current.find(account => account.nodePubkey === identity);
+                    assert(voteAccount, 'Expected a vote account for the local validator');
+
+                    const defaultSchedule = await rpc.getLeaderSchedule(null, { commitment, identity }).send();
+                    const schedule = await rpc
+                        .getLeaderSchedule(null, { commitment, identity, keyByVoteAccount })
+                        .send();
+
+                    expect(Object.keys(schedule)).toStrictEqual([voteAccount[keyField]]);
+                    expect(schedule[voteAccount[keyField]]).toStrictEqual(defaultSchedule[identity]);
+                },
+            );
+
             describe('when called with no identity and no slot', () => {
                 it('returns the leader schedule for all cluster nodes in the current epoch', async () => {
                     expect.assertions(3);
