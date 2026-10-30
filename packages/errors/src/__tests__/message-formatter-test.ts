@@ -81,6 +81,16 @@ describe('getErrorMessage', () => {
             );
             expect(message).toBe('static error message');
         });
+        it('renders a fallback message for an error code with no message', () => {
+            const messagesSpy = jest.spyOn(MessagesModule, 'SolanaErrorMessages', 'get');
+            // @ts-expect-error Mock error config doesn't conform to exported config.
+            messagesSpy.mockReturnValue({});
+            const message = getErrorMessage(
+                // @ts-expect-error Mock error codes don't conform to `SolanaErrorCode`
+                -32999,
+            );
+            expect(message).toBe('Unknown Solana error code: -32999');
+        });
         it.each([
             {
                 expected: "Something awful happened: 'bar'. How awful!",

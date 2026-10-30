@@ -1,5 +1,6 @@
 import type { Address } from '@solana/addresses';
 import { getBase58Decoder } from '@solana/codecs-strings';
+import { SOLANA_ERROR__JSON_RPC__SERVER_ERROR_LEADER_SCHEDULE_IDENTITY_NOT_FOUND } from '@solana/errors';
 import type { Rpc } from '@solana/rpc-spec';
 import type { Commitment } from '@solana/rpc-types';
 import assert from 'assert';
@@ -106,30 +107,34 @@ describe('getLeaderSchedule', () => {
         });
 
         describe('given an account that exists but is not a validator identity', () => {
-            it('returns an empty object', async () => {
+            it('throws an error', async () => {
                 expect.assertions(1);
-                const res = await rpc
+                const leaderSchedulePromise = rpc
                     .getLeaderSchedule(null, {
                         commitment,
                         // See scripts/fixtures/GQE2yjns7SKKuMc89tveBDpzYHwXfeuB2PGAbGaPWc6G.json
                         identity: 'GQE2yjns7SKKuMc89tveBDpzYHwXfeuB2PGAbGaPWc6G' as Address,
                     })
                     .send();
-                expect(res).toStrictEqual({});
+                await expect(leaderSchedulePromise).rejects.toMatchObject({
+                    context: { __code: SOLANA_ERROR__JSON_RPC__SERVER_ERROR_LEADER_SCHEDULE_IDENTITY_NOT_FOUND },
+                });
             });
         });
 
         describe('given an account that does not exist', () => {
-            it('returns an empty object', async () => {
+            it('throws an error', async () => {
                 expect.assertions(1);
-                const res = await rpc
+                const leaderSchedulePromise = rpc
                     .getLeaderSchedule(null, {
                         commitment,
                         // Randomly generated
                         identity: 'BnWCFuxmi6uH3ceVx4R8qcbWBMPVVYVVFWtAiiTA1PAu' as Address,
                     })
                     .send();
-                expect(res).toStrictEqual({});
+                await expect(leaderSchedulePromise).rejects.toMatchObject({
+                    context: { __code: SOLANA_ERROR__JSON_RPC__SERVER_ERROR_LEADER_SCHEDULE_IDENTITY_NOT_FOUND },
+                });
             });
         });
 
