@@ -51,27 +51,50 @@ describe('toArrayBuffer', () => {
         expect(arrayBuffer).not.toBe(byteArray.buffer);
         expect(new Uint8Array(arrayBuffer)).toStrictEqual(new Uint8Array([1, 2, 3]));
     });
-    it.each([
-        [-3, 0],
-        [-3, 1],
-        [-3, 2],
-        [-3, 2],
-        [-1, 0],
-        [-1, 1],
-        [-1, 2],
-        [-2, 0],
-        [-2, 1],
-        [0, 0],
-        [0, 1],
-        [0, 2],
-        [1, 0],
-        [1, 1],
-        [1, 2],
-        [2, 0],
-        [2, 1],
-        [2, 2],
-    ])('returns a new buffer when the slice reduces the data set (offset: %d, length: %d)', (offset, length) => {
-        const byteArray = new Uint8Array([1, 2, 3]);
-        expect(toArrayBuffer(byteArray, offset, length)).not.toBe(byteArray.buffer);
+    it('resolves a negative offset against the end of the byte array', () => {
+        const byteArray = new Uint8Array([1, 2, 3, 4, 5]);
+        expect(new Uint8Array(toArrayBuffer(byteArray, -1, 1))).toStrictEqual(new Uint8Array([5]));
+        expect(new Uint8Array(toArrayBuffer(byteArray, -2, 2))).toStrictEqual(new Uint8Array([4, 5]));
     });
+    it('resolves a negative offset against the end of a view', () => {
+        const byteArray = new Uint8Array([1, 2, 3, 4, 5]).subarray(2, 5);
+        expect(new Uint8Array(toArrayBuffer(byteArray, -1, 1))).toStrictEqual(new Uint8Array([5]));
+    });
+    it('resolves a negative offset on a shared array buffer view', () => {
+        const sharedArrayBuffer = new SharedArrayBuffer(5);
+        const byteArray = new Uint8Array(sharedArrayBuffer);
+        byteArray.set([1, 2, 3, 4, 5]);
+        expect(new Uint8Array(toArrayBuffer(byteArray, -2, 2))).toStrictEqual(new Uint8Array([4, 5]));
+    });
+    it('clamps a negative offset that exceeds the byte array length', () => {
+        const byteArray = new Uint8Array([1, 2, 3]);
+        expect(new Uint8Array(toArrayBuffer(byteArray, -10, 2))).toStrictEqual(new Uint8Array([1, 2]));
+    });
+    it.each([
+        [-3, 0, []],
+        [-3, 1, [1]],
+        [-3, 2, [1, 2]],
+        [-2, 0, []],
+        [-2, 1, [2]],
+        [-1, 0, []],
+        [-1, 1, [3]],
+        [-1, 2, [3]],
+        [0, 0, []],
+        [0, 1, [1]],
+        [0, 2, [1, 2]],
+        [1, 0, []],
+        [1, 1, [2]],
+        [1, 2, [2, 3]],
+        [2, 0, []],
+        [2, 1, [3]],
+        [2, 2, [3]],
+    ])(
+        'returns the expected bytes when the slice reduces the data set (offset: %d, length: %d)',
+        (offset, length, expected) => {
+            const byteArray = new Uint8Array([1, 2, 3]);
+            const arrayBuffer = toArrayBuffer(byteArray, offset, length);
+            expect(arrayBuffer).not.toBe(byteArray.buffer);
+            expect(new Uint8Array(arrayBuffer)).toStrictEqual(new Uint8Array(expected));
+        },
+    );
 });
