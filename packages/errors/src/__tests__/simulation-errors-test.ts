@@ -2,9 +2,10 @@ import {
     SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE,
     SOLANA_ERROR__LAMPORTS_OUT_OF_RANGE,
     SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT,
+    SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_RESOURCE_LIMITS,
 } from '../codes';
 import { SolanaError } from '../error';
-import { RpcSimulateTransactionResult, unwrapSimulationError } from '../index';
+import { isSimulationError, RpcSimulateTransactionResult, unwrapSimulationError } from '../index';
 
 const rpcSimulationError: Omit<RpcSimulateTransactionResult, 'err'> = {
     accounts: null,
@@ -21,43 +22,65 @@ const rpcSimulationError: Omit<RpcSimulateTransactionResult, 'err'> = {
     unitsConsumed: null,
 };
 
+const simulationErrorCodes = [
+    ['a preflight failure', SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE],
+    [
+        'a simulation compute limit estimation failure',
+        SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT,
+    ],
+    [
+        'a simulation resource limits estimation failure',
+        SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_RESOURCE_LIMITS,
+    ],
+] as const;
+
+describe('isSimulationError', () => {
+    describe.each(simulationErrorCodes)('given %s error', (_, code) => {
+        it('returns true', () => {
+            const error = new SolanaError(code, { ...rpcSimulationError, cause: new Error('underlying error') });
+            expect(isSimulationError(error)).toBe(true);
+        });
+
+        it('returns true without a cause', () => {
+            const error = new SolanaError(code, rpcSimulationError);
+            expect(isSimulationError(error)).toBe(true);
+        });
+    });
+
+    describe('given a non-simulation SolanaError', () => {
+        it('returns false', () => {
+            expect(isSimulationError(new SolanaError(SOLANA_ERROR__LAMPORTS_OUT_OF_RANGE))).toBe(false);
+        });
+    });
+
+    describe('given a regular Error', () => {
+        it('returns false', () => {
+            expect(isSimulationError(new Error('regular error'))).toBe(false);
+        });
+    });
+
+    describe('given a non-error value', () => {
+        it.each([
+            ['a string', 'error string'],
+            ['null', null],
+            ['undefined', undefined],
+            ['an object', {}],
+        ])('returns false when given %s', (_, value) => {
+            expect(isSimulationError(value)).toBe(false);
+        });
+    });
+});
+
 describe('unwrapSimulationError', () => {
-    describe('given a preflight failure error', () => {
+    describe.each(simulationErrorCodes)('given %s error', (_, code) => {
         it('returns the cause of the error', () => {
             const cause = new Error('underlying error');
-            const error = new SolanaError(SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE, {
-                ...rpcSimulationError,
-                cause,
-            });
+            const error = new SolanaError(code, { ...rpcSimulationError, cause });
             expect(unwrapSimulationError(error)).toBe(cause);
         });
-    });
 
-    describe('given a preflight failure error without a cause', () => {
-        it('returns the original error unchanged', () => {
-            const error = new SolanaError(SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE, {
-                ...rpcSimulationError,
-            });
-            expect(unwrapSimulationError(error)).toBe(error);
-        });
-    });
-
-    describe('given a simulation compute limit estimation failure error', () => {
-        it('returns the cause of the error', () => {
-            const cause = new Error('underlying error');
-            const error = new SolanaError(SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT, {
-                ...rpcSimulationError,
-                cause,
-            });
-            expect(unwrapSimulationError(error)).toBe(cause);
-        });
-    });
-
-    describe('given a simulation compute limit estimation failure error without a cause', () => {
-        it('returns the original error unchanged', () => {
-            const error = new SolanaError(SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT, {
-                ...rpcSimulationError,
-            });
+        it('returns the original error unchanged when it has no cause', () => {
+            const error = new SolanaError(code, rpcSimulationError);
             expect(unwrapSimulationError(error)).toBe(error);
         });
     });

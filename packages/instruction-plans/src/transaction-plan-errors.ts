@@ -1,15 +1,12 @@
 import {
-    isSolanaError,
+    isSimulationError,
     type RpcSimulateTransactionResult,
     SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION,
     SOLANA_ERROR__FAILED_TO_SEND_TRANSACTIONS,
     SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTION,
     SOLANA_ERROR__FAILED_TO_SIGN_TRANSACTIONS,
     SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN,
-    SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE,
-    SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT,
     SolanaError,
-    type SolanaErrorCode,
 } from '@solana/errors';
 
 import {
@@ -351,16 +348,12 @@ function unwrapErrorWithPreflightData(error: Error): {
     preflightData: PreflightData | undefined;
     unwrappedError: unknown;
 } {
-    const simulationCodes: SolanaErrorCode[] = [
-        SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE,
-        SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT,
-    ];
-    if (isSolanaError(error) && simulationCodes.includes(error.context.__code)) {
+    if (isSimulationError(error)) {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { __code, ...preflightData } = error.context;
         return {
-            logs: (preflightData as PreflightData).logs ?? undefined,
-            preflightData: preflightData as PreflightData,
+            logs: preflightData.logs ?? undefined,
+            preflightData,
             unwrappedError: error.cause ?? error,
         };
     }

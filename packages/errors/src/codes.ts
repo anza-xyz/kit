@@ -805,13 +805,24 @@ export type SolanaErrorCode =
     | typeof SOLANA_ERROR__WALLET__SIGNER_NOT_AVAILABLE;
 
 /**
- * Errors of this type are understood to have an optional {@link SolanaError} nested inside as
- * `cause`.
+ * Errors of this type are thrown when a transaction simulation fails. Their context holds the
+ * simulation result (eg. `logs` and `unitsConsumed`) and their `cause` holds the underlying
+ * transaction error, if any.
+ *
+ * @see {@link isSimulationError}
  */
-export type SolanaErrorCodeWithCause =
+export type SolanaErrorCodeWithSimulationResult =
     | typeof SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE
     | typeof SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT
     | typeof SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_RESOURCE_LIMITS;
+
+/**
+ * Errors of this type are understood to have an optional {@link SolanaError} nested inside as
+ * `cause`.
+ *
+ * This includes every simulation error (see {@link SolanaErrorCodeWithSimulationResult}).
+ */
+export type SolanaErrorCodeWithCause = SolanaErrorCodeWithSimulationResult;
 
 /**
  * Errors of this type have a deprecated `cause` property. Consumers should use the error's

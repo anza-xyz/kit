@@ -7,6 +7,7 @@ import {
     SOLANA_ERROR__INSTRUCTION_PLANS__FAILED_TO_EXECUTE_TRANSACTION_PLAN,
     SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE,
     SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT,
+    SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_RESOURCE_LIMITS,
     SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE,
     SolanaError,
 } from '@solana/errors';
@@ -55,6 +56,11 @@ const preflightContextWithoutLogs: Omit<RpcSimulateTransactionResult, 'err'> = {
     returnData: null,
     unitsConsumed: null,
 };
+
+const estimationSimulationErrorCodes = [
+    ['compute-limit', SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT],
+    ['resource-limits', SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_RESOURCE_LIMITS],
+] as const;
 
 function createPreflightError(
     causeError: Error,
@@ -168,13 +174,10 @@ describe('createFailedToSendTransactionError', () => {
         });
     });
 
-    describe('given a failed result with a compute-limit simulation error', () => {
+    describe.each(estimationSimulationErrorCodes)('given a failed result with a %s simulation error', (_, code) => {
         it('unwraps the simulation error', () => {
             const innerError = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
-            const simulationError = new SolanaError(
-                SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT,
-                { ...preflightContext, cause: innerError },
-            );
+            const simulationError = new SolanaError(code, { ...preflightContext, cause: innerError });
             const result = failedSingleTransactionPlanResult(createMessage('A'), simulationError);
             const error = createFailedToSendTransactionError(result);
             expect(error.cause).toBe(innerError);
@@ -182,10 +185,7 @@ describe('createFailedToSendTransactionError', () => {
 
         it('sets preflightData from the simulation error context', () => {
             const innerError = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
-            const simulationError = new SolanaError(
-                SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT,
-                { ...preflightContext, cause: innerError },
-            );
+            const simulationError = new SolanaError(code, { ...preflightContext, cause: innerError });
             const result = failedSingleTransactionPlanResult(createMessage('A'), simulationError);
             const error = createFailedToSendTransactionError(result);
             expect(error.context.preflightData).toEqual(preflightContext);
@@ -193,10 +193,7 @@ describe('createFailedToSendTransactionError', () => {
 
         it('sets logs from the simulation error context', () => {
             const innerError = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
-            const simulationError = new SolanaError(
-                SOLANA_ERROR__TRANSACTION__FAILED_WHEN_SIMULATING_TO_ESTIMATE_COMPUTE_LIMIT,
-                { ...preflightContext, cause: innerError },
-            );
+            const simulationError = new SolanaError(code, { ...preflightContext, cause: innerError });
             const result = failedSingleTransactionPlanResult(createMessage('A'), simulationError);
             const error = createFailedToSendTransactionError(result);
             expect(error.context.logs).toEqual(preflightContext.logs);
@@ -422,6 +419,31 @@ describe('createFailedToSendTransactionsError', () => {
             ]);
             const error = createFailedToSendTransactionsError(result);
             expect(error.context.failedTransactions[0].logs).toEqual(preflightContext.logs);
+        });
+    });
+
+    describe.each(estimationSimulationErrorCodes)('given failures with a %s simulation error', (_, code) => {
+        it('unwraps the simulation error and surfaces its preflight data and logs in the message', () => {
+            const messageA = createMessage('A');
+            const messageB = createMessage('B');
+            const innerError = new SolanaError(SOLANA_ERROR__TRANSACTION_ERROR__INSUFFICIENT_FUNDS_FOR_FEE);
+            const simulationError = new SolanaError(code, { ...preflightContext, cause: innerError });
+            const result = sequentialTransactionPlanResult([
+                successfulSingleTransactionPlanResult(messageA, {
+                    signature: '11111111111111111111111111111111111111111111' as Signature,
+                }),
+                failedSingleTransactionPlanResult(messageB, simulationError),
+            ]);
+            const error = createFailedToSendTransactionsError(result);
+            expect(error.cause).toBe(innerError);
+            expect(error.context.failedTransactions[0].error).toBe(innerError);
+            expect(error.context.failedTransactions[0].preflightData).toEqual(preflightContext);
+            expect(error.message).toBe(
+                `Failed to send transactions.\n[Tx #2 (preflight)] ${innerError.message}\n\n` +
+                    'Logs:\n' +
+                    '  > Program log: Instruction: Transfer\n' +
+                    '  > Program failed: insufficient funds\n',
+            );
         });
     });
 
