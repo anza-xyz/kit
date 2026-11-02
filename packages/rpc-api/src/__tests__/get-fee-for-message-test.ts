@@ -112,11 +112,13 @@ describe('getFeeForMessage', () => {
         it('throws an error', async () => {
             expect.assertions(1);
             const sendPromise = rpc.getFeeForMessage('someInvalidMessage' as TransactionMessageBytesBase64).send();
-            await expect(sendPromise).rejects.toThrow(
-                new SolanaError(SOLANA_ERROR__JSON_RPC__INVALID_PARAMS, {
-                    __serverMessage: 'invalid base64 encoding: InvalidPadding',
-                }),
-            );
+            await expect(sendPromise).rejects.toMatchObject({
+                context: {
+                    __code: SOLANA_ERROR__JSON_RPC__INVALID_PARAMS,
+                    // The rest of the message varies between server versions.
+                    __serverMessage: expect.stringMatching(/^invalid base64 encoding: /),
+                },
+            });
         });
     });
 
