@@ -1,7 +1,8 @@
 import * as SolanaErrorCodeModule from '../codes';
-import { SolanaErrorCode, SolanaErrorCodeWithCause } from '../codes';
+import { SolanaErrorCode, SolanaErrorCodeWithCause, SolanaErrorCodeWithSimulationResult } from '../codes';
 import { SolanaErrorContext } from '../context';
 import { isSolanaError, SolanaError, SolanaErrorWithDeprecatedCause } from '../error';
+import { isSimulationError } from '../simulation-errors';
 
 const { SOLANA_ERROR__TRANSACTION__FEE_PAYER_SIGNATURE_MISSING, SOLANA_ERROR__TRANSACTION__SIGNATURES_MISSING } =
     SolanaErrorCodeModule;
@@ -66,6 +67,18 @@ null as unknown as SolanaErrorContext satisfies {
 // Special errors have a nested `cause` property that is an optional `SolanaError`
 const errorWithCause = null as unknown as SolanaError<SolanaErrorCodeWithCause>;
 errorWithCause.cause satisfies SolanaError | undefined;
+
+// `isSimulationError` refines the error to one carrying the simulation result in its context
+{
+    const e = null as unknown;
+    if (isSimulationError(e)) {
+        e satisfies SolanaError<SolanaErrorCodeWithSimulationResult>;
+        e.context.logs satisfies readonly string[] | null;
+        e.cause satisfies SolanaError | undefined;
+        // @ts-expect-error Context belongs to another error code
+        e.context satisfies SolanaErrorContext[typeof SOLANA_ERROR__TRANSACTION__SIGNATURES_MISSING];
+    }
+}
 
 // Errors that have a deprecated `cause` property should satisfy `SolanaErrorWithDeprecatedCause`
 // when narrowed with `isSolanaError`
