@@ -8,20 +8,31 @@ import { useState } from 'react';
 
 import { ErrorDialog } from '../components/ErrorDialog';
 
-type Props = Readonly<{
-    signMessage(message: ReadonlyUint8Array): Promise<ReadonlyUint8Array>;
+/**
+ * The result of signing a message: the signature, and the exact bytes it is a signature of. Those
+ * bytes aren't always just the message text, so panels return them explicitly. For example, an
+ * offchain message wraps the text with some extra information before the wallet signs it.
+ */
+export type SignedMessage = Readonly<{
+    signature: ReadonlyUint8Array;
+    signedMessage: ReadonlyUint8Array;
 }>;
 
-export function BaseSignMessageFeaturePanel({ signMessage }: Props) {
+type Props = Readonly<{
+    buttonLabel?: string;
+    signMessage(text: string): Promise<SignedMessage>;
+}>;
+
+export function BaseSignMessageFeaturePanel({ buttonLabel = 'Sign Message', signMessage }: Props) {
     const [text, setText] = useState<string>();
 
     const {
-        data: lastSignature,
+        data: lastSigned,
         dispatch,
         error,
         isRunning: isSigningMessage,
         reset,
-    } = useAction(async () => await signMessage(new TextEncoder().encode(text)));
+    } = useAction(async () => await signMessage(text ?? ''));
 
     return (
         <Flex asChild gap="2" direction={{ initial: 'column', sm: 'row' }} style={{ width: '100%' }}>
@@ -43,7 +54,7 @@ export function BaseSignMessageFeaturePanel({ signMessage }: Props) {
                     </TextField.Root>
                 </Box>
                 <Dialog.Root
-                    open={!!lastSignature}
+                    open={!!lastSigned}
                     onOpenChange={open => {
                         if (!open) {
                             reset();
@@ -57,10 +68,10 @@ export function BaseSignMessageFeaturePanel({ signMessage }: Props) {
                             loading={isSigningMessage}
                             type="submit"
                         >
-                            Sign Message
+                            {buttonLabel}
                         </Button>
                     </Dialog.Trigger>
-                    {lastSignature ? (
+                    {lastSigned ? (
                         <Dialog.Content
                             onClick={e => {
                                 e.stopPropagation();
@@ -77,7 +88,13 @@ export function BaseSignMessageFeaturePanel({ signMessage }: Props) {
                                 <DataList.Item>
                                     <DataList.Label minWidth="88px">Signature</DataList.Label>
                                     <DataList.Value>
-                                        <Code truncate>{getBase64Decoder().decode(lastSignature)}</Code>
+                                        <Code truncate>{getBase64Decoder().decode(lastSigned.signature)}</Code>
+                                    </DataList.Value>
+                                </DataList.Item>
+                                <DataList.Item>
+                                    <DataList.Label minWidth="88px">Signed Bytes</DataList.Label>
+                                    <DataList.Value>
+                                        <Code truncate>{getBase64Decoder().decode(lastSigned.signedMessage)}</Code>
                                     </DataList.Value>
                                 </DataList.Item>
                             </DataList.Root>

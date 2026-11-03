@@ -16,5 +16,12 @@ export function SolanaSignMessageFeaturePanel({ account }: Props) {
     // Guard at render so the surrounding `ErrorBoundary` shows `FeatureNotSupportedCallout`
     // when the connected account lacks it.
     assertCanSignMessages(account);
-    return <BaseSignMessageFeaturePanel signMessage={dispatchAsync} />;
+    return (
+        <BaseSignMessageFeaturePanel
+            signMessage={async text => {
+                const signedMessage = new TextEncoder().encode(text);
+                return { signature: await dispatchAsync(signedMessage), signedMessage };
+            }}
+        />
+    );
 }
