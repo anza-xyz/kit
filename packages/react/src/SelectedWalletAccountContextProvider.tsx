@@ -46,7 +46,7 @@ function findSavedWalletAccount(
 }
 
 /**
- * Saves the selected wallet account's storage key to a persistant storage. In future
+ * Saves the selected wallet account's storage key to a persistent storage. In future
  * sessions it will try to return that same wallet account, or at least one from the same brand of
  * wallet if the wallet from which it came is still in the Wallet Standard registry.
  * @param children The child components that will have access to the selected wallet account context
@@ -86,7 +86,7 @@ export function SelectedWalletAccountContextProvider({
             [setSelectedWalletAccountInternal],
         );
 
-    //Sync to persistant storage when selectedWalletAccount changes
+    //Sync to persistent storage when selectedWalletAccount changes
     React.useEffect(() => {
         if (!wasSetterInvokedRef.current) return;
 
