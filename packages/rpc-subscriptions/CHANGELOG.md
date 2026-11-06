@@ -1,5 +1,22 @@
 # @solana/rpc-subscriptions
 
+## 8.7.0
+
+### Patch Changes
+
+- Updated dependencies [[`05b2eb2`](https://github.com/anza-xyz/kit/commit/05b2eb2f10292a0ebec03a1227e7651b24196596), [`0c4e92c`](https://github.com/anza-xyz/kit/commit/0c4e92c5d1e0339521721809efe82fac2a40d330)]:
+  - @solana/errors@8.7.0
+  - @solana/rpc-spec-types@8.7.0
+  - @solana/rpc-subscriptions-channel-websocket@8.7.0
+  - @solana/rpc-subscriptions-spec@8.7.0
+  - @solana/rpc-transformers@8.7.0
+  - @solana/rpc-types@8.7.0
+  - @solana/subscribable@8.7.0
+  - @solana/rpc-subscriptions-api@8.7.0
+  - @solana/fast-stable-stringify@8.7.0
+  - @solana/functional@8.7.0
+  - @solana/promises@8.7.0
+
 ## 8.6.0
 
 ### Patch Changes
