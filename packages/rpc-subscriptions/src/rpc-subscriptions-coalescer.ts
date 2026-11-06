@@ -42,7 +42,17 @@ export function getRpcSubscriptionsTransportWithSubscriptionCoalescing<TTranspor
                         { signal: abortController.signal },
                     );
                 })
-                .catch(() => {});
+                // If the transport failed outright — eg: the WebSocket failed to connect — the
+                // data publisher above will never exist to emit an 'error' event, so the cache
+                // entry has to be evicted here, lest every future subscription with the same
+                // configuration receive this same rejection without ever re-dialing the server.
+                // Aborting also detaches the subscriber abort listeners below, so that a late
+                // abort of a subscriber to this failed attempt can't evict a newly coalesced
+                // entry that has since taken its place at the same hash.
+                .catch(() => {
+                    cache.delete(subscriptionConfigurationHash);
+                    abortController.abort();
+                });
             cache.set(
                 subscriptionConfigurationHash,
                 (cachedDataPublisherPromise = {
