@@ -1,5 +1,18 @@
 # @solana/rpc-subscriptions-api
 
+## 8.7.0
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @solana/addresses@8.7.0
+  - @solana/keys@8.7.0
+  - @solana/rpc-subscriptions-spec@8.7.0
+  - @solana/rpc-transformers@8.7.0
+  - @solana/rpc-types@8.7.0
+  - @solana/transaction-messages@8.7.0
+  - @solana/transactions@8.7.0
+
 ## 8.6.0
 
 ### Patch Changes
