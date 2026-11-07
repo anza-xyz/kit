@@ -66,6 +66,22 @@ describe('getAbortablePromise()', () => {
         resolve(123);
         await expect(abortablePromise).resolves.toBe(123);
     });
+    it('removes abort listeners when reusing a signal for resolved promises', async () => {
+        expect.assertions(8);
+        const signal = new AbortController().signal;
+        const addAbortListener = jest.spyOn(signal, 'addEventListener');
+        const removeAbortListener = jest.spyOn(signal, 'removeEventListener');
+
+        for (let ii = 0; ii < 3; ii++) {
+            await expect(getAbortablePromise(Promise.resolve(ii), signal)).resolves.toBe(ii);
+        }
+
+        expect(addAbortListener).toHaveBeenCalledTimes(3);
+        expect(removeAbortListener).toHaveBeenCalledTimes(3);
+        for (const [type, listener] of addAbortListener.mock.calls) {
+            expect(removeAbortListener).toHaveBeenCalledWith(type, listener);
+        }
+    });
     it('pends when neither the promise has resolved nor the signal aborted', async () => {
         expect.assertions(1);
         const signal = new AbortController().signal;
