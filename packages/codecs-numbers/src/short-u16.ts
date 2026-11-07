@@ -73,6 +73,10 @@ export const getShortU16Encoder = (): VariableSizeEncoder<bigint | number> =>
  * This decoder deserializes `shortU16` values from **1 to 3 bytes**.
  * The number of bytes used depends on the encoded value.
  *
+ * Non-minimal ("alias") encodings — where a zero-valued terminating byte
+ * follows the first byte, so the value could have been encoded in fewer
+ * bytes — are rejected, matching Agave's `short_vec` decoder.
+ *
  * For more details, see {@link getShortU16Codec}.
  *
  * @returns A `VariableSizeDecoder<number>` for decoding `shortU16` values.
@@ -103,6 +107,16 @@ export const getShortU16Decoder = (): VariableSizeDecoder<number> =>
                 value |= nextSevenBits << (byteIndex * 7);
                 if ((currentByte & 0b10000000) === 0) {
                     // This byte does not have its continuation bit set. We're done.
+                    if (byteIndex > 0 && currentByte === 0) {
+                        // A zero-valued terminating byte after the first byte adds no
+                        // value bits, so the value could have been encoded in fewer
+                        // bytes. Agave rejects such non-minimal ("alias") encodings.
+                        throw new SolanaError(SOLANA_ERROR__CODECS__INVALID_BYTE_LENGTH, {
+                            bytesLength: byteCount,
+                            codecDescription: 'shortU16',
+                            expected: value <= 0b01111111 ? 1 : 2,
+                        });
+                    }
                     assertNumberIsBetweenForCodec('shortU16', 0, MAX_SHORT_U16_VALUE, value);
                     return [value, offset + byteCount];
                 }
