@@ -1,5 +1,17 @@
 # @solana/errors
 
+## 8.7.0
+
+### Minor Changes
+
+- [#2165](https://github.com/anza-xyz/kit/pull/2165) [`0c4e92c`](https://github.com/anza-xyz/kit/commit/0c4e92c5d1e0339521721809efe82fac2a40d330) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add an `isSimulationError` type guard and a `SolanaErrorCodeWithSimulationResult` type that identify errors thrown when a transaction simulation fails, refining their context to the simulation result. `unwrapSimulationError` now relies on this guard.
+
+### Patch Changes
+
+- [#2163](https://github.com/anza-xyz/kit/pull/2163) [`05b2eb2`](https://github.com/anza-xyz/kit/commit/05b2eb2f10292a0ebec03a1227e7651b24196596) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Add `SOLANA_ERROR__JSON_RPC__SERVER_ERROR_LEADER_SCHEDULE_IDENTITY_NOT_FOUND` (`-32022`), the error Agave v4.4.0 and later return from `getLeaderSchedule` when the requested identity is not in the leader schedule. Older servers return an empty object instead.
+  
+  Error codes that the library has no message for, such as a JSON-RPC error code added in a newer server, no longer throw a `TypeError` while the error message is being built in development mode. They now produce a `SolanaError` with the message `Unknown Solana error code: <code>`. JSON-RPC errors that arrive without structured data now keep the server's message on `context.__serverMessage`, and for unknown codes it is included in that fallback message. `npx @solana/errors decode` now accepts codes it has no message for, with a warning.
+
 ## 8.6.0
 
 ### Minor Changes

@@ -1,5 +1,20 @@
 # @solana/plugin-interfaces
 
+## 8.7.0
+
+### Patch Changes
+
+- Updated dependencies [[`0c4e92c`](https://github.com/anza-xyz/kit/commit/0c4e92c5d1e0339521721809efe82fac2a40d330)]:
+  - @solana/instruction-plans@8.7.0
+  - @solana/signers@8.7.0
+  - @solana/accounts@8.7.0
+  - @solana/addresses@8.7.0
+  - @solana/keys@8.7.0
+  - @solana/rpc-spec@8.7.0
+  - @solana/rpc-subscriptions-spec@8.7.0
+  - @solana/rpc-types@8.7.0
+  - @solana/transactions@8.7.0
+
 ## 8.6.0
 
 ### Patch Changes
