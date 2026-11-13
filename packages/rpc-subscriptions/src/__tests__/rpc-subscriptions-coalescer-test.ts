@@ -230,4 +230,54 @@ describe('getRpcSubscriptionsTransportWithSubscriptionCoalescing', () => {
         expect(publisherA).toBe(publisherB);
         expect(mockInnerTransport).toHaveBeenCalledTimes(1);
     });
+    it('evicts a rejected subscription attempt so that identical future requests re-dial the inner transport', async () => {
+        expect.assertions(3);
+        mockInnerTransport.mockRejectedValueOnce(new Error('WebSocket failed to connect'));
+        const config = {
+            execute: jest.fn(),
+            request: { methodName: 'foo', params: [] },
+        };
+        await expect(coalescedTransport({ ...config, signal: new AbortController().signal })).rejects.toThrow(
+            'WebSocket failed to connect',
+        );
+        const publisher = await coalescedTransport({ ...config, signal: new AbortController().signal });
+        expect(publisher).toBe(await mockInnerTransport.mock.results[1]?.value);
+        expect(mockInnerTransport).toHaveBeenCalledTimes(2);
+    });
+    it('does not cancel a newly-coalesced subscription when a rejected one is aborted', async () => {
+        expect.assertions(3);
+        jest.useFakeTimers();
+        const config = {
+            execute: jest.fn(),
+            request: { methodName: 'foo', params: [] },
+        };
+        const abortControllerA = new AbortController();
+        /**
+         * PHASE 1
+         * Create and fail a transport that never establishes (eg: the WebSocket failed to connect).
+         */
+        mockInnerTransport.mockRejectedValueOnce(new Error('WebSocket failed to connect'));
+        await expect(coalescedTransport({ ...config, signal: abortControllerA.signal })).rejects.toThrow(
+            'WebSocket failed to connect',
+        );
+        mockInnerTransport.mockClear();
+        /**
+         * PHASE 2
+         * Create a new transport
+         */
+        const publisherA = await coalescedTransport({ ...config, signal: new AbortController().signal });
+        /**
+         * PHASE 3
+         * Abort the original subscriber
+         */
+        abortControllerA.abort();
+        await jest.runAllTimersAsync();
+        /**
+         * PHASE 4
+         * Create a new transport and expect it to coalesce behind the one in phase 2
+         */
+        const publisherB = await coalescedTransport({ ...config, signal: new AbortController().signal });
+        expect(publisherA).toBe(publisherB);
+        expect(mockInnerTransport).toHaveBeenCalledTimes(1);
+    });
 });
