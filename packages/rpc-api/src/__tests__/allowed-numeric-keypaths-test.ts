@@ -39,6 +39,23 @@ function createMockRpc<TApi>(result: unknown): Rpc<TApi> {
     });
 }
 
+function getFullBlockRequest(
+    rpc: Rpc<GetBlockApi>,
+    encoding: 'base58' | 'base64' | 'json' | 'jsonParsed',
+    config: { maxSupportedTransactionVersion?: 0 },
+) {
+    switch (encoding) {
+        case 'base58':
+            return rpc.getBlock(1n, { ...config, encoding, transactionDetails: 'full' });
+        case 'base64':
+            return rpc.getBlock(1n, { ...config, encoding, transactionDetails: 'full' });
+        case 'jsonParsed':
+            return rpc.getBlock(1n, { ...config, encoding, transactionDetails: 'full' });
+        case 'json':
+            return rpc.getBlock(1n, { ...config, encoding, transactionDetails: 'full' });
+    }
+}
+
 describe('the default response transformer for the Solana RPC', () => {
     describe('getAgGenesisCert', () => {
         it('upcasts the slot to a `bigint` but leaves the byte arrays as numbers', async () => {
@@ -103,6 +120,37 @@ describe('the default response transformer for the Solana RPC', () => {
     });
 
     describe('getBlock', () => {
+        describe.each([
+            { config: {}, name: 'legacy' },
+            { config: { maxSupportedTransactionVersion: 0 as const }, name: 'versioned' },
+        ])('$name metadata arrays', ({ config }) => {
+            describe.each(['base58', 'base64', 'json', 'jsonParsed'] as const)('%s encoding', encoding => {
+                it.each([
+                    {
+                        meta: { innerInstructions: null, postTokenBalances: null, preTokenBalances: null },
+                        name: 'null',
+                    },
+                    { meta: {}, name: 'omitted' },
+                    { meta: { innerInstructions: [], postTokenBalances: [], preTokenBalances: [] }, name: 'empty' },
+                ])('preserves $name arrays in full mode', async ({ meta }) => {
+                    expect.assertions(1);
+                    const rpc = createMockRpc<GetBlockApi>({ transactions: [{ meta }] });
+                    const request = getFullBlockRequest(rpc, encoding, config);
+                    const response = await request.send();
+                    expect(response?.transactions[0].meta).toStrictEqual(meta);
+                });
+            });
+            it.each([
+                { meta: { postTokenBalances: null, preTokenBalances: null }, name: 'null' },
+                { meta: {}, name: 'omitted' },
+                { meta: { postTokenBalances: [], preTokenBalances: [] }, name: 'empty' },
+            ])('preserves $name token balance arrays in accounts mode', async ({ meta }) => {
+                expect.assertions(1);
+                const rpc = createMockRpc<GetBlockApi>({ transactions: [{ meta }] });
+                const response = await rpc.getBlock(1n, { ...config, transactionDetails: 'accounts' }).send();
+                expect(response?.transactions[0].meta).toStrictEqual(meta);
+            });
+        });
         it('leaves the `version` of each transaction as a number', async () => {
             expect.assertions(1);
             const rpc = createMockRpc<GetBlockApi>({
