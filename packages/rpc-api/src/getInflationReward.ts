@@ -28,8 +28,18 @@ type GetInflationRewardApiConfig = Readonly<{
 type InflationReward = Readonly<{
     /** Reward amount in {@link Lamports} */
     amount: Lamports;
+    /**
+     * Total block reward in {@link Lamports} the vote account earned in the epoch. Only present when
+     * the RPC emits it.
+     */
+    blockRewardAmount?: Lamports;
     /** Vote account commission when the reward was credited */
     commission: number;
+    /**
+     * Vote account commission in basis points when the reward was credited. Only present when the
+     * RPC emits it (SIMD-0291).
+     */
+    commissionBps?: number;
     /** The slot in which the rewards are delivered */
     effectiveSlot: Slot;
     /** Epoch for which reward occurred */

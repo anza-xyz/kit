@@ -428,6 +428,11 @@ export type Reward =
     | (Readonly<{
           /** The vote account commission when the reward was credited */
           commission: number;
+          /**
+           * The vote account commission in basis points when the reward was credited. Only present
+           * when the RPC emits it (SIMD-0291).
+           */
+          commissionBps?: number;
           /** The type of reward */
           rewardType: 'Staking' | 'Voting';
       }> &

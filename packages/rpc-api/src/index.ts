@@ -284,6 +284,7 @@ function getAllowedNumericKeypaths(): AllowedNumericKeypaths<RpcApi<SolanaRpcApi
                     ['transactions', KEYPATH_WILDCARD, 'meta', 'postTokenBalances', KEYPATH_WILDCARD, ...c],
                 ]),
                 ['transactions', KEYPATH_WILDCARD, 'meta', 'rewards', KEYPATH_WILDCARD, 'commission'],
+                ['transactions', KEYPATH_WILDCARD, 'meta', 'rewards', KEYPATH_WILDCARD, 'commissionBps'],
                 ...innerInstructionsConfigs.map(c => [
                     'transactions',
                     KEYPATH_WILDCARD,
@@ -295,6 +296,7 @@ function getAllowedNumericKeypaths(): AllowedNumericKeypaths<RpcApi<SolanaRpcApi
                 ...messageConfig.map(c => ['transactions', KEYPATH_WILDCARD, 'transaction', 'message', ...c] as const),
                 ['transactions', KEYPATH_WILDCARD, 'version'],
                 ['rewards', KEYPATH_WILDCARD, 'commission'],
+                ['rewards', KEYPATH_WILDCARD, 'commissionBps'],
             ],
             getClusterNodes: [
                 [KEYPATH_WILDCARD, 'featureSet'],
@@ -302,7 +304,10 @@ function getAllowedNumericKeypaths(): AllowedNumericKeypaths<RpcApi<SolanaRpcApi
             ],
             getInflationGovernor: [['initial'], ['foundation'], ['foundationTerm'], ['taper'], ['terminal']],
             getInflationRate: [['foundation'], ['total'], ['validator']],
-            getInflationReward: [[KEYPATH_WILDCARD, 'commission']],
+            getInflationReward: [
+                [KEYPATH_WILDCARD, 'commission'],
+                [KEYPATH_WILDCARD, 'commissionBps'],
+            ],
             getMultipleAccounts: jsonParsedAccountsConfigs.map(c => ['value', KEYPATH_WILDCARD, ...c]),
             getProgramAccounts: jsonParsedAccountsConfigs.flatMap(c => [
                 ['value', KEYPATH_WILDCARD, 'account', ...c],
@@ -340,6 +345,7 @@ function getAllowedNumericKeypaths(): AllowedNumericKeypaths<RpcApi<SolanaRpcApi
                     ['meta', 'postTokenBalances', KEYPATH_WILDCARD, ...c],
                 ]),
                 ['meta', 'rewards', KEYPATH_WILDCARD, 'commission'],
+                ['meta', 'rewards', KEYPATH_WILDCARD, 'commissionBps'],
                 ...innerInstructionsConfigs.map(c => ['meta', 'innerInstructions', KEYPATH_WILDCARD, ...c]),
                 ...messageConfig.map(c => ['transaction', 'message', ...c] as const),
                 ['version'],
@@ -351,6 +357,7 @@ function getAllowedNumericKeypaths(): AllowedNumericKeypaths<RpcApi<SolanaRpcApi
                     ['data', KEYPATH_WILDCARD, 'meta', 'postTokenBalances', KEYPATH_WILDCARD, ...c],
                 ]),
                 ['data', KEYPATH_WILDCARD, 'meta', 'rewards', KEYPATH_WILDCARD, 'commission'],
+                ['data', KEYPATH_WILDCARD, 'meta', 'rewards', KEYPATH_WILDCARD, 'commissionBps'],
                 ...innerInstructionsConfigs.map(c => [
                     'data',
                     KEYPATH_WILDCARD,
