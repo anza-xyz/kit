@@ -59,6 +59,7 @@ export const typeTypeDefs = /* GraphQL */ `
 
     type Reward {
         commission: Int
+        commissionBps: Int
         lamports: Lamports
         postBalance: BigInt
         pubkey: Address
