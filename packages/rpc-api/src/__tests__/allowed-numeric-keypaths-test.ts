@@ -6,6 +6,7 @@ import {
     createSolanaRpcApi,
     GetAgGenesisCertApi,
     GetBlockApi,
+    GetInflationRewardApi,
     GetTransactionApi,
     GetTransactionsForAddressApi,
     SimulateTransactionApi,
@@ -52,6 +53,29 @@ describe('the default response transformer for the Solana RPC', () => {
             expect(result?.block.blockId).toStrictEqual([1, 2, 3]);
             expect(result?.signature.signature).toStrictEqual([4, 5, 6]);
             expect(result?.signature.bitmap).toStrictEqual([7, 8, 9]);
+        });
+    });
+    describe('getInflationReward', () => {
+        it('leaves reward `commission` and `commissionBps` as numbers but upcasts `blockRewardAmount`', async () => {
+            expect.assertions(5);
+            const rpc = createMockRpc<GetInflationRewardApi>([
+                {
+                    amount: 1,
+                    blockRewardAmount: 42,
+                    commission: 6,
+                    commissionBps: 550,
+                    effectiveSlot: 1,
+                    epoch: 1,
+                    postBalance: 1,
+                },
+                null,
+            ]);
+            const result = await rpc.getInflationReward(['11111111111111111111111111111111' as Address]).send();
+            expect(result[0]?.commission).toBe(6);
+            expect(result[0]?.commissionBps).toBe(550);
+            expect(typeof result[0]?.commissionBps).toBe('number');
+            expect(result[0]?.blockRewardAmount).toBe(42n);
+            expect(typeof result[0]?.blockRewardAmount).toBe('bigint');
         });
     });
     describe('getTransaction', () => {
@@ -111,6 +135,25 @@ describe('the default response transformer for the Solana RPC', () => {
             });
             const result = await rpc.getBlock(1n, { encoding: 'json', maxSupportedTransactionVersion: 0 }).send();
             expect(result?.transactions[0].version).toBe(0);
+        });
+        it('leaves block reward `commission` and `commissionBps` as numbers', async () => {
+            expect.assertions(2);
+            const rpc = createMockRpc<GetBlockApi>({
+                blockhash: '4nHvMbxHURt2AXd7yQpKSKM5XCVKQiNbfsFmvPtHNJnJ',
+                rewards: [
+                    {
+                        commission: 6,
+                        commissionBps: 550,
+                        lamports: 5,
+                        postBalance: 10,
+                        pubkey: '11111111111111111111111111111111',
+                        rewardType: 'Voting',
+                    },
+                ],
+            });
+            const result = await rpc.getBlock(1n, { encoding: 'json', maxSupportedTransactionVersion: 0 }).send();
+            expect(result?.rewards?.[0]).toMatchObject({ commission: 6, commissionBps: 550 });
+            expect(typeof (result?.rewards?.[0] as { commissionBps?: unknown })?.commissionBps).toBe('number');
         });
         it('leaves the `u32` fields of `transactionConfig` as numbers but upcasts `priorityFee`', async () => {
             expect.assertions(4);
