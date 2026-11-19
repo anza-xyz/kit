@@ -49,11 +49,11 @@
         "@types/react-dom": "^19.3.0",
         "@wallet-standard/ui": "^1.0.3",
         "eslint": "^10",
-        "eslint-config-next": "^16.1.6",
+        "eslint-config-next": "^16.4.6",
         "postcss": "^8.5.31",
         "swr": "^2.5.1",
         "tailwindcss": "^4.3.3",
-        "typescript": "^5.9.3",
+        "typescript": "^7.0.2",
         "vercel": "^59.23.2"
     },
     "pnpm": {
