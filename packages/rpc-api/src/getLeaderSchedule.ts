@@ -11,10 +11,17 @@ type GetLeaderScheduleApiConfigBase = Readonly<{
      * default commitment applied by the server is `"finalized"`.
      */
     commitment?: Commitment;
+    /**
+     * Use vote account addresses as the dictionary keys instead of validator identities.
+     * The `identity` filter still takes a validator identity when this is `true`.
+     *
+     * @defaultValue `false`
+     */
+    keyByVoteAccount?: boolean;
 }>;
 
-// A dictionary of validator identities as base-58 encoded strings, and their corresponding leader
-// slot indices as values relative to the first slot in the requested epoch.
+// A dictionary of validator identities (or vote account addresses when `keyByVoteAccount` is true)
+// as base-58 encoded strings, with leader slot indices relative to the first slot in the epoch.
 //
 // @example
 // ```json
@@ -40,9 +47,9 @@ export type GetLeaderScheduleApi = {
      * @param slot A slot that will be used to select the epoch for which to return the leader
      * schedule.
      *
-     * @returns A dictionary having a single key representing the specified validator identity, and
-     * its corresponding leader slot indices as values relative to the first slot in the requested
-     * epoch, or `null` if there is no epoch that corresponds to the given slot.
+     * @returns A dictionary keyed by the specified validator identity, or its vote account address
+     * when `keyByVoteAccount` is `true`, with corresponding leader slot indices relative to the first
+     * slot in the requested epoch, or `null` if there is no epoch that corresponds to the given slot.
      * @throws A `SolanaError` with code
      * `SOLANA_ERROR__JSON_RPC__SERVER_ERROR_LEADER_SCHEDULE_IDENTITY_NOT_FOUND` when the
      * identity is not in the leader schedule, on servers running Agave v4.4.0 or later. Older
@@ -63,9 +70,9 @@ export type GetLeaderScheduleApi = {
      * @param slot A slot that will be used to select the epoch for which to return the leader
      * schedule.
      *
-     * @returns A dictionary of validator identities as base-58 encoded strings, and their
-     * corresponding leader slot indices as values relative to the first slot in the requested
-     * epoch, or `null` if there is no epoch that corresponds to the given slot.
+     * @returns A dictionary of validator identities, or vote account addresses when
+     * `keyByVoteAccount` is `true`, with corresponding leader slot indices relative to the first slot
+     * in the requested epoch, or `null` if there is no epoch that corresponds to the given slot.
      * @see https://solana.com/docs/rpc/http/getleaderschedule
      */
     getLeaderSchedule(
@@ -77,9 +84,9 @@ export type GetLeaderScheduleApi = {
      *
      * @param slot When `null`, orders the leader schedule for the current epoch.
      *
-     * @returns A dictionary having a single key representing the specified validator identity, and
-     * its corresponding leader slot indices as values relative to the first slot in the current
-     * epoch.
+     * @returns A dictionary keyed by the specified validator identity, or its vote account address
+     * when `keyByVoteAccount` is `true`, with corresponding leader slot indices relative to the first
+     * slot in the current epoch.
      * @throws A `SolanaError` with code
      * `SOLANA_ERROR__JSON_RPC__SERVER_ERROR_LEADER_SCHEDULE_IDENTITY_NOT_FOUND` when the
      * identity is not in the leader schedule, on servers running Agave v4.4.0 or later. Older
@@ -99,9 +106,9 @@ export type GetLeaderScheduleApi = {
      *
      * @param slot When `null`, orders the leader schedule for the current epoch.
      *
-     * @returns A dictionary of validator identities as base-58 encoded strings, and their
-     * corresponding leader slot indices as values relative to the first slot in the current
-     * epoch.
+     * @returns A dictionary of validator identities, or vote account addresses when
+     * `keyByVoteAccount` is `true`, with corresponding leader slot indices relative to the first slot
+     * in the current epoch.
      * @see https://solana.com/docs/rpc/http/getleaderschedule
      */
     getLeaderSchedule(

@@ -36,6 +36,16 @@ These types represent the RPC methods available on a specific Solana cluster.
 
 For instance, the test clusters support the `RequestAirdropApi` while mainnet does not.
 
+### `GetLeaderScheduleApi`
+
+On RPC nodes that support `keyByVoteAccount` (Agave 4.4 and later), pass `true` to key the leader schedule by vote account address instead of validator identity:
+
+```ts
+const schedule = await rpc.getLeaderSchedule(null, { keyByVoteAccount: true }).send();
+```
+
+The option defaults to `false`. The optional `identity` filter always takes a validator identity, including when `keyByVoteAccount` is `true`.
+
 ## Functions
 
 ### `createSolanaRpcApi(config)`
