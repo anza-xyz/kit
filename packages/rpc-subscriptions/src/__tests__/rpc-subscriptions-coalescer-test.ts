@@ -220,6 +220,19 @@ describe('getRpcSubscriptionsTransportWithSubscriptionCoalescing', () => {
         expect(publisher).toEqual({ on: mockOn });
         expect(mockInnerTransport).toHaveBeenCalledTimes(2);
     });
+    it('re-dials when a subscriber retries from within the rejection handler of a transport that rejected before creating a publisher', async () => {
+        expect.assertions(2);
+        mockInnerTransport.mockRejectedValueOnce(new Error('o no'));
+        const config = {
+            execute: jest.fn(),
+            request: { methodName: 'foo', params: [] },
+        };
+        const retried = coalescedTransport({ ...config, signal: new AbortController().signal }).catch(() =>
+            coalescedTransport({ ...config, signal: new AbortController().signal }),
+        );
+        await expect(retried).resolves.toEqual({ on: mockOn });
+        expect(mockInnerTransport).toHaveBeenCalledTimes(2);
+    });
     it('does not cancel a newly-coalesced transport when an old errored one is aborted', async () => {
         expect.assertions(2);
         jest.useFakeTimers();
