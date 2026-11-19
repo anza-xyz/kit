@@ -56,9 +56,9 @@
         "test:treeshakability:browser": "agadoo dist/index.browser.mjs",
         "test:treeshakability:native": "agadoo dist/index.native.mjs",
         "test:treeshakability:node": "agadoo dist/index.node.mjs",
-        "test:typecheck": "tsc --noEmit",
-        "test:unit:browser": "NODE_OPTIONS=\"--no-experimental-webstorage\" TERM_OVERRIDE=\"${TURBO_HASH:+dumb}\" TERM=${TERM_OVERRIDE:-$TERM} jest -c ../../node_modules/@solana/test-config/jest-unit.config.browser.js --rootDir . --silent",
-        "test:unit:node": "NODE_OPTIONS=\"--no-experimental-webstorage\" TERM_OVERRIDE=\"${TURBO_HASH:+dumb}\" TERM=${TERM_OVERRIDE:-$TERM} jest -c ../../node_modules/@solana/test-config/jest-unit.config.node.js --rootDir . --silent"
+        "test:typecheck": "tsc --noEmit && tsc --noEmit -p ./tsconfig.web3js-v1.json",
+        "test:unit:browser": "NODE_OPTIONS=\"--no-experimental-webstorage\" TERM_OVERRIDE=\"${TURBO_HASH:+dumb}\" TERM=${TERM_OVERRIDE:-$TERM} jest -c ./jest-unit.config.browser.mjs --rootDir . --silent",
+        "test:unit:node": "NODE_OPTIONS=\"--no-experimental-webstorage\" TERM_OVERRIDE=\"${TURBO_HASH:+dumb}\" TERM=${TERM_OVERRIDE:-$TERM} jest -c ./jest-unit.config.node.mjs --rootDir . --silent"
     },
     "author": "Solana Labs Maintainers <maintainers@solanalabs.com>",
     "license": "MIT",
@@ -82,7 +82,9 @@
         "@solana/transactions": "workspace:*"
     },
     "devDependencies": {
-        "@solana/web3.js": "^1"
+        "@solana/web3.js": "^3",
+        "@solana/web3.js-v1": "npm:@solana/web3.js@^1",
+        "uuid": "^8.3.2"
     },
     "peerDependencies": {
         "typescript": ">=5.4.0"

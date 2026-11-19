@@ -3,7 +3,10 @@ import { Keypair } from '@solana/web3.js';
 import { fromLegacyKeypair } from '../keypair';
 
 describe('fromLegacyKeypair', () => {
-    const legacyKeypair = Keypair.generate();
+    let legacyKeypair: Keypair;
+    beforeAll(async () => {
+        legacyKeypair = await Keypair.generate();
+    });
     describe.each(['public', 'private'])('%s key', type => {
         let keyPair: CryptoKeyPair;
         beforeEach(async () => {
