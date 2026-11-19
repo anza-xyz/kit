@@ -35,12 +35,13 @@ jobs:
           persist-credentials: false
 
       # Avoid `cache: 'pnpm'`: this workflow runs under pull_request_target
-      # trust, and the pnpm cache key in actions/install-dependencies collides 
+      # trust, and the pnpm cache key in actions/install-dependencies collides
       # with main-branch workflows.
       - name: Install pnpm
         uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
         with:
-          version: 10.24.0
+          # Install the version the docs pin in `packageManager`
+          package_json_file: docs/package.json
 
       - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
