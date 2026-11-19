@@ -12,7 +12,7 @@ const MAX_BODY_BYTES =
     // Largest 16-bit unsigned integer
     0xffff;
 const MAX_BODY_BYTES_HARDWARE_WALLET_SIGNABLE =
-    // Space remaining in the mininum IPv6 MTU after network header overhead
+    // Space remaining in the minimum IPv6 MTU after network header overhead
     1232;
 
 /**
