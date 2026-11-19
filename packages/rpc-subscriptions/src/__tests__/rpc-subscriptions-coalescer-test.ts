@@ -196,6 +196,43 @@ describe('getRpcSubscriptionsTransportWithSubscriptionCoalescing', () => {
         coalescedTransport({ ...config, signal: new AbortController().signal }).catch(() => {});
         expect(mockInnerTransport).toHaveBeenCalledTimes(2);
     });
+    it('does not re-coalesce new requests behind a transport that rejects before creating a publisher', async () => {
+        expect.assertions(4);
+        jest.useFakeTimers();
+        const transportError = new Error('o no');
+        mockInnerTransport.mockRejectedValueOnce(transportError);
+        const config = {
+            execute: jest.fn(),
+            request: { methodName: 'foo', params: [] },
+        };
+        const firstTransportPromise = coalescedTransport({
+            ...config,
+            signal: new AbortController().signal,
+        });
+        await expect(firstTransportPromise).rejects.toBe(transportError);
+        await jest.runAllTimersAsync();
+        expect(mockInnerTransport.mock.calls[0][0].signal).toHaveProperty('aborted', true);
+
+        const publisher = await coalescedTransport({
+            ...config,
+            signal: new AbortController().signal,
+        });
+        expect(publisher).toEqual({ on: mockOn });
+        expect(mockInnerTransport).toHaveBeenCalledTimes(2);
+    });
+    it('re-dials when a subscriber retries from within the rejection handler of a transport that rejected before creating a publisher', async () => {
+        expect.assertions(2);
+        mockInnerTransport.mockRejectedValueOnce(new Error('o no'));
+        const config = {
+            execute: jest.fn(),
+            request: { methodName: 'foo', params: [] },
+        };
+        const retried = coalescedTransport({ ...config, signal: new AbortController().signal }).catch(() =>
+            coalescedTransport({ ...config, signal: new AbortController().signal }),
+        );
+        await expect(retried).resolves.toEqual({ on: mockOn });
+        expect(mockInnerTransport).toHaveBeenCalledTimes(2);
+    });
     it('does not cancel a newly-coalesced transport when an old errored one is aborted', async () => {
         expect.assertions(2);
         jest.useFakeTimers();
@@ -229,5 +266,76 @@ describe('getRpcSubscriptionsTransportWithSubscriptionCoalescing', () => {
         const publisherB = await coalescedTransport({ ...config, signal: new AbortController().signal });
         expect(publisherA).toBe(publisherB);
         expect(mockInnerTransport).toHaveBeenCalledTimes(1);
+    });
+    it('does not cancel a newly-coalesced transport when a rejected one is aborted', async () => {
+        expect.assertions(3);
+        jest.useFakeTimers();
+        const config = {
+            execute: jest.fn(),
+            request: { methodName: 'foo', params: [] },
+        };
+        const abortControllerA = new AbortController();
+        /**
+         * PHASE 1
+         * Create a transport that rejects before establishing (eg: the WebSocket failed to connect).
+         */
+        mockInnerTransport.mockRejectedValueOnce(new Error('o no'));
+        await expect(coalescedTransport({ ...config, signal: abortControllerA.signal })).rejects.toThrow('o no');
+        await jest.runAllTimersAsync();
+        mockInnerTransport.mockClear();
+        /**
+         * PHASE 2
+         * Create a new transport
+         */
+        const publisherA = await coalescedTransport({ ...config, signal: new AbortController().signal });
+        /**
+         * PHASE 3
+         * Abort the original subscriber
+         */
+        abortControllerA.abort();
+        await jest.runAllTimersAsync();
+        /**
+         * PHASE 4
+         * Create a new transport and expect it to coalesce behind the one in phase 2
+         */
+        const publisherB = await coalescedTransport({ ...config, signal: new AbortController().signal });
+        expect(publisherA).toBe(publisherB);
+        expect(mockInnerTransport).toHaveBeenCalledTimes(1);
+    });
+    it('does not evict a newer transport when a stale one rejects after all of its subscribers aborted', async () => {
+        expect.assertions(2);
+        jest.useFakeTimers();
+        const config = {
+            execute: jest.fn(),
+            request: { methodName: 'foo', params: [] },
+        };
+        const { promise: stalePublisherPromise, reject: rejectStalePublisher } = Promise.withResolvers<never>();
+        mockInnerTransport.mockReturnValueOnce(stalePublisherPromise);
+        const abortControllerA = new AbortController();
+        /**
+         * PHASE 1
+         * Subscribe with a transport whose dial is still pending, then abort every subscriber.
+         */
+        coalescedTransport({ ...config, signal: abortControllerA.signal }).catch(() => {});
+        abortControllerA.abort();
+        await jest.runAllTimersAsync();
+        /**
+         * PHASE 2
+         * Subscribe again, creating a fresh transport.
+         */
+        const publisherB = await coalescedTransport({ ...config, signal: new AbortController().signal });
+        /**
+         * PHASE 3
+         * The stale dial from phase 1 rejects late (eg: a shared pooled channel failed to connect).
+         */
+        rejectStalePublisher(new Error('o no'));
+        await jest.runAllTimersAsync();
+        /**
+         * PHASE 4
+         * Expect a new subscriber to coalesce behind the transport from phase 2.
+         */
+        const publisherC = await coalescedTransport({ ...config, signal: new AbortController().signal });
+        expect(publisherC).toBe(publisherB);
+        expect(mockInnerTransport).toHaveBeenCalledTimes(2);
     });
 });
