@@ -112,6 +112,48 @@ describe('getShortU16Codec', () => {
         );
     });
 
+    it('rejects non-minimal (alias) encodings', () => {
+        expect.hasAssertions();
+        // A zero-valued terminating byte after the first byte adds no value
+        // bits, so the value could have been encoded in fewer bytes. Agave
+        // rejects these as alias encodings (`VisitError::Alias`).
+        expect(() => shortU16().decode(new Uint8Array([0x80, 0x00]))).toThrow(
+            new SolanaError(SOLANA_ERROR__CODECS__INVALID_BYTE_LENGTH, {
+                bytesLength: 2,
+                codecDescription: 'shortU16',
+                expected: 1,
+            }),
+        );
+        expect(() => shortU16().decode(new Uint8Array([0x80, 0x80, 0x00]))).toThrow(
+            new SolanaError(SOLANA_ERROR__CODECS__INVALID_BYTE_LENGTH, {
+                bytesLength: 3,
+                codecDescription: 'shortU16',
+                expected: 1,
+            }),
+        );
+        expect(() => shortU16().decode(new Uint8Array([0xff, 0x00]))).toThrow(
+            new SolanaError(SOLANA_ERROR__CODECS__INVALID_BYTE_LENGTH, {
+                bytesLength: 2,
+                codecDescription: 'shortU16',
+                expected: 1,
+            }),
+        );
+        expect(() => shortU16().decode(new Uint8Array([0x81, 0x80, 0x00]))).toThrow(
+            new SolanaError(SOLANA_ERROR__CODECS__INVALID_BYTE_LENGTH, {
+                bytesLength: 3,
+                codecDescription: 'shortU16',
+                expected: 1,
+            }),
+        );
+        expect(() => shortU16().decode(new Uint8Array([0xff, 0xff, 0x00]))).toThrow(
+            new SolanaError(SOLANA_ERROR__CODECS__INVALID_BYTE_LENGTH, {
+                bytesLength: 3,
+                codecDescription: 'shortU16',
+                expected: 2,
+            }),
+        );
+    });
+
     it('has the right sizes', () => {
         expect(shortU16().maxSize).toBe(3);
         expect(shortU16().getSizeFromValue(1)).toBe(1);
