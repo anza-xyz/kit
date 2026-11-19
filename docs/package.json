@@ -63,5 +63,5 @@
             "@vercel/remix-builder>path-to-regexp": "^6.3.0"
         }
     },
-    "packageManager": "pnpm@10.4.1"
+    "packageManager": "pnpm@10.34.9"
 }
