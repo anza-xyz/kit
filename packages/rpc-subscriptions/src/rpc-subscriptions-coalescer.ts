@@ -49,6 +49,17 @@ export function getRpcSubscriptionsTransportWithSubscriptionCoalescing<TTranspor
                     );
                 })
                 .catch(() => {
+                    // If the transport rejected outright (eg. the WebSocket failed to connect) the
+                    // data publisher above will never exist to emit an `error` event, so evict the
+                    // entry here; otherwise every future identical subscription would receive this
+                    // same cached rejection without ever re-dialing the server. Aborting also
+                    // detaches the subscriber abort listeners below, so a late abort from one of
+                    // this attempt's subscribers can't cancel a replacement entry.
+                    //
+                    // Only evict if the cache still holds *this* entry. If all of its subscribers
+                    // aborted while the dial was pending, the entry has already been evicted (and
+                    // its controller aborted), and a newer entry may now live at this hash. A late
+                    // rejection must not evict that one.
                     if (cache.get(subscriptionConfigurationHash) === cacheEntry) {
                         cache.delete(subscriptionConfigurationHash);
                         abortController.abort();
