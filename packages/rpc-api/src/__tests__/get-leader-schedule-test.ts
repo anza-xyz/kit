@@ -39,27 +39,45 @@ describe('getLeaderSchedule', () => {
 
     (['confirmed', 'finalized', 'processed'] as Commitment[]).forEach(commitment => {
         describe(`when called with \`${commitment}\` commitment`, () => {
-            it.each([
-                { keyByVoteAccount: false, keyField: 'nodePubkey' as const },
-                { keyByVoteAccount: true, keyField: 'votePubkey' as const },
-            ])(
-                'returns $keyField keys with keyByVoteAccount=$keyByVoteAccount while filtering by validator identity',
-                async ({ keyByVoteAccount, keyField }) => {
-                    expect.assertions(2);
-                    const identity = await getValidatorAddress();
-                    const { current } = await rpc.getVoteAccounts({ commitment }).send();
-                    const voteAccount = current.find(account => account.nodePubkey === identity);
-                    assert(voteAccount, 'Expected a vote account for the local validator');
+            // Each full-epoch schedule has 432,000 slots that are parsed and upcast to `bigint`, so
+            // this test requires some optimization
+            describe('when called with `keyByVoteAccount` while filtering by validator identity', () => {
+                let identity: Address;
+                let voteAccount: { nodePubkey: Address; votePubkey: Address };
+                let defaultSlots: readonly bigint[];
+                // fetch the vote accounts and default schedule once per commitment
+                beforeAll(async () => {
+                    const setupRpc = createLocalhostSolanaRpc();
+                    identity = await getValidatorAddress();
+                    const { current } = await setupRpc.getVoteAccounts({ commitment }).send();
+                    const account = current.find(account => account.nodePubkey === identity);
+                    assert(account, 'Expected a vote account for the local validator');
+                    voteAccount = account;
+                    const defaultSchedule = await setupRpc.getLeaderSchedule(null, { commitment, identity }).send();
+                    const slots = defaultSchedule[identity];
+                    assert(slots, 'Expected the local validator in its own leader schedule');
+                    defaultSlots = slots;
+                });
 
-                    const defaultSchedule = await rpc.getLeaderSchedule(null, { commitment, identity }).send();
-                    const schedule = await rpc
-                        .getLeaderSchedule(null, { commitment, identity, keyByVoteAccount })
-                        .send();
-
-                    expect(Object.keys(schedule)).toStrictEqual([voteAccount[keyField]]);
-                    expect(schedule[voteAccount[keyField]]).toStrictEqual(defaultSchedule[identity]);
-                },
-            );
+                it.each([
+                    { keyByVoteAccount: false, keyField: 'nodePubkey' as const },
+                    { keyByVoteAccount: true, keyField: 'votePubkey' as const },
+                ])(
+                    'returns $keyField keys with keyByVoteAccount=$keyByVoteAccount',
+                    async ({ keyByVoteAccount, keyField }) => {
+                        expect.assertions(3);
+                        const schedule = await rpc
+                            .getLeaderSchedule(null, { commitment, identity, keyByVoteAccount })
+                            .send();
+                        const slots = schedule[voteAccount[keyField]];
+                        expect(Object.keys(schedule)).toStrictEqual([voteAccount[keyField]]);
+                        // intentionally not using toStrictEqual here
+                        assert(slots);
+                        expect(slots).toHaveLength(defaultSlots.length);
+                        expect(slots.findIndex((slot, i) => slot !== defaultSlots[i])).toBe(-1);
+                    },
+                );
+            });
 
             describe('when called with no identity and no slot', () => {
                 it('returns the leader schedule for all cluster nodes in the current epoch', async () => {
