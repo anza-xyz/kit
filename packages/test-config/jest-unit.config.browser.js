@@ -1,11 +1,9 @@
-import { createRequire } from 'module';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 import commonConfig from './jest-unit.config.common.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const require = createRequire(import.meta.url);
 
 const config = {
     ...commonConfig,
@@ -18,12 +16,6 @@ const config = {
         __BROWSER__: true,
         __NODEJS__: false,
         __REACTNATIVE__: false,
-    },
-    // From https://stackoverflow.com/a/73203803/1375972
-    // this is required for @solana/compat, which uses the legacy web3js
-    moduleNameMapper: {
-        // Force module uuid to resolve with the CJS entry point, because Jest does not support package.json.exports. See https://github.com/uuidjs/uuid/issues/451
-        "uuid": require.resolve('uuid'),
     },
     setupFilesAfterEnv: [
         ...(commonConfig.setupFilesAfterEnv ?? []),

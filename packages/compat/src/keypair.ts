@@ -9,7 +9,8 @@ import { Keypair } from '@solana/web3.js';
  * ```ts
  * import { fromLegacyKeypair } from '@solana/compat';
  *
- * const legacyKeyPair = Keypair.generate();
+ * // `Keypair.generate()` is synchronous in web3.js v1 and asynchronous in v3; `await` works with both.
+ * const legacyKeyPair = await Keypair.generate();
  * const { privateKey, publicKey } = await fromLegacyKeypair(legacyKeyPair);
  * ```
  */

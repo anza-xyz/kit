@@ -13,6 +13,8 @@
 
 This package contains utilities for converting from legacy web3js classes to the new data structures in Kit. It can be used standalone, but it is also exported as part of Kit [`@solana/kit`](https://github.com/anza-xyz/kit/tree/main/packages/kit).
 
+These utilities work with objects created by both `@solana/web3.js` v1 and v3.
+
 ## Functions
 
 ### `fromLegacyPublicKey()`
@@ -30,7 +32,7 @@ This can be used to convert a legacy `Keypair` object to a native Ed25519 `Crypt
 
 ```ts
 import { fromLegacyKeypair } from '@solana/compat';
-const { privateKey, publicKey } = await fromLegacyKeypair(Keypair.generate());
+const { privateKey, publicKey } = await fromLegacyKeypair(await Keypair.generate());
 ```
 
 ### `fromVersionedTransaction()`
