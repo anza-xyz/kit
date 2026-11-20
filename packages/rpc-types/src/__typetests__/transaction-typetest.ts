@@ -1,5 +1,12 @@
 import type { Lamports } from '../lamports';
-import type { TransactionForFullJson, TransactionForFullJsonParsed } from '../transaction';
+import type { TokenBalance } from '../token-balance';
+import type {
+    TransactionForAccounts,
+    TransactionForFullBase58,
+    TransactionForFullBase64,
+    TransactionForFullJson,
+    TransactionForFullJsonParsed,
+} from '../transaction';
 
 // [DESCRIBE] TransactionForFullJson
 {
@@ -42,4 +49,68 @@ import type { TransactionForFullJson, TransactionForFullJsonParsed } from '../tr
         transaction.transaction.message.transactionConfig?.computeUnitLimit satisfies number | null | undefined;
         transaction.transaction.message.transactionConfig?.priorityFee satisfies Lamports | null | undefined;
     }
+}
+
+// [DESCRIBE] Block transaction metadata arrays
+{
+    // Every encoding and both legacy and versioned responses accept the same metadata states.
+    /* eslint-disable @typescript-eslint/no-duplicate-type-constituents -- Cover every encoding and version branch even when metadata shapes coincide. */
+    type FullMeta = NonNullable<TransactionForFullBase58<0 | 1>['meta']> &
+        NonNullable<TransactionForFullBase58<void>['meta']> &
+        NonNullable<TransactionForFullBase64<0 | 1>['meta']> &
+        NonNullable<TransactionForFullBase64<void>['meta']> &
+        NonNullable<TransactionForFullJson<0 | 1>['meta']> &
+        NonNullable<TransactionForFullJson<void>['meta']> &
+        NonNullable<TransactionForFullJsonParsed<0 | 1>['meta']> &
+        NonNullable<TransactionForFullJsonParsed<void>['meta']>;
+    type AccountsMeta = NonNullable<TransactionForAccounts<0 | 1>['meta']> &
+        NonNullable<TransactionForAccounts<void>['meta']>;
+    /* eslint-enable @typescript-eslint/no-duplicate-type-constituents */
+    type FullArrayFields = Pick<FullMeta, 'innerInstructions' | 'postTokenBalances' | 'preTokenBalances'>;
+    type AccountsArrayFields = Pick<AccountsMeta, 'postTokenBalances' | 'preTokenBalances'>;
+
+    // Null, omitted, and empty arrays are distinct valid states.
+    ({ innerInstructions: null, postTokenBalances: null, preTokenBalances: null }) satisfies FullArrayFields;
+    ({}) satisfies FullArrayFields;
+    ({ innerInstructions: [], postTokenBalances: [], preTokenBalances: [] }) satisfies FullArrayFields;
+    ({ postTokenBalances: null, preTokenBalances: null }) satisfies AccountsArrayFields;
+    ({}) satisfies AccountsArrayFields;
+    ({ postTokenBalances: [], preTokenBalances: [] }) satisfies AccountsArrayFields;
+
+    // Nullable/optional metadata requires a guard before array operations.
+    const fullMeta = null as unknown as FullMeta;
+    // @ts-expect-error Inner instructions can be null or omitted.
+    fullMeta.innerInstructions.map(group => group.index);
+    // @ts-expect-error Token balances can be null or omitted.
+    fullMeta.preTokenBalances.map(balance => balance.accountIndex);
+    // @ts-expect-error Token balances can still be null after an undefined-only guard.
+    if (fullMeta.postTokenBalances !== undefined) fullMeta.postTokenBalances.map(balance => balance.accountIndex);
+
+    if (fullMeta.innerInstructions != null) {
+        fullMeta.innerInstructions.map(group => group.index) satisfies number[];
+        // @ts-expect-error Inner instruction arrays remain readonly.
+        fullMeta.innerInstructions.push(fullMeta.innerInstructions[0]);
+        // @ts-expect-error Nested instruction arrays remain readonly.
+        fullMeta.innerInstructions[0].instructions.push(fullMeta.innerInstructions[0].instructions[0]);
+    }
+    if (fullMeta.preTokenBalances != null) {
+        fullMeta.preTokenBalances satisfies readonly TokenBalance[];
+        fullMeta.preTokenBalances.map(balance => balance.accountIndex) satisfies number[];
+        // @ts-expect-error Token balance arrays remain readonly.
+        fullMeta.preTokenBalances.push(fullMeta.preTokenBalances[0]);
+    }
+
+    const accountsMeta = null as unknown as AccountsMeta;
+    // @ts-expect-error Accounts mode token balances can be null or omitted.
+    accountsMeta.postTokenBalances.map(balance => balance.accountIndex);
+    if (accountsMeta.postTokenBalances != null) {
+        accountsMeta.postTokenBalances satisfies readonly TokenBalance[];
+        accountsMeta.postTokenBalances.map(balance => balance.accountIndex) satisfies number[];
+        // @ts-expect-error Accounts mode token balance arrays remain readonly.
+        accountsMeta.postTokenBalances.push(accountsMeta.postTokenBalances[0]);
+    }
+    // @ts-expect-error Metadata properties remain readonly.
+    fullMeta.innerInstructions = [];
+    // @ts-expect-error Accounts mode metadata properties remain readonly.
+    accountsMeta.preTokenBalances = [];
 }
