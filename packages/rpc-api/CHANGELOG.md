@@ -1,5 +1,31 @@
 # @solana/rpc-api
 
+## 8.7.0
+
+### Minor Changes
+
+- [#2164](https://github.com/anza-xyz/kit/pull/2164) [`cbc8883`](https://github.com/anza-xyz/kit/commit/cbc8883746e09db4e15839971bfb02a9f2fd9c0f) Thanks [@mobydih](https://github.com/mobydih)! - Add the `keyByVoteAccount` option to `getLeaderSchedule` for RPC nodes that support returning schedules keyed by vote account address. The `identity` filter continues to select a validator identity.
+
+- [#2159](https://github.com/anza-xyz/kit/pull/2159) [`9d43aee`](https://github.com/anza-xyz/kit/commit/9d43aee32db9ee83cf6ec80c279f44ccb2baa207) Thanks [@amilz](https://github.com/amilz)! - Add `innerInstructionsEncoding` to the `simulateTransaction` config. Set it to `'json'` to receive every inner instruction in compiled form (`programIdIndex`, `accounts`, `data`) instead of the default `'jsonParsed'` output. Supported by Agave 4.5+ (anza-xyz/agave#16165); older nodes ignore the option and return `jsonParsed` inner instructions, so the response type remains `TransactionForFullMetaInnerInstructionsParsed | TransactionForFullMetaInnerInstructionsUnparsed`.
+
+### Patch Changes
+
+- [#2186](https://github.com/anza-xyz/kit/pull/2186) [`4625b5a`](https://github.com/anza-xyz/kit/commit/4625b5a1a172a0b5f7a0d5424e866f545c208e42) Thanks [@erkancamli](https://github.com/erkancamli)! - Keep the reward `commissionBps` field (SIMD-0291) a `number` and add it, along with the `getInflationReward` `blockRewardAmount`, to the response types
+  
+  Agave sends a basis-point vote commission (`commissionBps`) on block and transaction rewards and on `getInflationReward`. It was missing from the `Reward` and `getInflationReward` types and was upcast to a `bigint` while its sibling `commission` stayed a `number`. `commissionBps` is now declared, kept a `number` across `getInflationReward`, `getBlock`, `getTransaction`, `getTransactionsForAddress` and `blockNotifications`, and exposed on the GraphQL `Reward` type. `getInflationReward` also declares `blockRewardAmount` as `Lamports | null`: Agave 4.5 (currently in beta) returns `null` when block revenue sharing is not enabled in the epoch, and earlier versions omit it.
+- Updated dependencies [[`05b2eb2`](https://github.com/anza-xyz/kit/commit/05b2eb2f10292a0ebec03a1227e7651b24196596), [`7afb7b7`](https://github.com/anza-xyz/kit/commit/7afb7b7e41ee1eb4adb58f5c4874da64240a6bab), [`4625b5a`](https://github.com/anza-xyz/kit/commit/4625b5a1a172a0b5f7a0d5424e866f545c208e42), [`0c4e92c`](https://github.com/anza-xyz/kit/commit/0c4e92c5d1e0339521721809efe82fac2a40d330), [`f255414`](https://github.com/anza-xyz/kit/commit/f2554140a89b54f9a193209382a1bb6c0168b75b)]:
+  - @solana/errors@8.7.0
+  - @solana/rpc-types@8.7.0
+  - @solana/addresses@8.7.0
+  - @solana/codecs-core@8.7.0
+  - @solana/codecs-strings@8.7.0
+  - @solana/keys@8.7.0
+  - @solana/rpc-spec@8.7.0
+  - @solana/rpc-transformers@8.7.0
+  - @solana/transaction-messages@8.7.0
+  - @solana/transactions@8.7.0
+  - @solana/rpc-parsed-types@8.7.0
+
 ## 8.6.0
 
 ### Patch Changes

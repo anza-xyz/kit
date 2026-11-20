@@ -1,5 +1,14 @@
 # @solana/codecs-numbers
 
+## 8.7.0
+
+### Patch Changes
+
+- [#2177](https://github.com/anza-xyz/kit/pull/2177) [`1196606`](https://github.com/anza-xyz/kit/commit/11966063ef0571cb025f24cc5ec06d4c4cc07585) Thanks [@saravanan619](https://github.com/saravanan619)! - Reject non-minimal ("alias") `shortU16` encodings in `getShortU16Decoder`. A zero-valued terminating byte after the first byte adds no value bits, so the value could have been encoded in fewer bytes; Agave's `short_vec` decoder rejects these, so Kit now throws `SOLANA_ERROR__CODECS__INVALID_BYTE_LENGTH` instead of decoding them.
+- Updated dependencies [[`05b2eb2`](https://github.com/anza-xyz/kit/commit/05b2eb2f10292a0ebec03a1227e7651b24196596), [`7afb7b7`](https://github.com/anza-xyz/kit/commit/7afb7b7e41ee1eb4adb58f5c4874da64240a6bab), [`0c4e92c`](https://github.com/anza-xyz/kit/commit/0c4e92c5d1e0339521721809efe82fac2a40d330), [`f255414`](https://github.com/anza-xyz/kit/commit/f2554140a89b54f9a193209382a1bb6c0168b75b)]:
+  - @solana/errors@8.7.0
+  - @solana/codecs-core@8.7.0
+
 ## 8.6.0
 
 ### Patch Changes

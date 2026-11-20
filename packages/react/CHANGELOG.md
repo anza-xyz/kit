@@ -1,5 +1,16 @@
 # @solana/react
 
+## 8.7.0
+
+### Patch Changes
+
+- Updated dependencies [[`a9cac22`](https://github.com/anza-xyz/kit/commit/a9cac22f49fb3ef6061db0696444f1a1c92c05db)]:
+  - @solana/promises@8.7.0
+  - @solana/signers@8.7.0
+  - @solana/subscribable@8.7.0
+  - @solana/transaction-messages@8.7.0
+  - @solana/transactions@8.7.0
+
 ## 8.6.0
 
 ### Patch Changes

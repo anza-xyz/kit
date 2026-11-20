@@ -1,5 +1,11 @@
 # @solana/promises
 
+## 8.7.0
+
+### Patch Changes
+
+- [#2144](https://github.com/anza-xyz/kit/pull/2144) [`a9cac22`](https://github.com/anza-xyz/kit/commit/a9cac22f49fb3ef6061db0696444f1a1c92c05db) Thanks [@dajiaohuang](https://github.com/dajiaohuang)! - Remove abort listeners when an abortable promise settles.
+
 ## 8.6.0
 
 No changes in this release.
