@@ -1,5 +1,15 @@
 # @solana/codecs-data-structures
 
+## 8.7.0
+
+### Patch Changes
+
+- [#2124](https://github.com/anza-xyz/kit/pull/2124) [`4489106`](https://github.com/anza-xyz/kit/commit/448910651df74ce07bbd47bff023c19c037a32e1) Thanks [@Iamsohungrynow](https://github.com/Iamsohungrynow)! - `getEnumCodec` now works with plain objects like `{ Bad: 0, Good: 1 } as const` and with enums that have negative values, and sorts numerical values numerically so `-2` comes before `-1` and `2` before `10`.
+- Updated dependencies [[`05b2eb2`](https://github.com/anza-xyz/kit/commit/05b2eb2f10292a0ebec03a1227e7651b24196596), [`7afb7b7`](https://github.com/anza-xyz/kit/commit/7afb7b7e41ee1eb4adb58f5c4874da64240a6bab), [`1196606`](https://github.com/anza-xyz/kit/commit/11966063ef0571cb025f24cc5ec06d4c4cc07585), [`0c4e92c`](https://github.com/anza-xyz/kit/commit/0c4e92c5d1e0339521721809efe82fac2a40d330), [`f255414`](https://github.com/anza-xyz/kit/commit/f2554140a89b54f9a193209382a1bb6c0168b75b)]:
+  - @solana/errors@8.7.0
+  - @solana/codecs-numbers@8.7.0
+  - @solana/codecs-core@8.7.0
+
 ## 8.6.0
 
 ### Patch Changes

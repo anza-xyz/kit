@@ -1,5 +1,23 @@
 # @solana/rpc-subscriptions
 
+## 8.7.0
+
+### Patch Changes
+
+- [#2094](https://github.com/anza-xyz/kit/pull/2094) [`9705274`](https://github.com/anza-xyz/kit/commit/9705274046fe334601a71217f414c66fefd10cd0) Thanks [@vetclippy](https://github.com/vetclippy)! - Clear the subscription coalescer cache when the underlying transport rejects before creating a publisher, allowing subsequent subscriptions to retry the connection.
+- Updated dependencies [[`05b2eb2`](https://github.com/anza-xyz/kit/commit/05b2eb2f10292a0ebec03a1227e7651b24196596), [`7afb7b7`](https://github.com/anza-xyz/kit/commit/7afb7b7e41ee1eb4adb58f5c4874da64240a6bab), [`a9cac22`](https://github.com/anza-xyz/kit/commit/a9cac22f49fb3ef6061db0696444f1a1c92c05db), [`4625b5a`](https://github.com/anza-xyz/kit/commit/4625b5a1a172a0b5f7a0d5424e866f545c208e42), [`0c4e92c`](https://github.com/anza-xyz/kit/commit/0c4e92c5d1e0339521721809efe82fac2a40d330), [`f255414`](https://github.com/anza-xyz/kit/commit/f2554140a89b54f9a193209382a1bb6c0168b75b)]:
+  - @solana/errors@8.7.0
+  - @solana/promises@8.7.0
+  - @solana/rpc-subscriptions-api@8.7.0
+  - @solana/rpc-types@8.7.0
+  - @solana/rpc-spec-types@8.7.0
+  - @solana/rpc-subscriptions-channel-websocket@8.7.0
+  - @solana/rpc-subscriptions-spec@8.7.0
+  - @solana/rpc-transformers@8.7.0
+  - @solana/subscribable@8.7.0
+  - @solana/fast-stable-stringify@8.7.0
+  - @solana/functional@8.7.0
+
 ## 8.6.0
 
 ### Patch Changes
