@@ -120,6 +120,16 @@ function getAllowedNumericKeypaths(): AllowedNumericKeypaths<
                     ],
                 ]),
                 ['value', 'block', 'transactions', KEYPATH_WILDCARD, 'meta', 'rewards', KEYPATH_WILDCARD, 'commission'],
+                [
+                    'value',
+                    'block',
+                    'transactions',
+                    KEYPATH_WILDCARD,
+                    'meta',
+                    'rewards',
+                    KEYPATH_WILDCARD,
+                    'commissionBps',
+                ],
                 ...innerInstructionsConfigs.map(c => [
                     'value',
                     'block',
@@ -135,6 +145,7 @@ function getAllowedNumericKeypaths(): AllowedNumericKeypaths<
                 ),
                 ['value', 'block', 'transactions', KEYPATH_WILDCARD, 'version'],
                 ['value', 'block', 'rewards', KEYPATH_WILDCARD, 'commission'],
+                ['value', 'block', 'rewards', KEYPATH_WILDCARD, 'commissionBps'],
             ],
             programNotifications: jsonParsedAccountsConfigs.flatMap(c => [
                 ['value', KEYPATH_WILDCARD, 'account', ...c],

@@ -28,8 +28,20 @@ type GetInflationRewardApiConfig = Readonly<{
 type InflationReward = Readonly<{
     /** Reward amount in {@link Lamports} */
     amount: Lamports;
+    /**
+     * The block revenue (SIMD-0123) portion of `amount` for the queried address, in {@link Lamports}.
+     * `amount` still contains inflation and block rewards combined, so the inflation reward alone is
+     * `amount - blockRewardAmount`. `null` when block revenue sharing is not enabled in the epoch, and
+     * absent on RPC nodes older than Agave 4.5.
+     */
+    blockRewardAmount?: Lamports | null;
     /** Vote account commission when the reward was credited */
     commission: number;
+    /**
+     * Vote account commission in basis points when the reward was credited (SIMD-0291). Absent when
+     * the RPC does not set it.
+     */
+    commissionBps?: number;
     /** The slot in which the rewards are delivered */
     effectiveSlot: Slot;
     /** Epoch for which reward occurred */
