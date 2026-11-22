@@ -62,7 +62,6 @@ export function addEncoderSizePrefix<TFrom>(encoder: Encoder<TFrom>, prefix: Num
     const maxSize = prefixMaxSize !== null && encoderMaxSize !== null ? prefixMaxSize + encoderMaxSize : null;
 
     return createEncoder({
-        ...encoder,
         ...(maxSize !== null ? { maxSize } : {}),
         getSizeFromValue: value => {
             const encoderSize = getEncodedSize(value, encoder);
@@ -108,7 +107,7 @@ export function addDecoderSizePrefix<TTo>(decoder: Decoder<TTo>, prefix: NumberD
     const prefixMaxSize = isFixedSize(prefix) ? prefix.fixedSize : (prefix.maxSize ?? null);
     const decoderMaxSize = isFixedSize(decoder) ? decoder.fixedSize : (decoder.maxSize ?? null);
     const maxSize = prefixMaxSize !== null && decoderMaxSize !== null ? prefixMaxSize + decoderMaxSize : null;
-    return createDecoder({ ...decoder, ...(maxSize !== null ? { maxSize } : {}), read });
+    return createDecoder({ ...(maxSize !== null ? { maxSize } : {}), read });
 }
 
 /**
