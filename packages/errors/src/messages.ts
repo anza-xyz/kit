@@ -300,6 +300,7 @@ import {
     SOLANA_ERROR__TRANSACTION__TOO_MANY_SIGNER_ADDRESSES,
     SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED,
     SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_OUT_OF_RANGE,
+    SOLANA_ERROR__TRANSACTION__VERSION_ONE_MUST_BE_ENCODED_WITH_MESSAGE_FIRST,
     SOLANA_ERROR__TRANSACTION__VERSION_ZERO_MUST_BE_ENCODED_WITH_SIGNATURES_FIRST,
     SOLANA_ERROR__TRANSACTION_ERROR__ACCOUNT_BORROW_OUTSTANDING,
     SOLANA_ERROR__TRANSACTION_ERROR__ACCOUNT_IN_USE,
@@ -929,6 +930,8 @@ export const SolanaErrorMessages: Readonly<{
         'Transaction bytes are empty, so no transaction can be decoded',
     [SOLANA_ERROR__TRANSACTION__VERSION_ZERO_MUST_BE_ENCODED_WITH_SIGNATURES_FIRST]:
         'Transaction version 0 must be encoded with signatures first. This transaction was encoded with first byte $firstByte, which is expected to be a signature count for v0 transactions.',
+    [SOLANA_ERROR__TRANSACTION__VERSION_ONE_MUST_BE_ENCODED_WITH_MESSAGE_FIRST]:
+        'Transaction version 1 must be encoded with message first. This transaction was encoded with signatures first.',
     [SOLANA_ERROR__TRANSACTION__SIGNATURE_COUNT_TOO_HIGH_FOR_TRANSACTION_BYTES]:
         'The provided transaction bytes expect that there should be $numExpectedSignatures signatures, but the bytes are not long enough to contain a transaction message with this many signatures. The provided bytes are $transactionBytesLength bytes long.',
     [SOLANA_ERROR__TRANSACTION__INVALID_HEAP_SIZE]:
