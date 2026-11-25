@@ -105,18 +105,42 @@ export interface RpcSimulateTransactionResult {
     unitsConsumed: bigint | null;
 }
 
+const EMPTY_PREFLIGHT_ERROR_CONTEXT: Omit<RpcSimulateTransactionResult, 'err'> = {
+    accounts: null,
+    fee: null,
+    loadedAccountsDataSize: null,
+    loadedAddresses: null,
+    logs: null,
+    postBalances: null,
+    postTokenBalances: null,
+    preBalances: null,
+    preTokenBalances: null,
+    replacementBlockhash: null,
+    returnData: null,
+    unitsConsumed: null,
+};
+
 export function getSolanaErrorFromJsonRpcError(putativeErrorResponse: unknown): SolanaError {
     let out: SolanaError;
     if (isRpcErrorResponse(putativeErrorResponse)) {
         const { code: rawCode, data, message } = putativeErrorResponse;
         const code = Number(rawCode);
         if (code === SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE) {
-            const { err, ...preflightErrorContext } = data as RpcSimulateTransactionResult;
-            const causeObject = err ? { cause: getSolanaErrorFromTransactionError(err) } : null;
-            out = new SolanaError(SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE, {
-                ...preflightErrorContext,
-                ...causeObject,
-            });
+            if (typeof data === 'object' && data !== null && !Array.isArray(data)) {
+                const { err, ...preflightErrorContext } = data as RpcSimulateTransactionResult;
+                const causeObject = err ? { cause: getSolanaErrorFromTransactionError(err) } : null;
+                out = new SolanaError(SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE, {
+                    ...preflightErrorContext,
+                    ...causeObject,
+                });
+            } else {
+                // Some RPC servers send this code without the simulation result. Report every
+                // simulation field as unavailable, and keep the server message so it's not lost.
+                out = new SolanaError(SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE, {
+                    ...EMPTY_PREFLIGHT_ERROR_CONTEXT,
+                    __serverMessage: message,
+                });
+            }
         } else {
             let errorContext;
             switch (code) {

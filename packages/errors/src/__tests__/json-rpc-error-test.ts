@@ -184,5 +184,39 @@ describe('getSolanaErrorFromJsonRpcError', () => {
             });
             expect(getSolanaErrorFromTransactionError).toHaveBeenCalledWith(transactionError);
         });
+        describe.each([undefined, null, 'a string', [1, 2, 3]])('with non-object data like `%s`', data => {
+            it('produces a `SolanaError` with null simulation fields and the server message as the context', () => {
+                const error = getSolanaErrorFromJsonRpcError({
+                    code: SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE,
+                    data,
+                    message: 'o no',
+                });
+                expect(error.context).toStrictEqual({
+                    __code: SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE,
+                    __serverMessage: 'o no',
+                    accounts: null,
+                    fee: null,
+                    loadedAccountsDataSize: null,
+                    loadedAddresses: null,
+                    logs: null,
+                    postBalances: null,
+                    postTokenBalances: null,
+                    preBalances: null,
+                    preTokenBalances: null,
+                    replacementBlockhash: null,
+                    returnData: null,
+                    unitsConsumed: null,
+                });
+            });
+            it('does not set a `cause`', () => {
+                const error = getSolanaErrorFromJsonRpcError({
+                    code: SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE,
+                    data,
+                    message: 'o no',
+                });
+                expect(error.cause).toBeUndefined();
+                expect(getSolanaErrorFromTransactionError).not.toHaveBeenCalled();
+            });
+        });
     });
 });
