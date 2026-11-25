@@ -52,4 +52,21 @@ describe('addCodecSizePrefix', () => {
         assertIsVariableSize(prefixedCodec);
         expect(prefixedCodec.getSizeFromValue('helloworld')).toBe(14);
     });
+
+    it('returns a variable size when a fixed-size codec gets a variable-size prefix', () => {
+        const numberCodec = getMockCodec();
+        numberCodec.getSizeFromValue.mockReturnValue(1);
+        const contentCodec = getMockCodec({ size: 10 });
+        const prefixedCodec = addCodecSizePrefix(contentCodec, numberCodec as Codec<number>);
+        assertIsVariableSize(prefixedCodec);
+        expect(prefixedCodec.getSizeFromValue('helloworld')).toBe(11);
+    });
+
+    it('encodes a fixed-size codec with a variable-size prefix', () => {
+        const numberCodec = getMockCodec({ innerSize: 1 });
+        numberCodec.getSizeFromValue.mockReturnValue(1);
+        const contentCodec = getMockCodec({ size: 10 });
+        const prefixedCodec = addCodecSizePrefix(contentCodec, numberCodec as Codec<number>);
+        expect(prefixedCodec.encode('helloworld')).toHaveLength(11);
+    });
 });
