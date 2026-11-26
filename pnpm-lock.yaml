@@ -219,8 +219,8 @@ importers:
         specifier: ^9.39.2
         version: 9.39.2(jiti@1.21.7)
       eslint-plugin-react-refresh:
-        specifier: ^0.5.7
-        version: 0.5.7(eslint@9.39.2(jiti@1.21.7))
+        specifier: ^0.5.8
+        version: 0.5.8(eslint@9.39.2(jiti@1.21.7))
       globals:
         specifier: ^17.13.0
         version: 17.13.0
@@ -6410,8 +6410,8 @@ packages:
   caniuse-lite@1.0.30001809:
     resolution: {integrity: sha512-xxWVywk6a6Arlk+hymeycyn/VgqEfLDxupvhH/xiY5SJ/18kmi9o6MiO320DCUzypORHLtvh0I4i04tUhCNHNQ==}
 
-  caniuse-lite@1.0.30001826:
-    resolution: {integrity: sha512-wTB+9tIbLro/BCXwLuNV1meHE4L9dS6dArMDwgYfNBPMYScqClHyGunhkCSDtHhe/69Xl0sHlKgBVZ+fNsYtWA==}
+  caniuse-lite@1.0.30001827:
+    resolution: {integrity: sha512-YWEDr46gSO81M8w6uPbaIy4++IXsirx2asUqvllNiD4BPf75ibxclUjWEqp8ObCenRv+UM2n5Y8xuRPT8V8FrQ==}
 
   chalk@2.4.2:
     resolution: {integrity: sha512-Mti+f9lpJNcwF4tWV8/OrTTtF1gZi+f8FqlyAdouralcFWFQWF2+NgCHShjkCb+IFBLq9buZwE1xckQU4peSuQ==}
@@ -6865,8 +6865,8 @@ packages:
     peerDependencies:
       eslint: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0 || ^9.0.0
 
-  eslint-plugin-react-refresh@0.5.7:
-    resolution: {integrity: sha512-XhJSzLljuYD4UjNuFGJu2v7aD3sqNVK12w5/DCUfrNfHWegZo2+TsavNx8MuxMwEquuFAzNbNfXKU0WoZ+YUIg==}
+  eslint-plugin-react-refresh@0.5.8:
+    resolution: {integrity: sha512-VYgz1iCC5LxeAd6YRz5ATfg8WKrNb1ulHMpCe4pQpn3CS9DiYpZi5wcag73O8iChLhrl/CmlGMmzA6eXZ2cX4Q==}
     peerDependencies:
       eslint: ^9 || ^10
 
@@ -15145,7 +15145,7 @@ snapshots:
   browserslist@4.29.6:
     dependencies:
       baseline-browser-mapping: 2.11.39
-      caniuse-lite: 1.0.30001826
+      caniuse-lite: 1.0.30001827
       electron-to-chromium: 1.5.492
       node-releases: 2.0.65
       update-browserslist-db: 1.4.0(browserslist@4.29.6)
@@ -15235,7 +15235,7 @@ snapshots:
 
   caniuse-lite@1.0.30001809: {}
 
-  caniuse-lite@1.0.30001826: {}
+  caniuse-lite@1.0.30001827: {}
 
   chalk@2.4.2:
     dependencies:
@@ -15638,7 +15638,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-react-refresh@0.5.7(eslint@9.39.2(jiti@1.21.7)):
+  eslint-plugin-react-refresh@0.5.8(eslint@9.39.2(jiti@1.21.7)):
     dependencies:
       eslint: 9.39.2(jiti@1.21.7)
 
