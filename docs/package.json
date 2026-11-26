@@ -54,7 +54,7 @@
         "swr": "^2.5.1",
         "tailwindcss": "^4.3.3",
         "typescript": "^5.9.3",
-        "vercel": "^59.23.2"
+        "vercel": "^66.6.0"
     },
     "pnpm": {
         "overrides": {
