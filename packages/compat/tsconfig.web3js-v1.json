@@ -1,0 +1,10 @@
+{
+    "$schema": "https://json.schemastore.org/tsconfig",
+    "compilerOptions": {
+        "paths": {
+            "@solana/web3.js": ["./node_modules/@solana/web3.js-v1"]
+        }
+    },
+    "display": "@solana/compat (web3.js v1)",
+    "extends": "./tsconfig.json"
+}
