@@ -71,3 +71,42 @@ describe('stringifyJsonWithBigInts', () => {
         expect(stringifyJsonWithBigInts(input)).toBe(JSON.stringify(input));
     });
 });
+
+describe('stringifyJsonWithBigInts with a `BigInt.prototype.toJSON` that returns the decimal string', () => {
+    beforeEach(() => {
+        Object.defineProperty(BigInt.prototype, 'toJSON', {
+            configurable: true,
+            value: function (this: bigint) {
+                return this.toString();
+            },
+        });
+    });
+    afterEach(() => {
+        Reflect.deleteProperty(BigInt.prototype, 'toJSON');
+    });
+    it.each`
+        input                        | expectedString
+        ${42n}                       | ${'42'}
+        ${{ alice: 42n }}            | ${'{"alice":42}'}
+        ${[42n, { bob: [-1n] }]}     | ${'[42,{"bob":[-1]}]'}
+        ${MAX_SAFE_INTEGER_PLUS_ONE} | ${MAX_SAFE_INTEGER_PLUS_ONE.toString()}
+    `('stringifies bigint $input as $expectedString', ({ expectedString, input }) => {
+        expect(stringifyJsonWithBigInts(input)).toBe(expectedString);
+    });
+    it('reads a getter once, and writes its bigint as `toJSON` returned it', () => {
+        const readSlot = jest.fn(() => 42n);
+        const input = {
+            get slot() {
+                return readSlot();
+            },
+        };
+        expect(stringifyJsonWithBigInts(input)).toBe('{"slot":"42"}');
+        expect(readSlot).toHaveBeenCalledTimes(1);
+    });
+});
+
+describe('stringifyJsonWithBigInts with a value whose own `toJSON` returns a bigint', () => {
+    it('stringifies the returned bigint as a numerical value', () => {
+        expect(stringifyJsonWithBigInts({ slot: { toJSON: () => 42n } })).toBe('{"slot":42}');
+    });
+});
