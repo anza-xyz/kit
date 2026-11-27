@@ -1,5 +1,21 @@
 # @solana/rpc-types
 
+## 8.7.0
+
+### Patch Changes
+
+- [#2186](https://github.com/anza-xyz/kit/pull/2186) [`4625b5a`](https://github.com/anza-xyz/kit/commit/4625b5a1a172a0b5f7a0d5424e866f545c208e42) Thanks [@erkancamli](https://github.com/erkancamli)! - Keep the reward `commissionBps` field (SIMD-0291) a `number` and add it, along with the `getInflationReward` `blockRewardAmount`, to the response types
+  
+  Agave sends a basis-point vote commission (`commissionBps`) on block and transaction rewards and on `getInflationReward`. It was missing from the `Reward` and `getInflationReward` types and was upcast to a `bigint` while its sibling `commission` stayed a `number`. `commissionBps` is now declared, kept a `number` across `getInflationReward`, `getBlock`, `getTransaction`, `getTransactionsForAddress` and `blockNotifications`, and exposed on the GraphQL `Reward` type. `getInflationReward` also declares `blockRewardAmount` as `Lamports | null`: Agave 4.5 (currently in beta) returns `null` when block revenue sharing is not enabled in the epoch, and earlier versions omit it.
+- Updated dependencies [[`05b2eb2`](https://github.com/anza-xyz/kit/commit/05b2eb2f10292a0ebec03a1227e7651b24196596), [`7afb7b7`](https://github.com/anza-xyz/kit/commit/7afb7b7e41ee1eb4adb58f5c4874da64240a6bab), [`1196606`](https://github.com/anza-xyz/kit/commit/11966063ef0571cb025f24cc5ec06d4c4cc07585), [`0c4e92c`](https://github.com/anza-xyz/kit/commit/0c4e92c5d1e0339521721809efe82fac2a40d330), [`ba1d993`](https://github.com/anza-xyz/kit/commit/ba1d9937430aace66f341d3bb13253d2200bcd5b), [`f255414`](https://github.com/anza-xyz/kit/commit/f2554140a89b54f9a193209382a1bb6c0168b75b)]:
+  - @solana/errors@8.7.0
+  - @solana/codecs-numbers@8.7.0
+  - @solana/codecs-core@8.7.0
+  - @solana/addresses@8.7.0
+  - @solana/codecs-strings@8.7.0
+  - @solana/fixed-points@8.7.0
+  - @solana/nominal-types@8.7.0
+
 ## 8.6.0
 
 ### Patch Changes
