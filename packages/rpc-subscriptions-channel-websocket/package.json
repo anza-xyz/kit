@@ -78,7 +78,7 @@
         "@solana/functional": "workspace:*",
         "@solana/rpc-subscriptions-spec": "workspace:*",
         "@solana/subscribable": "workspace:*",
-        "ws": "^8.21.3"
+        "ws": "^8.23.0"
     },
     "devDependencies": {
         "@solana/event-target-impl": "workspace:*",
