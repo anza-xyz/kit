@@ -745,7 +745,10 @@ export type SolanaErrorContext = ReadonlyContextValue<
             [SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE]: Omit<
                 RpcSimulateTransactionResult,
                 'err'
-            >;
+            > & {
+                /** Set when the server sent no simulation result, in which case every simulation field is `null`. */
+                __serverMessage?: string;
+            };
             [SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SLOT_NOT_EPOCH_BOUNDARY]: {
                 slot: bigint;
             };

@@ -32,3 +32,6 @@ test-ledger/
 .claude/worktrees
 .claude/settings.local.json
 .codex/config.toml
+
+# Paseo worktree config
+paseo.json
