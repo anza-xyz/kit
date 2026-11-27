@@ -52,10 +52,10 @@
         "maintained node versions"
     ],
     "dependencies": {
-        "ws": "^8.21.3"
+        "ws": "^8.23.0"
     },
     "devDependencies": {
-        "@types/ws": "^8.18.1"
+        "@types/ws": "^8.18.2"
     },
     "engines": {
         "node": ">=20.18.0"
