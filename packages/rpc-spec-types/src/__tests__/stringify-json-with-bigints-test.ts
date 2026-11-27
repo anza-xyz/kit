@@ -86,10 +86,10 @@ describe('stringifyJsonWithBigInts with a `BigInt.prototype.toJSON` that returns
     });
     it.each`
         input                        | expectedString
-        ${42n}                       | ${'"42"'}
-        ${{ alice: 42n }}            | ${'{"alice":"42"}'}
-        ${[42n, { bob: [-1n] }]}     | ${'["42",{"bob":["-1"]}]'}
-        ${MAX_SAFE_INTEGER_PLUS_ONE} | ${`"${MAX_SAFE_INTEGER_PLUS_ONE}"`}
+        ${42n}                       | ${'42'}
+        ${{ alice: 42n }}            | ${'{"alice":42}'}
+        ${[42n, { bob: [-1n] }]}     | ${'[42,{"bob":[-1]}]'}
+        ${MAX_SAFE_INTEGER_PLUS_ONE} | ${MAX_SAFE_INTEGER_PLUS_ONE.toString()}
     `('stringifies bigint $input as $expectedString', ({ expectedString, input }) => {
         expect(stringifyJsonWithBigInts(input)).toBe(expectedString);
     });

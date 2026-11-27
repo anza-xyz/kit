@@ -3,8 +3,19 @@
  */
 export function stringifyJsonWithBigInts(value: unknown, space?: number | string): string {
     return unwrapBigIntValueObject(
-        JSON.stringify(value, (_, v) => (typeof v === 'bigint' ? wrapBigIntValueObject(v) : v), space),
+        JSON.stringify(value, 'toJSON' in BigInt.prototype ? wrapBigIntsBehindToJson : wrapBigInts, space),
     );
+}
+
+function wrapBigInts(_: string, v: unknown): unknown {
+    return typeof v === 'bigint' ? wrapBigIntValueObject(v) : v;
+}
+
+function wrapBigIntsBehindToJson(this: object, key: string, v: unknown): unknown {
+    // `this` is the holder. `JSON.stringify` has already passed `v` through `BigInt.prototype.toJSON`, so the
+    // bigint is read from the holder, through its descriptor so that a getter does not run a second time.
+    const holderValue: unknown = Object.getOwnPropertyDescriptor(this, key)?.value;
+    return typeof holderValue === 'bigint' ? wrapBigIntValueObject(holderValue) : wrapBigInts(key, v);
 }
 
 type BigIntValueObject = {
