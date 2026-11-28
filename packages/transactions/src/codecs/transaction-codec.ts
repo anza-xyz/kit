@@ -29,6 +29,7 @@ import {
     SOLANA_ERROR__TRANSACTION__MESSAGE_SIGNATURES_MISMATCH,
     SOLANA_ERROR__TRANSACTION__SIGNATURE_COUNT_TOO_HIGH_FOR_TRANSACTION_BYTES,
     SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED,
+    SOLANA_ERROR__TRANSACTION__VERSION_ONE_MUST_BE_ENCODED_WITH_MESSAGE_FIRST,
     SOLANA_ERROR__TRANSACTION__VERSION_ZERO_MUST_BE_ENCODED_WITH_SIGNATURES_FIRST,
     SolanaError,
 } from '@solana/errors';
@@ -245,7 +246,17 @@ function decodePartiallyDecodedLegacyOrV0Transaction(transaction: PartiallyDecod
         // read static addresses
         getArrayDecoder(getAddressDecoder(), { size: getShortU16Decoder() }),
     ]);
-    const [_txVersion, numRequiredSignatures, staticAddresses] = signerAddressesDecoder.decode(messageBytes);
+    const [txVersion, numRequiredSignatures, staticAddresses] = signerAddressesDecoder.decode(messageBytes);
+
+    // v1 messages must be encoded with message first (SIMD-0385). A v1 message
+    // in a signatures-first envelope would otherwise be misread with the
+    // legacy/v0 layout, keying signatures to addresses made of config-mask
+    // and blockhash bytes.
+    if (txVersion === 1) {
+        throw new SolanaError(SOLANA_ERROR__TRANSACTION__VERSION_ONE_MUST_BE_ENCODED_WITH_MESSAGE_FIRST, {
+            messageBytes,
+        });
+    }
 
     const signerAddresses = staticAddresses.slice(0, numRequiredSignatures);
 

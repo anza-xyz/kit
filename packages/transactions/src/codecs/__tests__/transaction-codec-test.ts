@@ -6,6 +6,7 @@ import {
     SOLANA_ERROR__TRANSACTION__MALFORMED_MESSAGE_BYTES,
     SOLANA_ERROR__TRANSACTION__MESSAGE_SIGNATURES_MISMATCH,
     SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED,
+    SOLANA_ERROR__TRANSACTION__VERSION_ONE_MUST_BE_ENCODED_WITH_MESSAGE_FIRST,
     SolanaError,
 } from '@solana/errors';
 import { SignatureBytes } from '@solana/keys';
@@ -1161,6 +1162,60 @@ describe.each([getTransactionDecoder, getTransactionCodec])('Transaction decoder
             expect(() => decoder.decode(encodedTransaction)).toThrow(
                 new SolanaError(SOLANA_ERROR__TRANSACTION__VERSION_NUMBER_NOT_SUPPORTED, {
                     unsupportedVersion: 2,
+                }),
+            );
+        });
+
+        it('should throw for a v1 message encoded with signatures first', () => {
+            // prettier-ignore
+            const messageBytes = new Uint8Array([
+                /** VERSION HEADER */
+                129, // 1 + version mask
+
+                /** MESSAGE HEADER */
+                1, // numSignerAccounts
+                0, // numReadonlySignerAccount
+                1, // numReadonlyNonSignerAccounts
+
+                /** TRANSACTION CONFIG MASK */
+                // The first config-mask byte doubles as the static-address count when
+                // this v1 message is misread with the legacy layout, so the decoder
+                // finds one signer address made of the remaining config-mask bytes
+                // and the lifetime bytes, as in the reported mainnet transaction.
+                1, 0, 0, 0, // arbitrary, 4 bytes
+
+                /** LIFETIME SPECIFIER */
+                0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, // arbitrary, 32 bytes
+
+                /** NUM INSTRUCTIONS */
+                1, // arbitrary
+
+                /** NUM ACCOUNTS */
+                2,
+
+                /** STATIC ADDRESSES */
+                ...new Uint8Array(64).fill(11),
+                ...new Uint8Array(64).fill(12),
+
+                /** REST OF TRANSACTION MESSAGE (arbitrary) */
+                ...new Uint8Array(100).fill(1),
+            ]) as ReadonlyUint8Array as TransactionMessageBytes;
+
+            const encodedTransaction = new Uint8Array([
+                /** SIGNATURES */
+                1, // num signatures
+                ...(new Uint8Array(64).fill(1) as ReadonlyUint8Array as SignatureBytes),
+
+                /** MESSAGE */
+                ...messageBytes,
+            ]);
+
+            expect(() => decoder.decode(encodedTransaction)).toThrow(
+                new SolanaError(SOLANA_ERROR__TRANSACTION__VERSION_ONE_MUST_BE_ENCODED_WITH_MESSAGE_FIRST, {
+                    messageBytes,
                 }),
             );
         });
